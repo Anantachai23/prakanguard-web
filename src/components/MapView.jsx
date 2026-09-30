@@ -21,7 +21,8 @@ export default function MapView({
   isPickingLocation = false,
   onMapLocationPicked,
   flyToLocation,
-  theme = 'light'
+  theme = 'light',
+  isTopPanelCollapsed = false
 }) {
   const isDark = theme === 'dark';
   const mapContainerRef = useRef(null);
@@ -482,7 +483,7 @@ export default function MapView({
       ></div>
 
       {/* FLOATING MAP CONTROLS (TOP RIGHT - FULLY RESPONSIVE FOR ALL SCREENS) */}
-      <div className="absolute top-[140px] sm:top-4 right-2 sm:right-4 z-20 flex flex-col items-end gap-1.5 sm:gap-2 pointer-events-auto">
+      <div className={`absolute ${isTopPanelCollapsed ? 'top-3 sm:top-4' : 'top-[140px] sm:top-4'} right-2 sm:right-4 z-20 flex flex-col items-end gap-1.5 sm:gap-2 pointer-events-auto transition-all duration-300`}>
         
         {/* Map Tile Switcher (Theme-aware container with Roadmap, Satellite, Terrain) */}
         <div className={`p-1 rounded-2xl flex items-center gap-0.5 sm:gap-1 border shadow-md text-xs sm:text-sm backdrop-blur-md transition-colors ${

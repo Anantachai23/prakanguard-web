@@ -6,16 +6,16 @@ export default function WelcomeModal({ isOpen, onClose, theme = 'light' }) {
   const isDark = theme === 'dark';
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-3.5 sm:p-4 smooth-backdrop">
-      <div className={`w-full max-w-lg border rounded-3xl shadow-2xl overflow-hidden flex flex-col relative smooth-pop transition-colors ${
+    <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 smooth-backdrop">
+      <div className={`w-full max-w-lg border rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh] sm:max-h-[88vh] relative smooth-pop transition-colors ${
         isDark ? 'bg-slate-900 border-slate-700 text-slate-100' : 'bg-white border-slate-200 text-slate-800'
       }`}>
         
         {/* Accent Bar */}
-        <div className="h-1.5 w-full bg-gradient-to-r from-blue-600 via-cyan-500 to-indigo-600"></div>
+        <div className="h-1.5 w-full bg-gradient-to-r from-blue-600 via-cyan-500 to-indigo-600 shrink-0"></div>
 
         {/* Modal Header */}
-        <div className={`p-5 sm:p-6 pb-3 flex items-start justify-between gap-3 ${isDark ? 'bg-slate-950/40' : ''}`}>
+        <div className={`p-4 sm:p-6 pb-2.5 sm:pb-3 flex items-start justify-between gap-3 shrink-0 ${isDark ? 'bg-slate-950/40' : ''}`}>
           <div className="flex items-center space-x-3">
             <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shadow-sm shrink-0 border ${
               isDark ? 'bg-blue-950 text-cyan-400 border-blue-800' : 'bg-blue-50 text-blue-600 border-blue-200'
@@ -44,11 +44,11 @@ export default function WelcomeModal({ isOpen, onClose, theme = 'light' }) {
           </button>
         </div>
 
-        {/* Modal Body */}
-        <div className={`px-5 sm:px-6 py-2 space-y-3 text-xs sm:text-sm ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
+        {/* Modal Body (Scrollable with finger swipe on mobile) */}
+        <div className={`flex-1 overflow-y-auto px-4 sm:px-6 py-2 sm:py-3 space-y-3 text-xs sm:text-sm ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
           
           {/* Formal Student Group Purpose Statement */}
-          <div className={`p-4 rounded-2xl border shadow-xs space-y-2 ${
+          <div className={`p-3.5 sm:p-4 rounded-2xl border shadow-xs space-y-2 ${
             isDark ? 'bg-slate-855/80 border-slate-700' : 'bg-slate-50 border-slate-200'
           }`}>
             <div className="flex items-center gap-2">
@@ -68,7 +68,7 @@ export default function WelcomeModal({ isOpen, onClose, theme = 'light' }) {
           </div>
 
           {/* Data Reference & Disclaimers */}
-          <div className={`space-y-2 p-4 rounded-2xl border ${
+          <div className={`space-y-2 p-3.5 sm:p-4 rounded-2xl border ${
             isDark ? 'bg-slate-855/80 border-slate-700' : 'bg-slate-50 border-slate-200'
           }`}>
             <h4 className={`text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 ${
@@ -104,16 +104,16 @@ export default function WelcomeModal({ isOpen, onClose, theme = 'light' }) {
 
         </div>
 
-        {/* Modal Footer */}
-        <div className={`p-4 sm:p-5 border-t flex items-center justify-between gap-3 ${
-          isDark ? 'border-slate-800 bg-slate-950/60' : 'border-slate-200 bg-slate-50'
+        {/* Modal Footer (Pinned at bottom, ALWAYS accessible on any mobile device) */}
+        <div className={`p-3.5 sm:p-5 border-t flex items-center justify-between gap-3 shrink-0 ${
+          isDark ? 'border-slate-800 bg-slate-950/80' : 'border-slate-200 bg-slate-50'
         }`}>
           <span className={`text-[11px] hidden sm:inline ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
             PrakanGuard • จัดทำโดยกลุ่มนักเรียน
           </span>
           <button
             onClick={onClose}
-            className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs sm:text-sm transition-all cursor-pointer shadow-md shadow-blue-600/30 hover:scale-102 active:scale-98"
+            className="w-full sm:w-auto px-6 py-2.5 sm:py-3 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs sm:text-sm transition-all cursor-pointer shadow-lg shadow-blue-600/30 hover:scale-102 active:scale-98 text-center flex items-center justify-center"
           >
             เข้าสู่ระบบสารสนเทศ
           </button>

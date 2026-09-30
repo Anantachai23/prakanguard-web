@@ -83,6 +83,7 @@ export default function App() {
   // Search keyword state
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const [isTopPanelCollapsed, setIsTopPanelCollapsed] = useState(false);
 
   // District Filter Smooth Drag & Cinematic Scroll Controllers (60fps fluid interpolation)
   const districtScrollRef = useRef(null);
@@ -651,6 +652,7 @@ export default function App() {
             onMapLocationPicked={handleMapLocationPicked}
             flyToLocation={flyToLocation}
             theme={theme}
+            isTopPanelCollapsed={isTopPanelCollapsed}
           />
         </div>
 
@@ -702,8 +704,27 @@ export default function App() {
           </div>
         )}
 
+        {/* Toggle Button to RE-OPEN the collapsed panel (Appears docked at top-left when collapsed) */}
+        {isTopPanelCollapsed && (
+          <button
+            onClick={() => setIsTopPanelCollapsed(false)}
+            className={`absolute top-2.5 sm:top-3 left-2.5 sm:left-4 z-20 pointer-events-auto px-3 sm:px-3.5 py-2 rounded-2xl shadow-xl border flex items-center gap-2 text-xs sm:text-sm font-bold backdrop-blur-xl transition-all hover:scale-105 active:scale-95 cursor-pointer ${
+              isDark 
+                ? 'bg-slate-900/95 text-slate-100 border-slate-700 hover:border-blue-500' 
+                : 'bg-white/95 text-slate-800 border-slate-200 hover:border-blue-500'
+            }`}
+            title="คลิกเพื่อเปิดแถบเมนูค้นหาและจุดเสี่ยง"
+          >
+            <Search className="w-4 h-4 text-blue-500" />
+            <span>ค้นหา / ตัวกรอง</span>
+            <ChevronRight className="w-4 h-4 text-slate-400" />
+          </button>
+        )}
+
         {/* FLOATING TOP BAR: SEARCH, TICKER & DISTRICT PILLS */}
-        <div className="absolute top-2.5 sm:top-3 left-2.5 sm:left-4 right-2.5 sm:right-auto z-20 flex flex-col gap-2 max-w-xl pointer-events-none transition-all duration-200">
+        <div className={`absolute top-2.5 sm:top-3 left-2.5 sm:left-4 right-2.5 sm:right-auto z-20 flex flex-col gap-2 max-w-xl pointer-events-none transition-all duration-300 ease-in-out ${
+          isTopPanelCollapsed ? '-translate-x-[120%] opacity-0 pointer-events-none' : 'translate-x-0 opacity-100'
+        }`}>
           
           {/* Quick Search Bar (Clean & Focused, Share Removed) */}
           <div className="pointer-events-auto flex items-center gap-1.5">
@@ -796,6 +817,20 @@ export default function App() {
                 </div>
               )}
             </div>
+
+            {/* Collapse Side Button */}
+            <button
+              onClick={() => setIsTopPanelCollapsed(true)}
+              className={`px-2 sm:px-2.5 py-2 rounded-2xl border shadow-md flex items-center gap-1 transition-all cursor-pointer backdrop-blur-md shrink-0 ${
+                isDark 
+                  ? 'bg-slate-900/95 hover:bg-slate-800 text-slate-300 hover:text-white border-slate-700 hover:border-slate-500' 
+                  : 'bg-white/95 hover:bg-slate-50 text-slate-600 hover:text-slate-900 border-slate-300 hover:border-slate-400'
+              }`}
+              title="พับเก็บแถบเมนูไปด้านข้าง"
+            >
+              <ChevronLeft className="w-4 h-4" />
+              <span className="text-[11px] font-bold hidden xs:inline sm:inline">พับเก็บ</span>
+            </button>
           </div>
 
           {/* MOBILE STREAMLINED TELEMETRY & ADVISORY (Shown on mobile < sm to maximize map visibility) */}
