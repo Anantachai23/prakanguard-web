@@ -1,0 +1,604 @@
+import React, { useState, useRef, useEffect } from 'react';
+import { 
+  X, 
+  Camera, 
+  MapPin, 
+  Navigation, 
+  Upload, 
+  CheckCircle2, 
+  AlertTriangle, 
+  Image as ImageIcon,
+  Compass,
+  ArrowRight,
+  ShieldCheck,
+  LocateFixed
+} from 'lucide-react';
+import { DISTRICTS } from '../data/samutPrakanPoints';
+
+// Standard 5 Body-Landmark Water Levels
+export const BODY_WATER_LEVELS = [
+  {
+    id: 'ankle',
+    label: 'เท้าตาตุ่ม',
+    range: '10 – 15 ซม.',
+    depthApprox: 12,
+    severity: 1,
+    emoji: '🦶',
+    badgeClass: 'bg-emerald-50 text-emerald-800 border-emerald-300',
+    darkBadgeClass: 'bg-emerald-950/80 text-emerald-300 border-emerald-800',
+    desc: 'น้ำท่วมเสมอตาตุ่ม ผิวจราจรเปียกขัง',
+    traffic: 'รถทุกประเภทสัญจรได้ตามปกติ ชะลอความเร็วเมื่อเข้าใกล้จุดขัง',
+    guidance: 'ระมัดระวังการลื่นไถล ชะลอความเร็วเพื่อไม่ให้น้ำกระเซ็น'
+  },
+  {
+    id: 'knee',
+    label: 'ขาเข่า',
+    range: '25 – 35 ซม.',
+    depthApprox: 30,
+    severity: 2,
+    emoji: '🦵',
+    badgeClass: 'bg-amber-50 text-amber-800 border-amber-300',
+    darkBadgeClass: 'bg-amber-950/80 text-amber-300 border-amber-800',
+    desc: 'น้ำท่วมครึ่งแข้งถึงระดับหัวเข่า ท่วมเสมอขอบทางเท้า',
+    traffic: '⚠️ รถเก๋ง/อีโคคาร์เสี่ยงสูง ควรเลี่ยงเส้นทาง ห้ามขับเร็ว ปิดแอร์ทันที',
+    guidance: 'รถกระบะ/SUV ผ่านได้ในช่องทางขวา ห้ามสตาร์ทรถซ้ำหากเครื่องยนต์ดับ'
+  },
+  {
+    id: 'waist',
+    label: 'ระดับเอว',
+    range: '50 – 70 ซม.',
+    depthApprox: 60,
+    severity: 3,
+    emoji: '🩳',
+    badgeClass: 'bg-rose-50 text-rose-800 border-rose-300',
+    darkBadgeClass: 'bg-rose-950/80 text-rose-300 border-rose-800',
+    desc: 'น้ำท่วมสูงเสมอเอว มิดล้อรถยนต์เก๋ง',
+    traffic: '🔴 วิกฤต! ห้ามรถเก๋งและรถเล็กทุกชนิดผ่านเด็ดขาด ท่อไอเสียและห้องโดยสารจมน้ำ',
+    guidance: 'แนะนำยกของขึ้นที่สูง ตัดกระแสไฟชั้นล่าง หลีกเลี่ยงกระแสน้ำเชี่ยว'
+  },
+  {
+    id: 'chest',
+    label: 'ระดับอก',
+    range: '100 – 120 ซม.',
+    depthApprox: 110,
+    severity: 3,
+    emoji: '👕',
+    badgeClass: 'bg-purple-50 text-purple-800 border-purple-300',
+    darkBadgeClass: 'bg-purple-950/80 text-purple-300 border-purple-800',
+    desc: 'น้ำท่วมสูงระดับหน้าอก มิดกระโปรงหน้ารถยนต์',
+    traffic: '🚫 วิกฤตสูงสุด! รถทุกชนิดห้ามผ่าน สัญจรได้เฉพาะเรือท้องแบนยกสูง',
+    guidance: 'อพยพผู้ป่วยติดเตียงและผู้สูงอายุทันที ประสานสายด่วน ปภ. 1784'
+  },
+  {
+    id: 'neck',
+    label: 'ระดับคอ',
+    range: '> 140 ซม.',
+    depthApprox: 150,
+    severity: 3,
+    emoji: '🧣',
+    badgeClass: 'bg-red-100 text-red-900 border-red-400 font-extrabold',
+    darkBadgeClass: 'bg-red-950 text-red-200 border-red-700 font-extrabold',
+    desc: 'ระดับน้ำท่วมถึงคอ ท่วมมิดหลังคารถยนต์และชั้นหนึ่งของอาคาร',
+    traffic: '🚨 ภัยพิบัติฉุกเฉินระดับร้ายแรง ห้ามลงเล่นน้ำหรือเดินลุยน้ำเด็ดขาด',
+    guidance: 'ติดต่อหน่วยกู้ภัยร่วมกตัญญู 02-751-0951 หรือ ปภ. 1784 เพื่อเข้าช่วยเหลือด่วน'
+  }
+];
+
+export default function CitizenReportModal({ 
+  isOpen, 
+  onClose, 
+  onSubmitReport,
+  onStartPickOnMap,
+  pickedCoords,
+  onFlyToCoords,
+  theme = 'light' 
+}) {
+  const isDark = theme === 'dark';
+
+  // Form States
+  const [selectedLevel, setSelectedLevel] = useState('knee');
+  const [locationName, setLocationName] = useState('');
+  const [subdistrict, setSubdistrict] = useState('');
+  const [district, setDistrict] = useState('เมืองสมุทรปราการ');
+  const [lat, setLat] = useState('13.5991');
+  const [lng, setLng] = useState('100.6012');
+  const [notes, setNotes] = useState('');
+  const [photoPreview, setPhotoPreview] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLocatingGps, setIsLocatingGps] = useState(false);
+  const [gpsError, setGpsError] = useState(null);
+
+  const fileInputRef = useRef(null);
+
+  // Sync picked coordinates from map
+  useEffect(() => {
+    if (pickedCoords && pickedCoords.lat && pickedCoords.lng) {
+      setLat(pickedCoords.lat.toFixed(5));
+      setLng(pickedCoords.lng.toFixed(5));
+    }
+  }, [pickedCoords]);
+
+  if (!isOpen) return null;
+
+  // Handle Photo Selection & Compression via Canvas
+  const handlePhotoSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new window.Image();
+      img.onload = () => {
+        // Compress to reasonable resolution for localStorage efficiency
+        const maxDim = 800;
+        let w = img.width;
+        let h = img.height;
+        if (w > maxDim || h > maxDim) {
+          if (w > h) {
+            h = Math.round((h * maxDim) / w);
+            w = maxDim;
+          } else {
+            w = Math.round((w * maxDim) / h);
+            h = maxDim;
+          }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+        const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.75);
+        setPhotoPreview(compressedDataUrl);
+      };
+      img.src = event.target.result;
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // Get GPS Location
+  const handleGetGps = () => {
+    if (!navigator.geolocation) {
+      setGpsError("เบราว์เซอร์ไม่รองรับ GPS");
+      return;
+    }
+    setIsLocatingGps(true);
+    setGpsError(null);
+
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const cLat = pos.coords.latitude.toFixed(5);
+        const cLng = pos.coords.longitude.toFixed(5);
+        setLat(cLat);
+        setLng(cLng);
+        setIsLocatingGps(false);
+        if (onFlyToCoords) {
+          onFlyToCoords(parseFloat(cLat), parseFloat(cLng));
+        }
+      },
+      (err) => {
+        setIsLocatingGps(false);
+        setGpsError("ไม่สามารถดึงพิกัด GPS ได้ กรุณาอนุญาตตำแหน่งบนเบราว์เซอร์");
+      },
+      { enableHighAccuracy: true, timeout: 12000 }
+    );
+  };
+
+  // Fly Map to typed coordinates
+  const handleFlyToTypedCoords = () => {
+    const pLat = parseFloat(lat);
+    const pLng = parseFloat(lng);
+    if (!isNaN(pLat) && !isNaN(pLng) && pLat >= 13 && pLat <= 14 && pLng >= 100 && pLng <= 101) {
+      if (onFlyToCoords) {
+        onFlyToCoords(pLat, pLng);
+      }
+    } else {
+      alert("กรุณากรอกพิกัดละติจูดและลองจิจูดให้ถูกต้อง (เช่น 13.5991, 100.6012)");
+    }
+  };
+
+  // Handle Form Submission
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!locationName.trim()) {
+      alert("กรุณาระบุชื่อถนนหรือจุดสังเกตบริเวณน้ำท่วม");
+      return;
+    }
+
+    const pLat = parseFloat(lat);
+    const pLng = parseFloat(lng);
+    if (isNaN(pLat) || isNaN(pLng)) {
+      alert("กรุณาระบุพิกัดให้ถูกต้อง");
+      return;
+    }
+
+    setIsSubmitting(true);
+    const levelMeta = BODY_WATER_LEVELS.find(l => l.id === selectedLevel) || BODY_WATER_LEVELS[1];
+
+    const newReport = {
+      id: 'citizen-' + Date.now(),
+      isCitizenReport: true,
+      name: locationName.trim(),
+      subdistrict: subdistrict.trim() || 'แจ้งโดยประชาชน',
+      district: district,
+      lat: pLat,
+      lng: pLng,
+      bodyLevel: selectedLevel,
+      bodyLevelLabel: levelMeta.label,
+      depthCm: levelMeta.depthApprox,
+      depthRange: levelMeta.range,
+      level: levelMeta.severity,
+      statusLabel: `ระดับ${levelMeta.label}`,
+      trafficStatus: levelMeta.traffic,
+      cause: notes.trim() || 'น้ำท่วมขังรายงานโดยประชาชนในพื้นที่',
+      officialGuidance: levelMeta.guidance,
+      source: 'รายงานจากประชาชน (Crowdsource)',
+      phone: '1784',
+      photoUrl: photoPreview,
+      isApproved: false,
+      isResolved: false,
+      reportedAt: new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) + ' น.',
+      timestamp: Date.now()
+    };
+
+    onSubmitReport(newReport);
+    setIsSubmitting(false);
+    alert("✅ ส่งข้อมูลรายงานน้ำท่วมเรียบร้อยแล้ว!\n\nระบบได้ส่งข้อมูลไปยังผู้ดูแลระบบ (Admin) เพื่อตรวจสอบความถูกต้องและความน่าเชื่อถือ และจะแสดงบนแผนที่ทันทีเมื่อได้รับการยืนยันครับ ขอบคุณที่ร่วมรายงานเพื่อประโยชน์ของส่วนรวมครับ");
+    onClose();
+  };
+
+  const selectedMeta = BODY_WATER_LEVELS.find(l => l.id === selectedLevel) || BODY_WATER_LEVELS[1];
+
+  return (
+    <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 smooth-backdrop">
+      <div className={`w-full max-w-xl border rounded-3xl shadow-2xl flex flex-col max-h-[92vh] overflow-hidden smooth-pop transition-colors ${
+        isDark ? 'bg-slate-900 border-slate-700 text-slate-100' : 'bg-white border-slate-200 text-slate-800'
+      }`}>
+        
+        {/* Top Accent Gradient */}
+        <div className="h-1.5 w-full bg-gradient-to-r from-violet-600 via-indigo-500 to-cyan-500"></div>
+
+        {/* Modal Header */}
+        <div className={`px-5 py-3.5 border-b flex items-center justify-between ${
+          isDark ? 'bg-slate-950/80 border-slate-800' : 'bg-slate-50 border-slate-200'
+        }`}>
+          <div className="flex items-center space-x-2.5">
+            <div className="w-9 h-9 rounded-2xl bg-gradient-to-tr from-violet-600 to-indigo-500 text-white flex items-center justify-center shadow-md shrink-0">
+              <Camera className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className={`text-sm sm:text-base font-bold flex items-center gap-2 ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                <span>รายงานสถานการณ์น้ำท่วม (ภาคประชาชน)</span>
+              </h3>
+              <p className={`text-[11px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                ร่วมแจ้งเตือนภัยเพื่อความปลอดภัยในการสัญจรของชาวสมุทรปราการ
+              </p>
+            </div>
+          </div>
+          <button 
+            onClick={onClose} 
+            className={`p-1.5 rounded-xl transition-all cursor-pointer ${
+              isDark ? 'bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white' : 'bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800'
+            }`}
+            title="ปิดหน้าต่าง"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Form Body */}
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4 text-xs sm:text-sm">
+          
+          {/* 1. SELECT WATER LEVEL (BODY LANDMARKS) */}
+          <div>
+            <label className={`block text-xs font-bold uppercase tracking-wider mb-2 flex items-center justify-between ${
+              isDark ? 'text-slate-200' : 'text-slate-800'
+            }`}>
+              <span>1. เลือกระดับความสูงน้ำท่วม (เทียบร่างกาย) *</span>
+              <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full border ${
+                isDark ? selectedMeta.darkBadgeClass : selectedMeta.badgeClass
+              }`}>
+                {selectedMeta.emoji} {selectedMeta.label} ({selectedMeta.range})
+              </span>
+            </label>
+
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+              {BODY_WATER_LEVELS.map(level => {
+                const isSelected = selectedLevel === level.id;
+                return (
+                  <button
+                    key={level.id}
+                    type="button"
+                    onClick={() => setSelectedLevel(level.id)}
+                    className={`p-2.5 rounded-2xl border text-center transition-all cursor-pointer flex flex-col items-center justify-between gap-1 shadow-xs ${
+                      isSelected
+                        ? (isDark 
+                            ? 'bg-violet-950/80 border-violet-500 text-white ring-2 ring-violet-500/50' 
+                            : 'bg-violet-50 border-violet-500 text-violet-900 ring-2 ring-violet-200')
+                        : (isDark 
+                            ? 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-750' 
+                            : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50')
+                    }`}
+                  >
+                    <span className="text-xl sm:text-2xl">{level.emoji}</span>
+                    <span className="font-bold text-xs truncate">{level.label}</span>
+                    <span className={`text-[10px] px-1.5 py-0.2 rounded font-mono ${
+                      isDark ? 'text-slate-400 bg-slate-900' : 'text-slate-500 bg-slate-100'
+                    }`}>
+                      {level.range}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Level guidance callout */}
+            <div className={`mt-2 p-2.5 rounded-xl border text-xs leading-snug flex items-start gap-2 ${
+              isDark ? 'bg-slate-800/80 border-slate-700 text-slate-300' : 'bg-slate-50 border-slate-200 text-slate-700'
+            }`}>
+              <AlertTriangle className={`w-4 h-4 shrink-0 mt-0.5 ${
+                selectedMeta.severity === 3 ? 'text-rose-500' : selectedMeta.severity === 2 ? 'text-amber-500' : 'text-emerald-500'
+              }`} />
+              <div>
+                <strong className={isDark ? 'text-white' : 'text-slate-900'}>{selectedMeta.desc}</strong>
+                <p className="mt-0.5 text-[11px] text-slate-500">{selectedMeta.traffic}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* 2. PHOTO UPLOAD (OPTIONAL) */}
+          <div>
+            <label className={`block text-xs font-bold uppercase tracking-wider mb-1.5 flex items-center justify-between ${
+              isDark ? 'text-slate-200' : 'text-slate-800'
+            }`}>
+              <span>2. แนบรูปถ่ายสถานการณ์จริง (ไม่บังคับ)</span>
+              <span className={`text-[10px] font-normal ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                รองรับกล้องมือถือ / ไฟล์ภาพ
+              </span>
+            </label>
+
+            <input 
+              type="file" 
+              ref={fileInputRef} 
+              onChange={handlePhotoSelect} 
+              accept="image/*" 
+              className="hidden" 
+            />
+
+            {photoPreview ? (
+              <div className="relative rounded-2xl overflow-hidden border border-slate-300 shadow-md max-h-48 group">
+                <img 
+                  src={photoPreview} 
+                  alt="ตัวอย่างรูปถ่ายน้ำท่วม" 
+                  className="w-full h-44 object-cover" 
+                />
+                <div className="absolute inset-0 bg-slate-950/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="px-3 py-1.5 rounded-xl bg-white text-slate-800 font-semibold text-xs shadow-md cursor-pointer hover:bg-slate-100"
+                  >
+                    เปลี่ยนรูป
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPhotoPreview(null)}
+                    className="px-3 py-1.5 rounded-xl bg-rose-600 text-white font-semibold text-xs shadow-md cursor-pointer hover:bg-rose-500"
+                  >
+                    ลบรูป
+                  </button>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setPhotoPreview(null)}
+                  className="absolute top-2 right-2 p-1.5 rounded-full bg-slate-900/80 text-white hover:bg-rose-600 transition-colors cursor-pointer"
+                  title="ลบรูปภาพ"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            ) : (
+              <div 
+                onClick={() => fileInputRef.current?.click()}
+                className={`p-4 rounded-2xl border-2 border-dashed flex flex-col items-center justify-center gap-2 cursor-pointer transition-all ${
+                  isDark 
+                    ? 'border-slate-700 hover:border-violet-400 bg-slate-850/50 hover:bg-slate-800' 
+                    : 'border-slate-300 hover:border-violet-500 bg-slate-50 hover:bg-violet-50/30'
+                }`}
+              >
+                <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shadow-xs ${
+                  isDark ? 'bg-slate-800 text-violet-400' : 'bg-white text-violet-600 border border-slate-200'
+                }`}>
+                  <Upload className="w-5 h-5" />
+                </div>
+                <div className="text-center">
+                  <span className={`font-semibold text-xs ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>
+                    กดเพื่อถ่ายภาพ หรือเลือกรูปจากแกลเลอรี
+                  </span>
+                  <span className={`block text-[10px] mt-0.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                    (หากไม่มีรูป สามารถข้ามขั้นตอนนี้ได้เลยครับ)
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* 3. LOCATION & COORDINATES SELECTION */}
+          <div className="space-y-3">
+            <label className={`block text-xs font-bold uppercase tracking-wider ${
+              isDark ? 'text-slate-200' : 'text-slate-800'
+            }`}>
+              3. ระบุสถานที่และพิกัด *
+            </label>
+
+            {/* Quick Actions Bar for Picking Location */}
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  onStartPickOnMap();
+                  onClose();
+                }}
+                className="py-2.5 px-3 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-md transition-all cursor-pointer"
+                title="ย่อหน้าต่างแล้วแตะบนแผนที่เพื่อเลือกจุด"
+              >
+                <MapPin className="w-4 h-4" />
+                <span>แตะเลือกจุดบนแผนที่</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleGetGps}
+                disabled={isLocatingGps}
+                className={`py-2.5 px-3 rounded-xl border font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-sm ${
+                  isDark 
+                    ? 'bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700' 
+                    : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200'
+                }`}
+                title="ดึงพิกัดจาก GPS เครื่องของคุณ"
+              >
+                <LocateFixed className={`w-4 h-4 ${isLocatingGps ? 'animate-spin text-violet-400' : 'text-blue-500'}`} />
+                <span>{isLocatingGps ? 'กำลังค้นหา GPS...' : 'ใช้พิกัดปัจจุบัน (GPS)'}</span>
+              </button>
+            </div>
+
+            {gpsError && (
+              <p className="text-[11px] text-rose-500 font-medium">{gpsError}</p>
+            )}
+
+            {/* Road/Location Name & District Inputs */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+              <div className="sm:col-span-2">
+                <span className={`block text-[11px] mb-1 font-medium ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+                  ชื่อถนน / ซอย / จุดสังเกต *
+                </span>
+                <input
+                  type="text"
+                  required
+                  value={locationName}
+                  onChange={(e) => setLocationName(e.target.value)}
+                  placeholder="เช่น ซอยวัดด่านสำโรง, ถนนกิ่งแก้ว หน้าปั๊ม ปตท."
+                  className={`w-full rounded-xl px-3 py-2 text-xs sm:text-sm border focus:outline-none transition-colors ${
+                    isDark 
+                      ? 'bg-slate-800 border-slate-700 text-slate-100 placeholder-slate-500 focus:border-violet-400' 
+                      : 'bg-slate-50 border-slate-300 text-slate-800 placeholder-slate-400 focus:border-violet-500 focus:bg-white'
+                  }`}
+                />
+              </div>
+
+              <div>
+                <span className={`block text-[11px] mb-1 font-medium ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+                  อำเภอ *
+                </span>
+                <select
+                  value={district}
+                  onChange={(e) => setDistrict(e.target.value)}
+                  className={`w-full rounded-xl px-3 py-2 text-xs sm:text-sm border focus:outline-none transition-colors font-medium ${
+                    isDark 
+                      ? 'bg-slate-800 border-slate-700 text-slate-100 focus:border-violet-400' 
+                      : 'bg-slate-50 border-slate-300 text-slate-800 focus:border-violet-500'
+                  }`}
+                >
+                  {DISTRICTS.filter(d => d !== "ทั้งหมด").map(d => (
+                    <option key={d} value={d}>อ.{d}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Coordinates Inputs with "Go to Coordinates" button */}
+            <div className={`p-3 rounded-2xl border ${
+              isDark ? 'bg-slate-850/80 border-slate-750' : 'bg-slate-50 border-slate-200'
+            }`}>
+              <div className="flex items-center justify-between mb-1.5">
+                <span className={`text-[11px] font-bold ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
+                  พิกัดละติจูด, ลองจิจูด (Latitude, Longitude)
+                </span>
+                <button
+                  type="button"
+                  onClick={handleFlyToTypedCoords}
+                  className="text-[10px] text-violet-500 hover:text-violet-400 font-bold flex items-center gap-1 cursor-pointer underline"
+                  title="ดูจุดนี้บนแผนที่ทันที"
+                >
+                  <Compass className="w-3.5 h-3.5" />
+                  <span>บินไปยังพิกัดจริง</span>
+                </button>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <span className={`block text-[10px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>ละติจูด (Lat)</span>
+                  <input
+                    type="text"
+                    value={lat}
+                    onChange={(e) => setLat(e.target.value)}
+                    placeholder="13.5991"
+                    className={`w-full rounded-lg px-2.5 py-1.5 text-xs font-mono border focus:outline-none ${
+                      isDark ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-white border-slate-300 text-slate-800'
+                    }`}
+                  />
+                </div>
+                <div>
+                  <span className={`block text-[10px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>ลองจิจูด (Lng)</span>
+                  <input
+                    type="text"
+                    value={lng}
+                    onChange={(e) => setLng(e.target.value)}
+                    placeholder="100.6012"
+                    className={`w-full rounded-lg px-2.5 py-1.5 text-xs font-mono border focus:outline-none ${
+                      isDark ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-white border-slate-300 text-slate-800'
+                    }`}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Additional Notes */}
+            <div>
+              <span className={`block text-[11px] mb-1 font-medium ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+                ข้อสังเกตเพิ่มเติม / คำเตือนสำหรับผู้สัญจร (ไม่บังคับ)
+              </span>
+              <textarea
+                rows={2}
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="เช่น มีรถจอดเสียเลนซ้าย, ฝาท่อเปิดอยู่, น้ำไหลเชี่ยวมากควรเลี่ยงไปทางศรีนครินทร์..."
+                className={`w-full rounded-xl px-3 py-2 text-xs border focus:outline-none transition-colors ${
+                  isDark 
+                    ? 'bg-slate-800 border-slate-700 text-slate-100 placeholder-slate-500 focus:border-violet-400' 
+                    : 'bg-slate-50 border-slate-300 text-slate-800 placeholder-slate-400 focus:border-violet-500 focus:bg-white'
+                }`}
+              ></textarea>
+            </div>
+
+          </div>
+
+          {/* Modal Footer Buttons */}
+          <div className={`pt-3 border-t flex items-center justify-between gap-3 ${
+            isDark ? 'border-slate-800' : 'border-slate-200'
+          }`}>
+            <button
+              type="button"
+              onClick={onClose}
+              className={`px-4 py-2.5 rounded-xl font-semibold text-xs transition-all cursor-pointer ${
+                isDark ? 'bg-slate-800 hover:bg-slate-700 text-slate-300' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+              }`}
+            >
+              ยกเลิก
+            </button>
+
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="px-6 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-500 disabled:opacity-50 text-white font-bold text-xs sm:text-sm transition-all cursor-pointer shadow-md shadow-violet-600/30 flex items-center gap-1.5"
+            >
+              <CheckCircle2 className="w-4 h-4" />
+              <span>ส่งรายงานสถานการณ์</span>
+            </button>
+          </div>
+
+        </form>
+
+      </div>
+    </div>
+  );
+}
