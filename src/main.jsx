@@ -22,6 +22,8 @@ class ErrorBoundary extends React.Component {
     try {
       // Clear corrupt transient states if any
       sessionStorage.clear();
+      localStorage.removeItem('prakanguard_citizen_reports');
+      localStorage.removeItem('prakanguard_points_state');
     } catch (e) {}
     window.location.reload();
   };

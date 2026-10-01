@@ -24,7 +24,9 @@ import {
   publishAdminAction,
   fetchRecentCloudReports, 
   fetchRecentCloudFeedback, 
-  subscribeToCloudEvents 
+  subscribeToCloudEvents,
+  isValidReport,
+  isValidFeedback
 } from './services/cloudSyncService';
 import { 
   Phone, 
@@ -393,13 +395,22 @@ export default function App() {
   const [isEmergencyModalOpen, setIsEmergencyModalOpen] = useState(false);
 
   // Citizen Reports State (Persisted in localStorage)
-  // Ensures only genuine citizen and admin reports exist (NO fabricated AI reports)
+  // Ensures only genuine citizen and admin reports exist with valid coordinates
   const [citizenReports, setCitizenReports] = useState(() => {
     try {
       const saved = localStorage.getItem('prakanguard_citizen_reports');
       const parsed = saved ? JSON.parse(saved) : [];
-      const cleaned = parsed.filter(r => !r.isAiGenerated && !r.id?.startsWith('ai-alert-'));
-      if (cleaned.length !== parsed.length) {
+      const cleaned = (Array.isArray(parsed) ? parsed : []).filter(r => 
+        r && 
+        r.id && 
+        !r.isAiGenerated && 
+        !r.id?.startsWith('ai-alert-') &&
+        typeof r.lat === 'number' &&
+        !isNaN(r.lat) &&
+        typeof r.lng === 'number' &&
+        !isNaN(r.lng)
+      );
+      if (cleaned.length !== (parsed ? parsed.length : 0)) {
         try {
           localStorage.setItem('prakanguard_citizen_reports', JSON.stringify(cleaned));
         } catch (e) {}
@@ -577,7 +588,7 @@ export default function App() {
       if (Array.isArray(cloudReports) && cloudReports.length > 0) {
         setCitizenReports(prev => {
           const existingIds = new Set(prev.map(r => r.id));
-          const newItems = cloudReports.filter(cr => !existingIds.has(cr.id));
+          const newItems = cloudReports.filter(cr => isValidReport(cr) && !existingIds.has(cr.id));
           if (newItems.length === 0) return prev;
           const merged = [...newItems, ...prev];
           try {
@@ -595,7 +606,7 @@ export default function App() {
           const existingStr = localStorage.getItem('prakanguard_feedback_items');
           const existing = existingStr ? JSON.parse(existingStr) : [];
           const existingIds = new Set(existing.map(f => f.id));
-          const newItems = cloudFeedback.filter(cf => !existingIds.has(cf.id));
+          const newItems = cloudFeedback.filter(cf => isValidFeedback(cf) && !existingIds.has(cf.id));
           if (newItems.length > 0) {
             localStorage.setItem('prakanguard_feedback_items', JSON.stringify([...newItems, ...existing]));
           }
@@ -606,6 +617,7 @@ export default function App() {
     // 3. Real-time Live EventSource Listener across all devices
     const unsubscribe = subscribeToCloudEvents({
       onNewReport: (incomingReport) => {
+        if (!isValidReport(incomingReport)) return;
         setCitizenReports(prev => {
           if (prev.some(r => r.id === incomingReport.id)) return prev;
           const updated = [incomingReport, ...prev];
@@ -629,6 +641,7 @@ export default function App() {
         }
       },
       onNewFeedback: (incomingFeedback) => {
+        if (!isValidFeedback(incomingFeedback)) return;
         try {
           const existingStr = localStorage.getItem('prakanguard_feedback_items');
           const existing = existingStr ? JSON.parse(existingStr) : [];

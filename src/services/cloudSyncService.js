@@ -2,21 +2,52 @@
 // รองรับการส่งรายงานน้ำท่วม/ลูกเห็บ และข้อเสนอแนะจากมือถือหรืออุปกรณ์อื่นเข้ามาที่แอดมินทันที
 // ใช้ HTTP API & Server-Sent Events (SSE) ข้ามเครือข่ายได้ 100% โดยไม่ต้องพึ่ง LocalStorage เพียงอย่างเดียว
 
-const REPORTS_TOPIC_URL = 'https://ntfy.sh/prakanguard_sync_reports_spk_2026';
-const FEEDBACK_TOPIC_URL = 'https://ntfy.sh/prakanguard_sync_feedback_spk_2026';
-const ACTIONS_TOPIC_URL = 'https://ntfy.sh/prakanguard_sync_actions_spk_2026';
+const REPORTS_TOPIC_URL = 'https://ntfy.sh/prakanguard_live_reports_v3_spk';
+const FEEDBACK_TOPIC_URL = 'https://ntfy.sh/prakanguard_live_feedback_v3_spk';
+const ACTIONS_TOPIC_URL = 'https://ntfy.sh/prakanguard_live_actions_v3_spk';
+
+/**
+ * ตรวจสอบความถูกต้องของพิกัดและข้อมูลรายงาน เพื่อป้องกันข้อผิดพลาดแผนที่
+ */
+export function isValidReport(r) {
+  return (
+    r &&
+    typeof r === 'object' &&
+    typeof r.id === 'string' &&
+    r.id.trim().length > 0 &&
+    typeof r.lat === 'number' &&
+    !isNaN(r.lat) &&
+    typeof r.lng === 'number' &&
+    !isNaN(r.lng) &&
+    r.lat >= 13.0 && r.lat <= 14.5 &&
+    r.lng >= 100.0 && r.lng <= 101.5
+  );
+}
+
+export function isValidFeedback(f) {
+  return (
+    f &&
+    typeof f === 'object' &&
+    typeof f.id === 'string' &&
+    typeof f.message === 'string' &&
+    f.message.trim().length > 0
+  );
+}
 
 /**
  * ส่งรายงานน้ำท่วมหรือลูกเห็บขึ้น Cloud
  */
 export async function publishCloudReport(report) {
   try {
+    if (!isValidReport(report)) {
+      console.warn('[CloudSync] Report missing valid coordinates, skipping publish:', report);
+      return false;
+    }
     const isHail = report.hazardType === 'hail';
     const title = isHail 
       ? `🧊 รายงานลูกเห็บตก: ${report.name || 'ไม่ระบุชื่อจุด'}`
       : `🌊 รายงานน้ำท่วมใหม่: ${report.name || 'ไม่ระบุชื่อจุด'}`;
     
-    // To ensure payload is within limits, omit massive base64 if too large or keep compressed preview
     const payload = JSON.stringify(report);
 
     const res = await fetch(REPORTS_TOPIC_URL, {
@@ -40,6 +71,7 @@ export async function publishCloudReport(report) {
  */
 export async function publishCloudFeedback(feedback) {
   try {
+    if (!isValidFeedback(feedback)) return false;
     const title = `💬 ข้อเสนอแนะใหม่ (${feedback.categoryLabel || 'ทั่วไป'}) จาก ${feedback.senderName || 'ประชาชน'}`;
     const payload = JSON.stringify(feedback);
 
@@ -97,7 +129,7 @@ export async function fetchRecentCloudReports() {
         const item = JSON.parse(line);
         if (item.event === 'message' && item.message) {
           const report = JSON.parse(item.message);
-          if (report && report.id) {
+          if (isValidReport(report)) {
             reports.push(report);
           }
         }
@@ -129,7 +161,7 @@ export async function fetchRecentCloudFeedback() {
         const item = JSON.parse(line);
         if (item.event === 'message' && item.message) {
           const feedback = JSON.parse(item.message);
-          if (feedback && feedback.id) {
+          if (isValidFeedback(feedback)) {
             feedbacks.push(feedback);
           }
         }
@@ -159,7 +191,7 @@ export function subscribeToCloudEvents({ onNewReport, onNewFeedback, onAdminActi
           const data = JSON.parse(event.data);
           if (data && data.event === 'message' && data.message) {
             const report = JSON.parse(data.message);
-            if (report && report.id) {
+            if (isValidReport(report)) {
               onNewReport(report);
             }
           }
@@ -182,7 +214,7 @@ export function subscribeToCloudEvents({ onNewReport, onNewFeedback, onAdminActi
           const data = JSON.parse(event.data);
           if (data && data.event === 'message' && data.message) {
             const feedback = JSON.parse(data.message);
-            if (feedback && feedback.id) {
+            if (isValidFeedback(feedback)) {
               onNewFeedback(feedback);
             }
           }

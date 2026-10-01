@@ -252,10 +252,13 @@ export default function MapView({
     markersRef.current = [];
 
     points.forEach(point => {
+      if (!point || typeof point.lat !== 'number' || typeof point.lng !== 'number' || isNaN(point.lat) || isNaN(point.lng)) {
+        return;
+      }
       // 100% strictly adhere to the 3-Tier standard:
-      // Level 1: 8 - 20 cm
-      // Level 2: 21 - 60 cm
-      // Level 3: > 60 cm
+      // Level 1: 5 - 20 cm
+      // Level 2: 21 - 50 cm
+      // Level 3: > 50 cm
       const effectiveLevel = (point.depthCm !== undefined && point.depthCm !== null) 
         ? getFloodLevel(point.depthCm) 
         : (point.level || 1);
@@ -347,6 +350,9 @@ export default function MapView({
     citizenMarkersRef.current = [];
 
     citizenReports.forEach(report => {
+      if (!report || typeof report.lat !== 'number' || typeof report.lng !== 'number' || isNaN(report.lat) || isNaN(report.lng)) {
+        return;
+      }
       const isHail = report.hazardType === 'hail';
       const emojiMap = {
         ankle: '🦶',
@@ -438,7 +444,7 @@ export default function MapView({
   // 6. User GPS Location Marker
   useEffect(() => {
     const map = mapInstanceRef.current;
-    if (!map || !userLocation) return;
+    if (!map || !userLocation || typeof userLocation.lat !== 'number' || typeof userLocation.lng !== 'number' || isNaN(userLocation.lat) || isNaN(userLocation.lng)) return;
 
     if (userMarkerRef.current) map.removeLayer(userMarkerRef.current);
     if (userCircleRef.current) map.removeLayer(userCircleRef.current);
@@ -475,7 +481,7 @@ export default function MapView({
   // Smooth FlyTo explicit coordinates and zoom directly to point (e.g. from Search selection)
   useEffect(() => {
     const map = mapInstanceRef.current;
-    if (!map || !flyToLocation || flyToLocation.lat == null || flyToLocation.lng == null) return;
+    if (!map || !flyToLocation || typeof flyToLocation.lat !== 'number' || typeof flyToLocation.lng !== 'number' || isNaN(flyToLocation.lat) || isNaN(flyToLocation.lng)) return;
 
     lastFlyToTimeRef.current = Date.now();
     const targetZoom = flyToLocation.zoom || 16.5;
@@ -506,7 +512,7 @@ export default function MapView({
   // Zoom to selected point if not already handled by flyToLocation
   useEffect(() => {
     const map = mapInstanceRef.current;
-    if (!map || !selectedPoint || selectedPoint.lat == null || selectedPoint.lng == null) return;
+    if (!map || !selectedPoint || typeof selectedPoint.lat !== 'number' || typeof selectedPoint.lng !== 'number' || isNaN(selectedPoint.lat) || isNaN(selectedPoint.lng)) return;
 
     // If flyToLocation is already active, skip duplicate flyTo
     if (flyToLocation && flyToLocation.ts && Date.now() - flyToLocation.ts < 3000) {
