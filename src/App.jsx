@@ -11,6 +11,7 @@ import AdminModal from './components/AdminModal';
 import FeedbackModal from './components/FeedbackModal';
 import AdminVerificationPrompt from './components/AdminVerificationPrompt';
 import PublicUpdatesModal from './components/PublicUpdatesModal';
+import RainForecast24hCard from './components/RainForecast24hCard';
 import AutoMarquee from './components/AutoMarquee';
 import ChatBot from './components/ChatBot';
 import { INITIAL_FLOOD_POINTS, DISTRICTS, matchesLocationSearch, scoreLocationSearch, POPULAR_SEARCH_SUGGESTIONS } from './data/samutPrakanPoints';
@@ -1368,132 +1369,19 @@ export default function App() {
             </button>
           </div>
 
-          {/* UNIFIED COMPACT LIVE TELEMETRY & STATUS CARD */}
+          {/* 24-HOUR RAIN FORECAST & LIVE METEOROLOGICAL TELEMETRY CARD */}
           <div className="pointer-events-auto w-full">
-            <div className={`p-2 sm:p-2.5 rounded-2xl border shadow-md backdrop-blur-xl transition-all ${
-              isDark 
-                ? 'bg-slate-900/90 border-slate-700/80 text-slate-200 shadow-slate-950/40' 
-                : 'bg-white/90 border-slate-200/90 text-slate-800 shadow-slate-300/40'
-            }`}>
-              
-              {/* MOBILE STREAMLINED 1-LINE TICKER (sm:hidden) */}
-              <div className="flex sm:hidden items-center justify-between gap-1 text-[11px]">
-                <div 
-                  onClick={() => setIsOfficialModalOpen(true)}
-                  className="flex items-center gap-1.5 min-w-0 flex-1 cursor-pointer truncate"
-                  title="คลิกดูเรดาร์ตรวจฝน TMD"
-                >
-                  <div className={`w-5 h-5 rounded-md flex items-center justify-center shrink-0 ${
-                    isDark ? 'bg-cyan-950 text-cyan-400' : 'bg-blue-50 text-blue-600'
-                  }`}>
-                    <CloudRain className="w-3 h-3" />
-                  </div>
-                  <span className="font-bold truncate text-[11px]">
-                    {weather?.temp ?? 29}°C ฝน {weather?.rainProbabilityToday ?? 50}%
-                  </span>
-                  <span className="text-slate-400 text-[10px]">•</span>
-                  <span className="text-amber-500 font-bold shrink-0 text-[10px]">
-                    เสี่ยง {weather?.peakHour && typeof weather.peakHour === 'string' ? weather.peakHour.split(' ')[0] : '16:00'}
-                  </span>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => setIsPublicUpdatesModalOpen(true)}
-                  className={`px-2 py-0.5 rounded-lg text-[10px] font-bold shrink-0 border cursor-pointer flex items-center gap-1 ${
-                    isDark ? 'bg-blue-950/80 text-cyan-300 border-blue-800' : 'bg-blue-50 text-blue-700 border-blue-200'
-                  }`}
-                  title="คลิกดูอัปเดตสถานการณ์สด"
-                >
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                  <span>{lastUpdatedTime || 'สด'}</span>
-                </button>
-              </div>
-
-              {/* DESKTOP/TABLET DUAL-ROW TELEMETRY (hidden sm:flex) */}
-              <div className="hidden sm:flex sm:flex-col sm:gap-1.5">
-                {/* Row 1: Weather & Rain Radar Telemetry */}
-                <div className="flex items-center justify-between gap-2 text-xs">
-                  <div 
-                    onClick={() => setIsOfficialModalOpen(true)}
-                    className="flex items-center gap-1.5 min-w-0 flex-1 cursor-pointer group"
-                    title="คลิกดูเรดาร์ตรวจฝนและพยากรณ์อากาศสด TMD"
-                  >
-                    <div className={`w-6 h-6 rounded-lg flex items-center justify-center shrink-0 ${
-                      isDark ? 'bg-cyan-950/90 text-cyan-400 border border-cyan-800/60' : 'bg-blue-50 text-blue-600 border border-blue-200'
-                    }`}>
-                      <CloudRain className="w-3.5 h-3.5" />
-                    </div>
-                    <div className="truncate flex items-center gap-1.5 text-[11px] sm:text-xs">
-                      <span className="font-semibold text-slate-700 dark:text-slate-200 truncate">
-                        {weather?.weatherDesc || 'มีเมฆบางส่วน'} ({weather?.temp ?? 29}°C)
-                      </span>
-                      <span className="text-slate-300 dark:text-slate-600">•</span>
-                      <span className="text-blue-600 dark:text-cyan-400 font-bold whitespace-nowrap">
-                        ฝน {weather?.rainProbabilityToday ?? 50}%
-                      </span>
-                      <span className="text-[10px] text-slate-400 hidden md:inline">
-                        (~{weather?.rainSumToday ?? 0} มม.)
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Risk Window Badge */}
-                  <div 
-                    onClick={() => setIsOfficialModalOpen(true)}
-                    className={`text-[10px] sm:text-[11px] font-bold px-2 py-0.5 rounded-lg border flex items-center gap-1 shrink-0 cursor-pointer ${
-                      isDark 
-                        ? 'bg-amber-950/70 text-amber-300 border-amber-800/80' 
-                        : 'bg-amber-50 text-amber-800 border-amber-200'
-                    }`}
-                    title="ช่วงเวลาเฝ้าระวังฝนตกหนักสูงสุด"
-                  >
-                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping"></span>
-                    <span>ช่วงเสี่ยง {weather?.peakHour && typeof weather.peakHour === 'string' ? weather.peakHour.split(' ')[0] : '16:00'}</span>
-                  </div>
-                </div>
-
-                {/* Row 2: Live Sync Telemetry & Flood Updates Trigger */}
-                <div className={`pt-1.5 border-t flex items-center justify-between gap-1.5 text-[10px] sm:text-[11px] ${
-                  isDark ? 'border-slate-800/80' : 'border-slate-100'
-                }`}>
-                  {/* 24h Telemetry Sync Button */}
-                  <button
-                    type="button"
-                    onClick={handleManualSync}
-                    disabled={telemetrySyncStatus?.isSyncing}
-                    className={`flex items-center gap-1.5 px-2 py-1 rounded-lg transition-all cursor-pointer font-medium truncate ${
-                      isDark 
-                        ? 'hover:bg-slate-800/80 text-slate-300 hover:text-cyan-300' 
-                        : 'hover:bg-slate-100 text-slate-600 hover:text-blue-600'
-                    }`}
-                    title="คลิกเพื่อซิงก์ข้อมูลเรดาร์สด TMD / กองทัพเรือ ทันที"
-                  >
-                    <span className={`w-1.5 h-1.5 rounded-full ${telemetrySyncStatus?.isSyncing ? 'bg-cyan-400 animate-ping' : 'bg-emerald-500 animate-pulse'} shrink-0`}></span>
-                    <span className="truncate">
-                      {telemetrySyncStatus?.isSyncing ? 'กำลังซิงก์...' : 'เรดาร์สด TMD'}
-                    </span>
-                    <RefreshCw className={`w-3 h-3 text-cyan-500 shrink-0 ${telemetrySyncStatus?.isSyncing ? 'animate-spin' : ''}`} />
-                  </button>
-
-                  {/* Flood Updates Modal Trigger */}
-                  <button
-                    type="button"
-                    onClick={() => setIsPublicUpdatesModalOpen(true)}
-                    className={`flex items-center gap-1 px-2.5 py-1 rounded-lg transition-all cursor-pointer font-bold shrink-0 ${
-                      isDark 
-                        ? 'bg-blue-950/70 hover:bg-blue-900/80 text-cyan-300 border border-blue-800/60' 
-                        : 'bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200'
-                    }`}
-                    title="คลิกเพื่อดูบันทึกการอัปเดตสถานการณ์น้ำท่วม"
-                  >
-                    <span>อัปเดต: {lastUpdatedTime || 'สด'}</span>
-                    <ArrowRight className="w-3 h-3" />
-                  </button>
-                </div>
-              </div>
-
-            </div>
+            <RainForecast24hCard
+              forecast={weather?.forecast24h}
+              onOpenRadar={() => setIsOfficialModalOpen(true)}
+              theme={theme}
+              collapsible={true}
+              defaultExpanded={true}
+              onManualSync={handleManualSync}
+              isSyncing={telemetrySyncStatus?.isSyncing}
+              onOpenPublicUpdates={() => setIsPublicUpdatesModalOpen(true)}
+              lastUpdatedTime={lastUpdatedTime}
+            />
           </div>
 
           {/* Nearest Spot to GPS (Appears when GPS active) */}

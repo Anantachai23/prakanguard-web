@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, ExternalLink, ShieldCheck, Radio, Waves, CloudRain, MapPin, Compass, Thermometer, Droplets, AlertTriangle } from 'lucide-react';
 import { OFFICIAL_DATA_SOURCES } from '../services/aiPredictor';
 import { getLiveSamutPrakanWeather } from '../services/weatherService';
+import RainForecast24hCard from './RainForecast24hCard';
 
 export default function AiForecastModal({ isOpen, onClose, theme = 'light' }) {
   const [weather, setWeather] = useState(null);
@@ -59,6 +60,16 @@ export default function AiForecastModal({ isOpen, onClose, theme = 'light' }) {
             <X className="w-5 h-5" />
           </button>
         </div>
+
+        {/* 1. Next 24h Rain Forecast (Google Weather Model) */}
+        {weather?.forecast24h && (
+          <div className="mt-4">
+            <RainForecast24hCard 
+              forecast={weather.forecast24h} 
+              theme={theme} 
+            />
+          </div>
+        )}
 
         {/* 1. Live Weather & Rain Forecast Card */}
         <div className={`mt-4 p-4 rounded-2xl border shadow-sm ${

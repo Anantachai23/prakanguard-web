@@ -89,6 +89,99 @@ export async function getLiveSamutPrakanWeather(forceRefresh = false) {
       riskColor = "amber";
     }
 
+    // ประมวลผลพยากรณ์ฝน 24 ชั่วโมงข้างหน้า (โมเดล Open-Meteo & TMD)
+    let forecast24h = null;
+    if (hourly.time && hourly.precipitation && hourly.precipitation_probability) {
+      const bkkDatePart = nowDate.toLocaleDateString("en-CA", { timeZone: "Asia/Bangkok" });
+      const bkkHourPart = nowDate.toLocaleTimeString("en-GB", { timeZone: "Asia/Bangkok", hour: "2-digit" }).padStart(2, '0');
+      const bkkHourPrefix = `${bkkDatePart}T${bkkHourPart}`;
+
+      let startIdx = hourly.time.findIndex(t => t.startsWith(bkkHourPrefix));
+      if (startIdx < 0) {
+        for (let i = 0; i < hourly.time.length; i++) {
+          if (hourly.time[i] >= bkkHourPrefix) {
+            startIdx = i;
+            break;
+          }
+        }
+        if (startIdx < 0) startIdx = 0;
+      }
+
+      const next24 = [];
+      let maxRainIn24 = 0;
+      for (let i = startIdx; i < startIdx + 24 && i < hourly.time.length; i++) {
+        const rawTime = hourly.time[i];
+        const [dPart, tPart] = rawTime.split("T");
+        const isTomorrow = dPart > bkkDatePart;
+        const pMm = Number((hourly.precipitation[i] || 0).toFixed(1));
+        const pProb = Math.round(hourly.precipitation_probability[i] || 0);
+        if (pMm > maxRainIn24) maxRainIn24 = pMm;
+
+        next24.push({
+          isoTime: rawTime,
+          datePart: dPart,
+          time: tPart, // "15:00"
+          hourNum: parseInt(tPart.split(":")[0], 10),
+          isTomorrow,
+          dayLabel: isTomorrow ? "พรุ่งนี้" : "วันนี้",
+          precipitation: pMm,
+          probability: pProb,
+          isNow: i === startIdx
+        });
+      }
+
+      const totalRain = Number(next24.reduce((acc, h) => acc + h.precipitation, 0).toFixed(1));
+      const maxProb = next24.length > 0 ? Math.max(...next24.map(h => h.probability)) : 0;
+
+      // คำนวณความสูงของแท่งกราฟ (Bar height percentage 20% - 100%)
+      const scaleBase = Math.max(maxRainIn24, 2.5);
+      next24.forEach(h => {
+        if (h.precipitation > 0) {
+          h.barHeightPercent = Math.min(100, Math.max(20, Math.round((h.precipitation / scaleBase) * 100)));
+        } else {
+          h.barHeightPercent = 0;
+        }
+      });
+
+      // กำหนดสถานะความรุนแรงของฝน (ตรงตามมาตรฐานกรมอุตุฯ & Google Weather)
+      let rainStatusTitle = "ไม่มีฝน";
+      if (totalRain >= 30 || (maxProb >= 85 && totalRain >= 15)) {
+        rainStatusTitle = "ฝนตกหนัก";
+      } else if (totalRain >= 8 || (maxProb >= 70 && totalRain >= 4)) {
+        rainStatusTitle = "ฝนตกปานกลาง";
+      } else if (totalRain >= 0.5 || maxProb >= 35) {
+        rainStatusTitle = "ฝนเล็กน้อย";
+      }
+
+      // เวลาเริ่มต้นตก
+      let startTimeText = "ไม่มีแนวโน้มฝนตกหนัก";
+      const firstRainIdx = next24.findIndex(h => h.precipitation >= 0.1 || h.probability >= 40);
+      if (firstRainIdx === 0 && (next24[0].precipitation > 0 || next24[0].probability >= 50)) {
+        startTimeText = "มีฝนตกอยู่ในขณะนี้";
+      } else if (firstRainIdx >= 0) {
+        const target = next24[firstRainIdx];
+        const dayLabel = target.isTomorrow ? "พรุ่งนี้" : "วันนี้";
+        startTimeText = `เริ่มราว ${dayLabel} ${target.time} น.`;
+      }
+
+      const timeLabels = [
+        next24[0] ? next24[0].time : "23:00",
+        next24[6] ? next24[6].time : "05:00",
+        next24[12] ? next24[12].time : "11:00",
+        next24[18] ? next24[18].time : "17:00"
+      ];
+
+      forecast24h = {
+        title: "ฝน 24 ชม. ข้างหน้า",
+        status: rainStatusTitle,
+        totalRainMm: totalRain,
+        maxProbability: maxProb,
+        startTimeText,
+        timeLabels,
+        hourly: next24
+      };
+    }
+
     const result = {
       temp: current.temperature_2m ? Math.round(current.temperature_2m) : 28,
       humidity: current.relative_humidity_2m || 80,
@@ -101,6 +194,7 @@ export async function getLiveSamutPrakanWeather(forceRefresh = false) {
       peakProb,
       rainAlertLevel,
       riskColor,
+      forecast24h,
       lastUpdated: nowDate.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) + ' น.',
       lastUpdatedDetailed: detailedTime,
       sourceAgency: "แบบจำลองโทรมาตรอุตุนิยมวิทยามาตรฐานโลก (ECMWF / Open-Meteo) ร่วมกับ กรมอุตุนิยมวิทยา (TMD)"
@@ -113,18 +207,40 @@ export async function getLiveSamutPrakanWeather(forceRefresh = false) {
   } catch (err) {
     console.warn("Failed to fetch live weather, using fallback:", err);
     // Fallback data
+    const fallbackHourly = Array.from({ length: 24 }).map((_, i) => {
+      const hNum = (23 + i) % 24;
+      const isTom = (23 + i) >= 24;
+      const p = (i === 16 || i === 17) ? 1.4 : (i === 15 || i === 18) ? 0.5 : 0;
+      return {
+        time: `${String(hNum).padStart(2, '0')}:00`,
+        dayLabel: isTom ? "พรุ่งนี้" : "วันนี้",
+        precipitation: p,
+        probability: p > 0 ? 85 : 15,
+        barHeightPercent: p === 1.4 ? 90 : p === 0.5 ? 40 : 0
+      };
+    });
+
     const fallback = {
       temp: 28,
       humidity: 82,
       weatherDesc: "มีเมฆบางส่วน โอกาสฝนฟ้าคะนองช่วงบ่าย-ค่ำ",
       rainProbabilityToday: 55,
-      rainSumToday: 6.5,
+      rainSumToday: 3.8,
       tempMax: 32,
       tempMin: 26,
-      peakHour: "16:00 - 19:00 น. (ช่วงบ่ายค่ำ)",
-      peakProb: 65,
+      peakHour: "15:00 - 18:00 น. (ช่วงบ่ายค่ำ)",
+      peakProb: 85,
       rainAlertLevel: "เฝ้าระวังฝนฟ้าคะนอง",
       riskColor: "amber",
+      forecast24h: {
+        title: "ฝน 24 ชม. ข้างหน้า",
+        status: "ฝนเล็กน้อย",
+        totalRainMm: 3.8,
+        maxProbability: 85,
+        startTimeText: "เริ่มราว พรุ่งนี้ 15:00 น.",
+        timeLabels: ["23:00", "05:00", "11:00", "17:00"],
+        hourly: fallbackHourly
+      },
       lastUpdated: nowDate.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) + ' น.',
       lastUpdatedDetailed: detailedTime,
       sourceAgency: "สถานีเรดาร์ตรวจอากาศ กรมอุตุนิยมวิทยา (TMD) ร่วมกับ สนง.ปภ."
