@@ -661,21 +661,21 @@ export default function MapView({
 
           <div className="flex items-center space-x-1.5">
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
-            <span className={`font-medium ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>เฝ้าระวัง (&lt;15 ซม.)</span>
+            <span className={`font-medium ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>เฝ้าระวัง (8-20 ซม.)</span>
           </div>
 
           <span className={isDark ? 'text-slate-700' : 'text-slate-300'}>•</span>
 
           <div className="flex items-center space-x-1.5">
             <span className="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
-            <span className={`font-medium ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>เสี่ยงสูง (16-35 ซม.)</span>
+            <span className={`font-medium ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>เสี่ยงสูง (21-60 ซม.)</span>
           </div>
 
           <span className={isDark ? 'text-slate-700' : 'text-slate-300'}>•</span>
 
           <div className="flex items-center space-x-1.5">
             <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse"></span>
-            <span className="text-rose-500 font-bold">วิกฤต (&gt;35 ซม.)</span>
+            <span className="text-rose-500 font-bold">วิกฤต (&gt;60 ซม.)</span>
           </div>
 
           {citizenReports.length > 0 && (

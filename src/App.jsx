@@ -14,6 +14,7 @@ import PublicUpdatesModal from './components/PublicUpdatesModal';
 import AutoMarquee from './components/AutoMarquee';
 import ChatBot from './components/ChatBot';
 import { INITIAL_FLOOD_POINTS, DISTRICTS, matchesLocationSearch, scoreLocationSearch, POPULAR_SEARCH_SUGGESTIONS } from './data/samutPrakanPoints';
+import { getFloodLevel, FLOOD_STANDARDS } from './data/floodStandards';
 import { getOfficialAdvisorySummary } from './services/aiPredictor';
 import { getLiveSamutPrakanWeather } from './services/weatherService';
 import { runOfficial24HourSync } from './services/aiSentryService';
@@ -70,12 +71,25 @@ export default function App() {
           const savedMap = new Map(parsed.map(p => [p.id, p]));
           return INITIAL_FLOOD_POINTS.map(initPoint => {
             const existing = savedMap.get(initPoint.id);
-            return existing ? { ...initPoint, ...existing, aliases: initPoint.aliases, keywords: initPoint.keywords, lat: initPoint.lat, lng: initPoint.lng } : initPoint;
+            const merged = existing ? { ...initPoint, ...existing, aliases: initPoint.aliases, keywords: initPoint.keywords, lat: initPoint.lat, lng: initPoint.lng } : initPoint;
+            const lvl = getFloodLevel(merged.depthCm);
+            return {
+              ...merged,
+              level: lvl,
+              depthRange: lvl === 3 ? '> 60 ซม.' : lvl === 2 ? '21 - 60 ซม.' : '8 - 20 ซม.'
+            };
           });
         }
       }
     } catch (e) {}
-    return INITIAL_FLOOD_POINTS;
+    return INITIAL_FLOOD_POINTS.map(p => {
+      const lvl = getFloodLevel(p.depthCm);
+      return {
+        ...p,
+        level: lvl,
+        depthRange: lvl === 3 ? '> 60 ซม.' : lvl === 2 ? '21 - 60 ซม.' : '8 - 20 ซม.'
+      };
+    });
   });
 
   const [changelog, setChangelog] = useState(() => {
@@ -812,7 +826,8 @@ export default function App() {
         lat: item.lat,
         lng: item.lng,
         statusLabel: "จุดเฝ้าระวังซ้ำซาก",
-        depthRange: "15 - 30 ซม.",
+        depthRange: "21 - 60 ซม.",
+        depthCm: 25,
         level: 2
       };
     }
@@ -1429,9 +1444,9 @@ export default function App() {
               title="กรองตามระดับความรุนแรง (เกณฑ์ ปภ.)"
             >
               <option value="all">ทุกระดับเสี่ยง</option>
-              <option value="1">🟢 ปกติ (&lt;15ซม.)</option>
-              <option value="2">🟠 เสี่ยงสูง (16-35ซม.)</option>
-              <option value="3">🔴 วิกฤต (&gt;35ซม.)</option>
+              <option value="1">🟢 ระดับ 1: ปกติ (8-20 ซม.)</option>
+              <option value="2">🟠 ระดับ 2: เสี่ยงสูง (21-60 ซม.)</option>
+              <option value="3">🔴 ระดับ 3: วิกฤต (&gt;60 ซม.)</option>
             </select>
           </div>
 
@@ -1454,11 +1469,11 @@ export default function App() {
                   title="คลิกเพื่อขยายดูเกจวัดน้ำและรายละเอียด"
                 >
                   <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md border shrink-0 ${
-                    selectedPoint.level === 3 ? (isDark ? 'bg-rose-950/80 text-rose-300 border-rose-800' : 'bg-rose-50 text-rose-700 border-rose-200') :
-                    selectedPoint.level === 2 ? (isDark ? 'bg-amber-950/80 text-amber-300 border-amber-800' : 'bg-amber-50 text-amber-700 border-amber-200') :
+                    getFloodLevel(selectedPoint.depthCm) === 3 ? (isDark ? 'bg-rose-950/80 text-rose-300 border-rose-800' : 'bg-rose-50 text-rose-700 border-rose-200') :
+                    getFloodLevel(selectedPoint.depthCm) === 2 ? (isDark ? 'bg-amber-950/80 text-amber-300 border-amber-800' : 'bg-amber-50 text-amber-700 border-amber-200') :
                     (isDark ? 'bg-emerald-950/80 text-emerald-300 border-emerald-800' : 'bg-emerald-50 text-emerald-700 border-emerald-200')
                   }`}>
-                    {selectedPoint.statusLabel}
+                    {getFloodLevel(selectedPoint.depthCm) === 3 ? "🔴 วิกฤต (>60ซม.)" : getFloodLevel(selectedPoint.depthCm) === 2 ? "🟠 เสี่ยงสูง (21-60ซม.)" : "🟢 ปกติ (8-20ซม.)"}
                   </span>
                   <span className="font-bold text-xs sm:text-sm truncate text-slate-900 dark:text-white">
                     {selectedPoint.name}
@@ -1503,11 +1518,11 @@ export default function App() {
                         อ.{selectedPoint.district}
                       </span>
                       <span className={`text-xs font-bold px-2.5 py-0.5 rounded-md border ${
-                        selectedPoint.level === 3 ? (isDark ? 'bg-rose-950/80 text-rose-300 border-rose-800' : 'bg-rose-50 text-rose-700 border-rose-200') :
-                        selectedPoint.level === 2 ? (isDark ? 'bg-amber-950/80 text-amber-300 border-amber-800' : 'bg-amber-50 text-amber-700 border-amber-200') :
+                        getFloodLevel(selectedPoint.depthCm) === 3 ? (isDark ? 'bg-rose-950/80 text-rose-300 border-rose-800' : 'bg-rose-50 text-rose-700 border-rose-200') :
+                        getFloodLevel(selectedPoint.depthCm) === 2 ? (isDark ? 'bg-amber-950/80 text-amber-300 border-amber-800' : 'bg-amber-50 text-amber-700 border-amber-200') :
                         (isDark ? 'bg-emerald-950/80 text-emerald-300 border-emerald-800' : 'bg-emerald-50 text-emerald-700 border-emerald-200')
                       }`}>
-                        {selectedPoint.statusLabel}
+                        {getFloodLevel(selectedPoint.depthCm) === 3 ? "🔴 วิกฤต (>60 ซม.)" : getFloodLevel(selectedPoint.depthCm) === 2 ? "🟠 เสี่ยงสูง (21-60 ซม.)" : "🟢 ปกติ (8-20 ซม.)"}
                       </span>
                     </div>
                     <h3 className={`text-base sm:text-lg font-bold mt-1.5 leading-snug ${isDark ? 'text-white' : 'text-slate-900'}`}>
@@ -1563,7 +1578,7 @@ export default function App() {
             <div className="mt-3.5">
               <VisualGauge 
                 depthCm={selectedPoint.depthCm} 
-                level={selectedPoint.level} 
+                level={getFloodLevel(selectedPoint.depthCm)} 
                 impactText={selectedPoint.trafficStatus}
                 theme={theme}
               />

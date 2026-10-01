@@ -15,45 +15,45 @@ import {
 } from 'lucide-react';
 import { DISTRICTS } from '../data/samutPrakanPoints';
 
-// Standard 5 Body-Landmark Water Levels
+// Standard 5 Body-Landmark Water Levels (Aligned with Official 3-Tier Criteria)
 export const BODY_WATER_LEVELS = [
   {
     id: 'ankle',
-    label: 'เท้าตาตุ่ม',
-    range: '10 – 15 ซม.',
-    depthApprox: 12,
+    label: 'ข้อเท้า/ใต้ท้องรถ',
+    range: '8 – 20 ซม.',
+    depthApprox: 15,
     severity: 1,
     emoji: '🦶',
     badgeClass: 'bg-emerald-50 text-emerald-800 border-emerald-300',
     darkBadgeClass: 'bg-emerald-950/80 text-emerald-300 border-emerald-800',
-    desc: 'น้ำท่วมเสมอตาตุ่ม ผิวจราจรเปียกขัง',
-    traffic: 'รถทุกประเภทสัญจรได้ตามปกติ ชะลอความเร็วเมื่อเข้าใกล้จุดขัง',
+    desc: 'น้ำท่วมเสมอตาตุ่มถึงใต้ท้องรถเก๋ง ผิวจราจรเปียกขัง',
+    traffic: '🟢 ระดับ 1 (8-20 ซม.): รถทุกประเภทสัญจรได้ตามปกติ ชะลอความเร็วเมื่อเข้าใกล้จุดขัง',
     guidance: 'ระมัดระวังการลื่นไถล ชะลอความเร็วเพื่อไม่ให้น้ำกระเซ็น'
   },
   {
     id: 'knee',
-    label: 'ขาเข่า',
-    range: '25 – 35 ซม.',
-    depthApprox: 30,
+    label: 'หน้าแข้งถึงหัวเข่า',
+    range: '21 – 60 ซม.',
+    depthApprox: 40,
     severity: 2,
     emoji: '🦵',
     badgeClass: 'bg-amber-50 text-amber-800 border-amber-300',
     darkBadgeClass: 'bg-amber-950/80 text-amber-300 border-amber-800',
-    desc: 'น้ำท่วมครึ่งแข้งถึงระดับหัวเข่า ท่วมเสมอขอบทางเท้า',
-    traffic: '⚠️ รถเก๋ง/อีโคคาร์เสี่ยงสูง ควรเลี่ยงเส้นทาง ห้ามขับเร็ว ปิดแอร์ทันที',
+    desc: 'น้ำท่วมครึ่งแข้งถึงหัวเข่า ท่วมแตะท้องรถถึง 2/3 ล้อรถเก๋ง',
+    traffic: '🟠 ระดับ 2 (21-60 ซม.): รถเก๋ง/อีโคคาร์เสี่ยงสูงมาก ควรเลี่ยงเส้นทาง ปิดแอร์ทันที',
     guidance: 'รถกระบะ/SUV ผ่านได้ในช่องทางขวา ห้ามสตาร์ทรถซ้ำหากเครื่องยนต์ดับ'
   },
   {
     id: 'waist',
-    label: 'ระดับเอว',
-    range: '50 – 70 ซม.',
-    depthApprox: 60,
+    label: 'ระดับเอว/มิดล้อรถ',
+    range: '> 60 ซม.',
+    depthApprox: 70,
     severity: 3,
     emoji: '🩳',
     badgeClass: 'bg-rose-50 text-rose-800 border-rose-300',
     darkBadgeClass: 'bg-rose-950/80 text-rose-300 border-rose-800',
-    desc: 'น้ำท่วมสูงเสมอเอว มิดล้อรถยนต์เก๋ง',
-    traffic: '🔴 วิกฤต! ห้ามรถเก๋งและรถเล็กทุกชนิดผ่านเด็ดขาด ท่อไอเสียและห้องโดยสารจมน้ำ',
+    desc: 'น้ำท่วมสูงเสมอเอว ท่วมมิดล้อรถเก๋ง (>60 ซม.) และเข้าห้องโดยสาร',
+    traffic: '🔴 ระดับ 3 (>60 ซม.): วิกฤต! ห้ามรถเก๋งและรถเล็กทุกชนิดผ่านเด็ดขาด ท่อไอเสียและห้องเครื่องจมน้ำ',
     guidance: 'แนะนำยกของขึ้นที่สูง ตัดกระแสไฟชั้นล่าง หลีกเลี่ยงกระแสน้ำเชี่ยว'
   },
   {
