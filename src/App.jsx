@@ -54,10 +54,36 @@ function getDistanceKm(lat1, lon1, lat2, lon2) {
 }
 
 export default function App() {
-  const [points] = useState(INITIAL_FLOOD_POINTS);
+  const [points, setPoints] = useState(() => {
+    try {
+      const saved = localStorage.getItem('prakanguard_points_state');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {}
+    return INITIAL_FLOOD_POINTS;
+  });
+
+  const [changelog, setChangelog] = useState(() => {
+    try {
+      const saved = localStorage.getItem('prakanguard_24h_changelog');
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {}
+    return [];
+  });
+
+  const pointsRef = useRef(points);
   const [selectedDistrict, setSelectedDistrict] = useState("ทั้งหมด");
   const [severityFilter, setSeverityFilter] = useState("all");
   const [selectedPoint, setSelectedPoint] = useState(null);
+
+  useEffect(() => {
+    pointsRef.current = points;
+    try {
+      localStorage.setItem('prakanguard_points_state', JSON.stringify(points));
+    } catch (e) {}
+  }, [points]);
 
   // Global Website Theme: 'light' | 'dark' (Persisted in localStorage)
   const [theme, setTheme] = useState(() => {
@@ -326,38 +352,103 @@ export default function App() {
     alertBadge: '🟢 เฝ้าระวังปกติ (24 ชม.)'
   });
 
-  // Manual Trigger to refresh official telemetry
+  const citizenReportsRef = useRef(citizenReports);
+  useEffect(() => {
+    citizenReportsRef.current = citizenReports;
+  }, [citizenReports]);
+
+  // Manual Trigger to refresh official telemetry & run 24-hr lifecycle check
   const handleManualSync = async () => {
     setTelemetrySyncStatus(prev => ({ ...prev, isSyncing: true }));
     try {
-      const { telemetryReport, weather: freshWeather } = await runOfficial24HourSync();
+      const { telemetryReport, weather: freshWeather, lifecycleResult } = await runOfficial24HourSync(
+        pointsRef.current,
+        citizenReportsRef.current
+      );
       if (freshWeather) setWeather(freshWeather);
       const nowTime = telemetryReport.syncTime;
       setLastUpdatedTime(nowTime);
+
+      if (lifecycleResult) {
+        if (lifecycleResult.updatedPoints) {
+          setPoints(lifecycleResult.updatedPoints);
+        }
+        if (lifecycleResult.updatedReports) {
+          setCitizenReports(lifecycleResult.updatedReports);
+          try {
+            localStorage.setItem('prakanguard_citizen_reports', JSON.stringify(lifecycleResult.updatedReports));
+          } catch (e) {}
+        }
+        if (lifecycleResult.notificationMessage) {
+          setLatestUpdateNotification(lifecycleResult.notificationMessage);
+        } else {
+          setLatestUpdateNotification(`📡 อัปเดตข้อมูลสภาพอากาศและเรดาร์สดจาก TMD / กองทัพเรือ สำเร็จ (${nowTime})`);
+        }
+        setTimeout(() => setLatestUpdateNotification(null), 7000);
+
+        if (lifecycleResult.changelogEntry) {
+          setChangelog(prev => {
+            const updated = [lifecycleResult.changelogEntry, ...prev.filter(x => x.id !== lifecycleResult.changelogEntry.id)].slice(0, 30);
+            try {
+              localStorage.setItem('prakanguard_24h_changelog', JSON.stringify(updated));
+            } catch (e) {}
+            return updated;
+          });
+        }
+      }
+
       setTelemetrySyncStatus({
         isActive: true,
         lastSyncTime: nowTime,
         isSyncing: false,
         alertBadge: telemetryReport.alertBadge
       });
-      setLatestUpdateNotification(`📡 อัปเดตข้อมูลสภาพอากาศและเรดาร์สดจาก TMD / กองทัพเรือ สำเร็จ (${nowTime})`);
-      setTimeout(() => setLatestUpdateNotification(null), 6000);
     } catch (e) {
       console.warn("Telemetry manual sync error:", e);
       setTelemetrySyncStatus(prev => ({ ...prev, isSyncing: false }));
     }
   };
 
-  // Run 24-Hour Telemetry Sync on Mount & Every 3 Minutes
+  // Run 24-Hour Autonomous Telemetry & Dynamic Flood Point Lifecycle Engine
+  // ตรวจสอบสภาพอากาศ จุดเสี่ยงน้ำท่วม และน้ำทะเลหนุนตลอด 24 ชั่วโมง อัตโนมัติทุก 60 วินาที
   useEffect(() => {
     let isMounted = true;
     const executeBackgroundSync = async () => {
       if (!isMounted) return;
       try {
-        const { telemetryReport, weather: freshWeather } = await runOfficial24HourSync();
+        const { telemetryReport, weather: freshWeather, lifecycleResult } = await runOfficial24HourSync(
+          pointsRef.current,
+          citizenReportsRef.current
+        );
         if (!isMounted) return;
         if (freshWeather) setWeather(freshWeather);
         setLastUpdatedTime(telemetryReport.syncTime);
+
+        if (lifecycleResult) {
+          if (lifecycleResult.updatedPoints) {
+            setPoints(lifecycleResult.updatedPoints);
+          }
+          if (lifecycleResult.updatedReports) {
+            setCitizenReports(lifecycleResult.updatedReports);
+            try {
+              localStorage.setItem('prakanguard_citizen_reports', JSON.stringify(lifecycleResult.updatedReports));
+            } catch (e) {}
+          }
+          if (lifecycleResult.notificationMessage) {
+            setLatestUpdateNotification(lifecycleResult.notificationMessage);
+            setTimeout(() => setLatestUpdateNotification(null), 9000);
+          }
+          if (lifecycleResult.changelogEntry) {
+            setChangelog(prev => {
+              const updated = [lifecycleResult.changelogEntry, ...prev.filter(x => x.id !== lifecycleResult.changelogEntry.id)].slice(0, 30);
+              try {
+                localStorage.setItem('prakanguard_24h_changelog', JSON.stringify(updated));
+              } catch (e) {}
+              return updated;
+            });
+          }
+        }
+
         setTelemetrySyncStatus({
           isActive: true,
           lastSyncTime: telemetryReport.syncTime,
@@ -370,7 +461,7 @@ export default function App() {
     };
 
     executeBackgroundSync();
-    const interval = setInterval(executeBackgroundSync, 3 * 60 * 1000);
+    const interval = setInterval(executeBackgroundSync, 60 * 1000); // Heartbeat ทุก 60 วินาที
     return () => {
       isMounted = false;
       clearInterval(interval);
@@ -384,20 +475,47 @@ export default function App() {
   });
   const [isRefreshingData, setIsRefreshingData] = useState(false);
 
-  // Public Refresh Handler (Syncs fresh live weather telemetry and reports)
+  // Public Refresh Handler (Syncs fresh live weather telemetry, evaluations, and reports)
   const handleRefreshData = async () => {
     setIsRefreshingData(true);
     try {
-      const freshWeather = await getLiveSamutPrakanWeather();
+      const { telemetryReport, weather: freshWeather, lifecycleResult } = await runOfficial24HourSync(
+        pointsRef.current,
+        citizenReportsRef.current
+      );
       if (freshWeather) setWeather(freshWeather);
+      const nowTime = telemetryReport.syncTime;
+      setLastUpdatedTime(nowTime);
+
+      if (lifecycleResult) {
+        if (lifecycleResult.updatedPoints) setPoints(lifecycleResult.updatedPoints);
+        if (lifecycleResult.updatedReports) {
+          setCitizenReports(lifecycleResult.updatedReports);
+          try {
+            localStorage.setItem('prakanguard_citizen_reports', JSON.stringify(lifecycleResult.updatedReports));
+          } catch (e) {}
+        }
+        if (lifecycleResult.notificationMessage) {
+          setLatestUpdateNotification(lifecycleResult.notificationMessage);
+        } else {
+          setLatestUpdateNotification(`🔄 ซิงก์ข้อมูลสภาพอากาศและสถานการณ์น้ำท่วมล่าสุดสำเร็จ (อัปเดตเมื่อ ${nowTime})`);
+        }
+        setTimeout(() => setLatestUpdateNotification(null), 7000);
+
+        if (lifecycleResult.changelogEntry) {
+          setChangelog(prev => {
+            const updated = [lifecycleResult.changelogEntry, ...prev.filter(x => x.id !== lifecycleResult.changelogEntry.id)].slice(0, 30);
+            try {
+              localStorage.setItem('prakanguard_24h_changelog', JSON.stringify(updated));
+            } catch (e) {}
+            return updated;
+          });
+        }
+      }
     } catch (e) {
       console.warn("Weather sync error during refresh:", e);
     }
-    const nowTime = new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) + ' น.';
-    setLastUpdatedTime(nowTime);
     setIsRefreshingData(false);
-    setLatestUpdateNotification(`🔄 ซิงก์ข้อมูลสภาพอากาศและสถานการณ์น้ำท่วมล่าสุดสำเร็จ (อัปเดตเมื่อ ${nowTime})`);
-    setTimeout(() => setLatestUpdateNotification(null), 6000);
   };
 
   // Handle Admin Direct Emergency Announcement
@@ -530,9 +648,10 @@ export default function App() {
 
   const officialAdvisory = getOfficialAdvisorySummary(points);
 
-  // Filter Official Points by district, severity, and search query
+  // Filter Official Points by district, severity, and search query (Active & Unresolved only)
   const filteredPoints = useMemo(() => {
     return points.filter(point => {
+      if (point.isActive === false || point.isResolved) return false;
       const matchDistrict = selectedDistrict === "ทั้งหมด" || point.district === selectedDistrict;
       const matchSeverity = severityFilter === "all" || point.level.toString() === severityFilter;
       const q = searchQuery.trim().toLowerCase();
@@ -571,19 +690,21 @@ export default function App() {
     let minDistance = 999999;
     let closest = null;
     points.forEach(p => {
-      const d = getDistanceKm(userLocation.lat, userLocation.lng, p.lat, p.lng);
-      if (d < minDistance) {
-        minDistance = d;
-        closest = p;
+      if (p.isActive !== false && !p.isResolved) {
+        const d = getDistanceKm(userLocation.lat, userLocation.lng, p.lat, p.lng);
+        if (d < minDistance) {
+          minDistance = d;
+          closest = p;
+        }
       }
     });
     return closest ? { point: closest, distanceKm: minDistance } : null;
   }, [userLocation, points]);
 
-  // GPS Geolocation Handler with High Accuracy
-  const handleLocateMe = () => {
+  // GPS Geolocation Handler with High Accuracy (Auto-requested on entry for mobile, iPad, and all devices)
+  const handleLocateMe = (silent = false) => {
     if (!navigator.geolocation) {
-      alert("อุปกรณ์หรือเบราว์เซอร์ของคุณไม่รองรับการระบุพิกัด GPS");
+      if (!silent) alert("อุปกรณ์หรือเบราว์เซอร์ของคุณไม่รองรับการระบุพิกัด GPS");
       return;
     }
 
@@ -595,21 +716,52 @@ export default function App() {
         };
         setUserLocation(coords);
         setLocationAccuracy(pos.coords.accuracy);
+        setFlyToLocation(coords);
+
+        const accuracyM = Math.round(pos.coords.accuracy);
+        const timeStr = new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) + ' น.';
+
+        // Find nearest active danger hotspot
+        let minDistance = 999999;
+        let closest = null;
+        pointsRef.current.forEach(p => {
+          if (p.isActive !== false && !p.isResolved) {
+            const d = getDistanceKm(coords.lat, coords.lng, p.lat, p.lng);
+            if (d < minDistance) {
+              minDistance = d;
+              closest = p;
+            }
+          }
+        });
+
+        if (closest && minDistance <= 3.0) {
+          setLatestUpdateNotification(`📍 ตำแหน่งของคุณ (±${accuracyM} ม.) ใกล้จุดเสี่ยง "${closest.name}" (${minDistance} กม.)`);
+        } else {
+          setLatestUpdateNotification(`📍 ระบุพิกัด GPS ของคุณสำเร็จ (ความแม่นยำ ±${accuracyM} ม. อัปเดต ${timeStr})`);
+        }
+        setTimeout(() => setLatestUpdateNotification(null), 7000);
 
         const isInside = coords.lat >= 13.45 && coords.lat <= 13.75 && coords.lng >= 100.45 && coords.lng <= 100.95;
-        if (!isInside) {
+        if (!isInside && !silent) {
           alert(`ตรวจพบตำแหน่งของคุณที่ [${coords.lat.toFixed(4)}, ${coords.lng.toFixed(4)}]\n\nหมายเหตุ: พิกัดของคุณอยู่นอกพื้นที่จังหวัดสมุทรปราการ แต่ระบบได้แสดงตำแหน่งของคุณบนแผนที่เรียบร้อยแล้วครับ`);
         }
       },
       (err) => {
-        let msg = "ไม่สามารถเข้าถึงตำแหน่งของคุณได้ กรุณาอนุญาต Location บนเบราว์เซอร์";
-        if (err.code === 1) msg = "คุณปฏิเสธการเข้าถึงตำแหน่ง กรุณาเปิดการอนุญาต Location ในเบราว์เซอร์";
-        else if (err.code === 2) msg = "สัญญาณ GPS ขัดข้อง ไม่สามารถระบุพิกัดได้ในขณะนี้";
-        alert(msg);
+        if (!silent) {
+          let msg = "ไม่สามารถเข้าถึงตำแหน่งของคุณได้ กรุณาอนุญาต Location บนเบราว์เซอร์เพื่อความแม่นยำ";
+          if (err.code === 1) msg = "คุณปฏิเสธการเข้าถึงตำแหน่ง GPS กรุณาเปิดการอนุญาต Location ในการตั้งค่าเบราว์เซอร์ (Settings > Site Permissions > Location) เพื่อระบุพิกัดและเตือนจุดน้ำท่วมใกล้ตัวแม่นยำ";
+          else if (err.code === 2) msg = "สัญญาณ GPS ขัดข้อง ไม่สามารถระบุพิกัดได้ในขณะนี้";
+          alert(msg);
+        }
       },
       { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
     );
   };
+
+  // Auto-request location on website entry across all devices (Mobile, iPad, Desktop)
+  useEffect(() => {
+    handleLocateMe(true);
+  }, []);
 
   return (
     <div className={`h-screen w-screen flex flex-col font-prompt selection:bg-blue-600 selection:text-white overflow-hidden transition-colors duration-200 ${
@@ -1275,7 +1427,9 @@ export default function App() {
       <PublicUpdatesModal 
         isOpen={isPublicUpdatesModalOpen}
         onClose={() => setIsPublicUpdatesModalOpen(false)}
+        points={points}
         citizenReports={citizenReports}
+        changelog={changelog}
         weather={weather}
         onSelectPoint={setSelectedPoint}
         lastUpdatedTime={lastUpdatedTime}
@@ -1309,7 +1463,14 @@ export default function App() {
 
       <WelcomeModal 
         isOpen={isWelcomeModalOpen}
-        onClose={() => setIsWelcomeModalOpen(false)}
+        onClose={() => {
+          setIsWelcomeModalOpen(false);
+          handleLocateMe(false);
+        }}
+        onEnterWithLocation={() => {
+          setIsWelcomeModalOpen(false);
+          handleLocateMe(false);
+        }}
         theme={theme}
       />
 

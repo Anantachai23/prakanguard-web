@@ -1,9 +1,17 @@
 import React from 'react';
-import { X, GraduationCap, Shield, CheckCircle2, AlertCircle, Info } from 'lucide-react';
+import { X, GraduationCap, Shield, CheckCircle2, Navigation2, Info, MapPin } from 'lucide-react';
 
-export default function WelcomeModal({ isOpen, onClose, theme = 'light' }) {
+export default function WelcomeModal({ isOpen, onClose, onEnterWithLocation, theme = 'light' }) {
   if (!isOpen) return null;
   const isDark = theme === 'dark';
+
+  const handleEnter = () => {
+    if (onEnterWithLocation) {
+      onEnterWithLocation();
+    } else if (onClose) {
+      onClose();
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 smooth-backdrop">
@@ -47,6 +55,25 @@ export default function WelcomeModal({ isOpen, onClose, theme = 'light' }) {
         {/* Modal Body (Scrollable with finger swipe on mobile) */}
         <div className={`flex-1 overflow-y-auto px-4 sm:px-6 py-2 sm:py-3 space-y-3 text-xs sm:text-sm ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
           
+          {/* GPS Auto-Prompt Highlight for Precision */}
+          <div className={`p-3.5 rounded-2xl border flex items-start gap-3 shadow-xs ${
+            isDark 
+              ? 'bg-blue-950/60 border-blue-800/80 text-cyan-200' 
+              : 'bg-blue-50/90 border-blue-200 text-blue-900'
+          }`}>
+            <div className="p-2 rounded-xl bg-blue-600 text-white shrink-0 mt-0.5 shadow-sm">
+              <Navigation2 className="w-4 h-4 animate-pulse" />
+            </div>
+            <div className="space-y-1">
+              <strong className="block text-xs sm:text-sm font-bold">
+                📍 เรียกขอตำแหน่ง GPS อัตโนมัติเพื่อความแม่นยำ
+              </strong>
+              <p className="text-[11px] sm:text-xs leading-relaxed opacity-90">
+                เมื่อเข้าสู่ระบบ อุปกรณ์ (มือถือ ไอแพด แท็บเล็ต หรือคอมพิวเตอร์) จะขออนุญาตเข้าถึงตำแหน่งของคุณ เพื่อระบุพิกัดและคำนวณระยะห่างจุดน้ำท่วมใกล้ตัวที่สุดแบบเรียลไทม์
+              </p>
+            </div>
+          </div>
+
           {/* Formal Student Group Purpose Statement */}
           <div className={`p-3.5 sm:p-4 rounded-2xl border shadow-xs space-y-2 ${
             isDark ? 'bg-slate-855/80 border-slate-700' : 'bg-slate-50 border-slate-200'
@@ -75,21 +102,21 @@ export default function WelcomeModal({ isOpen, onClose, theme = 'light' }) {
               isDark ? 'text-slate-200' : 'text-slate-800'
             }`}>
               <Shield className={`w-4 h-4 ${isDark ? 'text-cyan-400' : 'text-blue-600'}`} />
-              <span>การอ้างอิงแหล่งข้อมูลและข้อกำหนดการใช้งาน</span>
+              <span>การอ้างอิงแหล่งข้อมูลและการเฝ้าระวัง 24 ชั่วโมง</span>
             </h4>
 
             <div className={`space-y-2 text-xs leading-relaxed ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
               <div className="flex items-start gap-2">
                 <CheckCircle2 className={`w-3.5 h-3.5 shrink-0 mt-0.5 ${isDark ? 'text-cyan-400' : 'text-blue-600'}`} />
                 <span>
-                  <strong className={isDark ? 'text-white' : 'text-slate-800'}>การรวบรวมข้อมูล:</strong> ข้อมูลสถิติ พิกัดจุดเสี่ยง เกณฑ์ระดับน้ำ และพยากรณ์อากาศ เป็นการรวบรวมจากแหล่งข้อมูลเปิดและประกาศที่เป็นประโยชน์ต่อสาธารณชน เพื่อประกอบการติดตามสถานการณ์เบื้องต้น
+                  <strong className={isDark ? 'text-white' : 'text-slate-800'}>อัปเดต 24 ชั่วโมง:</strong> ระบบตรวจสภาพอากาศ เรดาร์ฝน และน้ำทะเลหนุนอัตโนมัติตลอด 24 ชม. จุดไหนน้ำระบายแห้งจะถูกนำออกจากแผนที่เสี่ยงภัยทันที
                 </span>
               </div>
 
               <div className="flex items-start gap-2">
                 <CheckCircle2 className={`w-3.5 h-3.5 shrink-0 mt-0.5 ${isDark ? 'text-cyan-400' : 'text-blue-600'}`} />
                 <span>
-                  <strong className={isDark ? 'text-white' : 'text-slate-800'}>เจตนารมณ์ในการจัดทำ:</strong> ระบบนี้จัดทำขึ้นเพื่อการศึกษาและการบริการข้อมูลเพื่อความปลอดภัยของสาธารณชน มิได้มีเจตนาพาดพิงหรือส่งผลกระทบต่อหน่วยงานหรือบุคคลใด
+                  <strong className={isDark ? 'text-white' : 'text-slate-800'}>การรวบรวมข้อมูล:</strong> ข้อมูลสถิติ พิกัดจุดเสี่ยง เกณฑ์ระดับน้ำ และพยากรณ์อากาศ เป็นการรวบรวมจากแหล่งข้อมูลเปิดและประกาศที่เป็นประโยชน์ต่อสาธารณชน เพื่อประกอบการติดตามสถานการณ์เบื้องต้น
                 </span>
               </div>
 
@@ -112,10 +139,11 @@ export default function WelcomeModal({ isOpen, onClose, theme = 'light' }) {
             PrakanGuard • จัดทำโดยกลุ่มนักเรียน
           </span>
           <button
-            onClick={onClose}
-            className="w-full sm:w-auto px-6 py-2.5 sm:py-3 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs sm:text-sm transition-all cursor-pointer shadow-lg shadow-blue-600/30 hover:scale-102 active:scale-98 text-center flex items-center justify-center"
+            onClick={handleEnter}
+            className="w-full sm:w-auto px-6 py-2.5 sm:py-3 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs sm:text-sm transition-all cursor-pointer shadow-lg shadow-blue-600/30 hover:scale-102 active:scale-98 text-center flex items-center justify-center gap-2"
           >
-            เข้าสู่ระบบสารสนเทศ
+            <Navigation2 className="w-4 h-4 fill-white" />
+            <span>เข้าสู่ระบบสารสนเทศ (เปิดพิกัด GPS)</span>
           </button>
         </div>
 

@@ -30,9 +30,9 @@ export default function Navbar({
   onToggleTheme
 }) {
   const isDark = theme === 'dark';
-  const minor = points.filter(p => p.level === 1).length;
-  const moderate = points.filter(p => p.level === 2).length;
-  const severe = points.filter(p => p.level === 3).length;
+  const minor = points.filter(p => p.level === 1 && p.isActive !== false && !p.isResolved).length;
+  const moderate = points.filter(p => p.level === 2 && p.isActive !== false && !p.isResolved).length;
+  const severe = points.filter(p => p.level === 3 && p.isActive !== false && !p.isResolved).length;
 
   // Responsive Horizontal Slider Controller for Top Navigation Bar
   const sliderRef = useRef(null);
