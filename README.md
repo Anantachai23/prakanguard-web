@@ -16,7 +16,6 @@
 * 📏 **เกณฑ์วัดระดับน้ำอิงมาตรฐาน ปภ. และเกจวัดสายตารถยนต์ (Visual Gauge):** แบ่งความรุนแรง 3 ระดับ (🟢 เฝ้าระวัง <15 ซม., 🟠 เสี่ยงสูง 16-35 ซม., 🔴 วิกฤตห้ามสัญจร >35 ซม.) แสดงภาพจำลองระดับน้ำเทียบกับสเกลรถยนต์ (รถเก๋ง, SUV, กระบะ) ให้คนขับรู้ได้ทันทีว่ารถของตนลุยน้ำได้หรือไม่
 * 📡 **ระบบซิงก์สภาพอากาศและเรดาร์ 24 ชม. จากแหล่งข้อมูลจริง:** ดึงข้อมูลสดจากกรมอุตุนิยมวิทยา (TMD) และสถานีตรวจวัดน้ำขึ้น-น้ำลง กรมอุทกศาสตร์ กองทัพเรือ (สถานีป้อมพระจุลจอมเกล้า) โดยไม่มีการสร้างข้อมูลหรือสุ่มจุดน้ำท่วมปลอม
 * 📢 **การมีส่วนร่วมของภาคประชาชน (Crowdsourced Reporting):** เปิดให้ประชาชนในพื้นที่รายงานเหตุน้ำท่วมจริง ระบุระดับน้ำเทียบกับร่างกาย (เสมอตาตุ่ม, ระดับหัวเข่า, ระดับเอว) พร้อมแนบภาพถ่ายและพิกัด GPS
-* 🛡️ **ระบบคัดกรองข้อมูลโดยผู้ดูแลระบบ (Admin Verification):** แยกหน้าจัดการแอดมินออกจากหน้าประชาชน 100% ข้อมูลที่ประชาชนรายงานต้องผ่านการอนุมัติจากแอดมินก่อนขึ้นแผนที่ เพื่อป้องกันข้อมูลเท็จและข่าวปลอม
 * 🤖 **ผู้ช่วยอัจฉริยะ PrakanGuard AI Information Desk:** แชทบอทตอบคำถามเรื่องสภาพอากาศ เส้นทางปลอดภัย และเกณฑ์มาตรฐานน้ำท่วม หน้าต่างแชทสามารถคลิกลากย้ายได้อย่างอิสระ (Freely Draggable)
 * 📱 **รองรับทุกขนาดหน้าจอและผู้สูงอายุ (Universal UI/UX):** สลับโหมดมืด/สว่างได้ ตัวหนังสือคมชัด มีนาฬิกาดิจิทัลและวันที่แบบเรียลไทม์ พร้อมปุ่มกดโทรสายด่วนฉุกเฉิน ปภ. 1784 และเบอร์ศูนย์ควบคุมแต่ละอำเภอได้ทันทีด้วยคลิกเดียว
 
@@ -34,7 +33,6 @@ Located at the mouth of the Chao Phraya River, Samut Prakan Province frequently 
 * 📏 **Visual Vehicle Depth Gauges & DDPM Standards:** Classified into 3 standardized safety levels (🟢 Minor <15 cm, 🟠 Moderate 16–35 cm, 🔴 Severe >35 cm). Dynamic visual vehicle silhouettes allow drivers of sedans, SUVs, and pickup trucks to immediately evaluate crossing safety.
 * 📡 **24/7 Verified Meteorological & Tidal Telemetry:** Real-time synchronization with official government sources, including rain radar and precipitation forecasts from the Thai Meteorological Department (TMD) and tidal surge telemetry from the Royal Thai Navy Hydrographic Department (Fort Chula Station).
 * 📢 **Crowdsourced Citizen Reporting:** Empowers commuters to submit live flood reports using intuitive human body landmarks (ankle, knee, waist), complete with GPS geo-location and photo uploads.
-* 🛡️ **Zero-Interference Admin Verification:** Rigorous administrative vetting panel strictly isolated from the public interface. All user submissions are verified before public publication to prevent misinformation.
 * 🤖 **PrakanGuard AI Assistant Desk:** A context-aware virtual inquiry desk capable of providing instant guidance on route safety, weather forecasts, and emergency protocols, housed in a freely draggable floating window.
 * 📱 **Senior-Friendly, Fully Responsive Design:** Clean, accessible typography supporting Light/Dark themes, live digital Buddhist/Gregorian clocks, and single-click emergency hotline dialing (DDPM 1784 and local district disaster centers). Optimized for mobile smartphones, iPads, tablets, and desktop workstations.
 
