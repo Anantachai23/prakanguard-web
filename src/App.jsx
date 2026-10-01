@@ -94,14 +94,14 @@ function playNotificationChime() {
 export default function App() {
   const [points, setPoints] = useState(() => {
     try {
-      const saved = localStorage.getItem('prakanguard_points_state');
+      const saved = localStorage.getItem('prakanguard_points_state_v3');
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
+        if (Array.isArray(parsed) && parsed.length === INITIAL_FLOOD_POINTS.length) {
           const savedMap = new Map(parsed.map(p => [p.id, p]));
           return INITIAL_FLOOD_POINTS.map(initPoint => {
             const existing = savedMap.get(initPoint.id);
-            const merged = existing ? { ...initPoint, ...existing, aliases: initPoint.aliases, keywords: initPoint.keywords, lat: initPoint.lat, lng: initPoint.lng } : initPoint;
+            const merged = existing ? { ...initPoint, ...existing, aliases: initPoint.aliases, keywords: initPoint.keywords, lat: initPoint.lat, lng: initPoint.lng, cause: initPoint.cause, trafficStatus: initPoint.trafficStatus } : initPoint;
             const lvl = getFloodLevel(merged.depthCm);
             return {
               ...merged,
@@ -138,7 +138,7 @@ export default function App() {
   useEffect(() => {
     pointsRef.current = points;
     try {
-      localStorage.setItem('prakanguard_points_state', JSON.stringify(points));
+      localStorage.setItem('prakanguard_points_state_v3', JSON.stringify(points));
     } catch (e) {}
   }, [points]);
 

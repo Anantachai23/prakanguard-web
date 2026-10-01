@@ -478,16 +478,18 @@ export default function VisualGauge({ depthCm = 0, level, impactText = '', theme
 
       </div>
 
-      {/* Traffic Impact Status Pill */}
-      <div className={`mt-2.5 p-2.5 rounded-xl border flex items-start gap-2.5 shadow-2xs transition-all ${
-        isDark ? 'bg-slate-900/80 border-slate-700' : 'bg-white border-slate-200'
+      {/* Traffic Impact Status Card - Clean Vertical Framing */}
+      <div className={`mt-3 p-3 sm:p-3.5 rounded-xl border flex flex-col gap-2 shadow-sm transition-all ${
+        isDark ? 'bg-slate-900/90 border-slate-700/90' : 'bg-white border-slate-200/90'
       }`}>
-        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md border shrink-0 mt-0.5 ${levelTheme.tagStyle}`}>
-          {levelTheme.tag}
-        </span>
-        <span className={`text-xs sm:text-sm leading-snug font-medium ${isDark ? 'text-slate-200' : 'text-slate-700'}`}>
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className={`text-[10px] sm:text-[11px] font-bold px-2.5 py-1 rounded-lg border inline-flex items-center gap-1.5 shadow-2xs ${levelTheme.tagStyle}`}>
+            {levelTheme.tag}
+          </span>
+        </div>
+        <p className={`text-xs sm:text-[13px] leading-relaxed font-medium break-words m-0 ${isDark ? 'text-slate-200' : 'text-slate-700'}`}>
           {impactText || standard.trafficAdvice}
-        </span>
+        </p>
       </div>
 
       {/* Official Standard Citation */}
