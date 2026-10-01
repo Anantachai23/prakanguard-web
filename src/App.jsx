@@ -112,6 +112,7 @@ export default function App() {
   // Search keyword state
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const searchInputRef = useRef(null);
   const [isTopPanelCollapsed, setIsTopPanelCollapsed] = useState(false);
 
   // District Filter Smooth Drag & Cinematic Scroll Controllers (60fps fluid interpolation)
@@ -693,30 +694,80 @@ export default function App() {
 
   const officialAdvisory = getOfficialAdvisorySummary(points);
 
-  // Filter Official Points by district, severity, and search query (Active & Unresolved only)
-  const filteredPoints = useMemo(() => {
-    return points
-      .filter(point => {
-        if (point.isActive === false || point.isResolved) return false;
-        const matchDistrict = selectedDistrict === "ทั้งหมด" || point.district === selectedDistrict;
-        const matchSeverity = severityFilter === "all" || point.level.toString() === severityFilter;
-        const matchSearch = matchesLocationSearch(point, searchQuery);
-        return matchDistrict && matchSeverity && matchSearch;
-      })
-      .sort((a, b) => scoreLocationSearch(b, searchQuery) - scoreLocationSearch(a, searchQuery));
-  }, [points, selectedDistrict, severityFilter, searchQuery]);
+  // 1. Official Points shown on Map (filtered by district & severity)
+  const mapPoints = useMemo(() => {
+    return points.filter(point => {
+      if (point.isActive === false || point.isResolved) return false;
+      const matchDistrict = selectedDistrict === "ทั้งหมด" || point.district === selectedDistrict;
+      const matchSeverity = severityFilter === "all" || point.level.toString() === severityFilter;
+      return matchDistrict && matchSeverity;
+    });
+  }, [points, selectedDistrict, severityFilter]);
 
-  // Filter Citizen Reports for Public Map View (Requires Admin Approval)
-  const filteredCitizenReports = useMemo(() => {
+  // 2. Citizen Reports shown on Map (filtered by district & severity, requires Admin Approval)
+  const mapCitizenReports = useMemo(() => {
     return citizenReports.filter(report => {
-      // Must be approved by Admin and not yet resolved to be visible on public map
       if (report.isApproved === false || report.isResolved) return false;
       const matchDistrict = selectedDistrict === "ทั้งหมด" || report.district === selectedDistrict;
       const matchSeverity = severityFilter === "all" || report.level.toString() === severityFilter;
-      const matchSearch = matchesLocationSearch(report, searchQuery);
-      return matchDistrict && matchSeverity && matchSearch;
+      return matchDistrict && matchSeverity;
     });
-  }, [citizenReports, selectedDistrict, severityFilter, searchQuery]);
+  }, [citizenReports, selectedDistrict, severityFilter]);
+
+  // 3. Search Results for Official Points (searches ALL districts and severities)
+  const searchResultsOfficial = useMemo(() => {
+    if (!searchQuery.trim()) return [];
+    return points
+      .filter(point => {
+        if (point.isActive === false || point.isResolved) return false;
+        return matchesLocationSearch(point, searchQuery);
+      })
+      .sort((a, b) => scoreLocationSearch(b, searchQuery) - scoreLocationSearch(a, searchQuery));
+  }, [points, searchQuery]);
+
+  // 4. Search Results for Citizen Reports (searches ALL districts and severities)
+  const searchResultsCitizen = useMemo(() => {
+    if (!searchQuery.trim()) return [];
+    return citizenReports
+      .filter(report => {
+        if (report.isApproved === false || report.isResolved) return false;
+        return matchesLocationSearch(report, searchQuery);
+      })
+      .sort((a, b) => scoreLocationSearch(b, searchQuery) - scoreLocationSearch(a, searchQuery));
+  }, [citizenReports, searchQuery]);
+
+  // Unified Handler: Select location & zoom smoothly into that point on the map
+  const handleSelectLocation = (location) => {
+    if (!location) {
+      setSelectedPoint(null);
+      return;
+    }
+
+    // Ensure district filter does not hide this point on the map
+    if (selectedDistrict !== "ทั้งหมด" && location.district && selectedDistrict !== location.district) {
+      setSelectedDistrict("ทั้งหมด");
+    }
+
+    // Ensure severity filter does not hide this point on the map
+    if (severityFilter !== "all" && location.level && location.level.toString() !== severityFilter) {
+      setSeverityFilter("all");
+    }
+
+    setSelectedPoint(location);
+    setFlyToLocation({
+      lat: location.lat,
+      lng: location.lng,
+      zoom: 16.5,
+      pointId: location.id,
+      ts: Date.now()
+    });
+
+    setIsSearchFocused(false);
+    setSearchQuery("");
+    if (searchInputRef.current) {
+      searchInputRef.current.blur();
+    }
+  };
 
   // Count pending unapproved reports for Admin
   const pendingReportsCount = useMemo(() => {
@@ -830,9 +881,9 @@ export default function App() {
         {/* Full Interactive Map */}
         <div className="absolute inset-0 w-full h-full z-0">
           <MapView 
-            points={filteredPoints} 
-            citizenReports={filteredCitizenReports}
-            onSelectPoint={setSelectedPoint}
+            points={mapPoints} 
+            citizenReports={mapCitizenReports}
+            onSelectPoint={handleSelectLocation}
             selectedPoint={selectedPoint}
             selectedDistrict={selectedDistrict}
             onSelectDistrict={setSelectedDistrict}
@@ -921,11 +972,27 @@ export default function App() {
           <div className="pointer-events-auto flex items-center gap-1.5">
             <div className="relative flex-1">
               <input
+                ref={searchInputRef}
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onFocus={() => setIsSearchFocused(true)}
                 onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const topMatch = searchResultsOfficial[0] || 
+                                     searchResultsCitizen[0] ||
+                                     points.find(p => matchesLocationSearch(p, searchQuery)) ||
+                                     citizenReports.find(cr => matchesLocationSearch(cr, searchQuery));
+                    if (topMatch) {
+                      handleSelectLocation(topMatch);
+                    }
+                  } else if (e.key === 'Escape') {
+                    setIsSearchFocused(false);
+                    searchInputRef.current?.blur();
+                  }
+                }}
                 placeholder="ค้นหาจุดเสี่ยงหรือชื่อเรียกติดปาก (เช่น บางฉโลง, สำโรง, ทรัพย์บุญชัย, กิ่งแก้ว, หนามแดง)..."
                 className={`w-full text-xs sm:text-sm pl-9 pr-8 py-2 rounded-2xl border shadow-md focus:outline-none transition-colors backdrop-blur-md font-medium ${
                   isDark 
@@ -936,7 +1003,11 @@ export default function App() {
               <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
               {searchQuery && (
                 <button
-                  onClick={() => setSearchQuery("")}
+                  type="button"
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    setSearchQuery("");
+                  }}
                   className={`absolute right-2.5 top-2.5 cursor-pointer ${
                     isDark ? 'text-slate-400 hover:text-slate-200' : 'text-slate-400 hover:text-slate-700'
                   }`}
@@ -960,12 +1031,14 @@ export default function App() {
                         {POPULAR_SEARCH_SUGGESTIONS.map((item, idx) => (
                           <div
                             key={idx}
-                            onMouseDown={() => {
-                              setSearchQuery(item.query);
-                              const match = points.find(p => matchesLocationSearch(p, item.query));
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              const match = points.find(p => matchesLocationSearch(p, item.query)) ||
+                                            citizenReports.find(cr => matchesLocationSearch(cr, item.query));
                               if (match) {
-                                setSelectedPoint(match);
-                                setFlyToLocation({ lat: match.lat, lng: match.lng });
+                                handleSelectLocation(match);
+                              } else {
+                                setSearchQuery(item.query);
                               }
                             }}
                             className={`p-2 rounded-xl cursor-pointer border transition-all text-left flex flex-col justify-between ${
@@ -989,7 +1062,7 @@ export default function App() {
                         ))}
                       </div>
                     </div>
-                  ) : filteredPoints.length === 0 && filteredCitizenReports.length === 0 ? (
+                  ) : searchResultsOfficial.length === 0 && searchResultsCitizen.length === 0 ? (
                     <div className="p-3 text-center">
                       <div className="text-slate-400 mb-2">ไม่พบจุดเสี่ยงที่ตรงกับ "{searchQuery}"</div>
                       <div className="text-[11px] text-slate-400 mb-2">ลองค้นหาด้วยชื่อเรียกติดปาก:</div>
@@ -997,12 +1070,15 @@ export default function App() {
                         {POPULAR_SEARCH_SUGGESTIONS.slice(0, 8).map((item, idx) => (
                           <button
                             key={idx}
-                            onMouseDown={() => {
-                              setSearchQuery(item.query);
-                              const match = points.find(p => matchesLocationSearch(p, item.query));
+                            type="button"
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              const match = points.find(p => matchesLocationSearch(p, item.query)) ||
+                                            citizenReports.find(cr => matchesLocationSearch(cr, item.query));
                               if (match) {
-                                setSelectedPoint(match);
-                                setFlyToLocation({ lat: match.lat, lng: match.lng });
+                                handleSelectLocation(match);
+                              } else {
+                                setSearchQuery(item.query);
                               }
                             }}
                             className="px-2 py-1 rounded-lg text-[10px] bg-blue-500/10 text-blue-500 hover:bg-blue-500 hover:text-white border border-blue-400/20 font-medium transition-colors cursor-pointer"
@@ -1015,13 +1091,12 @@ export default function App() {
                   ) : (
                     <div className="flex flex-col gap-1 max-h-60 overflow-y-auto">
                       {/* Official points */}
-                      {filteredPoints.map(p => (
+                      {searchResultsOfficial.map(p => (
                         <div
                           key={p.id}
-                          onMouseDown={() => {
-                            setSelectedPoint(p);
-                            setFlyToLocation({ lat: p.lat, lng: p.lng });
-                            setSearchQuery("");
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            handleSelectLocation(p);
                           }}
                           className={`p-2 rounded-xl cursor-pointer flex items-center justify-between transition-colors ${
                             isDark ? 'hover:bg-slate-800 text-slate-200' : 'hover:bg-blue-50 text-slate-800'
@@ -1044,13 +1119,12 @@ export default function App() {
                       ))}
 
                       {/* Citizen reports */}
-                      {filteredCitizenReports.map(cr => (
+                      {searchResultsCitizen.map(cr => (
                         <div
                           key={cr.id}
-                          onMouseDown={() => {
-                            setSelectedPoint(cr);
-                            setFlyToLocation({ lat: cr.lat, lng: cr.lng });
-                            setSearchQuery("");
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            handleSelectLocation(cr);
                           }}
                           className={`p-2 rounded-xl cursor-pointer flex items-center justify-between transition-colors border-t border-dashed ${
                             isDark ? 'hover:bg-violet-950/50 text-slate-200 border-slate-800' : 'hover:bg-violet-50 text-slate-800 border-slate-100'
@@ -1182,7 +1256,7 @@ export default function App() {
           {/* Nearest Spot to GPS (Appears when GPS active) */}
           {nearestPointInfo && (
             <div 
-              onClick={() => setSelectedPoint(nearestPointInfo.point)}
+              onClick={() => handleSelectLocation(nearestPointInfo.point)}
               className={`pointer-events-auto text-[11px] sm:text-xs px-3 py-1.5 rounded-2xl border shadow-xs flex items-center justify-between gap-2 cursor-pointer transition-all backdrop-blur-md ${
                 isDark 
                   ? 'bg-blue-950/70 hover:bg-blue-900/70 border-blue-800/80 text-blue-200' 
@@ -1443,7 +1517,7 @@ export default function App() {
       {/* 3. OFFICIAL PUBLIC INFORMATION DESK (CHATBOT) */}
       <ChatBot 
         points={[...points, ...citizenReports.filter(r => r.isApproved && !r.isResolved)]} 
-        onSelectPoint={setSelectedPoint}
+        onSelectPoint={handleSelectLocation}
         theme={theme}
         weather={weather}
         isPointSelected={!!selectedPoint}
@@ -1469,7 +1543,7 @@ export default function App() {
         citizenReports={citizenReports}
         changelog={changelog}
         weather={weather}
-        onSelectPoint={setSelectedPoint}
+        onSelectPoint={handleSelectLocation}
         lastUpdatedTime={lastUpdatedTime}
         lastUpdatedTimeDetailed={lastUpdatedTimeDetailed}
         onRefreshData={handleRefreshData}

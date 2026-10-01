@@ -31,6 +31,8 @@ export default function MapView({
   const districtLayersRef = useRef([]);
   const markersRef = useRef([]);
   const citizenMarkersRef = useRef([]);
+  const markersByIdRef = useRef({});
+  const lastFlyToTimeRef = useRef(0);
   const temporaryPickMarkerRef = useRef(null);
   const userMarkerRef = useRef(null);
   const userCircleRef = useRef(null);
@@ -202,10 +204,14 @@ export default function MapView({
     });
   }, [selectedDistrict, onSelectDistrict]);
 
-  // 3. Pan & Zoom Smoothly when selectedDistrict changes
+  // 3. Pan & Zoom Smoothly when selectedDistrict changes (Skip if point flyTo just occurred)
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map) return;
+
+    if (Date.now() - lastFlyToTimeRef.current < 1500) {
+      return;
+    }
 
     const meta = DISTRICT_METADATA[selectedDistrict] || DISTRICT_METADATA["ทั้งหมด"];
     if (meta && meta.center) {
@@ -311,11 +317,12 @@ export default function MapView({
       });
 
       marker.on('click', () => {
+        lastFlyToTimeRef.current = Date.now();
         onSelectPoint(point);
-        map.setView([point.lat, point.lng], 13.5, { animate: true });
       });
 
       markersRef.current.push(marker);
+      markersByIdRef.current[point.id] = marker;
     });
   }, [points, onSelectPoint]);
 
@@ -406,11 +413,12 @@ export default function MapView({
       });
 
       marker.on('click', () => {
+        lastFlyToTimeRef.current = Date.now();
         onSelectPoint(report);
-        map.setView([report.lat, report.lng], 13.5, { animate: true });
       });
 
       citizenMarkersRef.current.push(marker);
+      markersByIdRef.current[report.id] = marker;
     });
   }, [citizenReports, onSelectPoint]);
 
@@ -451,19 +459,62 @@ export default function MapView({
     map.setView([userLocation.lat, userLocation.lng], 13.5, { animate: true });
   }, [userLocation, locationAccuracy]);
 
-  // Pan to selected point
+  // Smooth FlyTo explicit coordinates and zoom directly to point (e.g. from Search selection)
   useEffect(() => {
-    if (selectedPoint && mapInstanceRef.current) {
-      mapInstanceRef.current.setView([selectedPoint.lat, selectedPoint.lng], 13.5, { animate: true });
-    }
-  }, [selectedPoint]);
+    const map = mapInstanceRef.current;
+    if (!map || !flyToLocation || flyToLocation.lat == null || flyToLocation.lng == null) return;
 
-  // Smooth FlyTo explicit coordinates (for Citizen Report coordinate navigation)
-  useEffect(() => {
-    if (flyToLocation && mapInstanceRef.current && flyToLocation.lat && flyToLocation.lng) {
-      mapInstanceRef.current.flyTo([flyToLocation.lat, flyToLocation.lng], 15, { duration: 1.2 });
+    lastFlyToTimeRef.current = Date.now();
+    const targetZoom = flyToLocation.zoom || 16.5;
+
+    map.flyTo([flyToLocation.lat, flyToLocation.lng], targetZoom, {
+      duration: 1.2,
+      easeLinearity: 0.25
+    });
+
+    const targetId = flyToLocation.pointId || selectedPoint?.id;
+    if (targetId) {
+      const openTargetPopup = () => {
+        const marker = markersByIdRef.current[targetId];
+        if (marker && map.hasLayer(marker)) {
+          marker.openPopup();
+        }
+      };
+
+      map.once('moveend', openTargetPopup);
+      setTimeout(openTargetPopup, 700);
     }
   }, [flyToLocation]);
+
+  // Zoom to selected point if not already handled by flyToLocation
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map || !selectedPoint || selectedPoint.lat == null || selectedPoint.lng == null) return;
+
+    // If flyToLocation already navigated recently, avoid duplicate camera animation
+    if (Date.now() - lastFlyToTimeRef.current < 1500) {
+      const marker = markersByIdRef.current[selectedPoint.id];
+      if (marker && map.hasLayer(marker)) {
+        setTimeout(() => marker.openPopup(), 400);
+      }
+      return;
+    }
+
+    lastFlyToTimeRef.current = Date.now();
+    map.flyTo([selectedPoint.lat, selectedPoint.lng], 16.5, {
+      duration: 1.2,
+      easeLinearity: 0.25
+    });
+
+    const openPopupOnSelected = () => {
+      const marker = markersByIdRef.current[selectedPoint.id];
+      if (marker && map.hasLayer(marker)) {
+        marker.openPopup();
+      }
+    };
+    map.once('moveend', openPopupOnSelected);
+    setTimeout(openPopupOnSelected, 700);
+  }, [selectedPoint]);
 
   const resetView = () => {
     if (mapInstanceRef.current) {
