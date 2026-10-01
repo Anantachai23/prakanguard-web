@@ -12,7 +12,7 @@ import AdminVerificationPrompt from './components/AdminVerificationPrompt';
 import PublicUpdatesModal from './components/PublicUpdatesModal';
 import AutoMarquee from './components/AutoMarquee';
 import ChatBot from './components/ChatBot';
-import { INITIAL_FLOOD_POINTS, DISTRICTS } from './data/samutPrakanPoints';
+import { INITIAL_FLOOD_POINTS, DISTRICTS, matchesLocationSearch, scoreLocationSearch, POPULAR_SEARCH_SUGGESTIONS } from './data/samutPrakanPoints';
 import { getOfficialAdvisorySummary } from './services/aiPredictor';
 import { getLiveSamutPrakanWeather } from './services/weatherService';
 import { runOfficial24HourSync } from './services/aiSentryService';
@@ -39,7 +39,8 @@ import {
   PanelLeftOpen,
   Trash2,
   Megaphone,
-  Sparkles
+  Sparkles,
+  Flame
 } from 'lucide-react';
 
 // Distance calculation helper (Haversine Formula)
@@ -694,17 +695,15 @@ export default function App() {
 
   // Filter Official Points by district, severity, and search query (Active & Unresolved only)
   const filteredPoints = useMemo(() => {
-    return points.filter(point => {
-      if (point.isActive === false || point.isResolved) return false;
-      const matchDistrict = selectedDistrict === "ทั้งหมด" || point.district === selectedDistrict;
-      const matchSeverity = severityFilter === "all" || point.level.toString() === severityFilter;
-      const q = searchQuery.trim().toLowerCase();
-      const matchSearch = !q || 
-        point.name.toLowerCase().includes(q) || 
-        point.subdistrict.toLowerCase().includes(q) ||
-        point.district.toLowerCase().includes(q);
-      return matchDistrict && matchSeverity && matchSearch;
-    });
+    return points
+      .filter(point => {
+        if (point.isActive === false || point.isResolved) return false;
+        const matchDistrict = selectedDistrict === "ทั้งหมด" || point.district === selectedDistrict;
+        const matchSeverity = severityFilter === "all" || point.level.toString() === severityFilter;
+        const matchSearch = matchesLocationSearch(point, searchQuery);
+        return matchDistrict && matchSeverity && matchSearch;
+      })
+      .sort((a, b) => scoreLocationSearch(b, searchQuery) - scoreLocationSearch(a, searchQuery));
   }, [points, selectedDistrict, severityFilter, searchQuery]);
 
   // Filter Citizen Reports for Public Map View (Requires Admin Approval)
@@ -714,11 +713,7 @@ export default function App() {
       if (report.isApproved === false || report.isResolved) return false;
       const matchDistrict = selectedDistrict === "ทั้งหมด" || report.district === selectedDistrict;
       const matchSeverity = severityFilter === "all" || report.level.toString() === severityFilter;
-      const q = searchQuery.trim().toLowerCase();
-      const matchSearch = !q || 
-        report.name.toLowerCase().includes(q) || 
-        report.subdistrict.toLowerCase().includes(q) ||
-        report.district.toLowerCase().includes(q);
+      const matchSearch = matchesLocationSearch(report, searchQuery);
       return matchDistrict && matchSeverity && matchSearch;
     });
   }, [citizenReports, selectedDistrict, severityFilter, searchQuery]);
@@ -931,7 +926,7 @@ export default function App() {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onFocus={() => setIsSearchFocused(true)}
                 onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
-                placeholder="ค้นหาจุดเสี่ยงหรือชื่อถนน (เช่น ปากน้ำ, สำโรง, บางปู, กิ่งแก้ว)..."
+                placeholder="ค้นหาจุดเสี่ยงหรือชื่อเรียกติดปาก (เช่น บางฉโลง, สำโรง, ทรัพย์บุญชัย, กิ่งแก้ว, หนามแดง)..."
                 className={`w-full text-xs sm:text-sm pl-9 pr-8 py-2 rounded-2xl border shadow-md focus:outline-none transition-colors backdrop-blur-md font-medium ${
                   isDark 
                     ? 'bg-slate-900/95 text-slate-100 border-slate-700 placeholder-slate-500 focus:border-blue-400 focus:ring-2 focus:ring-blue-900/50' 
@@ -950,21 +945,82 @@ export default function App() {
                 </button>
               )}
 
-              {/* Instant Search Suggestions Dropdown */}
-              {isSearchFocused && searchQuery.trim() && (
-                <div className={`absolute top-full left-0 right-0 mt-1 border rounded-2xl shadow-xl max-h-56 overflow-y-auto z-50 p-1 text-xs backdrop-blur-xl ${
-                  isDark ? 'bg-slate-900/95 border-slate-700 text-slate-100' : 'bg-white border-slate-200 text-slate-800'
+              {/* Instant Search Suggestions & Popular Colloquial Shortcuts Dropdown */}
+              {isSearchFocused && (
+                <div className={`absolute top-full left-0 right-0 mt-1 border rounded-2xl shadow-2xl max-h-72 overflow-y-auto z-50 p-2 text-xs backdrop-blur-xl ${
+                  isDark ? 'bg-slate-900/98 border-slate-700 text-slate-100 shadow-slate-950/80' : 'bg-white/98 border-slate-200 text-slate-800 shadow-slate-400/40'
                 }`}>
-                  {filteredPoints.length === 0 && filteredCitizenReports.length === 0 ? (
-                    <div className="p-3 text-center text-slate-400">ไม่พบจุดเสี่ยงที่ตรงกับคำค้นหา</div>
+                  {!searchQuery.trim() ? (
+                    <div>
+                      <div className={`text-[11px] font-bold mb-2 px-1 flex items-center gap-1.5 ${isDark ? 'text-amber-400' : 'text-amber-700'}`}>
+                        <Flame className="w-3.5 h-3.5 text-amber-500 animate-pulse" />
+                        <span>สถานที่ค้นหายอดนิยมที่คนเรียกติดปาก (คลิกเลือกดูได้ทันที)</span>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 max-h-56 overflow-y-auto pr-0.5">
+                        {POPULAR_SEARCH_SUGGESTIONS.map((item, idx) => (
+                          <div
+                            key={idx}
+                            onMouseDown={() => {
+                              setSearchQuery(item.query);
+                              const match = points.find(p => matchesLocationSearch(p, item.query));
+                              if (match) {
+                                setSelectedPoint(match);
+                                setFlyToLocation({ lat: match.lat, lng: match.lng });
+                              }
+                            }}
+                            className={`p-2 rounded-xl cursor-pointer border transition-all text-left flex flex-col justify-between ${
+                              isDark 
+                                ? 'bg-slate-800/80 hover:bg-blue-900/40 border-slate-700/80 hover:border-blue-500/60 text-slate-200' 
+                                : 'bg-slate-50 hover:bg-blue-50 border-slate-200/80 hover:border-blue-300 text-slate-800'
+                            }`}
+                          >
+                            <div className="flex items-center justify-between gap-1 mb-0.5">
+                              <span className="font-bold text-xs truncate">{item.label}</span>
+                              <span className={`text-[9px] px-1.5 py-0.5 rounded font-medium shrink-0 ${
+                                isDark ? 'bg-slate-700 text-slate-300' : 'bg-slate-200 text-slate-700'
+                              }`}>
+                                อ.{item.district.replace('เมืองสมุทรปราการ', 'เมือง')}
+                              </span>
+                            </div>
+                            <span className={`text-[10px] truncate ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                              {item.sub}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ) : filteredPoints.length === 0 && filteredCitizenReports.length === 0 ? (
+                    <div className="p-3 text-center">
+                      <div className="text-slate-400 mb-2">ไม่พบจุดเสี่ยงที่ตรงกับ "{searchQuery}"</div>
+                      <div className="text-[11px] text-slate-400 mb-2">ลองค้นหาด้วยชื่อเรียกติดปาก:</div>
+                      <div className="flex flex-wrap gap-1.5 justify-center">
+                        {POPULAR_SEARCH_SUGGESTIONS.slice(0, 8).map((item, idx) => (
+                          <button
+                            key={idx}
+                            onMouseDown={() => {
+                              setSearchQuery(item.query);
+                              const match = points.find(p => matchesLocationSearch(p, item.query));
+                              if (match) {
+                                setSelectedPoint(match);
+                                setFlyToLocation({ lat: match.lat, lng: match.lng });
+                              }
+                            }}
+                            className="px-2 py-1 rounded-lg text-[10px] bg-blue-500/10 text-blue-500 hover:bg-blue-500 hover:text-white border border-blue-400/20 font-medium transition-colors cursor-pointer"
+                          >
+                            {item.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                   ) : (
-                    <>
+                    <div className="flex flex-col gap-1 max-h-60 overflow-y-auto">
                       {/* Official points */}
                       {filteredPoints.map(p => (
                         <div
                           key={p.id}
                           onMouseDown={() => {
                             setSelectedPoint(p);
+                            setFlyToLocation({ lat: p.lat, lng: p.lng });
                             setSearchQuery("");
                           }}
                           className={`p-2 rounded-xl cursor-pointer flex items-center justify-between transition-colors ${
@@ -972,8 +1028,10 @@ export default function App() {
                           }`}
                         >
                           <div className="truncate pr-2">
-                            <span className={`font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>{p.name}</span>
-                            <span className={`text-[10px] block ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>อ.{p.district} • {p.depthRange}</span>
+                            <span className={`font-bold block truncate ${isDark ? 'text-white' : 'text-slate-900'}`}>{p.name}</span>
+                            <span className={`text-[10px] block truncate ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                              อ.{p.district} • {p.depthRange} {p.aliases ? `• ${p.aliases.slice(0, 3).join(', ')}` : ''}
+                            </span>
                           </div>
                           <span className={`text-[10px] px-2 py-0.5 rounded font-bold shrink-0 ${
                             p.level === 3 ? (isDark ? 'bg-rose-950/80 text-rose-300 border border-rose-800' : 'bg-rose-100 text-rose-800') :
@@ -991,6 +1049,7 @@ export default function App() {
                           key={cr.id}
                           onMouseDown={() => {
                             setSelectedPoint(cr);
+                            setFlyToLocation({ lat: cr.lat, lng: cr.lng });
                             setSearchQuery("");
                           }}
                           className={`p-2 rounded-xl cursor-pointer flex items-center justify-between transition-colors border-t border-dashed ${
@@ -1008,7 +1067,7 @@ export default function App() {
                           </span>
                         </div>
                       ))}
-                    </>
+                    </div>
                   )}
                 </div>
               )}
