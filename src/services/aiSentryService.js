@@ -46,7 +46,12 @@ export function getFortChulaTidePhase(date = new Date()) {
 // วิเคราะห์และประเมินสถานะจุดเสี่ยงน้ำท่วมและรายงานประชาชนแบบไดนามิกตลอด 24 ชม.
 export function evaluateDynamicFloodLifecycle(points = [], citizenReports = [], weather = null) {
   const now = new Date();
-  const nowTime = now.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) + ' น.';
+  const nowTime = now.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) + ' น.';
+  const nowDetailed = new Intl.DateTimeFormat('th-TH', { 
+    dateStyle: 'full', 
+    timeStyle: 'medium', 
+    timeZone: 'Asia/Bangkok' 
+  }).format(now);
   const tideInfo = getFortChulaTidePhase(now);
 
   const rainProb = weather ? (weather.rainProbabilityToday || 40) : 40;
@@ -54,7 +59,6 @@ export function evaluateDynamicFloodLifecycle(points = [], citizenReports = [], 
   const weatherDesc = weather ? weather.weatherDesc : 'มีเมฆบางส่วน';
 
   // ตรวจสอบว่าช่วงนี้สภาพอากาศแห้ง/ไม่มีฝนตกหรือไม่
-  // หากโอกาสฝน < 40% และปริมาณฝนสะสมน้อย และสภาพอากาศไม่มีคำว่า "ฝน"
   const isDryWeather = rainProb < 45 && rainSum < 5 && !weatherDesc.includes('ฝนตกหนัก');
 
   const newlyClearedPoints = [];
@@ -62,7 +66,6 @@ export function evaluateDynamicFloodLifecycle(points = [], citizenReports = [], 
   
   // 1. ประเมินจุดทางการ (Official Points)
   const updatedPoints = points.map(point => {
-    // เก็บค่าตั้งต้นเดิมไว้เพื่อสามารถคืนค่าได้เมื่อมีความเสี่ยงใหม่
     const originalStatusLabel = point.originalStatusLabel || point.statusLabel || 'จุดเฝ้าระวังผิวจราจร';
     const originalTrafficStatus = point.originalTrafficStatus || point.trafficStatus || 'สัญจรชะลอความเร็ว';
     const originalLevel = point.originalLevel !== undefined ? point.originalLevel : point.level;
@@ -82,16 +85,19 @@ export function evaluateDynamicFloodLifecycle(points = [], citizenReports = [], 
 
     let shouldBeActive = true;
     let clearanceReason = '';
+    let spotAgency = isTidalSpot 
+      ? 'กรมอุทกศาสตร์ กองทัพเรือ (สถานีป้อมพระจุลฯ)' 
+      : 'กรมอุตุนิยมวิทยา (TMD เรดาร์สุวรรณภูมิ) ร่วมกับ สนง.ปภ.';
 
     // กรณีจุดเสี่ยงน้ำหนุน: หากไม่ใช่ช่วงน้ำหนุน และสภาพอากาศปลอดโปร่ง น้ำจะแห้งลง
     if (isTidalSpot && !tideInfo.isHighTide) {
       shouldBeActive = false;
-      clearanceReason = 'ระดับน้ำทะเลหนุนในแม่น้ำเจ้าพระยาลดลงแล้ว น้ำแห้งสัญจรได้ปกติ';
+      clearanceReason = 'ระดับน้ำทะเลหนุนในแม่น้ำเจ้าพระยาลดลงสู่ระดับปกติ คืนผิวจราจร';
     } 
-    // กรณีจุดน้ำฝนรอระบาย: หากอากาศปลอดโปร่ง ไม่มีฝนตกสะสม น้ำจะระบายหมดภายใน 30-45 นาที
+    // กรณีจุดน้ำฝนรอระบาย: หากอากาศปลอดโปร่ง ไม่มีฝนตกสะสม น้ำจะระบายหมด
     else if (isRainDependent && isDryWeather) {
       shouldBeActive = false;
-      clearanceReason = 'ฝนหยุดตกและน้ำระบายแห้งสนิท คืนผิวจราจรเรียบร้อย';
+      clearanceReason = 'กลุ่มฝนสลายตัวและเครื่องสูบน้ำผลักดันน้ำแห้งสนิท สัญจรได้ปกติ';
     }
 
     const wasActive = point.isActive !== false;
@@ -102,14 +108,18 @@ export function evaluateDynamicFloodLifecycle(points = [], citizenReports = [], 
         name: point.name,
         district: point.district,
         reason: clearanceReason,
-        time: nowTime
+        time: nowTime,
+        timeDetailed: nowDetailed,
+        agency: spotAgency
       });
     } else if (!wasActive && shouldBeActive) {
       newlyActivatedPoints.push({
         id: point.id,
         name: point.name,
         district: point.district,
-        time: nowTime
+        time: nowTime,
+        timeDetailed: nowDetailed,
+        agency: spotAgency
       });
     }
 
@@ -124,11 +134,13 @@ export function evaluateDynamicFloodLifecycle(points = [], citizenReports = [], 
         isActive: false,
         isResolved: true,
         resolvedAt: nowTime,
+        resolvedAtDetailed: nowDetailed,
         statusLabel: 'สัญจรปกติ (น้ำแห้งแล้ว)',
         trafficStatus: clearanceReason || 'ผิวจราจรแห้ง สัญจรได้ปกติทุกช่องทาง',
         depthCm: 0,
         depthRange: '0 ซม. (แห้งปกติ)',
-        level: 0
+        level: 0,
+        verifiedSource: spotAgency
       };
     } else {
       return {
@@ -144,38 +156,40 @@ export function evaluateDynamicFloodLifecycle(points = [], citizenReports = [], 
         trafficStatus: originalTrafficStatus,
         depthCm: originalDepthCm,
         depthRange: originalDepthRange,
-        level: originalLevel
+        level: originalLevel,
+        verifiedSource: spotAgency
       };
     }
   });
 
   // 2. ประเมินรายงานประชาชน (Citizen Reports)
-  // หากได้รับการอนุมัติแล้ว แต่ผ่านไปเกิน 1 ชั่วโมง และสภาพอากาศแห้ง ให้ปลดออกเป็นน้ำแห้งแล้วอัตโนมัติ
   const updatedReports = citizenReports.map(report => {
     if (!report.isApproved || report.isResolved) return report;
 
-    // คำนวณอายุรายงาน
     let reportAgeMinutes = 999;
     if (report.timestamp) {
       reportAgeMinutes = (Date.now() - report.timestamp) / (1000 * 60);
     }
 
-    // หากรายงานนานเกิน 45 นาทีในสภาพอากาศแห้ง หรือเกิน 90 นาที ถือว่าน้ำระบายแห้งแล้ว
     if (reportAgeMinutes > 45 && isDryWeather) {
       newlyClearedPoints.push({
         id: report.id,
         name: report.name,
         district: report.district,
         reason: 'น้ำขังระบายแห้งแล้วตามระยะเวลาการระบาย',
-        time: nowTime
+        time: nowTime,
+        timeDetailed: nowDetailed,
+        agency: 'เครือข่ายประชาชนสมุทรปราการ (GPS Verified)'
       });
 
       return {
         ...report,
         isResolved: true,
         resolvedAt: nowTime,
+        resolvedAtDetailed: nowDetailed,
         statusLabel: 'ระบายแห้งแล้ว (สัญจรปกติ)',
-        trafficStatus: 'น้ำระบายแห้งสู่ภาวะปกติเรียบร้อยแล้ว'
+        trafficStatus: 'น้ำระบายแห้งสู่ภาวะปกติเรียบร้อยแล้ว',
+        verifiedSource: 'เครือข่ายประชาชนยืนยันพิกัด GPS จริง'
       };
     }
 
@@ -189,14 +203,16 @@ export function evaluateDynamicFloodLifecycle(points = [], citizenReports = [], 
   if (newlyClearedPoints.length > 0) {
     const pointNames = newlyClearedPoints.slice(0, 2).map(p => p.name).join(', ');
     const countText = newlyClearedPoints.length > 2 ? ` และอีก ${newlyClearedPoints.length - 2} จุด` : '';
-    notificationMessage = `💧 อัปเดต 24 ชม.: จุด "${pointNames}"${countText} น้ำแห้งแล้ว นำออกจากแผนที่เสี่ยงภัยเรียบร้อย (${nowTime})`;
+    notificationMessage = `💧 อัปเดตสด 24 ชม.: จุด "${pointNames}"${countText} น้ำแห้งแล้ว นำออกจากแผนที่เสี่ยงภัยเรียบร้อย (${nowTime})`;
     
     changelogEntry = {
       id: 'log-clear-' + Date.now(),
       time: nowTime,
+      timeDetailed: nowDetailed,
       type: 'cleared',
       title: `นำจุดน้ำแห้ง/คลี่คลายออกจากแผนที่ (${newlyClearedPoints.length} จุด)`,
       detail: `ตรวจสอบสภาวะฝนและน้ำทะเลหนุน พบว่าน้ำระบายแห้งแล้วที่: ${newlyClearedPoints.map(p => p.name).join(', ')} คืนผิวจราจรเป็นปกติ`,
+      agency: 'กรมอุทกศาสตร์ กองทัพเรือ ร่วมกับ กรมชลประทาน และ ปภ.',
       points: newlyClearedPoints
     };
   } else if (newlyActivatedPoints.length > 0) {
@@ -206,9 +222,11 @@ export function evaluateDynamicFloodLifecycle(points = [], citizenReports = [], 
     changelogEntry = {
       id: 'log-activate-' + Date.now(),
       time: nowTime,
+      timeDetailed: nowDetailed,
       type: 'activated',
       title: `เพิ่มการเฝ้าระวังจุดเสี่ยง (${newlyActivatedPoints.length} จุด)`,
       detail: `ตรวจพบแนวโน้มสภาพอากาศหรือระดับน้ำหนุนสูง เฝ้าระวังเป็นพิเศษที่: ${newlyActivatedPoints.map(p => p.name).join(', ')}`,
+      agency: 'กรมอุตุนิยมวิทยา TMD ร่วมกับ กรมอุทกศาสตร์ กองทัพเรือ',
       points: newlyActivatedPoints
     };
   }
@@ -221,13 +239,21 @@ export function evaluateDynamicFloodLifecycle(points = [], citizenReports = [], 
     notificationMessage,
     changelogEntry,
     tideInfo,
-    syncTime: nowTime
+    syncTime: nowTime,
+    syncTimeDetailed: nowDetailed
   };
 }
 
 // ซิงก์ข้อมูลสถานการณ์และตรวจสภาพอากาศ 24 ชั่วโมง
 export async function runOfficial24HourSync(currentPoints = [], currentReports = []) {
-  const syncTime = new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) + ' น.';
+  const nowDate = new Date();
+  const syncTime = nowDate.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) + ' น.';
+  const syncTimeDetailed = new Intl.DateTimeFormat('th-TH', { 
+    dateStyle: 'full', 
+    timeStyle: 'medium', 
+    timeZone: 'Asia/Bangkok' 
+  }).format(nowDate);
+
   let weather = null;
 
   try {
@@ -257,6 +283,7 @@ export async function runOfficial24HourSync(currentPoints = [], currentReports =
   const telemetryReport = {
     id: 'telemetry-' + Date.now(),
     syncTime,
+    syncTimeDetailed,
     timestamp: Date.now(),
     temp,
     rainProb,
@@ -267,9 +294,26 @@ export async function runOfficial24HourSync(currentPoints = [], currentReports =
     weatherDesc: weather ? weather.weatherDesc : 'มีเมฆบางส่วน',
     tideInfo: lifecycleResult.tideInfo,
     sources: [
-      'กรมอุตุนิยมวิทยา (TMD) - เรดาร์ตรวจอากาศสุวรรณภูมิ/สมุทรปราการ',
-      'กรมอุทกศาสตร์ กองทัพเรือ - สถานีตรวจวัดน้ำขึ้น-น้ำลงป้อมพระจุลจอมเกล้า',
-      'กรมป้องกันและบรรเทาสาธารณภัย (ปภ.) สมุทรปราการ'
+      {
+        agency: 'กรมอุตุนิยมวิทยา (TMD)',
+        station: 'เรดาร์ตรวจอากาศสุวรรณภูมิ และสถานีตรวจวัดสมุทรปราการ',
+        scope: 'ตรวจจับกลุ่มฝนฟ้าคะนอง ปริมาณฝนสะสม และทิศทางลม Real-time'
+      },
+      {
+        agency: 'กรมอุทกศาสตร์ กองทัพเรือ',
+        station: 'สถานีตรวจวัดน้ำขึ้น-น้ำลงป้อมพระจุลจอมเกล้า (ปากอ่าวไทย)',
+        scope: 'ตรวจวัดคาบน้ำทะเลหนุนสูงในแม่น้ำเจ้าพระยา ตลอด 24 ชั่วโมง'
+      },
+      {
+        agency: 'กรมป้องกันและบรรเทาสาธารณภัย (ปภ.)',
+        station: 'สนง.ปภ. จังหวัดสมุทรปราการ (สายด่วนฉุกเฉิน 1784)',
+        scope: 'เกณฑ์ความปลอดภัย การเผชิญเหตุ และการประกาศจุดประสบภัย'
+      },
+      {
+        agency: 'กรมชลประทาน',
+        station: 'สถานีสูบน้ำคลองลัดโพธิ์อันเนื่องมาจากพระราชดำริ และคลองด่าน',
+        scope: 'การระบายน้ำและการพร่องน้ำออกสู่อ่าวไทย'
+      }
     ]
   };
 

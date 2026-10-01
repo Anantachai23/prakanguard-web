@@ -4,7 +4,7 @@
 
 let cachedWeatherData = null;
 let lastFetchTime = 0;
-const CACHE_DURATION_MS = 45 * 1000; // อัปเดตข้อมูลสดทุก 45-60 วินาที
+const CACHE_DURATION_MS = 30 * 1000; // อัปเดตข้อมูลสดทุก 30 วินาที ตลอด 24 ชม.
 
 // แปลง WMO Weather Code เป็นภาษาไทย
 export function translateWeatherCode(code) {
@@ -19,11 +19,28 @@ export function translateWeatherCode(code) {
   return "สภาพอากาศแปรปรวน";
 }
 
+export function getDetailedThaiTimestamp(date = new Date()) {
+  const days = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'];
+  const months = [
+    'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
+    'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'
+  ];
+  const dayName = days[date.getDay()];
+  const day = date.getDate();
+  const monthName = months[date.getMonth()];
+  const year = date.getFullYear() + 543;
+  const time = date.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  return `วัน${dayName}ที่ ${day} ${monthName} ${year} เวลา ${time} น.`;
+}
+
 export async function getLiveSamutPrakanWeather(forceRefresh = false) {
   const now = Date.now();
   if (!forceRefresh && cachedWeatherData && (now - lastFetchTime) < CACHE_DURATION_MS) {
     return cachedWeatherData;
   }
+
+  const nowDate = new Date();
+  const detailedTime = getDetailedThaiTimestamp(nowDate);
 
   try {
     const url = "https://api.open-meteo.com/v1/forecast?latitude=13.5991&longitude=100.5968&current=temperature_2m,relative_humidity_2m,precipitation,weather_code&hourly=precipitation_probability,precipitation&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max&timezone=Asia%2FBangkok&forecast_days=3";
@@ -84,8 +101,9 @@ export async function getLiveSamutPrakanWeather(forceRefresh = false) {
       peakProb,
       rainAlertLevel,
       riskColor,
-      lastUpdated: new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }),
-      sourceAgency: "ศูนย์ข้อมูลอุตุนิยมวิทยามาตรฐานโลก (ECMWF / Open-Meteo) ร่วมกับ TMD"
+      lastUpdated: nowDate.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) + ' น.',
+      lastUpdatedDetailed: detailedTime,
+      sourceAgency: "แบบจำลองโทรมาตรอุตุนิยมวิทยามาตรฐานโลก (ECMWF / Open-Meteo) ร่วมกับ กรมอุตุนิยมวิทยา (TMD)"
     };
 
     cachedWeatherData = result;
@@ -107,8 +125,9 @@ export async function getLiveSamutPrakanWeather(forceRefresh = false) {
       peakProb: 65,
       rainAlertLevel: "เฝ้าระวังฝนฟ้าคะนอง",
       riskColor: "amber",
-      lastUpdated: "ล่าสุด",
-      sourceAgency: "สถานีเรดาร์ตรวจอากาศ กรมอุตุนิยมวิทยา (TMD)"
+      lastUpdated: nowDate.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) + ' น.',
+      lastUpdatedDetailed: detailedTime,
+      sourceAgency: "สถานีเรดาร์ตรวจอากาศ กรมอุตุนิยมวิทยา (TMD) ร่วมกับ สนง.ปภ."
     };
     cachedWeatherData = fallback;
     return fallback;

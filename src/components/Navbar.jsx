@@ -25,6 +25,7 @@ export default function Navbar({
   onOpenAdmin,
   onOpenPublicUpdates,
   lastUpdatedTime,
+  lastUpdatedTimeDetailed,
   pendingReportsCount = 0,
   theme = 'light',
   onToggleTheme
@@ -292,7 +293,7 @@ export default function Navbar({
                   ? 'bg-emerald-950/60 hover:bg-emerald-900/60 text-emerald-300 border-emerald-800' 
                   : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border-emerald-200'
               }`}
-              title="อัปเดตสถานการณ์น้ำท่วมและเส้นทางสำหรับประชาชน"
+              title={`อัปเดตสถานการณ์น้ำท่วมและเส้นทาง (อัปเดตล่าสุด: ${lastUpdatedTimeDetailed || lastUpdatedTime || 'สด 24 ชม.'} • ซิงก์อัตโนมัติทุก 35 วินาที)`}
             >
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
               <span>อัปเดตสด</span>

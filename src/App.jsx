@@ -479,17 +479,40 @@ export default function App() {
     };
 
     executeBackgroundSync();
-    const interval = setInterval(executeBackgroundSync, 60 * 1000); // Heartbeat ทุก 60 วินาที
+    const interval = setInterval(executeBackgroundSync, 35 * 1000); // Heartbeat ซิงก์ข้อมูลสดทุก 35 วินาที ตลอด 24 ชม.
+
+    // ซิงก์ทันทีเมื่อผู้ใช้สลับกลับมาที่หน้าแท็บ หรือเมื่ออินเทอร์เน็ตกลับมาเชื่อมต่อ
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        executeBackgroundSync();
+      }
+    };
+    const handleOnline = () => {
+      executeBackgroundSync();
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('online', handleOnline);
+
     return () => {
       isMounted = false;
       clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('online', handleOnline);
     };
   }, []);
 
   // Public Live Situation Updates Modal & Live Refresh States (For Citizens)
   const [isPublicUpdatesModalOpen, setIsPublicUpdatesModalOpen] = useState(false);
   const [lastUpdatedTime, setLastUpdatedTime] = useState(() => {
-    return new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) + ' น.';
+    return new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) + ' น.';
+  });
+  const [lastUpdatedTimeDetailed, setLastUpdatedTimeDetailed] = useState(() => {
+    return new Intl.DateTimeFormat('th-TH', { 
+      dateStyle: 'full', 
+      timeStyle: 'medium', 
+      timeZone: 'Asia/Bangkok' 
+    }).format(new Date());
   });
   const [isRefreshingData, setIsRefreshingData] = useState(false);
 
@@ -504,6 +527,9 @@ export default function App() {
       if (freshWeather) setWeather(freshWeather);
       const nowTime = telemetryReport.syncTime;
       setLastUpdatedTime(nowTime);
+      if (telemetryReport.syncTimeDetailed) {
+        setLastUpdatedTimeDetailed(telemetryReport.syncTimeDetailed);
+      }
 
       if (lifecycleResult) {
         if (lifecycleResult.updatedPoints) setPoints(lifecycleResult.updatedPoints);
@@ -799,6 +825,7 @@ export default function App() {
         onOpenAdmin={() => setIsAdminModalOpen(true)}
         onOpenPublicUpdates={() => setIsPublicUpdatesModalOpen(true)}
         lastUpdatedTime={lastUpdatedTime}
+        lastUpdatedTimeDetailed={lastUpdatedTimeDetailed}
         pendingReportsCount={isAdminAuthenticated ? pendingReportsCount : 0}
       />
 
@@ -1385,6 +1412,7 @@ export default function App() {
         weather={weather}
         onSelectPoint={setSelectedPoint}
         lastUpdatedTime={lastUpdatedTime}
+        lastUpdatedTimeDetailed={lastUpdatedTimeDetailed}
         onRefreshData={handleRefreshData}
         isRefreshing={isRefreshingData}
         theme={theme}
