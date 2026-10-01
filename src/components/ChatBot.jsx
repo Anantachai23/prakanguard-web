@@ -1686,16 +1686,16 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
-          className={`fixed bottom-4 right-3 sm:bottom-6 sm:right-6 z-40 px-3.5 sm:px-4 py-2.5 sm:py-3 rounded-2xl font-semibold text-xs sm:text-sm shadow-xl items-center gap-2.5 border cursor-pointer transition-all hover:scale-105 active:scale-95 backdrop-blur-xl group ${
+          className={`fixed bottom-[calc(4.75rem+env(safe-area-inset-bottom,0px))] right-3 sm:bottom-6 sm:right-6 z-40 px-3.5 sm:px-4 py-2.5 sm:py-3 rounded-2xl font-semibold text-xs sm:text-sm shadow-xl items-center gap-2.5 border cursor-pointer transition-all hover:scale-105 active:scale-95 backdrop-blur-xl group ${
             isPointSelected ? 'hidden sm:flex' : 'flex'
           } ${
             isDark 
-              ? 'bg-slate-900/95 hover:bg-slate-800 text-slate-100 border-slate-700 hover:border-blue-500' 
-              : 'bg-white hover:bg-slate-50 text-slate-800 border-slate-200 hover:border-blue-400'
+              ? 'bg-slate-900/95 hover:bg-slate-800 text-slate-100 border-slate-700 hover:border-blue-500 shadow-blue-900/30' 
+              : 'bg-white hover:bg-slate-50 text-slate-800 border-slate-200 hover:border-blue-400 shadow-blue-500/10'
           }`}
           title="ศูนย์บริการข้อมูลเส้นทางและน้ำท่วม (ถาม-ตอบอัจฉริยะ)"
         >
-          <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-600 to-cyan-500 text-white flex items-center justify-center shadow-md">
+          <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-600 to-cyan-500 text-white flex items-center justify-center shadow-md shrink-0">
             <MessageSquareText className="w-4 h-4" />
           </div>
           <div className="text-left">
@@ -1707,7 +1707,7 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
             </div>
             <span className={`hidden sm:block text-[10px] font-medium ${isDark ? 'text-cyan-400' : 'text-blue-600'}`}>ถามตอบแม่นยำ • พยากรณ์ฝนสด</span>
           </div>
-          <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse border border-white ml-1"></span>
+          <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse border border-white ml-1 shrink-0"></span>
         </button>
       )}
 
@@ -1720,7 +1720,7 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
             right: 'auto',
             bottom: 'auto'
           } : undefined}
-          className={`fixed z-50 bottom-4 right-3 sm:bottom-6 sm:right-6 max-w-[92vw] sm:w-[380px] border rounded-2xl shadow-2xl flex items-center justify-between gap-2 px-3 py-2.5 backdrop-blur-2xl transition-all duration-200 animate-in fade-in slide-in-from-bottom-2 ${
+          className={`fixed z-50 bottom-[calc(4.75rem+env(safe-area-inset-bottom,0px))] right-3 sm:bottom-6 sm:right-6 max-w-[92vw] sm:w-[380px] border rounded-2xl shadow-2xl flex items-center justify-between gap-2 px-3 py-2.5 backdrop-blur-2xl transition-all duration-200 animate-in fade-in slide-in-from-bottom-2 ${
             isDark 
               ? 'bg-slate-900/95 border-slate-700 text-slate-100 ring-1 ring-blue-500/20' 
               : 'bg-white/95 border-slate-200 text-slate-800 shadow-blue-500/10'
@@ -1808,9 +1808,9 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
             bottom: 'auto'
           } : undefined}
           className={`fixed z-50 w-[95vw] ${
-            isExpanded ? 'sm:w-[620px] h-[720px] max-h-[92vh]' : 'sm:w-[460px] h-[600px] max-h-[85vh] sm:max-h-[88vh]'
+            isExpanded ? 'sm:w-[620px] h-[720px] max-h-[92vh]' : 'sm:w-[460px] h-[560px] max-h-[calc(100dvh-8rem)] sm:h-[600px] sm:max-h-[88vh]'
           } border rounded-3xl shadow-2xl flex flex-col overflow-hidden backdrop-blur-2xl transition-[width,height,box-shadow,border-color] duration-200 ${
-            !position ? 'bottom-2.5 left-2.5 right-2.5 sm:left-auto sm:bottom-6 sm:right-6' : ''
+            !position ? 'bottom-[calc(4.5rem+env(safe-area-inset-bottom,0px))] left-2.5 right-2.5 sm:left-auto sm:bottom-6 sm:right-6' : ''
           } ${
             isDraggingModal ? 'ring-2 ring-blue-500/60 shadow-blue-500/30 cursor-grabbing' : ''
           } ${

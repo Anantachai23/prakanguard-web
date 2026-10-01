@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
   X, 
   ShieldAlert, 
@@ -29,10 +29,23 @@ import {
   Star,
   CheckCheck,
   Phone,
-  Mail
+  Mail,
+  DownloadCloud,
+  Layers,
+  Database,
+  Sliders,
+  Search,
+  ExternalLink,
+  Crosshair,
+  FileCode,
+  Check,
+  RefreshCw
 } from 'lucide-react';
 import { BODY_WATER_LEVELS } from './CitizenReportModal';
 import { DISTRICTS } from '../data/samutPrakanPoints';
+import { OFFICIAL_LOCATION_CATALOG, formatPointForTracking, parseAndValidateExternalData } from '../data/officialLocationCatalog';
+import { validateCoordinatePrecision, detectDistrictForCoordinates } from '../data/samutPrakanBoundary';
+import { getFloodLevel } from '../data/floodStandards';
 
 // Default Hardened Admin Credentials
 const DEFAULT_ADMIN_CREDENTIALS = {
@@ -45,11 +58,19 @@ export default function AdminModal({
   isOpen, 
   onClose, 
   citizenReports = [], 
+  points = [],
   onApproveReport, 
   onRejectReport, 
   onResolveReport,
   onAddAdminBroadcast,
+  onAddPoint,
+  onUpdatePoint,
+  onDeletePoint,
+  onImportPoints,
+  onResetPoints,
   onFlyToCoords,
+  onPickLocationOnMap,
+  pickedCoords,
   theme = 'light',
   onAuthChange
 }) {
@@ -79,9 +100,58 @@ export default function AdminModal({
   const [failedAttempts, setFailedAttempts] = useState(0);
   const [lockoutSeconds, setLockoutSeconds] = useState(0);
 
-  // Tabs: 'pending' | 'approved' | 'broadcast' | 'history' | 'feedback' | 'security'
+  // Tabs: 'pending' | 'approved' | 'locations' | 'broadcast' | 'history' | 'feedback' | 'security'
   const [activeTab, setActiveTab] = useState('pending');
   const [selectedPhotoModal, setSelectedPhotoModal] = useState(null);
+
+  // Location Management States
+  const [locationsSubTab, setLocationsSubTab] = useState('add'); // 'add' | 'catalog' | 'import_data' | 'list'
+  const [newLocationName, setNewLocationName] = useState('');
+  const [newLocationDistrict, setNewLocationDistrict] = useState('เมืองสมุทรปราการ');
+  const [newLocationSubdistrict, setNewLocationSubdistrict] = useState('');
+  const [newLocationLat, setNewLocationLat] = useState('');
+  const [newLocationLng, setNewLocationLng] = useState('');
+  const [newLocationDepth, setNewLocationDepth] = useState(15);
+  const [newLocationCause, setNewLocationCause] = useState('น้ำฝนสะสมรอการระบาย ร่วมกับแอ่งกระทะ');
+  const [newLocationTraffic, setNewLocationTraffic] = useState('มีน้ำท่วมขังผิวจราจร 2 เลนซ้าย ชะลอความเร็ว');
+  const [newLocationSource, setNewLocationSource] = useState('แขวงทางหลวงสมุทรปราการ & สนง.ปภ.สมุทรปราการ');
+  const [newLocationAliases, setNewLocationAliases] = useState('');
+  const [locationFormSuccess, setLocationFormSuccess] = useState('');
+  const [locationFormError, setLocationFormError] = useState('');
+
+  // Catalog Browser States
+  const [catalogDistrictFilter, setCatalogDistrictFilter] = useState('ทั้งหมด');
+  const [catalogSearch, setCatalogSearch] = useState('');
+
+  // External Data Source (JSON/GeoJSON) Import States
+  const [importJsonText, setImportJsonText] = useState('');
+  const [importResult, setImportResult] = useState(null);
+
+  // Active Points Management States
+  const [activePointsDistrictFilter, setActivePointsDistrictFilter] = useState('ทั้งหมด');
+  const [activePointsSearch, setActivePointsSearch] = useState('');
+  const [editingPointId, setEditingPointId] = useState(null);
+  const [editingPointDepth, setEditingPointDepth] = useState(15);
+
+  // Auto-populate coordinates from map click
+  useEffect(() => {
+    if (pickedCoords && pickedCoords.lat && pickedCoords.lng) {
+      setNewLocationLat(Number(pickedCoords.lat).toFixed(5));
+      setNewLocationLng(Number(pickedCoords.lng).toFixed(5));
+      const detected = detectDistrictForCoordinates(pickedCoords.lat, pickedCoords.lng);
+      if (detected) {
+        setNewLocationDistrict(detected);
+      }
+      setActiveTab('locations');
+      setLocationsSubTab('add');
+    }
+  }, [pickedCoords]);
+
+  // Coordinate Precision Validation in real time
+  const coordValidation = useMemo(() => {
+    if (!newLocationLat || !newLocationLng) return null;
+    return validateCoordinatePrecision(newLocationLat, newLocationLng, newLocationDistrict);
+  }, [newLocationLat, newLocationLng, newLocationDistrict]);
 
   // Feedback Management States (Citizen Feedback & Suggestion Box)
   const [feedbackItems, setFeedbackItems] = useState(() => {
@@ -105,6 +175,13 @@ export default function AdminModal({
     if (isOpen) {
       refreshFeedbackItems();
     }
+    const handleFeedbackUpdate = () => refreshFeedbackItems();
+    window.addEventListener('prakanguard_feedback_updated', handleFeedbackUpdate);
+    window.addEventListener('storage', handleFeedbackUpdate);
+    return () => {
+      window.removeEventListener('prakanguard_feedback_updated', handleFeedbackUpdate);
+      window.removeEventListener('storage', handleFeedbackUpdate);
+    };
   }, [isOpen]);
 
   const handleToggleFeedbackRead = (id) => {
@@ -152,6 +229,146 @@ export default function AdminModal({
   };
 
   const unreadFeedbackCount = feedbackItems.filter(f => !f.isRead).length;
+
+  // Location Management Handlers
+  const handleGetGpsCoords = () => {
+    if (!navigator.geolocation) {
+      alert("อุปกรณ์นี้ไม่รองรับการดึงพิกัด GPS");
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const lat = Number(pos.coords.latitude.toFixed(5));
+        const lng = Number(pos.coords.longitude.toFixed(5));
+        setNewLocationLat(lat);
+        setNewLocationLng(lng);
+        const detected = detectDistrictForCoordinates(lat, lng);
+        if (detected) {
+          setNewLocationDistrict(detected);
+        }
+      },
+      (err) => {
+        alert("ไม่สามารถดึงตำแหน่งพิกัด GPS ได้: " + err.message);
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  };
+
+  const handleSaveNewLocation = (e) => {
+    e.preventDefault();
+    setLocationFormError('');
+    setLocationFormSuccess('');
+
+    if (!newLocationName.trim()) {
+      setLocationFormError('กรุณากรอกชื่อสถานที่หรือถนนที่เฝ้าระวัง');
+      return;
+    }
+
+    const numLat = Number(newLocationLat);
+    const numLng = Number(newLocationLng);
+
+    if (isNaN(numLat) || isNaN(numLng)) {
+      setLocationFormError('กรุณากรอกพิกัดละติจูดและลองจิจูดให้ถูกต้อง');
+      return;
+    }
+
+    const val = validateCoordinatePrecision(numLat, numLng, newLocationDistrict);
+    if (!val.isValid) {
+      setLocationFormError(val.message);
+      return;
+    }
+
+    const finalDistrict = val.detectedDistrict || newLocationDistrict;
+    const aliasesArray = newLocationAliases
+      ? newLocationAliases.split(',').map(s => s.trim()).filter(Boolean)
+      : [];
+
+    const formatted = formatPointForTracking({
+      name: newLocationName.trim(),
+      district: finalDistrict,
+      subdistrict: newLocationSubdistrict.trim() || `อ.${finalDistrict}`,
+      lat: numLat,
+      lng: numLng,
+      depthCm: Number(newLocationDepth),
+      cause: newLocationCause.trim(),
+      trafficStatus: newLocationTraffic.trim(),
+      source: newLocationSource.trim(),
+      aliases: aliasesArray
+    });
+
+    if (onAddPoint) {
+      onAddPoint(formatted);
+    }
+
+    setLocationFormSuccess(`✅ บันทึกจุดเฝ้าระวัง "${formatted.name}" (อ.${finalDistrict}) สำเร็จ! ระบบได้เริ่มติดตาม Real-time 24 ชม. แล้ว`);
+    setNewLocationName('');
+    setNewLocationSubdistrict('');
+    setNewLocationLat('');
+    setNewLocationLng('');
+    setNewLocationAliases('');
+    setTimeout(() => setLocationFormSuccess(''), 5000);
+  };
+
+  const handleImportSingleCatalogPoint = (item) => {
+    const formatted = formatPointForTracking(item);
+    if (onAddPoint) {
+      onAddPoint(formatted);
+    }
+  };
+
+  const handleImportAllUntrackedCatalog = () => {
+    const untracked = OFFICIAL_LOCATION_CATALOG.filter(item => 
+      !points.some(p => p.name === item.name || (Math.abs(p.lat - item.lat) < 0.001 && Math.abs(p.lng - item.lng) < 0.001))
+    );
+    if (untracked.length === 0) {
+      alert("นำเข้าจุดทั้งหมดในแคตตาล็อกทางการเรียบร้อยแล้ว");
+      return;
+    }
+    const formattedList = untracked.map(formatPointForTracking);
+    if (onImportPoints) {
+      onImportPoints(formattedList);
+    }
+  };
+
+  const loadJsonSample = () => {
+    const sample = [
+      {
+        "name": "ถนนสุขุมวิท ช่วงหน้าพิพิธภัณฑ์ช้างเอราวัณ",
+        "district": "เมืองสมุทรปราการ",
+        "subdistrict": "ต.บางเมืองใหม่",
+        "lat": 13.6288,
+        "lng": 100.5898,
+        "depthCm": 25,
+        "cause": "น้ำฝนสะสมรอระบายลงคลองบางปิ้ง",
+        "source": "แขวงทางหลวงสมุทรปราการ"
+      },
+      {
+        "name": "ถนนเทพารักษ์ หน้าวัดบางพลีใหญ่ใน",
+        "district": "บางพลี",
+        "subdistrict": "ต.บางพลีใหญ่",
+        "lat": 13.6065,
+        "lng": 100.7092,
+        "depthCm": 20,
+        "cause": "น้ำฝนสะสมรอระบายลงคลองสำโรง",
+        "source": "เทศบาลตำบลบางพลี"
+      }
+    ];
+    setImportJsonText(JSON.stringify(sample, null, 2));
+  };
+
+  const handleValidateAndImport = () => {
+    if (!importJsonText.trim()) {
+      alert("กรุณาวางข้อมูล JSON หรือ GeoJSON ก่อนกดนำเข้า");
+      return;
+    }
+    const res = parseAndValidateExternalData(importJsonText);
+    setImportResult(res);
+    if (res.success && res.validPoints.length > 0) {
+      if (onImportPoints) {
+        onImportPoints(res.validPoints);
+      }
+    }
+  };
 
   // Broadcast Form State (Admin Direct Flood Announcement)
   const [broadcastName, setBroadcastName] = useState('');
@@ -500,7 +717,7 @@ export default function AdminModal({
                     : 'border-transparent text-slate-400 hover:text-slate-200'
                 }`}
               >
-                <span>รอยืนยัน</span>
+                <span>แจ้งเตือนน้ำท่วม</span>
                 {pendingReports.length > 0 && (
                   <span className="px-1.5 py-0.2 rounded-full text-[10px] font-extrabold bg-rose-500 text-white animate-pulse">
                     {pendingReports.length}
@@ -517,6 +734,18 @@ export default function AdminModal({
                 }`}
               >
                 <span>แสดงบนแผนที่ ({approvedReports.length})</span>
+              </button>
+
+              <button
+                onClick={() => setActiveTab('locations')}
+                className={`px-3 py-2 rounded-t-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 border-b-2 whitespace-nowrap ${
+                  activeTab === 'locations'
+                    ? (isDark ? 'border-cyan-400 text-cyan-300 bg-slate-800 shadow-sm' : 'border-blue-600 text-blue-700 bg-white shadow-sm')
+                    : 'border-transparent text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                <MapPin className="w-3.5 h-3.5 text-blue-500" />
+                <span>จุดเฝ้าระวัง 6 อำเภอ ({points.length})</span>
               </button>
 
               <button
@@ -552,7 +781,7 @@ export default function AdminModal({
                 }`}
               >
                 <MessageSquare className="w-3.5 h-3.5 text-teal-400" />
-                <span>ข้อเสนอแนะ & ติชม</span>
+                <span>ข้อเสนอต่อเว็บ</span>
                 {unreadFeedbackCount > 0 && (
                   <span className="px-1.5 py-0.2 rounded-full text-[10px] font-extrabold bg-teal-500 text-white animate-pulse">
                     {unreadFeedbackCount}
@@ -765,6 +994,708 @@ export default function AdminModal({
                         </div>
                       </div>
                     ))
+                  )}
+                </div>
+              )}
+
+              {/* TAB: LOCATIONS MANAGEMENT - 6 DISTRICTS */}
+              {activeTab === 'locations' && (
+                <div className="space-y-4">
+                  {/* Top Sub-Nav Pills */}
+                  <div className={`p-1.5 rounded-2xl border flex items-center gap-1.5 overflow-x-auto no-scrollbar ${
+                    isDark ? 'bg-slate-900 border-slate-800' : 'bg-slate-100 border-slate-200'
+                  }`}>
+                    <button
+                      type="button"
+                      onClick={() => setLocationsSubTab('add')}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
+                        locationsSubTab === 'add'
+                          ? (isDark ? 'bg-blue-600 text-white shadow-sm' : 'bg-blue-600 text-white shadow-sm')
+                          : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'
+                      }`}
+                    >
+                      <PlusCircle className="w-3.5 h-3.5" />
+                      <span>เพิ่มสถานที่ใหม่</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setLocationsSubTab('catalog')}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
+                        locationsSubTab === 'catalog'
+                          ? (isDark ? 'bg-blue-600 text-white shadow-sm' : 'bg-blue-600 text-white shadow-sm')
+                          : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'
+                      }`}
+                    >
+                      <Database className="w-3.5 h-3.5" />
+                      <span>คลังข้อมูลทางการ ({OFFICIAL_LOCATION_CATALOG.length})</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setLocationsSubTab('import_data')}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
+                        locationsSubTab === 'import_data'
+                          ? (isDark ? 'bg-blue-600 text-white shadow-sm' : 'bg-blue-600 text-white shadow-sm')
+                          : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'
+                      }`}
+                    >
+                      <DownloadCloud className="w-3.5 h-3.5" />
+                      <span>นำเข้า JSON / GeoJSON</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setLocationsSubTab('list')}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap ml-auto ${
+                        locationsSubTab === 'list'
+                          ? (isDark ? 'bg-blue-600 text-white shadow-sm' : 'bg-blue-600 text-white shadow-sm')
+                          : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'
+                      }`}
+                    >
+                      <Layers className="w-3.5 h-3.5" />
+                      <span>จุดที่ติดตามทั้งหมด ({points.length})</span>
+                    </button>
+                  </div>
+
+                  {/* Sub-tab 1: Add New Location Form */}
+                  {locationsSubTab === 'add' && (
+                    <div className="space-y-4">
+                      <div className={`p-3.5 rounded-2xl border text-xs leading-relaxed ${
+                        isDark ? 'bg-slate-900/60 border-slate-800 text-slate-300' : 'bg-blue-50/70 border-blue-200 text-slate-700'
+                      }`}>
+                        <div className="font-bold text-slate-900 dark:text-white flex items-center gap-1.5 mb-1">
+                          <MapPin className="w-4 h-4 text-blue-500" />
+                          <span>เพิ่มจุดเฝ้าระวังใหม่ในขอบเขต 6 อำเภอ จ.สมุทรปราการ</span>
+                        </div>
+                        ระบบจะทำการตรวจสอบพิกัดความถูกต้อง 100% ว่าอยู่ในขอบเขต 6 อำเภอ (เมืองสมุทรปราการ, บางพลี, บางบ่อ, บางเสาธง, พระประแดง, พระสมุทรเจดีย์) และเชื่อมต่อการคำนวณอุทกวิทยา-อุตุนิยมวิทยาแบบ Real-time ตลอด 24 ชม. ทันที
+                      </div>
+
+                      {locationFormSuccess && (
+                        <div className="p-3 rounded-2xl bg-emerald-50 dark:bg-emerald-950/80 border border-emerald-300 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 text-xs flex items-center gap-2">
+                          <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                          <span>{locationFormSuccess}</span>
+                        </div>
+                      )}
+
+                      {locationFormError && (
+                        <div className="p-3 rounded-2xl bg-rose-50 dark:bg-rose-950/80 border border-rose-300 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-xs flex items-center gap-2">
+                          <AlertTriangle className="w-4 h-4 text-rose-500 shrink-0" />
+                          <span>{locationFormError}</span>
+                        </div>
+                      )}
+
+                      <form onSubmit={handleSaveNewLocation} className="space-y-3 text-xs">
+                        <div>
+                          <label className="block font-semibold mb-1">
+                            ชื่อสถานที่ / จุดเฝ้าระวัง / ถนน (*)
+                          </label>
+                          <input 
+                            type="text"
+                            value={newLocationName}
+                            onChange={(e) => setNewLocationName(e.target.value)}
+                            placeholder="เช่น ถนนสุขุมวิท ช่วงหน้าพิพิธภัณฑ์ช้างเอราวัณ หรือ ซอยมังกร-ขันดี"
+                            className={`w-full p-2.5 rounded-xl border text-xs sm:text-sm focus:outline-none ${
+                              isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-300'
+                            }`}
+                            required
+                          />
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div>
+                            <label className="block font-semibold mb-1">อำเภอ (ใน 6 อำเภอ จ.สมุทรปราการ)</label>
+                            <select
+                              value={newLocationDistrict}
+                              onChange={(e) => setNewLocationDistrict(e.target.value)}
+                              className={`w-full p-2.5 rounded-xl border text-xs sm:text-sm focus:outline-none ${
+                                isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-300'
+                              }`}
+                            >
+                              {DISTRICTS.filter(d => d !== "ทั้งหมด").map(d => (
+                                <option key={d} value={d}>อ.{d}</option>
+                              ))}
+                            </select>
+                          </div>
+
+                          <div>
+                            <label className="block font-semibold mb-1">ตำบล / ชุมชน</label>
+                            <input 
+                              type="text"
+                              value={newLocationSubdistrict}
+                              onChange={(e) => setNewLocationSubdistrict(e.target.value)}
+                              placeholder={`เช่น ต.ปากน้ำ หรือ ต.บางโฉลง`}
+                              className={`w-full p-2.5 rounded-xl border text-xs sm:text-sm focus:outline-none ${
+                                isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-300'
+                              }`}
+                            />
+                          </div>
+                        </div>
+
+                        {/* Coordinates with High-Precision Validator */}
+                        <div className={`p-3 rounded-2xl border space-y-2.5 ${
+                          isDark ? 'bg-slate-850 border-slate-750' : 'bg-slate-50 border-slate-200'
+                        }`}>
+                          <div className="flex items-center justify-between flex-wrap gap-2">
+                            <span className="font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                              <Crosshair className="w-3.5 h-3.5 text-blue-500" />
+                              <span>พิกัดภูมิศาสตร์ (Latitude & Longitude แม่นยำ 100%)</span>
+                            </span>
+
+                            <div className="flex items-center gap-1.5">
+                              <button
+                                type="button"
+                                onClick={handleGetGpsCoords}
+                                className="px-2.5 py-1 rounded-xl bg-blue-50 dark:bg-blue-950/70 hover:bg-blue-100 text-blue-600 dark:text-blue-300 text-[11px] font-bold border border-blue-200 dark:border-blue-800 transition-colors flex items-center gap-1 cursor-pointer"
+                                title="ดึงพิกัดจาก GPS เครื่องปัจจุบัน"
+                              >
+                                <Compass className="w-3 h-3" />
+                                <span>ดึง GPS</span>
+                              </button>
+
+                              {onPickLocationOnMap && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    onPickLocationOnMap();
+                                    onClose();
+                                  }}
+                                  className="px-2.5 py-1 rounded-xl bg-cyan-50 dark:bg-cyan-950/70 hover:bg-cyan-100 text-cyan-700 dark:text-cyan-300 text-[11px] font-bold border border-cyan-200 dark:border-cyan-800 transition-colors flex items-center gap-1 cursor-pointer"
+                                  title="เลือกปักหมุดบนแผนที่"
+                                >
+                                  <MapPin className="w-3 h-3" />
+                                  <span>ปักหมุดบนแผนที่</span>
+                                </button>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                            <div>
+                              <label className="block text-[11px] text-slate-500 mb-1">ละติจูด (Lat)</label>
+                              <input 
+                                type="number"
+                                step="any"
+                                value={newLocationLat}
+                                onChange={(e) => setNewLocationLat(e.target.value)}
+                                placeholder="13.5991"
+                                className={`w-full p-2 rounded-xl border text-xs focus:outline-none ${
+                                  isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-300'
+                                }`}
+                                required
+                              />
+                            </div>
+
+                            <div>
+                              <label className="block text-[11px] text-slate-500 mb-1">ลองจิจูด (Lng)</label>
+                              <input 
+                                type="number"
+                                step="any"
+                                value={newLocationLng}
+                                onChange={(e) => setNewLocationLng(e.target.value)}
+                                placeholder="100.5968"
+                                className={`w-full p-2 rounded-xl border text-xs focus:outline-none ${
+                                  isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-300'
+                                }`}
+                                required
+                              />
+                            </div>
+                          </div>
+
+                          {/* Live Boundary Precision Check Badge */}
+                          {coordValidation && (
+                            <div className={`p-2.5 rounded-xl text-[11px] border flex items-center justify-between gap-2 flex-wrap ${
+                              coordValidation.isValid
+                                ? (coordValidation.isDistrictMismatch 
+                                    ? 'bg-amber-50 dark:bg-amber-950/80 border-amber-300 text-amber-800 dark:text-amber-200' 
+                                    : 'bg-emerald-50 dark:bg-emerald-950/80 border-emerald-300 text-emerald-800 dark:text-emerald-200')
+                                : 'bg-rose-50 dark:bg-rose-950/80 border-rose-300 text-rose-800 dark:text-rose-200'
+                            }`}>
+                              <div className="flex items-center gap-1.5 min-w-0">
+                                {coordValidation.isValid ? (
+                                  coordValidation.isDistrictMismatch ? <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0" /> : <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                                ) : (
+                                  <AlertTriangle className="w-4 h-4 text-rose-500 shrink-0" />
+                                )}
+                                <span className="font-medium">{coordValidation.message}</span>
+                              </div>
+
+                              {coordValidation.isDistrictMismatch && coordValidation.detectedDistrict && (
+                                <button
+                                  type="button"
+                                  onClick={() => setNewLocationDistrict(coordValidation.detectedDistrict)}
+                                  className="px-2 py-0.5 rounded-lg bg-amber-600 hover:bg-amber-500 text-white text-[10px] font-bold cursor-pointer shrink-0 transition-colors"
+                                >
+                                  เปลี่ยนเป็น อ.{coordValidation.detectedDistrict} ทันที
+                                </button>
+                              )}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Current Water Level / Depth */}
+                        <div>
+                          <div className="flex items-center justify-between mb-1.5">
+                            <label className="font-semibold text-xs">ระดับน้ำปัจจุบัน (ความลึก ซม.)</label>
+                            <span className="font-bold text-blue-600 dark:text-cyan-400">
+                              {Number(newLocationDepth) === 0 ? "0 ซม. (แห้งปกติ สัญจรคล่องตัว)" : `${newLocationDepth} ซม. (${getFloodLevel(Number(newLocationDepth)) === 3 ? "🔴 วิกฤต" : getFloodLevel(Number(newLocationDepth)) === 2 ? "🟠 เสี่ยงสูง" : "🟢 ปกติ/เฝ้าระวัง"})`}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <input 
+                              type="range"
+                              min="0"
+                              max="90"
+                              value={newLocationDepth}
+                              onChange={(e) => setNewLocationDepth(Number(e.target.value))}
+                              className="w-full accent-blue-600 cursor-pointer"
+                            />
+                            <input 
+                              type="number"
+                              min="0"
+                              max="150"
+                              value={newLocationDepth}
+                              onChange={(e) => setNewLocationDepth(Number(e.target.value))}
+                              className={`w-20 p-2 text-center rounded-xl border font-bold text-xs focus:outline-none ${
+                                isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-300'
+                              }`}
+                            />
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div>
+                            <label className="block font-semibold mb-1">สาเหตุการท่วม / ปัจจัยเฝ้าระวัง</label>
+                            <input 
+                              type="text"
+                              value={newLocationCause}
+                              onChange={(e) => setNewLocationCause(e.target.value)}
+                              placeholder="เช่น น้ำฝนสะสมรอการระบาย หรือ น้ำทะเลหนุนแม่น้ำเจ้าพระยา"
+                              className={`w-full p-2.5 rounded-xl border text-xs sm:text-sm focus:outline-none ${
+                                isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-300'
+                              }`}
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block font-semibold mb-1">สภาพผิวจราจร & คำแนะนำ</label>
+                            <input 
+                              type="text"
+                              value={newLocationTraffic}
+                              onChange={(e) => setNewLocationTraffic(e.target.value)}
+                              placeholder="เช่น รถเก๋งชิดเลนขวา มอเตอร์ไซค์ชะลอความเร็ว"
+                              className={`w-full p-2.5 rounded-xl border text-xs sm:text-sm focus:outline-none ${
+                                isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-300'
+                              }`}
+                            />
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div>
+                            <label className="block font-semibold mb-1">แหล่งข้อมูลอ้างอิงทางการ</label>
+                            <input 
+                              type="text"
+                              value={newLocationSource}
+                              onChange={(e) => setNewLocationSource(e.target.value)}
+                              placeholder="เช่น กรมอุตุนิยมวิทยา, แขวงทางหลวง, ปภ.1784"
+                              className={`w-full p-2.5 rounded-xl border text-xs sm:text-sm focus:outline-none ${
+                                isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-300'
+                              }`}
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block font-semibold mb-1">คำค้นหาติดปาก / คำพ้อง (คั่นด้วยจุลภาค ,)</label>
+                            <input 
+                              type="text"
+                              value={newLocationAliases}
+                              onChange={(e) => setNewLocationAliases(e.target.value)}
+                              placeholder="เช่น หน้าห้าง, แยกไฟแดง, กม.15"
+                              className={`w-full p-2.5 rounded-xl border text-xs sm:text-sm focus:outline-none ${
+                                isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-300'
+                              }`}
+                            />
+                          </div>
+                        </div>
+
+                        <button
+                          type="submit"
+                          className="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs sm:text-sm transition-all shadow-md shadow-blue-600/30 flex items-center justify-center gap-2 cursor-pointer"
+                        >
+                          <PlusCircle className="w-4 h-4" />
+                          <span>บันทึกและเริ่มติดตาม Real-time 24 ชม.</span>
+                        </button>
+                      </form>
+                    </div>
+                  )}
+
+                  {/* Sub-tab 2: Pre-verified Government Catalog */}
+                  {locationsSubTab === 'catalog' && (
+                    <div className="space-y-3.5">
+                      <div className={`p-3.5 rounded-2xl border text-xs leading-relaxed ${
+                        isDark ? 'bg-slate-900/60 border-slate-800 text-slate-300' : 'bg-blue-50/70 border-blue-200 text-slate-700'
+                      }`}>
+                        <div className="font-bold text-slate-900 dark:text-white flex items-center gap-1.5 mb-1">
+                          <Database className="w-4 h-4 text-blue-500" />
+                          <span>คลังข้อมูลจุดเสี่ยงทางการ 6 อำเภอ (กรมทางหลวง • ปภ. • กรมอุทกศาสตร์ กองทัพเรือ)</span>
+                        </div>
+                        จุดเสี่ยงและสถานีตรวจวัดมาตรฐานที่ผ่านการตรวจสอบพิกัดความถูกต้อง 100% สามารถกด "นำเข้าสู่ระบบติดตาม" ได้ทันทีในคลิกเดียว
+                      </div>
+
+                      {/* District Filters and Search */}
+                      <div className="flex items-center gap-2 flex-wrap justify-between">
+                        <div className="flex items-center gap-1 overflow-x-auto no-scrollbar py-1">
+                          {DISTRICTS.map(d => (
+                            <button
+                              key={d}
+                              type="button"
+                              onClick={() => setCatalogDistrictFilter(d)}
+                              className={`px-2.5 py-1 rounded-xl text-xs font-semibold whitespace-nowrap cursor-pointer transition-all ${
+                                catalogDistrictFilter === d
+                                  ? 'bg-blue-600 text-white'
+                                  : (isDark ? 'bg-slate-800 text-slate-300 hover:bg-slate-700' : 'bg-slate-200 text-slate-700 hover:bg-slate-300')
+                              }`}
+                            >
+                              {d === "ทั้งหมด" ? "ทั้งหมด" : `อ.${d}`}
+                            </button>
+                          ))}
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <div className="relative">
+                            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+                            <input 
+                              type="text"
+                              value={catalogSearch}
+                              onChange={(e) => setCatalogSearch(e.target.value)}
+                              placeholder="ค้นหาในคลังข้อมูล..."
+                              className={`pl-8 pr-3 py-1 rounded-xl border text-xs focus:outline-none ${
+                                isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-300'
+                              }`}
+                            />
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={handleImportAllUntrackedCatalog}
+                            className="px-3 py-1 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-all shadow-sm flex items-center gap-1 cursor-pointer shrink-0"
+                          >
+                            <DownloadCloud className="w-3.5 h-3.5" />
+                            <span>นำเข้าทั้งหมดที่ยังไม่มี</span>
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Catalog Cards Grid */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[55vh] overflow-y-auto pr-1">
+                        {OFFICIAL_LOCATION_CATALOG
+                          .filter(item => {
+                            if (catalogDistrictFilter !== "ทั้งหมด" && item.district !== catalogDistrictFilter) return false;
+                            if (catalogSearch.trim()) {
+                              const q = catalogSearch.toLowerCase();
+                              return item.name.toLowerCase().includes(q) || item.district.toLowerCase().includes(q) || (item.subdistrict && item.subdistrict.toLowerCase().includes(q));
+                            }
+                            return true;
+                          })
+                          .map(item => {
+                            const isAlreadyTracked = points.some(p => p.name === item.name || (Math.abs(p.lat - item.lat) < 0.001 && Math.abs(p.lng - item.lng) < 0.001));
+
+                            return (
+                              <div 
+                                key={item.catalogId}
+                                className={`p-3.5 rounded-2xl border flex flex-col justify-between gap-2.5 ${
+                                  isDark ? 'bg-slate-850/90 border-slate-750' : 'bg-white border-slate-200 shadow-xs'
+                                }`}
+                              >
+                                <div>
+                                  <div className="flex items-center justify-between gap-2 mb-1">
+                                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-500/15 text-blue-500 border border-blue-500/30">
+                                      อ.{item.district}
+                                    </span>
+                                    <span className="text-[10px] text-slate-400 font-mono">
+                                      {item.lat.toFixed(4)}, {item.lng.toFixed(4)}
+                                    </span>
+                                  </div>
+
+                                  <h5 className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white line-clamp-1">
+                                    {item.name}
+                                  </h5>
+
+                                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">
+                                    {item.cause}
+                                  </p>
+
+                                  <div className="mt-2 text-[10px] text-slate-400 flex items-center justify-between">
+                                    <span>แหล่งข้อมูล: {item.source}</span>
+                                    <span className="font-bold text-amber-500">{item.depthRange}</span>
+                                  </div>
+                                </div>
+
+                                <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                                  {isAlreadyTracked ? (
+                                    <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                                      <Check className="w-3.5 h-3.5" />
+                                      <span>กำลังติดตามในระบบแล้ว</span>
+                                    </span>
+                                  ) : (
+                                    <button
+                                      type="button"
+                                      onClick={() => handleImportSingleCatalogPoint(item)}
+                                      className="w-full py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-xs"
+                                    >
+                                      <PlusCircle className="w-3.5 h-3.5" />
+                                      <span>+ นำเข้าสู่ระบบติดตาม</span>
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Sub-tab 3: External Data (JSON / GeoJSON) Import */}
+                  {locationsSubTab === 'import_data' && (
+                    <div className="space-y-3.5">
+                      <div className={`p-3.5 rounded-2xl border text-xs leading-relaxed ${
+                        isDark ? 'bg-slate-900/60 border-slate-800 text-slate-300' : 'bg-slate-50 border-slate-200 text-slate-700'
+                      }`}>
+                        <div className="font-bold text-slate-900 dark:text-white flex items-center gap-1.5 mb-1">
+                          <FileCode className="w-4 h-4 text-blue-500" />
+                          <span>นำเข้าชุดข้อมูลพิกัด (JSON หรือ GeoJSON FeatureCollection)</span>
+                        </div>
+                        สามารถวางข้อมูล JSON หรือ GeoJSON ที่ได้จากหน่วยงานภาครัฐ หรือ Open Data ระบบจะทำการตรวจสอบความถูกต้องของพิกัดว่าอยู่ภายใน 6 อำเภอของจังหวัดสมุทรปราการแบบอัตโนมัติก่อนนำเข้า
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-semibold">วางข้อความ JSON / GeoJSON:</span>
+                        <button
+                          type="button"
+                          onClick={loadJsonSample}
+                          className="px-2.5 py-1 rounded-xl bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 text-slate-700 dark:text-slate-300 text-[11px] font-bold cursor-pointer transition-colors"
+                        >
+                          โหลดตัวอย่าง JSON
+                        </button>
+                      </div>
+
+                      <textarea 
+                        rows={7}
+                        value={importJsonText}
+                        onChange={(e) => setImportJsonText(e.target.value)}
+                        placeholder={`[\n  {\n    "name": "ถนนเทพารักษ์ หน้าวัดบางพลีใหญ่ใน",\n    "district": "บางพลี",\n    "lat": 13.6065,\n    "lng": 100.7092,\n    "depthCm": 20,\n    "cause": "น้ำฝนสะสมรอระบาย"\n  }\n]`}
+                        className={`w-full p-3 rounded-2xl border text-xs font-mono focus:outline-none ${
+                          isDark ? 'bg-slate-850 border-slate-750 text-slate-200' : 'bg-white border-slate-300 text-slate-900'
+                        }`}
+                      />
+
+                      <button
+                        type="button"
+                        onClick={handleValidateAndImport}
+                        className="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs sm:text-sm transition-all shadow-md shadow-blue-600/30 flex items-center justify-center gap-2 cursor-pointer"
+                      >
+                        <DownloadCloud className="w-4 h-4" />
+                        <span>🔍 ตรวจสอบความแม่นยำและนำเข้าสู่ระบบ</span>
+                      </button>
+
+                      {importResult && (
+                        <div className={`p-3.5 rounded-2xl border text-xs space-y-2 ${
+                          importResult.success 
+                            ? 'bg-emerald-50 dark:bg-emerald-950/80 border-emerald-300 text-emerald-800 dark:text-emerald-200'
+                            : 'bg-rose-50 dark:bg-rose-950/80 border-rose-300 text-rose-800 dark:text-rose-200'
+                        }`}>
+                          <div className="font-bold flex items-center gap-1.5">
+                            {importResult.success ? <CheckCircle2 className="w-4 h-4 text-emerald-500" /> : <AlertTriangle className="w-4 h-4 text-rose-500" />}
+                            <span>{importResult.success ? `นำเข้าสำเร็จ ${importResult.validPoints.length} จุดเรียบร้อยแล้ว!` : importResult.error}</span>
+                          </div>
+
+                          {importResult.rejected && importResult.rejected.length > 0 && (
+                            <div className="pt-2 border-t border-rose-200 dark:border-rose-800 text-[11px] space-y-1">
+                              <span className="font-semibold text-rose-600 dark:text-rose-400">จุดที่ถูกปฏิเสธเนื่องจากอยู่นอก 6 อำเภอ สมุทรปราการ ({importResult.rejected.length} จุด):</span>
+                              {importResult.rejected.map((r, i) => (
+                                <div key={i} className="text-slate-600 dark:text-slate-400">
+                                  • {r.name}: {r.reason}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Sub-tab 4: Active Points List & Management */}
+                  {locationsSubTab === 'list' && (
+                    <div className="space-y-3.5">
+                      <div className="flex items-center justify-between flex-wrap gap-2">
+                        <div className="flex items-center gap-1 overflow-x-auto no-scrollbar py-1">
+                          {DISTRICTS.map(d => (
+                            <button
+                              key={d}
+                              type="button"
+                              onClick={() => setActivePointsDistrictFilter(d)}
+                              className={`px-2.5 py-1 rounded-xl text-xs font-semibold whitespace-nowrap cursor-pointer transition-all ${
+                                activePointsDistrictFilter === d
+                                  ? 'bg-blue-600 text-white'
+                                  : (isDark ? 'bg-slate-800 text-slate-300 hover:bg-slate-700' : 'bg-slate-200 text-slate-700 hover:bg-slate-300')
+                              }`}
+                            >
+                              {d === "ทั้งหมด" ? "ทั้งหมด" : `อ.${d}`}
+                            </button>
+                          ))}
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <input 
+                            type="text"
+                            value={activePointsSearch}
+                            onChange={(e) => setActivePointsSearch(e.target.value)}
+                            placeholder="ค้นหาจุดที่ติดตาม..."
+                            className={`px-3 py-1 rounded-xl border text-xs focus:outline-none ${
+                              isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-300'
+                            }`}
+                          />
+
+                          {onResetPoints && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (window.confirm("ยืนยันต้องการคืนค่าจุดเฝ้าระวังเริ่มต้น 30 จุดมาตรฐานหรือไม่? จุดที่เพิ่มเองทั้งหมดจะถูกรีเซ็ต")) {
+                                  onResetPoints();
+                                }
+                              }}
+                              className="px-2.5 py-1 rounded-xl border border-slate-300 dark:border-slate-700 text-xs font-semibold text-slate-500 hover:text-rose-500 transition-colors flex items-center gap-1 cursor-pointer shrink-0"
+                              title="คืนค่าจุดเริ่มต้น 30 จุด"
+                            >
+                              <RefreshCw className="w-3.5 h-3.5" />
+                              <span>คืนค่าเริ่มต้น</span>
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Monitored Points List */}
+                      <div className="space-y-2.5 max-h-[55vh] overflow-y-auto pr-1">
+                        {points
+                          .filter(p => {
+                            if (activePointsDistrictFilter !== "ทั้งหมด" && p.district !== activePointsDistrictFilter) return false;
+                            if (activePointsSearch.trim()) {
+                              const q = activePointsSearch.toLowerCase();
+                              return (p.name && p.name.toLowerCase().includes(q)) || (p.subdistrict && p.subdistrict.toLowerCase().includes(q));
+                            }
+                            return true;
+                          })
+                          .map(point => {
+                            const isResolved = point.isResolved || point.depthCm === 0;
+
+                            return (
+                              <div 
+                                key={point.id}
+                                className={`p-3 rounded-2xl border transition-all ${
+                                  isDark ? 'bg-slate-850/90 border-slate-750' : 'bg-white border-slate-200 shadow-xs'
+                                }`}
+                              >
+                                <div className="flex items-center justify-between gap-2 flex-wrap mb-1.5">
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-500/15 text-blue-500 border border-blue-500/30">
+                                      อ.{point.district}
+                                    </span>
+                                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
+                                      isResolved 
+                                        ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/80 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800'
+                                        : (point.level === 3 ? 'bg-rose-50 text-rose-700 dark:bg-rose-950/80 dark:text-rose-300 border border-rose-300' : 'bg-amber-50 text-amber-700 dark:bg-amber-950/80 dark:text-amber-300 border border-amber-300')
+                                    }`}>
+                                      {isResolved ? "🟢 ปกติ (แห้งแล้ว)" : point.level === 3 ? "🔴 วิกฤต" : point.level === 2 ? "🟠 เสี่ยงสูง" : "🟡 เฝ้าระวัง"} ({point.depthCm || 0} ซม.)
+                                    </span>
+                                  </div>
+
+                                  <span className="text-[10px] text-slate-400 font-mono">
+                                    {point.lat ? point.lat.toFixed(4) : ''}, {point.lng ? point.lng.toFixed(4) : ''}
+                                  </span>
+                                </div>
+
+                                <div className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white mb-1">
+                                  {point.name}
+                                </div>
+
+                                <div className="text-[11px] text-slate-500 dark:text-slate-400 mb-2">
+                                  {point.trafficStatus || point.cause}
+                                </div>
+
+                                {/* Depth Slider Controller right in card */}
+                                <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-3 flex-wrap text-xs">
+                                  <div className="flex items-center gap-2 flex-1 min-w-[200px]">
+                                    <span className="text-[11px] text-slate-400 whitespace-nowrap">ปรับระดับน้ำ:</span>
+                                    <input 
+                                      type="range"
+                                      min="0"
+                                      max="85"
+                                      value={point.depthCm || 0}
+                                      onChange={(e) => {
+                                        if (onUpdatePoint) {
+                                          onUpdatePoint(point.id, { depthCm: Number(e.target.value) });
+                                        }
+                                      }}
+                                      className="w-full accent-blue-600 cursor-pointer"
+                                    />
+                                    <span className="font-bold font-mono text-xs w-12 text-right">
+                                      {point.depthCm || 0} ซม.
+                                    </span>
+                                  </div>
+
+                                  <div className="flex items-center gap-1.5 ml-auto">
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        if (onUpdatePoint) {
+                                          onUpdatePoint(point.id, { depthCm: isResolved ? 25 : 0 });
+                                        }
+                                      }}
+                                      className={`px-2.5 py-1 rounded-xl text-[11px] font-bold cursor-pointer transition-colors ${
+                                        isResolved
+                                          ? 'bg-amber-100 text-amber-800 hover:bg-amber-200'
+                                          : 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200'
+                                      }`}
+                                    >
+                                      {isResolved ? "จำลองน้ำท่วม (25 ซม.)" : "สลับเป็นแห้งปกติ"}
+                                    </button>
+
+                                    {onFlyToCoords && (
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          onFlyToCoords(point.lat, point.lng);
+                                          onClose();
+                                        }}
+                                        className="p-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-blue-500 hover:text-white transition-colors cursor-pointer"
+                                        title="ซูมไปยังจุดนี้บนแผนที่"
+                                      >
+                                        <MapPin className="w-3.5 h-3.5" />
+                                      </button>
+                                    )}
+
+                                    {onDeletePoint && (
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          if (window.confirm(`ยืนยันการลบจุด "${point.name}" ออกจากระบบติดตาม?`)) {
+                                            onDeletePoint(point.id);
+                                          }
+                                        }}
+                                        className="p-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-rose-500 hover:bg-rose-500 hover:text-white transition-colors cursor-pointer"
+                                        title="ลบจุดนี้ออกจากระบบ"
+                                      >
+                                        <Trash2 className="w-3.5 h-3.5" />
+                                      </button>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                      </div>
+                    </div>
                   )}
                 </div>
               )}

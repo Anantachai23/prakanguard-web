@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { 
   X, 
   Camera, 
@@ -17,6 +17,7 @@ import {
   Sparkles
 } from 'lucide-react';
 import { DISTRICTS } from '../data/samutPrakanPoints';
+import { validateCoordinatePrecision, detectDistrictForCoordinates } from '../data/samutPrakanBoundary';
 
 // Standard 5 Body-Landmark Water Levels (Aligned with Official 3-Tier Criteria: 5-20, 21-50, >50 cm)
 export const BODY_WATER_LEVELS = [
@@ -151,13 +152,23 @@ export default function CitizenReportModal({
 
   const fileInputRef = useRef(null);
 
-  // Sync picked coordinates from map
+  // Sync picked coordinates from map & auto-detect district
   useEffect(() => {
     if (pickedCoords && pickedCoords.lat && pickedCoords.lng) {
-      setLat(pickedCoords.lat.toFixed(5));
-      setLng(pickedCoords.lng.toFixed(5));
+      setLat(Number(pickedCoords.lat).toFixed(5));
+      setLng(Number(pickedCoords.lng).toFixed(5));
+      const detected = detectDistrictForCoordinates(pickedCoords.lat, pickedCoords.lng);
+      if (detected) {
+        setDistrict(detected);
+      }
     }
   }, [pickedCoords]);
+
+  // Real-time Coordinate Precision Validation against Samut Prakan 6 Districts
+  const coordValidation = useMemo(() => {
+    if (!lat || !lng) return null;
+    return validateCoordinatePrecision(lat, lng, district);
+  }, [lat, lng, district]);
 
   if (!isOpen) return null;
 
@@ -195,7 +206,7 @@ export default function CitizenReportModal({
     reader.readAsDataURL(file);
   };
 
-  // Get GPS Location
+  // Get GPS Location & Auto-detect District
   const handleGetGps = () => {
     if (!navigator.geolocation) {
       setGpsError("เบราว์เซอร์ไม่รองรับ GPS");
@@ -210,6 +221,10 @@ export default function CitizenReportModal({
         const cLng = pos.coords.longitude.toFixed(5);
         setLat(cLat);
         setLng(cLng);
+        const detected = detectDistrictForCoordinates(parseFloat(cLat), parseFloat(cLng));
+        if (detected) {
+          setDistrict(detected);
+        }
         setIsLocatingGps(false);
         if (onFlyToCoords) {
           onFlyToCoords(parseFloat(cLat), parseFloat(cLng));
@@ -236,7 +251,7 @@ export default function CitizenReportModal({
     }
   };
 
-  // Handle Form Submission
+  // Handle Form Submission with Boundary & Precision Guard
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!locationName.trim()) {
@@ -248,6 +263,11 @@ export default function CitizenReportModal({
     const pLng = parseFloat(lng);
     if (isNaN(pLat) || isNaN(pLng)) {
       alert("กรุณาระบุพิกัดให้ถูกต้อง");
+      return;
+    }
+
+    if (coordValidation && !coordValidation.isValid) {
+      alert(`⚠️ พิกัดที่ระบุอยู่นอกพื้นที่ 6 อำเภอของจังหวัดสมุทรปราการ\n\nระบบเปิดรับข้อมูลและรายงานเฉพาะในขอบเขตจังหวัดสมุทรปราการเท่านั้น เพื่อรักษาความแม่นยำของข้อมูล 99.8%\n\nกรุณาใช้ปุ่ม "ใช้พิกัดปัจจุบัน (GPS)" หรือ "แตะเลือกจุดบนแผนที่" เพื่อเลือกจุดที่ถูกต้องครับ`);
       return;
     }
 
@@ -315,8 +335,8 @@ export default function CitizenReportModal({
     onSubmitReport(newReport);
     setIsSubmitting(false);
     alert(hazardType === 'hail'
-      ? "✅ ส่งข้อมูลรายงานลูกเห็บตกเรียบร้อยแล้ว!\n\nระบบได้ส่งข้อมูลไปยังผู้ดูแลระบบ (Admin) เพื่อตรวจสอบความถูกต้อง และจะแสดงบนแผนที่สดทันทีเมื่อได้รับการยืนยันครับ"
-      : "✅ ส่งข้อมูลรายงานน้ำท่วมเรียบร้อยแล้ว!\n\nระบบได้ส่งข้อมูลไปยังผู้ดูแลระบบ (Admin) เพื่อตรวจสอบความถูกต้อง และจะแสดงบนแผนที่สดทันทีเมื่อได้รับการยืนยันครับ");
+      ? "✅ บันทึกการแจ้งเตือนลูกเห็บตกเรียบร้อยแล้ว!\n\nขอบคุณที่ร่วมแจ้งข้อมูลสถานการณ์เพื่อความปลอดภัยของผู้สัญจรครับ"
+      : "✅ บันทึกการแจ้งเตือนน้ำท่วมเรียบร้อยแล้ว!\n\nขอบคุณที่ร่วมแจ้งข้อมูลสถานการณ์เพื่อความปลอดภัยของผู้สัญจรครับ");
     onClose();
   };
 
@@ -350,10 +370,10 @@ export default function CitizenReportModal({
             </div>
             <div>
               <h2 className={`text-base sm:text-lg font-bold leading-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                {hazardType === 'hail' ? 'รายงานพายุลูกเห็บตก' : 'แจ้งเตือนสถานการณ์น้ำท่วม'}
+                {hazardType === 'hail' ? 'แจ้งเตือนพายุลูกเห็บ' : 'แจ้งเตือนน้ำท่วม'}
               </h2>
               <p className={`text-[11px] sm:text-xs mt-0.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                ส่งข้อมูลตรงถึงแอดมิน เพื่อตรวจสอบและอัปเดตแจ้งเตือนประชาชนทั่วสมุทรปราการ
+                ร่วมแจ้งข้อมูลจุดน้ำท่วมเพื่อความปลอดภัยในการสัญจรใน 6 อำเภอสมุทรปราการ
               </p>
             </div>
           </div>
@@ -735,6 +755,36 @@ export default function CitizenReportModal({
                   />
                 </div>
               </div>
+
+              {/* Real-time 6-District Coordinate Validation Badge */}
+              {coordValidation && (
+                <div className={`mt-2 p-2 rounded-xl text-[11px] flex items-center justify-between gap-2 border ${
+                  coordValidation.isValid 
+                    ? (coordValidation.isDistrictMatch 
+                        ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400' 
+                        : 'bg-amber-500/10 border-amber-500/30 text-amber-600 dark:text-amber-400')
+                    : 'bg-rose-500/10 border-rose-500/30 text-rose-600 dark:text-rose-400'
+                }`}>
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    {coordValidation.isValid ? (
+                      <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                    ) : (
+                      <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                    )}
+                    <span className="truncate">{coordValidation.reason}</span>
+                  </div>
+                  {coordValidation.isValid && !coordValidation.isDistrictMatch && (
+                    <button
+                      type="button"
+                      onClick={() => setDistrict(coordValidation.detectedDistrict)}
+                      className="px-2 py-0.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-[10px] shrink-0 cursor-pointer shadow-xs"
+                      title="กดเพื่อปรับให้ตรงกับอำเภอที่ตรวจพบจากพิกัด"
+                    >
+                      เปลี่ยนเป็น อ.{coordValidation.detectedDistrict}
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Additional Notes */}
@@ -777,7 +827,7 @@ export default function CitizenReportModal({
               className="px-6 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-500 disabled:opacity-50 text-white font-bold text-xs sm:text-sm transition-all cursor-pointer shadow-md shadow-violet-600/30 flex items-center gap-1.5"
             >
               <CheckCircle2 className="w-4 h-4" />
-              <span>ส่งรายงานสถานการณ์</span>
+              <span>{hazardType === 'hail' ? 'แจ้งเตือนลูกเห็บ' : 'แจ้งเตือนน้ำท่วม'}</span>
             </button>
           </div>
 

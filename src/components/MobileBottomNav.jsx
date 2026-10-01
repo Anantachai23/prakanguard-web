@@ -55,16 +55,16 @@ export default function MobileBottomNav({
           <span className="text-[10px] tracking-tight">เรดาร์ฝน</span>
         </button>
 
-        {/* 3. Center Hero: Report Flood (แจ้งน้ำท่วม - ปุ่มเด่นกลาง สดใส กดง่าย) */}
+        {/* 3. Center Hero: Report Flood (แจ้งเตือนน้ำท่วม - ปุ่มเด่นกลาง สดใส กดง่าย) */}
         <div className="flex-1 flex justify-center -mt-5">
           <button
             type="button"
             onClick={onOpenCitizenReport}
             className="flex flex-col items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-tr from-violet-600 via-indigo-600 to-blue-600 text-white shadow-lg shadow-violet-600/40 border-2 border-white dark:border-slate-900 active:scale-90 transition-transform cursor-pointer"
-            title="แจ้งจุดน้ำท่วมภาคประชาชน พร้อมแนบภาพ"
+            title="แจ้งเตือนน้ำท่วม"
           >
             <Camera className="w-5 h-5" />
-            <span className="text-[9px] font-bold tracking-tight mt-0.5">แจ้งน้ำ</span>
+            <span className="text-[9px] font-bold tracking-tight mt-0.5">แจ้งเตือน</span>
           </button>
         </div>
 

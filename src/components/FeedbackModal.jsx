@@ -116,10 +116,10 @@ export default function FeedbackModal({ isOpen, onClose, theme = 'light', onFeed
             </div>
             <div>
               <h2 className={`text-base sm:text-lg font-bold leading-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                กล่องรับฟังข้อเสนอแนะ & ติชม
+                ข้อเสนอต่อเว็บ
               </h2>
               <p className={`text-[11px] sm:text-xs mt-0.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                ความคิดเห็นของคุณจะส่งตรงถึงทีมผู้ดูแลระบบ (Admin) เพื่อนำไปปรับปรุง
+                ร่วมแสดงความคิดเห็นหรือเสนอแนะเพื่อร่วมพัฒนาเว็บไซต์รายงานน้ำท่วม
               </p>
             </div>
           </div>
@@ -144,10 +144,10 @@ export default function FeedbackModal({ isOpen, onClose, theme = 'light', onFeed
               </div>
               <div className="space-y-1">
                 <h3 className={`text-lg font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                  ส่งข้อเสนอแนะเรียบร้อยแล้ว!
+                  ส่งข้อเสนอต่อเว็บเรียบร้อยแล้ว!
                 </h3>
                 <p className={`text-xs max-w-sm mx-auto leading-relaxed ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
-                  ขอบพระคุณสำหรับข้อเสนอแนะและข้อคิดเห็นของท่าน ระบบได้บันทึกข้อมูลเข้าสู่ระบบจัดการของผู้ดูแลระบบ (Admin) เรียบร้อยแล้วครับ
+                  ขอบพระคุณสำหรับข้อเสนอแนะและข้อคิดเห็นของท่าน เพื่อร่วมพัฒนาเว็บไซต์รายงานน้ำท่วมสมุทรปราการครับ
                 </p>
               </div>
 
@@ -156,7 +156,7 @@ export default function FeedbackModal({ isOpen, onClose, theme = 'light', onFeed
               }`}>
                 <ShieldCheck className="w-4 h-4 text-emerald-500 shrink-0" />
                 <span className="text-[11px] text-left">
-                  ข้อมูลจะถูกเก็บเป็นความลับ และสามารถเปิดอ่านได้เฉพาะผู้ดูแลระบบที่ล็อกอินแล้วเท่านั้น
+                  ข้อมูลข้อเสนอแนะถูกบันทึกเข้าระบบเรียบร้อยแล้ว ขอบคุณสำหรับข้อมูลครับ
                 </span>
               </div>
 
@@ -304,13 +304,13 @@ export default function FeedbackModal({ isOpen, onClose, theme = 'light', onFeed
                 </div>
               </div>
 
-              {/* Privacy Notice */}
+              {/* Quality & Value Notice */}
               <div className={`p-2.5 rounded-xl border text-[11px] leading-relaxed flex items-center gap-2 ${
                 isDark ? 'bg-slate-950/60 border-slate-800 text-slate-400' : 'bg-slate-100 border-slate-200 text-slate-600'
               }`}>
                 <ShieldCheck className="w-4 h-4 text-teal-500 shrink-0" />
                 <span>
-                  🔒 <strong>ความปลอดภัย:</strong> ข้อความนี้จะถูกจัดส่งให้เฉพาะผู้ดูแลระบบ (Admin) ที่ผ่านการยืนยันตัวตนเท่านั้น
+                  💡 ทุกข้อคิดเห็นมีคุณค่าอย่างยิ่งในการพัฒนาปรับปรุงระบบรายงานน้ำท่วมให้ดียิ่งขึ้น
                 </span>
               </div>
 
@@ -328,7 +328,7 @@ export default function FeedbackModal({ isOpen, onClose, theme = 'light', onFeed
                 className="w-full py-3 rounded-xl bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-500 hover:to-cyan-500 active:scale-[0.99] text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md shadow-teal-600/25 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Send className="w-4 h-4" />
-                <span>{isSubmitting ? 'กำลังส่งข้อมูล...' : 'ส่งข้อเสนอแนะถึงแอดมิน'}</span>
+                <span>{isSubmitting ? 'กำลังส่งข้อมูล...' : 'ส่งข้อเสนอต่อเว็บ'}</span>
               </button>
 
             </form>

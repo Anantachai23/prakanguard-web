@@ -99,18 +99,37 @@ export default function App() {
       const saved = localStorage.getItem('prakanguard_points_state_v3');
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length === INITIAL_FLOOD_POINTS.length) {
-          const savedMap = new Map(parsed.map(p => [p.id, p]));
-          return INITIAL_FLOOD_POINTS.map(initPoint => {
-            const existing = savedMap.get(initPoint.id);
-            const merged = existing ? { ...initPoint, ...existing, aliases: initPoint.aliases, keywords: initPoint.keywords, lat: initPoint.lat, lng: initPoint.lng, cause: initPoint.cause, trafficStatus: initPoint.trafficStatus } : initPoint;
-            const lvl = getFloodLevel(merged.depthCm);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const initMap = new Map(INITIAL_FLOOD_POINTS.map(p => [p.id, p]));
+          const parsedIds = new Set(parsed.map(p => p.id));
+
+          // Merge saved items
+          const list = parsed.map(item => {
+            const initPoint = initMap.get(item.id);
+            const merged = initPoint 
+              ? { ...initPoint, ...item, aliases: item.aliases || initPoint.aliases, keywords: item.keywords || initPoint.keywords }
+              : item;
+            const lvl = merged.depthCm !== undefined ? getFloodLevel(merged.depthCm) : (merged.level || 0);
             return {
               ...merged,
               level: lvl,
-              depthRange: lvl === 3 ? '> 50 ซม.' : lvl === 2 ? '21 - 50 ซม.' : '5 - 20 ซม.'
+              depthRange: lvl === 3 ? '> 50 ซม.' : lvl === 2 ? '21 - 50 ซม.' : (merged.depthCm > 0 ? '5 - 20 ซม.' : '0 ซม. (แห้งปกติ)')
             };
           });
+
+          // Ensure any initial points that weren't in saved list are preserved
+          INITIAL_FLOOD_POINTS.forEach(ip => {
+            if (!parsedIds.has(ip.id)) {
+              const lvl = getFloodLevel(ip.depthCm);
+              list.push({
+                ...ip,
+                level: lvl,
+                depthRange: lvl === 3 ? '> 50 ซม.' : lvl === 2 ? '21 - 50 ซม.' : '5 - 20 ซม.'
+              });
+            }
+          });
+
+          return list;
         }
       }
     } catch (e) {}
@@ -649,9 +668,12 @@ export default function App() {
           const existing = existingStr ? JSON.parse(existingStr) : [];
           if (!existing.some(f => f.id === incomingFeedback.id)) {
             localStorage.setItem('prakanguard_feedback_items', JSON.stringify([incomingFeedback, ...existing]));
-            setLatestUpdateNotification(`💬 ได้รับข้อเสนอแนะใหม่จากประชาชน: "${incomingFeedback.categoryLabel || 'ทั่วไป'}"`);
-            playNotificationChime();
-            setTimeout(() => setLatestUpdateNotification(null), 7000);
+            window.dispatchEvent(new CustomEvent('prakanguard_feedback_updated', { detail: incomingFeedback }));
+            if (isAdminAuthenticated) {
+              setLatestUpdateNotification(`💬 ได้รับข้อเสนอต่อเว็บรายการใหม่: "${incomingFeedback.categoryLabel || 'ทั่วไป'}"`);
+              playNotificationChime();
+              setTimeout(() => setLatestUpdateNotification(null), 7000);
+            }
           }
         } catch (e) {}
       },
@@ -662,6 +684,12 @@ export default function App() {
           handleResolveReport(action.id, false);
         } else if (action.type === 'reject') {
           handleRejectReport(action.id, false);
+        } else if (action.type === 'ADD_POINT' && action.point) {
+          setPoints(prev => [action.point, ...prev.filter(p => p.id !== action.point.id)]);
+        } else if (action.type === 'UPDATE_POINT' && action.pointId) {
+          setPoints(prev => prev.map(p => p.id === action.pointId ? { ...p, ...action.updatedFields } : p));
+        } else if (action.type === 'DELETE_POINT' && action.pointId) {
+          setPoints(prev => prev.filter(p => p.id !== action.pointId));
         }
       }
     });
@@ -772,13 +800,17 @@ export default function App() {
       district: newReport.district,
       time: newReport.reportedAt
     });
+
+    setLatestUpdateNotification(`📍 บันทึกการแจ้งเตือนน้ำท่วม "${newReport.name}" เรียบร้อยแล้ว ขอบคุณที่ร่วมแจ้งข้อมูลครับ`);
+    setTimeout(() => setLatestUpdateNotification(null), 7000);
   };
 
   // Handle Feedback Submission
   const handleFeedbackSubmitted = (newFeedback) => {
     publishCloudFeedback(newFeedback);
     playNotificationChime();
-    setLatestUpdateNotification(`💬 บันทึกข้อเสนอแนะและส่งถึงแอดมินเรียบร้อยแล้ว ขอบพระคุณครับ`);
+    setLatestUpdateNotification(`💬 บันทึกข้อเสนอต่อเว็บเรียบร้อยแล้ว ขอบพระคุณสำหรับข้อเสนอแนะครับ`);
+    window.dispatchEvent(new CustomEvent('prakanguard_feedback_updated', { detail: newFeedback }));
     setTimeout(() => setLatestUpdateNotification(null), 6000);
   };
 
@@ -860,21 +892,149 @@ export default function App() {
     }
   };
 
-  // Map Picking Helpers
-  const handleStartPickOnMap = () => {
-    setIsCitizenReportModalOpen(false);
+  // Location Management Handlers (Continuous 6 Districts Telemetry)
+  const handleAddPoint = (newPoint) => {
+    setPoints(prev => {
+      const filtered = prev.filter(p => p.id !== newPoint.id);
+      const updated = [newPoint, ...filtered];
+      try {
+        localStorage.setItem('prakanguard_points_state_v3', JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
+
+    publishAdminAction({
+      type: 'ADD_POINT',
+      point: newPoint,
+      timestamp: Date.now()
+    });
+
+    setLatestUpdateNotification(`📍 เพิ่มจุดเฝ้าระวังใหม่: "${newPoint.name}" (อ.${newPoint.district}) สู่ระบบติดตาม Real-time 24 ชม.`);
+    playNotificationChime();
+    setTimeout(() => setLatestUpdateNotification(null), 6000);
+  };
+
+  const handleUpdatePoint = (pointId, updatedFields) => {
+    setPoints(prev => {
+      const updated = prev.map(p => {
+        if (p.id !== pointId) return p;
+        const merged = { ...p, ...updatedFields };
+        if (updatedFields.depthCm !== undefined) {
+          const lvl = getFloodLevel(updatedFields.depthCm);
+          merged.level = lvl;
+          merged.depthRange = lvl === 3 ? '> 50 ซม.' : lvl === 2 ? '21 - 50 ซม.' : (updatedFields.depthCm > 0 ? '5 - 20 ซม.' : '0 ซม. (แห้งปกติ)');
+          merged.isActive = updatedFields.depthCm > 0;
+          merged.isResolved = updatedFields.depthCm === 0;
+        }
+        return merged;
+      });
+      try {
+        localStorage.setItem('prakanguard_points_state_v3', JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
+
+    publishAdminAction({
+      type: 'UPDATE_POINT',
+      pointId,
+      updatedFields,
+      timestamp: Date.now()
+    });
+  };
+
+  const handleDeletePoint = (pointId) => {
+    setPoints(prev => {
+      const target = prev.find(p => p.id === pointId);
+      const updated = prev.filter(p => p.id !== pointId);
+      try {
+        localStorage.setItem('prakanguard_points_state_v3', JSON.stringify(updated));
+      } catch (e) {}
+      if (target) {
+        setLatestUpdateNotification(`🗑️ ลบจุดเฝ้าระวัง "${target.name}" ออกจากระบบเรียบร้อย`);
+        setTimeout(() => setLatestUpdateNotification(null), 5000);
+      }
+      return updated;
+    });
+
+    publishAdminAction({
+      type: 'DELETE_POINT',
+      pointId,
+      timestamp: Date.now()
+    });
+  };
+
+  const handleImportPoints = (pointsToImport) => {
+    if (!Array.isArray(pointsToImport) || pointsToImport.length === 0) return;
+    setPoints(prev => {
+      const existingIds = new Set(prev.map(p => p.id));
+      const existingNames = new Set(prev.map(p => p.name));
+      const newItems = pointsToImport.filter(p => !existingIds.has(p.id) && !existingNames.has(p.name));
+      const updated = [...newItems, ...prev];
+      try {
+        localStorage.setItem('prakanguard_points_state_v3', JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
+
+    publishAdminAction({
+      type: 'IMPORT_POINTS',
+      count: pointsToImport.length,
+      timestamp: Date.now()
+    });
+
+    setLatestUpdateNotification(`📥 นำเข้าจุดเฝ้าระวังทางการสำเร็จ +${pointsToImport.length} จุด (ครอบคลุม 6 อำเภอ)`);
+    playNotificationChime();
+    setTimeout(() => setLatestUpdateNotification(null), 7000);
+  };
+
+  const handleResetPoints = () => {
+    const defaultPoints = INITIAL_FLOOD_POINTS.map(p => {
+      const lvl = getFloodLevel(p.depthCm);
+      return {
+        ...p,
+        level: lvl,
+        depthRange: lvl === 3 ? '> 50 ซม.' : lvl === 2 ? '21 - 50 ซม.' : '5 - 20 ซม.'
+      };
+    });
+    setPoints(defaultPoints);
+    try {
+      localStorage.setItem('prakanguard_points_state_v3', JSON.stringify(defaultPoints));
+    } catch (e) {}
+
+    setLatestUpdateNotification('🔄 คืนค่าจุดเฝ้าระวังมาตรฐาน 30 จุด เรียบร้อยแล้ว');
+    setTimeout(() => setLatestUpdateNotification(null), 5000);
+  };
+
+  // Map Picking Helpers with source routing ('citizen' or 'admin')
+  const [pickSource, setPickSource] = useState('citizen');
+
+  const handleStartPickOnMap = (source = 'citizen') => {
+    setPickSource(source);
+    if (source === 'admin') {
+      setIsAdminModalOpen(false);
+    } else {
+      setIsCitizenReportModalOpen(false);
+    }
     setIsPickingLocationOnMap(true);
   };
 
   const handleMapLocationPicked = (coords) => {
     setPickedCoords(coords);
     setIsPickingLocationOnMap(false);
-    setIsCitizenReportModalOpen(true);
+    if (pickSource === 'admin') {
+      setIsAdminModalOpen(true);
+    } else {
+      setIsCitizenReportModalOpen(true);
+    }
   };
 
   const handleCancelPickOnMap = () => {
     setIsPickingLocationOnMap(false);
-    setIsCitizenReportModalOpen(true);
+    if (pickSource === 'admin') {
+      setIsAdminModalOpen(true);
+    } else {
+      setIsCitizenReportModalOpen(true);
+    }
   };
 
   const handleFlyToCoords = (lat, lng) => {
@@ -1758,11 +1918,19 @@ export default function App() {
         isOpen={isAdminModalOpen}
         onClose={() => setIsAdminModalOpen(false)}
         citizenReports={citizenReports}
+        points={points}
         onApproveReport={handleApproveReport}
         onRejectReport={handleRejectReport}
         onResolveReport={handleResolveReport}
         onAddAdminBroadcast={handleAddAdminBroadcast}
+        onAddPoint={handleAddPoint}
+        onUpdatePoint={handleUpdatePoint}
+        onDeletePoint={handleDeletePoint}
+        onImportPoints={handleImportPoints}
+        onResetPoints={handleResetPoints}
         onFlyToCoords={handleFlyToCoords}
+        onPickLocationOnMap={() => handleStartPickOnMap('admin')}
+        pickedCoords={pickedCoords}
         onAuthChange={setIsAdminAuthenticated}
         theme={theme}
       />
@@ -1778,7 +1946,7 @@ export default function App() {
       />
 
       {/* Real-time Alert Toast Notification for Admin when new reports arrive */}
-      {adminAlertToast && (
+      {isAdminAuthenticated && adminAlertToast && (
         <div className="fixed top-16 sm:top-20 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-top-4 duration-300 pointer-events-auto max-w-md w-[92vw]">
           <div className={`p-3.5 sm:p-4 rounded-2xl shadow-2xl border flex items-center justify-between gap-3 ${
             isDark ? 'bg-slate-900/98 border-amber-500 text-white shadow-amber-500/20' : 'bg-white border-amber-400 text-slate-900 shadow-xl'
