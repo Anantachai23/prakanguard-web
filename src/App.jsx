@@ -62,7 +62,13 @@ export default function App() {
       const saved = localStorage.getItem('prakanguard_points_state');
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const savedMap = new Map(parsed.map(p => [p.id, p]));
+          return INITIAL_FLOOD_POINTS.map(initPoint => {
+            const existing = savedMap.get(initPoint.id);
+            return existing ? { ...initPoint, ...existing, aliases: initPoint.aliases, keywords: initPoint.keywords, lat: initPoint.lat, lng: initPoint.lng } : initPoint;
+          });
+        }
       }
     } catch (e) {}
     return INITIAL_FLOOD_POINTS;
@@ -113,7 +119,19 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const searchInputRef = useRef(null);
+  const searchContainerRef = useRef(null);
   const [isTopPanelCollapsed, setIsTopPanelCollapsed] = useState(false);
+
+  // Close search dropdown on click outside
+  useEffect(() => {
+    const handleOutsideClick = (e) => {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(e.target)) {
+        setIsSearchFocused(false);
+      }
+    };
+    document.addEventListener('pointerdown', handleOutsideClick);
+    return () => document.removeEventListener('pointerdown', handleOutsideClick);
+  }, []);
 
   // District Filter Smooth Drag & Cinematic Scroll Controllers (60fps fluid interpolation)
   const districtScrollRef = useRef(null);
@@ -769,6 +787,31 @@ export default function App() {
     }
   };
 
+  // Dedicated selection handler for popular search suggestion items
+  const handleSelectPopularSuggestion = (item) => {
+    let match = points.find(p => p.id === item.pointId);
+    if (!match) {
+      match = INITIAL_FLOOD_POINTS.find(p => p.id === item.pointId);
+    }
+    if (!match) {
+      match = points.find(p => matchesLocationSearch(p, item.query)) ||
+              citizenReports.find(cr => matchesLocationSearch(cr, item.query));
+    }
+    if (!match) {
+      match = {
+        id: item.pointId || `suggest-${Date.now()}`,
+        name: item.label,
+        district: item.district,
+        lat: item.lat,
+        lng: item.lng,
+        statusLabel: "จุดเฝ้าระวังซ้ำซาก",
+        depthRange: "15 - 30 ซม.",
+        level: 2
+      };
+    }
+    handleSelectLocation(match);
+  };
+
   // Count pending unapproved reports for Admin
   const pendingReportsCount = useMemo(() => {
     return citizenReports.filter(r => r.isApproved === false).length;
@@ -969,7 +1012,7 @@ export default function App() {
         }`}>
           
           {/* Quick Search Bar (Clean & Focused, Share Removed) */}
-          <div className="pointer-events-auto flex items-center gap-1.5">
+          <div ref={searchContainerRef} className="pointer-events-auto flex items-center gap-1.5 relative">
             <div className="relative flex-1">
               <input
                 ref={searchInputRef}
@@ -977,7 +1020,6 @@ export default function App() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onFocus={() => setIsSearchFocused(true)}
-                onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
                     e.preventDefault();
@@ -1004,10 +1046,7 @@ export default function App() {
               {searchQuery && (
                 <button
                   type="button"
-                  onMouseDown={(e) => {
-                    e.preventDefault();
-                    setSearchQuery("");
-                  }}
+                  onClick={() => setSearchQuery("")}
                   className={`absolute right-2.5 top-2.5 cursor-pointer ${
                     isDark ? 'text-slate-400 hover:text-slate-200' : 'text-slate-400 hover:text-slate-700'
                   }`}
@@ -1029,19 +1068,15 @@ export default function App() {
                       </div>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 max-h-56 overflow-y-auto pr-0.5">
                         {POPULAR_SEARCH_SUGGESTIONS.map((item, idx) => (
-                          <div
+                          <button
                             key={idx}
-                            onMouseDown={(e) => {
+                            type="button"
+                            onClick={() => handleSelectPopularSuggestion(item)}
+                            onPointerDown={(e) => {
                               e.preventDefault();
-                              const match = points.find(p => matchesLocationSearch(p, item.query)) ||
-                                            citizenReports.find(cr => matchesLocationSearch(cr, item.query));
-                              if (match) {
-                                handleSelectLocation(match);
-                              } else {
-                                setSearchQuery(item.query);
-                              }
+                              handleSelectPopularSuggestion(item);
                             }}
-                            className={`p-2 rounded-xl cursor-pointer border transition-all text-left flex flex-col justify-between ${
+                            className={`w-full p-2.5 rounded-xl cursor-pointer border transition-all text-left flex flex-col justify-between select-none active:scale-[0.98] ${
                               isDark 
                                 ? 'bg-slate-800/80 hover:bg-blue-900/40 border-slate-700/80 hover:border-blue-500/60 text-slate-200' 
                                 : 'bg-slate-50 hover:bg-blue-50 border-slate-200/80 hover:border-blue-300 text-slate-800'
@@ -1058,7 +1093,7 @@ export default function App() {
                             <span className={`text-[10px] truncate ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
                               {item.sub}
                             </span>
-                          </div>
+                          </button>
                         ))}
                       </div>
                     </div>
@@ -1071,17 +1106,12 @@ export default function App() {
                           <button
                             key={idx}
                             type="button"
-                            onMouseDown={(e) => {
+                            onClick={() => handleSelectPopularSuggestion(item)}
+                            onPointerDown={(e) => {
                               e.preventDefault();
-                              const match = points.find(p => matchesLocationSearch(p, item.query)) ||
-                                            citizenReports.find(cr => matchesLocationSearch(cr, item.query));
-                              if (match) {
-                                handleSelectLocation(match);
-                              } else {
-                                setSearchQuery(item.query);
-                              }
+                              handleSelectPopularSuggestion(item);
                             }}
-                            className="px-2 py-1 rounded-lg text-[10px] bg-blue-500/10 text-blue-500 hover:bg-blue-500 hover:text-white border border-blue-400/20 font-medium transition-colors cursor-pointer"
+                            className="px-2.5 py-1 rounded-lg text-[10px] bg-blue-500/10 text-blue-500 hover:bg-blue-500 hover:text-white border border-blue-400/20 font-medium transition-colors cursor-pointer active:scale-95"
                           >
                             {item.label}
                           </button>
@@ -1092,13 +1122,15 @@ export default function App() {
                     <div className="flex flex-col gap-1 max-h-60 overflow-y-auto">
                       {/* Official points */}
                       {searchResultsOfficial.map(p => (
-                        <div
+                        <button
                           key={p.id}
-                          onMouseDown={(e) => {
+                          type="button"
+                          onClick={() => handleSelectLocation(p)}
+                          onPointerDown={(e) => {
                             e.preventDefault();
                             handleSelectLocation(p);
                           }}
-                          className={`p-2 rounded-xl cursor-pointer flex items-center justify-between transition-colors ${
+                          className={`w-full p-2.5 rounded-xl cursor-pointer flex items-center justify-between transition-colors text-left select-none active:scale-[0.98] ${
                             isDark ? 'hover:bg-slate-800 text-slate-200' : 'hover:bg-blue-50 text-slate-800'
                           }`}
                         >
@@ -1115,18 +1147,20 @@ export default function App() {
                           }`}>
                             {p.statusLabel}
                           </span>
-                        </div>
+                        </button>
                       ))}
 
                       {/* Citizen reports */}
                       {searchResultsCitizen.map(cr => (
-                        <div
+                        <button
                           key={cr.id}
-                          onMouseDown={(e) => {
+                          type="button"
+                          onClick={() => handleSelectLocation(cr)}
+                          onPointerDown={(e) => {
                             e.preventDefault();
                             handleSelectLocation(cr);
                           }}
-                          className={`p-2 rounded-xl cursor-pointer flex items-center justify-between transition-colors border-t border-dashed ${
+                          className={`w-full p-2.5 rounded-xl cursor-pointer flex items-center justify-between transition-colors border-t border-dashed text-left select-none active:scale-[0.98] ${
                             isDark ? 'hover:bg-violet-950/50 text-slate-200 border-slate-800' : 'hover:bg-violet-50 text-slate-800 border-slate-100'
                           }`}
                         >
@@ -1139,7 +1173,7 @@ export default function App() {
                           <span className={`text-[10px] px-2 py-0.5 rounded font-bold shrink-0 bg-violet-100 text-violet-800 border border-violet-200`}>
                             ภาคประชาชน
                           </span>
-                        </div>
+                        </button>
                       ))}
                     </div>
                   )}

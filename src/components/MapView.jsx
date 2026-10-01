@@ -209,7 +209,12 @@ export default function MapView({
     const map = mapInstanceRef.current;
     if (!map) return;
 
-    if (Date.now() - lastFlyToTimeRef.current < 1500) {
+    // If an explicit location flyTo was requested with this update, DO NOT fly to district center!
+    if (flyToLocation && flyToLocation.ts && Date.now() - flyToLocation.ts < 3500) {
+      return;
+    }
+
+    if (Date.now() - lastFlyToTimeRef.current < 2000) {
       return;
     }
 
@@ -467,6 +472,9 @@ export default function MapView({
     lastFlyToTimeRef.current = Date.now();
     const targetZoom = flyToLocation.zoom || 16.5;
 
+    // Immediately stop any running transition to prevent collision
+    map.stop();
+
     map.flyTo([flyToLocation.lat, flyToLocation.lng], targetZoom, {
       duration: 1.2,
       easeLinearity: 0.25
@@ -482,7 +490,8 @@ export default function MapView({
       };
 
       map.once('moveend', openTargetPopup);
-      setTimeout(openTargetPopup, 700);
+      setTimeout(openTargetPopup, 650);
+      setTimeout(openTargetPopup, 1300);
     }
   }, [flyToLocation]);
 
@@ -491,8 +500,11 @@ export default function MapView({
     const map = mapInstanceRef.current;
     if (!map || !selectedPoint || selectedPoint.lat == null || selectedPoint.lng == null) return;
 
-    // If flyToLocation already navigated recently, avoid duplicate camera animation
-    if (Date.now() - lastFlyToTimeRef.current < 1500) {
+    // If flyToLocation is already active, skip duplicate flyTo
+    if (flyToLocation && flyToLocation.ts && Date.now() - flyToLocation.ts < 3000) {
+      return;
+    }
+    if (Date.now() - lastFlyToTimeRef.current < 2000) {
       const marker = markersByIdRef.current[selectedPoint.id];
       if (marker && map.hasLayer(marker)) {
         setTimeout(() => marker.openPopup(), 400);
@@ -501,6 +513,7 @@ export default function MapView({
     }
 
     lastFlyToTimeRef.current = Date.now();
+    map.stop();
     map.flyTo([selectedPoint.lat, selectedPoint.lng], 16.5, {
       duration: 1.2,
       easeLinearity: 0.25
@@ -513,7 +526,8 @@ export default function MapView({
       }
     };
     map.once('moveend', openPopupOnSelected);
-    setTimeout(openPopupOnSelected, 700);
+    setTimeout(openPopupOnSelected, 650);
+    setTimeout(openPopupOnSelected, 1300);
   }, [selectedPoint]);
 
   const resetView = () => {
