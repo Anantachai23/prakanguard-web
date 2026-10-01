@@ -19,8 +19,78 @@
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   </head>
-  <body class="bg-slate-50 text-slate-800 font-prompt antialiased selection:bg-blue-600 selection:text-white">
-    <div id="root"></div>
+  <body class="bg-slate-900 text-slate-100 font-prompt antialiased selection:bg-blue-600 selection:text-white">
+    <div id="root">
+      <!-- Pre-rendered Updating & Initial Loading Screen (Prevents White Screen during Deployments / Asset Loading) -->
+      <div id="prakanguard-splash-loader" style="position: fixed; inset: 0; z-index: 99999; display: flex; flex-direction: column; align-items: center; justify-content: center; background: radial-gradient(circle at 50% 35%, #0f2744 0%, #071224 55%, #030712 100%); color: #f8fafc; font-family: 'Prompt', -apple-system, BlinkMacSystemFont, sans-serif; padding: 24px; text-align: center; box-sizing: border-box;">
+        
+        <!-- Animated Shield Icon with Pulse Halo -->
+        <div style="position: relative; width: 88px; height: 88px; margin-bottom: 24px;">
+          <div style="position: absolute; inset: -8px; border-radius: 28px; background: rgba(14, 165, 233, 0.25); animation: pg-pulse-ring 2.2s cubic-bezier(0, 0, 0.2, 1) infinite;"></div>
+          <div style="position: relative; width: 100%; height: 100%; background: linear-gradient(135deg, #0284c7 0%, #1d4ed8 100%); border-radius: 24px; box-shadow: 0 16px 36px -6px rgba(2, 132, 199, 0.6); display: flex; align-items: center; justify-content: center; border: 1.5px solid rgba(255,255,255,0.25);">
+            <svg xmlns="http://www.w3.org/2000/svg" width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+              <path d="m9 12 2 2 4-4"/>
+            </svg>
+          </div>
+        </div>
+
+        <!-- Project Badge -->
+        <div style="display: inline-flex; align-items: center; gap: 8px; padding: 6px 16px; background: rgba(56, 189, 248, 0.12); border: 1px solid rgba(56, 189, 248, 0.35); border-radius: 9999px; font-size: 13px; font-weight: 600; color: #38bdf8; margin-bottom: 16px; letter-spacing: 0.02em;">
+          <span style="width: 8px; height: 8px; border-radius: 50%; background: #38bdf8; box-shadow: 0 0 10px #38bdf8; animation: pg-glow 1.5s infinite alternate;"></span>
+          PrakanGuard AI • ศูนย์ข้อมูลอุทกภัยสมุทรปราการ
+        </div>
+
+        <!-- Main Status Heading -->
+        <h1 style="font-size: 24px; font-weight: 700; margin: 0 0 10px 0; color: #ffffff; letter-spacing: -0.01em;">
+          กำลังทำการอัปเดตระบบ...
+        </h1>
+
+        <!-- Explanatory Subtext for Users -->
+        <p style="font-size: 14px; color: #94a3b8; max-width: 440px; line-height: 1.65; margin: 0 0 24px 0; font-weight: 400;">
+          กำลังทำการอัปเดตโปรดรอสักครู่ เว็บไซต์จะเปิดให้บริการทันทีหลังการอัปเดตเสร็จสิ้น
+        </p>
+
+        <!-- Shimmering Progress Bar -->
+        <div style="width: 220px; height: 5px; background: rgba(255, 255, 255, 0.12); border-radius: 9999px; overflow: hidden; margin-bottom: 18px;">
+          <div style="width: 100%; height: 100%; background: linear-gradient(90deg, #38bdf8, #60a5fa, #38bdf8); background-size: 200% 100%; animation: pg-shimmer 1.8s infinite linear;"></div>
+        </div>
+
+        <span style="font-size: 12px; color: #64748b;">
+          กำลังเชื่อมต่อข้อมูลเรียลไทม์ TMD, ปภ. และกรมอุทกศาสตร์ กองทัพเรือ
+        </span>
+
+        <style>
+          @keyframes pg-pulse-ring {
+            0% { transform: scale(0.95); opacity: 0.8; }
+            50% { transform: scale(1.15); opacity: 0.2; }
+            100% { transform: scale(0.95); opacity: 0.8; }
+          }
+          @keyframes pg-glow {
+            from { opacity: 0.4; }
+            to { opacity: 1; }
+          }
+          @keyframes pg-shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+          }
+        </style>
+      </div>
+    </div>
+
+    <!-- Automatic Chunk Reload Handler for Vercel Deployments -->
+    <script>
+      window.addEventListener('error', function(e) {
+        if (e.message && (
+          e.message.indexOf('Failed to fetch dynamically imported module') > -1 ||
+          e.message.indexOf('Loading chunk') > -1 ||
+          e.message.indexOf('dynamically imported') > -1
+        )) {
+          console.warn('New deployment detected, reloading to fetch latest assets...');
+          setTimeout(function() { window.location.reload(); }, 1500);
+        }
+      });
+    </script>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
