@@ -11,7 +11,8 @@ import {
   ShieldAlert,
   ChevronLeft,
   ChevronRight,
-  MessageSquare
+  MessageSquare,
+  GraduationCap
 } from 'lucide-react';
 import AutoMarquee from './AutoMarquee';
 import RealTimeClock from './RealTimeClock';
@@ -145,32 +146,15 @@ export default function Navbar({
 
             {/* Responsive Animated Marquee Scrolling Left */}
             <div className="w-24 xs:w-36 sm:w-48 md:w-56 lg:w-64 overflow-hidden mt-0.5">
-              <AutoMarquee speedSeconds={20} gapPx={32} force={true}>
+              <AutoMarquee speedSeconds={18} gapPx={24} force={true}>
                 <div className="inline-flex items-center gap-2 text-[10px] sm:text-[11px] whitespace-nowrap">
                   <span className={`font-semibold ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>
-                    ระบบเฝ้าระวังอุทกภัย จ.สมุทรปราการ
-                  </span>
-                  <span className="text-slate-400">•</span>
-                  <span className={`px-1.5 py-0.2 rounded-full font-bold inline-flex items-center gap-1 ${
-                    isDark ? 'bg-blue-950/90 text-blue-300 border border-blue-800' : 'bg-blue-50 text-blue-700 border border-blue-200'
-                  }`}>
-                    <span className="w-1 h-1 rounded-full bg-blue-500 animate-pulse"></span>
-                    <span>อ้างอิงเกณฑ์ ปภ. / กรมทางหลวง</span>
+                    ระบบเฝ้าระวังน้ำท่วมผิวจราจร จ.สมุทรปราการ (6 อำเภอ)
                   </span>
                   <span className="text-slate-400">•</span>
                   <span className={isDark ? 'text-slate-300' : 'text-slate-600'}>
-                    เฝ้าระวังผิวจราจร 6 อำเภอ
+                    อ้างอิงเกณฑ์ ปภ.
                   </span>
-                  <span className="text-slate-400">•</span>
-                  <button 
-                    onClick={onOpenWelcome}
-                    className={`underline underline-offset-2 font-bold cursor-pointer transition-colors ${
-                      isDark ? 'text-cyan-400 hover:text-cyan-300' : 'text-blue-600 hover:text-blue-800'
-                    }`}
-                    title="คลิกอ่านคำชี้แจงกลุ่มนักเรียน"
-                  >
-                    กลุ่มนักเรียน
-                  </button>
                 </div>
               </AutoMarquee>
             </div>
@@ -273,6 +257,20 @@ export default function Navbar({
               <span>เกณฑ์ ปภ.</span>
             </button>
 
+            {/* Student Developers / Credits Button */}
+            <button 
+              onClick={onOpenWelcome}
+              className={`shrink-0 px-2 sm:px-2.5 py-1.5 rounded-xl border text-xs font-semibold flex items-center gap-1 transition-all cursor-pointer shadow-xs whitespace-nowrap ${
+                isDark 
+                  ? 'bg-slate-900 hover:bg-slate-800 text-slate-200 border-slate-700 hover:text-cyan-300 hover:border-cyan-500/50' 
+                  : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200 hover:border-blue-300'
+              }`}
+              title="คณะผู้จัดทำโครงงาน (ทีมพัฒนานักเรียน)"
+            >
+              <GraduationCap className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+              <span>ผู้จัดทำ</span>
+            </button>
+
             {/* Real-time Stations & Radar Button */}
             <button 
               onClick={onOpenAiForecast}
@@ -322,7 +320,7 @@ export default function Navbar({
               }`}
             >
               <MessageSquare className="w-3.5 h-3.5 text-teal-500 shrink-0" />
-              <span>ติชม/ข้อเสนอแนะ</span>
+              <span>ข้อเสนอแนะ</span>
             </button>
 
             {/* Admin Management System Button - Explicitly Labeled ADMIN */}

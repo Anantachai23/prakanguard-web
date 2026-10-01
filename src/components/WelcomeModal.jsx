@@ -94,6 +94,50 @@ export default function WelcomeModal({ isOpen, onClose, onEnterWithLocation, the
             </p>
           </div>
 
+          {/* Student Developer Team Credits */}
+          <div className={`p-3.5 sm:p-4 rounded-2xl border shadow-xs space-y-2.5 ${
+            isDark ? 'bg-slate-850/90 border-slate-700' : 'bg-slate-50 border-slate-200'
+          }`}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <GraduationCap className={`w-4 h-4 shrink-0 ${isDark ? 'text-cyan-400' : 'text-blue-600'}`} />
+                <h4 className={`text-xs font-bold uppercase tracking-wider ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                  คณะผู้จัดทำ (ทีมพัฒนานักเรียน)
+                </h4>
+              </div>
+              <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold border ${
+                isDark ? 'bg-blue-950 text-cyan-300 border-blue-800' : 'bg-blue-50 text-blue-700 border-blue-200'
+              }`}>
+                ผู้พัฒนา
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+              {[
+                "นาย อนันตชัย สายสิญจน์",
+                "นาย ณรัณ ตันวิเชียร",
+                "นาย วิชญ์ วิโนทัย",
+                "นางสาว สุธิมา ตรัยรัตนทวี"
+              ].map((name, idx) => (
+                <div 
+                  key={idx}
+                  className={`p-2.5 rounded-xl border flex items-center gap-2.5 transition-all ${
+                    isDark 
+                      ? 'bg-slate-800/80 border-slate-700/80 hover:border-blue-500/50' 
+                      : 'bg-white border-slate-200 shadow-2xs hover:border-blue-300'
+                  }`}
+                >
+                  <div className="w-6 h-6 rounded-full bg-blue-600 text-white font-bold text-xs flex items-center justify-center shrink-0">
+                    {idx + 1}
+                  </div>
+                  <span className={`text-xs font-bold truncate ${isDark ? 'text-slate-100' : 'text-slate-800'}`}>
+                    {name}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+
           {/* Data Reference & Disclaimers */}
           <div className={`space-y-2 p-3.5 sm:p-4 rounded-2xl border ${
             isDark ? 'bg-slate-855/80 border-slate-700' : 'bg-slate-50 border-slate-200'
@@ -136,7 +180,7 @@ export default function WelcomeModal({ isOpen, onClose, onEnterWithLocation, the
           isDark ? 'border-slate-800 bg-slate-950/80' : 'border-slate-200 bg-slate-50'
         }`}>
           <span className={`text-[11px] hidden sm:inline ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-            PrakanGuard • จัดทำโดยกลุ่มนักเรียน
+            PrakanGuard • จัดทำโดย: อนันตชัย, ณรัณ, วิชญ์, สุธิมา
           </span>
           <button
             onClick={handleEnter}

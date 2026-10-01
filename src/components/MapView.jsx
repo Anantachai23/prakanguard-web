@@ -6,6 +6,7 @@ import {
   SAMUT_PRAKAN_DISTRICTS_GEOJSON, 
   DISTRICT_METADATA 
 } from '../data/samutPrakanBoundary';
+import { getFloodLevel } from '../data/floodStandards';
 
 export default function MapView({ 
   points, 
@@ -251,20 +252,26 @@ export default function MapView({
     markersRef.current = [];
 
     points.forEach(point => {
-      const isL3 = point.level === 3;
-      const isL2 = point.level === 2;
+      // 100% strictly adhere to the 3-Tier standard:
+      // Level 1: 8 - 20 cm
+      // Level 2: 21 - 60 cm
+      // Level 3: > 60 cm
+      const effectiveLevel = (point.depthCm !== undefined && point.depthCm !== null) 
+        ? getFloodLevel(point.depthCm) 
+        : (point.level || 1);
+      const isL3 = effectiveLevel === 3;
+      const isL2 = effectiveLevel === 2;
       const levelClass = isL3 ? 'beacon-level-3' : (isL2 ? 'beacon-level-2' : 'beacon-level-1');
       const pulseClass = isL3 ? 'pulse-l3' : (isL2 ? 'pulse-l2' : 'pulse-l1');
+      const levelBadgeName = isL3 ? '🔴 วิกฤต' : (isL2 ? '🟠 เสี่ยงสูง' : '🟢 ปกติ');
+      const depthBadgeText = point.depthCm ? `${point.depthCm} ซม.` : point.depthRange;
 
-      // High contrast telemetry beacon with water droplet
+      // Clean, ultra-readable marker showing depth in cm or water droplet
       const markerHtml = `
-        <div class="telemetry-pin" title="${point.name}">
+        <div class="telemetry-pin" title="${point.name} (${depthBadgeText})">
           <div class="beacon-pulse ${pulseClass}"></div>
           <div class="beacon-core ${levelClass}">
-            <svg style="width:15px;height:15px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" fill="currentColor" fill-opacity="0.35" />
-              <path d="M7 14c1.5-.8 3.5-.8 5 0s3.5.8 5 0" stroke="white" stroke-width="2" />
-            </svg>
+            <span style="font-size:10px;font-weight:800;color:#ffffff;line-height:1;font-family:'Prompt',sans-serif;">${point.depthCm || ''}</span>
           </div>
         </div>
       `;
@@ -279,7 +286,7 @@ export default function MapView({
 
       const marker = L.marker([point.lat, point.lng], { icon: customIcon }).addTo(map);
 
-      // Clean Daylight Micro-Popup
+      // Clean Daylight Micro-Popup without clutter
       const levelBg = isL3 ? '#ffe4e6' : (isL2 ? '#fef3c7' : '#d1fae5');
       const levelText = isL3 ? '#9f1239' : (isL2 ? '#92400e' : '#065f46');
       const levelBorder = isL3 ? '#f43f5e' : (isL2 ? '#f59e0b' : '#10b981');
@@ -289,15 +296,15 @@ export default function MapView({
         <div style="font-family:'Prompt',sans-serif;padding:6px 4px 4px 4px;min-width:180px;">
           <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:6px;">
             <div style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:6px;${levelStyle}">
-              ${point.statusLabel}
+              ${levelBadgeName} (${point.depthRange})
             </div>
             <span style="font-size:10px;color:#64748b;font-weight:600;">อ.${point.district}</span>
           </div>
           <div style="font-size:12px;font-weight:700;color:#0f172a;line-height:1.3;margin-bottom:4px;">
             ${point.name}
           </div>
-          <div style="font-size:11px;color:#0284c7;font-weight:600;margin-bottom:8px;">
-            ระดับความลึก: ${point.depthRange}
+          <div style="font-size:11px;color:${isL3 ? '#e11d48' : isL2 ? '#d97706' : '#059669'};font-weight:700;margin-bottom:8px;">
+            ระดับน้ำ: ${depthBadgeText}
           </div>
           <button id="popup-btn-${point.id}" style="width:100%;padding:6px 10px;background:#2563eb;color:white;border:none;border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;">
             <span>ดูรายละเอียด &rarr;</span>
@@ -661,7 +668,7 @@ export default function MapView({
 
           <div className="flex items-center space-x-1.5">
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
-            <span className={`font-medium ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>เฝ้าระวัง (8-20 ซม.)</span>
+            <span className={`font-medium ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>ปกติ (8-20 ซม.)</span>
           </div>
 
           <span className={isDark ? 'text-slate-700' : 'text-slate-300'}>•</span>
@@ -684,7 +691,7 @@ export default function MapView({
               <div className="flex items-center space-x-1.5">
                 <span className="w-2.5 h-2.5 rounded-full bg-violet-500 animate-pulse"></span>
                 <span className={`font-bold ${isDark ? 'text-violet-300' : 'text-violet-700'}`}>
-                  แจ้งโดยประชาชน ({citizenReports.length})
+                  ประชาชนแจ้ง ({citizenReports.length})
                 </span>
               </div>
             </>

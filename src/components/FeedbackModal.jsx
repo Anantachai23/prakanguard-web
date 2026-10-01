@@ -241,11 +241,15 @@ export default function FeedbackModal({ isOpen, onClose, theme = 'light', onFeed
                   onChange={(e) => setMessage(e.target.value)}
                   placeholder="เขียนข้อเสนอแนะ เช่น จุดไหนที่อยากให้ปรับปรุง, ฟังก์ชันที่อยากให้มี, หรือความรู้สึกจากการใช้งาน..."
                   rows={4}
-                  className={`w-full p-3 rounded-xl border text-xs leading-relaxed outline-none transition-all ${
+                  className={`w-full p-3 rounded-xl border text-xs sm:text-sm leading-relaxed outline-none transition-all ${
                     isDark 
-                      ? 'bg-slate-850 border-slate-700 text-slate-100 placeholder-slate-500 focus:border-teal-400' 
-                      : 'bg-white border-slate-300 text-slate-900 placeholder-slate-400 focus:border-teal-500'
+                      ? 'bg-slate-900 border-slate-700 text-slate-100 placeholder-slate-400 focus:border-teal-400 focus:ring-1 focus:ring-teal-400' 
+                      : 'bg-white border-slate-300 text-slate-900 placeholder-slate-400 focus:border-teal-500 focus:ring-1 focus:ring-teal-500'
                   }`}
+                  style={{
+                    backgroundColor: isDark ? '#0f172a' : '#ffffff',
+                    color: isDark ? '#f8fafc' : '#0f172a'
+                  }}
                   required
                 />
               </div>
@@ -263,11 +267,15 @@ export default function FeedbackModal({ isOpen, onClose, theme = 'light', onFeed
                       value={senderName}
                       onChange={(e) => setSenderName(e.target.value)}
                       placeholder="เช่น สมศักดิ์ หรือ ปล่อยว่าง"
-                      className={`w-full pl-8 pr-3 py-2 rounded-xl border text-xs outline-none transition-all ${
+                      className={`w-full pl-8 pr-3 py-2 rounded-xl border text-xs sm:text-sm outline-none transition-all ${
                         isDark 
-                          ? 'bg-slate-850 border-slate-700 text-slate-100 placeholder-slate-500 focus:border-teal-400' 
-                          : 'bg-white border-slate-300 text-slate-900 placeholder-slate-400 focus:border-teal-500'
+                          ? 'bg-slate-900 border-slate-700 text-slate-100 placeholder-slate-400 focus:border-teal-400 focus:ring-1 focus:ring-teal-400' 
+                          : 'bg-white border-slate-300 text-slate-900 placeholder-slate-400 focus:border-teal-500 focus:ring-1 focus:ring-teal-500'
                       }`}
+                      style={{
+                        backgroundColor: isDark ? '#0f172a' : '#ffffff',
+                        color: isDark ? '#f8fafc' : '#0f172a'
+                      }}
                     />
                   </div>
                 </div>
@@ -283,11 +291,15 @@ export default function FeedbackModal({ isOpen, onClose, theme = 'light', onFeed
                       value={contact}
                       onChange={(e) => setContact(e.target.value)}
                       placeholder="เช่น 08X-XXX-XXXX"
-                      className={`w-full pl-8 pr-3 py-2 rounded-xl border text-xs outline-none transition-all ${
+                      className={`w-full pl-8 pr-3 py-2 rounded-xl border text-xs sm:text-sm outline-none transition-all ${
                         isDark 
-                          ? 'bg-slate-850 border-slate-700 text-slate-100 placeholder-slate-500 focus:border-teal-400' 
-                          : 'bg-white border-slate-300 text-slate-900 placeholder-slate-400 focus:border-teal-500'
+                          ? 'bg-slate-900 border-slate-700 text-slate-100 placeholder-slate-400 focus:border-teal-400 focus:ring-1 focus:ring-teal-400' 
+                          : 'bg-white border-slate-300 text-slate-900 placeholder-slate-400 focus:border-teal-500 focus:ring-1 focus:ring-teal-500'
                       }`}
+                      style={{
+                        backgroundColor: isDark ? '#0f172a' : '#ffffff',
+                        color: isDark ? '#f8fafc' : '#0f172a'
+                      }}
                     />
                   </div>
                 </div>

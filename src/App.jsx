@@ -1058,7 +1058,7 @@ export default function App() {
                     searchInputRef.current?.blur();
                   }
                 }}
-                placeholder="ค้นหาจุดเสี่ยงหรือชื่อเรียกติดปาก (เช่น บางฉโลง, สำโรง, ทรัพย์บุญชัย, กิ่งแก้ว, หนามแดง)..."
+                placeholder="ค้นหาจุดเสี่ยงหรือชื่อถนน (เช่น บางฉโลง, กิ่งแก้ว, วัดด่าน)..."
                 className={`w-full text-xs sm:text-sm pl-9 pr-8 py-2 rounded-2xl border shadow-md focus:outline-none transition-colors backdrop-blur-md font-medium ${
                   isDark 
                     ? 'bg-slate-900/95 text-slate-100 border-slate-700 placeholder-slate-500 focus:border-blue-400 focus:ring-2 focus:ring-blue-900/50' 
@@ -1087,7 +1087,7 @@ export default function App() {
                     <div>
                       <div className={`text-[11px] font-bold mb-2 px-1 flex items-center gap-1.5 ${isDark ? 'text-amber-400' : 'text-amber-700'}`}>
                         <Flame className="w-3.5 h-3.5 text-amber-500 animate-pulse" />
-                        <span>สถานที่ค้นหายอดนิยมที่คนเรียกติดปาก (คลิกเลือกดูได้ทันที)</span>
+                        <span>จุดค้นหายอดนิยม</span>
                       </div>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 max-h-56 overflow-y-auto pr-0.5">
                         {POPULAR_SEARCH_SUGGESTIONS.map((item, idx) => (
@@ -1322,7 +1322,7 @@ export default function App() {
                   >
                     <span className={`w-1.5 h-1.5 rounded-full ${telemetrySyncStatus?.isSyncing ? 'bg-cyan-400 animate-ping' : 'bg-emerald-500 animate-pulse'} shrink-0`}></span>
                     <span className="truncate">
-                      {telemetrySyncStatus?.isSyncing ? 'กำลังซิงก์...' : `เรดาร์สด (${telemetrySyncStatus?.lastSyncTime || 'สด'})`}
+                      {telemetrySyncStatus?.isSyncing ? 'กำลังซิงก์...' : 'เรดาร์สด TMD'}
                     </span>
                     <RefreshCw className={`w-3 h-3 text-cyan-500 shrink-0 ${telemetrySyncStatus?.isSyncing ? 'animate-spin' : ''}`} />
                   </button>
@@ -1338,7 +1338,7 @@ export default function App() {
                     }`}
                     title="คลิกเพื่อดูบันทึกการอัปเดตสถานการณ์น้ำท่วม"
                   >
-                    <span>สถานการณ์: {lastUpdatedTime || 'สด'}</span>
+                    <span>อัปเดต: {lastUpdatedTime || 'สด'}</span>
                     <ArrowRight className="w-3 h-3" />
                   </button>
                 </div>
@@ -1589,13 +1589,13 @@ export default function App() {
               <div className={`p-3 rounded-2xl border ${
                 isDark ? 'bg-slate-800/80 border-slate-700' : 'bg-slate-50 border-slate-200'
               }`}>
-                <span className={`block text-xs font-medium ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>สาเหตุสำคัญที่ทำให้เกิดน้ำท่วม:</span>
+                <span className={`block text-xs font-semibold ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>สาเหตุ:</span>
                 <span className={`mt-0.5 block leading-relaxed font-medium ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>{selectedPoint.cause}</span>
               </div>
               <div className={`p-3 rounded-2xl border ${
                 isDark ? 'bg-slate-800/80 border-slate-700' : 'bg-slate-50 border-slate-200'
               }`}>
-                <span className={`block text-xs font-medium ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>คำแนะนำความปลอดภัยในการสัญจร:</span>
+                <span className={`block text-xs font-semibold ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>คำแนะนำ:</span>
                 <span className={`mt-0.5 block leading-relaxed font-medium ${isDark ? 'text-cyan-400' : 'text-blue-700'}`}>{selectedPoint.officialGuidance}</span>
               </div>
             </div>
@@ -1606,7 +1606,7 @@ export default function App() {
             }`}>
               <div className="flex items-center gap-1.5 truncate">
                 <Shield className="w-4 h-4 text-blue-500 shrink-0" />
-                <span className="truncate">อ้างอิงข้อมูล: <strong className={isDark ? 'text-slate-200' : 'text-slate-800'}>{selectedPoint.source}</strong></span>
+                <span className="truncate">ที่มา: <strong className={isDark ? 'text-slate-200' : 'text-slate-800'}>{selectedPoint.source}</strong></span>
               </div>
               {selectedPoint.reportedAt && (
                 <span className="text-[10px] text-slate-400 shrink-0">
@@ -1621,10 +1621,10 @@ export default function App() {
                 <div className="min-w-0">
                   <span className="text-xs font-bold text-amber-600 dark:text-amber-400 flex items-center gap-1">
                     <Megaphone className="w-3.5 h-3.5 shrink-0" />
-                    <span>ข้อความประกาศแอดมิน / AI</span>
+                    <span>ข้อความประกาศ</span>
                   </span>
                   <span className="text-[10px] text-slate-500 dark:text-slate-400 block truncate">
-                    สามารถลบประกาศนี้ออกจากแผนที่และระบบได้ทันที
+                    สามารถลบประกาศนี้ออกจากแผนที่ได้
                   </span>
                 </div>
                 <button
@@ -1654,7 +1654,7 @@ export default function App() {
                 }`}
               >
                 <BookOpen className="w-4 h-4 text-blue-500" />
-                <span>เกณฑ์มาตรฐาน ปภ.</span>
+                <span>เกณฑ์น้ำ ปภ.</span>
               </button>
 
               <a 
@@ -1662,7 +1662,7 @@ export default function App() {
                 className="py-3 px-3 rounded-2xl bg-rose-600 hover:bg-rose-500 text-white text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition-all text-center cursor-pointer shadow-md shadow-rose-600/30"
               >
                 <Phone className="w-4 h-4" />
-                <span>โทรศูนย์ {selectedPoint.district}</span>
+                <span>โทรสายด่วน</span>
               </a>
             </div>
           </>
