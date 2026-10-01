@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { INITIAL_FLOOD_POINTS } from '../data/samutPrakanPoints';
 import { FLOOD_STANDARDS } from '../data/floodStandards';
+import { getLiveSamutPrakanWeather } from '../services/weatherService';
 // พจนานุกรมสถานที่ในจังหวัดสมุทรปราการ พร้อมระบบจับคู่คำสะกดผิด/คำพ้องเสียง (Fuzzy Typo Dictionary)
 export const LOCATION_TYPO_DICTIONARY = [
   {

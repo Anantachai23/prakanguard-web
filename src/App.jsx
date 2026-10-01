@@ -1008,14 +1008,14 @@ export default function App() {
                   </div>
                   <div className="truncate flex items-center gap-1.5 text-[11px] sm:text-xs">
                     <span className="font-semibold text-slate-700 dark:text-slate-200 truncate">
-                      {weather.weatherDesc} ({weather.temp}°C)
+                      {weather?.weatherDesc || 'มีเมฆบางส่วน'} ({weather?.temp ?? 29}°C)
                     </span>
                     <span className="text-slate-300 dark:text-slate-600">•</span>
                     <span className="text-blue-600 dark:text-cyan-400 font-bold whitespace-nowrap">
-                      ฝน {weather.rainProbabilityToday}%
+                      ฝน {weather?.rainProbabilityToday ?? 50}%
                     </span>
                     <span className="text-[10px] text-slate-400 hidden md:inline">
-                      (~{weather.rainSumToday} มม.)
+                      (~{weather?.rainSumToday ?? 0} มม.)
                     </span>
                   </div>
                 </div>
@@ -1031,7 +1031,7 @@ export default function App() {
                   title="ช่วงเวลาเฝ้าระวังฝนตกหนักสูงสุด"
                 >
                   <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping"></span>
-                  <span>ช่วงเสี่ยง {weather.peakHour.split(' ')[0]}</span>
+                  <span>ช่วงเสี่ยง {weather?.peakHour && typeof weather.peakHour === 'string' ? weather.peakHour.split(' ')[0] : '16:00'}</span>
                 </div>
               </div>
 
@@ -1043,7 +1043,7 @@ export default function App() {
                 <button
                   type="button"
                   onClick={handleManualSync}
-                  disabled={telemetrySyncStatus.isSyncing}
+                  disabled={telemetrySyncStatus?.isSyncing}
                   className={`flex items-center gap-1.5 px-2 py-1 rounded-lg transition-all cursor-pointer font-medium truncate ${
                     isDark 
                       ? 'hover:bg-slate-800/80 text-slate-300 hover:text-cyan-300' 
@@ -1051,11 +1051,11 @@ export default function App() {
                   }`}
                   title="คลิกเพื่อซิงก์ข้อมูลเรดาร์สด TMD / กองทัพเรือ ทันที"
                 >
-                  <span className={`w-1.5 h-1.5 rounded-full ${telemetrySyncStatus.isSyncing ? 'bg-cyan-400 animate-ping' : 'bg-emerald-500 animate-pulse'} shrink-0`}></span>
+                  <span className={`w-1.5 h-1.5 rounded-full ${telemetrySyncStatus?.isSyncing ? 'bg-cyan-400 animate-ping' : 'bg-emerald-500 animate-pulse'} shrink-0`}></span>
                   <span className="truncate">
-                    {telemetrySyncStatus.isSyncing ? 'กำลังซิงก์...' : `เรดาร์สด (${telemetrySyncStatus.lastSyncTime})`}
+                    {telemetrySyncStatus?.isSyncing ? 'กำลังซิงก์...' : `เรดาร์สด (${telemetrySyncStatus?.lastSyncTime || 'สด'})`}
                   </span>
-                  <RefreshCw className={`w-3 h-3 text-cyan-500 shrink-0 ${telemetrySyncStatus.isSyncing ? 'animate-spin' : ''}`} />
+                  <RefreshCw className={`w-3 h-3 text-cyan-500 shrink-0 ${telemetrySyncStatus?.isSyncing ? 'animate-spin' : ''}`} />
                 </button>
 
                 {/* Flood Updates Modal Trigger */}
@@ -1069,7 +1069,7 @@ export default function App() {
                   }`}
                   title="คลิกเพื่อดูบันทึกการอัปเดตสถานการณ์น้ำท่วม"
                 >
-                  <span>สถานการณ์: {lastUpdatedTime}</span>
+                  <span>สถานการณ์: {lastUpdatedTime || 'สด'}</span>
                   <ArrowRight className="w-3 h-3" />
                 </button>
               </div>
