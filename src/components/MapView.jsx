@@ -640,7 +640,7 @@ export default function MapView({
       </div>
 
       {/* FLOATING MAP LEGEND & STANDARDS BUTTON (BOTTOM LEFT - FULLY RESPONSIVE) */}
-      <div className="absolute bottom-4 left-3 sm:left-4 z-20 flex flex-col gap-1.5 max-w-[90vw]">
+      <div className="absolute bottom-16 sm:bottom-4 left-3 sm:left-4 z-20 flex flex-col gap-1.5 max-w-[90vw]">
         
         {/* District Active Indicator */}
         <div className={`px-3 sm:px-3.5 py-1.5 rounded-xl border text-xs sm:text-sm flex items-center gap-2 shadow-md backdrop-blur-md font-semibold ${

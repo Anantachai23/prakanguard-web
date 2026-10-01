@@ -225,3 +225,13 @@ body {
   user-select: none;
 }
 
+/* Mobile Ergonomics & Safe Area adjustments */
+@media (max-width: 640px) {
+  .leaflet-bottom.leaflet-right {
+    bottom: 68px !important;
+  }
+  .leaflet-bottom.leaflet-left {
+    bottom: 68px !important;
+  }
+}
+

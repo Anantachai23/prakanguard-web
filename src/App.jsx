@@ -12,6 +12,7 @@ import FeedbackModal from './components/FeedbackModal';
 import AdminVerificationPrompt from './components/AdminVerificationPrompt';
 import PublicUpdatesModal from './components/PublicUpdatesModal';
 import RainForecast24hCard from './components/RainForecast24hCard';
+import MobileBottomNav from './components/MobileBottomNav';
 import AutoMarquee from './components/AutoMarquee';
 import ChatBot from './components/ChatBot';
 import { INITIAL_FLOOD_POINTS, DISTRICTS, matchesLocationSearch, scoreLocationSearch, POPULAR_SEARCH_SUGGESTIONS } from './data/samutPrakanPoints';
@@ -1175,7 +1176,7 @@ export default function App() {
             title="คลิกเพื่อขยายแถบเมนูค้นหาและตัวกรอง"
           >
             <PanelLeftOpen className="w-4 h-4 text-blue-500" />
-            <span className="hidden xs:inline sm:inline">ค้นหา / ตัวกรอง</span>
+            <span className="text-xs font-bold">ค้นหา / ข้อมูล</span>
           </button>
         )}
 
@@ -1491,7 +1492,7 @@ export default function App() {
 
         {/* FLOATING POINT DETAIL CARD (CLEAN & SENIOR-FRIENDLY & COLLAPSIBLE FOR MOBILE) */}
         {selectedPoint && (
-          <div className={`absolute bottom-3 left-3 right-3 sm:bottom-4 sm:left-auto sm:right-4 z-30 sm:w-[420px] border rounded-3xl shadow-2xl backdrop-blur-2xl smooth-sheet transition-all ${
+          <div className={`absolute bottom-16 left-2 right-2 sm:bottom-4 sm:left-auto sm:right-4 z-30 sm:w-[420px] border rounded-3xl shadow-2xl backdrop-blur-2xl smooth-sheet transition-all ${
             isDark 
               ? 'bg-slate-900/95 border-slate-700 text-slate-100' 
               : 'bg-white/95 border-slate-200 text-slate-800'
@@ -1859,6 +1860,17 @@ export default function App() {
       <EmergencyModal 
         isOpen={isEmergencyModalOpen} 
         onClose={() => setIsEmergencyModalOpen(false)}
+        theme={theme}
+      />
+
+      {/* 4. MOBILE BOTTOM ACTION BAR (สำหรับมือถือ ใช้งานสะดวกด้วยนิ้วโป้ง ไม่ซับซ้อน) */}
+      <MobileBottomNav
+        onLocateMe={handleLocateMe}
+        onOpenAiForecast={() => setIsOfficialModalOpen(true)}
+        onOpenCitizenReport={() => setIsCitizenReportModalOpen(true)}
+        onOpenPublicUpdates={() => setIsPublicUpdatesModalOpen(true)}
+        onOpenEmergency={() => setIsEmergencyModalOpen(true)}
+        hasGps={!!userLocation}
         theme={theme}
       />
 
