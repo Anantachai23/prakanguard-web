@@ -142,13 +142,6 @@ export default function AdminModal({
     sessionStorage.removeItem('prakanguard_admin_auth');
   };
 
-  // Quick autofill credentials helper
-  const handleAutofillCredentials = () => {
-    setInputUsername(credentials.username);
-    setInputPassword(credentials.password);
-    setLoginError('');
-  };
-
   // Credibility evaluator helper
   const evaluateCredibility = (report) => {
     let score = 70;
@@ -412,18 +405,6 @@ export default function AdminModal({
                 >
                   {lockoutSeconds > 0 ? `ระงับชั่วคราว (${lockoutSeconds}s)` : 'เข้าสู่ระบบ ADMIN'}
                 </button>
-
-                <div className="pt-2 text-center">
-                  <button
-                    type="button"
-                    onClick={handleAutofillCredentials}
-                    className="inline-flex items-center gap-1.5 text-[11px] text-amber-500 hover:text-amber-400 underline font-semibold transition-colors cursor-pointer"
-                    title="คลิกเพื่อกรอกชื่อผู้ใช้และรหัสผ่านเริ่มต้นของระบบอัตโนมัติ"
-                  >
-                    <KeyRound className="w-3.5 h-3.5" />
-                    <span>กรอกรหัสผ่านเริ่มต้นอัตโนมัติ (Default Admin)</span>
-                  </button>
-                </div>
               </form>
 
             </div>
