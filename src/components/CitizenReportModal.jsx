@@ -11,49 +11,52 @@ import {
   Compass,
   ArrowRight,
   ShieldCheck,
-  LocateFixed
+  LocateFixed,
+  CloudRain,
+  CloudHail,
+  Sparkles
 } from 'lucide-react';
 import { DISTRICTS } from '../data/samutPrakanPoints';
 
-// Standard 5 Body-Landmark Water Levels (Aligned with Official 3-Tier Criteria)
+// Standard 5 Body-Landmark Water Levels (Aligned with Official 3-Tier Criteria: 5-20, 21-50, >50 cm)
 export const BODY_WATER_LEVELS = [
   {
     id: 'ankle',
     label: 'ข้อเท้า/ใต้ท้องรถ',
-    range: '8 – 20 ซม.',
+    range: '5 – 20 ซม.',
     depthApprox: 15,
     severity: 1,
     emoji: '🦶',
     badgeClass: 'bg-emerald-50 text-emerald-800 border-emerald-300',
     darkBadgeClass: 'bg-emerald-950/80 text-emerald-300 border-emerald-800',
     desc: 'น้ำท่วมเสมอตาตุ่มถึงใต้ท้องรถเก๋ง ผิวจราจรเปียกขัง',
-    traffic: '🟢 ระดับ 1 (8-20 ซม.): รถทุกประเภทสัญจรได้ตามปกติ ชะลอความเร็วเมื่อเข้าใกล้จุดขัง',
+    traffic: '🟢 ระดับ 1 (5-20 ซม.): รถทุกประเภทสัญจรได้ตามปกติ ชะลอความเร็วเมื่อเข้าใกล้จุดขัง',
     guidance: 'ระมัดระวังการลื่นไถล ชะลอความเร็วเพื่อไม่ให้น้ำกระเซ็น'
   },
   {
     id: 'knee',
     label: 'หน้าแข้งถึงหัวเข่า',
-    range: '21 – 60 ซม.',
-    depthApprox: 40,
+    range: '21 – 50 ซม.',
+    depthApprox: 35,
     severity: 2,
     emoji: '🦵',
     badgeClass: 'bg-amber-50 text-amber-800 border-amber-300',
     darkBadgeClass: 'bg-amber-950/80 text-amber-300 border-amber-800',
-    desc: 'น้ำท่วมครึ่งแข้งถึงหัวเข่า ท่วมแตะท้องรถถึง 2/3 ล้อรถเก๋ง',
-    traffic: '🟠 ระดับ 2 (21-60 ซม.): รถเก๋ง/อีโคคาร์เสี่ยงสูงมาก ควรเลี่ยงเส้นทาง ปิดแอร์ทันที',
+    desc: 'น้ำท่วมครึ่งแข้งถึงหัวเข่า ท่วมแตะขอบประตูล่างถึงครึ่งล้อรถเก๋ง',
+    traffic: '🟠 ระดับ 2 (21-50 ซม.): รถเก๋ง/อีโคคาร์เสี่ยงสูงมาก ควรเลี่ยงเส้นทาง ปิดแอร์ทันที',
     guidance: 'รถกระบะ/SUV ผ่านได้ในช่องทางขวา ห้ามสตาร์ทรถซ้ำหากเครื่องยนต์ดับ'
   },
   {
     id: 'waist',
     label: 'ระดับเอว/มิดล้อรถ',
-    range: '> 60 ซม.',
+    range: '> 50 ซม.',
     depthApprox: 70,
     severity: 3,
     emoji: '🩳',
     badgeClass: 'bg-rose-50 text-rose-800 border-rose-300',
     darkBadgeClass: 'bg-rose-950/80 text-rose-300 border-rose-800',
-    desc: 'น้ำท่วมสูงเสมอเอว ท่วมมิดล้อรถเก๋ง (>60 ซม.) และเข้าห้องโดยสาร',
-    traffic: '🔴 ระดับ 3 (>60 ซม.): วิกฤต! ห้ามรถเก๋งและรถเล็กทุกชนิดผ่านเด็ดขาด ท่อไอเสียและห้องเครื่องจมน้ำ',
+    desc: 'น้ำท่วมสูงเสมอเอว ท่วมมิดล้อรถเก๋ง (>50 ซม.) และเข้าห้องโดยสาร',
+    traffic: '🔴 ระดับ 3 (>50 ซม.): วิกฤต! ห้ามรถเก๋งและรถเล็กทุกชนิดผ่านเด็ดขาด ท่อไอเสียและห้องเครื่องจมน้ำ',
     guidance: 'แนะนำยกของขึ้นที่สูง ตัดกระแสไฟชั้นล่าง หลีกเลี่ยงกระแสน้ำเชี่ยว'
   },
   {
@@ -66,7 +69,7 @@ export const BODY_WATER_LEVELS = [
     badgeClass: 'bg-purple-50 text-purple-800 border-purple-300',
     darkBadgeClass: 'bg-purple-950/80 text-purple-300 border-purple-800',
     desc: 'น้ำท่วมสูงระดับหน้าอก มิดกระโปรงหน้ารถยนต์',
-    traffic: '🚫 วิกฤตสูงสุด! รถทุกชนิดห้ามผ่าน สัญจรได้เฉพาะเรือท้องแบนยกสูง',
+    traffic: '🚫 วิกฤตสูงสุด (>50 ซม.)! รถทุกชนิดห้ามผ่าน สัญจรได้เฉพาะเรือท้องแบนยกสูง',
     guidance: 'อพยพผู้ป่วยติดเตียงและผู้สูงอายุทันที ประสานสายด่วน ปภ. 1784'
   },
   {
@@ -79,15 +82,49 @@ export const BODY_WATER_LEVELS = [
     badgeClass: 'bg-red-100 text-red-900 border-red-400 font-extrabold',
     darkBadgeClass: 'bg-red-950 text-red-200 border-red-700 font-extrabold',
     desc: 'ระดับน้ำท่วมถึงคอ ท่วมมิดหลังคารถยนต์และชั้นหนึ่งของอาคาร',
-    traffic: '🚨 ภัยพิบัติฉุกเฉินระดับร้ายแรง ห้ามลงเล่นน้ำหรือเดินลุยน้ำเด็ดขาด',
+    traffic: '🚨 ภัยพิบัติฉุกเฉินระดับร้ายแรง (>50 ซม.) ห้ามลงเล่นน้ำหรือเดินลุยน้ำเด็ดขาด',
     guidance: 'ติดต่อหน่วยกู้ภัยร่วมกตัญญู 02-751-0951 หรือ ปภ. 1784 เพื่อเข้าช่วยเหลือด่วน'
+  }
+];
+
+// Hail Sizes Standard
+export const HAIL_SIZES = [
+  {
+    id: 'small',
+    label: 'เม็ดเล็ก (< 1 ซม.)',
+    sub: 'เท่าเม็ดถั่ว / ลูกแก้ว',
+    severity: 1,
+    emoji: '🧊',
+    desc: 'ลูกเห็บตกประปราย เม็ดเล็ก ยังไม่ส่งผลต่อหลังคาหรือกระจกรถยนต์',
+    traffic: '⚠️ ถนนลื่นจากเม็ดน้ำแข็งและน้ำฝน ชะลอความเร็ว ไม่เบรกกะทันหัน',
+    guidance: 'ระวังการลื่นไถล ชะลอความเร็ว เปิดไฟหน้ารถ'
+  },
+  {
+    id: 'medium',
+    label: 'เม็ดกลาง (1 – 2.5 ซม.)',
+    sub: 'เท่าเหรียญ 5 - 10 บาท',
+    severity: 2,
+    emoji: '🧊',
+    desc: 'ลูกเห็บตกหนาแน่น หลังคาสังกะสีหรือกันสาดพลาสติกอาจแตกร้าว กระจกรถเสี่ยงกระเทาะ',
+    traffic: '🟠 สภาพอากาศรุนแรง ชะลอความเร็ว จอดหลบในที่ร่มหรือใต้ชายคาที่ปลอดภัย',
+    guidance: 'ห้ามจอดใต้ต้นไม้ใหญ่หรือป้ายโฆษณาที่เสี่ยงหักโค่น'
+  },
+  {
+    id: 'large',
+    label: 'เม็ดใหญ่ (> 2.5 ซม.)',
+    sub: 'เท่าลูกปิงปอง / มะนาว / ลูกกอล์ฟ',
+    severity: 3,
+    emoji: '💥',
+    desc: 'วิกฤตพายุลูกเห็บรุนแรง! หลังคาบ้านทะลุ กระจกรถยนต์แตกร้าว เป็นอันตรายต่อศีรษะ',
+    traffic: '🔴 วิกฤตพายุลูกเห็บรุนแรง ห้ามขับขี่หรืออยู่นอกอาคารเด็ดขาด',
+    guidance: 'หลบเข้าในอาคารปูนแข็งแรงทันที ระวังเศษกระจกแตกและกระแสลมกระโชกแรง'
   }
 ];
 
 export default function CitizenReportModal({ 
   isOpen, 
   onClose, 
-  onSubmitReport,
+  onSubmitReport, 
   onStartPickOnMap,
   pickedCoords,
   onFlyToCoords,
@@ -95,8 +132,12 @@ export default function CitizenReportModal({
 }) {
   const isDark = theme === 'dark';
 
+  // Hazard Type: 'flood' | 'hail'
+  const [hazardType, setHazardType] = useState('flood');
+
   // Form States
   const [selectedLevel, setSelectedLevel] = useState('knee');
+  const [selectedHail, setSelectedHail] = useState('medium');
   const [locationName, setLocationName] = useState('');
   const [subdistrict, setSubdistrict] = useState('');
   const [district, setDistrict] = useState('เมืองสมุทรปราการ');
@@ -129,7 +170,6 @@ export default function CitizenReportModal({
     reader.onload = (event) => {
       const img = new window.Image();
       img.onload = () => {
-        // Compress to reasonable resolution for localStorage efficiency
         const maxDim = 800;
         let w = img.width;
         let h = img.height;
@@ -200,7 +240,7 @@ export default function CitizenReportModal({
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!locationName.trim()) {
-      alert("กรุณาระบุชื่อถนนหรือจุดสังเกตบริเวณน้ำท่วม");
+      alert(hazardType === 'hail' ? "กรุณาระบุชื่อถนนหรือจุดสังเกตบริเวณลูกเห็บตก" : "กรุณาระบุชื่อถนนหรือจุดสังเกตบริเวณน้ำท่วม");
       return;
     }
 
@@ -212,41 +252,76 @@ export default function CitizenReportModal({
     }
 
     setIsSubmitting(true);
-    const levelMeta = BODY_WATER_LEVELS.find(l => l.id === selectedLevel) || BODY_WATER_LEVELS[1];
-
-    const newReport = {
-      id: 'citizen-' + Date.now(),
-      isCitizenReport: true,
-      name: locationName.trim(),
-      subdistrict: subdistrict.trim() || 'แจ้งโดยประชาชน',
-      district: district,
-      lat: pLat,
-      lng: pLng,
-      bodyLevel: selectedLevel,
-      bodyLevelLabel: levelMeta.label,
-      depthCm: levelMeta.depthApprox,
-      depthRange: levelMeta.range,
-      level: levelMeta.severity,
-      statusLabel: `ระดับ${levelMeta.label}`,
-      trafficStatus: levelMeta.traffic,
-      cause: notes.trim() || 'น้ำท่วมขังรายงานโดยประชาชนในพื้นที่',
-      officialGuidance: levelMeta.guidance,
-      source: 'รายงานจากประชาชน (Crowdsource)',
-      phone: '1784',
-      photoUrl: photoPreview,
-      isApproved: false,
-      isResolved: false,
-      reportedAt: new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) + ' น.',
-      timestamp: Date.now()
-    };
+    
+    let newReport;
+    if (hazardType === 'hail') {
+      const hailMeta = HAIL_SIZES.find(h => h.id === selectedHail) || HAIL_SIZES[1];
+      newReport = {
+        id: 'citizen-' + Date.now(),
+        isCitizenReport: true,
+        hazardType: 'hail',
+        name: locationName.trim(),
+        subdistrict: subdistrict.trim() || 'แจ้งโดยประชาชน',
+        district: district,
+        lat: pLat,
+        lng: pLng,
+        hailSize: selectedHail,
+        hailSizeLabel: hailMeta.label,
+        depthCm: 0,
+        depthRange: hailMeta.sub,
+        level: hailMeta.severity,
+        statusLabel: `🧊 ลูกเห็บ: ${hailMeta.label}`,
+        trafficStatus: hailMeta.traffic,
+        cause: notes.trim() || 'พายุฝนฟ้าคะนองและลูกเห็บตก รายงานโดยประชาชนในพื้นที่',
+        officialGuidance: hailMeta.guidance,
+        source: 'รายงานลูกเห็บจากประชาชน (Crowdsource)',
+        phone: '1784',
+        photoUrl: photoPreview,
+        isApproved: false,
+        isResolved: false,
+        reportedAt: new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) + ' น.',
+        timestamp: Date.now()
+      };
+    } else {
+      const levelMeta = BODY_WATER_LEVELS.find(l => l.id === selectedLevel) || BODY_WATER_LEVELS[1];
+      newReport = {
+        id: 'citizen-' + Date.now(),
+        isCitizenReport: true,
+        hazardType: 'flood',
+        name: locationName.trim(),
+        subdistrict: subdistrict.trim() || 'แจ้งโดยประชาชน',
+        district: district,
+        lat: pLat,
+        lng: pLng,
+        bodyLevel: selectedLevel,
+        bodyLevelLabel: levelMeta.label,
+        depthCm: levelMeta.depthApprox,
+        depthRange: levelMeta.range,
+        level: levelMeta.severity,
+        statusLabel: `ระดับ${levelMeta.label}`,
+        trafficStatus: levelMeta.traffic,
+        cause: notes.trim() || 'น้ำท่วมขังรายงานโดยประชาชนในพื้นที่',
+        officialGuidance: levelMeta.guidance,
+        source: 'รายงานน้ำท่วมจากประชาชน (Crowdsource)',
+        phone: '1784',
+        photoUrl: photoPreview,
+        isApproved: false,
+        isResolved: false,
+        reportedAt: new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) + ' น.',
+        timestamp: Date.now()
+      };
+    }
 
     onSubmitReport(newReport);
     setIsSubmitting(false);
-    alert("✅ ส่งข้อมูลรายงานน้ำท่วมเรียบร้อยแล้ว!\n\nระบบได้ส่งข้อมูลไปยังผู้ดูแลระบบ (Admin) เพื่อตรวจสอบความถูกต้องและความน่าเชื่อถือ และจะแสดงบนแผนที่ทันทีเมื่อได้รับการยืนยันครับ ขอบคุณที่ร่วมรายงานเพื่อประโยชน์ของส่วนรวมครับ");
+    alert(hazardType === 'hail'
+      ? "✅ ส่งข้อมูลรายงานลูกเห็บตกเรียบร้อยแล้ว!\n\nระบบได้ส่งข้อมูลไปยังผู้ดูแลระบบ (Admin) เพื่อตรวจสอบความถูกต้อง และจะแสดงบนแผนที่สดทันทีเมื่อได้รับการยืนยันครับ"
+      : "✅ ส่งข้อมูลรายงานน้ำท่วมเรียบร้อยแล้ว!\n\nระบบได้ส่งข้อมูลไปยังผู้ดูแลระบบ (Admin) เพื่อตรวจสอบความถูกต้อง และจะแสดงบนแผนที่สดทันทีเมื่อได้รับการยืนยันครับ");
     onClose();
   };
 
-  const selectedMeta = BODY_WATER_LEVELS.find(l => l.id === selectedLevel) || BODY_WATER_LEVELS[1];
+  const selectedFloodMeta = BODY_WATER_LEVELS.find(l => l.id === selectedLevel) || BODY_WATER_LEVELS[1];
+  const selectedHailMeta = HAIL_SIZES.find(h => h.id === selectedHail) || HAIL_SIZES[1];
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 smooth-backdrop">
@@ -255,95 +330,193 @@ export default function CitizenReportModal({
       }`}>
         
         {/* Top Accent Gradient */}
-        <div className="h-1.5 w-full bg-gradient-to-r from-violet-600 via-indigo-500 to-cyan-500"></div>
+        <div className={`h-1.5 w-full bg-gradient-to-r ${
+          hazardType === 'hail' 
+            ? 'from-cyan-500 via-blue-500 to-indigo-500' 
+            : 'from-violet-600 via-indigo-500 to-cyan-500'
+        }`}></div>
 
         {/* Modal Header */}
-        <div className={`px-5 py-3.5 border-b flex items-center justify-between ${
-          isDark ? 'bg-slate-950/80 border-slate-800' : 'bg-slate-50 border-slate-200'
+        <div className={`p-4 sm:p-5 border-b flex items-center justify-between gap-3 ${
+          isDark ? 'border-slate-800 bg-slate-900/80' : 'border-slate-100 bg-slate-50/80'
         }`}>
-          <div className="flex items-center space-x-2.5">
-            <div className="w-9 h-9 rounded-2xl bg-gradient-to-tr from-violet-600 to-indigo-500 text-white flex items-center justify-center shadow-md shrink-0">
-              <Camera className="w-5 h-5" />
+          <div className="flex items-center gap-2.5">
+            <div className={`w-9 h-9 rounded-2xl flex items-center justify-center shadow-inner ${
+              hazardType === 'hail'
+                ? (isDark ? 'bg-cyan-950/80 text-cyan-400 border border-cyan-800' : 'bg-cyan-50 text-cyan-600 border border-cyan-200')
+                : (isDark ? 'bg-violet-950/80 text-violet-400 border border-violet-800' : 'bg-violet-50 text-violet-600 border border-violet-200')
+            }`}>
+              {hazardType === 'hail' ? <CloudHail className="w-5 h-5" /> : <Camera className="w-5 h-5" />}
             </div>
             <div>
-              <h3 className={`text-sm sm:text-base font-bold flex items-center gap-2 ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                <span>รายงานสถานการณ์น้ำท่วม (ภาคประชาชน)</span>
-              </h3>
-              <p className={`text-[11px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                ร่วมแจ้งเตือนภัยเพื่อความปลอดภัยในการสัญจรของชาวสมุทรปราการ
+              <h2 className={`text-base sm:text-lg font-bold leading-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                {hazardType === 'hail' ? 'รายงานพายุลูกเห็บตก' : 'แจ้งเตือนสถานการณ์น้ำท่วม'}
+              </h2>
+              <p className={`text-[11px] sm:text-xs mt-0.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                ส่งข้อมูลตรงถึงแอดมิน เพื่อตรวจสอบและอัปเดตแจ้งเตือนประชาชนทั่วสมุทรปราการ
               </p>
             </div>
           </div>
-          <button 
-            onClick={onClose} 
-            className={`p-1.5 rounded-xl transition-all cursor-pointer ${
-              isDark ? 'bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white' : 'bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800'
+
+          <button
+            onClick={onClose}
+            className={`p-2 rounded-xl transition-all cursor-pointer ${
+              isDark ? 'hover:bg-slate-800 text-slate-400 hover:text-white' : 'hover:bg-slate-100 text-slate-500 hover:text-slate-900'
             }`}
-            title="ปิดหน้าต่าง"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Form Body */}
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4 text-xs sm:text-sm">
+        <form onSubmit={handleSubmit} className="p-4 sm:p-6 overflow-y-auto space-y-4 flex-1">
           
-          {/* 1. SELECT WATER LEVEL (BODY LANDMARKS) */}
+          {/* HAZARD TYPE SWITCHER: FLOOD vs HAIL */}
           <div>
-            <label className={`block text-xs font-bold uppercase tracking-wider mb-2 flex items-center justify-between ${
-              isDark ? 'text-slate-200' : 'text-slate-800'
-            }`}>
-              <span>1. เลือกระดับความสูงน้ำท่วม (เทียบร่างกาย) *</span>
-              <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full border ${
-                isDark ? selectedMeta.darkBadgeClass : selectedMeta.badgeClass
-              }`}>
-                {selectedMeta.emoji} {selectedMeta.label} ({selectedMeta.range})
-              </span>
+            <label className={`block text-xs font-bold uppercase tracking-wider mb-1.5 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
+              ประเภทภัยพิบัติ / เหตุการณ์สภาพอากาศ
             </label>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setHazardType('flood')}
+                className={`py-2.5 px-3 rounded-xl border font-bold text-xs sm:text-sm flex items-center justify-center gap-2 cursor-pointer transition-all ${
+                  hazardType === 'flood'
+                    ? (isDark ? 'bg-violet-950/90 border-violet-500 text-violet-200 ring-2 ring-violet-500/40 shadow-sm' : 'bg-violet-50 border-violet-500 text-violet-900 ring-2 ring-violet-200 shadow-sm')
+                    : (isDark ? 'bg-slate-800/80 border-slate-700 text-slate-400 hover:text-slate-200' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50')
+                }`}
+              >
+                <CloudRain className="w-4 h-4 text-blue-500" />
+                <span>🌊 น้ำท่วมขังบนถนน</span>
+              </button>
 
-            <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
-              {BODY_WATER_LEVELS.map(level => {
-                const isSelected = selectedLevel === level.id;
-                return (
-                  <button
-                    key={level.id}
-                    type="button"
-                    onClick={() => setSelectedLevel(level.id)}
-                    className={`p-2.5 rounded-2xl border text-center transition-all cursor-pointer flex flex-col items-center justify-between gap-1 shadow-xs ${
-                      isSelected
-                        ? (isDark 
-                            ? 'bg-violet-950/80 border-violet-500 text-white ring-2 ring-violet-500/50' 
-                            : 'bg-violet-50 border-violet-500 text-violet-900 ring-2 ring-violet-200')
-                        : (isDark 
-                            ? 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-750' 
-                            : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50')
-                    }`}
-                  >
-                    <span className="text-xl sm:text-2xl">{level.emoji}</span>
-                    <span className="font-bold text-xs truncate">{level.label}</span>
-                    <span className={`text-[10px] px-1.5 py-0.2 rounded font-mono ${
-                      isDark ? 'text-slate-400 bg-slate-900' : 'text-slate-500 bg-slate-100'
-                    }`}>
-                      {level.range}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Level guidance callout */}
-            <div className={`mt-2 p-2.5 rounded-xl border text-xs leading-snug flex items-start gap-2 ${
-              isDark ? 'bg-slate-800/80 border-slate-700 text-slate-300' : 'bg-slate-50 border-slate-200 text-slate-700'
-            }`}>
-              <AlertTriangle className={`w-4 h-4 shrink-0 mt-0.5 ${
-                selectedMeta.severity === 3 ? 'text-rose-500' : selectedMeta.severity === 2 ? 'text-amber-500' : 'text-emerald-500'
-              }`} />
-              <div>
-                <strong className={isDark ? 'text-white' : 'text-slate-900'}>{selectedMeta.desc}</strong>
-                <p className="mt-0.5 text-[11px] text-slate-500">{selectedMeta.traffic}</p>
-              </div>
+              <button
+                type="button"
+                onClick={() => setHazardType('hail')}
+                className={`py-2.5 px-3 rounded-xl border font-bold text-xs sm:text-sm flex items-center justify-center gap-2 cursor-pointer transition-all ${
+                  hazardType === 'hail'
+                    ? (isDark ? 'bg-cyan-950/90 border-cyan-500 text-cyan-200 ring-2 ring-cyan-500/40 shadow-sm' : 'bg-cyan-50 border-cyan-500 text-cyan-900 ring-2 ring-cyan-200 shadow-sm')
+                    : (isDark ? 'bg-slate-800/80 border-slate-700 text-slate-400 hover:text-slate-200' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50')
+                }`}
+              >
+                <CloudHail className="w-4 h-4 text-cyan-400" />
+                <span>🧊 พายุลูกเห็บตก</span>
+              </button>
             </div>
           </div>
+
+          {/* 1. SEVERITY / LEVEL SELECTION */}
+          {hazardType === 'flood' ? (
+            /* FLOOD BODY LEVELS */
+            <div>
+              <label className={`block text-xs font-bold uppercase tracking-wider mb-1.5 flex items-center justify-between ${
+                isDark ? 'text-slate-200' : 'text-slate-800'
+              }`}>
+                <span>1. ประเมินระดับความสูงของน้ำ (5-20, 21-50, &gt;50 ซม.) *</span>
+                <span className="text-[11px] font-semibold text-violet-500">
+                  {selectedFloodMeta.emoji} {selectedFloodMeta.label} ({selectedFloodMeta.range})
+                </span>
+              </label>
+
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                {BODY_WATER_LEVELS.map(level => {
+                  const isSelected = selectedLevel === level.id;
+                  return (
+                    <button
+                      key={level.id}
+                      type="button"
+                      onClick={() => setSelectedLevel(level.id)}
+                      className={`p-2.5 rounded-2xl border text-center transition-all cursor-pointer flex flex-col items-center justify-between gap-1 shadow-xs ${
+                        isSelected
+                          ? (isDark 
+                              ? 'bg-violet-950/80 border-violet-500 text-white ring-2 ring-violet-500/50' 
+                              : 'bg-violet-50 border-violet-500 text-violet-900 ring-2 ring-violet-200')
+                          : (isDark 
+                              ? 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-750' 
+                              : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50')
+                      }`}
+                    >
+                      <span className="text-xl sm:text-2xl">{level.emoji}</span>
+                      <span className="font-bold text-xs truncate">{level.label}</span>
+                      <span className={`text-[10px] px-1.5 py-0.2 rounded font-mono ${
+                        isDark ? 'text-slate-400 bg-slate-900' : 'text-slate-500 bg-slate-100'
+                      }`}>
+                        {level.range}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Level guidance callout */}
+              <div className={`mt-2 p-2.5 rounded-xl border text-xs leading-snug flex items-start gap-2 ${
+                isDark ? 'bg-slate-800/80 border-slate-700 text-slate-300' : 'bg-slate-50 border-slate-200 text-slate-700'
+              }`}>
+                <AlertTriangle className={`w-4 h-4 shrink-0 mt-0.5 ${
+                  selectedFloodMeta.severity === 3 ? 'text-rose-500' : selectedFloodMeta.severity === 2 ? 'text-amber-500' : 'text-emerald-500'
+                }`} />
+                <div>
+                  <strong className={isDark ? 'text-white' : 'text-slate-900'}>{selectedFloodMeta.desc}</strong>
+                  <p className="mt-0.5 text-[11px] text-slate-500">{selectedFloodMeta.traffic}</p>
+                </div>
+              </div>
+            </div>
+          ) : (
+            /* HAIL SIZES */
+            <div>
+              <label className={`block text-xs font-bold uppercase tracking-wider mb-1.5 flex items-center justify-between ${
+                isDark ? 'text-slate-200' : 'text-slate-800'
+              }`}>
+                <span>1. ประเมินขนาดเม็ดลูกเห็บ *</span>
+                <span className="text-[11px] font-semibold text-cyan-500">
+                  {selectedHailMeta.emoji} {selectedHailMeta.label}
+                </span>
+              </label>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                {HAIL_SIZES.map(hail => {
+                  const isSelected = selectedHail === hail.id;
+                  return (
+                    <button
+                      key={hail.id}
+                      type="button"
+                      onClick={() => setSelectedHail(hail.id)}
+                      className={`p-3 rounded-2xl border text-left transition-all cursor-pointer flex flex-col gap-1 shadow-xs ${
+                        isSelected
+                          ? (isDark 
+                              ? 'bg-cyan-950/80 border-cyan-500 text-white ring-2 ring-cyan-500/50' 
+                              : 'bg-cyan-50 border-cyan-500 text-cyan-900 ring-2 ring-cyan-200')
+                          : (isDark 
+                              ? 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-750' 
+                              : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50')
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="text-xl">{hail.emoji}</span>
+                        <div>
+                          <span className="font-bold text-xs block">{hail.label}</span>
+                          <span className={`text-[10px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{hail.sub}</span>
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Hail Guidance Callout */}
+              <div className={`mt-2 p-2.5 rounded-xl border text-xs leading-snug flex items-start gap-2 ${
+                isDark ? 'bg-slate-800/80 border-slate-700 text-slate-300' : 'bg-slate-50 border-slate-200 text-slate-700'
+              }`}>
+                <AlertTriangle className={`w-4 h-4 shrink-0 mt-0.5 ${
+                  selectedHailMeta.severity === 3 ? 'text-rose-500' : selectedHailMeta.severity === 2 ? 'text-amber-500' : 'text-cyan-500'
+                }`} />
+                <div>
+                  <strong className={isDark ? 'text-white' : 'text-slate-900'}>{selectedHailMeta.desc}</strong>
+                  <p className="mt-0.5 text-[11px] text-slate-500">{selectedHailMeta.traffic}</p>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* 2. PHOTO UPLOAD (OPTIONAL) */}
           <div>
@@ -368,7 +541,7 @@ export default function CitizenReportModal({
               <div className="relative rounded-2xl overflow-hidden border border-slate-300 shadow-md max-h-48 group">
                 <img 
                   src={photoPreview} 
-                  alt="ตัวอย่างรูปถ่ายน้ำท่วม" 
+                  alt="ตัวอย่างรูปถ่ายสถานการณ์" 
                   className="w-full h-44 object-cover" 
                 />
                 <div className="absolute inset-0 bg-slate-950/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
@@ -412,7 +585,7 @@ export default function CitizenReportModal({
                 </div>
                 <div className="text-center">
                   <span className={`font-semibold text-xs ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>
-                    กดเพื่อถ่ายภาพ หรือเลือกรูปจากแกลเลอรี
+                    กดเพื่อถ่ายภาพ หรือเลือกรูปจากมือถือ
                   </span>
                   <span className={`block text-[10px] mt-0.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
                     (หากไม่มีรูป สามารถข้ามขั้นตอนนี้ได้เลยครับ)
@@ -476,12 +649,16 @@ export default function CitizenReportModal({
                   required
                   value={locationName}
                   onChange={(e) => setLocationName(e.target.value)}
-                  placeholder="เช่น ซอยวัดด่านสำโรง, ถนนกิ่งแก้ว หน้าปั๊ม ปตท."
+                  placeholder={hazardType === 'hail' ? "เช่น ตลาดปากน้ำ, ซอยมังกรขันดี" : "เช่น ซอยวัดด่านสำโรง, ถนนกิ่งแก้ว หน้าปั๊ม ปตท."}
                   className={`w-full rounded-xl px-3 py-2 text-xs sm:text-sm border focus:outline-none transition-colors ${
                     isDark 
-                      ? 'bg-slate-800 border-slate-700 text-slate-100 placeholder-slate-500 focus:border-violet-400' 
-                      : 'bg-slate-50 border-slate-300 text-slate-800 placeholder-slate-400 focus:border-violet-500 focus:bg-white'
+                      ? 'border-slate-700 focus:border-violet-400' 
+                      : 'border-slate-300 focus:border-violet-500'
                   }`}
+                  style={{
+                    backgroundColor: isDark ? '#0f172a' : '#ffffff',
+                    color: isDark ? '#f8fafc' : '#0f172a'
+                  }}
                 />
               </div>
 
@@ -494,9 +671,13 @@ export default function CitizenReportModal({
                   onChange={(e) => setDistrict(e.target.value)}
                   className={`w-full rounded-xl px-3 py-2 text-xs sm:text-sm border focus:outline-none transition-colors font-medium ${
                     isDark 
-                      ? 'bg-slate-800 border-slate-700 text-slate-100 focus:border-violet-400' 
-                      : 'bg-slate-50 border-slate-300 text-slate-800 focus:border-violet-500'
+                      ? 'border-slate-700 focus:border-violet-400' 
+                      : 'border-slate-300 focus:border-violet-500'
                   }`}
+                  style={{
+                    backgroundColor: isDark ? '#0f172a' : '#ffffff',
+                    color: isDark ? '#f8fafc' : '#0f172a'
+                  }}
                 >
                   {DISTRICTS.filter(d => d !== "ทั้งหมด").map(d => (
                     <option key={d} value={d}>อ.{d}</option>
@@ -532,9 +713,11 @@ export default function CitizenReportModal({
                     value={lat}
                     onChange={(e) => setLat(e.target.value)}
                     placeholder="13.5991"
-                    className={`w-full rounded-lg px-2.5 py-1.5 text-xs font-mono border focus:outline-none ${
-                      isDark ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-white border-slate-300 text-slate-800'
-                    }`}
+                    className="w-full rounded-lg px-2.5 py-1.5 text-xs font-mono border focus:outline-none"
+                    style={{
+                      backgroundColor: isDark ? '#0f172a' : '#ffffff',
+                      color: isDark ? '#f8fafc' : '#0f172a'
+                    }}
                   />
                 </div>
                 <div>
@@ -544,9 +727,11 @@ export default function CitizenReportModal({
                     value={lng}
                     onChange={(e) => setLng(e.target.value)}
                     placeholder="100.6012"
-                    className={`w-full rounded-lg px-2.5 py-1.5 text-xs font-mono border focus:outline-none ${
-                      isDark ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-white border-slate-300 text-slate-800'
-                    }`}
+                    className="w-full rounded-lg px-2.5 py-1.5 text-xs font-mono border focus:outline-none"
+                    style={{
+                      backgroundColor: isDark ? '#0f172a' : '#ffffff',
+                      color: isDark ? '#f8fafc' : '#0f172a'
+                    }}
                   />
                 </div>
               </div>
@@ -561,12 +746,12 @@ export default function CitizenReportModal({
                 rows={2}
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                placeholder="เช่น มีรถจอดเสียเลนซ้าย, ฝาท่อเปิดอยู่, น้ำไหลเชี่ยวมากควรเลี่ยงไปทางศรีนครินทร์..."
-                className={`w-full rounded-xl px-3 py-2 text-xs border focus:outline-none transition-colors ${
-                  isDark 
-                    ? 'bg-slate-800 border-slate-700 text-slate-100 placeholder-slate-500 focus:border-violet-400' 
-                    : 'bg-slate-50 border-slate-300 text-slate-800 placeholder-slate-400 focus:border-violet-500 focus:bg-white'
-                }`}
+                placeholder={hazardType === 'hail' ? "เช่น ลูกเห็บตกหนัก ลมกระโชกแรง มีกิ่งไม้หักขวางถนน..." : "เช่น มีรถจอดเสียเลนซ้าย, ฝาท่อเปิดอยู่, น้ำไหลเชี่ยวมาก..."}
+                className="w-full rounded-xl px-3 py-2 text-xs border focus:outline-none transition-colors"
+                style={{
+                  backgroundColor: isDark ? '#0f172a' : '#ffffff',
+                  color: isDark ? '#f8fafc' : '#0f172a'
+                }}
               ></textarea>
             </div>
 

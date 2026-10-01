@@ -2,7 +2,7 @@
   "name": "prakanguard-flood-webapp",
   "private": true,
   "version": "1.0.0",
-  "description": "ระบบรายงานและพยากรณ์น้ำท่วมสมุทรปราการ จัดสร้างโดย Anantachai",
+  "description": "ระบบสารสนเทศและเฝ้าระวังอุทกภัยผิวจราจร 6 อำเภอ จังหวัดสมุทรปราการ",
   "type": "module",
   "scripts": {
     "dev": "vite",

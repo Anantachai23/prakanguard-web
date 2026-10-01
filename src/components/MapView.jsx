@@ -347,6 +347,7 @@ export default function MapView({
     citizenMarkersRef.current = [];
 
     citizenReports.forEach(report => {
+      const isHail = report.hazardType === 'hail';
       const emojiMap = {
         ankle: '🦶',
         knee: '🦵',
@@ -354,12 +355,12 @@ export default function MapView({
         chest: '👕',
         neck: '🧣'
       };
-      const emoji = emojiMap[report.bodyLevel] || '📢';
+      const emoji = isHail ? (report.level === 3 ? '💥' : '🧊') : (emojiMap[report.bodyLevel] || '📢');
 
       const citizenMarkerHtml = `
-        <div class="telemetry-pin" title="รายงานจากประชาชน: ${report.name}">
-          <div class="citizen-pulse-ring"></div>
-          <div class="citizen-beacon-core">
+        <div class="telemetry-pin" title="${isHail ? 'รายงานลูกเห็บตก' : 'รายงานน้ำท่วม'}: ${report.name}">
+          <div class="${isHail ? 'hail-pulse-ring' : 'citizen-pulse-ring'}" style="${isHail ? 'border-color:#06b6d4;background:rgba(6,182,212,0.2);' : ''}"></div>
+          <div class="citizen-beacon-core" style="${isHail ? 'background:linear-gradient(135deg, #06b6d4, #0284c7);box-shadow:0 0 14px rgba(6,182,212,0.6);' : ''}">
             <span>${emoji}</span>
           </div>
         </div>
@@ -377,23 +378,23 @@ export default function MapView({
 
       const photoHtml = report.photoUrl ? `
         <div style="margin:6px 0;border-radius:10px;overflow:hidden;border:1px solid #e2e8f0;max-height:110px;">
-          <img src="${report.photoUrl}" style="width:100%;height:100px;object-fit:cover;" alt="ภาพน้ำท่วมจริง" />
+          <img src="${report.photoUrl}" style="width:100%;height:100px;object-fit:cover;" alt="ภาพสถานการณ์จริง" />
         </div>
       ` : '';
 
       const popupContent = `
         <div style="font-family:'Prompt',sans-serif;padding:6px 4px 4px 4px;min-width:200px;max-width:240px;">
           <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:6px;">
-            <div style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:6px;background:#f5f3ff;color:#6d28d9;border:1px solid #ddd6fe;">
-              📢 รายงานโดยประชาชน
+            <div style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:6px;${isHail ? 'background:#ecfeff;color:#0891b2;border:1px solid #a5f3fc;' : 'background:#f5f3ff;color:#6d28d9;border:1px solid #ddd6fe;'}">
+              ${isHail ? '🧊 ลูกเห็บตก' : '📢 รายงานโดยประชาชน'}
             </div>
             <span style="font-size:10px;color:#64748b;font-weight:600;">อ.${report.district}</span>
           </div>
           <div style="font-size:12px;font-weight:700;color:#0f172a;line-height:1.3;margin-bottom:4px;">
             ${report.name}
           </div>
-          <div style="font-size:11px;color:#7c3aed;font-weight:700;margin-bottom:4px;">
-            ${emoji} ${report.statusLabel || report.bodyLevelLabel} (${report.depthRange})
+          <div style="font-size:11px;color:${isHail ? '#0284c7' : '#7c3aed'};font-weight:700;margin-bottom:4px;">
+            ${emoji} ${isHail ? (report.statusLabel || `ลูกเห็บ: ${report.hailSizeLabel}`) : `${report.statusLabel || report.bodyLevelLabel} (${report.depthRange})`}
           </div>
           ${photoHtml}
           <div style="font-size:10px;color:#475569;margin-bottom:6px;line-height:1.4;">
@@ -402,7 +403,7 @@ export default function MapView({
           <div style="font-size:9px;color:#94a3b8;margin-bottom:6px;">
             แจ้งเมื่อ: ${report.reportedAt || 'วันนี้'}
           </div>
-          <button id="citizen-popup-btn-${report.id}" style="width:100%;padding:6px 10px;background:linear-gradient(135deg, #7c3aed, #4f46e5);color:white;border:none;border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;">
+          <button id="citizen-popup-btn-${report.id}" style="width:100%;padding:6px 10px;background:${isHail ? 'linear-gradient(135deg, #06b6d4, #0284c7)' : 'linear-gradient(135deg, #7c3aed, #4f46e5)'};color:white;border:none;border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;">
             <span>ดูรายละเอียด &rarr;</span>
           </button>
         </div>

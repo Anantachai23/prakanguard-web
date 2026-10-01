@@ -257,19 +257,6 @@ export default function Navbar({
               <span>เกณฑ์ ปภ.</span>
             </button>
 
-            {/* Student Developers / Credits Button */}
-            <button 
-              onClick={onOpenWelcome}
-              className={`shrink-0 px-2 sm:px-2.5 py-1.5 rounded-xl border text-xs font-semibold flex items-center gap-1 transition-all cursor-pointer shadow-xs whitespace-nowrap ${
-                isDark 
-                  ? 'bg-slate-900 hover:bg-slate-800 text-slate-200 border-slate-700 hover:text-cyan-300 hover:border-cyan-500/50' 
-                  : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200 hover:border-blue-300'
-              }`}
-              title="คณะผู้จัดทำโครงงาน (ทีมพัฒนานักเรียน)"
-            >
-              <GraduationCap className="w-3.5 h-3.5 text-blue-500 shrink-0" />
-              <span>ผู้จัดทำ</span>
-            </button>
 
             {/* Real-time Stations & Radar Button */}
             <button 

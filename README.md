@@ -64,12 +64,5 @@ npm run build
 npm run preview
 ```
 
-## 👥 คณะผู้จัดทำ (Project Credits & Team)
-โครงงานระบบสารสนเทศและเฝ้าระวังอุทกภัยผิวจราจร PrakanGuard พัฒนาขึ้นโดยกลุ่มนักเรียน:
-1. **นาย อนันตชัย สายสิญจน์**
-2. **นาย ณรัณ ตันวิเชียร**
-3. **นาย วิชญ์ วิโนทัย**
-4. **นางสาว สุธิมา ตรัยรัตนทวี**
-
 ---
 © 2026 PrakanGuard Project. Built with dedication for the community of Samut Prakan.

@@ -19,6 +19,14 @@ import { getOfficialAdvisorySummary } from './services/aiPredictor';
 import { getLiveSamutPrakanWeather } from './services/weatherService';
 import { runOfficial24HourSync } from './services/aiSentryService';
 import { 
+  publishCloudReport, 
+  publishCloudFeedback, 
+  publishAdminAction,
+  fetchRecentCloudReports, 
+  fetchRecentCloudFeedback, 
+  subscribeToCloudEvents 
+} from './services/cloudSyncService';
+import { 
   Phone, 
   X, 
   ArrowRight, 
@@ -61,6 +69,26 @@ function getDistanceKm(lat1, lon1, lat2, lon2) {
   return Number((R * c).toFixed(1));
 }
 
+// Crisp dual-tone audio notification chime via Web Audio API (cross-device safe)
+function playNotificationChime() {
+  try {
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtx) return;
+    const audioCtx = new AudioCtx();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(587.33, audioCtx.currentTime); // D5
+    osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.15); // A5
+    gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.38);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.4);
+  } catch (e) {}
+}
+
 export default function App() {
   const [points, setPoints] = useState(() => {
     try {
@@ -76,7 +104,7 @@ export default function App() {
             return {
               ...merged,
               level: lvl,
-              depthRange: lvl === 3 ? '> 60 ซม.' : lvl === 2 ? '21 - 60 ซม.' : '8 - 20 ซม.'
+              depthRange: lvl === 3 ? '> 50 ซม.' : lvl === 2 ? '21 - 50 ซม.' : '5 - 20 ซม.'
             };
           });
         }
@@ -87,7 +115,7 @@ export default function App() {
       return {
         ...p,
         level: lvl,
-        depthRange: lvl === 3 ? '> 60 ซม.' : lvl === 2 ? '21 - 60 ซม.' : '8 - 20 ซม.'
+        depthRange: lvl === 3 ? '> 50 ซม.' : lvl === 2 ? '21 - 50 ซม.' : '5 - 20 ซม.'
       };
     });
   });
@@ -542,6 +570,92 @@ export default function App() {
     };
   }, []);
 
+  // Real-time Cloud Cross-Device Synchronization (Crowdsource Flood/Hail Reports & Feedback)
+  useEffect(() => {
+    // 1. Initial Pull of recent reports from Cloud
+    fetchRecentCloudReports().then(cloudReports => {
+      if (Array.isArray(cloudReports) && cloudReports.length > 0) {
+        setCitizenReports(prev => {
+          const existingIds = new Set(prev.map(r => r.id));
+          const newItems = cloudReports.filter(cr => !existingIds.has(cr.id));
+          if (newItems.length === 0) return prev;
+          const merged = [...newItems, ...prev];
+          try {
+            localStorage.setItem('prakanguard_citizen_reports', JSON.stringify(merged));
+          } catch (e) {}
+          return merged;
+        });
+      }
+    });
+
+    // 2. Initial Pull of recent feedback from Cloud
+    fetchRecentCloudFeedback().then(cloudFeedback => {
+      if (Array.isArray(cloudFeedback) && cloudFeedback.length > 0) {
+        try {
+          const existingStr = localStorage.getItem('prakanguard_feedback_items');
+          const existing = existingStr ? JSON.parse(existingStr) : [];
+          const existingIds = new Set(existing.map(f => f.id));
+          const newItems = cloudFeedback.filter(cf => !existingIds.has(cf.id));
+          if (newItems.length > 0) {
+            localStorage.setItem('prakanguard_feedback_items', JSON.stringify([...newItems, ...existing]));
+          }
+        } catch (e) {}
+      }
+    });
+
+    // 3. Real-time Live EventSource Listener across all devices
+    const unsubscribe = subscribeToCloudEvents({
+      onNewReport: (incomingReport) => {
+        setCitizenReports(prev => {
+          if (prev.some(r => r.id === incomingReport.id)) return prev;
+          const updated = [incomingReport, ...prev];
+          try {
+            localStorage.setItem('prakanguard_citizen_reports', JSON.stringify(updated));
+          } catch (e) {}
+          return updated;
+        });
+
+        // Trigger alert toast for admin
+        if (!incomingReport.isApproved) {
+          const isHail = incomingReport.hazardType === 'hail';
+          setAdminAlertToast({
+            id: incomingReport.id,
+            name: incomingReport.name,
+            levelLabel: isHail ? `🧊 ${incomingReport.hailSizeLabel || 'ลูกเห็บตก'}` : incomingReport.bodyLevelLabel,
+            district: incomingReport.district,
+            time: incomingReport.reportedAt || 'เมื่อสักครู่'
+          });
+          playNotificationChime();
+        }
+      },
+      onNewFeedback: (incomingFeedback) => {
+        try {
+          const existingStr = localStorage.getItem('prakanguard_feedback_items');
+          const existing = existingStr ? JSON.parse(existingStr) : [];
+          if (!existing.some(f => f.id === incomingFeedback.id)) {
+            localStorage.setItem('prakanguard_feedback_items', JSON.stringify([incomingFeedback, ...existing]));
+            setLatestUpdateNotification(`💬 ได้รับข้อเสนอแนะใหม่จากประชาชน: "${incomingFeedback.categoryLabel || 'ทั่วไป'}"`);
+            playNotificationChime();
+            setTimeout(() => setLatestUpdateNotification(null), 7000);
+          }
+        } catch (e) {}
+      },
+      onAdminAction: (action) => {
+        if (action.type === 'approve') {
+          handleApproveReport(action.id, false);
+        } else if (action.type === 'resolve') {
+          handleResolveReport(action.id, false);
+        } else if (action.type === 'reject') {
+          handleRejectReport(action.id, false);
+        }
+      }
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, []);
+
   // Public Live Situation Updates Modal & Live Refresh States (For Citizens)
   const [isPublicUpdatesModalOpen, setIsPublicUpdatesModalOpen] = useState(false);
   const [lastUpdatedTime, setLastUpdatedTime] = useState(() => {
@@ -621,7 +735,7 @@ export default function App() {
   // Handle New Citizen Report Submission (Hold in pending queue for admin review)
   const handleAddCitizenReport = (newReport) => {
     setCitizenReports(prev => {
-      const updated = [newReport, ...prev];
+      const updated = [newReport, ...prev.filter(r => r.id !== newReport.id)];
       try {
         localStorage.setItem('prakanguard_citizen_reports', JSON.stringify(updated));
       } catch (e) {
@@ -630,18 +744,31 @@ export default function App() {
       return updated;
     });
 
+    // Notify Cloud Pub/Sub immediately so Admin on any device receives it!
+    publishCloudReport(newReport);
+    playNotificationChime();
+
     // Notify the admin owner immediately
+    const isHail = newReport.hazardType === 'hail';
     setAdminAlertToast({
       id: newReport.id,
       name: newReport.name,
-      levelLabel: newReport.bodyLevelLabel,
+      levelLabel: isHail ? `🧊 ${newReport.hailSizeLabel || 'ลูกเห็บตก'}` : newReport.bodyLevelLabel,
       district: newReport.district,
       time: newReport.reportedAt
     });
   };
 
+  // Handle Feedback Submission
+  const handleFeedbackSubmitted = (newFeedback) => {
+    publishCloudFeedback(newFeedback);
+    playNotificationChime();
+    setLatestUpdateNotification(`💬 บันทึกข้อเสนอแนะและส่งถึงแอดมินเรียบร้อยแล้ว ขอบพระคุณครับ`);
+    setTimeout(() => setLatestUpdateNotification(null), 6000);
+  };
+
   // Admin Actions: Approve Report & Publish to Map
-  const handleApproveReport = (id) => {
+  const handleApproveReport = (id, shouldBroadcast = true) => {
     const timeStr = new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) + ' น.';
     let approvedPoint = null;
     setCitizenReports(prev => {
@@ -664,11 +791,14 @@ export default function App() {
       setFlyToLocation({ lat: approvedPoint.lat, lng: approvedPoint.lng });
       setLatestUpdateNotification(`✅ ยืนยันจุด "${approvedPoint.name}" ขึ้นแสดงบนแผนที่แล้ว (อัปเดตเมื่อ ${timeStr})`);
       setTimeout(() => setLatestUpdateNotification(null), 8000);
+      if (shouldBroadcast) {
+        publishAdminAction({ type: 'approve', id });
+      }
     }
   };
 
   // Admin Actions: Reject Report / Delete Announcement
-  const handleRejectReport = (id) => {
+  const handleRejectReport = (id, shouldBroadcast = true) => {
     setCitizenReports(prev => {
       const updated = prev.filter(r => r.id !== id);
       try {
@@ -680,6 +810,9 @@ export default function App() {
     if (selectedPoint && selectedPoint.id === id) {
       setSelectedPoint(null);
     }
+    if (shouldBroadcast) {
+      publishAdminAction({ type: 'reject', id });
+    }
   };
 
   // Filter pending reports for admin verification prompt
@@ -688,7 +821,7 @@ export default function App() {
   }, [citizenReports]);
 
   // Admin Actions: Resolve Report (Water Drained)
-  const handleResolveReport = (id) => {
+  const handleResolveReport = (id, shouldBroadcast = true) => {
     const timeStr = new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) + ' น.';
     let resolvedName = '';
     setCitizenReports(prev => {
@@ -707,6 +840,9 @@ export default function App() {
     setLastUpdatedTime(timeStr);
     setLatestUpdateNotification(`💧 อัปเดตสถานะ: จุด "${resolvedName}" ระบายแห้งสู่ภาวะปกติแล้ว (อัปเดตเมื่อ ${timeStr})`);
     setTimeout(() => setLatestUpdateNotification(null), 8000);
+    if (shouldBroadcast) {
+      publishAdminAction({ type: 'resolve', id });
+    }
   };
 
   // Map Picking Helpers
@@ -826,7 +962,7 @@ export default function App() {
         lat: item.lat,
         lng: item.lng,
         statusLabel: "จุดเฝ้าระวังซ้ำซาก",
-        depthRange: "21 - 60 ซม.",
+        depthRange: "21 - 50 ซม.",
         depthCm: 25,
         level: 2
       };
@@ -1444,9 +1580,9 @@ export default function App() {
               title="กรองตามระดับความรุนแรง (เกณฑ์ ปภ.)"
             >
               <option value="all">ทุกระดับเสี่ยง</option>
-              <option value="1">🟢 ระดับ 1: ปกติ (8-20 ซม.)</option>
-              <option value="2">🟠 ระดับ 2: เสี่ยงสูง (21-60 ซม.)</option>
-              <option value="3">🔴 ระดับ 3: วิกฤต (&gt;60 ซม.)</option>
+              <option value="1">🟢 ระดับ 1: ปกติ (5-20 ซม.)</option>
+              <option value="2">🟠 ระดับ 2: เสี่ยงสูง (21-50 ซม.)</option>
+              <option value="3">🔴 ระดับ 3: วิกฤต (&gt;50 ซม.)</option>
             </select>
           </div>
 
@@ -1469,17 +1605,20 @@ export default function App() {
                   title="คลิกเพื่อขยายดูเกจวัดน้ำและรายละเอียด"
                 >
                   <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md border shrink-0 ${
+                    selectedPoint.hazardType === 'hail' ? (isDark ? 'bg-cyan-950/80 text-cyan-300 border-cyan-800' : 'bg-cyan-50 text-cyan-700 border-cyan-200') :
                     getFloodLevel(selectedPoint.depthCm) === 3 ? (isDark ? 'bg-rose-950/80 text-rose-300 border-rose-800' : 'bg-rose-50 text-rose-700 border-rose-200') :
                     getFloodLevel(selectedPoint.depthCm) === 2 ? (isDark ? 'bg-amber-950/80 text-amber-300 border-amber-800' : 'bg-amber-50 text-amber-700 border-amber-200') :
                     (isDark ? 'bg-emerald-950/80 text-emerald-300 border-emerald-800' : 'bg-emerald-50 text-emerald-700 border-emerald-200')
                   }`}>
-                    {getFloodLevel(selectedPoint.depthCm) === 3 ? "🔴 วิกฤต (>60ซม.)" : getFloodLevel(selectedPoint.depthCm) === 2 ? "🟠 เสี่ยงสูง (21-60ซม.)" : "🟢 ปกติ (8-20ซม.)"}
+                    {selectedPoint.hazardType === 'hail' ? `🧊 ${selectedPoint.hailSizeLabel || 'ลูกเห็บตก'}` :
+                     getFloodLevel(selectedPoint.depthCm) === 3 ? "🔴 วิกฤต (>50 ซม.)" :
+                     getFloodLevel(selectedPoint.depthCm) === 2 ? "🟠 เสี่ยงสูง (21-50 ซม.)" : "🟢 ปกติ (5-20 ซม.)"}
                   </span>
                   <span className="font-bold text-xs sm:text-sm truncate text-slate-900 dark:text-white">
                     {selectedPoint.name}
                   </span>
                   <span className="text-xs font-mono font-bold text-blue-500 shrink-0">
-                    {selectedPoint.depthCm} ซม.
+                    {selectedPoint.hazardType === 'hail' ? '🧊 ลูกเห็บ' : `${selectedPoint.depthCm} ซม.`}
                   </span>
                 </div>
 
@@ -1518,11 +1657,14 @@ export default function App() {
                         อ.{selectedPoint.district}
                       </span>
                       <span className={`text-xs font-bold px-2.5 py-0.5 rounded-md border ${
+                        selectedPoint.hazardType === 'hail' ? (isDark ? 'bg-cyan-950/80 text-cyan-300 border-cyan-800' : 'bg-cyan-50 text-cyan-700 border-cyan-200') :
                         getFloodLevel(selectedPoint.depthCm) === 3 ? (isDark ? 'bg-rose-950/80 text-rose-300 border-rose-800' : 'bg-rose-50 text-rose-700 border-rose-200') :
                         getFloodLevel(selectedPoint.depthCm) === 2 ? (isDark ? 'bg-amber-950/80 text-amber-300 border-amber-800' : 'bg-amber-50 text-amber-700 border-amber-200') :
                         (isDark ? 'bg-emerald-950/80 text-emerald-300 border-emerald-800' : 'bg-emerald-50 text-emerald-700 border-emerald-200')
                       }`}>
-                        {getFloodLevel(selectedPoint.depthCm) === 3 ? "🔴 วิกฤต (>60 ซม.)" : getFloodLevel(selectedPoint.depthCm) === 2 ? "🟠 เสี่ยงสูง (21-60 ซม.)" : "🟢 ปกติ (8-20 ซม.)"}
+                        {selectedPoint.hazardType === 'hail' ? `🧊 ลูกเห็บ: ${selectedPoint.hailSizeLabel || 'ลูกเห็บตก'}` :
+                         getFloodLevel(selectedPoint.depthCm) === 3 ? "🔴 วิกฤต (>50 ซม.)" :
+                         getFloodLevel(selectedPoint.depthCm) === 2 ? "🟠 เสี่ยงสูง (21-50 ซม.)" : "🟢 ปกติ (5-20 ซม.)"}
                       </span>
                     </div>
                     <h3 className={`text-base sm:text-lg font-bold mt-1.5 leading-snug ${isDark ? 'text-white' : 'text-slate-900'}`}>
@@ -1733,10 +1875,59 @@ export default function App() {
         theme={theme}
       />
 
+      {/* Real-time Alert Toast Notification for Admin when new reports arrive */}
+      {adminAlertToast && (
+        <div className="fixed top-16 sm:top-20 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-top-4 duration-300 pointer-events-auto max-w-md w-[92vw]">
+          <div className={`p-3.5 sm:p-4 rounded-2xl shadow-2xl border flex items-center justify-between gap-3 ${
+            isDark ? 'bg-slate-900/98 border-amber-500 text-white shadow-amber-500/20' : 'bg-white border-amber-400 text-slate-900 shadow-xl'
+          }`}>
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-9 h-9 rounded-xl bg-amber-500 text-slate-950 flex items-center justify-center font-bold shrink-0 animate-bounce">
+                <ShieldAlert className="w-5 h-5" />
+              </div>
+              <div className="min-w-0">
+                <span className="text-[10px] font-bold text-amber-500 block uppercase tracking-wider">
+                  🚨 มีรายงานสถานการณ์ใหม่เข้ามา!
+                </span>
+                <h4 className="text-xs sm:text-sm font-bold truncate">
+                  {adminAlertToast.name}
+                </h4>
+                <span className="text-[10px] text-slate-400 block truncate">
+                  อ.{adminAlertToast.district} • {adminAlertToast.levelLabel} ({adminAlertToast.time})
+                </span>
+              </div>
+            </div>
+            <div className="flex items-center gap-1.5 shrink-0">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsAdminModalOpen(true);
+                  setAdminAlertToast(null);
+                }}
+                className="px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs shadow-md cursor-pointer transition-all"
+              >
+                ตรวจสอบ
+              </button>
+              <button
+                type="button"
+                onClick={() => setAdminAlertToast(null)}
+                className={`p-1.5 rounded-xl text-slate-400 hover:text-slate-200 cursor-pointer ${
+                  isDark ? 'hover:bg-slate-800' : 'hover:bg-slate-100'
+                }`}
+                title="ปิดการแจ้งเตือน"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <FeedbackModal 
         isOpen={isFeedbackModalOpen}
         onClose={() => setIsFeedbackModalOpen(false)}
         theme={theme}
+        onFeedbackSubmitted={handleFeedbackSubmitted}
       />
 
       <WelcomeModal 

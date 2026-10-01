@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, GraduationCap, Shield, CheckCircle2, Navigation2, Info, MapPin } from 'lucide-react';
+import { X, Shield, CheckCircle2, Navigation2, Info, MapPin } from 'lucide-react';
 
 export default function WelcomeModal({ isOpen, onClose, onEnterWithLocation, theme = 'light' }) {
   if (!isOpen) return null;
@@ -28,13 +28,13 @@ export default function WelcomeModal({ isOpen, onClose, onEnterWithLocation, the
             <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shadow-sm shrink-0 border ${
               isDark ? 'bg-blue-950 text-cyan-400 border-blue-800' : 'bg-blue-50 text-blue-600 border-blue-200'
             }`}>
-              <GraduationCap className="w-5 h-5" />
+              <Shield className="w-5 h-5" />
             </div>
             <div>
               <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full tracking-wide uppercase border ${
                 isDark ? 'bg-blue-950/80 text-cyan-300 border-blue-800' : 'bg-blue-50 text-blue-700 border-blue-200'
               }`}>
-                กลุ่มนักเรียน
+                สารสนเทศสาธารณประโยชน์
               </span>
               <h3 className={`text-base sm:text-lg font-bold mt-0.5 leading-snug ${isDark ? 'text-white' : 'text-slate-900'}`}>
                 ระบบสารสนเทศและเฝ้าระวังอุทกภัย จ.สมุทรปราการ
@@ -69,73 +69,24 @@ export default function WelcomeModal({ isOpen, onClose, onEnterWithLocation, the
                 📍 เรียกขอตำแหน่ง GPS อัตโนมัติเพื่อความแม่นยำ
               </strong>
               <p className="text-[11px] sm:text-xs leading-relaxed opacity-90">
-                เมื่อเข้าสู่ระบบ อุปกรณ์ (มือถือ ไอแพด แท็บเล็ต หรือคอมพิวเตอร์) จะขออนุญาตเข้าถึงตำแหน่งของคุณ เพื่อระบุพิกัดและคำนวณระยะห่างจุดน้ำท่วมใกล้ตัวที่สุดแบบเรียลไทม์
+                เมื่อเข้าสู่ระบบ อุปกรณ์ของคุณจะขออนุญาตเข้าถึงตำแหน่ง เพื่อระบุพิกัดและคำนวณระยะห่างจุดน้ำท่วมใกล้ตัวที่สุดแบบเรียลไทม์
               </p>
             </div>
           </div>
 
-          {/* Formal Student Group Purpose Statement */}
+          {/* Project Purpose Statement */}
           <div className={`p-3.5 sm:p-4 rounded-2xl border shadow-xs space-y-2 ${
             isDark ? 'bg-slate-855/80 border-slate-700' : 'bg-slate-50 border-slate-200'
           }`}>
             <div className="flex items-center gap-2">
               <Info className={`w-4 h-4 shrink-0 ${isDark ? 'text-cyan-400' : 'text-blue-600'}`} />
               <h4 className={`text-xs font-bold uppercase tracking-wider ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                วัตถุประสงค์การพัฒนาโดยกลุ่มนักเรียน
+                วัตถุประสงค์ระบบสารสนเทศ
               </h4>
             </div>
             <p className={`text-xs sm:text-sm leading-relaxed ${isDark ? 'text-slate-200' : 'text-slate-700'}`}>
-              เว็บไซต์นี้จัดทำขึ้นโดย <strong>กลุ่มนักเรียน</strong> เพื่อเป็นสื่อกลางในการรวบรวมและเผยแพร่ข้อมูลสารสนเทศเกี่ยวกับสถานการณ์น้ำท่วมขังบนผิวจราจรในพื้นที่จังหวัดสมุทรปราการ โดยมีวัตถุประสงค์เพื่อสนับสนุนการวางแผนการเดินทางและความปลอดภัยในการสัญจรของประชาชน
+              เว็บไซต์นี้จัดทำขึ้นเพื่อเป็นสื่อกลางในการรวบรวมและเผยแพร่ข้อมูลสารสนเทศเกี่ยวกับสถานการณ์น้ำท่วมขังบนผิวจราจรในพื้นที่จังหวัดสมุทรปราการ โดยมีวัตถุประสงค์เพื่อสนับสนุนการวางแผนการเดินทางและความปลอดภัยในการสัญจรของประชาชน
             </p>
-            <p className={`text-xs leading-relaxed pt-1.5 border-t font-medium ${
-              isDark ? 'border-slate-700 text-cyan-300' : 'border-slate-200 text-blue-800'
-            }`}>
-              *หากมีข้อผิดพลาดหรือข้อเสนอแนะประการใด คณะผู้จัดทำขอน้อมรับเพื่อนำไปพัฒนาและปรับปรุงระบบให้เกิดประโยชน์สูงสุดต่อไปครับ
-            </p>
-          </div>
-
-          {/* Student Developer Team Credits */}
-          <div className={`p-3.5 sm:p-4 rounded-2xl border shadow-xs space-y-2.5 ${
-            isDark ? 'bg-slate-850/90 border-slate-700' : 'bg-slate-50 border-slate-200'
-          }`}>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <GraduationCap className={`w-4 h-4 shrink-0 ${isDark ? 'text-cyan-400' : 'text-blue-600'}`} />
-                <h4 className={`text-xs font-bold uppercase tracking-wider ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                  คณะผู้จัดทำ (ทีมพัฒนานักเรียน)
-                </h4>
-              </div>
-              <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold border ${
-                isDark ? 'bg-blue-950 text-cyan-300 border-blue-800' : 'bg-blue-50 text-blue-700 border-blue-200'
-              }`}>
-                ผู้พัฒนา
-              </span>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
-              {[
-                "นาย อนันตชัย สายสิญจน์",
-                "นาย ณรัณ ตันวิเชียร",
-                "นาย วิชญ์ วิโนทัย",
-                "นางสาว สุธิมา ตรัยรัตนทวี"
-              ].map((name, idx) => (
-                <div 
-                  key={idx}
-                  className={`p-2.5 rounded-xl border flex items-center gap-2.5 transition-all ${
-                    isDark 
-                      ? 'bg-slate-800/80 border-slate-700/80 hover:border-blue-500/50' 
-                      : 'bg-white border-slate-200 shadow-2xs hover:border-blue-300'
-                  }`}
-                >
-                  <div className="w-6 h-6 rounded-full bg-blue-600 text-white font-bold text-xs flex items-center justify-center shrink-0">
-                    {idx + 1}
-                  </div>
-                  <span className={`text-xs font-bold truncate ${isDark ? 'text-slate-100' : 'text-slate-800'}`}>
-                    {name}
-                  </span>
-                </div>
-              ))}
-            </div>
           </div>
 
           {/* Data Reference & Disclaimers */}
@@ -180,7 +131,7 @@ export default function WelcomeModal({ isOpen, onClose, onEnterWithLocation, the
           isDark ? 'border-slate-800 bg-slate-950/80' : 'border-slate-200 bg-slate-50'
         }`}>
           <span className={`text-[11px] hidden sm:inline ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-            PrakanGuard • จัดทำโดย: อนันตชัย, ณรัณ, วิชญ์, สุธิมา
+            PrakanGuard • ระบบสารสนเทศเพื่อความปลอดภัยในการสัญจร จ.สมุทรปราการ
           </span>
           <button
             onClick={handleEnter}

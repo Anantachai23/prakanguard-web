@@ -1,10 +1,11 @@
 // เกณฑ์มาตรฐานระดับน้ำท่วมขังบนผิวจราจรและการสัญจร
 // อ้างอิงมาตรฐานจาก: กรมป้องกันและบรรเทาสาธารณภัย (ปภ.), สำนักการระบายน้ำ กทม., กรมทางหลวง และ คปภ.
-// ปรับปรุงเกณฑ์ล่าสุด: ระดับ 1 (8-20 ซม.) | ระดับ 2 (21-60 ซม.) | ระดับ 3 (> 60 ซม.)
+// เกณฑ์มาตรฐานใหม่: 
+// ระดับ 1 (5 - 20 ซม.) | ระดับ 2 (21 - 50 ซม.) | ระดับ 3 (> 50 ซม.)
 
 export function getFloodLevel(depthCm) {
   const d = Number(depthCm) || 0;
-  if (d > 60) return 3;
+  if (d > 50) return 3;
   if (d >= 21) return 2;
   return 1;
 }
@@ -13,9 +14,9 @@ export const FLOOD_STANDARDS = [
   {
     level: 1,
     name: "ระดับ 1: ปกติ / เฝ้าระวังเบื้องต้น",
-    shortName: "ปกติ (8-20 ซม.)",
-    depthRange: "8 - 20 ซม.",
-    depthCmMin: 8,
+    shortName: "ปกติ",
+    depthRange: "5 - 20 ซม.",
+    depthCmMin: 5,
     depthCmMax: 20,
     color: "emerald",
     bgClass: "bg-emerald-500/15",
@@ -36,18 +37,18 @@ export const FLOOD_STANDARDS = [
   {
     level: 2,
     name: "ระดับ 2: ปานกลาง / เสี่ยงสูงสำหรับรถเล็ก",
-    shortName: "เสี่ยงสูง (21-60 ซม.)",
-    depthRange: "21 - 60 ซม.",
+    shortName: "เสี่ยงสูง",
+    depthRange: "21 - 50 ซม.",
     depthCmMin: 21,
-    depthCmMax: 60,
+    depthCmMax: 50,
     color: "amber",
     bgClass: "bg-amber-500/15",
     borderClass: "border-amber-500/30",
     textClass: "text-amber-400",
     glowColor: "#f59e0b",
-    waterDepthVisual: "ระดับหน้าแข้งถึงหัวเข่า / ท่วมแตะท้องรถ (15-20 ซม.) ถึง 2/3 ล้อรถเก๋ง (50-60 ซม.)",
+    waterDepthVisual: "ระดับหน้าแข้งถึงหัวเข่า / ท่วมแตะขอบประตูล่าง (20 ซม.) ถึงครึ่งล้อรถเก๋ง (35-50 ซม.)",
     vehicleImpact: {
-      sedan: { status: "warning", label: "รถเก๋ง / Eco car", desc: "⚠️ เสี่ยงสูงมาก! น้ำท่วมแตะท้องรถและปริ่มท่อไอเสีย เลี่ยงได้ควรเลี่ยง หากจำเป็นต้องปิดแอร์ทันที ใช้เกียร์ต่ำ" },
+      sedan: { status: "warning", label: "รถเก๋ง / Eco car", desc: "⚠️ เสี่ยงสูงมาก! น้ำท่วมแตะชายประตูล่างและท่อไอเสีย เลี่ยงได้ควรเลี่ยง หากจำเป็นต้องปิดแอร์ทันที ใช้เกียร์ต่ำ" },
       motorcycle: { status: "warning", label: "รถจักรยานยนต์", desc: "⚠️ เสี่ยงเครื่องดับและเสียการทรงตัวจากคลื่นน้ำ ควรชิดเลนขวาหรือเลี่ยงเส้นทาง" },
       suv: { status: "safe", label: "รถกระบะ / SUV", desc: "ผ่านได้ในช่องทางขวา ใช้ความเร็วสม่ำเสมอ รักษาระยะห่าง" },
       truck: { status: "safe", label: "รถบรรทุก", desc: "ผ่านได้ตามปกติ ใช้ความเร็วต่ำ" }
@@ -59,18 +60,18 @@ export const FLOOD_STANDARDS = [
   {
     level: 3,
     name: "ระดับ 3: วิกฤต / ห้ามสัญจรเด็ดขาด",
-    shortName: "วิกฤตห้ามผ่าน (>60 ซม.)",
-    depthRange: "> 60 ซม. (61 - 100+ ซม.)",
-    depthCmMin: 61,
+    shortName: "วิกฤต",
+    depthRange: "> 50 ซม.",
+    depthCmMin: 51,
     depthCmMax: 100,
     color: "rose",
     bgClass: "bg-rose-500/15",
     borderClass: "border-rose-500/30",
     textClass: "text-rose-400",
     glowColor: "#f43f5e",
-    waterDepthVisual: "ระดับต้นขา สะโพก เอว ถึงหน้าอก / น้ำท่วมมิดล้อรถเก๋ง (60 ซม.) ท่วมห้องโดยสารและฝากระโปรง",
+    waterDepthVisual: "ระดับต้นขา สะโพก เอว ถึงหน้าอก / น้ำท่วมมิดล้อรถเก๋ง (>50 ซม.) ท่วมห้องโดยสารและฝากระโปรง",
     vehicleImpact: {
-      sedan: { status: "danger", label: "รถเก๋ง / Eco car", desc: "🔴 ห้ามผ่านเด็ดขาด! น้ำท่วมมิดล้อและห้องเครื่อง น้ำเข้าท่อไอเสียและท่อไอดี เครื่องยนต์พังถาวร รถลอยน้ำ" },
+      sedan: { status: "danger", label: "รถเก๋ง / Eco car", desc: "🔴 ห้ามผ่านเด็ดขาด! น้ำท่วมมิดล้อและห้องเครื่อง น้ำเข้าท่อไอดี เครื่องยนต์พังถาวร รถอาจลอยน้ำ" },
       motorcycle: { status: "danger", label: "รถจักรยานยนต์", desc: "🔴 ห้ามผ่านเด็ดขาด! รถจมมิดคัน เครื่องยนต์ดับและกระแสน้ำพัดล้มได้" },
       suv: { status: "warning", label: "รถกระบะ / SUV", desc: "รถกระบะเดิมๆ ห้ามผ่าน สัญจรได้เฉพาะรถกระบะยกสูง 4x4 พิเศษหรือเรือท้องแบน" },
       truck: { status: "warning", label: "รถบรรทุก", desc: "ใช้ความระมัดระวังสูงสุด ระวังหลุมยุบใต้ผิวจราจรและกระแสน้ำไหลเชี่ยว" }
@@ -84,7 +85,7 @@ export const FLOOD_STANDARDS = [
 export const VEHICLE_TOLERANCES = [
   { type: "รถเก๋ง / Eco Car (โหลดต่ำ)", limitCm: 15, safeMax: 20, note: "ระยะใต้ท้องรถสูง ~13-16 ซม. ปริ่มท่อไอเสียที่ ~20 ซม." },
   { type: "รถจักรยานยนต์ ทั่วไป", limitCm: 15, safeMax: 20, note: "ท่อไอเสียและชุดสายพานสูง ~18-22 ซม." },
-  { type: "รถกระบะ / SUV สแตนดาร์ด", limitCm: 30, safeMax: 45, note: "ระยะท้องรถสูง ~20-25 ซม. ท่อไอเสียสูง ~35-45 ซม." },
-  { type: "รถกระบะยกสูง 4x4", limitCm: 50, safeMax: 65, note: "ท่อไอดีและกรองอากาศสูงกว่า 70 ซม." },
-  { type: "รถบรรทุก 6 ล้อ / 10 ล้อ", limitCm: 65, safeMax: 85, note: "เครื่องยนต์และแนวท่อไอเสียอยู่สูงเกิน 80 ซม." }
+  { type: "รถกระบะ / SUV สแตนดาร์ด", limitCm: 25, safeMax: 40, note: "ระยะท้องรถสูง ~20-25 ซม. ท่อไอเสียสูง ~35-45 ซม." },
+  { type: "รถกระบะยกสูง 4x4", limitCm: 45, safeMax: 60, note: "ท่อไอดีและกรองอากาศสูงกว่า 65 ซม." },
+  { type: "รถบรรทุก 6 ล้อ / 10 ล้อ", limitCm: 60, safeMax: 80, note: "เครื่องยนต์และแนวท่อไอเสียอยู่สูงเกิน 75 ซม." }
 ];

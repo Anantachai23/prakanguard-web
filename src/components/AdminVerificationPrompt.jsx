@@ -131,17 +131,23 @@ export default function AdminVerificationPrompt({
               </p>
             </div>
 
-            {/* Severity & Water Depth */}
+            {/* Severity & Water Depth / Hail Size */}
             <div className="grid grid-cols-2 gap-2.5">
               <div className={`p-3 rounded-2xl border ${
                 isDark ? 'bg-slate-800/60 border-slate-700' : 'bg-slate-50 border-slate-200'
               }`}>
-                <span className="text-[11px] text-slate-400 block mb-0.5">ระดับน้ำที่แจ้ง:</span>
+                <span className="text-[11px] text-slate-400 block mb-0.5">
+                  {currentReport.hazardType === 'hail' ? 'ขนาดลูกเห็บ:' : 'ระดับน้ำที่แจ้ง:'}
+                </span>
                 <span className="font-bold text-sm text-blue-600 dark:text-cyan-400 block">
-                  ระดับ{currentReport.bodyLevelLabel}
+                  {currentReport.hazardType === 'hail' 
+                    ? `🧊 ${currentReport.hailSizeLabel || 'ลูกเห็บตก'}` 
+                    : `ระดับ${currentReport.bodyLevelLabel}`}
                 </span>
                 <span className="text-[10px] text-slate-500 block">
-                  (ประมาณ {currentReport.depthRange})
+                  {currentReport.hazardType === 'hail' 
+                    ? 'พายุลูกเห็บ/ลมกระโชกแรง' 
+                    : `(ประมาณ ${currentReport.depthRange})`}
                 </span>
               </div>
 
@@ -153,11 +159,11 @@ export default function AdminVerificationPrompt({
                   currentReport.level === 3 ? 'text-rose-500' :
                   currentReport.level === 2 ? 'text-amber-500' : 'text-emerald-500'
                 }`}>
-                  {currentReport.level === 3 ? '🔴 วิกฤต (ห้ามผ่าน)' :
-                   currentReport.level === 2 ? '🟡 เฝ้าระวังสูง' : '🟢 ปกติ/ท่วมเล็กน้อย'}
+                  {currentReport.level === 3 ? '🔴 วิกฤต (ห้ามผ่าน/อันตราย)' :
+                   currentReport.level === 2 ? '🟠 เฝ้าระวังสูง/เสี่ยง' : '🟢 ปกติ/เฝ้าระวัง'}
                 </span>
                 <span className="text-[10px] text-slate-500 block">
-                  เกณฑ์ ปภ. / กรมทางหลวง
+                  {currentReport.hazardType === 'hail' ? 'เกณฑ์ขนาดพายุลูกเห็บ' : 'เกณฑ์ ปภ. / กรมทางหลวง'}
                 </span>
               </div>
             </div>

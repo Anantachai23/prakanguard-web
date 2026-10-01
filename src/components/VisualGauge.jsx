@@ -6,9 +6,9 @@ export default function VisualGauge({ depthCm = 0, level, impactText = '', theme
   const isDark = theme === 'dark';
   
   // Enforce new 3-Tier Official Criteria:
-  // Level 1: 8 - 20 cm
-  // Level 2: 21 - 60 cm
-  // Level 3: > 60 cm
+  // Level 1: 5 - 20 cm
+  // Level 2: 21 - 50 cm
+  // Level 3: > 50 cm
   const computedLevel = getFloodLevel(depthCm);
   const activeLevel = level || computedLevel;
   const standard = FLOOD_STANDARDS.find(s => s.level === activeLevel) || FLOOD_STANDARDS[0];
@@ -22,41 +22,36 @@ export default function VisualGauge({ depthCm = 0, level, impactText = '', theme
   // Real-world Anatomical Landmark Assessment for 170cm Human
   let humanImpact = '';
   let humanImpactBadge = '';
-  if (depthCm <= 7) {
-    humanImpact = 'ผิวถนนเปียกชื้น / น้ำขังตื้น (<8 ซม.)';
+  if (depthCm < 5) {
+    humanImpact = 'ผิวถนนเปียกชื้น / น้ำขังตื้น (< 5 ซม.)';
     humanImpactBadge = 'bg-emerald-50 text-emerald-700 border-emerald-300 dark:bg-emerald-950/80 dark:text-emerald-300 dark:border-emerald-800';
   } else if (depthCm <= 20) {
-    humanImpact = 'ระดับ 1 (8-20 ซม.): สูงเสมอตาตุ่มถึงหน้าแข้งตอนล่าง — เดินลุยได้ปกติ ร่างกายและเสื้อผ้าพ้นน้ำ';
+    humanImpact = 'ระดับ 1 (5-20 ซม.): สูงเสมอตาตุ่มถึงใต้ท้องรถเก๋ง — เดินลุยได้ปกติ ร่างกายและเสื้อผ้าพ้นน้ำ';
     humanImpactBadge = 'bg-emerald-100 text-emerald-800 border-emerald-400 dark:bg-emerald-950 dark:text-emerald-200 dark:border-emerald-700 font-bold';
-  } else if (depthCm <= 45) {
-    humanImpact = 'ระดับ 2 (21-45 ซม.): สูงระดับหน้าแข้งถึงหัวเข่า — ลำตัวและศีรษะพ้นน้ำปลอดภัย 100%';
+  } else if (depthCm <= 50) {
+    humanImpact = 'ระดับ 2 (21-50 ซม.): สูงระดับหน้าแข้งถึงหัวเข่า/ครึ่งล้อ — ศีรษะและลำตัวพ้นน้ำปลอดภัย 100%';
     humanImpactBadge = 'bg-amber-100 text-amber-800 border-amber-400 dark:bg-amber-950 dark:text-amber-200 dark:border-amber-700 font-bold';
-  } else if (depthCm <= 60) {
-    humanImpact = 'ระดับ 2 (46-60 ซม.): สูงแตะหัวเข่าถึงต้นขาตอนล่าง — ศีรษะและลำตัวพ้นน้ำปลอดภัย';
-    humanImpactBadge = 'bg-orange-100 text-orange-900 border-orange-400 dark:bg-orange-950 dark:text-orange-200 dark:border-orange-700 font-bold';
   } else if (depthCm <= 90) {
-    humanImpact = 'ระดับ 3 (>60 ซม.): สูงระดับสะโพก/เอว — วิกฤต ห้ามเดินลุยน้ำเด็ดขาด เสี่ยงถูกกระแสน้ำพัด';
+    humanImpact = 'ระดับ 3 (>50 ซม.): สูงระดับสะโพก/เอว — วิกฤต ห้ามเดินลุยน้ำเด็ดขาด เสี่ยงถูกกระแสน้ำพัด';
     humanImpactBadge = 'bg-rose-100 text-rose-800 border-rose-400 dark:bg-rose-950 dark:text-rose-200 dark:border-rose-700 font-bold animate-pulse';
   } else if (depthCm <= 130) {
-    humanImpact = 'ระดับ 3 (>60 ซม.): สูงระดับหน้าอก (100-130 ซม.) — ภัยพิบัติร้ายแรง ห้ามเข้าใกล้แนวลำน้ำ';
+    humanImpact = 'ระดับ 3 (>50 ซม.): สูงระดับหน้าอก (100-130 ซม.) — ภัยพิบัติร้ายแรง ห้ามเข้าใกล้แนวลำน้ำ';
     humanImpactBadge = 'bg-purple-100 text-purple-900 border-purple-400 dark:bg-purple-950 dark:text-purple-200 dark:border-purple-700 font-bold animate-pulse';
   } else {
-    humanImpact = 'ระดับ 3 (>60 ซม.): สูงถึงระดับคอและมิดศีรษะ (>140 ซม.) — ภัยพิบัติฉุกเฉินสูงสุด อพยพทันที';
+    humanImpact = 'ระดับ 3 (>50 ซม.): สูงถึงระดับคอและมิดศีรษะ (>140 ซม.) — ภัยพิบัติฉุกเฉินสูงสุด อพยพทันที';
     humanImpactBadge = 'bg-red-200 text-red-950 border-red-500 dark:bg-red-950 dark:text-red-100 dark:border-red-600 font-extrabold animate-pulse';
   }
 
   // Real-world Vehicle Impact Assessment based on new standard
   let carImpact = '';
-  if (depthCm < 8) {
+  if (depthCm < 5) {
     carImpact = 'น้ำขังตื้นผิวทาง — สัญจรได้ตามปกติ';
   } else if (depthCm <= 20) {
-    carImpact = 'ระดับ 1 (8-20 ซม.): น้ำแตะใต้ท้องรถ (15 ซม.) ยังไม่ถึงขอบประตูล่าง — รถเก๋งและรถทุกประเภทผ่านได้ปกติ';
-  } else if (depthCm <= 40) {
-    carImpact = 'ระดับ 2 (21-40 ซม.): น้ำท่วมเสมอชายประตูล่างและท่วมครึ่งล้อ — รถเก๋งเสี่ยงสูงมาก แนะนำเลี่ยงเส้นทาง ปิดแอร์ทันที';
-  } else if (depthCm <= 60) {
-    carImpact = 'ระดับ 2 (41-60 ซม.): น้ำท่วมสูงปริ่มขอบบนล้อรถเก๋ง (แตะ 60 ซม.) — รถเก๋งเสี่ยงเครื่องดับสูง รถกระบะผ่านได้ชิดขวา';
+    carImpact = 'ระดับ 1 (5-20 ซม.): น้ำแตะใต้ท้องรถ (15 ซม.) ยังไม่ถึงขอบประตูล่าง — รถเก๋งและรถทุกประเภทผ่านได้ปกติ';
+  } else if (depthCm <= 50) {
+    carImpact = 'ระดับ 2 (21-50 ซม.): น้ำท่วมเสมอชายประตูล่างถึงครึ่งล้อ — รถเก๋งเสี่ยงสูงมาก แนะนำเลี่ยงเส้นทาง ปิดแอร์ทันที';
   } else {
-    carImpact = 'ระดับ 3 (>60 ซม.): น้ำท่วมมิดล้อรถเก๋ง (>60 ซม.) ท่วมห้องโดยสารและฝากระโปรง — ห้ามรถเก๋งผ่านเด็ดขาด รถจมน้ำถาวร';
+    carImpact = 'ระดับ 3 (>50 ซม.): น้ำท่วมมิดล้อรถเก๋ง (>50 ซม.) ท่วมห้องโดยสารและฝากระโปรง — ห้ามรถเก๋งผ่านเด็ดขาด รถจมน้ำถาวร';
   }
 
   // Level Theme Configuration
@@ -64,7 +59,7 @@ export default function VisualGauge({ depthCm = 0, level, impactText = '', theme
     badge: isDark ? "bg-emerald-950/80 text-emerald-300 border-emerald-800" : "bg-emerald-50 text-emerald-800 border-emerald-300",
     waterFill: "url(#waterGradientEmerald)",
     waterColor: "#10b981",
-    tag: "🟢 ระดับ 1: ปกติ (8 - 20 ซม.) • รถทุกชนิดผ่านได้ปกติ",
+    tag: "🟢 ระดับ 1: ปกติ (5 - 20 ซม.) • รถทุกชนิดผ่านได้ปกติ",
     tagStyle: isDark ? "bg-emerald-950/80 text-emerald-300 border-emerald-800" : "bg-emerald-100 text-emerald-800 border-emerald-300"
   };
 
@@ -73,7 +68,7 @@ export default function VisualGauge({ depthCm = 0, level, impactText = '', theme
       badge: isDark ? "bg-amber-950/80 text-amber-300 border-amber-800" : "bg-amber-50 text-amber-800 border-amber-300",
       waterFill: "url(#waterGradientAmber)",
       waterColor: "#f59e0b",
-      tag: "🟠 ระดับ 2: เสี่ยงสูง (21 - 60 ซม.) • รถเล็กเสี่ยงสูง ควรเลี่ยงเส้นทาง",
+      tag: "🟠 ระดับ 2: เสี่ยงสูง (21 - 50 ซม.) • รถเล็กเสี่ยงสูง ควรเลี่ยงเส้นทาง",
       tagStyle: isDark ? "bg-amber-950/80 text-amber-300 border-amber-800" : "bg-amber-100 text-amber-800 border-amber-300"
     };
   } else if (activeLevel === 3) {
@@ -81,7 +76,7 @@ export default function VisualGauge({ depthCm = 0, level, impactText = '', theme
       badge: isDark ? "bg-rose-950/80 text-rose-300 border-rose-800" : "bg-rose-50 text-rose-800 border-rose-300",
       waterFill: "url(#waterGradientRose)",
       waterColor: "#f43f5e",
-      tag: "🔴 ระดับ 3: วิกฤต (>60 ซม.) • มิดล้อรถ ห้ามผ่านเด็ดขาด",
+      tag: "🔴 ระดับ 3: วิกฤต (>50 ซม.) • ท่วมมิดล้อ ห้ามผ่านเด็ดขาด",
       tagStyle: isDark ? "bg-rose-950/80 text-rose-300 border-rose-800" : "bg-rose-100 text-rose-800 border-rose-300"
     };
   }
@@ -139,21 +134,21 @@ export default function VisualGauge({ depthCm = 0, level, impactText = '', theme
           style={{ maxHeight: '250px' }}
         >
           <defs>
-            {/* Emerald Gradient (Level 1: 8 - 20 cm) */}
+            {/* Emerald Gradient (Level 1: 5 - 20 cm) */}
             <linearGradient id="waterGradientEmerald" x1="0%" y1="0%" x2="0%" y2="100%">
               <stop offset="0%" stopColor="#34d399" stopOpacity="0.82" />
               <stop offset="30%" stopColor="#10b981" stopOpacity="0.88" />
               <stop offset="100%" stopColor="#047857" stopOpacity="0.95" />
             </linearGradient>
 
-            {/* Amber Gradient (Level 2: 21 - 60 cm) */}
+            {/* Amber Gradient (Level 2: 21 - 50 cm) */}
             <linearGradient id="waterGradientAmber" x1="0%" y1="0%" x2="0%" y2="100%">
               <stop offset="0%" stopColor="#fde047" stopOpacity="0.85" />
               <stop offset="25%" stopColor="#f59e0b" stopOpacity="0.88" />
               <stop offset="100%" stopColor="#b45309" stopOpacity="0.95" />
             </linearGradient>
 
-            {/* Rose/Crimson Gradient (Level 3: > 60 cm) */}
+            {/* Rose/Crimson Gradient (Level 3: > 50 cm) */}
             <linearGradient id="waterGradientRose" x1="0%" y1="0%" x2="0%" y2="100%">
               <stop offset="0%" stopColor="#fda4af" stopOpacity="0.88" />
               <stop offset="25%" stopColor="#f43f5e" stopOpacity="0.90" />
@@ -175,14 +170,14 @@ export default function VisualGauge({ depthCm = 0, level, impactText = '', theme
           </defs>
 
           {/* 3-TIER OFFICIAL BACKGROUND ZONE BANDS */}
-          {/* Level 3 Zone: Y=0 to 120 (>60 cm) */}
-          <rect x="0" y="0" width="350" height="120" fill={isDark ? "#f43f5e" : "#ffe4e6"} opacity={isDark ? "0.04" : "0.35"} />
+          {/* Level 3 Zone: Y=0 to 130 (>50 cm) */}
+          <rect x="0" y="0" width="350" height="130" fill={isDark ? "#f43f5e" : "#ffe4e6"} opacity={isDark ? "0.04" : "0.35"} />
           
-          {/* Level 2 Zone: Y=120 to 160 (21 - 60 cm) */}
-          <rect x="0" y="120" width="350" height="40" fill={isDark ? "#f59e0b" : "#fef3c7"} opacity={isDark ? "0.05" : "0.45"} />
+          {/* Level 2 Zone: Y=130 to 160 (21 - 50 cm) */}
+          <rect x="0" y="130" width="350" height="30" fill={isDark ? "#f59e0b" : "#fef3c7"} opacity={isDark ? "0.05" : "0.45"} />
           
-          {/* Level 1 Zone: Y=160 to 180 (8 - 20 cm) */}
-          <rect x="0" y="160" width="350" height="20" fill={isDark ? "#10b981" : "#ecfdf5"} opacity={isDark ? "0.06" : "0.55"} />
+          {/* Level 1 Zone: Y=160 to 175 (5 - 20 cm) */}
+          <rect x="0" y="160" width="350" height="15" fill={isDark ? "#10b981" : "#ecfdf5"} opacity={isDark ? "0.06" : "0.55"} />
 
 
           {/* ----------------- RULER BENCHMARKS (Across Width) ----------------- */}
@@ -198,56 +193,121 @@ export default function VisualGauge({ depthCm = 0, level, impactText = '', theme
           <line x1="8" y1="80" x2="270" y2="80" stroke={isDark ? "#334155" : "#cbd5e1"} strokeWidth="0.8" strokeDasharray="3 3" />
           <text x="274" y="83" fill={isDark ? "#94a3b8" : "#64748b"} fontSize="7.5" fontFamily="monospace">100cm ระดับเอว</text>
 
-          {/* 60 cm - KEY THRESHOLD: Level 3 Limit (>60 cm is Critical / Submerged Tires) */}
-          <line x1="0" y1="120" x2="270" y2="120" stroke="#f43f5e" strokeWidth="1.5" strokeDasharray="4 2" />
-          <text x="274" y="123" fill="#e11d48" fontSize="8" fontFamily="monospace" fontWeight="bold">60cm 🔴 วิกฤต มิดล้อ</text>
+          {/* 50 cm - KEY THRESHOLD: Level 3 Limit (>50 cm is Critical / Submerged Tires) */}
+          <line x1="0" y1="130" x2="270" y2="130" stroke="#f43f5e" strokeWidth="1.5" strokeDasharray="4 2" />
+          <text x="274" y="133" fill="#e11d48" fontSize="8" fontFamily="monospace" fontWeight="bold">50cm 🔴 วิกฤต ห้ามผ่าน</text>
 
-          {/* 40 cm - Knee Level */}
-          <line x1="8" y1="140" x2="270" y2="140" stroke={isDark ? "#475569" : "#94a3b8"} strokeWidth="0.8" strokeDasharray="3 3" />
-          <text x="274" y="143" fill={isDark ? "#fbbf24" : "#b45309"} fontSize="7.5" fontFamily="monospace" fontWeight="semibold">40cm หัวเข่า</text>
+          {/* 35 cm - Shin / Half Wheel Level */}
+          <line x1="8" y1="145" x2="270" y2="145" stroke={isDark ? "#475569" : "#94a3b8"} strokeWidth="0.8" strokeDasharray="3 3" />
+          <text x="274" y="148" fill={isDark ? "#fbbf24" : "#b45309"} fontSize="7.5" fontFamily="monospace" fontWeight="semibold">35cm ครึ่งล้อรถ</text>
 
           {/* 20 cm - KEY THRESHOLD: Level 2 / Level 1 Boundary (20 cm Car Door Sill) */}
           <line x1="0" y1="160" x2="270" y2="160" stroke="#f59e0b" strokeWidth="1.5" strokeDasharray="4 2" />
-          <text x="274" y="163" fill="#d97706" fontSize="8" fontFamily="monospace" fontWeight="bold">20cm 🟠 เสี่ยงสูง ท้องรถ</text>
+          <text x="274" y="163" fill="#d97706" fontSize="8" fontFamily="monospace" fontWeight="bold">20cm 🟠 เสี่ยงสูง ชายประตู</text>
 
-          {/* 8 cm - Level 1 Start Threshold */}
-          <line x1="8" y1="172" x2="270" y2="172" stroke="#10b981" strokeWidth="0.8" strokeDasharray="2 2" />
-          <text x="274" y="174.5" fill="#059669" fontSize="7" fontFamily="monospace">8cm 🟢 เริ่มท่วมขัง</text>
+          {/* 5 cm - Level 1 Start Threshold */}
+          <line x1="8" y1="175" x2="270" y2="175" stroke="#10b981" strokeWidth="0.8" strokeDasharray="2 2" />
+          <text x="274" y="177.5" fill="#059669" fontSize="7" fontFamily="monospace">5cm 🟢 เริ่มท่วมขัง</text>
 
           {/* 0 cm - Ground Line */}
           <line x1="0" y1="180" x2="350" y2="180" stroke={isDark ? "#64748b" : "#334155"} strokeWidth="2.5" />
           <text x="274" y="186" fill={isDark ? "#94a3b8" : "#64748b"} fontSize="7.5" fontFamily="monospace" fontWeight="bold">0cm พื้นผิวทาง</text>
 
 
-          {/* ----------------- HUMAN VECTOR SILHOUETTE (Standing 170 cm) ----------------- */}
+          {/* ----------------- HUMAN ATHLETIC VECTOR SILHOUETTE (Standing 170 cm) ----------------- */}
           {/* Ground is at Y=180. Head top is at Y=10. Height = exactly 170 units */}
+          {/* Proportioned naturally, athletic, and NOT too skinny/slender */}
           <g className={isDark ? "text-slate-300" : "text-slate-700"}>
-            {/* Head (Y=10 to 32) */}
-            <ellipse cx="50" cy="21" rx="10" ry="11" fill="currentColor" />
             
-            {/* Neck (Y=32 to 38) */}
-            <rect x="47" y="32" width="6" height="6" rx="2" fill="currentColor" />
+            {/* Head & Hair (Y=10 to 33) */}
+            <ellipse cx="50" cy="21.5" rx="11" ry="11.5" fill="currentColor" />
+            <path d="M 39 19 Q 50 8 61 19 Q 62 13 50 10 Q 38 13 39 19 Z" fill={isDark ? "#f1f5f9" : "#1e293b"} opacity="0.65" />
+            
+            {/* Neck (Y=33 to 39) */}
+            <path d="M 46 33 L 46 40 L 54 40 L 54 33 Z" fill="currentColor" />
 
-            {/* Torso & Shoulders (Y=38 to 86) */}
-            <path d="M 36 42 Q 50 36 64 42 L 61 86 Q 50 88 39 86 Z" fill="currentColor" />
+            {/* Athletic Torso & Shoulders (Y=39 to 98) */}
+            {/* Natural broad shoulders (width 42px), athletic chest taper to waist */}
+            <path d="
+              M 46 40
+              Q 50 43 54 40
+              L 71 45
+              Q 73 48 72 52
+              L 67 85
+              Q 67 92 68 98
+              L 32 98
+              Q 33 92 33 85
+              L 28 52
+              Q 27 48 29 45
+              Z
+            " fill="currentColor" />
 
-            {/* Left Arm */}
-            <path d="M 36 42 L 31 78 Q 30 84 34 84 Q 37 84 38 78 L 40 46 Z" fill="currentColor" opacity="0.9" />
+            {/* Left Arm (Relaxed, athletic thickness) */}
+            <path d="
+              M 29 45
+              Q 24 58 24 72
+              L 24 92
+              Q 23 98 26 98
+              Q 29 98 30 92
+              L 31 72
+              Q 32 58 34 50
+              Z
+            " fill="currentColor" opacity="0.95" />
 
-            {/* Right Arm */}
-            <path d="M 64 42 L 69 78 Q 70 84 66 84 Q 63 84 62 78 L 60 46 Z" fill="currentColor" opacity="0.9" />
+            {/* Right Arm (Relaxed, athletic thickness) */}
+            <path d="
+              M 71 45
+              Q 76 58 76 72
+              L 76 92
+              Q 77 98 74 98
+              Q 71 98 70 92
+              L 69 72
+              Q 68 58 66 50
+              Z
+            " fill="currentColor" opacity="0.95" />
 
-            {/* Pelvis / Waist (Y=86 to 98) */}
-            <path d="M 39 86 L 61 86 L 58 100 L 42 100 Z" fill="currentColor" />
+            {/* Athletic Pants & Strong Legs (Y=98 to 180) */}
+            {/* Left Leg: Athletic Quad (98-138), Knee (138-145), Calf (145-172), Sneaker (172-180) */}
+            <path d="
+              M 32 98
+              L 32 135
+              Q 33 144 35 145
+              Q 33 156 34 165
+              L 37 172
+              L 30 174
+              Q 28 178 30 180
+              L 48 180
+              Q 49 177 47 172
+              L 46 165
+              Q 48 156 46 145
+              Q 47 140 48 135
+              L 49 104
+              Z
+            " fill="currentColor" />
 
-            {/* Left Leg: Thigh (98-138), Knee (138-144), Shin (144-172), Foot (172-180) */}
-            <path d="M 42 100 L 41 138 Q 41 142 42 144 L 43 174 L 38 174 Q 36 177 38 180 L 48 180 Q 49 177 47 174 L 47 144 Q 48 142 48 138 L 49 100 Z" fill="currentColor" />
+            {/* Right Leg: Athletic Quad (98-138), Knee (138-145), Calf (145-172), Sneaker (172-180) */}
+            <path d="
+              M 51 104
+              L 52 135
+              Q 53 140 54 145
+              Q 52 156 54 165
+              L 53 172
+              Q 51 177 52 180
+              L 70 180
+              Q 72 178 70 174
+              L 63 172
+              L 66 165
+              Q 67 156 65 145
+              Q 67 144 68 135
+              L 68 98
+              Z
+            " fill="currentColor" />
 
-            {/* Right Leg: Thigh (98-138), Knee (138-144), Shin (144-172), Foot (172-180) */}
-            <path d="M 51 100 L 52 138 Q 52 142 53 144 L 53 174 L 52 174 Q 51 177 52 180 L 62 180 Q 64 177 62 174 L 57 174 Q 57 174 57 144 Q 58 142 58 138 L 59 100 Z" fill="currentColor" />
+            {/* Subtle T-shirt Hem line */}
+            <line x1="33" y1="86" x2="67" y2="86" stroke={isDark ? "#1e293b" : "#ffffff"} strokeWidth="1" opacity="0.4" />
 
             {/* Human Label Pill */}
-            <rect x="22" y="172" width="56" height="7.5" rx="3.5" fill={isDark ? "#1e293b" : "#ffffff"} stroke={isDark ? "#475569" : "#cbd5e1"} strokeWidth="0.8" />
+            <rect x="22" y="171.5" width="56" height="8" rx="4" fill={isDark ? "#1e293b" : "#ffffff"} stroke={isDark ? "#475569" : "#cbd5e1"} strokeWidth="0.8" />
             <text x="50" y="177.5" textAnchor="middle" fill={isDark ? "#cbd5e1" : "#334155"} fontSize="6.2" fontWeight="bold">คน 170 ซม.</text>
           </g>
 
@@ -301,7 +361,7 @@ export default function VisualGauge({ depthCm = 0, level, impactText = '', theme
             <rect x="90" y="122" width="3" height="8" rx="1.5" fill="#ef4444" />
 
             {/* Sedan Label Pill */}
-            <rect x="142" y="172" width="66" height="7.5" rx="3.5" fill={isDark ? "#1e293b" : "#ffffff"} stroke={isDark ? "#475569" : "#cbd5e1"} strokeWidth="0.8" />
+            <rect x="142" y="171.5" width="66" height="8" rx="4" fill={isDark ? "#1e293b" : "#ffffff"} stroke={isDark ? "#475569" : "#cbd5e1"} strokeWidth="0.8" />
             <text x="175" y="177.5" textAnchor="middle" fill={isDark ? "#cbd5e1" : "#334155"} fontSize="6.2" fontWeight="bold">รถเก๋ง (ล้อ 60ซม.)</text>
           </g>
 
@@ -395,7 +455,7 @@ export default function VisualGauge({ depthCm = 0, level, impactText = '', theme
             </div>
           </div>
           <span className={`text-[10px] px-2 py-0.5 rounded-md border shrink-0 ${humanImpactBadge}`}>
-            {depthCm <= 60 ? 'ศีรษะพ้นน้ำ 100%' : depthCm <= 100 ? 'เอวถึงอก' : 'เสี่ยงจมน้ำ'}
+            {depthCm <= 50 ? 'ศีรษะพ้นน้ำ 100%' : depthCm <= 90 ? 'เอวถึงอก' : 'เสี่ยงจมน้ำ'}
           </span>
         </div>
 
@@ -434,7 +494,7 @@ export default function VisualGauge({ depthCm = 0, level, impactText = '', theme
       <div className={`mt-2 pt-2 border-t flex items-center justify-between text-[10px] ${
         isDark ? 'border-slate-700/80 text-slate-400' : 'border-slate-200 text-slate-500'
       }`}>
-        <span>เกณฑ์: ปภ. ระดับ 1 (8-20) • 2 (21-60) • 3 (&gt;60ซม.)</span>
+        <span>เกณฑ์: ปภ. ระดับ 1 (5-20) • 2 (21-50) • 3 (&gt;50ซม.)</span>
         <span>คปภ. ประเมินความเสียหาย</span>
       </div>
 
