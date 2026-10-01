@@ -24,7 +24,12 @@ import {
   Megaphone,
   Shield,
   Save,
-  LogOut
+  LogOut,
+  MessageSquare,
+  Star,
+  CheckCheck,
+  Phone,
+  Mail
 } from 'lucide-react';
 import { BODY_WATER_LEVELS } from './CitizenReportModal';
 import { DISTRICTS } from '../data/samutPrakanPoints';
@@ -74,9 +79,79 @@ export default function AdminModal({
   const [failedAttempts, setFailedAttempts] = useState(0);
   const [lockoutSeconds, setLockoutSeconds] = useState(0);
 
-  // Tabs: 'pending' | 'approved' | 'broadcast' | 'history' | 'security'
+  // Tabs: 'pending' | 'approved' | 'broadcast' | 'history' | 'feedback' | 'security'
   const [activeTab, setActiveTab] = useState('pending');
   const [selectedPhotoModal, setSelectedPhotoModal] = useState(null);
+
+  // Feedback Management States (Citizen Feedback & Suggestion Box)
+  const [feedbackItems, setFeedbackItems] = useState(() => {
+    try {
+      const saved = localStorage.getItem('prakanguard_feedback_items');
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      return [];
+    }
+  });
+  const [feedbackFilter, setFeedbackFilter] = useState('all'); // 'all' | 'unread' | 'read'
+
+  const refreshFeedbackItems = () => {
+    try {
+      const saved = localStorage.getItem('prakanguard_feedback_items');
+      setFeedbackItems(saved ? JSON.parse(saved) : []);
+    } catch (e) {}
+  };
+
+  useEffect(() => {
+    if (isOpen) {
+      refreshFeedbackItems();
+    }
+  }, [isOpen]);
+
+  const handleToggleFeedbackRead = (id) => {
+    setFeedbackItems(prev => {
+      const updated = prev.map(f => f.id === id ? { ...f, isRead: !f.isRead } : f);
+      try {
+        localStorage.setItem('prakanguard_feedback_items', JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
+  };
+
+  const handleDeleteFeedback = (id) => {
+    if (window.confirm("ยืนยันต้องการลบข้อเสนอแนะนี้หรือไม่?")) {
+      setFeedbackItems(prev => {
+        const updated = prev.filter(f => f.id !== id);
+        try {
+          localStorage.setItem('prakanguard_feedback_items', JSON.stringify(updated));
+        } catch (e) {}
+        return updated;
+      });
+    }
+  };
+
+  const handleMarkAllFeedbackRead = () => {
+    setFeedbackItems(prev => {
+      const updated = prev.map(f => ({ ...f, isRead: true }));
+      try {
+        localStorage.setItem('prakanguard_feedback_items', JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
+  };
+
+  const handleClearReadFeedback = () => {
+    if (window.confirm("ยืนยันต้องการลบข้อเสนอแนะที่อ่านแล้วทั้งหมดหรือไม่?")) {
+      setFeedbackItems(prev => {
+        const updated = prev.filter(f => !f.isRead);
+        try {
+          localStorage.setItem('prakanguard_feedback_items', JSON.stringify(updated));
+        } catch (e) {}
+        return updated;
+      });
+    }
+  };
+
+  const unreadFeedbackCount = feedbackItems.filter(f => !f.isRead).length;
 
   // Broadcast Form State (Admin Direct Flood Announcement)
   const [broadcastName, setBroadcastName] = useState('');
@@ -466,6 +541,23 @@ export default function AdminModal({
               >
                 <Clock className="w-3.5 h-3.5 text-slate-400" />
                 <span>ประวัติการอัปเดต</span>
+              </button>
+
+              <button
+                onClick={() => { setActiveTab('feedback'); refreshFeedbackItems(); }}
+                className={`px-3 py-2 rounded-t-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 border-b-2 whitespace-nowrap ${
+                  activeTab === 'feedback'
+                    ? (isDark ? 'border-teal-400 text-teal-300 bg-slate-800' : 'border-teal-500 text-teal-700 bg-white')
+                    : 'border-transparent text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                <MessageSquare className="w-3.5 h-3.5 text-teal-400" />
+                <span>ข้อเสนอแนะ & ติชม</span>
+                {unreadFeedbackCount > 0 && (
+                  <span className="px-1.5 py-0.2 rounded-full text-[10px] font-extrabold bg-teal-500 text-white animate-pulse">
+                    {unreadFeedbackCount}
+                  </span>
+                )}
               </button>
 
               <button
@@ -859,6 +951,244 @@ export default function AdminModal({
                       </div>
                     ))
                   )}
+                </div>
+              )}
+
+              {/* TAB: CITIZEN FEEDBACK & SUGGESTIONS (READABLE ONLY BY AUTHENTICATED ADMIN) */}
+              {activeTab === 'feedback' && (
+                <div className="space-y-4">
+                  {/* Info & Privacy Notice */}
+                  <div className={`p-3.5 rounded-2xl border text-xs leading-relaxed ${
+                    isDark ? 'bg-slate-800/80 border-slate-700 text-slate-300' : 'bg-slate-50 border-slate-200 text-slate-600'
+                  }`}>
+                    <div className="flex items-center gap-2 mb-1">
+                      <MessageSquare className="w-4 h-4 text-teal-500 shrink-0" />
+                      <strong className="text-slate-900 dark:text-white">💬 กล่องรับข้อเสนอแนะ & ติชมจากภาคประชาชน</strong>
+                    </div>
+                    ข้อความทั้งหมดถูกส่งมาจากประชาชนผ่านกล่องรับฟังความคิดเห็น <strong>เปิดอ่านและจัดการได้เฉพาะผู้ดูแลระบบ (Admin) ที่เข้าสู่ระบบแล้วเท่านั้น</strong> เพื่อนำข้อมูลไปปรับปรุงและพัฒนาเว็บให้ดียิ่งขึ้น
+                  </div>
+
+                  {/* Summary Metric Cards */}
+                  <div className="grid grid-cols-3 gap-2.5">
+                    <div className={`p-3 rounded-2xl border text-center ${
+                      isDark ? 'bg-slate-850 border-slate-750' : 'bg-white border-slate-200 shadow-2xs'
+                    }`}>
+                      <span className="text-[10px] text-slate-400 block font-semibold">ข้อเสนอแนะทั้งหมด</span>
+                      <span className="text-lg font-black text-slate-900 dark:text-white">{feedbackItems.length}</span>
+                    </div>
+
+                    <div className={`p-3 rounded-2xl border text-center ${
+                      isDark ? 'bg-slate-850 border-slate-750' : 'bg-white border-slate-200 shadow-2xs'
+                    }`}>
+                      <span className="text-[10px] text-slate-400 block font-semibold">ยังไม่ได้อ่าน</span>
+                      <span className={`text-lg font-black ${unreadFeedbackCount > 0 ? 'text-teal-500 animate-pulse' : 'text-slate-900 dark:text-white'}`}>
+                        {unreadFeedbackCount}
+                      </span>
+                    </div>
+
+                    <div className={`p-3 rounded-2xl border text-center ${
+                      isDark ? 'bg-slate-850 border-slate-750' : 'bg-white border-slate-200 shadow-2xs'
+                    }`}>
+                      <span className="text-[10px] text-slate-400 block font-semibold">คะแนนเฉลี่ย</span>
+                      <div className="flex items-center justify-center gap-1">
+                        <span className="text-lg font-black text-amber-500">
+                          {feedbackItems.length > 0 
+                            ? (feedbackItems.reduce((acc, f) => acc + (f.rating || 5), 0) / feedbackItems.length).toFixed(1) 
+                            : '5.0'}
+                        </span>
+                        <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Filter & Batch Actions Bar */}
+                  <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+                    {/* Filters */}
+                    <div className="flex items-center gap-1 bg-slate-200 dark:bg-slate-800 p-1 rounded-xl text-xs font-semibold">
+                      <button
+                        type="button"
+                        onClick={() => setFeedbackFilter('all')}
+                        className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
+                          feedbackFilter === 'all'
+                            ? (isDark ? 'bg-slate-700 text-white shadow-xs' : 'bg-white text-slate-900 shadow-xs')
+                            : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
+                        }`}
+                      >
+                        ทั้งหมด ({feedbackItems.length})
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setFeedbackFilter('unread')}
+                        className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
+                          feedbackFilter === 'unread'
+                            ? (isDark ? 'bg-slate-700 text-white shadow-xs' : 'bg-white text-slate-900 shadow-xs')
+                            : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
+                        }`}
+                      >
+                        ยังไม่อ่าน ({unreadFeedbackCount})
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setFeedbackFilter('read')}
+                        className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
+                          feedbackFilter === 'read'
+                            ? (isDark ? 'bg-slate-700 text-white shadow-xs' : 'bg-white text-slate-900 shadow-xs')
+                            : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
+                        }`}
+                      >
+                        อ่านแล้ว ({feedbackItems.length - unreadFeedbackCount})
+                      </button>
+                    </div>
+
+                    {/* Batch Actions */}
+                    <div className="flex items-center gap-1.5 ml-auto">
+                      {unreadFeedbackCount > 0 && (
+                        <button
+                          type="button"
+                          onClick={handleMarkAllFeedbackRead}
+                          className="px-2.5 py-1 text-[11px] font-bold rounded-xl bg-teal-500/10 hover:bg-teal-500/20 text-teal-600 dark:text-teal-400 border border-teal-500/30 transition-all cursor-pointer"
+                        >
+                          อ่านแล้วทั้งหมด
+                        </button>
+                      )}
+                      {feedbackItems.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={handleClearReadFeedback}
+                          className="px-2.5 py-1 text-[11px] font-medium rounded-xl bg-slate-200 dark:bg-slate-800 hover:bg-rose-500/10 hover:text-rose-500 text-slate-600 dark:text-slate-400 transition-all cursor-pointer"
+                        >
+                          ล้างที่อ่านแล้ว
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Feedback List */}
+                  <div className="space-y-3">
+                    {feedbackItems
+                      .filter(f => {
+                        if (feedbackFilter === 'unread') return !f.isRead;
+                        if (feedbackFilter === 'read') return f.isRead;
+                        return true;
+                      })
+                      .length === 0 ? (
+                      <div className="p-10 text-center text-slate-400 space-y-2">
+                        <MessageSquare className="w-8 h-8 text-teal-500/60 mx-auto" />
+                        <p className="text-xs font-semibold">ไม่มีข้อเสนอแนะในหมวดหมู่นี้</p>
+                        <p className="text-[11px] text-slate-500">
+                          {feedbackFilter === 'unread' 
+                            ? 'คุณได้อ่านข้อเสนอแนะครบทุกข้อความแล้ว' 
+                            : 'เมื่อประชาชนส่งข้อเสนอแนะหรือข้อติชม จะปรากฏที่นี่ทันที'}
+                        </p>
+                      </div>
+                    ) : (
+                      feedbackItems
+                        .filter(f => {
+                          if (feedbackFilter === 'unread') return !f.isRead;
+                          if (feedbackFilter === 'read') return f.isRead;
+                          return true;
+                        })
+                        .map(item => (
+                          <div
+                            key={item.id}
+                            className={`p-4 rounded-2xl border transition-all ${
+                              !item.isRead
+                                ? (isDark ? 'bg-teal-950/20 border-teal-500/50 shadow-sm' : 'bg-teal-50/40 border-teal-400/60 shadow-xs')
+                                : (isDark ? 'bg-slate-850/80 border-slate-700/80' : 'bg-white border-slate-200 shadow-2xs')
+                            }`}
+                          >
+                            {/* Card Top: Category, Rating & Status */}
+                            <div className="flex items-center justify-between gap-2 flex-wrap pb-2 border-b border-dashed border-slate-200 dark:border-slate-800">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md border ${
+                                  isDark ? 'bg-slate-800 text-teal-300 border-teal-800' : 'bg-teal-50 text-teal-800 border-teal-200'
+                                }`}>
+                                  {item.categoryLabel || item.category || 'ข้อเสนอแนะ'}
+                                </span>
+
+                                {!item.isRead && (
+                                  <span className="text-[9px] font-black px-1.5 py-0.2 rounded-md bg-teal-500 text-white animate-pulse">
+                                    ใหม่
+                                  </span>
+                                )}
+
+                                {/* Star Rating Display */}
+                                <div className="flex items-center gap-0.5 ml-1">
+                                  {[1, 2, 3, 4, 5].map(s => (
+                                    <Star 
+                                      key={s} 
+                                      className={`w-3 h-3 ${
+                                        s <= (item.rating || 5) 
+                                          ? 'fill-amber-400 text-amber-400' 
+                                          : 'text-slate-300 dark:text-slate-700'
+                                      }`} 
+                                    />
+                                  ))}
+                                </div>
+                              </div>
+
+                              <span className="text-[10px] text-slate-400 font-mono">
+                                {item.submittedAt}
+                              </span>
+                            </div>
+
+                            {/* Message Body */}
+                            <div className="py-2.5">
+                              <p className={`text-xs sm:text-sm leading-relaxed whitespace-pre-wrap ${
+                                isDark ? 'text-slate-200' : 'text-slate-800'
+                              }`}>
+                                {item.message}
+                              </p>
+                            </div>
+
+                            {/* Card Bottom: Sender Info & Actions */}
+                            <div className="pt-2 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between gap-2 flex-wrap text-xs">
+                              {/* Sender Identity */}
+                              <div className="flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400">
+                                <span className="font-semibold text-slate-700 dark:text-slate-300">
+                                  ผู้ส่ง: {item.senderName || 'นิรนาม'}
+                                </span>
+                                {item.contact && item.contact !== '-' && (
+                                  <>
+                                    <span>•</span>
+                                    <span className="flex items-center gap-1 font-mono text-slate-600 dark:text-slate-400">
+                                      <Phone className="w-3 h-3" />
+                                      {item.contact}
+                                    </span>
+                                  </>
+                                )}
+                              </div>
+
+                              {/* Action Buttons */}
+                              <div className="flex items-center gap-1.5 ml-auto">
+                                <button
+                                  type="button"
+                                  onClick={() => handleToggleFeedbackRead(item.id)}
+                                  className={`px-2.5 py-1 rounded-xl text-[11px] font-bold transition-all cursor-pointer flex items-center gap-1 ${
+                                    item.isRead
+                                      ? 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-teal-500 hover:text-white'
+                                      : 'bg-teal-600 hover:bg-teal-500 text-white shadow-xs'
+                                  }`}
+                                  title={item.isRead ? 'ทำเป็นยังไม่ได้อ่าน' : 'ทำเครื่องหมายว่าอ่านแล้ว'}
+                                >
+                                  <CheckCheck className="w-3.5 h-3.5" />
+                                  <span>{item.isRead ? 'อ่านแล้ว' : 'ทำเครื่องหมายอ่านแล้ว'}</span>
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteFeedback(item.id)}
+                                  className="p-1.5 rounded-xl bg-slate-200 dark:bg-slate-800 text-slate-400 hover:bg-rose-500 hover:text-white transition-all cursor-pointer"
+                                  title="ลบข้อเสนอแนะนี้"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                    )}
+                  </div>
                 </div>
               )}
 

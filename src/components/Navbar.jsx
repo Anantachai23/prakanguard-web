@@ -10,7 +10,8 @@ import {
   Camera, 
   ShieldAlert,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  MessageSquare
 } from 'lucide-react';
 import AutoMarquee from './AutoMarquee';
 import RealTimeClock from './RealTimeClock';
@@ -22,6 +23,7 @@ export default function Navbar({
   onOpenStandards,
   onOpenWelcome,
   onOpenCitizenReport,
+  onOpenFeedback,
   onOpenAdmin,
   onOpenPublicUpdates,
   lastUpdatedTime,
@@ -307,6 +309,20 @@ export default function Navbar({
             >
               <Camera className="w-3.5 h-3.5 shrink-0" />
               <span>แจ้งน้ำท่วม</span>
+            </button>
+
+            {/* Citizen Feedback & Suggestion Box Button */}
+            <button 
+              onClick={onOpenFeedback}
+              title="กล่องรับฟังข้อเสนอแนะและข้อติชมสำหรับประชาชน"
+              className={`shrink-0 px-2.5 sm:px-3 py-1.5 rounded-xl border text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer shadow-xs whitespace-nowrap ${
+                isDark 
+                  ? 'bg-slate-900 hover:bg-slate-800 text-teal-300 border-slate-700 hover:border-teal-400' 
+                  : 'bg-teal-50 hover:bg-teal-100 text-teal-800 border-teal-200'
+              }`}
+            >
+              <MessageSquare className="w-3.5 h-3.5 text-teal-500 shrink-0" />
+              <span>ติชม/ข้อเสนอแนะ</span>
             </button>
 
             {/* Admin Management System Button - Explicitly Labeled ADMIN */}

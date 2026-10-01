@@ -8,6 +8,7 @@ import EmergencyModal from './components/EmergencyModal';
 import WelcomeModal from './components/WelcomeModal';
 import CitizenReportModal from './components/CitizenReportModal';
 import AdminModal from './components/AdminModal';
+import FeedbackModal from './components/FeedbackModal';
 import AdminVerificationPrompt from './components/AdminVerificationPrompt';
 import PublicUpdatesModal from './components/PublicUpdatesModal';
 import AutoMarquee from './components/AutoMarquee';
@@ -35,6 +36,9 @@ import {
   RefreshCw,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
+  ChevronUp,
+  MessageSquare,
   PanelLeftClose,
   PanelLeftOpen,
   Trash2,
@@ -364,8 +368,10 @@ export default function App() {
     }
   });
 
-  // Citizen Report Modal & Picking on Map States
+  // Citizen Report & Feedback Modal States
   const [isCitizenReportModalOpen, setIsCitizenReportModalOpen] = useState(false);
+  const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false);
+  const [isDetailMinimized, setIsDetailMinimized] = useState(false);
   const [isPickingLocationOnMap, setIsPickingLocationOnMap] = useState(false);
   const [pickedCoords, setPickedCoords] = useState(null);
   const [flyToLocation, setFlyToLocation] = useState(null);
@@ -772,6 +778,7 @@ export default function App() {
     }
 
     setSelectedPoint(location);
+    setIsDetailMinimized(false);
     setFlyToLocation({
       lat: location.lat,
       lng: location.lng,
@@ -911,6 +918,7 @@ export default function App() {
         onOpenStandards={() => setIsStandardsModalOpen(true)}
         onOpenWelcome={() => setIsWelcomeModalOpen(true)}
         onOpenCitizenReport={() => setIsCitizenReportModalOpen(true)}
+        onOpenFeedback={() => setIsFeedbackModalOpen(true)}
         onOpenAdmin={() => setIsAdminModalOpen(true)}
         onOpenPublicUpdates={() => setIsPublicUpdatesModalOpen(true)}
         lastUpdatedTime={lastUpdatedTime}
@@ -1198,90 +1206,127 @@ export default function App() {
 
           {/* UNIFIED COMPACT LIVE TELEMETRY & STATUS CARD */}
           <div className="pointer-events-auto w-full">
-            <div className={`p-2 sm:p-2.5 rounded-2xl border shadow-md backdrop-blur-xl flex flex-col gap-1.5 transition-all ${
+            <div className={`p-2 sm:p-2.5 rounded-2xl border shadow-md backdrop-blur-xl transition-all ${
               isDark 
                 ? 'bg-slate-900/90 border-slate-700/80 text-slate-200 shadow-slate-950/40' 
                 : 'bg-white/90 border-slate-200/90 text-slate-800 shadow-slate-300/40'
             }`}>
               
-              {/* Row 1: Weather & Rain Radar Telemetry */}
-              <div className="flex items-center justify-between gap-2 text-xs">
+              {/* MOBILE STREAMLINED 1-LINE TICKER (sm:hidden) */}
+              <div className="flex sm:hidden items-center justify-between gap-1 text-[11px]">
                 <div 
                   onClick={() => setIsOfficialModalOpen(true)}
-                  className="flex items-center gap-1.5 min-w-0 flex-1 cursor-pointer group"
-                  title="คลิกดูเรดาร์ตรวจฝนและพยากรณ์อากาศสด TMD"
+                  className="flex items-center gap-1.5 min-w-0 flex-1 cursor-pointer truncate"
+                  title="คลิกดูเรดาร์ตรวจฝน TMD"
                 >
-                  <div className={`w-6 h-6 rounded-lg flex items-center justify-center shrink-0 ${
-                    isDark ? 'bg-cyan-950/90 text-cyan-400 border border-cyan-800/60' : 'bg-blue-50 text-blue-600 border border-blue-200'
+                  <div className={`w-5 h-5 rounded-md flex items-center justify-center shrink-0 ${
+                    isDark ? 'bg-cyan-950 text-cyan-400' : 'bg-blue-50 text-blue-600'
                   }`}>
-                    <CloudRain className="w-3.5 h-3.5" />
+                    <CloudRain className="w-3 h-3" />
                   </div>
-                  <div className="truncate flex items-center gap-1.5 text-[11px] sm:text-xs">
-                    <span className="font-semibold text-slate-700 dark:text-slate-200 truncate">
-                      {weather?.weatherDesc || 'มีเมฆบางส่วน'} ({weather?.temp ?? 29}°C)
-                    </span>
-                    <span className="text-slate-300 dark:text-slate-600">•</span>
-                    <span className="text-blue-600 dark:text-cyan-400 font-bold whitespace-nowrap">
-                      ฝน {weather?.rainProbabilityToday ?? 50}%
-                    </span>
-                    <span className="text-[10px] text-slate-400 hidden md:inline">
-                      (~{weather?.rainSumToday ?? 0} มม.)
-                    </span>
-                  </div>
-                </div>
-
-                {/* Risk Window Badge */}
-                <div 
-                  onClick={() => setIsOfficialModalOpen(true)}
-                  className={`text-[10px] sm:text-[11px] font-bold px-2 py-0.5 rounded-lg border flex items-center gap-1 shrink-0 cursor-pointer ${
-                    isDark 
-                      ? 'bg-amber-950/70 text-amber-300 border-amber-800/80' 
-                      : 'bg-amber-50 text-amber-800 border-amber-200'
-                  }`}
-                  title="ช่วงเวลาเฝ้าระวังฝนตกหนักสูงสุด"
-                >
-                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping"></span>
-                  <span>ช่วงเสี่ยง {weather?.peakHour && typeof weather.peakHour === 'string' ? weather.peakHour.split(' ')[0] : '16:00'}</span>
-                </div>
-              </div>
-
-              {/* Row 2: Live Sync Telemetry & Flood Updates Trigger */}
-              <div className={`pt-1.5 border-t flex items-center justify-between gap-1.5 text-[10px] sm:text-[11px] ${
-                isDark ? 'border-slate-800/80' : 'border-slate-100'
-              }`}>
-                {/* 24h Telemetry Sync Button */}
-                <button
-                  type="button"
-                  onClick={handleManualSync}
-                  disabled={telemetrySyncStatus?.isSyncing}
-                  className={`flex items-center gap-1.5 px-2 py-1 rounded-lg transition-all cursor-pointer font-medium truncate ${
-                    isDark 
-                      ? 'hover:bg-slate-800/80 text-slate-300 hover:text-cyan-300' 
-                      : 'hover:bg-slate-100 text-slate-600 hover:text-blue-600'
-                  }`}
-                  title="คลิกเพื่อซิงก์ข้อมูลเรดาร์สด TMD / กองทัพเรือ ทันที"
-                >
-                  <span className={`w-1.5 h-1.5 rounded-full ${telemetrySyncStatus?.isSyncing ? 'bg-cyan-400 animate-ping' : 'bg-emerald-500 animate-pulse'} shrink-0`}></span>
-                  <span className="truncate">
-                    {telemetrySyncStatus?.isSyncing ? 'กำลังซิงก์...' : `เรดาร์สด (${telemetrySyncStatus?.lastSyncTime || 'สด'})`}
+                  <span className="font-bold truncate text-[11px]">
+                    {weather?.temp ?? 29}°C ฝน {weather?.rainProbabilityToday ?? 50}%
                   </span>
-                  <RefreshCw className={`w-3 h-3 text-cyan-500 shrink-0 ${telemetrySyncStatus?.isSyncing ? 'animate-spin' : ''}`} />
-                </button>
+                  <span className="text-slate-400 text-[10px]">•</span>
+                  <span className="text-amber-500 font-bold shrink-0 text-[10px]">
+                    เสี่ยง {weather?.peakHour && typeof weather.peakHour === 'string' ? weather.peakHour.split(' ')[0] : '16:00'}
+                  </span>
+                </div>
 
-                {/* Flood Updates Modal Trigger */}
                 <button
                   type="button"
                   onClick={() => setIsPublicUpdatesModalOpen(true)}
-                  className={`flex items-center gap-1 px-2.5 py-1 rounded-lg transition-all cursor-pointer font-bold shrink-0 ${
-                    isDark 
-                      ? 'bg-blue-950/70 hover:bg-blue-900/80 text-cyan-300 border border-blue-800/60' 
-                      : 'bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200'
+                  className={`px-2 py-0.5 rounded-lg text-[10px] font-bold shrink-0 border cursor-pointer flex items-center gap-1 ${
+                    isDark ? 'bg-blue-950/80 text-cyan-300 border-blue-800' : 'bg-blue-50 text-blue-700 border-blue-200'
                   }`}
-                  title="คลิกเพื่อดูบันทึกการอัปเดตสถานการณ์น้ำท่วม"
+                  title="คลิกดูอัปเดตสถานการณ์สด"
                 >
-                  <span>สถานการณ์: {lastUpdatedTime || 'สด'}</span>
-                  <ArrowRight className="w-3 h-3" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                  <span>{lastUpdatedTime || 'สด'}</span>
                 </button>
+              </div>
+
+              {/* DESKTOP/TABLET DUAL-ROW TELEMETRY (hidden sm:flex) */}
+              <div className="hidden sm:flex sm:flex-col sm:gap-1.5">
+                {/* Row 1: Weather & Rain Radar Telemetry */}
+                <div className="flex items-center justify-between gap-2 text-xs">
+                  <div 
+                    onClick={() => setIsOfficialModalOpen(true)}
+                    className="flex items-center gap-1.5 min-w-0 flex-1 cursor-pointer group"
+                    title="คลิกดูเรดาร์ตรวจฝนและพยากรณ์อากาศสด TMD"
+                  >
+                    <div className={`w-6 h-6 rounded-lg flex items-center justify-center shrink-0 ${
+                      isDark ? 'bg-cyan-950/90 text-cyan-400 border border-cyan-800/60' : 'bg-blue-50 text-blue-600 border border-blue-200'
+                    }`}>
+                      <CloudRain className="w-3.5 h-3.5" />
+                    </div>
+                    <div className="truncate flex items-center gap-1.5 text-[11px] sm:text-xs">
+                      <span className="font-semibold text-slate-700 dark:text-slate-200 truncate">
+                        {weather?.weatherDesc || 'มีเมฆบางส่วน'} ({weather?.temp ?? 29}°C)
+                      </span>
+                      <span className="text-slate-300 dark:text-slate-600">•</span>
+                      <span className="text-blue-600 dark:text-cyan-400 font-bold whitespace-nowrap">
+                        ฝน {weather?.rainProbabilityToday ?? 50}%
+                      </span>
+                      <span className="text-[10px] text-slate-400 hidden md:inline">
+                        (~{weather?.rainSumToday ?? 0} มม.)
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Risk Window Badge */}
+                  <div 
+                    onClick={() => setIsOfficialModalOpen(true)}
+                    className={`text-[10px] sm:text-[11px] font-bold px-2 py-0.5 rounded-lg border flex items-center gap-1 shrink-0 cursor-pointer ${
+                      isDark 
+                        ? 'bg-amber-950/70 text-amber-300 border-amber-800/80' 
+                        : 'bg-amber-50 text-amber-800 border-amber-200'
+                    }`}
+                    title="ช่วงเวลาเฝ้าระวังฝนตกหนักสูงสุด"
+                  >
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping"></span>
+                    <span>ช่วงเสี่ยง {weather?.peakHour && typeof weather.peakHour === 'string' ? weather.peakHour.split(' ')[0] : '16:00'}</span>
+                  </div>
+                </div>
+
+                {/* Row 2: Live Sync Telemetry & Flood Updates Trigger */}
+                <div className={`pt-1.5 border-t flex items-center justify-between gap-1.5 text-[10px] sm:text-[11px] ${
+                  isDark ? 'border-slate-800/80' : 'border-slate-100'
+                }`}>
+                  {/* 24h Telemetry Sync Button */}
+                  <button
+                    type="button"
+                    onClick={handleManualSync}
+                    disabled={telemetrySyncStatus?.isSyncing}
+                    className={`flex items-center gap-1.5 px-2 py-1 rounded-lg transition-all cursor-pointer font-medium truncate ${
+                      isDark 
+                        ? 'hover:bg-slate-800/80 text-slate-300 hover:text-cyan-300' 
+                        : 'hover:bg-slate-100 text-slate-600 hover:text-blue-600'
+                    }`}
+                    title="คลิกเพื่อซิงก์ข้อมูลเรดาร์สด TMD / กองทัพเรือ ทันที"
+                  >
+                    <span className={`w-1.5 h-1.5 rounded-full ${telemetrySyncStatus?.isSyncing ? 'bg-cyan-400 animate-ping' : 'bg-emerald-500 animate-pulse'} shrink-0`}></span>
+                    <span className="truncate">
+                      {telemetrySyncStatus?.isSyncing ? 'กำลังซิงก์...' : `เรดาร์สด (${telemetrySyncStatus?.lastSyncTime || 'สด'})`}
+                    </span>
+                    <RefreshCw className={`w-3 h-3 text-cyan-500 shrink-0 ${telemetrySyncStatus?.isSyncing ? 'animate-spin' : ''}`} />
+                  </button>
+
+                  {/* Flood Updates Modal Trigger */}
+                  <button
+                    type="button"
+                    onClick={() => setIsPublicUpdatesModalOpen(true)}
+                    className={`flex items-center gap-1 px-2.5 py-1 rounded-lg transition-all cursor-pointer font-bold shrink-0 ${
+                      isDark 
+                        ? 'bg-blue-950/70 hover:bg-blue-900/80 text-cyan-300 border border-blue-800/60' 
+                        : 'bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200'
+                    }`}
+                    title="คลิกเพื่อดูบันทึกการอัปเดตสถานการณ์น้ำท่วม"
+                  >
+                    <span>สถานการณ์: {lastUpdatedTime || 'สด'}</span>
+                    <ArrowRight className="w-3 h-3" />
+                  </button>
+                </div>
               </div>
 
             </div>
@@ -1392,48 +1437,111 @@ export default function App() {
 
         </div>
 
-        {/* FLOATING POINT DETAIL CARD (CLEAN & SENIOR-FRIENDLY) */}
+        {/* FLOATING POINT DETAIL CARD (CLEAN & SENIOR-FRIENDLY & COLLAPSIBLE FOR MOBILE) */}
         {selectedPoint && (
-          <div className={`absolute bottom-3 left-3 right-3 sm:bottom-4 sm:left-auto sm:right-4 z-30 sm:w-[420px] border rounded-3xl p-4 sm:p-5 shadow-2xl backdrop-blur-2xl smooth-sheet max-h-[82vh] overflow-y-auto ${
+          <div className={`absolute bottom-3 left-3 right-3 sm:bottom-4 sm:left-auto sm:right-4 z-30 sm:w-[420px] border rounded-3xl shadow-2xl backdrop-blur-2xl smooth-sheet transition-all ${
             isDark 
               ? 'bg-slate-900/95 border-slate-700 text-slate-100' 
               : 'bg-white/95 border-slate-200 text-slate-800'
-          }`}>
+          } ${isDetailMinimized ? 'p-3 max-h-24' : 'p-4 sm:p-5 max-h-[75vh] sm:max-h-[82vh] overflow-y-auto'}`}>
             
-            {/* Card Header */}
-            <div className={`flex items-start justify-between gap-3 pb-3 border-b ${isDark ? 'border-slate-800' : 'border-slate-200'}`}>
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className={`text-xs font-bold px-2.5 py-0.5 rounded-md border ${
-                    isDark ? 'bg-blue-950/80 text-blue-300 border-blue-800' : 'bg-blue-50 text-blue-700 border-blue-200'
-                  }`}>
-                    อ.{selectedPoint.district}
-                  </span>
-                  <span className={`text-xs font-bold px-2 py-0.5 rounded-md border ${
+            {isDetailMinimized ? (
+              /* MINIMIZED COMPACT 1-LINE BAR FOR MOBILE */
+              <div className="flex items-center justify-between gap-2">
+                <div 
+                  onClick={() => setIsDetailMinimized(false)}
+                  className="flex items-center gap-2 min-w-0 flex-1 cursor-pointer"
+                  title="คลิกเพื่อขยายดูเกจวัดน้ำและรายละเอียด"
+                >
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md border shrink-0 ${
                     selectedPoint.level === 3 ? (isDark ? 'bg-rose-950/80 text-rose-300 border-rose-800' : 'bg-rose-50 text-rose-700 border-rose-200') :
                     selectedPoint.level === 2 ? (isDark ? 'bg-amber-950/80 text-amber-300 border-amber-800' : 'bg-amber-50 text-amber-700 border-amber-200') :
                     (isDark ? 'bg-emerald-950/80 text-emerald-300 border-emerald-800' : 'bg-emerald-50 text-emerald-700 border-emerald-200')
                   }`}>
                     {selectedPoint.statusLabel}
                   </span>
+                  <span className="font-bold text-xs sm:text-sm truncate text-slate-900 dark:text-white">
+                    {selectedPoint.name}
+                  </span>
+                  <span className="text-xs font-mono font-bold text-blue-500 shrink-0">
+                    {selectedPoint.depthCm} ซม.
+                  </span>
                 </div>
-                <h3 className={`text-base sm:text-lg font-bold mt-1.5 leading-snug ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                  {selectedPoint.name}
-                </h3>
-                <p className={`text-xs sm:text-sm mt-0.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{selectedPoint.subdistrict}</p>
+
+                <div className="flex items-center gap-1 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setIsDetailMinimized(false)}
+                    className={`p-1.5 rounded-xl border transition-all cursor-pointer ${
+                      isDark ? 'bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-200' : 'bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-700'
+                    }`}
+                    title="ขยายดูรายละเอียดและเกจวัดน้ำ"
+                  >
+                    <ChevronUp className="w-4 h-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedPoint(null)}
+                    className={`p-1.5 rounded-xl border transition-all cursor-pointer ${
+                      isDark ? 'bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-400 hover:text-rose-400' : 'bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-500 hover:text-rose-600'
+                    }`}
+                    title="ปิด"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
-              <button 
-                onClick={() => setSelectedPoint(null)}
-                className={`p-2 rounded-xl transition-all cursor-pointer shrink-0 ${
-                  isDark 
-                    ? 'bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white' 
-                    : 'bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800'
-                }`}
-                title="ปิดหน้าต่างข้อมูล"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
+            ) : (
+              <>
+                {/* Card Header with Minimize & Close */}
+                <div className={`flex items-start justify-between gap-3 pb-3 border-b ${isDark ? 'border-slate-800' : 'border-slate-200'}`}>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className={`text-xs font-bold px-2.5 py-0.5 rounded-md border ${
+                        isDark ? 'bg-blue-950/80 text-blue-300 border-blue-800' : 'bg-blue-50 text-blue-700 border-blue-200'
+                      }`}>
+                        อ.{selectedPoint.district}
+                      </span>
+                      <span className={`text-xs font-bold px-2.5 py-0.5 rounded-md border ${
+                        selectedPoint.level === 3 ? (isDark ? 'bg-rose-950/80 text-rose-300 border-rose-800' : 'bg-rose-50 text-rose-700 border-rose-200') :
+                        selectedPoint.level === 2 ? (isDark ? 'bg-amber-950/80 text-amber-300 border-amber-800' : 'bg-amber-50 text-amber-700 border-amber-200') :
+                        (isDark ? 'bg-emerald-950/80 text-emerald-300 border-emerald-800' : 'bg-emerald-50 text-emerald-700 border-emerald-200')
+                      }`}>
+                        {selectedPoint.statusLabel}
+                      </span>
+                    </div>
+                    <h3 className={`text-base sm:text-lg font-bold mt-1.5 leading-snug ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                      {selectedPoint.name}
+                    </h3>
+                    <p className={`text-xs sm:text-sm mt-0.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{selectedPoint.subdistrict}</p>
+                  </div>
+
+                  <div className="flex items-center gap-1 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => setIsDetailMinimized(true)}
+                      className={`p-2 rounded-xl transition-all cursor-pointer ${
+                        isDark 
+                          ? 'bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white' 
+                          : 'bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-900'
+                      }`}
+                      title="ย่อหน้าต่างลง (เพื่อให้เห็นแผนที่ชัดขึ้น)"
+                    >
+                      <ChevronDown className="w-5 h-5" />
+                    </button>
+                    <button 
+                      onClick={() => setSelectedPoint(null)}
+                      className={`p-2 rounded-xl transition-all cursor-pointer ${
+                        isDark 
+                          ? 'bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white' 
+                          : 'bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800'
+                      }`}
+                      title="ปิดหน้าต่างข้อมูล"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+                  </div>
+                </div>
 
             {/* Citizen Uploaded Photo Preview (If available) */}
             {selectedPoint.photoUrl && (
@@ -1542,9 +1650,11 @@ export default function App() {
                 <span>โทรศูนย์ {selectedPoint.district}</span>
               </a>
             </div>
-
-          </div>
+          </>
         )}
+
+      </div>
+    )}
 
       </main>
 
@@ -1605,6 +1715,12 @@ export default function App() {
         onStartPickOnMap={handleStartPickOnMap}
         pickedCoords={pickedCoords}
         onFlyToCoords={handleFlyToCoords}
+        theme={theme}
+      />
+
+      <FeedbackModal 
+        isOpen={isFeedbackModalOpen}
+        onClose={() => setIsFeedbackModalOpen(false)}
         theme={theme}
       />
 
