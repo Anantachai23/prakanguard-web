@@ -292,10 +292,26 @@ export default function App() {
     peakHour: '16:00 น.'
   });
 
+  // Continuous 24/7 Live Weather & Temperature Telemetry (Auto-refreshed every 45 seconds)
   useEffect(() => {
-    getLiveSamutPrakanWeather().then(w => {
-      if (w) setWeather(w);
-    }).catch(err => console.warn("Live weather sync error in App:", err));
+    let isMounted = true;
+    const syncContinuousWeather = async () => {
+      try {
+        const w = await getLiveSamutPrakanWeather(true);
+        if (isMounted && w) {
+          setWeather(w);
+        }
+      } catch (err) {
+        console.warn("Live weather sync error in App:", err);
+      }
+    };
+
+    syncContinuousWeather();
+    const interval = setInterval(syncContinuousWeather, 45000);
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
   }, []);
 
   // Welcome Announcement Modal (Pops up automatically on first entry)
@@ -1343,6 +1359,7 @@ export default function App() {
         points={[...points, ...citizenReports.filter(r => r.isApproved && !r.isResolved)]} 
         onSelectPoint={setSelectedPoint}
         theme={theme}
+        weather={weather}
         isPointSelected={!!selectedPoint}
       />
 

@@ -4,7 +4,7 @@
 
 let cachedWeatherData = null;
 let lastFetchTime = 0;
-const CACHE_DURATION_MS = 15 * 60 * 1000; // แคช 15 นาที
+const CACHE_DURATION_MS = 45 * 1000; // อัปเดตข้อมูลสดทุก 45-60 วินาที
 
 // แปลง WMO Weather Code เป็นภาษาไทย
 export function translateWeatherCode(code) {
@@ -19,9 +19,9 @@ export function translateWeatherCode(code) {
   return "สภาพอากาศแปรปรวน";
 }
 
-export async function getLiveSamutPrakanWeather() {
+export async function getLiveSamutPrakanWeather(forceRefresh = false) {
   const now = Date.now();
-  if (cachedWeatherData && (now - lastFetchTime) < CACHE_DURATION_MS) {
+  if (!forceRefresh && cachedWeatherData && (now - lastFetchTime) < CACHE_DURATION_MS) {
     return cachedWeatherData;
   }
 

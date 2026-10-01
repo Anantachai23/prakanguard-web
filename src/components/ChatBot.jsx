@@ -17,7 +17,13 @@ import {
   ChevronLeft,
   ChevronRight,
   RotateCcw,
-  GripHorizontal
+  GripHorizontal,
+  Minus,
+  Square,
+  Maximize2,
+  Minimize2,
+  ChevronUp,
+  ChevronDown
 } from 'lucide-react';
 import { INITIAL_FLOOD_POINTS } from '../data/samutPrakanPoints';
 import { FLOOD_STANDARDS } from '../data/floodStandards';
@@ -281,13 +287,15 @@ export function findLocationMatch(queryText) {
   return null;
 }
 
-export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, theme = 'light', isPointSelected = false }) {
+export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, theme = 'light', weather: propWeather, isPointSelected = false }) {
   const isDark = theme === 'dark';
   const [isOpen, setIsOpen] = useState(false);
+  const [isMinimized, setIsMinimized] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
   const [input, setInput] = useState('');
   const [isThinking, setIsThinking] = useState(false);
   const [streamingMessageId, setStreamingMessageId] = useState(null);
-  const [weather, setWeather] = useState({
+  const [weather, setWeather] = useState(propWeather || {
     temp: 29,
     humidity: 78,
     weatherDesc: 'มีเมฆบางส่วน',
@@ -304,14 +312,17 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
       sender: 'bot',
       text: `สวัสดีครับ ยินดีต้อนรับสู่ **ระบบตอบข้อซักถามสารสนเทศอุทกภัยและเส้นทางสัญจร จังหวัดสมุทรปราการ (PrakanGuard AI)**
 
-ระบบนี้รวบรวมและอ้างอิงข้อมูลประกาศเปิดที่เป็นประโยชน์ต่อประชาชน (เช่น เกณฑ์ความปลอดภัยทางถนน, เกณฑ์เฝ้าระวังน้ำท่วมผิวจราจร และพยากรณ์อากาศ) เพื่ออำนวยความสะดวกในการติดตามสถานการณ์
+💡 ท่านสามารถพิมพ์สอบถามได้อย่างอิสระทุกเรื่องเกี่ยวกับน้ำท่วม ไม่จำกัดเฉพาะคำถามตัวอย่าง เช่น:
+• 📍 **ความเสี่ยงรายพิกัด:** *"ซอยทรัพย์บุญชัย / วัดด่าน / ปากน้ำ มีโอกาสท่วมไหม"*
+• 🚗 **เกณฑ์รถยนต์:** *"รถเก๋งลุยน้ำได้กี่เซน / รถดับกลางน้ำทำอย่างไร"*
+• 🛡️ **การเตรียมตัว & บ้าน:** *"น้ำจะเข้าบ้านเตรียมตัวอย่างไร / กั้นกระสอบทรายแบบไหน"*
+• ⚡️ **ความปลอดภัยไฟฟ้า:** *"วิธีตัดไฟป้องกันไฟดูดช่วงน้ำท่วม"*
+• 🅿️ **จุดจอดรถที่สูง:** *"ในสมุทรปราการมีที่จอดรถหนีน้ำที่ไหนบ้าง"*
+• 🐍 **สัตว์มีพิษ & สุขภาพ:** *"ป้องกันงูและสัตว์มีพิษ / วิธีรักษาโรคน้ำกัดเท้า"*
+• 🌧️ **สภาพอากาศสด:** *"วันนี้ฝนตกกี่โมง / กี่เปอร์เซ็นต์"*
 
-💡 ท่านสามารถกดเลื่อนเลือกคำถามด้านบน หรือพิมพ์สอบถามได้ทันทีครับ เช่น:
-• *"ซอยทรัพย์บุญชัย มีโอกาสเกิดน้ำท่วมไหม"* (พิมพ์สะกดผิดระบบก็เข้าใจ เช่น *ทับบุนชัย*, *ทรัพบุนชัย*)
-• *"ปากน้ำมีโอกาสท่วมไหม"*
-• *"วันนี้ฝนจะตกกี่เปอร์เซ็นต์ / ตกกี่โมง"*
-• *"รถเก๋งลุยน้ำได้กี่เซนติเมตร"*`,
-      time: 'ระบบพร้อมให้บริการ'
+⏱️ ระบบรายงานสภาพอากาศและอุณหภูมิอัปเดตสดตลอดเวลา และท่านสามารถกด **[⏹️ หยุดตอบ]** หรือกด **[-] ย่อขนาด** ได้ตลอดเวลาครับ!`,
+      time: 'ระบบพร้อมให้บริการตลอด 24 ชม.'
     }
   ]);
 
@@ -330,15 +341,56 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
     modalY: 0
   });
 
-  // Fetch real live weather on mount
+  const streamingIntervalRef = useRef(null);
+  const thinkingTimeoutRef = useRef(null);
+
+  // Sync propWeather whenever updated by App.jsx
+  useEffect(() => {
+    if (propWeather) {
+      setWeather(propWeather);
+    }
+  }, [propWeather]);
+
+  // Continuous background real-time weather & temperature heartbeat every 45s
   useEffect(() => {
     let isMounted = true;
-    getLiveSamutPrakanWeather().then(w => {
-      if (isMounted && w) {
-        setWeather(w);
+    const syncContinuousWeather = async () => {
+      try {
+        const fresh = await getLiveSamutPrakanWeather(true);
+        if (isMounted && fresh) {
+          setWeather(fresh);
+        }
+      } catch (e) {
+        console.warn("Continuous weather telemetry err:", e);
       }
-    }).catch(err => console.warn("Live weather sync error:", err));
-    return () => { isMounted = false; };
+    };
+
+    syncContinuousWeather();
+    const interval = setInterval(syncContinuousWeather, 45000);
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, []);
+
+  const handleStopResponse = () => {
+    if (thinkingTimeoutRef.current) {
+      clearTimeout(thinkingTimeoutRef.current);
+      thinkingTimeoutRef.current = null;
+    }
+    if (streamingIntervalRef.current) {
+      clearInterval(streamingIntervalRef.current);
+      streamingIntervalRef.current = null;
+    }
+    setIsThinking(false);
+    setStreamingMessageId(null);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (streamingIntervalRef.current) clearInterval(streamingIntervalRef.current);
+      if (thinkingTimeoutRef.current) clearTimeout(thinkingTimeoutRef.current);
+    };
   }, []);
 
   useEffect(() => {
@@ -783,18 +835,189 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
       return `ด้วยความยินดีครับ ขอให้ทุกท่านเดินทางสัญจรด้วยความปลอดภัยครับ`;
     }
 
-    // Default Fallback
-    return `ขออภัยครับ คำถามนี้อาจต้องการความชัดเจนเพิ่มเติม ท่านสามารถสอบถามข้อมูลในสมุทรปราการได้ดังนี้ครับ:\n\n` +
-      `1. **ความเสี่ยงเฉพาะพื้นที่:** เช่น *"อยากทราบว่าวัดด่านมีโอกาสท่วมอีกไหม"*, *"ปากน้ำมีโอกาสท่วมไหม"*, *"นิคมฯ บางปู"*\n` +
-      `2. **พยากรณ์ฝน:** เช่น *"วันนี้ฝนจะตกกี่โมง"*, *"โอกาสฝนตกกี่เปอร์เซ็นต์"*\n` +
-      `3. **เกณฑ์รถยนต์:** เช่น *"รถเก๋งลุยน้ำได้กี่เซน"*\n` +
-      `4. **น้ำทะเลหนุน:** เช่น *"ป้อมพระจุลฯ น้ำทะเลหนุนส่งผลกระทบที่ไหน"*\n` +
-      `5. **สายด่วน:** เช่น *"ขอเบอร์โทร ปภ. หรือ กู้ภัย"*\n\n` +
-      `โปรดพิมพ์คำถามหรือเลื่อนเลือกชิปคำถามด้านบนได้เลยครับ`;
+    // 16. การเตรียมตัวรับมือน้ำท่วม / ป้องกันบ้าน / กระสอบทราย / ก่ออิฐกั้นน้ำ
+    if (q.includes("เตรียมตัว") || q.includes("รับมือ") || q.includes("เตรียมพร้อม") || q.includes("น้ำเข้าบ้าน") || q.includes("ป้องกันบ้าน") || q.includes("กระสอบทราย") || q.includes("กั้นน้ำ") || q.includes("ยกของ") || q.includes("บ้านน้ำท่วม") || q.includes("ก่ออิฐ") || q.includes("ท่วมบ้าน")) {
+      return `🏡 **คู่มือการเตรียมตัวและป้องกันบ้านรับมือน้ำท่วม (อ้างอิง: [กรมป้องกันและบรรเทาสาธารณภัย ปภ.]):**\n\n` +
+        `• **1. ตัดกระแสไฟฟ้าชั้นล่างทันที:** หากระดับน้ำเริ่มปริ่มเข้าขอบประตูบ้าน ให้สับคัตเอาต์/เบรกเกอร์เฉพาะชั้นล่างลง เพื่อป้องกันไฟฟ้ารั่วและไฟดูด\n` +
+        `• **2. การวางกระสอบทรายที่ถูกต้อง:**\n` +
+        `   - เรียงกระสอบทรายสลับชั้นแบบก่ออิฐ โดยหันปากถุงเข้าหาตัวบ้าน\n` +
+        `   - ทำมุมลาดเอียง 45 องศาเพื่อต้านแรงดันน้ำ พร้อมปูแผ่นพลาสติกหนารองใต้แนวกระสอบ\n` +
+        `• **3. ยกของขึ้นที่สูง:** ยกเครื่องใช้ไฟฟ้า (ตู้เย็น, เครื่องซักผ้า, ทีวี) และเอกสารสำคัญ (โฉนด, ทะเบียนบ้าน, บัตรประชาชน) ขึ้นชั้น 2\n` +
+        `• **4. อุดท่อน้ำทิ้งและโถสุขภัณฑ์:** ป้องกันน้ำเอ่อดันย้อนกลับเข้าบ้านด้วยถุงทรายหรือลูกยางอุดท่อ\n` +
+        `• **5. ขอรับกระสอบทรายและเครื่องสูบน้ำ:** สามารถติดต่อเทศบาลหรือ อบต. ในพื้นที่ของท่านได้ตลอด 24 ชม. เช่น เทศบาลนครสมุทรปราการ โทร. **02-382-6199** หรือสายด่วนนิรภัย ปภ. **1784**`;
+    }
+
+    // 17. ความปลอดภัยทางไฟฟ้า / ไฟดูด / ไฟรั่ว / ปลั๊กไฟ / ตัดเบรกเกอร์
+    if (q.includes("ไฟดูด") || q.includes("ไฟฟ้า") || q.includes("ไฟรั่ว") || q.includes("ตัดไฟ") || q.includes("เบรกเกอร์") || q.includes("ปลั๊ก") || q.includes("มิเตอร์") || q.includes("สายไฟ") || q.includes("แช่น้ำ")) {
+      return `⚡️ **ข้อควรระวังและวิธีป้องกันอันตรายจากไฟฟ้าช่วงน้ำท่วม (อ้างอิง: [การไฟฟ้านครหลวง (MEA)]):**\n\n` +
+        `🔴 **กฎเหล็กเพื่อความปลอดภัยสูงสุด:**\n` +
+        `• **ห้ามสัมผัสสวิตช์ไฟหรือเสียบปลั๊ก** ในขณะที่ร่างกายเปียกชื้น หรือยืนแช่อยู่ในน้ำเด็ดขาด\n` +
+        `• **ปลดเมนสวิตช์ (เบรกเกอร์) ชั้นล่างลง:** หากระดับน้ำท่วมถึงระดับเต้ารับหรือใกล้ปลั๊กไฟฝาผนัง ให้ตัดไฟเฉพาะส่วนล่างทันที\n` +
+        `• **ระวังเสาไฟฟ้าริมทางและตู้ไฟสาธารณะ:** ขณะเดินลุยน้ำ ให้เว้นระยะห่างจากเสาไฟ โคมไฟถนน และป้ายโฆษณาอย่างน้อย **3 - 5 เมตร** เพราะอาจมีกระแสไฟฟ้ารั่วลงน้ำ\n` +
+        `• **หากพบผู้ถูกไฟดูดในน้ำ:**\n` +
+        `   1. **ห้ามลงไปช่วยด้วยมือเปล่าเด็ดขาด!**\n` +
+        `   2. ตัดกระแสไฟฟ้าที่เมนสวิตช์ก่อนเป็นอันดับแรก\n` +
+        `   3. ใช้วัตถุที่เป็นฉนวนแห้งสนิท (เช่น ไม้แห้ง, ท่อ PVC, เชือกแห้ง) ดึงตัวผู้ประสบภัยออกมา\n` +
+        `   4. รีบโทรแจ้ง **1669** หรือสายด่วนการไฟฟ้านครหลวง **1130** (สมุทรปราการ-กทม.-นนทบุรี) ตลอด 24 ชั่วโมงครับ`;
+    }
+
+    // 18. สัตว์มีพิษและสัตว์เลื้อยคลานช่วงน้ำท่วม (งู, ตะขาบ, แมงป่อง)
+    if (q.includes("งู") || q.includes("ตะขาบ") || q.includes("แมงป่อง") || q.includes("สัตว์มีพิษ") || q.includes("สัตว์เลื้อยคลาน") || q.includes("จระเข้") || q.includes("สัตว์อันตราย")) {
+      return `🐍 **วิธีป้องกันและรับมือสัตว์มีพิษหนีน้ำท่วม (อ้างอิง: [กรมอุทยานฯ] & [สภากาชาดไทย]):**\n\n` +
+        `• **พฤติกรรมสัตว์ช่วงน้ำท่วม:** สัตว์เลื้อยคลาน (งูพิษ, ตะขาบ, แมงป่อง) จะหนีน้ำขึ้นที่แห้ง มักซ่อนตัวตาม **รองเท้า, ใต้พรม, ซอกตู้, ขอบเตียง, กองผ้า และฝ้าเพดาน**\n` +
+        `• **วิธีป้องกันในบ้าน:**\n` +
+        `   - เคาะรองเท้า คว่ำตรวจดูทุกครั้งก่อนสวมใส่\n` +
+        `   - ใช้ไฟฉายส่องก่อนเดินเข้ามุมมืดหรือห้องน้ำเสมอ\n` +
+        `   - โรยปูนขาว หรือน้ำมันก๊าด/กำมะถัน บริเวณรอยต่อประตูและบันได\n` +
+        `• **หากถูกงูกัด:**\n` +
+        `   - **ห้าม** ใช้ปากดูดพิษ ห้ามใช้มีดกรีดแผล และ **ห้ามขันชะเนาะ (Tourniquet) แน่นเกินไป** เพราะเนื้อเยื่ออาจตาย\n` +
+        `   - ให้ล้างแผลด้วยน้ำสะอาด ดามอวัยวะให้นิ่งที่สุด และจดจำลักษณะงูหรือถ่ายภาพไว้\n` +
+        `   - โทรเรียกรถพยาบาลด่วน **1669** หรือศูนย์กู้ภัยช่วยจับงู/สัตว์เลื้อยคลาน โทร. **199** ตลอด 24 ชม.`;
+    }
+
+    // 19. โรคและสุขภาพช่วงน้ำท่วม (น้ำกัดเท้า, ไข้ฉี่หนู, ท้องเสีย, ตาแดง)
+    if (q.includes("โรค") || q.includes("น้ำกัดเท้า") || q.includes("ฉี่หนู") || q.includes("เลปโต") || q.includes("ท้องเสีย") || q.includes("ท้องร่วง") || q.includes("ตาแดง") || q.includes("สุขภาพ") || q.includes("คันเท้า") || q.includes("เชื้อรา") || q.includes("แผลเปื่อย")) {
+      return `🩺 **4 โรคสำคัญที่มากับน้ำท่วมและวิธีดูแลรักษา (อ้างอิง: [กรมควบคุมโรค กระทรวงสาธารณสุข]):**\n\n` +
+        `• **1. โรคน้ำกัดเท้า (Hong Kong Foot):**\n` +
+        `   - เกิดจากเท้าแช่น้ำสกปรกเป็นเวลานานจนผิวหนังเปื่อย คัน และติดเชื้อรา\n` +
+        `   - *วิธีดูแล:* หลังลุยน้ำ ให้ฟอกสบู่และล้างด้วยน้ำสะอาดทันที เช็ดซอกนิ้วเท้าให้แห้งสนิท หากมีแผลเปื่อยให้ทายาฆ่าเชื้อรา\n\n` +
+        `• **2. โรคไข้ฉี่หนู (Leptospirosis):**\n` +
+        `   - เชื้อแบคทีเรียจากปัสสาวะหนูปนเปื้อนในน้ำ เข้าสู่ร่างกายทางบาดแผลหรือเยื่อบุตา\n` +
+        `   - *อาการเตือน:* มีไข้สูงเฉียบพลัน ปวดศีรษะ โดยเฉพาะ **ปวดกล้ามเนื้อน่องและโคนขาอย่างรุนแรง** ตาแดง ควรรีบพบแพทย์ทันที\n\n` +
+        `• **3. โรคอุจจาระร่วงและอาหารเป็นพิษ:**\n` +
+        `   - ดื่มน้ำบรรจุขวดที่ปิดสนิทหรือน้ำต้มสุก ล้างมือก่อนรับประทานอาหารทุกครั้ง\n\n` +
+        `• **4. โรคตาแดง:** เกิดจากน้ำสกปรกกระเด็นเข้าตา ห้ามใช้มือเปียกขยี้ตา\n` +
+        `💡 *คำแนะนำ:* ควรสวมรองเท้าบูทยางทุกครั้งที่ต้องลุยน้ำขัง และติดต่อสายด่วนกรมควบคุมโรค โทร. **1422** ครับ`;
+    }
+
+    // 20. การดูแลรถยนต์หลังลุยน้ำ / รถดับในน้ำ / ตรวจเช็คน้ำมันเครื่อง
+    if (q.includes("รถดับ") || q.includes("น้ำเข้าเครื่อง") || q.includes("สตาร์ทไม่ติด") || q.includes("ลุยน้ำมา") || q.includes("ดูแลรถ") || q.includes("ตรวจรถ") || q.includes("เบรกลื่น") || q.includes("น้ำเข้ารถ") || q.includes("พรมเปียก") || q.includes("น้ำมันเครื่อง")) {
+      return `🚘 **คู่มือดูแลรถยนต์เมื่อต้องลุยน้ำและวิธีแก้ไขเมื่อรถดับ (อ้างอิง: [กรมการขนส่งทางบก] & [คปภ.]):**\n\n` +
+        `🛑 **กรณีที่ 1: หากรถดับสนิทขณะลุยน้ำขัง:**\n` +
+        `• **ห้ามบิดกุญแจสตาร์ทเครื่องยนต์ซ้ำเด็ดขาด!** เพราะน้ำจะถูกดูดเข้าสู่ห้องเผาไหม้ทำให้ก้านสูบหัก/คด (Hydrolock) เครื่องยนต์พังถาวรทันที\n` +
+        `• ปลดเป็นเกียร์ว่าง (N) เข็นรถขึ้นที่แห้ง และถอดขั้วแบตเตอรี่ออก โทรเรียกรถยกหรือสายด่วนกู้ภัย 1197 / 1586\n\n` +
+        `🚗 **กรณีที่ 2: เมื่อขับรถลุยน้ำพ้นมาได้แล้ว:**\n` +
+        `• **อย่าเพิ่งดับเครื่องยนต์ทันที:** ให้ติดเครื่องเดินเบาไว้ 10 - 15 นาที เพื่อให้ความร้อนระบายความชื้นออกจากห้องเครื่อง\n` +
+        `• **เหยียบเบรกย้ำๆ ถี่ๆ ด้วยความเร็วต่ำ:** เพื่อไล่น้ำออกจากจานเบรกและผ้าเบรก ป้องกันอาการเบรกลื่นหรือเบรกหาย\n` +
+        `• **ตรวจเช็คก้านวัดน้ำมันเครื่อง:** หากดึงขึ้นมาดูแล้วพบว่าน้ำมันเครื่องเปลี่ยนเป็น **สีขุ่นคล้ายชานมเย็น / กาแฟใส่นม** แสดงว่ามีน้ำรั่วซึมเข้าเครื่องยนต์ ห้ามใช้งาน ให้เปลี่ยนถ่ายน้ำมันเครื่องทันทีครับ`;
+    }
+
+    // 21. ประกันภัย / เคลมประกันน้ำท่วม (คปภ.)
+    if (q.includes("ประกัน") || q.includes("เคลม") || q.includes("คปภ") || q.includes("เงินชดเชย") || q.includes("เยียวยา") || q.includes("ถ่ายรูป") || q.includes("ประกันจ่าย")) {
+      return `📑 **แนวทางการเคลมประกันภัยรถยนต์กรณีถูกน้ำท่วม (อ้างอิง: [สำนักงาน คปภ.]):**\n\n` +
+        `• **ประเภทประกันที่คุ้มครองน้ำท่วม:**\n` +
+        `  - **ประกันภัยชั้น 1:** คุ้มครองภัยธรรมชาติและน้ำท่วมเต็มรูปแบบ ทั้งกรณีจอดจมน้ำและขับผ่านน้ำ\n` +
+        `  - **ประกันภัยชั้น 2+ หรือ 3+:** คุ้มครองเฉพาะกรมธรรม์ที่มีการระบุความคุ้มครองเสริมภัยน้ำท่วม\n\n` +
+        `📸 **4 ขั้นตอนปฏิบัติในการเคลมให้ได้เงินชดเชยเร็ว:**\n` +
+        `  1. **ถ่ายภาพหลักฐานทันที:** ถ่ายรูปมุมกว้างให้เห็นระดับน้ำ ทะเบียนรถ และตำแหน่งพิกัดที่รถจมน้ำ\n` +
+        `  2. **อย่าพยายามสตาร์ทเครื่องยนต์:** การพยายามสตาร์ทในน้ำจนเครื่องพัง อาจถูกพิจารณาเป็นความประมาทเลินเล่อ\n` +
+        `  3. **จดบันทึกวันและเวลาเกิดเหตุ:** พร้อมระบุสถานที่ให้ชัดเจน (เช่น ถนน, ซอย, อำเภอ)\n` +
+        `  4. **โทรแจ้งศูนย์เคลมของบริษัทประกันภัยทันที**\n\n` +
+        `📞 หากมีข้อพิพาทหรือสอบถามสิทธิประโยชน์ ติดต่อสายด่วนประกันภัย คปภ. โทร. **1186** (วันและเวลาราชการ) ครับ`;
+    }
+
+    // 22. จุดจอดรถหนีน้ำที่สูงในสมุทรปราการ
+    if (q.includes("จอดรถ") || q.includes("ที่จอดรถ") || q.includes("หนีน้ำ") || q.includes("ที่สูง") || q.includes("จอดรถที่ไหน") || q.includes("จอดรถตรงไหน") || q.includes("ฝากรถ")) {
+      return `🅿️ **พิกัดอาคารจอดรถยกสูงและพื้นที่ปลอดภัยน้ำไม่ท่วม จ.สมุทรปราการ:**\n\n` +
+        `• **1. อาคารจอดแล้วจร (Park & Ride) BTS เคหะสมุทรปราการ:**\n` +
+        `  - อาคารจอดรถ 3 ชั้น รองรับรถยนต์ได้กว่า 1,200 คัน พื้นที่ยกสูงเหนือระดับน้ำทะเลอย่างปลอดภัย\n\n` +
+        `• **2. ศูนย์การค้าเมกาบางนา (Mega Bangna):**\n` +
+        `  - อาคารจอดรถในร่ม 7 ชั้น โซน IKEA และโซน Big C ถ.บางนา-ตราด\n\n` +
+        `• **3. โรบินสัน ไลฟ์สไตล์ สมุทรปราการ:**\n` +
+        `  - ถ.สุขุมวิท (ใกล้สถานี BTS แพรกษา) มีพื้นที่จอดรถในร่มยกสูง\n\n` +
+        `• **4. อิมพีเรียล เวิลด์ สำโรง:**\n` +
+        `  - อาคารจอดรถชั้น 3 ขึ้นไป พ้นระดับน้ำท่วมถนนสุขุมวิท\n\n` +
+        `• **5. อาคารจอดรถสถานีรถไฟฟ้าสายสีเหลือง (สถานีศรีเอี่ยม):**\n` +
+        `  - อาคารจอดรถ 7 ชั้น เชื่อมต่อถนนศรีนครินทร์และบางนา\n\n` +
+        `💡 *ข้อแนะนำ:* ควรนำเอกสารประจำตัวและกุญแจสำรองติดตัวไว้ และปลดเบรกมือทิ้งเกียร์ N ไว้ในกรณีต้องจอดขวางครับ`;
+    }
+
+    // 23. สัตว์เลี้ยงช่วงน้ำท่วม (หมา แมว)
+    if (q.includes("หมา") || q.includes("แมว") || q.includes("สัตว์เลี้ยง") || q.includes("สุนัข") || q.includes("อาหารหมา") || q.includes("อาหารแมว")) {
+      return `🐾 **การดูแลและอพยพสัตว์เลี้ยงช่วงน้ำท่วม (อ้างอิง: [กรมปศุสัตว์]):**\n\n` +
+        `• **1. เตรียมเสบียงสัตว์เลี้ยง:** สำรองอาหารเม็ด อาหารเปียก และน้ำสะอาดอย่างน้อย **5 - 7 วัน**\n` +
+        `• **2. อุปกรณ์อพยพ:** จัดเตรียมกรง/กระเป๋าเดินทางสัตว์เลี้ยง ปลอกคอ สายจูง และยาประจำตัว\n` +
+        `• **3. กฎความปลอดภัย:**\n` +
+        `   - **ห้ามล่ามโซ่สัตว์เลี้ยงไว้กับเสาหรือรั้วชั้นล่างเด็ดขาด** เพราะเมื่อระดับน้ำสูงขึ้น สัตว์จะไม่สามารถหนีน้ำได้\n` +
+        `   - ย้ายกรงสัตว์เลี้ยงขึ้นชั้น 2 หรือพื้นที่แห้ง ระวังยุงและสัตว์เลื้อยคลานเข้ามารบกวน\n` +
+        `• **4. ขอความช่วยเหลืออพยพสัตว์เลี้ยง:** หากติดอยู่ในพื้นที่น้ำท่วมสูง ติดต่อสายด่วนกู้ภัย ปภ. **1784** หรือมูลนิธิกู้ภัยในพื้นที่สมุทรปราการครับ`;
+    }
+
+    // 24. ระบบคลองระบายน้ำและประตูน้ำในสมุทรปราการ
+    if (q.includes("คลอง") || q.includes("คลองสำโรง") || q.includes("คลองบางปิ้ง") || q.includes("คลองด่าน") || q.includes("ลัดโพธิ์") || q.includes("ประตูน้ำ") || q.includes("สูบน้ำ") || q.includes("เครื่องสูบ")) {
+      return `🌊 **โครงข่ายคลองระบายน้ำและประตูระบายน้ำสำคัญ จ.สมุทรปราการ (อ้างอิง: [กรมชลประทาน]):**\n\n` +
+        `• **1. คลองสำโรง:** ลำน้ำสายประวัติศาสตร์ เชื่อมระหว่างแม่น้ำเจ้าพระยากับแม่น้ำบางปะกง เป็นแนวระบายน้ำหลักของ อ.เมือง และ อ.บางพลี โดยมีสถานีสูบน้ำสำโรงเร่งผลักดันน้ำลงสู่แม่น้ำเจ้าพระยา\n` +
+        `• **2. คลองบางปิ้ง:** รับน้ำจากซอยทรัพย์บุญชัย, ถ.ศรีนครินทร์ และ ถ.แพรกษา เพื่อระบายออกสู่อ่าวไทย\n` +
+        `• **3. ประตูระบายน้ำคลองลัดโพธิ์อันเนื่องมาจากพระราชดำริ (อ.พระประแดง):** ช่วยตัดโค้งแม่น้ำเจ้าพระยาจาก 18 กม. เหลือเพียง 600 ม. ทำให้ระบายน้ำหลากลงสู่อ่าวไทยได้เร็วขึ้นกว่าเดิมถึง 10 เท่า\n` +
+        `• **4. สถานีสูบน้ำชลหารพิจิตร (คลองด่าน อ.บางบ่อ):** สถานีสูบน้ำชายทะเลที่ใหญ่ที่สุดในเอเชียตะวันออกเฉียงใต้ ทำหน้าที่สูบน้ำจากคลองระบายน้ำสุวรรณภูมิและพื้นที่ฝั่งตะวันออกทิ้งลงสู่อ่าวไทย\n\n` +
+        `⚙️ เจ้าหน้าที่ชลประทานและเทศบาลเดินเครื่องสูบน้ำตลอด 24 ชั่วโมงเพื่อควบคุมระดับน้ำครับ`;
+    }
+
+    // 25. เส้นทางเลี่ยง / ทางยกระดับ / สะพานภูมิพล / ทางด่วน
+    if (q.includes("ทางเลี่ยง") || q.includes("เลี่ยงทาง") || q.includes("เส้นทางเลี่ยง") || q.includes("ทางด่วน") || q.includes("สะพานภูมิพล") || q.includes("บูรพาวิถี") || q.includes("กาญจนาภิเษก") || q.includes("ไปทางไหน") || q.includes("เลี่ยงรถติด")) {
+      return `🛣️ **3 เส้นทางยกระดับหลักที่ปลอดภัยจากน้ำท่วม 100% ในสมุทรปราการ:**\n\n` +
+        `• **1. สะพานภูมิพล 1 และ สะพานภูมิพล 2:**\n` +
+        `  - สะพานข้ามแม่น้ำเจ้าพระยาเชื่อมระหว่าง อ.พระประแดง กับ ถ.พระราม 3 และ ถ.ปู่เจ้าสมิงพราย ใช้ข้ามเลี่ยงจุดน้ำท่วมถนนผิวราบแนวริมน้ำเจ้าพระยาได้ดีที่สุด\n\n` +
+        `• **2. ทางพิเศษกาญจนาภิเษก (บางพลี - สุขสวัสดิ์):**\n` +
+        `  - สะพานกาญจนาภิเษกข้ามแม่น้ำเจ้าพระยา เชื่อมฝั่งตะวันออก (บางพลี, ปากน้ำ) ไปยังฝั่งตะวันตก (พระสมุทรเจดีย์, สุขสวัสดิ์, พระราม 2) โดยไม่ต้องผ่านผิวจราจรด้านล่าง\n\n` +
+        `• **3. ทางพิเศษบูรพาวิถี (บางนา - ตราด):**\n` +
+        `  - ทางยกระดับตลอดสายเหนือถนนบางนา-ตราด (กม.0 ถึง กม.55) เลี่ยงปัญหาน้ำท่วมขังผิวถนนบางนา-ตราด และกิ่งแก้วได้อย่างสมบูรณ์แบบ\n\n` +
+        `💡 ตรวจสอบสภาพจราจรสดได้ที่ศูนย์ควบคุม บก.02 โทร. **1197** หรือสายด่วนทางหลวง **1586** ครับ`;
+    }
+
+    // 26. ถุงยังชีพและสิ่งของจำเป็น
+    if (q.includes("ถุงยังชีพ") || q.includes("ของจำเป็น") || q.includes("เสบียง") || q.includes("อาหารแห้ง") || q.includes("ไฟฉาย") || q.includes("เตรียมของ")) {
+      return `🎒 **รายการสิ่งของจำเป็น 7 หมวดสำหรับจัดเตรียม "ถุงยังชีพฉุกเฉิน":**\n\n` +
+        `• **1. น้ำดื่มสะอาด:** อย่างน้อยคนละ 2 - 3 ลิตรต่อวัน (สำรอง 3 วันขึ้นไป)\n` +
+        `• **2. อาหารแห้งที่ไม่ต้องปรุง:** ปลากระป๋อง, บะหมี่กึ่งสำเร็จรูป, ขนมปังกรอบ, นมกล่อง UHT\n` +
+        `• **3. ยาสามัญและยาประจำตัว:** พาราเซตามอล, ยาแก้แพ้, ผงเกลือแร่ (ORS), เบตาดีน, แอลกอฮอล์, ยาทาน้ำกัดเท้า และยาประจำตัวสำหรับผู้สูงอายุ\n` +
+        `• **4. อุปกรณ์ส่องสว่าง & พลังงาน:** ไฟฉายกันน้ำพร้อมถ่านสำรอง, พาวเวอร์แบงค์ชาร์จเต็ม 100%, เทียนไขและไฟแช็ก\n` +
+        `• **5. ของใช้สุขอนามัย:** ทิชชูเปียก, สบู่, หน้ากากอนามัย, ถุงดำสำหรับทิ้งขยะและใช้เป็นถุงขับถ่ายฉุกเฉิน\n` +
+        `• **6. เอกสารสำคัญ:** บัตรประชาชน, ทะเบียนบ้าน, เอกสารรถยนต์, กรมธรรม์ประกันภัย (ใส่ซองซิปล็อกกันน้ำ)\n` +
+        `• **7. อุปกรณ์ส่งสัญญาณ:** นกหวีดสำหรับเป่าขอความช่วยเหลือยามฉุกเฉิน`;
+    }
+
+    // 27. ข้อมูลรายอำเภอทั้ง 6 อำเภอของสมุทรปราการ
+    if (q.includes("อำเภอ") || q.includes("อ.เมือง") || q.includes("บางพลี") || q.includes("พระประแดง") || q.includes("พระสมุทรเจดีย์") || q.includes("บางบ่อ") || q.includes("บางเสาธง")) {
+      return `🗺️ **สรุปลักษณะความเสี่ยงและจุดเฝ้าระวัง 6 อำเภอ จ.สมุทรปราการ (อ้างอิง: [ปภ.สมุทรปราการ]):**\n\n` +
+        `• **1. อ.เมืองสมุทรปราการ:** เฝ้าระวัง 2 ปัจจัยหลัก ทั้งน้ำฝนสะสม (ซอยทรัพย์บุญชัย, วัดด่าน, แบริ่ง) และน้ำทะเลหนุนเจ้าพระยา (ตลาดปากน้ำ, ท้ายบ้าน)\n` +
+        `• **2. อ.บางพลี:** พื้นที่ลุ่มต่ำแอ่งกระทะรับน้ำรอบสุวรรณภูมิ (ถ.กิ่งแก้ว, ถ.บางนา-ตราด กม.12-16, ซอยวัดศรีวารีน้อย)\n` +
+        `• **3. อ.พระประแดง:** แนวเขื่อนแม่น้ำเจ้าพระยาและพื้นที่ริมน้ำ (ท่าน้ำพระประแดง, ตลาดบางพึ่ง, ปู่เจ้าสมิงพราย)\n` +
+        `• **4. อ.พระสมุทรเจดีย์:** ติดชายทะเลอ่าวไทย ได้รับอิทธิพลน้ำทะเลหนุนสูงโดยตรง (ถ.สุขสวัสดิ์-ป้อมพระจุลฯ, สามแยกพระสมุทรเจดีย์)\n` +
+        `• **5. อ.บางบ่อ:** แนวคลองสำโรงและชายฝั่งทะเล (ตลาดคลองด่าน, คลองด่าน-สุขุมวิทสายเก่า, บางพลีน้อย)\n` +
+        `• **6. อ.บางเสาธง:** พื้นที่รองรับน้ำทุ่งตะวันออก (ถ.เทพารักษ์ กม.21-25, เคหะบางพลี)\n\n` +
+        `📞 สอบถามศูนย์ ปภ. จังหวัดสมุทรปราการ โทร. **02-382-6040** ได้ตลอด 24 ชั่วโมงครับ`;
+    }
+
+    // 28. ทำไมสมุทรปราการถึงน้ำท่วมบ่อย
+    if (q.includes("ทำไม") || q.includes("สาเหตุ") || q.includes("ท่วมบ่อย") || q.includes("แผ่นดินทรุด") || q.includes("เพราะอะไร")) {
+      return `🌏 **3 สาเหตุสำคัญเชิงภูมิศาสตร์และอุทกวิทยาที่ทำให้ จ.สมุทรปราการ เกิดน้ำท่วมบ่อยครั้ง:**\n\n` +
+        `• **1. ลักษณะพื้นที่เป็น "แอ่งกระทะลุ่มต่ำ" (Lowland Depression):**\n` +
+        `  - พื้นที่ส่วนใหญ่ของจังหวัดมีความสูงใกล้เคียงหรือต่ำกว่าระดับน้ำทะเลปานกลาง (รทก.) ในบางจุดเกิดการทรุดตัวของชั้นดินสะสม ทำให้เมื่อมีฝนตกหนัก น้ำจึงไหลมารวมตัวกันและระบายออกสู่ธรรมชาติได้ช้า\n\n` +
+        `• **2. อิทธิพล "น้ำทะเลหนุนสูง" (High Sea Tide) บริเวณปากอ่าวไทย:**\n` +
+        `  - สมุทรปราการเป็นจุดบรรจบสุดท้ายของแม่น้ำเจ้าพระยาก่อนออกสู่อ่าวไทย ในช่วงน้ำขึ้นสูงสุด ระดับน้ำในแม่น้ำจะสูงกว่าระดับผิวถนนแนวชายฝั่ง ทำให้น้ำดันย้อนขึ้นมาตามท่อระบายน้ำและล้นแนวเขื่อน\n\n` +
+        `• **3. การขยายตัวของเมืองและพื้นที่รับน้ำจาก กทม.:**\n` +
+        `  - สมุทรปราการทำหน้าที่เป็น "ทางผ่านน้ำหลาก" (Floodway) จาก กทม. ฝั่งตะวันออกและแม่น้ำเจ้าพระยาตอนบนเพื่อระบายออกสู่ทะเลทางคลองสำโรงและคลองด่าน\n\n` +
+        `💡 ระบบนี้จัดทำขึ้นเพื่อช่วยให้พี่น้องประชาชนติดตามสถานการณ์และวางแผนสัญจรได้อย่างปลอดภัยล่วงหน้าครับ`;
+    }
+
+    // 29. คำถามทั่วไป / สนทนานอกกรอบอย่างชาญฉลาด (Intelligent Conversational Responder)
+    return `🤖 **PrakanGuard AI ยินดีตอบข้อซักถามและให้ข้อมูลครับ:**\n\n` +
+      `ขณะนี้ในพื้นที่ **จังหวัดสมุทรปราการ** มีข้อมูลสภาพอากาศและสถานการณ์สดดังนี้:\n` +
+      `• 🌡️ **อุณหภูมิปัจจุบัน:** **${weather.temp}°C** (สถานะ: ${weather.weatherDesc})\n` +
+      `• 🌧️ **โอกาสเกิดฝนตกวันนี้:** **${rainChance}%** (ปริมาณฝนสะสมคาดการณ์ ~**${rainSum} มม.**)\n` +
+      `• ⏱️ **ช่วงเวลาที่ต้องเฝ้าระวังฝนตกหนักสูงสุด:** **${peakTime}**\n\n` +
+      `💡 **ท่านสามารถพิมพ์ถามเรื่องอื่นๆ เพิ่มเติมได้อย่างอิสระ เช่น:**\n` +
+      `1. **เช็คจุดเสี่ยงเฉพาะพิกัด:** เช่น *"ซอยทรัพย์บุญชัยท่วมไหม"*, *"วัดด่าน"*, *"ปากน้ำ"*, *"กิ่งแก้ว"*\n` +
+      `2. **ความปลอดภัยและการเตรียมตัว:** เช่น *"น้ำเข้าบ้านเตรียมตัวอย่างไร"*, *"ป้องกันไฟดูด"*, *"สัตว์มีพิษ"*\n` +
+      `3. **การสัญจรและยานพาหนะ:** เช่น *"รถเก๋งลุยน้ำได้กี่เซน"*, *"จุดจอดรถหนีน้ำที่สูง"*, *"เคลมประกันน้ำท่วม"*\n` +
+      `4. **ขอความช่วยเหลือ:** สายด่วน ปภ. **1784**, กู้ชีพ **1669**, เทศบาลนครสมุทรปราการ **02-382-6199** ครับ`;
   };
 
-  // Smooth Streaming Typer
+  // Smooth Streaming Typer with Real-time Cancellation / Stop Support
   const streamBotResponse = (fullText) => {
+    handleStopResponse();
+
     const newMsgId = `bot-${Date.now()}`;
     const newBotMsg = {
       id: newMsgId,
@@ -810,11 +1033,14 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
     let currentIdx = 0;
     const speed = 12;
 
-    const interval = setInterval(() => {
+    streamingIntervalRef.current = setInterval(() => {
       currentIdx += Math.floor(Math.random() * 2) + 2;
       if (currentIdx >= fullText.length) {
         currentIdx = fullText.length;
-        clearInterval(interval);
+        if (streamingIntervalRef.current) {
+          clearInterval(streamingIntervalRef.current);
+          streamingIntervalRef.current = null;
+        }
         setStreamingMessageId(null);
       }
 
@@ -825,7 +1051,10 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
 
   const handleSend = (textToSend) => {
     const query = textToSend || input;
-    if (!query.trim() || streamingMessageId) return;
+    if (!query.trim()) return;
+
+    // If already streaming, cancel existing stream before sending new message
+    handleStopResponse();
 
     const userMsg = {
       id: `user-${Date.now()}`,
@@ -838,7 +1067,7 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
     setInput('');
     setIsThinking(true);
 
-    setTimeout(() => {
+    thinkingTimeoutRef.current = setTimeout(() => {
       const fullAnswer = synthesizeAnswer(query, [...messages, userMsg]);
       streamBotResponse(fullAnswer);
     }, 280);
@@ -940,8 +1169,94 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
         </button>
       )}
 
+      {/* Minimized Floating Dock Bar (When minimized) */}
+      {isOpen && isMinimized && (
+        <div 
+          style={position ? {
+            left: `${position.x}px`,
+            top: `${position.y}px`,
+            right: 'auto',
+            bottom: 'auto'
+          } : undefined}
+          className={`fixed z-50 bottom-4 right-3 sm:bottom-6 sm:right-6 max-w-[92vw] sm:w-[380px] border rounded-2xl shadow-2xl flex items-center justify-between gap-2 px-3 py-2.5 backdrop-blur-2xl transition-all duration-200 animate-in fade-in slide-in-from-bottom-2 ${
+            isDark 
+              ? 'bg-slate-900/95 border-slate-700 text-slate-100 ring-1 ring-blue-500/20' 
+              : 'bg-white/95 border-slate-200 text-slate-800 shadow-blue-500/10'
+          }`}
+        >
+          {/* Clickable Area to Restore */}
+          <div 
+            onClick={() => setIsMinimized(false)}
+            className="flex items-center gap-2.5 cursor-pointer select-none flex-1 min-w-0"
+            title="คลิกเพื่อขยายหน้าต่างแชท AI กลับขึ้นมา"
+          >
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-600 to-cyan-500 text-white flex items-center justify-center shadow-md shrink-0">
+              <Sparkles className="w-4 h-4 text-white" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-1.5">
+                <span className="font-bold text-xs sm:text-sm truncate">PrakanGuard AI</span>
+                <span className={`text-[9px] px-1.5 py-0.2 rounded font-bold shrink-0 ${
+                  isDark ? 'bg-blue-950/80 text-cyan-300 border border-blue-800' : 'bg-blue-50 text-blue-700 border border-blue-200'
+                }`}>ย่อขนาด</span>
+              </div>
+              <p className="text-[10px] text-slate-400 truncate flex items-center gap-1">
+                {(isThinking || streamingMessageId) ? (
+                  <span className="text-amber-400 font-semibold animate-pulse flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping"></span>
+                    กำลังตอบคำถาม...
+                  </span>
+                ) : (
+                  <span>คลิกเพื่อขยายหน้าต่างถามตอบ</span>
+                )}
+              </p>
+            </div>
+          </div>
+
+          {/* Action buttons inside Minimized Bar */}
+          <div className="flex items-center gap-1 shrink-0">
+            {/* Instant Stop Button if AI is generating */}
+            {(isThinking || streamingMessageId) && (
+              <button
+                type="button"
+                onClick={handleStopResponse}
+                className="px-2.5 py-1 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-[11px] font-bold flex items-center gap-1 transition-all cursor-pointer shadow-sm animate-pulse"
+                title="หยุดการตอบคำถามของ AI ทันที"
+              >
+                <Square className="w-3 h-3 fill-current" />
+                <span>หยุดตอบ</span>
+              </button>
+            )}
+
+            {/* Restore/Expand Button */}
+            <button
+              type="button"
+              onClick={() => setIsMinimized(false)}
+              className={`p-1.5 rounded-xl transition-all cursor-pointer ${
+                isDark ? 'bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+              }`}
+              title="ขยายหน้าต่างขึ้น"
+            >
+              <ChevronUp className="w-4 h-4" />
+            </button>
+
+            {/* Close Button */}
+            <button
+              type="button"
+              onClick={() => { setIsOpen(false); setIsMinimized(false); }}
+              className={`p-1.5 rounded-xl transition-all cursor-pointer ${
+                isDark ? 'bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white' : 'bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800'
+              }`}
+              title="ปิดแชท"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Official Public Information Dialog - Theme-Adaptive & Freely Draggable */}
-      {isOpen && (
+      {isOpen && !isMinimized && (
         <div 
           ref={modalRef}
           style={position ? {
@@ -950,7 +1265,9 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
             right: 'auto',
             bottom: 'auto'
           } : undefined}
-          className={`fixed z-50 w-[95vw] sm:w-[460px] h-[600px] max-h-[85vh] sm:max-h-[88vh] border rounded-3xl shadow-2xl flex flex-col overflow-hidden backdrop-blur-2xl transition-[box-shadow,border-color] duration-150 ${
+          className={`fixed z-50 w-[95vw] ${
+            isExpanded ? 'sm:w-[620px] h-[720px] max-h-[92vh]' : 'sm:w-[460px] h-[600px] max-h-[85vh] sm:max-h-[88vh]'
+          } border rounded-3xl shadow-2xl flex flex-col overflow-hidden backdrop-blur-2xl transition-[width,height,box-shadow,border-color] duration-200 ${
             !position ? 'bottom-2.5 left-2.5 right-2.5 sm:left-auto sm:bottom-6 sm:right-6' : ''
           } ${
             isDraggingModal ? 'ring-2 ring-blue-500/60 shadow-blue-500/30 cursor-grabbing' : ''
@@ -1018,6 +1335,35 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
                 </button>
               )}
 
+              {/* Size Expand/Normal Toggle Button */}
+              <button
+                type="button"
+                onClick={() => setIsExpanded(prev => !prev)}
+                className={`p-1.5 rounded-xl transition-all cursor-pointer ${
+                  isDark 
+                    ? 'bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-cyan-300 border border-slate-700' 
+                    : 'bg-white hover:bg-slate-100 text-slate-600 hover:text-blue-600 border border-slate-200 shadow-xs'
+                }`}
+                title={isExpanded ? "ย่อขนาดหน้าต่างให้กะทัดรัด" : "ขยายขนาดหน้าต่างให้กว้างขึ้น"}
+              >
+                {isExpanded ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+              </button>
+
+              {/* Minimize Dock Button */}
+              <button
+                type="button"
+                onClick={() => setIsMinimized(true)}
+                className={`p-1.5 rounded-xl transition-all cursor-pointer ${
+                  isDark 
+                    ? 'bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-amber-300 border border-slate-700' 
+                    : 'bg-white hover:bg-slate-100 text-slate-600 hover:text-amber-600 border border-slate-200 shadow-xs'
+                }`}
+                title="ย่อขนาดเก็บลงแถบด้านข้าง/มุมล่าง"
+              >
+                <Minus className="w-4 h-4" />
+              </button>
+
+              {/* Close Button */}
               <button
                 type="button"
                 onClick={() => setIsOpen(false)}
@@ -1119,14 +1465,24 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
                 🌊 วัดด่านมีโอกาสท่วมอีกไหม?
               </button>
               <button 
-                onClick={() => { if (!chipsHasDraggedRef.current) handleSend("วันนี้ฝนจะตกกี่เปอร์เซ็นต์ และคาดการณ์ตกหนักช่วงเวลาไหน?"); }}
-                className={`smooth-slider-item px-3 py-1.5 rounded-xl whitespace-nowrap transition-all cursor-pointer font-medium flex items-center gap-1 shrink-0 select-none ${
+                onClick={() => { if (!chipsHasDraggedRef.current) handleSend("วิธีตัดไฟและป้องกันไฟดูดช่วงน้ำท่วมต้องทำอย่างไร?"); }}
+                className={`smooth-slider-item px-3 py-1.5 rounded-xl whitespace-nowrap transition-all cursor-pointer font-bold flex items-center gap-1 shrink-0 select-none ${
                   isDark 
-                    ? 'bg-slate-850 text-slate-300 border border-slate-700 hover:border-blue-400 hover:text-cyan-300' 
-                    : 'bg-white text-slate-700 border border-slate-200 hover:border-blue-400 hover:text-blue-600'
+                    ? 'bg-yellow-950/90 text-yellow-300 border border-yellow-700 hover:bg-yellow-900' 
+                    : 'bg-yellow-50 text-yellow-800 border border-yellow-300 hover:bg-yellow-100'
                 }`}
               >
-                🌧️ คาดการณ์ฝนตกหนักวันนี้
+                ⚡️ ป้องกันไฟดูด & ตัดไฟ
+              </button>
+              <button 
+                onClick={() => { if (!chipsHasDraggedRef.current) handleSend("ในสมุทรปราการมีจุดจอดรถที่สูงหรือลานจอดหนีน้ำท่วมที่ไหนบ้าง?"); }}
+                className={`smooth-slider-item px-3 py-1.5 rounded-xl whitespace-nowrap transition-all cursor-pointer font-bold flex items-center gap-1 shrink-0 select-none ${
+                  isDark 
+                    ? 'bg-indigo-950/90 text-indigo-300 border border-indigo-700 hover:bg-indigo-900' 
+                    : 'bg-indigo-50 text-indigo-800 border border-indigo-300 hover:bg-indigo-100'
+                }`}
+              >
+                🅿️ จุดจอดรถที่สูงหนีน้ำ
               </button>
               <button 
                 onClick={() => { if (!chipsHasDraggedRef.current) handleSend("รถเก๋งลุยน้ำได้กี่เซนติเมตร และระดับไหนห้ามผ่านเด็ดขาด?"); }}
@@ -1137,6 +1493,46 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
                 }`}
               >
                 🚗 เกณฑ์รถเก๋งลุยน้ำ
+              </button>
+              <button 
+                onClick={() => { if (!chipsHasDraggedRef.current) handleSend("สัตว์มีพิษที่มักมากับน้ำท่วมมีอะไรบ้าง และวิธีป้องกันงูเข้าบ้าน?"); }}
+                className={`smooth-slider-item px-3 py-1.5 rounded-xl whitespace-nowrap transition-all cursor-pointer font-medium flex items-center gap-1 shrink-0 select-none ${
+                  isDark 
+                    ? 'bg-slate-850 text-slate-300 border border-slate-700 hover:border-blue-400 hover:text-cyan-300' 
+                    : 'bg-white text-slate-700 border border-slate-200 hover:border-blue-400 hover:text-blue-600'
+                }`}
+              >
+                🐍 สัตว์มีพิษช่วงน้ำท่วม
+              </button>
+              <button 
+                onClick={() => { if (!chipsHasDraggedRef.current) handleSend("โรคน้ำกัดเท้าและโรคไข้ฉี่หนู อาการเป็นอย่างไรและรักษายังไง?"); }}
+                className={`smooth-slider-item px-3 py-1.5 rounded-xl whitespace-nowrap transition-all cursor-pointer font-medium flex items-center gap-1 shrink-0 select-none ${
+                  isDark 
+                    ? 'bg-slate-850 text-slate-300 border border-slate-700 hover:border-blue-400 hover:text-cyan-300' 
+                    : 'bg-white text-slate-700 border border-slate-200 hover:border-blue-400 hover:text-blue-600'
+                }`}
+              >
+                💊 โรคน้ำกัดเท้า & ไข้ฉี่หนู
+              </button>
+              <button 
+                onClick={() => { if (!chipsHasDraggedRef.current) handleSend("จัดเตรียมถุงยังชีพฉุกเฉินรับมือน้ำท่วม มีสิ่งของจำเป็นอะไรบ้าง?"); }}
+                className={`smooth-slider-item px-3 py-1.5 rounded-xl whitespace-nowrap transition-all cursor-pointer font-medium flex items-center gap-1 shrink-0 select-none ${
+                  isDark 
+                    ? 'bg-slate-850 text-slate-300 border border-slate-700 hover:border-blue-400 hover:text-cyan-300' 
+                    : 'bg-white text-slate-700 border border-slate-200 hover:border-blue-400 hover:text-blue-600'
+                }`}
+              >
+                🛡️ จัดถุงยังชีพฉุกเฉิน
+              </button>
+              <button 
+                onClick={() => { if (!chipsHasDraggedRef.current) handleSend("วันนี้ฝนจะตกกี่เปอร์เซ็นต์ และคาดการณ์ตกหนักช่วงเวลาไหน?"); }}
+                className={`smooth-slider-item px-3 py-1.5 rounded-xl whitespace-nowrap transition-all cursor-pointer font-medium flex items-center gap-1 shrink-0 select-none ${
+                  isDark 
+                    ? 'bg-slate-850 text-slate-300 border border-slate-700 hover:border-blue-400 hover:text-cyan-300' 
+                    : 'bg-white text-slate-700 border border-slate-200 hover:border-blue-400 hover:text-blue-600'
+                }`}
+              >
+                🌧️ คาดการณ์ฝนตกหนักวันนี้
               </button>
               <button 
                 onClick={() => { if (!chipsHasDraggedRef.current) handleSend("สถานการณ์จุดเสี่ยงสำโรงและแบริ่งเป็นอย่างไร?"); }}
@@ -1293,6 +1689,21 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
               </div>
             )}
 
+            {/* Prominent Floating Stop Button while streaming or thinking */}
+            {(isThinking || Boolean(streamingMessageId)) && (
+              <div className="sticky bottom-1 z-20 flex justify-center py-1">
+                <button
+                  type="button"
+                  onClick={handleStopResponse}
+                  className="px-4 py-1.5 rounded-full bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold shadow-lg flex items-center gap-1.5 transition-all transform hover:scale-105 active:scale-95 cursor-pointer ring-2 ring-white/20 animate-in fade-in zoom-in-95"
+                  title="หยุดการพิมพ์ตอบของ AI ทันที"
+                >
+                  <Square className="w-3.5 h-3.5 fill-current" />
+                  <span>⏹️ หยุดตอบ</span>
+                </button>
+              </div>
+            )}
+
             <div ref={messagesEndRef} />
           </div>
 
@@ -1308,21 +1719,33 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
               value={input}
               onChange={(e) => setInput(e.target.value)}
               disabled={Boolean(streamingMessageId)}
-              placeholder="พิมพ์คำถาม เช่น ปากน้ำมีโอกาสท่วมไหม, วันนี้ฝนตกกี่โมง..."
+              placeholder={isThinking || streamingMessageId ? "AI กำลังตอบคำถาม... สามารถกดปุ่มหยุดตอบได้" : "พิมพ์คำถามได้อย่างอิสระ เช่น ซอยทรัพย์บุญชัยท่วมไหม, ตัดไฟอย่างไร..."}
               className={`flex-1 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm focus:outline-none transition-colors ${
                 isDark 
                   ? 'bg-slate-800 border border-slate-700 text-slate-100 placeholder-slate-500 focus:border-blue-400 focus:bg-slate-800' 
                   : 'bg-slate-50 border border-slate-300 text-slate-800 placeholder-slate-400 focus:border-blue-500 focus:bg-white'
               }`}
             />
-            <button
-              type="submit"
-              disabled={!input.trim() || isThinking || Boolean(streamingMessageId)}
-              className="p-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-40 text-white transition-all cursor-pointer shadow-md"
-              title="ส่งข้อความ"
-            >
-              <Send className="w-4 h-4" />
-            </button>
+            {isThinking || Boolean(streamingMessageId) ? (
+              <button
+                type="button"
+                onClick={handleStopResponse}
+                className="px-3.5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs sm:text-sm transition-all cursor-pointer shadow-md flex items-center gap-1.5 shrink-0 animate-pulse"
+                title="หยุดการตอบของ AI ทันที"
+              >
+                <Square className="w-3.5 h-3.5 fill-current" />
+                <span>หยุดตอบ</span>
+              </button>
+            ) : (
+              <button
+                type="submit"
+                disabled={!input.trim()}
+                className="p-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-40 text-white transition-all cursor-pointer shadow-md shrink-0"
+                title="ส่งข้อความ"
+              >
+                <Send className="w-4 h-4" />
+              </button>
+            )}
           </form>
 
         </div>

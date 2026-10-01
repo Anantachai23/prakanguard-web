@@ -231,7 +231,7 @@ export async function runOfficial24HourSync(currentPoints = [], currentReports =
   let weather = null;
 
   try {
-    weather = await getLiveSamutPrakanWeather();
+    weather = await getLiveSamutPrakanWeather(true);
   } catch (e) {
     console.warn("24h telemetry sync error", e);
   }
