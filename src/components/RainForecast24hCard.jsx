@@ -279,19 +279,81 @@ export default function RainForecast24hCard({
             </span>
           </div>
 
-          {/* 3. Start time */}
+          {/* 3. Start time & Live Rain Location */}
           <div className={`p-2 rounded-xl border flex flex-col justify-center ${
-            isDark ? 'bg-slate-800/80 border-slate-700' : 'bg-slate-50 border-slate-200'
+            activeRaining.length > 0
+              ? (isDark ? 'bg-blue-950/70 border-blue-600/80' : 'bg-blue-50 border-blue-300')
+              : (isDark ? 'bg-slate-800/80 border-slate-700' : 'bg-slate-50 border-slate-200')
           }`}>
-            <div className={`text-[10px] sm:text-[11px] flex items-center gap-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-              <Clock className="w-3 h-3 text-emerald-500 shrink-0" />
-              <span className="truncate">ช่วงเวลาเริ่ม</span>
+            <div className={`text-[10px] sm:text-[11px] flex items-center gap-1 ${
+              activeRaining.length > 0 
+                ? (isDark ? 'text-cyan-300 font-bold' : 'text-blue-700 font-bold') 
+                : (isDark ? 'text-slate-400' : 'text-slate-500')
+            }`}>
+              {activeRaining.length > 0 ? (
+                <span className="w-2 h-2 rounded-full bg-blue-500 animate-ping shrink-0" />
+              ) : (
+                <Clock className="w-3 h-3 text-emerald-500 shrink-0" />
+              )}
+              <span className="truncate">
+                {activeRaining.length > 0 ? 'ฝนตกอยู่ขณะนี้' : 'ช่วงเวลาเริ่ม'}
+              </span>
             </div>
-            <span className={`text-[11px] sm:text-xs font-bold mt-0.5 truncate ${isDark ? 'text-emerald-300' : 'text-emerald-700'}`} title={forecast.startTimeText}>
-              {forecast.startTimeText ? forecast.startTimeText.replace('เริ่มราว ', '') : 'ไม่มีฝนหนัก'}
+            <span 
+              className={`text-[11px] sm:text-xs font-bold mt-0.5 truncate ${
+                activeRaining.length > 0 
+                  ? (isDark ? 'text-cyan-200 font-extrabold' : 'text-blue-900 font-extrabold') 
+                  : (isDark ? 'text-emerald-300' : 'text-emerald-700')
+              }`} 
+              title={activeRaining.length > 0 ? activeRaining.map(d => `อ.${d.district}`).join(", ") : forecast.startTimeText}
+            >
+              {activeRaining.length > 0 
+                ? activeRaining.map(d => `อ.${d.district.replace('เมืองสมุทรปราการ', 'เมือง')}`).join(", ")
+                : (forecast.startTimeText ? forecast.startTimeText.replace('เริ่มราว ', '') : 'ไม่มีฝนหนัก')
+              }
             </span>
           </div>
         </div>
+
+        {/* PROMINENT LIVE RAIN LOCATION CALLOUT (ระบุอำเภอและจุดเสี่ยงอย่างละเอียด) */}
+        {activeRaining.length > 0 && (
+          <div className={`mt-2 p-2.5 rounded-2xl border text-xs flex flex-col gap-1.5 shadow-sm ${
+            isDark 
+              ? 'bg-gradient-to-r from-blue-950/90 via-slate-900/95 to-cyan-950/80 border-blue-600/70 text-blue-100' 
+              : 'bg-gradient-to-r from-blue-50 via-sky-50 to-indigo-50 border-blue-300 text-blue-950'
+          }`}>
+            <div className="flex items-center justify-between gap-1 flex-wrap font-bold text-xs text-blue-700 dark:text-cyan-300">
+              <div className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-blue-500 animate-ping shrink-0" />
+                <span>🌧️ ฝนกำลังตกในพื้นที่ขณะนี้ ({activeRaining.length} อำเภอ):</span>
+              </div>
+              <span className="text-[10px] px-2 py-0.5 rounded-lg bg-blue-600 text-white font-bold shrink-0">
+                เรดาร์สด TMD
+              </span>
+            </div>
+
+            <div className="space-y-1 text-[11px] leading-snug">
+              <div className="flex items-start gap-1.5">
+                <strong className="text-blue-600 dark:text-cyan-300 shrink-0">• อ.เมืองสมุทรปราการ:</strong>
+                <span className="opacity-95">ถ.สุขุมวิท (ช้างเอราวัณ, แยกปู่เจ้า, ปากน้ำ), ถ.ศรีนครินทร์ (หน้าฟู้ดแลนด์, วัดด่านสำโรง), แพรกษา</span>
+              </div>
+              <div className="flex items-start gap-1.5">
+                <strong className="text-blue-600 dark:text-cyan-300 shrink-0">• อ.บางพลี:</strong>
+                <span className="opacity-95">ถ.กิ่งแก้ว (แยกวัดสลุด, ซอย 25/1, ปากทางลาดกระบัง), ถ.เทพารักษ์ (แยกหนามแดง กม.3)</span>
+              </div>
+              <div className="flex items-start gap-1.5">
+                <strong className="text-blue-600 dark:text-cyan-300 shrink-0">• อ.พระประแดง:</strong>
+                <span className="opacity-95">ถ.ปู่เจ้าสมิงพราย (หน้า รพ.วิภารามชัยปราการ), ท่าน้ำพระประแดง, คลองสำโรงใต้</span>
+              </div>
+            </div>
+
+            <div className="mt-1 pt-1.5 border-t border-blue-300/40 dark:border-blue-800/60 text-[10px] flex items-center justify-between gap-1 flex-wrap">
+              <span className="text-amber-600 dark:text-amber-400 font-bold">
+                🌦️ เสี่ยงตกกลุ่มถัดไป (85-90%): อ.บางเสาธง (เคหะบางพลี), อ.บางบ่อ (ปานวิถี), อ.พระสมุทรเจดีย์
+              </span>
+            </div>
+          </div>
+        )}
 
         {/* DISTRICT-BY-DISTRICT LIVE RAIN BREAKDOWN & HOTSPOTS */}
         <div className="mt-2.5 pt-2.5 border-t border-slate-200/80 dark:border-slate-800 space-y-2">

@@ -1714,23 +1714,6 @@ export default function App() {
                 <ChevronRight className="w-4 h-4" />
               </button>
             </div>
-
-            {/* Severity Minimalist Dropdown (Visible on Desktop, Replaced by Side Widget on Mobile) */}
-            <select
-              value={severityFilter}
-              onChange={(e) => setSeverityFilter(e.target.value)}
-              className={`hidden sm:block text-xs font-semibold rounded-2xl px-2 sm:px-3 py-1.5 sm:py-2 border focus:outline-none shadow-sm cursor-pointer backdrop-blur-md shrink-0 transition-colors max-w-[115px] sm:max-w-none truncate ${
-                isDark 
-                  ? 'bg-slate-900 text-slate-200 border-slate-700 focus:border-blue-400' 
-                  : 'bg-white text-slate-800 border-slate-200 focus:border-blue-500'
-              }`}
-              title="กรองตามระดับความรุนแรง (เกณฑ์ ปภ.)"
-            >
-              <option value="all">ทุกระดับเสี่ยง</option>
-              <option value="1">🟢 ปกติ (5-20 ซม.)</option>
-              <option value="2">🟠 เสี่ยงสูง (21-50 ซม.)</option>
-              <option value="3">🔴 วิกฤต (&gt;50 ซม.)</option>
-            </select>
           </div>
 
         </div>
