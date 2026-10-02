@@ -1,15 +1,108 @@
 // บริการ Cloud Real-time Sync ข้ามอุปกรณ์สำหรับ Prakanguard
 // รองรับการส่งและรับรายงานน้ำท่วม/ลูกเห็บ และข้อเสนอแนะจากมือถือหรืออุปกรณ์อื่นเข้ามาที่แอดมิน 100%
-// ใช้ Multi-Topic Fallback, HTTP Polling with since=all, Auto Attachment Resolver & Server-Sent Events (SSE)
+// Multi-Channel Architecture: Supabase Cloud Database (Primary) + Direct Local Admin API (PNA) + Cloud Pub/Sub Fallback
 
-const PRIMARY_REPORTS_TOPIC = 'https://ntfy.sh/prakanguard_live_reports_v4_spk';
-const FALLBACK_REPORTS_TOPIC = 'https://ntfy.sh/prakanguard_live_reports_v3_spk';
+const SUPABASE_URL = 'https://cnjufleeibbgmpvuvrpg.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_cwxpTPIFXkyWVgXksZASAQ_76DreEAw';
 
-const PRIMARY_FEEDBACK_TOPIC = 'https://ntfy.sh/prakanguard_live_feedback_v4_spk';
-const FALLBACK_FEEDBACK_TOPIC = 'https://ntfy.sh/prakanguard_live_feedback_v3_spk';
+const PRIMARY_REPORTS_TOPIC = 'https://ntfy.sh/prakanguard_spk_reports_v5';
+const FALLBACK_REPORTS_TOPIC = 'https://ntfy.sh/prakanguard_live_reports_v4_spk';
+
+const PRIMARY_FEEDBACK_TOPIC = 'https://ntfy.sh/prakanguard_spk_feedback_v5';
+const FALLBACK_FEEDBACK_TOPIC = 'https://ntfy.sh/prakanguard_live_feedback_v4_spk';
 
 const PRIMARY_ACTIONS_TOPIC = 'https://ntfy.sh/prakanguard_live_actions_v4_spk';
-const FALLBACK_ACTIONS_TOPIC = 'https://ntfy.sh/prakanguard_live_actions_v3_spk';
+
+const LOCAL_ADMIN_API = 'http://localhost:4000';
+
+/**
+ * แปลง CamelCase เป็น Snake_Case สำหรับ Supabase Reports
+ */
+function toSupabaseReport(r) {
+  return {
+    id: r.id,
+    hazard_type: r.hazardType || 'flood',
+    name: r.name || 'ไม่ระบุชื่อจุด',
+    subdistrict: r.subdistrict || null,
+    district: r.district || 'เมืองสมุทรปราการ',
+    lat: Number(r.lat),
+    lng: Number(r.lng),
+    body_level: r.bodyLevel || null,
+    body_level_label: r.bodyLevelLabel || null,
+    depth_cm: r.depthCm ? parseInt(r.depthCm, 10) : null,
+    depth_range: r.depthRange || null,
+    level: r.level ? parseInt(r.level, 10) : 2,
+    traffic_status: r.trafficStatus || null,
+    cause: r.cause || null,
+    official_guidance: r.officialGuidance || null,
+    source: r.source || 'รายงานจากประชาชน (Crowdsource)',
+    phone: r.phone || null,
+    photo_url: r.photoUrl || null,
+    is_approved: !!r.isApproved,
+    is_resolved: !!r.isResolved,
+    reported_at: r.reportedAt || null,
+    timestamp: Number(r.timestamp) || Date.now()
+  };
+}
+
+function fromSupabaseReport(row) {
+  return {
+    id: row.id,
+    hazardType: row.hazard_type || 'flood',
+    name: row.name,
+    subdistrict: row.subdistrict || '',
+    district: row.district,
+    lat: Number(row.lat),
+    lng: Number(row.lng),
+    bodyLevel: row.body_level || '',
+    bodyLevelLabel: row.body_level_label || '',
+    depthCm: row.depth_cm,
+    depthRange: row.depth_range || '',
+    level: row.level || 2,
+    trafficStatus: row.traffic_status || '',
+    cause: row.cause || '',
+    officialGuidance: row.official_guidance || '',
+    source: row.source || 'รายงานจากประชาชน',
+    phone: row.phone || '',
+    photoUrl: row.photo_url || null,
+    isApproved: !!row.is_approved,
+    isResolved: !!row.is_resolved,
+    reportedAt: row.reported_at || '',
+    timestamp: Number(row.timestamp) || Date.now()
+  };
+}
+
+function toSupabaseFeedback(f) {
+  return {
+    id: f.id,
+    category: f.category || 'suggestion',
+    category_label: f.categoryLabel || 'ทั่วไป',
+    rating: f.rating ? parseInt(f.rating, 10) : 5,
+    message: f.message || '',
+    sender_name: f.senderName || 'ประชาชนทั่วไป',
+    contact: f.contact || '-',
+    admin_note: f.adminNote || '',
+    is_read: !!f.isRead,
+    submitted_at: f.submittedAt || '',
+    timestamp: Number(f.timestamp) || Date.now()
+  };
+}
+
+function fromSupabaseFeedback(row) {
+  return {
+    id: row.id,
+    category: row.category,
+    categoryLabel: row.category_label,
+    rating: row.rating,
+    message: row.message,
+    senderName: row.sender_name,
+    contact: row.contact,
+    adminNote: row.admin_note || '',
+    isRead: !!row.is_read,
+    submittedAt: row.submitted_at,
+    timestamp: Number(row.timestamp) || Date.now()
+  };
+}
 
 /**
  * ตรวจสอบความถูกต้องของพิกัดและข้อมูลรายงาน เพื่อป้องกันข้อผิดพลาดแผนที่
@@ -40,7 +133,7 @@ export function isValidFeedback(f) {
 }
 
 /**
- * ส่งรายงานน้ำท่วมหรือลูกเห็บขึ้น Cloud
+ * ส่งรายงานน้ำท่วมหรือลูกเห็บขึ้น Supabase Cloud Database + Local Admin Server
  */
 export async function publishCloudReport(report) {
   try {
@@ -49,37 +142,49 @@ export async function publishCloudReport(report) {
       return false;
     }
     const isHail = report.hazardType === 'hail';
-    const title = isHail 
-      ? `🧊 รายงานลูกเห็บตก: ${report.name || 'ไม่ระบุชื่อจุด'}`
-      : `🌊 รายงานน้ำท่วมใหม่: ${report.name || 'ไม่ระบุชื่อจุด'}`;
-    
+    const asciiTitle = isHail ? 'PrakanGuard Hail Report' : 'PrakanGuard Flood Report';
     const payload = JSON.stringify(report);
 
-    // Publish to primary topic
-    const res = await fetch(PRIMARY_REPORTS_TOPIC, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json; charset=utf-8',
-        'Title': title,
-        'Priority': report.level === 3 ? 'urgent' : 'high',
-        'Tags': isHail ? 'ice_cube,cloud_with_rain' : 'droplet,warning'
-      },
-      body: payload
-    });
+    // 1. ส่งขึ้น Supabase Cloud Database (ศูนย์ข้อมูลกลาง 24 ชม. ทุกเครื่องเข้าถึงได้)
+    try {
+      const supaBody = JSON.stringify(toSupabaseReport(report));
+      fetch(`${SUPABASE_URL}/rest/v1/reports`, {
+        method: 'POST',
+        headers: {
+          'apikey': SUPABASE_KEY,
+          'Authorization': `Bearer ${SUPABASE_KEY}`,
+          'Content-Type': 'application/json',
+          'Prefer': 'resolution=merge-duplicates'
+        },
+        body: supaBody
+      }).catch(err => console.warn('[Supabase Report Error]:', err));
+    } catch (e) {}
 
-    // Also fire-and-forget to fallback topic for backwards compatibility
-    fetch(FALLBACK_REPORTS_TOPIC, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json; charset=utf-8',
-        'Title': title,
-        'Priority': report.level === 3 ? 'urgent' : 'high',
-        'Tags': isHail ? 'ice_cube,cloud_with_rain' : 'droplet,warning'
-      },
-      body: payload
-    }).catch(() => {});
+    // 2. Direct Local Admin API Push (Instant zero latency via PNA เมื่อเปิดบนเครื่องเดียวกับแอดมิน)
+    try {
+      fetch(`${LOCAL_ADMIN_API}/api/reports`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: payload,
+        mode: 'cors'
+      }).catch(() => {});
+    } catch (e) {}
 
-    return res.ok;
+    // 3. Publish to Cloud Topics (Fallback Pub/Sub - strictly ASCII header)
+    try {
+      fetch(PRIMARY_REPORTS_TOPIC, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json; charset=utf-8',
+          'Title': asciiTitle,
+          'Priority': report.level === 3 ? 'urgent' : 'high',
+          'Tags': isHail ? 'ice_cube,cloud_with_rain' : 'droplet,warning'
+        },
+        body: payload
+      }).catch(() => {});
+    } catch (e) {}
+
+    return true;
   } catch (err) {
     console.warn('[CloudSync] publishCloudReport warning:', err);
     return false;
@@ -87,39 +192,54 @@ export async function publishCloudReport(report) {
 }
 
 /**
- * ส่งข้อเสนอแนะหรือข้อติชมขึ้น Cloud
+ * ส่งข้อเสนอแนะหรือข้อติชมขึ้น Supabase Cloud Database + Local Admin Server
  */
 export async function publishCloudFeedback(feedback) {
   try {
     if (!isValidFeedback(feedback)) return false;
-    const title = `💬 ข้อเสนอแนะใหม่ (${feedback.categoryLabel || 'ทั่วไป'}) จาก ${feedback.senderName || 'ประชาชน'}`;
+    const asciiTitle = 'PrakanGuard Citizen Feedback';
     const payload = JSON.stringify(feedback);
 
-    // Publish to primary feedback topic
-    const res = await fetch(PRIMARY_FEEDBACK_TOPIC, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json; charset=utf-8',
-        'Title': title,
-        'Priority': 'default',
-        'Tags': 'speech_balloon,star'
-      },
-      body: payload
-    });
+    // 1. ส่งขึ้น Supabase Cloud Database
+    try {
+      const supaBody = JSON.stringify(toSupabaseFeedback(feedback));
+      fetch(`${SUPABASE_URL}/rest/v1/feedback`, {
+        method: 'POST',
+        headers: {
+          'apikey': SUPABASE_KEY,
+          'Authorization': `Bearer ${SUPABASE_KEY}`,
+          'Content-Type': 'application/json',
+          'Prefer': 'resolution=merge-duplicates'
+        },
+        body: supaBody
+      }).catch(err => console.warn('[Supabase Feedback Error]:', err));
+    } catch (e) {}
 
-    // Also fire-and-forget to fallback topic
-    fetch(FALLBACK_FEEDBACK_TOPIC, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json; charset=utf-8',
-        'Title': title,
-        'Priority': 'default',
-        'Tags': 'speech_balloon,star'
-      },
-      body: payload
-    }).catch(() => {});
+    // 2. Direct Local Admin API Push
+    try {
+      fetch(`${LOCAL_ADMIN_API}/api/feedback`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: payload,
+        mode: 'cors'
+      }).catch(() => {});
+    } catch (e) {}
 
-    return res.ok;
+    // 3. Publish to Cloud Topics (Fallback Pub/Sub)
+    try {
+      fetch(PRIMARY_FEEDBACK_TOPIC, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json; charset=utf-8',
+          'Title': asciiTitle,
+          'Priority': 'default',
+          'Tags': 'speech_balloon,star'
+        },
+        body: payload
+      }).catch(() => {});
+    } catch (e) {}
+
+    return true;
   } catch (err) {
     console.warn('[CloudSync] publishCloudFeedback warning:', err);
     return false;
@@ -127,32 +247,69 @@ export async function publishCloudFeedback(feedback) {
 }
 
 /**
- * ส่งคำสั่ง Admin Action (เช่น อนุมัติ / ปิดงาน / ลบจุด) เพื่อให้เครื่องอื่นอัปเดตตาม
+ * ส่งคำสั่ง Admin Action (เช่น อนุมัติ / ปิดงาน / ลบจุด) เพื่อให้อุปกรณ์อื่นอัปเดตตาม
  */
 export async function publishAdminAction(action) {
   try {
     const payload = JSON.stringify(action);
-    const res = await fetch(PRIMARY_ACTIONS_TOPIC, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json; charset=utf-8',
-        'Title': `🛡️ Admin Action: ${action.type}`,
-        'Tags': 'shield,gear'
-      },
-      body: payload
-    });
+    const asciiTitle = `Admin Action: ${action.type || 'update'}`;
 
-    fetch(FALLBACK_ACTIONS_TOPIC, {
+    // Update Supabase Database
+    try {
+      if (action.type === 'approve' && action.id) {
+        fetch(`${SUPABASE_URL}/rest/v1/reports?id=eq.${encodeURIComponent(action.id)}`, {
+          method: 'PATCH',
+          headers: {
+            'apikey': SUPABASE_KEY,
+            'Authorization': `Bearer ${SUPABASE_KEY}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ is_approved: true, is_resolved: false })
+        }).catch(() => {});
+      } else if (action.type === 'resolve' && action.id) {
+        fetch(`${SUPABASE_URL}/rest/v1/reports?id=eq.${encodeURIComponent(action.id)}`, {
+          method: 'PATCH',
+          headers: {
+            'apikey': SUPABASE_KEY,
+            'Authorization': `Bearer ${SUPABASE_KEY}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ is_resolved: true })
+        }).catch(() => {});
+      } else if (action.type === 'reject' && action.id) {
+        fetch(`${SUPABASE_URL}/rest/v1/reports?id=eq.${encodeURIComponent(action.id)}`, {
+          method: 'DELETE',
+          headers: {
+            'apikey': SUPABASE_KEY,
+            'Authorization': `Bearer ${SUPABASE_KEY}`
+          }
+        }).catch(() => {});
+      }
+    } catch (e) {}
+
+    // Direct Local Admin push
+    try {
+      if (action.type === 'approve' && action.id) {
+        fetch(`${LOCAL_ADMIN_API}/api/reports/${encodeURIComponent(action.id)}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ isApproved: true, isResolved: false }),
+          mode: 'cors'
+        }).catch(() => {});
+      }
+    } catch (e) {}
+
+    fetch(PRIMARY_ACTIONS_TOPIC, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json; charset=utf-8',
-        'Title': `🛡️ Admin Action: ${action.type}`,
+        'Title': asciiTitle,
         'Tags': 'shield,gear'
       },
       body: payload
     }).catch(() => {});
 
-    return res.ok;
+    return true;
   } catch (err) {
     console.warn('[CloudSync] publishAdminAction warning:', err);
     return false;
@@ -160,78 +317,49 @@ export async function publishAdminAction(action) {
 }
 
 /**
- * ตัวช่วยดาวน์โหลดและแกะข้อมูลจากข้อความ ntfy ไม่ว่าจะเป็น inline message หรือ attachment
- */
-async function parseNtfyNdjsonStream(url, validator) {
-  try {
-    const res = await fetch(`${url}/json?poll=1&since=all`, { cache: 'no-cache' });
-    if (!res.ok) return [];
-    const text = await res.text();
-    if (!text || !text.trim()) return [];
-
-    const lines = text.trim().split('\n');
-    const items = [];
-
-    for (const line of lines) {
-      if (!line) continue;
-      try {
-        const entry = JSON.parse(line);
-        if (entry.event === 'message') {
-          let parsedData = null;
-
-          // กรณีข้อความมีไฟล์แนบ (เช่น มีภาพถ่ายขนาดเกิน 4KB)
-          if (entry.attachment && entry.attachment.url) {
-            try {
-              const fileRes = await fetch(entry.attachment.url, { cache: 'no-cache' });
-              if (fileRes.ok) {
-                parsedData = await fileRes.json();
-              }
-            } catch (e) {
-              // fallback to message if attachment download fails
-            }
-          }
-
-          // กรณีข้อความอยู่ใน message ปกติ
-          if (!parsedData && entry.message) {
-            try {
-              parsedData = JSON.parse(entry.message);
-            } catch (e) {
-              // ignore plain string messages
-            }
-          }
-
-          if (validator(parsedData)) {
-            items.push(parsedData);
-          }
-        }
-      } catch (e) {
-        // Skip invalid line
-      }
-    }
-    return items;
-  } catch (err) {
-    console.warn(`[CloudSync] Error fetching from ${url}:`, err);
-    return [];
-  }
-}
-
-/**
- * ดึงรายงานน้ำท่วม/ลูกเห็บย้อนหลังล่าสุดจาก Cloud (ดึงทั้ง Primary และ Fallback แล้ว Merge กัน)
+ * ดึงรายงานน้ำท่วม/ลูกเห็บย้อนหลังล่าสุด (ดึงจาก Supabase Cloud + Local API + Fallback)
  */
 export async function fetchRecentCloudReports() {
   try {
-    const [primaryReports, fallbackReports] = await Promise.all([
-      parseNtfyNdjsonStream(PRIMARY_REPORTS_TOPIC, isValidReport),
-      parseNtfyNdjsonStream(FALLBACK_REPORTS_TOPIC, isValidReport)
-    ]);
-
     const reportMap = new Map();
-    // เพิ่ม fallback ก่อน แล้วตามด้วย primary เพื่อให้ข้อมูลใหม่สุดทับ
-    [...fallbackReports, ...primaryReports].forEach(r => {
-      if (isValidReport(r)) {
-        reportMap.set(r.id, r);
+
+    // 1. ดึงจาก Supabase Cloud Database เป็นหลัก
+    try {
+      const supaRes = await fetch(`${SUPABASE_URL}/rest/v1/reports?order=timestamp.desc&limit=60`, {
+        headers: {
+          'apikey': SUPABASE_KEY,
+          'Authorization': `Bearer ${SUPABASE_KEY}`
+        },
+        cache: 'no-cache'
+      }).catch(() => null);
+
+      if (supaRes && supaRes.ok) {
+        const rows = await supaRes.json();
+        if (Array.isArray(rows)) {
+          rows.forEach(row => {
+            const parsed = fromSupabaseReport(row);
+            if (isValidReport(parsed)) {
+              reportMap.set(parsed.id, parsed);
+            }
+          });
+        }
       }
-    });
+    } catch (e) {}
+
+    // 2. ดึงจาก Local Admin API เสริมถ้าเข้าถึงได้
+    try {
+      const localRes = await fetch(`${LOCAL_ADMIN_API}/api/reports`, { cache: 'no-cache' }).catch(() => null);
+      if (localRes && localRes.ok) {
+        const localReports = await localRes.json();
+        if (Array.isArray(localReports)) {
+          localReports.forEach(r => {
+            if (isValidReport(r) && !reportMap.has(r.id)) {
+              reportMap.set(r.id, r);
+            }
+          });
+        }
+      }
+    } catch (e) {}
 
     const results = Array.from(reportMap.values());
     results.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
@@ -243,21 +371,49 @@ export async function fetchRecentCloudReports() {
 }
 
 /**
- * ดึงข้อเสนอแนะล่าสุดจาก Cloud
+ * ดึงข้อเสนอแนะล่าสุด (ดึงจาก Supabase Cloud + Local API)
  */
 export async function fetchRecentCloudFeedback() {
   try {
-    const [primaryFeedbacks, fallbackFeedbacks] = await Promise.all([
-      parseNtfyNdjsonStream(PRIMARY_FEEDBACK_TOPIC, isValidFeedback),
-      parseNtfyNdjsonStream(FALLBACK_FEEDBACK_TOPIC, isValidFeedback)
-    ]);
-
     const feedbackMap = new Map();
-    [...fallbackFeedbacks, ...primaryFeedbacks].forEach(f => {
-      if (isValidFeedback(f)) {
-        feedbackMap.set(f.id, f);
+
+    // 1. ดึงจาก Supabase Cloud Database เป็นหลัก
+    try {
+      const supaRes = await fetch(`${SUPABASE_URL}/rest/v1/feedback?order=timestamp.desc&limit=60`, {
+        headers: {
+          'apikey': SUPABASE_KEY,
+          'Authorization': `Bearer ${SUPABASE_KEY}`
+        },
+        cache: 'no-cache'
+      }).catch(() => null);
+
+      if (supaRes && supaRes.ok) {
+        const rows = await supaRes.json();
+        if (Array.isArray(rows)) {
+          rows.forEach(row => {
+            const parsed = fromSupabaseFeedback(row);
+            if (isValidFeedback(parsed)) {
+              feedbackMap.set(parsed.id, parsed);
+            }
+          });
+        }
       }
-    });
+    } catch (e) {}
+
+    // 2. ดึงจาก Local Admin API เสริม
+    try {
+      const localRes = await fetch(`${LOCAL_ADMIN_API}/api/feedback`, { cache: 'no-cache' }).catch(() => null);
+      if (localRes && localRes.ok) {
+        const localFeedback = await localRes.json();
+        if (Array.isArray(localFeedback)) {
+          localFeedback.forEach(f => {
+            if (isValidFeedback(f) && !feedbackMap.has(f.id)) {
+              feedbackMap.set(f.id, f);
+            }
+          });
+        }
+      }
+    } catch (e) {}
 
     const results = Array.from(feedbackMap.values());
     results.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
@@ -269,7 +425,7 @@ export async function fetchRecentCloudFeedback() {
 }
 
 /**
- * ฟังก์ชันซิงก์ดึงข้อมูลสดทั้งหมดจาก Cloud แบบ Manual Trigger (สำหรับแอดมินกดรีเฟรช)
+ * ฟังก์ชันซิงก์ดึงข้อมูลสดทั้งหมด
  */
 export async function syncCloudDataNow() {
   const [reports, feedback] = await Promise.all([
@@ -277,6 +433,54 @@ export async function syncCloudDataNow() {
     fetchRecentCloudFeedback()
   ]);
   return { reports, feedback };
+}
+
+/**
+ * ส่ง Heartbeat ข้อมูลการเข้าชมเบาๆ ไปยัง Supabase + Admin Server (Non-blocking)
+ */
+export function sendVisitorTelemetry(district = 'เมืองสมุทรปราการ') {
+  if (typeof window === 'undefined') return;
+  try {
+    let sessionId = sessionStorage.getItem('pg_visitor_sid');
+    if (!sessionId) {
+      sessionId = 'v-' + Math.random().toString(36).substring(2, 9) + '-' + Date.now().toString(36);
+      sessionStorage.setItem('pg_visitor_sid', sessionId);
+    }
+    const isMobile = /Mobile|Android|iP(hone|od)/i.test(navigator.userAgent);
+    const payload = {
+      session_id: sessionId,
+      device: isMobile ? 'Mobile' : 'Desktop',
+      district: district || 'เมืองสมุทรปราการ',
+      page: document.title || 'หน้าหลัก',
+      last_ping: new Date().toISOString()
+    };
+
+    // 1. ส่งเข้า Supabase visitors (upsert)
+    fetch(`${SUPABASE_URL}/rest/v1/visitors`, {
+      method: 'POST',
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'resolution=merge-duplicates'
+      },
+      body: JSON.stringify(payload)
+    }).catch(() => {});
+
+    // 2. ส่งเข้า Local Admin API
+    fetch(`${LOCAL_ADMIN_API}/api/heartbeat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        sessionId,
+        device: payload.device,
+        district: payload.district,
+        page: payload.page,
+        timestamp: Date.now()
+      }),
+      mode: 'cors'
+    }).catch(() => {});
+  } catch (e) {}
 }
 
 /**
@@ -310,27 +514,27 @@ export function subscribeToCloudEvents({ onNewReport, onNewFeedback, onAdminActi
 
   // 1. Subscribe to Citizen Flood & Hail Reports
   if (onNewReport && typeof window !== 'undefined' && 'EventSource' in window) {
-    try {
-      const reportsSource = new EventSource(`${PRIMARY_REPORTS_TOPIC}/sse`);
-      reportsSource.onmessage = (event) => handleIncomingMessage(event, isValidReport, onNewReport);
-      eventSources.push(reportsSource);
-    } catch (e) {
-      console.warn('[CloudSync] Report EventSource error:', e);
-    }
+    [PRIMARY_REPORTS_TOPIC, FALLBACK_REPORTS_TOPIC].forEach(topic => {
+      try {
+        const reportsSource = new EventSource(`${topic}/sse`);
+        reportsSource.onmessage = (event) => handleIncomingMessage(event, isValidReport, onNewReport);
+        eventSources.push(reportsSource);
+      } catch (e) {}
+    });
   }
 
   // 2. Subscribe to Feedback & Suggestions
   if (onNewFeedback && typeof window !== 'undefined' && 'EventSource' in window) {
-    try {
-      const feedbackSource = new EventSource(`${PRIMARY_FEEDBACK_TOPIC}/sse`);
-      feedbackSource.onmessage = (event) => handleIncomingMessage(event, isValidFeedback, onNewFeedback);
-      eventSources.push(feedbackSource);
-    } catch (e) {
-      console.warn('[CloudSync] Feedback EventSource error:', e);
-    }
+    [PRIMARY_FEEDBACK_TOPIC, FALLBACK_FEEDBACK_TOPIC].forEach(topic => {
+      try {
+        const feedbackSource = new EventSource(`${topic}/sse`);
+        feedbackSource.onmessage = (event) => handleIncomingMessage(event, isValidFeedback, onNewFeedback);
+        eventSources.push(feedbackSource);
+      } catch (e) {}
+    });
   }
 
-  // 3. Subscribe to Admin Actions (e.g. approve/resolve/delete sync)
+  // 3. Subscribe to Admin Actions
   if (onAdminAction && typeof window !== 'undefined' && 'EventSource' in window) {
     try {
       const actionsSource = new EventSource(`${PRIMARY_ACTIONS_TOPIC}/sse`);
@@ -349,12 +553,9 @@ export function subscribeToCloudEvents({ onNewReport, onNewFeedback, onAdminActi
         } catch (e) {}
       };
       eventSources.push(actionsSource);
-    } catch (e) {
-      console.warn('[CloudSync] Action EventSource error:', e);
-    }
+    } catch (e) {}
   }
 
-  // Return cleanup function to close all SSE streams
   return () => {
     eventSources.forEach(es => {
       try {

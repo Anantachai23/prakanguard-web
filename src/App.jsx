@@ -30,7 +30,8 @@ import {
   subscribeToCloudEvents,
   syncCloudDataNow,
   isValidReport,
-  isValidFeedback
+  isValidFeedback,
+  sendVisitorTelemetry
 } from './services/cloudSyncService';
 import { 
   Phone, 
@@ -756,6 +757,12 @@ export default function App() {
 
   // Real-time Cloud Cross-Device Synchronization (Crowdsource Flood/Hail Reports & Feedback)
   useEffect(() => {
+    // Send anonymous heartbeat telemetry to admin server
+    sendVisitorTelemetry(selectedDistrict !== 'ทั้งหมด' ? selectedDistrict : 'เมืองสมุทรปราการ');
+    const telemetryInterval = setInterval(() => {
+      sendVisitorTelemetry(selectedDistrict !== 'ทั้งหมด' ? selectedDistrict : 'เมืองสมุทรปราการ');
+    }, 30000);
+
     const pullCloudUpdates = () => {
       // 1. Pull recent reports from Cloud
       fetchRecentCloudReports().then(cloudReports => {
@@ -849,6 +856,7 @@ export default function App() {
     });
 
     return () => {
+      clearInterval(telemetryInterval);
       clearInterval(cloudSyncInterval);
       unsubscribe();
     };
