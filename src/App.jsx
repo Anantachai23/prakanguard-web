@@ -443,6 +443,15 @@ export default function App() {
   });
 
   // Citizen Report & Feedback Modal States
+  const [feedbackItems, setFeedbackItems] = useState(() => {
+    try {
+      const saved = localStorage.getItem('prakanguard_feedback_items');
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      return [];
+    }
+  });
+
   const [isCitizenReportModalOpen, setIsCitizenReportModalOpen] = useState(false);
   const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false);
   const [isDetailMinimized, setIsDetailMinimized] = useState(false);
@@ -631,15 +640,16 @@ export default function App() {
     // 2. Initial Pull of recent feedback from Cloud
     fetchRecentCloudFeedback().then(cloudFeedback => {
       if (Array.isArray(cloudFeedback) && cloudFeedback.length > 0) {
-        try {
-          const existingStr = localStorage.getItem('prakanguard_feedback_items');
-          const existing = existingStr ? JSON.parse(existingStr) : [];
-          const existingIds = new Set(existing.map(f => f.id));
+        setFeedbackItems(prev => {
+          const existingIds = new Set(prev.map(f => f.id));
           const newItems = cloudFeedback.filter(cf => isValidFeedback(cf) && !existingIds.has(cf.id));
-          if (newItems.length > 0) {
-            localStorage.setItem('prakanguard_feedback_items', JSON.stringify([...newItems, ...existing]));
-          }
-        } catch (e) {}
+          if (newItems.length === 0) return prev;
+          const merged = [...newItems, ...prev];
+          try {
+            localStorage.setItem('prakanguard_feedback_items', JSON.stringify(merged));
+          } catch (e) {}
+          return merged;
+        });
       }
     });
 
@@ -656,7 +666,7 @@ export default function App() {
           return updated;
         });
 
-        // Trigger alert toast for admin
+        // Trigger alert toast for admin (only visible if logged in)
         if (!incomingReport.isApproved) {
           const isHail = incomingReport.hazardType === 'hail';
           setAdminAlertToast({
@@ -671,19 +681,15 @@ export default function App() {
       },
       onNewFeedback: (incomingFeedback) => {
         if (!isValidFeedback(incomingFeedback)) return;
-        try {
-          const existingStr = localStorage.getItem('prakanguard_feedback_items');
-          const existing = existingStr ? JSON.parse(existingStr) : [];
-          if (!existing.some(f => f.id === incomingFeedback.id)) {
-            localStorage.setItem('prakanguard_feedback_items', JSON.stringify([incomingFeedback, ...existing]));
-            window.dispatchEvent(new CustomEvent('prakanguard_feedback_updated', { detail: incomingFeedback }));
-            if (isAdminAuthenticated) {
-              setLatestUpdateNotification(`💬 ได้รับข้อเสนอต่อเว็บรายการใหม่: "${incomingFeedback.categoryLabel || 'ทั่วไป'}"`);
-              playNotificationChime();
-              setTimeout(() => setLatestUpdateNotification(null), 7000);
-            }
-          }
-        } catch (e) {}
+        setFeedbackItems(prev => {
+          if (prev.some(f => f.id === incomingFeedback.id)) return prev;
+          const updated = [incomingFeedback, ...prev];
+          try {
+            localStorage.setItem('prakanguard_feedback_items', JSON.stringify(updated));
+          } catch (e) {}
+          return updated;
+        });
+        window.dispatchEvent(new CustomEvent('prakanguard_feedback_updated', { detail: incomingFeedback }));
       },
       onAdminAction: (action) => {
         if (action.type === 'approve') {
@@ -779,8 +785,6 @@ export default function App() {
     setSelectedPoint(broadcast);
     setFlyToLocation({ lat: broadcast.lat, lng: broadcast.lng });
     setLastUpdatedTime(broadcast.reportedAt);
-    setLatestUpdateNotification(`📢 ประกาศด่วนแอดมิน: จุด "${broadcast.name}" เผยแพร่ขึ้นแผนที่แล้ว (อัปเดตเมื่อ ${broadcast.reportedAt})`);
-    setTimeout(() => setLatestUpdateNotification(null), 8000);
   };
 
   // Handle New Citizen Report Submission (Hold in pending queue for admin review)
@@ -815,11 +819,77 @@ export default function App() {
 
   // Handle Feedback Submission
   const handleFeedbackSubmitted = (newFeedback) => {
+    setFeedbackItems(prev => {
+      const updated = [newFeedback, ...prev.filter(f => f.id !== newFeedback.id)];
+      try {
+        localStorage.setItem('prakanguard_feedback_items', JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
     publishCloudFeedback(newFeedback);
     playNotificationChime();
-    setLatestUpdateNotification(`💬 บันทึกข้อเสนอต่อเว็บเรียบร้อยแล้ว ขอบพระคุณสำหรับข้อเสนอแนะครับ`);
     window.dispatchEvent(new CustomEvent('prakanguard_feedback_updated', { detail: newFeedback }));
-    setTimeout(() => setLatestUpdateNotification(null), 6000);
+  };
+
+  // Feedback Management Handlers (Admin Only)
+  const handleToggleFeedbackRead = (id) => {
+    setFeedbackItems(prev => {
+      const updated = prev.map(f => f.id === id ? { ...f, isRead: !f.isRead } : f);
+      try {
+        localStorage.setItem('prakanguard_feedback_items', JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
+  };
+
+  const handleDeleteFeedback = (id) => {
+    setFeedbackItems(prev => {
+      const updated = prev.filter(f => f.id !== id);
+      try {
+        localStorage.setItem('prakanguard_feedback_items', JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
+  };
+
+  const handleMarkAllFeedbackRead = () => {
+    setFeedbackItems(prev => {
+      const updated = prev.map(f => ({ ...f, isRead: true }));
+      try {
+        localStorage.setItem('prakanguard_feedback_items', JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
+  };
+
+  const handleClearReadFeedback = () => {
+    setFeedbackItems(prev => {
+      const updated = prev.filter(f => !f.isRead);
+      try {
+        localStorage.setItem('prakanguard_feedback_items', JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
+  };
+
+  // Edit Report (depth, notes, status)
+  const handleUpdateReport = (reportId, updatedFields) => {
+    setCitizenReports(prev => {
+      const updated = prev.map(r => {
+        if (r.id !== reportId) return r;
+        const merged = { ...r, ...updatedFields };
+        if (updatedFields.depthCm !== undefined) {
+          const lvl = getFloodLevel(updatedFields.depthCm);
+          merged.level = lvl;
+          merged.depthRange = lvl === 3 ? '> 50 ซม.' : lvl === 2 ? '21 - 50 ซม.' : (updatedFields.depthCm > 0 ? '5 - 20 ซม.' : '0 ซม. (แห้งปกติ)');
+        }
+        return merged;
+      });
+      try {
+        localStorage.setItem('prakanguard_citizen_reports', JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
   };
 
   // Admin Actions: Approve Report & Publish to Map
@@ -844,8 +914,6 @@ export default function App() {
     if (approvedPoint) {
       setSelectedPoint(approvedPoint);
       setFlyToLocation({ lat: approvedPoint.lat, lng: approvedPoint.lng });
-      setLatestUpdateNotification(`✅ ยืนยันจุด "${approvedPoint.name}" ขึ้นแสดงบนแผนที่แล้ว (อัปเดตเมื่อ ${timeStr})`);
-      setTimeout(() => setLatestUpdateNotification(null), 8000);
       if (shouldBroadcast) {
         publishAdminAction({ type: 'approve', id });
       }
@@ -878,11 +946,9 @@ export default function App() {
   // Admin Actions: Resolve Report (Water Drained)
   const handleResolveReport = (id, shouldBroadcast = true) => {
     const timeStr = new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) + ' น.';
-    let resolvedName = '';
     setCitizenReports(prev => {
       const updated = prev.map(r => {
         if (r.id === id) {
-          resolvedName = r.name;
           return { ...r, isResolved: true, resolvedAt: timeStr };
         }
         return r;
@@ -893,8 +959,6 @@ export default function App() {
       return updated;
     });
     setLastUpdatedTime(timeStr);
-    setLatestUpdateNotification(`💧 อัปเดตสถานะ: จุด "${resolvedName}" ระบายแห้งสู่ภาวะปกติแล้ว (อัปเดตเมื่อ ${timeStr})`);
-    setTimeout(() => setLatestUpdateNotification(null), 8000);
     if (shouldBroadcast) {
       publishAdminAction({ type: 'resolve', id });
     }
@@ -916,10 +980,6 @@ export default function App() {
       point: newPoint,
       timestamp: Date.now()
     });
-
-    setLatestUpdateNotification(`📍 เพิ่มจุดเฝ้าระวังใหม่: "${newPoint.name}" (อ.${newPoint.district}) สู่ระบบติดตาม Real-time 24 ชม.`);
-    playNotificationChime();
-    setTimeout(() => setLatestUpdateNotification(null), 6000);
   };
 
   const handleUpdatePoint = (pointId, updatedFields) => {
@@ -952,15 +1012,10 @@ export default function App() {
 
   const handleDeletePoint = (pointId) => {
     setPoints(prev => {
-      const target = prev.find(p => p.id === pointId);
       const updated = prev.filter(p => p.id !== pointId);
       try {
         localStorage.setItem('prakanguard_points_state_v3', JSON.stringify(updated));
       } catch (e) {}
-      if (target) {
-        setLatestUpdateNotification(`🗑️ ลบจุดเฝ้าระวัง "${target.name}" ออกจากระบบเรียบร้อย`);
-        setTimeout(() => setLatestUpdateNotification(null), 5000);
-      }
       return updated;
     });
 
@@ -989,10 +1044,6 @@ export default function App() {
       count: pointsToImport.length,
       timestamp: Date.now()
     });
-
-    setLatestUpdateNotification(`📥 นำเข้าจุดเฝ้าระวังทางการสำเร็จ +${pointsToImport.length} จุด (ครอบคลุม 6 อำเภอ)`);
-    playNotificationChime();
-    setTimeout(() => setLatestUpdateNotification(null), 7000);
   };
 
   const handleResetPoints = () => {
@@ -1008,9 +1059,6 @@ export default function App() {
     try {
       localStorage.setItem('prakanguard_points_state_v3', JSON.stringify(defaultPoints));
     } catch (e) {}
-
-    setLatestUpdateNotification('🔄 คืนค่าจุดเฝ้าระวังมาตรฐาน 30 จุด เรียบร้อยแล้ว');
-    setTimeout(() => setLatestUpdateNotification(null), 5000);
   };
 
   // Map Picking Helpers with source routing ('citizen' or 'admin')
@@ -1928,18 +1976,25 @@ export default function App() {
         onClose={() => setIsAdminModalOpen(false)}
         citizenReports={citizenReports}
         points={points}
+        feedbackItems={feedbackItems}
         onApproveReport={handleApproveReport}
         onRejectReport={handleRejectReport}
         onResolveReport={handleResolveReport}
+        onUpdateReport={handleUpdateReport}
         onAddAdminBroadcast={handleAddAdminBroadcast}
         onAddPoint={handleAddPoint}
         onUpdatePoint={handleUpdatePoint}
         onDeletePoint={handleDeletePoint}
         onImportPoints={handleImportPoints}
         onResetPoints={handleResetPoints}
+        onToggleFeedbackRead={handleToggleFeedbackRead}
+        onDeleteFeedback={handleDeleteFeedback}
+        onMarkAllFeedbackRead={handleMarkAllFeedbackRead}
+        onClearReadFeedback={handleClearReadFeedback}
         onFlyToCoords={handleFlyToCoords}
         onPickLocationOnMap={() => handleStartPickOnMap('admin')}
         pickedCoords={pickedCoords}
+        isAdminAuthenticated={isAdminAuthenticated}
         onAuthChange={setIsAdminAuthenticated}
         theme={theme}
       />
