@@ -117,6 +117,11 @@ export function evaluateDynamicFloodLifecycle(points = [], citizenReports = [], 
       ? 'กรมอุทกศาสตร์ กองทัพเรือ (สถานีป้อมพระจุลฯ)' 
       : 'กรมอุตุนิยมวิทยา (TMD เรดาร์สุวรรณภูมิ) ร่วมกับ สนง.ปภ.';
 
+    // ตรวจสอบข้อมูลสภาพอากาศเฉพาะอำเภอของจุดนั้น (Real-time 6 Districts Telemetry)
+    const distWeather = weather?.districtWeather ? weather.districtWeather[point.district] : null;
+    const isDistrictRaining = distWeather ? distWeather.isRainingNow : false;
+    const isCurrentlyFloodingIncident = point.isFlooding || originalLevel >= 2;
+
     // คำนวณความลึกและสถานะตามหลักวิทยาศาสตร์อุทกวิทยา:
     if (isTidalSpot) {
       if (!tideInfo.isHighTide) {
@@ -130,11 +135,15 @@ export function evaluateDynamicFloodLifecycle(points = [], citizenReports = [], 
         if (calculatedDepthCm < 5) calculatedDepthCm = 15;
       }
     } else if (isRainDependent) {
-      if (isDryWeather) {
+      if (isCurrentlyFloodingIncident) {
+        // จุดที่มีน้ำท่วมขังระดับ 2 ขึ้นไป หรือมีรายงานสดกำลังท่วม ให้คงสถานะท่วมไว้ตามจริง
+        shouldBeActive = true;
+        calculatedDepthCm = originalDepthCm;
+      } else if (isDryWeather && !isDistrictRaining) {
         shouldBeActive = false;
         clearanceReason = 'กลุ่มฝนสลายตัวและเครื่องสูบน้ำผลักดันน้ำแห้งสนิท สัญจรได้ปกติ';
         calculatedDepthCm = 0;
-      } else if (isHeavyRainWeather) {
+      } else if (isHeavyRainWeather || isDistrictRaining) {
         // ช่วงฝนตกหนัก น้ำท่วมขังเพิ่มขึ้น
         calculatedDepthCm = Math.min(65, Math.round(originalDepthCm * 1.3));
       }

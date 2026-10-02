@@ -152,7 +152,7 @@ export default function Navbar({
                     แพท 1.0 ล่าสุด
                   </span>
                   <span className={`font-semibold ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>
-                    อัพเดทได้แม่นยำขึ้นกว่าเดิม • เฝ้าระวังน้ำท่วม 6 อำเภอ จ.สมุทรปราการ
+                    อัพเดทได้แม่นยำขึ้นกว่าเดิม • ตรวจสภาพอากาศสดทุก 30 วินาที ครอบคลุม 6 อำเภอ จ.สมุทรปราการ
                   </span>
                 </div>
               </AutoMarquee>
@@ -231,10 +231,10 @@ export default function Navbar({
               className={`shrink-0 flex items-center space-x-1.5 px-2.5 py-1 sm:py-1.5 rounded-xl border text-[11px] sm:text-xs font-semibold cursor-pointer transition-all hover:scale-[1.01] whitespace-nowrap ${
                 isDark ? 'bg-cyan-950/40 border-cyan-800/80 text-cyan-300' : 'bg-cyan-50/80 border-cyan-200 text-cyan-800'
               }`}
-              title="ระบบคำนวณและอัปเดตข้อมูลอัตโนมัติตลอด 24 ชม. ทุกสถานที่ใน 6 อำเภอ คลิกเพื่อดูสถานีโทรมาตร TMD/กองทัพเรือ"
+              title="ระบบคำนวณและอัปเดตข้อมูลอัตโนมัติตลอด 24 ชม. ทุก 30 วินาที ครอบคลุม 6 อำเภอ คลิกเพื่อดูสถานีโทรมาตร TMD/กองทัพเรือ"
             >
               <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping shrink-0"></span>
-              <span className="font-bold">อัปเดตอัตโนมัติ 6 อำเภอ</span>
+              <span className="font-bold">อัปเดตสดอัตโนมัติทุก 30 วินาที</span>
             </div>
 
             {/* Theme Switcher Button */}
@@ -291,7 +291,7 @@ export default function Navbar({
                   ? 'bg-emerald-950/60 hover:bg-emerald-900/60 text-emerald-300 border-emerald-800' 
                   : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border-emerald-200'
               }`}
-              title={`อัปเดตสถานการณ์น้ำท่วมและเส้นทาง (อัปเดตล่าสุด: ${lastUpdatedTimeDetailed || lastUpdatedTime || 'สด 24 ชม.'} • ซิงก์อัตโนมัติทุก 35 วินาที)`}
+              title={`อัปเดตสถานการณ์น้ำท่วมและเส้นทาง (อัปเดตล่าสุด: ${lastUpdatedTimeDetailed || lastUpdatedTime || 'สด 24 ชม.'} • ซิงก์อัตโนมัติทุก 30 วินาที)`}
             >
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
               <span>อัปเดตสด</span>
@@ -310,7 +310,7 @@ export default function Navbar({
             {/* Citizen Feedback & Suggestion Box Button (ซ่อนบนมือถือเพราะมีเมนูด้านล่างแล้ว แสดงบน iPad/คอม) */}
             <button 
               onClick={onOpenFeedback}
-              title="ข้อเสนอต่อเว็บ"
+              title="ข้อเสนอแนะ"
               className={`hidden md:inline-flex shrink-0 px-2.5 sm:px-3 py-1.5 rounded-xl border text-xs font-semibold items-center gap-1.5 transition-all cursor-pointer shadow-xs whitespace-nowrap ${
                 isDark 
                   ? 'bg-slate-900 hover:bg-slate-800 text-teal-300 border-slate-700 hover:border-teal-400' 
@@ -318,7 +318,7 @@ export default function Navbar({
               }`}
             >
               <MessageSquare className="w-3.5 h-3.5 text-teal-500 shrink-0" />
-              <span>ข้อเสนอต่อเว็บ</span>
+              <span>ข้อเสนอแนะ</span>
             </button>
 
             {/* Admin Management System Button - Explicitly Labeled ADMIN */}

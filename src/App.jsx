@@ -416,7 +416,7 @@ export default function App() {
     };
 
     syncContinuousWeather();
-    const interval = setInterval(syncContinuousWeather, 45000);
+    const interval = setInterval(syncContinuousWeather, 30000); // อัปเดตสภาพอากาศสดทุก 30 วินาที
     return () => {
       isMounted = false;
       clearInterval(interval);
@@ -693,7 +693,7 @@ export default function App() {
     };
 
     executeBackgroundSync();
-    const interval = setInterval(executeBackgroundSync, 35 * 1000); // Heartbeat ซิงก์ข้อมูลสดทุก 35 วินาที ตลอด 24 ชม.
+    const interval = setInterval(executeBackgroundSync, 30 * 1000); // Heartbeat ซิงก์ข้อมูลสดทุก 30 วินาที ตลอด 24 ชม.
 
     // ซิงก์ทันทีเมื่อผู้ใช้สลับกลับมาที่หน้าแท็บ หรือเมื่ออินเทอร์เน็ตกลับมาเชื่อมต่อ
     const handleVisibilityChange = () => {
@@ -718,37 +718,42 @@ export default function App() {
 
   // Real-time Cloud Cross-Device Synchronization (Crowdsource Flood/Hail Reports & Feedback)
   useEffect(() => {
-    // 1. Initial Pull of recent reports from Cloud
-    fetchRecentCloudReports().then(cloudReports => {
-      if (Array.isArray(cloudReports) && cloudReports.length > 0) {
-        setCitizenReports(prev => {
-          const existingIds = new Set(prev.map(r => r.id));
-          const newItems = cloudReports.filter(cr => isValidReport(cr) && !existingIds.has(cr.id));
-          if (newItems.length === 0) return prev;
-          const merged = [...newItems, ...prev];
-          try {
-            localStorage.setItem('prakanguard_citizen_reports', JSON.stringify(merged));
-          } catch (e) {}
-          return merged;
-        });
-      }
-    });
+    const pullCloudUpdates = () => {
+      // 1. Pull recent reports from Cloud
+      fetchRecentCloudReports().then(cloudReports => {
+        if (Array.isArray(cloudReports) && cloudReports.length > 0) {
+          setCitizenReports(prev => {
+            const existingIds = new Set(prev.map(r => r.id));
+            const newItems = cloudReports.filter(cr => isValidReport(cr) && !existingIds.has(cr.id));
+            if (newItems.length === 0) return prev;
+            const merged = [...newItems, ...prev];
+            try {
+              localStorage.setItem('prakanguard_citizen_reports', JSON.stringify(merged));
+            } catch (e) {}
+            return merged;
+          });
+        }
+      });
 
-    // 2. Initial Pull of recent feedback from Cloud
-    fetchRecentCloudFeedback().then(cloudFeedback => {
-      if (Array.isArray(cloudFeedback) && cloudFeedback.length > 0) {
-        setFeedbackItems(prev => {
-          const existingIds = new Set(prev.map(f => f.id));
-          const newItems = cloudFeedback.filter(cf => isValidFeedback(cf) && !existingIds.has(cf.id));
-          if (newItems.length === 0) return prev;
-          const merged = [...newItems, ...prev];
-          try {
-            localStorage.setItem('prakanguard_feedback_items', JSON.stringify(merged));
-          } catch (e) {}
-          return merged;
-        });
-      }
-    });
+      // 2. Pull recent feedback from Cloud
+      fetchRecentCloudFeedback().then(cloudFeedback => {
+        if (Array.isArray(cloudFeedback) && cloudFeedback.length > 0) {
+          setFeedbackItems(prev => {
+            const existingIds = new Set(prev.map(f => f.id));
+            const newItems = cloudFeedback.filter(cf => isValidFeedback(cf) && !existingIds.has(cf.id));
+            if (newItems.length === 0) return prev;
+            const merged = [...newItems, ...prev];
+            try {
+              localStorage.setItem('prakanguard_feedback_items', JSON.stringify(merged));
+            } catch (e) {}
+            return merged;
+          });
+        }
+      });
+    };
+
+    pullCloudUpdates();
+    const cloudSyncInterval = setInterval(pullCloudUpdates, 30000); // ตรวจสอบและดึงข้อมูลอัปเดตจาก Cloud อัตโนมัติทุก 30 วินาที
 
     // 3. Real-time Live EventSource Listener across all devices
     const unsubscribe = subscribeToCloudEvents({
@@ -806,6 +811,7 @@ export default function App() {
     });
 
     return () => {
+      clearInterval(cloudSyncInterval);
       unsubscribe();
     };
   }, []);

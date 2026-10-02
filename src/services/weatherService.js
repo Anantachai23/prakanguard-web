@@ -33,6 +33,24 @@ export function getDetailedThaiTimestamp(date = new Date()) {
   return `วัน${dayName}ที่ ${day} ${monthName} ${year} เวลา ${time} น.`;
 }
 
+export const DISTRICT_COORDINATES = [
+  { id: "mueang", name: "เมืองสมุทรปราการ", lat: 13.5991, lng: 100.5968 },
+  { id: "bangphli", name: "บางพลี", lat: 13.6050, lng: 100.7050 },
+  { id: "bangbo", name: "บางบ่อ", lat: 13.5685, lng: 100.8350 },
+  { id: "bangsaothong", name: "บางเสาธง", lat: 13.5875, lng: 100.8250 },
+  { id: "phrapradaeng", name: "พระประแดง", lat: 13.6580, lng: 100.5340 },
+  { id: "phrasamutchedi", name: "พระสมุทรเจดีย์", lat: 13.5412, lng: 100.5845 }
+];
+
+export function getWeatherForDistrict(weatherData, districtName) {
+  if (!weatherData) return null;
+  if (districtName && districtName !== "ทั้งหมด" && weatherData.districtWeather) {
+    const match = weatherData.districtWeather[districtName];
+    if (match) return match;
+  }
+  return weatherData;
+}
+
 export async function getLiveSamutPrakanWeather(forceRefresh = false) {
   const now = Date.now();
   if (!forceRefresh && cachedWeatherData && (now - lastFetchTime) < CACHE_DURATION_MS) {
@@ -43,16 +61,20 @@ export async function getLiveSamutPrakanWeather(forceRefresh = false) {
   const detailedTime = getDetailedThaiTimestamp(nowDate);
 
   try {
-    const url = "https://api.open-meteo.com/v1/forecast?latitude=13.5991&longitude=100.5968&current=temperature_2m,relative_humidity_2m,precipitation,weather_code&hourly=precipitation_probability,precipitation&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max&timezone=Asia%2FBangkok&forecast_days=3";
+    const lats = DISTRICT_COORDINATES.map(d => d.lat).join(',');
+    const lngs = DISTRICT_COORDINATES.map(d => d.lng).join(',');
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lats}&longitude=${lngs}&current=temperature_2m,relative_humidity_2m,precipitation,weather_code&hourly=precipitation_probability,precipitation,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max&timezone=Asia%2FBangkok&forecast_days=3`;
     
     const response = await fetch(url, { headers: { 'Accept': 'application/json' } });
     if (!response.ok) throw new Error("Weather API response not ok");
 
     const data = await response.json();
     
-    const current = data.current || {};
-    const daily = data.daily || {};
-    const hourly = data.hourly || {};
+    // Open-Meteo returns array of results when multiple coordinates are queried
+    const primaryData = Array.isArray(data) ? data[0] : data;
+    const current = primaryData.current || {};
+    const daily = primaryData.daily || {};
+    const hourly = primaryData.hourly || {};
 
     const rainProbMax = (daily.precipitation_probability_max && daily.precipitation_probability_max[0]) || 40;
     const rainSum = (daily.precipitation_sum && daily.precipitation_sum[0]) || 0;
@@ -194,57 +216,45 @@ export async function getLiveSamutPrakanWeather(forceRefresh = false) {
         next24[18] ? next24[18].time : "17:00"
       ];
 
-      // วิเคราะห์กลุ่มฝน 6 อำเภอ (กระชับ ชัดเจน ไม่รก บอกตรงไปตรงมาว่าอำเภอไหนตก และอำเภอไหนมีโอกาสตก)
-      const districtRainAnalysis = [
-        {
-          district: "เมืองสมุทรปราการ",
-          isRainingNow: isRainingRightNow,
-          probability: Math.min(94, Math.max(35, maxProb - 2)),
-          status: isRainingRightNow ? "ฝนกำลังตก" : "โอกาสตก 90% (ช่วงบ่าย)",
-          timeWindow: "ช่วงบ่าย 13:00 - 17:00 น.",
-          icon: isRainingRightNow ? "🌧️" : "🌦️"
-        },
-        {
-          district: "บางพลี",
-          isRainingNow: isRainingRightNow,
-          probability: Math.min(95, Math.max(40, maxProb)),
-          status: isRainingRightNow ? "ฝนกำลังตก" : "โอกาสตก 92% (ช่วงบ่าย)",
-          timeWindow: "ช่วงบ่าย 13:00 - 17:00 น.",
-          icon: isRainingRightNow ? "🌧️" : "🌦️"
-        },
-        {
-          district: "พระประแดง",
-          isRainingNow: isRainingRightNow,
-          probability: Math.min(92, Math.max(35, maxProb - 4)),
-          status: isRainingRightNow ? "ฝนกำลังตก" : "โอกาสตก 85% (ช่วงบ่าย)",
-          timeWindow: "ช่วงบ่าย 13:30 - 17:00 น.",
-          icon: isRainingRightNow ? "🌧️" : "🌦️"
-        },
-        {
-          district: "บางเสาธง",
-          isRainingNow: false,
-          probability: Math.min(85, Math.max(30, maxProb - 10)),
-          status: "โอกาสตก 75% (ช่วงบ่าย-ค่ำ)",
-          timeWindow: "ช่วงบ่าย 14:00 - 18:00 น.",
-          icon: "🌦️"
-        },
-        {
-          district: "บางบ่อ",
-          isRainingNow: false,
-          probability: Math.min(80, Math.max(25, maxProb - 15)),
-          status: "โอกาสตก 70% (ช่วงบ่าย-ค่ำ)",
-          timeWindow: "ช่วงบ่าย 14:00 - 18:00 น.",
-          icon: "🌦️"
-        },
-        {
-          district: "พระสมุทรเจดีย์",
-          isRainingNow: false,
-          probability: Math.min(75, Math.max(25, maxProb - 20)),
-          status: "โอกาสตก 65% (ช่วงบ่าย-ค่ำ)",
-          timeWindow: "ช่วงบ่าย 14:30 - 18:00 น.",
-          icon: "🌦️"
+      // วิเคราะห์กลุ่มฝน 6 อำเภอแบบสดจริงจาก Open-Meteo Multi-Coordinate Telemetry
+      const districtRainAnalysis = DISTRICT_COORDINATES.map((dist, idx) => {
+        const dData = Array.isArray(data) ? (data[idx] || data[0]) : data;
+        const dCur = dData.current || {};
+        const dDaily = dData.daily || {};
+        
+        const precip = dCur.precipitation || 0;
+        const code = dCur.weather_code !== undefined ? dCur.weather_code : 2;
+        const probMax = (dDaily.precipitation_probability_max && dDaily.precipitation_probability_max[0]) || 40;
+        const temp = dCur.temperature_2m !== undefined ? Math.round(dCur.temperature_2m) : 31;
+        
+        const isRainCode = [61, 63, 65, 80, 81, 82, 95, 96, 99].includes(code);
+        const isRainingNow = precip >= 0.1 || (precip > 0 && isRainCode) || code >= 95;
+        
+        let statusText = translateWeatherCode(code);
+        let icon = "☀️";
+        if (code >= 95) icon = "⚡";
+        else if (isRainingNow) icon = "🌧️";
+        else if (code >= 80) icon = "🌦️";
+        else if (code >= 51) icon = "🌧️";
+        else if (code >= 3) icon = "☁️";
+        else if (code >= 1) icon = "⛅";
+        
+        if (isRainingNow) {
+          statusText = `ฝนตก ${precip.toFixed(1)} มม./ชม.`;
         }
-      ];
+
+        return {
+          district: dist.name,
+          isRainingNow,
+          precipitationMm: Number(precip.toFixed(1)),
+          temperature: temp,
+          probability: probMax,
+          weatherCode: code,
+          status: statusText,
+          timeWindow: isRainingNow ? "ฝนตกในขณะนี้" : (probMax >= 60 ? "มีโอกาสตกช่วงบ่าย-ค่ำ" : "โอกาสน้อย"),
+          icon
+        };
+      });
 
       const activeRainingDistricts = districtRainAnalysis.filter(d => d.isRainingNow);
       const riskIncomingDistricts = districtRainAnalysis.filter(d => !d.isRainingNow && d.probability >= 60);
@@ -272,6 +282,13 @@ export async function getLiveSamutPrakanWeather(forceRefresh = false) {
       };
     }
 
+    const districtWeather = {};
+    if (Array.isArray(districtRainAnalysis)) {
+      districtRainAnalysis.forEach(d => {
+        districtWeather[d.district] = d;
+      });
+    }
+
     const result = {
       temp: current.temperature_2m ? Math.round(current.temperature_2m) : 28,
       humidity: current.relative_humidity_2m || 80,
@@ -285,6 +302,8 @@ export async function getLiveSamutPrakanWeather(forceRefresh = false) {
       rainAlertLevel,
       riskColor,
       forecast24h,
+      districtWeather,
+      districtList: districtRainAnalysis,
       lastUpdated: nowDate.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) + ' น.',
       lastUpdatedDetailed: detailedTime,
       sourceAgency: "แบบจำลองโทรมาตรอุตุนิยมวิทยามาตรฐานโลก (ECMWF / Open-Meteo) ร่วมกับ กรมอุตุนิยมวิทยา (TMD)"

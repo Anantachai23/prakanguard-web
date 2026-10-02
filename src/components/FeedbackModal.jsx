@@ -116,10 +116,10 @@ export default function FeedbackModal({ isOpen, onClose, theme = 'light', onFeed
             </div>
             <div>
               <h2 className={`text-base sm:text-lg font-bold leading-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                ข้อเสนอต่อเว็บ
+                ข้อเสนอแนะ
               </h2>
               <p className={`text-[11px] sm:text-xs mt-0.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                ร่วมแสดงความคิดเห็นหรือเสนอแนะเพื่อร่วมพัฒนาเว็บไซต์รายงานน้ำท่วม
+                ร่วมแสดงความคิดเห็นหรือข้อเสนอแนะเพื่อร่วมพัฒนาเว็บไซต์รายงานน้ำท่วม
               </p>
             </div>
           </div>
@@ -144,7 +144,7 @@ export default function FeedbackModal({ isOpen, onClose, theme = 'light', onFeed
               </div>
               <div className="space-y-1">
                 <h3 className={`text-lg font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                  ส่งข้อเสนอต่อเว็บเรียบร้อยแล้ว!
+                  ส่งข้อเสนอแนะเรียบร้อยแล้ว!
                 </h3>
                 <p className={`text-xs max-w-sm mx-auto leading-relaxed ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
                   ขอบพระคุณสำหรับข้อเสนอแนะและข้อคิดเห็นของท่าน เพื่อร่วมพัฒนาเว็บไซต์รายงานน้ำท่วมสมุทรปราการครับ
@@ -328,7 +328,7 @@ export default function FeedbackModal({ isOpen, onClose, theme = 'light', onFeed
                 className="w-full py-3 rounded-xl bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-500 hover:to-cyan-500 active:scale-[0.99] text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md shadow-teal-600/25 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Send className="w-4 h-4" />
-                <span>{isSubmitting ? 'กำลังส่งข้อมูล...' : 'ส่งข้อเสนอต่อเว็บ'}</span>
+                <span>{isSubmitting ? 'กำลังส่งข้อมูล...' : 'ส่งข้อเสนอแนะ'}</span>
               </button>
 
             </form>

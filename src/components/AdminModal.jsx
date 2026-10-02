@@ -1028,7 +1028,7 @@ export default function AdminModal({
                   }`}
                 >
                   <MessageSquare className="w-3.5 h-3.5 text-teal-400" />
-                  <span>ข้อเสนอต่อเว็บ</span>
+                  <span>ข้อเสนอแนะ</span>
                   {unreadFeedbackCount > 0 && (
                     <span className="px-1.5 py-0.2 rounded-full text-[10px] font-extrabold bg-teal-500 text-white animate-pulse">
                       {unreadFeedbackCount}

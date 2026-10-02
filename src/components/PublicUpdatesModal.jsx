@@ -202,7 +202,7 @@ export default function PublicUpdatesModal({
             </div>
             <p className={`text-[11px] flex items-center gap-1.5 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-              <span><strong>ความถี่การซิงก์:</strong> ตรวจสอบและดึงข้อมูลโทรมาตรสดจากหน่วยงานทางการอัตโนมัติทุก 30-45 วินาที</span>
+              <span><strong>ความถี่การซิงก์:</strong> ตรวจสอบและดึงข้อมูลโทรมาตรสดจากหน่วยงานทางการอัตโนมัติทุก 30 วินาที</span>
             </p>
           </div>
 
