@@ -110,7 +110,15 @@ export default function App() {
           const list = parsed.map(item => {
             const initPoint = initMap.get(item.id);
             const merged = initPoint 
-              ? { ...initPoint, ...item, aliases: item.aliases || initPoint.aliases, keywords: item.keywords || initPoint.keywords }
+              ? { 
+                  ...initPoint, 
+                  ...item, 
+                  lat: initPoint.lat,
+                  lng: initPoint.lng,
+                  roadSegment: initPoint.roadSegment,
+                  aliases: item.aliases || initPoint.aliases, 
+                  keywords: item.keywords || initPoint.keywords 
+                }
               : item;
             const lvl = merged.depthCm !== undefined ? getFloodLevel(merged.depthCm) : (merged.level || 0);
             const detectedDist = detectDistrictForCoordinates(merged.lat, merged.lng);
