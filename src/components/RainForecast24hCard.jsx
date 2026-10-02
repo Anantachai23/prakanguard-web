@@ -68,17 +68,12 @@ export default function RainForecast24hCard({
           </div>
         </div>
 
-        {/* Real-time 6 Districts High-Accuracy Telemetry Badge */}
-        <div className={`mt-2 px-2.5 py-1 rounded-xl text-[10px] sm:text-[11px] font-semibold flex items-center justify-between gap-1 border ${
+        {/* Real-time 6 Districts Telemetry Badge */}
+        <div className={`mt-2 px-2.5 py-1 rounded-xl text-[10px] sm:text-[11px] font-semibold flex items-center gap-1.5 border ${
           isDark ? 'bg-cyan-950/40 border-cyan-800/60 text-cyan-300' : 'bg-cyan-50 border-cyan-200 text-cyan-900'
         }`}>
-          <div className="flex items-center gap-1.5 min-w-0">
-            <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping shrink-0" />
-            <span className="truncate font-medium">อัปเดตข้อมูลอัตโนมัติตลอด 24 ชม. (ครอบคลุม 6 อำเภอ)</span>
-          </div>
-          <span className="font-bold text-[9px] px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-400 shrink-0">
-            แม่นยำ ~99.8%
-          </span>
+          <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping shrink-0" />
+          <span className="truncate font-medium">อัปเดตข้อมูลอัตโนมัติตลอด 24 ชม. (ครอบคลุม 6 อำเภอ)</span>
         </div>
 
         {/* 3 Simple Metric Pills: ปริมาณฝน • โอกาสฝน • เริ่มตก (อ่านง่ายใน 1 วินาที) */}

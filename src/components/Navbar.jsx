@@ -12,8 +12,7 @@ import {
   ChevronLeft,
   ChevronRight,
   MessageSquare,
-  GraduationCap,
-  MapPin
+  GraduationCap
 } from 'lucide-react';
 import AutoMarquee from './AutoMarquee';
 import RealTimeClock from './RealTimeClock';
@@ -233,26 +232,11 @@ export default function Navbar({
               className={`shrink-0 flex items-center space-x-1.5 px-2.5 py-1 sm:py-1.5 rounded-xl border text-[11px] sm:text-xs font-semibold cursor-pointer transition-all hover:scale-[1.01] whitespace-nowrap ${
                 isDark ? 'bg-cyan-950/40 border-cyan-800/80 text-cyan-300' : 'bg-cyan-50/80 border-cyan-200 text-cyan-800'
               }`}
-              title="ระบบคำนวณและอัปเดตข้อมูลอัตโนมัติตลอด 24 ชม. ทุกสถานที่ใน 6 อำเภอ (ความแม่นยำ ~99.8%) คลิกเพื่อดูสถานีโทรมาตร TMD/กองทัพเรือ"
+              title="ระบบคำนวณและอัปเดตข้อมูลอัตโนมัติตลอด 24 ชม. ทุกสถานที่ใน 6 อำเภอ คลิกเพื่อดูสถานีโทรมาตร TMD/กองทัพเรือ"
             >
               <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping shrink-0"></span>
               <span className="font-bold">อัปเดตอัตโนมัติ 6 อำเภอ</span>
-              <span className="text-[10px] opacity-75">(แม่นยำ ~99.8%)</span>
             </div>
-
-            {/* Quick Action: Manage / Add Monitored Location across 6 districts */}
-            <button 
-              onClick={onOpenAdmin}
-              className={`shrink-0 px-2 sm:px-2.5 py-1.5 rounded-xl border text-xs font-semibold flex items-center gap-1 transition-all cursor-pointer shadow-xs whitespace-nowrap ${
-                isDark 
-                  ? 'bg-blue-900/60 hover:bg-blue-800/60 text-cyan-200 border-blue-700' 
-                  : 'bg-blue-600 hover:bg-blue-700 text-white border-blue-700 shadow-sm'
-              }`}
-              title="คลิกเพื่อจัดการและเพิ่มจุดเฝ้าระวังใหม่ หรือนำเข้าข้อมูลทางการใน 6 อำเภอ"
-            >
-              <MapPin className="w-3.5 h-3.5 shrink-0" />
-              <span>+ จัดการ/เพิ่มจุด</span>
-            </button>
 
             {/* Theme Switcher Button */}
             <button

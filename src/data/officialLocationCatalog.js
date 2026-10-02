@@ -437,7 +437,7 @@ export function formatPointForTracking(raw) {
     isResolved: depth === 0,
     isCustomAdded: true,
     addedAt: new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) + ' น.',
-    verifiedPrecision: "99.8% (GPS Verified)"
+    verifiedPrecision: "GPS Verified"
   };
 }
 

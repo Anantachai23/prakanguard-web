@@ -1,6 +1,6 @@
 // PrakanGuard 24/7 Autonomous Hydro-Meteorological Telemetry & Dynamic Flood Lifecycle Engine
 // ระบบเฝ้าระวังและอัปเดตจุดเสี่ยงน้ำท่วมและสภาพอากาศ จ.สมุทรปราการ ตลอด 24 ชั่วโมง อัตโนมัติ ทุกสถานที่ใน 6 อำเภอ
-// อ้างอิงแหล่งข้อมูลโทรมาตรทางการความแม่นยำสูง (~99.8%):
+// อ้างอิงแหล่งข้อมูลโทรมาตรทางการ:
 // 1. กรมอุตุนิยมวิทยา (TMD) - เรดาร์ตรวจอากาศสุวรรณภูมิ & ปริมาณน้ำฝน Open-Meteo ECMWF
 // 2. กรมอุทกศาสตร์ กองทัพเรือ - สถานีตรวจวัดน้ำขึ้น-น้ำลง ป้อมพระจุลจอมเกล้า (ปากอ่าวไทย)
 // 3. กรมป้องกันและบรรเทาสาธารณภัย (สนง.ปภ. จังหวัดสมุทรปราการ สายด่วน 1784)
@@ -186,7 +186,7 @@ export function evaluateDynamicFloodLifecycle(points = [], citizenReports = [], 
         level: 0,
         verifiedSource: spotAgency,
         lastCheckedTime: nowTime,
-        precisionScore: '99.8% (TMD / กองทัพเรือ โทรมาตร)'
+        precisionScore: 'TMD / กองทัพเรือ โทรมาตร'
       };
     } else {
       return {
@@ -205,7 +205,7 @@ export function evaluateDynamicFloodLifecycle(points = [], citizenReports = [], 
         level: currentLevel,
         verifiedSource: spotAgency,
         lastCheckedTime: nowTime,
-        precisionScore: '99.8% (TMD / กองทัพเรือ โทรมาตร)'
+        precisionScore: 'TMD / กองทัพเรือ โทรมาตร'
       };
     }
   });
@@ -349,7 +349,7 @@ export async function runOfficial24HourSync(currentPoints = [], currentReports =
     tideInfo: lifecycleResult.tideInfo,
     monitoredPointsCount: lifecycleResult.monitoredPointsCount,
     activeRiskPointsCount: lifecycleResult.activeRiskPointsCount,
-    confidencePrecision: '99.8% (ความแม่นยำสูง ตรวจสอบ 4 องค์กรหลัก)',
+    confidencePrecision: 'ตรวจสอบผ่าน 4 องค์กรหลัก',
     sources: [
       {
         agency: 'กรมอุตุนิยมวิทยา (TMD)',

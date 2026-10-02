@@ -363,11 +363,11 @@ export function validateCoordinatePrecision(lat, lng, specifiedDistrict = null) 
     };
   }
 
-  const msg = `พิกัดถูกต้อง 100% อยู่ในเขต อ.${detected} จ.สมุทรปราการ (ระดับความแม่นยำ 99.8%)`;
+  const msg = `พิกัดถูกต้องอยู่ในเขต อ.${detected} จ.สมุทรปราการ`;
   return {
     isValid: true,
-    confidence: 99.8,
-    precisionScore: '99.8%',
+    confidence: 100,
+    precisionScore: '100%',
     detectedDistrict: detected,
     isDistrictMatch: true,
     isDistrictMismatch: false,

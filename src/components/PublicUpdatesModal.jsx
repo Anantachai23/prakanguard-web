@@ -20,7 +20,8 @@ import {
   Compass,
   FileText,
   Activity,
-  Check
+  Check,
+  Layers
 } from 'lucide-react';
 
 export default function PublicUpdatesModal({ 
@@ -185,72 +186,103 @@ export default function PublicUpdatesModal({
           </button>
         </div>
 
-        {/* Filter Navigation Tabs */}
-        <div className={`px-5 pt-2 border-b flex items-center gap-1.5 overflow-x-auto no-scrollbar text-xs font-bold select-none ${
-          isDark ? 'bg-slate-950/60 border-slate-800' : 'bg-slate-50/80 border-slate-200'
+        {/* Filter Navigation Tabs - Easy to press, High contrast, Highly tactile */}
+        <div className={`px-3 sm:px-5 py-2.5 border-b select-none transition-colors ${
+          isDark ? 'bg-slate-950/80 border-slate-800' : 'bg-slate-100/80 border-slate-200'
         }`}>
-          <button
-            onClick={() => setActiveTab('all')}
-            className={`px-3 py-2 rounded-t-xl transition-all cursor-pointer flex items-center gap-1.5 border-b-2 whitespace-nowrap ${
-              activeTab === 'all'
-                ? (isDark ? 'border-blue-400 text-cyan-300 bg-slate-800/80' : 'border-blue-600 text-blue-800 bg-white')
-                : 'border-transparent text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            <span>ภาพรวมทั้งหมด</span>
-          </button>
+          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar scroll-smooth p-0.5 overscroll-x-contain">
+            {/* 1. All Overview */}
+            <button
+              onClick={() => setActiveTab('all')}
+              className={`min-h-[44px] px-3.5 sm:px-4 py-2 rounded-xl sm:rounded-2xl text-xs sm:text-sm font-bold flex items-center gap-2 whitespace-nowrap cursor-pointer transition-all duration-150 shrink-0 select-none active:scale-95 ${
+                activeTab === 'all'
+                  ? 'bg-blue-600 text-white shadow-md shadow-blue-500/30 ring-2 ring-blue-400/50 border border-blue-500'
+                  : isDark 
+                    ? 'bg-slate-900/90 hover:bg-slate-800 text-slate-200 border border-slate-700/80 hover:text-white hover:border-slate-600'
+                    : 'bg-white hover:bg-slate-50 text-slate-700 border border-slate-200/90 shadow-2xs hover:text-slate-900'
+              }`}
+            >
+              <Layers className="w-4 h-4 shrink-0" />
+              <span>ภาพรวมทั้งหมด</span>
+            </button>
 
-          <button
-            onClick={() => setActiveTab('active')}
-            className={`px-3 py-2 rounded-t-xl transition-all cursor-pointer flex items-center gap-1.5 border-b-2 whitespace-nowrap ${
-              activeTab === 'active'
-                ? (isDark ? 'border-amber-400 text-amber-300 bg-slate-800/80' : 'border-amber-500 text-amber-800 bg-white')
-                : 'border-transparent text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            <span>จุดเฝ้าระวัง/มีน้ำท่วม</span>
-            <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-amber-500 text-white font-extrabold">
-              {totalActiveCount}
-            </span>
-          </button>
+            {/* 2. Active Risk Points */}
+            <button
+              onClick={() => setActiveTab('active')}
+              className={`min-h-[44px] px-3.5 sm:px-4 py-2 rounded-xl sm:rounded-2xl text-xs sm:text-sm font-bold flex items-center gap-2 whitespace-nowrap cursor-pointer transition-all duration-150 shrink-0 select-none active:scale-95 ${
+                activeTab === 'active'
+                  ? 'bg-amber-500 text-white shadow-md shadow-amber-500/30 ring-2 ring-amber-300/50 border border-amber-400'
+                  : isDark 
+                    ? 'bg-slate-900/90 hover:bg-slate-800 text-amber-300 border border-amber-900/60 hover:text-amber-200 hover:border-amber-700/60'
+                    : 'bg-amber-50/90 hover:bg-amber-100 text-amber-800 border border-amber-200/90 shadow-2xs hover:text-amber-900'
+              }`}
+            >
+              <AlertTriangle className="w-4 h-4 shrink-0" />
+              <span>จุดเฝ้าระวัง/มีน้ำท่วม</span>
+              <span className={`px-2 py-0.5 rounded-full text-xs font-black transition-colors ${
+                activeTab === 'active' ? 'bg-black/25 text-white' : 'bg-amber-500 text-white shadow-2xs'
+              }`}>
+                {totalActiveCount}
+              </span>
+            </button>
 
-          <button
-            onClick={() => setActiveTab('cleared')}
-            className={`px-3 py-2 rounded-t-xl transition-all cursor-pointer flex items-center gap-1.5 border-b-2 whitespace-nowrap ${
-              activeTab === 'cleared'
-                ? (isDark ? 'border-emerald-400 text-emerald-300 bg-slate-800/80' : 'border-emerald-600 text-emerald-800 bg-white')
-                : 'border-transparent text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            <span>จุดน้ำแห้ง/นำออกแล้ว</span>
-            <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-emerald-600 text-white font-extrabold">
-              {totalDrainedCount}
-            </span>
-          </button>
+            {/* 3. Drained / Cleared Points */}
+            <button
+              onClick={() => setActiveTab('cleared')}
+              className={`min-h-[44px] px-3.5 sm:px-4 py-2 rounded-xl sm:rounded-2xl text-xs sm:text-sm font-bold flex items-center gap-2 whitespace-nowrap cursor-pointer transition-all duration-150 shrink-0 select-none active:scale-95 ${
+                activeTab === 'cleared'
+                  ? 'bg-emerald-600 text-white shadow-md shadow-emerald-500/30 ring-2 ring-emerald-400/50 border border-emerald-500'
+                  : isDark 
+                    ? 'bg-slate-900/90 hover:bg-slate-800 text-emerald-300 border border-emerald-900/60 hover:text-emerald-200 hover:border-emerald-700/60'
+                    : 'bg-emerald-50/90 hover:bg-emerald-100 text-emerald-800 border border-emerald-200/90 shadow-2xs hover:text-emerald-900'
+              }`}
+            >
+              <CheckCircle2 className="w-4 h-4 shrink-0" />
+              <span>จุดน้ำแห้ง/นำออกแล้ว</span>
+              <span className={`px-2 py-0.5 rounded-full text-xs font-black transition-colors ${
+                activeTab === 'cleared' ? 'bg-black/25 text-white' : 'bg-emerald-600 text-white shadow-2xs'
+              }`}>
+                {totalDrainedCount}
+              </span>
+            </button>
 
-          <button
-            onClick={() => setActiveTab('sources')}
-            className={`px-3 py-2 rounded-t-xl transition-all cursor-pointer flex items-center gap-1.5 border-b-2 whitespace-nowrap ${
-              activeTab === 'sources'
-                ? (isDark ? 'border-indigo-400 text-indigo-300 bg-slate-800/80' : 'border-indigo-600 text-indigo-800 bg-white')
-                : 'border-transparent text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            <ShieldCheck className="w-3.5 h-3.5" />
-            <span>แหล่งข้อมูลอ้างอิง ({OFFICIAL_SOURCES.length})</span>
-          </button>
+            {/* 4. Official Sources */}
+            <button
+              onClick={() => setActiveTab('sources')}
+              className={`min-h-[44px] px-3.5 sm:px-4 py-2 rounded-xl sm:rounded-2xl text-xs sm:text-sm font-bold flex items-center gap-2 whitespace-nowrap cursor-pointer transition-all duration-150 shrink-0 select-none active:scale-95 ${
+                activeTab === 'sources'
+                  ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/30 ring-2 ring-indigo-400/50 border border-indigo-500'
+                  : isDark 
+                    ? 'bg-slate-900/90 hover:bg-slate-800 text-indigo-300 border border-indigo-900/60 hover:text-indigo-200 hover:border-indigo-700/60'
+                    : 'bg-indigo-50/90 hover:bg-indigo-100 text-indigo-800 border border-indigo-200/90 shadow-2xs hover:text-indigo-900'
+              }`}
+            >
+              <ShieldCheck className="w-4 h-4 shrink-0" />
+              <span>แหล่งข้อมูลอ้างอิง</span>
+              <span className={`px-2 py-0.5 rounded-full text-xs font-black transition-colors ${
+                activeTab === 'sources' 
+                  ? 'bg-black/25 text-white' 
+                  : isDark ? 'bg-indigo-500/25 text-indigo-200' : 'bg-indigo-100 text-indigo-800'
+              }`}>
+                {OFFICIAL_SOURCES.length}
+              </span>
+            </button>
 
-          <button
-            onClick={() => setActiveTab('changelog')}
-            className={`px-3 py-2 rounded-t-xl transition-all cursor-pointer flex items-center gap-1.5 border-b-2 whitespace-nowrap ${
-              activeTab === 'changelog'
-                ? (isDark ? 'border-purple-400 text-purple-300 bg-slate-800/80' : 'border-purple-600 text-purple-800 bg-white')
-                : 'border-transparent text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            <Activity className="w-3.5 h-3.5" />
-            <span>ประวัติ 24 ชม.</span>
-          </button>
+            {/* 5. 24h History / Activity */}
+            <button
+              onClick={() => setActiveTab('changelog')}
+              className={`min-h-[44px] px-3.5 sm:px-4 py-2 rounded-xl sm:rounded-2xl text-xs sm:text-sm font-bold flex items-center gap-2 whitespace-nowrap cursor-pointer transition-all duration-150 shrink-0 select-none active:scale-95 ${
+                activeTab === 'changelog'
+                  ? 'bg-purple-600 text-white shadow-md shadow-purple-500/30 ring-2 ring-purple-400/50 border border-purple-500'
+                  : isDark 
+                    ? 'bg-slate-900/90 hover:bg-slate-800 text-purple-300 border border-purple-900/60 hover:text-purple-200 hover:border-purple-700/60'
+                    : 'bg-purple-50/90 hover:bg-purple-100 text-purple-800 border border-purple-200/90 shadow-2xs hover:text-purple-900'
+              }`}
+            >
+              <Activity className="w-4 h-4 shrink-0" />
+              <span>ประวัติ 24 ชม.</span>
+            </button>
+          </div>
         </div>
 
         {/* Modal Scrollable Body */}
