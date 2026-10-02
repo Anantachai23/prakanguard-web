@@ -131,14 +131,14 @@ export default function PublicUpdatesModal({
               <Bell className="w-5 h-5 animate-bounce-slow" />
             </div>
             <div className="min-w-0">
-              <div className="flex items-center gap-2">
-                <h3 className={`text-sm sm:text-base font-bold truncate ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                  ศูนย์ข้อมูลและอัปเดตสถานการณ์น้ำท่วม (24 ชั่วโมง)
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <h3 className={`text-xs sm:text-base font-bold leading-tight break-words ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                  ศูนย์ข้อมูลและอัปเดตสถานการณ์น้ำท่วม (24 ชม.)
                 </h3>
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping shrink-0" title="ระบบออนไลน์ตลอด 24 ชม."></span>
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping shrink-0" title="ระบบออนไลน์ตลอด 24 ชม."></span>
               </div>
-              <p className={`text-[11px] truncate ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                ระบบเฝ้าระวังอัตโนมัติ • อ้างอิงหน่วยงานทางการ • ปลดจุดน้ำแห้งออกจากแผนที่ทันที
+              <p className={`text-[10px] sm:text-[11px] leading-tight mt-0.5 line-clamp-1 sm:line-clamp-none ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                ระบบเฝ้าระวังอัตโนมัติ • อ้างอิงหน่วยงานทางการ • ปลดจุดน้ำแห้งทันที
               </p>
             </div>
           </div>
@@ -290,44 +290,44 @@ export default function PublicUpdatesModal({
           
           {/* Quick Metrics Summary Cards */}
           {(activeTab === 'all' || activeTab === 'active' || activeTab === 'cleared') && (
-            <div className="grid grid-cols-3 gap-2.5">
+            <div className="grid grid-cols-3 gap-1.5 sm:gap-2.5">
               <div 
                 onClick={() => setActiveTab('active')}
-                className={`p-3 rounded-2xl border text-center cursor-pointer transition-all hover:scale-[1.01] ${
+                className={`p-2 sm:p-3 rounded-2xl border text-center cursor-pointer transition-all hover:scale-[1.01] ${
                   isDark ? 'bg-slate-850/90 border-slate-750' : 'bg-slate-50 border-slate-200'
                 }`}
               >
-                <span className="text-[11px] text-slate-400 block mb-0.5">จุดเฝ้าระวังผิวจราจร</span>
-                <strong className="text-base sm:text-lg font-bold text-blue-500">
+                <span className="text-[10px] sm:text-[11px] text-slate-400 block mb-0.5 leading-tight">จุดเฝ้าระวัง</span>
+                <strong className="text-sm sm:text-lg font-bold text-blue-500 block">
                   {activeOfficialPoints.length} จุด
                 </strong>
-                <span className="block text-[10px] text-slate-500 mt-0.5">อัปเดตต่อเนื่อง 24 ชม.</span>
+                <span className="block text-[9px] sm:text-[10px] text-slate-500 mt-0.5">24 ชั่วโมง</span>
               </div>
 
               <div 
                 onClick={() => setActiveTab('active')}
-                className={`p-3 rounded-2xl border text-center cursor-pointer transition-all hover:scale-[1.01] ${
+                className={`p-2 sm:p-3 rounded-2xl border text-center cursor-pointer transition-all hover:scale-[1.01] ${
                   isDark ? 'bg-slate-850/90 border-slate-750' : 'bg-slate-50 border-slate-200'
                 }`}
               >
-                <span className="text-[11px] text-slate-400 block mb-0.5">รายงานประชาชนที่ยืนยัน</span>
-                <strong className="text-base sm:text-lg font-bold text-amber-500">
+                <span className="text-[10px] sm:text-[11px] text-slate-400 block mb-0.5 leading-tight">ประชาชนแจ้ง</span>
+                <strong className="text-sm sm:text-lg font-bold text-amber-500 block">
                   {approvedReports.length} จุด
                 </strong>
-                <span className="block text-[10px] text-slate-500 mt-0.5">ตรวจสอบพิกัดแล้ว</span>
+                <span className="block text-[9px] sm:text-[10px] text-slate-500 mt-0.5">ตรวจสอบแล้ว</span>
               </div>
 
               <div 
                 onClick={() => setActiveTab('cleared')}
-                className={`p-3 rounded-2xl border text-center cursor-pointer transition-all hover:scale-[1.01] ${
+                className={`p-2 sm:p-3 rounded-2xl border text-center cursor-pointer transition-all hover:scale-[1.01] ${
                   isDark ? 'bg-slate-850/90 border-slate-750' : 'bg-slate-50 border-slate-200'
                 }`}
               >
-                <span className="text-[11px] text-slate-400 block mb-0.5">น้ำแห้ง/นำออกแล้ว</span>
-                <strong className="text-base sm:text-lg font-bold text-emerald-500">
+                <span className="text-[10px] sm:text-[11px] text-slate-400 block mb-0.5 leading-tight">น้ำแห้งแล้ว</span>
+                <strong className="text-sm sm:text-lg font-bold text-emerald-500 block">
                   {totalDrainedCount} จุด
                 </strong>
-                <span className="block text-[10px] text-emerald-600 font-semibold mt-0.5">คืนผิวจราจรปกติ</span>
+                <span className="block text-[9px] sm:text-[10px] text-emerald-600 font-semibold mt-0.5">เปิดการจราจร</span>
               </div>
             </div>
           )}
@@ -335,14 +335,14 @@ export default function PublicUpdatesModal({
           {/* TAB: SOURCES (แหล่งข้อมูลอ้างอิงทางการอย่างละเอียด) */}
           {(activeTab === 'sources' || activeTab === 'all') && (
             <div className="space-y-3 pt-1">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
                 <h4 className={`text-xs sm:text-sm font-bold flex items-center gap-1.5 ${
                   isDark ? 'text-indigo-300' : 'text-indigo-900'
                 }`}>
                   <ShieldCheck className="w-4 h-4 text-indigo-500 shrink-0" />
                   <span>หน่วยงานและแหล่งข้อมูลอ้างอิงทางการที่เชื่อมต่อสด (Verified Sources)</span>
                 </h4>
-                <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold border ${
+                <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold border shrink-0 w-fit ${
                   isDark ? 'bg-indigo-950/80 text-indigo-300 border-indigo-800' : 'bg-indigo-50 text-indigo-700 border border-indigo-200'
                 }`}>
                   อัปเดตอัตโนมัติตลอดเวลา

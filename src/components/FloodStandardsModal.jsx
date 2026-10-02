@@ -31,9 +31,9 @@ export default function FloodStandardsModal({ isOpen, onClose, theme = 'light' }
               </svg>
             </div>
             <div>
-              <h3 className={`text-sm sm:text-base font-bold flex items-center gap-2 ${isDark ? 'text-white' : 'text-slate-900'}`}>
+              <h3 className={`text-sm sm:text-base font-bold flex flex-wrap items-center gap-1.5 ${isDark ? 'text-white' : 'text-slate-900'}`}>
                 <span>เกณฑ์มาตรฐานระดับน้ำท่วมผิวจราจร</span>
-                <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium border ${
+                <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium border shrink-0 ${
                   isDark ? 'bg-blue-950/80 text-cyan-300 border-blue-800' : 'bg-blue-50 text-blue-700 border-blue-200'
                 }`}>
                   มาตรฐาน ปภ. / กรมทางหลวง

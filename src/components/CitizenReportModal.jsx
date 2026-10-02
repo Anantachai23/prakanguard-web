@@ -429,7 +429,7 @@ export default function CitizenReportModal({
           {hazardType === 'flood' ? (
             /* FLOOD BODY LEVELS */
             <div>
-              <label className={`block text-xs font-bold uppercase tracking-wider mb-1.5 flex items-center justify-between ${
+              <label className={`block text-xs font-bold uppercase tracking-wider mb-1.5 flex flex-col sm:flex-row sm:items-center justify-between gap-1 ${
                 isDark ? 'text-slate-200' : 'text-slate-800'
               }`}>
                 <span>1. ประเมินระดับความสูงของน้ำ (5-20, 21-50, &gt;50 ซม.) *</span>
@@ -484,7 +484,7 @@ export default function CitizenReportModal({
           ) : (
             /* HAIL SIZES */
             <div>
-              <label className={`block text-xs font-bold uppercase tracking-wider mb-1.5 flex items-center justify-between ${
+              <label className={`block text-xs font-bold uppercase tracking-wider mb-1.5 flex flex-col sm:flex-row sm:items-center justify-between gap-1 ${
                 isDark ? 'text-slate-200' : 'text-slate-800'
               }`}>
                 <span>1. ประเมินขนาดเม็ดลูกเห็บ *</span>
@@ -540,7 +540,7 @@ export default function CitizenReportModal({
 
           {/* 2. PHOTO UPLOAD (OPTIONAL) */}
           <div>
-            <label className={`block text-xs font-bold uppercase tracking-wider mb-1.5 flex items-center justify-between ${
+            <label className={`block text-xs font-bold uppercase tracking-wider mb-1.5 flex flex-col sm:flex-row sm:items-center justify-between gap-1 ${
               isDark ? 'text-slate-200' : 'text-slate-800'
             }`}>
               <span>2. แนบรูปถ่ายสถานการณ์จริง (ไม่บังคับ)</span>
@@ -710,7 +710,7 @@ export default function CitizenReportModal({
             <div className={`p-3 rounded-2xl border ${
               isDark ? 'bg-slate-850/80 border-slate-750' : 'bg-slate-50 border-slate-200'
             }`}>
-              <div className="flex items-center justify-between mb-1.5">
+              <div className="flex flex-wrap items-center justify-between gap-1.5 mb-1.5">
                 <span className={`text-[11px] font-bold ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
                   พิกัดละติจูด, ลองจิจูด (Latitude, Longitude)
                 </span>

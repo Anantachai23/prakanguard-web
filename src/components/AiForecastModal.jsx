@@ -75,14 +75,14 @@ export default function AiForecastModal({ isOpen, onClose, theme = 'light' }) {
         <div className={`mt-4 p-4 rounded-2xl border shadow-sm ${
           isDark ? 'bg-slate-850/80 border-slate-750' : 'bg-slate-50 border-slate-200'
         }`}>
-          <div className={`flex items-center justify-between pb-2.5 border-b ${isDark ? 'border-slate-750' : 'border-slate-200'}`}>
+          <div className={`flex flex-wrap items-center justify-between gap-1.5 pb-2.5 border-b ${isDark ? 'border-slate-750' : 'border-slate-200'}`}>
             <div className="flex items-center gap-2">
               <CloudRain className={`w-5 h-5 ${isDark ? 'text-cyan-400' : 'text-blue-600'}`} />
               <span className={`text-xs sm:text-sm font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>
                 สถานการณ์ฝนและสภาพอากาศ จ.สมุทรปราการ (สด)
               </span>
             </div>
-            <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold border ${
+            <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold border shrink-0 ${
               isDark ? 'bg-blue-950/80 text-cyan-300 border-blue-800' : 'bg-blue-50 text-blue-700 border border-blue-200'
             }`}>
               พยากรณ์สด Real-time
@@ -161,7 +161,7 @@ export default function AiForecastModal({ isOpen, onClose, theme = 'light' }) {
                 </div>
               </div>
 
-              <p className={`text-[11px] flex items-center justify-between ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+              <p className={`text-[11px] flex flex-wrap items-center justify-between gap-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
                 <span>แหล่งข้อมูล: <strong className={isDark ? 'text-slate-200' : 'text-slate-700'}>{weather.sourceAgency}</strong></span>
                 <span>อัปเดต: {weather.lastUpdated}</span>
               </p>

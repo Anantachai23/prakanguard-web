@@ -440,40 +440,38 @@ export default function VisualGauge({ depthCm = 0, level, impactText = '', theme
       <div className="mt-3 space-y-2">
         
         {/* Human Comparison Landmark */}
-        <div className={`p-2.5 rounded-xl border flex items-center justify-between gap-2 transition-all ${
+        <div className={`p-2.5 sm:p-3 rounded-xl border flex flex-col gap-1.5 transition-all ${
           isDark ? 'bg-slate-900/60 border-slate-700/80' : 'bg-white border-slate-200 shadow-2xs'
         }`}>
-          <div className="flex items-center gap-2 min-w-0">
-            <span className="text-base shrink-0">🚶‍♂️</span>
-            <div className="min-w-0">
-              <span className={`text-[10px] block font-semibold ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-1.5 min-w-0">
+              <span className="text-base shrink-0">🚶‍♂️</span>
+              <span className={`text-[11px] font-semibold ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
                 เทียบสรีระคนยืน 170 ซม.:
               </span>
-              <span className="text-xs font-bold truncate block text-slate-800 dark:text-slate-200">
-                {humanImpact}
-              </span>
             </div>
+            <span className={`text-[10px] px-2 py-0.5 rounded-md border shrink-0 ${humanImpactBadge}`}>
+              {depthCm <= 50 ? 'ศีรษะพ้นน้ำ 100%' : depthCm <= 90 ? 'เอวถึงอก' : 'เสี่ยงจมน้ำ'}
+            </span>
           </div>
-          <span className={`text-[10px] px-2 py-0.5 rounded-md border shrink-0 ${humanImpactBadge}`}>
-            {depthCm <= 50 ? 'ศีรษะพ้นน้ำ 100%' : depthCm <= 90 ? 'เอวถึงอก' : 'เสี่ยงจมน้ำ'}
-          </span>
+          <p className="text-xs font-bold leading-relaxed text-slate-800 dark:text-slate-200 break-words m-0">
+            {humanImpact}
+          </p>
         </div>
 
         {/* Vehicle Impact Landmark */}
-        <div className={`p-2.5 rounded-xl border flex items-center justify-between gap-2 transition-all ${
+        <div className={`p-2.5 sm:p-3 rounded-xl border flex flex-col gap-1.5 transition-all ${
           isDark ? 'bg-slate-900/60 border-slate-700/80' : 'bg-white border-slate-200 shadow-2xs'
         }`}>
-          <div className="flex items-center gap-2 min-w-0">
+          <div className="flex items-center gap-1.5">
             <span className="text-base shrink-0">🚗</span>
-            <div className="min-w-0">
-              <span className={`text-[10px] block font-semibold ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                เทียบรถยนต์นั่งทั่วไป (ท้องรถ 15ซม. / ล้อ 60ซม.):
-              </span>
-              <span className="text-xs font-medium truncate block text-slate-800 dark:text-slate-200">
-                {carImpact}
-              </span>
-            </div>
+            <span className={`text-[11px] font-semibold ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+              เทียบรถยนต์นั่งทั่วไป (ใต้ท้อง 15 ซม. / ล้อ 60 ซม.):
+            </span>
           </div>
+          <p className="text-xs font-medium leading-relaxed text-slate-800 dark:text-slate-200 break-words m-0">
+            {carImpact}
+          </p>
         </div>
 
       </div>
@@ -493,7 +491,7 @@ export default function VisualGauge({ depthCm = 0, level, impactText = '', theme
       </div>
 
       {/* Official Standard Citation */}
-      <div className={`mt-2 pt-2 border-t flex items-center justify-between text-[10px] ${
+      <div className={`mt-2 pt-2 border-t flex flex-wrap items-center justify-between gap-1 text-[10px] ${
         isDark ? 'border-slate-700/80 text-slate-400' : 'border-slate-200 text-slate-500'
       }`}>
         <span>เกณฑ์: ปภ. ระดับ 1 (5-20) • 2 (21-50) • 3 (&gt;50ซม.)</span>

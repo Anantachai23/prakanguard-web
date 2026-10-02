@@ -115,7 +115,9 @@ export default function MapView({
       zoomControl: false
     });
 
-    L.control.zoom({ position: 'bottomright' }).addTo(map);
+    if (typeof window !== 'undefined' && window.innerWidth >= 640) {
+      L.control.zoom({ position: 'bottomright' }).addTo(map);
+    }
 
     // Initial Tile Layer
     const config = getTileConfig('google-roadmap');
@@ -614,14 +616,14 @@ export default function MapView({
           <button 
             onClick={onLocateMe}
             title="ค้นหาพิกัดตำแหน่งปัจจุบันของคุณ"
-            className={`px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl shadow-md border transition-all flex items-center gap-1.5 text-xs sm:text-sm cursor-pointer backdrop-blur-md font-semibold ${
+            className={`hidden sm:flex px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl shadow-md border transition-all items-center gap-1.5 text-xs sm:text-sm cursor-pointer backdrop-blur-md font-semibold ${
               isDark 
                 ? 'bg-slate-900/95 text-slate-200 hover:text-cyan-400 hover:bg-slate-800 border-slate-700 shadow-xl' 
                 : 'bg-white/95 text-slate-700 hover:text-blue-700 hover:bg-blue-50/80 border-slate-200'
             }`}
           >
             <Navigation className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${isDark ? 'text-cyan-400' : 'text-blue-600'}`} />
-            <span className="hidden sm:inline">พิกัดของฉัน</span>
+            <span>พิกัดของฉัน</span>
           </button>
           
           <button 
@@ -640,7 +642,7 @@ export default function MapView({
       </div>
 
       {/* FLOATING MAP LEGEND & STANDARDS BUTTON (BOTTOM LEFT - FULLY RESPONSIVE) */}
-      <div className="absolute bottom-16 sm:bottom-4 left-3 sm:left-4 z-20 flex flex-col gap-1.5 max-w-[90vw]">
+      <div className="absolute bottom-[calc(4.25rem+env(safe-area-inset-bottom,0px))] sm:bottom-4 left-2.5 sm:left-4 z-20 flex flex-col gap-1.5 max-w-[85vw] pointer-events-none">
         
         {/* District Active Indicator */}
         <div className={`px-3 sm:px-3.5 py-1.5 rounded-xl border text-xs sm:text-sm flex items-center gap-2 shadow-md backdrop-blur-md font-semibold ${

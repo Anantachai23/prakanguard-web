@@ -1,5 +1,5 @@
-import React from 'react';
-import { CloudRain, ChevronRight, RefreshCw, ArrowRight, Droplets, Target, Clock } from 'lucide-react';
+import React, { useState } from 'react';
+import { CloudRain, ChevronRight, RefreshCw, ArrowRight, Droplets, Target, Clock, ChevronDown, ChevronUp } from 'lucide-react';
 
 export default function RainForecast24hCard({
   forecast,
@@ -9,9 +9,18 @@ export default function RainForecast24hCard({
   onManualSync,
   isSyncing = false,
   onOpenPublicUpdates,
-  lastUpdatedTime
+  lastUpdatedTime,
+  collapsible = true,
+  defaultExpanded
 }) {
   const isDark = theme === 'dark';
+  
+  // On mobile (< 640px), default to compact collapsed mode unless explicitly overridden
+  const [isExpanded, setIsExpanded] = useState(() => {
+    if (defaultExpanded !== undefined) return defaultExpanded;
+    if (typeof window !== 'undefined' && window.innerWidth < 640) return false;
+    return true;
+  });
 
   if (!forecast) {
     return null;
@@ -32,6 +41,56 @@ export default function RainForecast24hCard({
     ? (isDark ? 'bg-blue-950/80 text-cyan-300 border-blue-800' : 'bg-blue-100 text-blue-800 border-blue-200')
     : (isDark ? 'bg-emerald-950/80 text-emerald-300 border-emerald-800' : 'bg-emerald-100 text-emerald-800 border-emerald-200');
 
+  if (collapsible && !isExpanded) {
+    return (
+      <div
+        className={`rounded-2xl border shadow-md transition-all duration-200 pointer-events-auto select-none p-2 sm:p-2.5 backdrop-blur-xl ${
+          isDark 
+            ? 'bg-slate-900/95 border-slate-700/80 text-slate-100 shadow-slate-950/40' 
+            : 'bg-white/95 border-slate-200/90 text-slate-800 shadow-slate-300/30'
+        } ${className}`}
+      >
+        <div className="flex items-center justify-between gap-2">
+          <button
+            type="button"
+            onClick={() => setIsExpanded(true)}
+            className="flex items-center gap-2 min-w-0 flex-1 text-left cursor-pointer group"
+            title="แตะเพื่อขยายดูรายละเอียดพยากรณ์ฝน 24 ชม."
+          >
+            <div className={`p-1.5 rounded-xl flex items-center justify-center shrink-0 ${
+              isDark ? 'bg-cyan-950/80 text-cyan-400 border border-cyan-800/60' : 'bg-blue-50 text-blue-600 border border-blue-200'
+            }`}>
+              <CloudRain className="w-4 h-4 text-blue-500 animate-pulse shrink-0" />
+            </div>
+            <div className="min-w-0 truncate">
+              <span className="font-bold text-xs truncate block text-slate-900 dark:text-white">
+                พยากรณ์ฝน 24 ชม.: <strong className={isHeavy ? 'text-rose-500' : isModerate ? 'text-amber-500' : 'text-blue-500'}>{status}</strong> ({forecast.maxProbability ?? 0}%)
+              </span>
+              <span className={`text-[10px] block truncate ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                {forecast.startTimeText ? forecast.startTimeText : 'ครอบคลุม 6 อำเภอ'} • แตะเพื่อดูรายละเอียด
+              </span>
+            </div>
+          </button>
+
+          <div className="flex items-center gap-1 shrink-0">
+            <button
+              type="button"
+              onClick={() => setIsExpanded(true)}
+              className={`px-2.5 py-1.5 rounded-xl text-xs font-bold border flex items-center gap-1 cursor-pointer transition-all active:scale-95 ${
+                isDark 
+                  ? 'bg-blue-950/80 hover:bg-blue-900 border-blue-800 text-cyan-300' 
+                  : 'bg-blue-50 hover:bg-blue-100 border-blue-200 text-blue-700'
+              }`}
+            >
+              <span>ขยาย</span>
+              <ChevronDown className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
       className={`rounded-2xl sm:rounded-3xl border shadow-md transition-all duration-200 pointer-events-auto select-none ${
@@ -41,7 +100,7 @@ export default function RainForecast24hCard({
       } ${className}`}
     >
       <div className="p-3 sm:p-4">
-        {/* Top Row: Title + Main Status Badge */}
+        {/* Top Row: Title + Main Status Badge + Collapse Button */}
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
             <div className={`p-1.5 rounded-xl flex items-center justify-center shrink-0 ${
@@ -59,12 +118,30 @@ export default function RainForecast24hCard({
             </div>
           </div>
 
-          {/* Status Badge: Big & Clear */}
-          <div className={`px-2.5 sm:px-3 py-1 rounded-xl text-xs sm:text-sm font-bold border shrink-0 flex items-center gap-1.5 ${badgeStyle}`}>
-            <span className={`w-2 h-2 rounded-full ${
-              isHeavy ? 'bg-rose-500 animate-ping' : isModerate ? 'bg-amber-500 animate-pulse' : isLight ? 'bg-blue-500' : 'bg-emerald-500'
-            }`} />
-            <span>{status}</span>
+          <div className="flex items-center gap-1.5 shrink-0">
+            {/* Status Badge: Big & Clear */}
+            <div className={`px-2.5 sm:px-3 py-1 rounded-xl text-xs sm:text-sm font-bold border shrink-0 flex items-center gap-1.5 ${badgeStyle}`}>
+              <span className={`w-2 h-2 rounded-full ${
+                isHeavy ? 'bg-rose-500 animate-ping' : isModerate ? 'bg-amber-500 animate-pulse' : isLight ? 'bg-blue-500' : 'bg-emerald-500'
+              }`} />
+              <span>{status}</span>
+            </div>
+
+            {collapsible && (
+              <button
+                type="button"
+                onClick={() => setIsExpanded(false)}
+                className={`p-1.5 rounded-xl border transition-all cursor-pointer ${
+                  isDark 
+                    ? 'bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-300 hover:text-white' 
+                    : 'bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-600 hover:text-slate-900'
+                }`}
+                title="ย่อหน้าต่างลง"
+                aria-label="ย่อหน้าต่างพยากรณ์ฝน"
+              >
+                <ChevronUp className="w-4 h-4" />
+              </button>
+            )}
           </div>
         </div>
 

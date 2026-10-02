@@ -1369,7 +1369,7 @@ export default function App() {
                     searchInputRef.current?.blur();
                   }
                 }}
-                placeholder="ค้นหาจุดเสี่ยงหรือชื่อถนน (เช่น บางฉโลง, กิ่งแก้ว, วัดด่าน)..."
+                placeholder="ค้นหาจุดเสี่ยงหรือชื่อถนน (กิ่งแก้ว, วัดด่าน)..."
                 className={`w-full text-xs sm:text-sm pl-9 pr-8 py-2 rounded-2xl border shadow-md focus:outline-none transition-colors backdrop-blur-md font-medium ${
                   isDark 
                     ? 'bg-slate-900/95 text-slate-100 border-slate-700 placeholder-slate-500 focus:border-blue-400 focus:ring-2 focus:ring-blue-900/50' 
@@ -1634,7 +1634,7 @@ export default function App() {
             <select
               value={severityFilter}
               onChange={(e) => setSeverityFilter(e.target.value)}
-              className={`text-xs font-semibold rounded-2xl px-2 sm:px-3 py-1.5 sm:py-2 border focus:outline-none shadow-sm cursor-pointer backdrop-blur-md shrink-0 transition-colors ${
+              className={`text-xs font-semibold rounded-2xl px-2 sm:px-3 py-1.5 sm:py-2 border focus:outline-none shadow-sm cursor-pointer backdrop-blur-md shrink-0 transition-colors max-w-[115px] sm:max-w-none truncate ${
                 isDark 
                   ? 'bg-slate-900 text-slate-200 border-slate-700 focus:border-blue-400' 
                   : 'bg-white text-slate-800 border-slate-200 focus:border-blue-500'
@@ -1642,9 +1642,9 @@ export default function App() {
               title="กรองตามระดับความรุนแรง (เกณฑ์ ปภ.)"
             >
               <option value="all">ทุกระดับเสี่ยง</option>
-              <option value="1">🟢 ระดับ 1: ปกติ (5-20 ซม.)</option>
-              <option value="2">🟠 ระดับ 2: เสี่ยงสูง (21-50 ซม.)</option>
-              <option value="3">🔴 ระดับ 3: วิกฤต (&gt;50 ซม.)</option>
+              <option value="1">🟢 ปกติ (5-20 ซม.)</option>
+              <option value="2">🟠 เสี่ยงสูง (21-50 ซม.)</option>
+              <option value="3">🔴 วิกฤต (&gt;50 ซม.)</option>
             </select>
           </div>
 
@@ -1652,7 +1652,7 @@ export default function App() {
 
         {/* FLOATING POINT DETAIL CARD (CLEAN & SENIOR-FRIENDLY & COLLAPSIBLE FOR MOBILE) */}
         {selectedPoint && (
-          <div className={`absolute bottom-16 left-2 right-2 sm:bottom-4 sm:left-auto sm:right-4 z-30 sm:w-[420px] border rounded-3xl shadow-2xl backdrop-blur-2xl smooth-sheet transition-all ${
+          <div className={`absolute bottom-[calc(4.25rem+env(safe-area-inset-bottom,0px))] left-2 right-2 sm:bottom-4 sm:left-auto sm:right-4 z-30 sm:w-[420px] border rounded-3xl shadow-2xl backdrop-blur-2xl smooth-sheet transition-all ${
             isDark 
               ? 'bg-slate-900/95 border-slate-700 text-slate-100' 
               : 'bg-white/95 border-slate-200 text-slate-800'
@@ -1805,12 +1805,12 @@ export default function App() {
             </div>
 
             {/* Official Source & Verification Citation */}
-            <div className={`mt-2.5 p-2.5 rounded-xl border text-xs flex items-center justify-between ${
+            <div className={`mt-2.5 p-2.5 rounded-xl border text-xs flex flex-wrap items-center justify-between gap-1 ${
               isDark ? 'bg-slate-800/80 border-slate-700 text-slate-400' : 'bg-slate-50 border-slate-200 text-slate-500'
             }`}>
-              <div className="flex items-center gap-1.5 truncate">
+              <div className="flex items-center gap-1.5 min-w-0">
                 <Shield className="w-4 h-4 text-blue-500 shrink-0" />
-                <span className="truncate">ที่มา: <strong className={isDark ? 'text-slate-200' : 'text-slate-800'}>{selectedPoint.source}</strong></span>
+                <span className="break-words">ที่มา: <strong className={isDark ? 'text-slate-200' : 'text-slate-800'}>{selectedPoint.source}</strong></span>
               </div>
               {selectedPoint.reportedAt && (
                 <span className="text-[10px] text-slate-400 shrink-0">

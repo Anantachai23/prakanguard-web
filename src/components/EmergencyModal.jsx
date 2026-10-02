@@ -22,25 +22,25 @@ export default function EmergencyModal({ isOpen, onClose, theme = 'light' }) {
       }`}>
         
         {/* Header */}
-        <div className={`flex items-center justify-between pb-3.5 border-b ${isDark ? 'border-slate-800' : 'border-slate-200'}`}>
-          <div className="flex items-center space-x-3">
-            <div className={`p-2.5 rounded-2xl border ${
+        <div className={`flex items-start justify-between gap-2.5 pb-3.5 border-b ${isDark ? 'border-slate-800' : 'border-slate-200'}`}>
+          <div className="flex items-center space-x-2.5 min-w-0">
+            <div className={`p-2.5 rounded-2xl border shrink-0 ${
               isDark ? 'bg-rose-950/80 text-rose-400 border-rose-800' : 'bg-rose-50 text-rose-600 border border-rose-200'
             }`}>
-              <PhoneForwarded className="w-6 h-6 animate-pulse" />
+              <PhoneForwarded className="w-5 h-5 sm:w-6 sm:h-6 animate-pulse" />
             </div>
-            <div>
-              <h3 className={`text-base sm:text-lg font-bold flex items-center gap-2 ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                <span>หมายเลขโทรศัพท์สายด่วนฉุกเฉิน 24 ชม.</span>
+            <div className="min-w-0">
+              <h3 className={`text-sm sm:text-base font-bold leading-tight break-words ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                หมายเลขโทรศัพท์สายด่วนฉุกเฉิน 24 ชม.
               </h3>
-              <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                จังหวัดสมุทรปราการ (อ้างอิง: แผนเผชิญเหตุอุทกภัย ปภ.สมุทรปราการ)
+              <p className={`text-[11px] sm:text-xs mt-0.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                จ.สมุทรปราการ (แผนเผชิญเหตุอุทกภัย ปภ.)
               </p>
             </div>
           </div>
           <button 
             onClick={onClose} 
-            className={`p-1.5 rounded-xl transition-all cursor-pointer ${
+            className={`p-1.5 rounded-xl transition-all cursor-pointer shrink-0 ${
               isDark ? 'bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white' : 'bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800'
             }`}
             title="ปิดหน้าต่าง"
@@ -61,20 +61,20 @@ export default function EmergencyModal({ isOpen, onClose, theme = 'light' }) {
                   : 'bg-slate-50 border-slate-200 hover:border-rose-400 hover:bg-rose-50/30'
               }`}
             >
-              <div className="min-w-0 pr-2">
-                <div className="flex items-center gap-2">
-                  <span className={`font-bold text-xs sm:text-sm group-hover:text-rose-500 transition-colors truncate ${
+              <div className="min-w-0 pr-2 flex-1">
+                <div className="flex flex-wrap items-center gap-1.5 mb-1">
+                  <span className={`font-bold text-xs sm:text-sm group-hover:text-rose-500 transition-colors break-words leading-tight ${
                     isDark ? 'text-slate-100' : 'text-slate-900'
                   }`}>
                     {item.name}
                   </span>
-                  <span className={`text-[10px] px-1.5 py-0.2 rounded shrink-0 font-medium ${
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded shrink-0 font-medium ${
                     isDark ? 'bg-slate-800 text-slate-300 border border-slate-700' : 'bg-white text-slate-600 border border-slate-200'
                   }`}>
                     {item.badge}
                   </span>
                 </div>
-                <span className={`text-xs mt-0.5 block leading-snug ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                <span className={`text-xs mt-0.5 block leading-snug break-words ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
                   {item.desc}
                 </span>
               </div>

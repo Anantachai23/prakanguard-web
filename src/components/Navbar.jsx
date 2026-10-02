@@ -270,10 +270,10 @@ export default function Navbar({
             </button>
 
 
-            {/* Real-time Stations & Radar Button */}
+            {/* Real-time Stations & Radar Button (Desktop only, mobile uses bottom nav) */}
             <button 
               onClick={onOpenAiForecast}
-              className={`shrink-0 px-2 sm:px-2.5 py-1.5 rounded-xl border text-xs font-semibold flex items-center gap-1 transition-all cursor-pointer shadow-xs whitespace-nowrap ${
+              className={`hidden sm:inline-flex shrink-0 px-2 sm:px-2.5 py-1.5 rounded-xl border text-xs font-semibold items-center gap-1 transition-all cursor-pointer shadow-xs whitespace-nowrap ${
                 isDark 
                   ? 'bg-blue-950/60 hover:bg-blue-900/60 text-cyan-300 border-blue-800' 
                   : 'bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200'
@@ -284,10 +284,10 @@ export default function Navbar({
               <span>เรดาร์สด</span>
             </button>
 
-            {/* Public Live Situation Updates Button */}
+            {/* Public Live Situation Updates Button (Desktop only, mobile uses bottom nav) */}
             <button 
               onClick={onOpenPublicUpdates}
-              className={`shrink-0 px-2 sm:px-2.5 py-1.5 rounded-xl border text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer shadow-xs whitespace-nowrap ${
+              className={`hidden sm:inline-flex shrink-0 px-2 sm:px-2.5 py-1.5 rounded-xl border text-xs font-semibold items-center gap-1.5 transition-all cursor-pointer shadow-xs whitespace-nowrap ${
                 isDark 
                   ? 'bg-emerald-950/60 hover:bg-emerald-900/60 text-emerald-300 border-emerald-800' 
                   : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border-emerald-200'
@@ -298,11 +298,11 @@ export default function Navbar({
               <span>อัปเดตสด</span>
             </button>
 
-            {/* Citizen Flood Report Button (Crowdsourced Reporting) */}
+            {/* Citizen Flood Report Button (Desktop only, mobile uses center hero button in bottom nav) */}
             <button 
               onClick={onOpenCitizenReport}
               title="แจ้งเตือนน้ำท่วม"
-              className="shrink-0 px-2.5 sm:px-3 py-1.5 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-md shadow-violet-600/25 whitespace-nowrap"
+              className="hidden sm:inline-flex shrink-0 px-2.5 sm:px-3 py-1.5 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white text-xs font-bold items-center gap-1.5 transition-all cursor-pointer shadow-md shadow-violet-600/25 whitespace-nowrap"
             >
               <Camera className="w-3.5 h-3.5 shrink-0" />
               <span>แจ้งเตือนน้ำท่วม</span>
@@ -342,11 +342,11 @@ export default function Navbar({
               )}
             </button>
 
-            {/* Emergency Hotline Button */}
+            {/* Emergency Hotline Button (Desktop only, mobile uses bottom nav) */}
             <button 
               onClick={onOpenEmergency}
               title="เบอร์สายด่วน ปภ. และกู้ภัยสมุทรปราการ"
-              className="shrink-0 px-2 sm:px-2.5 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold flex items-center gap-1 transition-all cursor-pointer shadow-md shadow-rose-600/30 whitespace-nowrap"
+              className="hidden sm:inline-flex shrink-0 px-2 sm:px-2.5 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold items-center gap-1 transition-all cursor-pointer shadow-md shadow-rose-600/30 whitespace-nowrap"
             >
               <PhoneCall className="w-3.5 h-3.5 shrink-0" />
               <span>สายด่วน</span>
