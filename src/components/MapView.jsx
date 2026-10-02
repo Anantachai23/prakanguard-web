@@ -4,6 +4,7 @@ import 'leaflet/dist/leaflet.css';
 import { Crosshair, Navigation, BookOpen } from 'lucide-react';
 import { 
   SAMUT_PRAKAN_DISTRICTS_GEOJSON, 
+  SAMUT_PRAKAN_MASK_GEOJSON,
   DISTRICT_METADATA 
 } from '../data/samutPrakanBoundary';
 import { getFloodLevel } from '../data/floodStandards';
@@ -30,6 +31,7 @@ export default function MapView({
   const mapContainerRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const tileLayerRef = useRef(null);
+  const maskLayerRef = useRef(null);
   const districtLayersRef = useRef([]);
   const markersRef = useRef([]);
   const citizenMarkersRef = useRef([]);
@@ -121,6 +123,13 @@ export default function MapView({
       L.control.zoom({ position: 'bottomright' }).addTo(map);
     }
 
+    // Dedicated Pane for Outside-Province Blur & Dimming Mask
+    if (!map.getPane('provinceMaskPane')) {
+      const maskPane = map.createPane('provinceMaskPane');
+      maskPane.style.zIndex = 250; // Above tilePane (200), below overlayPane (400)
+      maskPane.style.pointerEvents = 'none';
+    }
+
     // Initial Tile Layer
     const config = getTileConfig('google-roadmap');
     tileLayerRef.current = createTileLayer(config).addTo(map);
@@ -165,6 +174,40 @@ export default function MapView({
       mapContainerRef.current.style.cursor = '';
     }
   }, [isPickingLocation]);
+
+  // 1.5 Render Outside Samut Prakan Mask (Frosted Blur & Dimming Effect for Bangkok / Gulf / Neighboring Provinces)
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map) return;
+
+    if (maskLayerRef.current) {
+      map.removeLayer(maskLayerRef.current);
+      maskLayerRef.current = null;
+    }
+
+    const maskFillColor = (isDark || mapStyle === 'google-satellite') ? '#020617' : '#0f172a';
+    const maskFillOpacity = (isDark || mapStyle === 'google-satellite') ? 0.72 : 0.58;
+
+    maskLayerRef.current = L.geoJSON(SAMUT_PRAKAN_MASK_GEOJSON, {
+      pane: 'provinceMaskPane',
+      style: {
+        fillColor: maskFillColor,
+        fillOpacity: maskFillOpacity,
+        color: '#0284c7', // Radiant cyan boundary stroke separating Samut Prakan from outside
+        weight: 3.5,
+        opacity: 0.95,
+        className: 'outside-province-mask'
+      },
+      interactive: false
+    }).addTo(map);
+
+    return () => {
+      if (maskLayerRef.current && map) {
+        map.removeLayer(maskLayerRef.current);
+        maskLayerRef.current = null;
+      }
+    };
+  }, [isDark, mapStyle]);
 
   // 2. Render Exact 6-District Polygons (Google Maps Standard)
   useEffect(() => {
@@ -240,7 +283,10 @@ export default function MapView({
     const config = getTileConfig(mapStyle);
     tileLayerRef.current = createTileLayer(config).addTo(map);
 
-    // Bring district layers to front
+    // Bring mask and district layers to front
+    if (maskLayerRef.current && maskLayerRef.current.bringToFront) {
+      maskLayerRef.current.bringToFront();
+    }
     districtLayersRef.current.forEach(layer => layer.bringToFront());
 
     map.invalidateSize();
