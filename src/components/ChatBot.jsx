@@ -1686,7 +1686,7 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
-          className={`fixed bottom-[calc(4.75rem+env(safe-area-inset-bottom,0px))] right-3 sm:bottom-6 sm:right-6 z-40 px-3.5 sm:px-4 py-2.5 sm:py-3 rounded-2xl font-semibold text-xs sm:text-sm shadow-xl items-center gap-2.5 border cursor-pointer transition-all hover:scale-105 active:scale-95 backdrop-blur-xl group ${
+          className={`fixed bottom-[calc(4.25rem+env(safe-area-inset-bottom,0px))] right-2.5 sm:bottom-6 sm:right-6 z-40 px-2.5 sm:px-4 py-1.5 sm:py-3 rounded-xl sm:rounded-2xl font-semibold text-xs sm:text-sm shadow-xl items-center gap-2 border cursor-pointer transition-all hover:scale-105 active:scale-95 backdrop-blur-xl group ${
             isPointSelected ? 'hidden sm:flex' : 'flex'
           } ${
             isDark 
@@ -1695,19 +1695,19 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
           }`}
           title="ศูนย์บริการข้อมูลเส้นทางและน้ำท่วม (ถาม-ตอบอัจฉริยะ)"
         >
-          <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-600 to-cyan-500 text-white flex items-center justify-center shadow-md shrink-0">
-            <MessageSquareText className="w-4 h-4" />
+          <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-gradient-to-tr from-blue-600 to-cyan-500 text-white flex items-center justify-center shadow-md shrink-0">
+            <MessageSquareText className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
           </div>
           <div className="text-left">
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1">
               <span className={`block text-xs sm:text-sm font-bold leading-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>PrakanGuard AI</span>
-              <span className={`text-[10px] px-1.5 py-0.2 rounded font-bold ${
+              <span className={`text-[9px] sm:text-[10px] px-1.5 py-0.2 rounded font-bold ${
                 isDark ? 'bg-emerald-950/80 text-emerald-300 border border-emerald-800' : 'bg-emerald-50 text-emerald-700 border border-emerald-300'
               }`}>Online</span>
             </div>
             <span className={`hidden sm:block text-[10px] font-medium ${isDark ? 'text-cyan-400' : 'text-blue-600'}`}>ถามตอบแม่นยำ • พยากรณ์ฝนสด</span>
           </div>
-          <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse border border-white ml-1 shrink-0"></span>
+          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse border border-white ml-0.5 shrink-0"></span>
         </button>
       )}
 
@@ -1720,7 +1720,7 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
             right: 'auto',
             bottom: 'auto'
           } : undefined}
-          className={`fixed z-50 bottom-[calc(4.75rem+env(safe-area-inset-bottom,0px))] right-3 sm:bottom-6 sm:right-6 max-w-[92vw] sm:w-[380px] border rounded-2xl shadow-2xl flex items-center justify-between gap-2 px-3 py-2.5 backdrop-blur-2xl transition-all duration-200 animate-in fade-in slide-in-from-bottom-2 ${
+          className={`fixed z-50 bottom-[calc(4.25rem+env(safe-area-inset-bottom,0px))] right-2 sm:bottom-6 sm:right-6 w-auto max-w-[270px] sm:w-[380px] border rounded-2xl shadow-2xl flex items-center justify-between gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-2.5 backdrop-blur-2xl transition-all duration-200 animate-in fade-in slide-in-from-bottom-2 ${
             isDark 
               ? 'bg-slate-900/95 border-slate-700 text-slate-100 ring-1 ring-blue-500/20' 
               : 'bg-white/95 border-slate-200 text-slate-800 shadow-blue-500/10'
@@ -1729,16 +1729,16 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
           {/* Clickable Area to Restore */}
           <div 
             onClick={() => setIsMinimized(false)}
-            className="flex items-center gap-2.5 cursor-pointer select-none flex-1 min-w-0"
+            className="flex items-center gap-2 cursor-pointer select-none flex-1 min-w-0"
             title="คลิกเพื่อขยายหน้าต่างแชท AI กลับขึ้นมา"
           >
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-600 to-cyan-500 text-white flex items-center justify-center shadow-md shrink-0">
-              <Sparkles className="w-4 h-4 text-white" />
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-gradient-to-tr from-blue-600 to-cyan-500 text-white flex items-center justify-center shadow-md shrink-0">
+              <Sparkles className="w-3.5 h-3.5 text-white" />
             </div>
             <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1">
                 <span className="font-bold text-xs sm:text-sm truncate">PrakanGuard AI</span>
-                <span className={`text-[9px] px-1.5 py-0.2 rounded font-bold shrink-0 ${
+                <span className={`text-[8px] sm:text-[9px] px-1 py-0.2 rounded font-bold shrink-0 ${
                   isDark ? 'bg-blue-950/80 text-cyan-300 border border-blue-800' : 'bg-blue-50 text-blue-700 border border-blue-200'
                 }`}>ย่อขนาด</span>
               </div>
@@ -1807,10 +1807,10 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
             right: 'auto',
             bottom: 'auto'
           } : undefined}
-          className={`fixed z-50 w-[95vw] ${
-            isExpanded ? 'sm:w-[620px] h-[720px] max-h-[92vh]' : 'sm:w-[460px] h-[560px] max-h-[calc(100dvh-8rem)] sm:h-[600px] sm:max-h-[88vh]'
+          className={`fixed z-50 w-[94vw] max-w-[420px] sm:max-w-none ${
+            isExpanded ? 'sm:w-[620px] h-[660px] max-h-[90vh]' : 'sm:w-[460px] h-[480px] max-h-[calc(100dvh-7.5rem)] sm:h-[600px] sm:max-h-[88vh]'
           } border rounded-3xl shadow-2xl flex flex-col overflow-hidden backdrop-blur-2xl transition-[width,height,box-shadow,border-color] duration-200 ${
-            !position ? 'bottom-[calc(4.5rem+env(safe-area-inset-bottom,0px))] left-2.5 right-2.5 sm:left-auto sm:bottom-6 sm:right-6' : ''
+            !position ? 'bottom-[calc(4.25rem+env(safe-area-inset-bottom,0px))] left-1/2 -translate-x-1/2 sm:translate-x-0 sm:left-auto sm:bottom-6 sm:right-6' : ''
           } ${
             isDraggingModal ? 'ring-2 ring-blue-500/60 shadow-blue-500/30 cursor-grabbing' : ''
           } ${
@@ -2269,21 +2269,6 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
                   <span className="w-2 h-2 rounded-full bg-blue-500 animate-bounce" style={{ animationDelay: '300ms' }}></span>
                   <span className="text-xs ml-1.5 font-medium">กำลังค้นหาข้อมูลประกาศและสภาพอากาศ...</span>
                 </div>
-              </div>
-            )}
-
-            {/* Prominent Floating Stop Button while streaming or thinking */}
-            {(isThinking || Boolean(streamingMessageId)) && (
-              <div className="sticky bottom-1 z-20 flex justify-center py-1">
-                <button
-                  type="button"
-                  onClick={handleStopResponse}
-                  className="px-4 py-1.5 rounded-full bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold shadow-lg flex items-center gap-1.5 transition-all transform hover:scale-105 active:scale-95 cursor-pointer ring-2 ring-white/20 animate-in fade-in zoom-in-95"
-                  title="หยุดการพิมพ์ตอบของ AI ทันที"
-                >
-                  <Square className="w-3.5 h-3.5 fill-current" />
-                  <span>⏹️ หยุดตอบ</span>
-                </button>
               </div>
             )}
 

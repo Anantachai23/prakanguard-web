@@ -181,19 +181,18 @@ export default function MapView({
       const layer = L.geoJSON(feature, {
         style: {
           color: isSelected ? '#1d4ed8' : districtColor,
-          weight: isSelected ? 3.5 : 2,
-          opacity: isSelected ? 1 : 0.8,
-          dashArray: isSelected ? '8, 5' : '5, 5',
+          weight: isSelected ? 4.5 : 3,
+          opacity: 0.95,
           fillColor: districtColor,
-          fillOpacity: isSelected ? 0.15 : 0.04
+          fillOpacity: isSelected ? 0.22 : 0.08
         }
       }).addTo(map);
 
       // District Label Tooltip
-      layer.bindTooltip(`อำเภอ${feature.properties.districtName}`, {
+      layer.bindTooltip(`📍 อำเภอ${feature.properties.districtName}`, {
         permanent: true,
         direction: 'center',
-        className: 'bg-white/95 text-slate-800 font-prompt text-xs border border-slate-300 px-2.5 py-1 rounded-xl shadow-md font-semibold'
+        className: 'bg-white/95 text-slate-900 font-prompt text-xs border-2 border-slate-300 px-2.5 py-1 rounded-xl shadow-lg font-bold'
       });
 
       // Click district polygon to filter

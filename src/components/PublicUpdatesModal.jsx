@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { 
   X, 
   Clock, 
@@ -10,6 +10,7 @@ import {
   CloudRain, 
   ShieldCheck, 
   ExternalLink,
+  ChevronLeft,
   ChevronRight,
   Sparkles,
   Droplets,
@@ -43,6 +44,40 @@ export default function PublicUpdatesModal({
 
   // Active filter tab: 'all' | 'active' | 'cleared' | 'sources' | 'changelog'
   const [activeTab, setActiveTab] = useState('all');
+
+  // Tab horizontal scroll controllers
+  const tabScrollRef = useRef(null);
+  const [canScrollTabLeft, setCanScrollTabLeft] = useState(false);
+  const [canScrollTabRight, setCanScrollTabRight] = useState(true);
+
+  const checkTabScroll = () => {
+    const el = tabScrollRef.current;
+    if (!el) return;
+    setCanScrollTabLeft(el.scrollLeft > 6);
+    setCanScrollTabRight(el.scrollLeft < el.scrollWidth - el.clientWidth - 6);
+  };
+
+  useEffect(() => {
+    const timer = setTimeout(checkTabScroll, 100);
+    const el = tabScrollRef.current;
+    if (el) {
+      el.addEventListener('scroll', checkTabScroll);
+      window.addEventListener('resize', checkTabScroll);
+    }
+    return () => {
+      clearTimeout(timer);
+      if (el) el.removeEventListener('scroll', checkTabScroll);
+      window.removeEventListener('resize', checkTabScroll);
+    };
+  }, [activeTab]);
+
+  const scrollTabs = (dir) => {
+    const el = tabScrollRef.current;
+    if (!el) return;
+    const delta = dir === 'left' ? -240 : 240;
+    el.scrollBy({ left: delta, behavior: 'smooth' });
+    setTimeout(checkTabScroll, 320);
+  };
 
   // Filter approved and resolved reports for public view
   const approvedReports = citizenReports.filter(r => r.isApproved && !r.isResolved);
@@ -186,11 +221,30 @@ export default function PublicUpdatesModal({
           </button>
         </div>
 
-        {/* Filter Navigation Tabs - Easy to press, High contrast, Highly tactile */}
-        <div className={`px-3 sm:px-5 py-2.5 border-b select-none transition-colors ${
+        {/* Filter Navigation Tabs with Left/Right Scroll Arrows & Smooth Track */}
+        <div className={`px-2 sm:px-4 py-2 border-b select-none transition-colors flex items-center gap-1.5 ${
           isDark ? 'bg-slate-950/80 border-slate-800' : 'bg-slate-100/80 border-slate-200'
         }`}>
-          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar scroll-smooth p-0.5 overscroll-x-contain">
+          {/* Scroll Left Arrow */}
+          <button
+            type="button"
+            onClick={() => scrollTabs('left')}
+            className={`p-2 rounded-xl border transition-all cursor-pointer shrink-0 shadow-sm ${
+              canScrollTabLeft 
+                ? (isDark ? 'bg-slate-800 hover:bg-slate-700 text-slate-100 border-slate-700' : 'bg-white hover:bg-slate-50 text-slate-800 border-slate-300')
+                : (isDark ? 'bg-slate-900/40 text-slate-600 border-slate-800 opacity-40' : 'bg-slate-100 text-slate-400 border-slate-200 opacity-40')
+            }`}
+            title="เลื่อนดูเมนูก่อนหน้า"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+
+          {/* Scrollable Strip with Smooth Track */}
+          <div 
+            ref={tabScrollRef}
+            onScroll={checkTabScroll}
+            className="flex-1 flex items-center gap-2 overflow-x-auto smooth-slider scroll-smooth py-1 px-0.5 overscroll-x-contain"
+          >
             {/* 1. All Overview */}
             <button
               onClick={() => setActiveTab('all')}
@@ -283,6 +337,20 @@ export default function PublicUpdatesModal({
               <span>ประวัติ 24 ชม.</span>
             </button>
           </div>
+
+          {/* Scroll Right Arrow */}
+          <button
+            type="button"
+            onClick={() => scrollTabs('right')}
+            className={`p-2 rounded-xl border transition-all cursor-pointer shrink-0 shadow-sm ${
+              canScrollTabRight 
+                ? (isDark ? 'bg-blue-600 hover:bg-blue-500 text-white border-blue-500 shadow-blue-500/20' : 'bg-blue-600 hover:bg-blue-700 text-white border-blue-600 shadow-blue-500/20')
+                : (isDark ? 'bg-slate-800 text-slate-300 border-slate-700' : 'bg-white text-slate-700 border-slate-300')
+            }`}
+            title="เลื่อนดูเมนูถัดไป"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </button>
         </div>
 
         {/* Modal Scrollable Body */}

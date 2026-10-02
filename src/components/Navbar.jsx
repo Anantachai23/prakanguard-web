@@ -148,12 +148,11 @@ export default function Navbar({
             <div className="w-24 xs:w-36 sm:w-48 md:w-56 lg:w-64 overflow-hidden mt-0.5">
               <AutoMarquee speedSeconds={18} gapPx={24} force={true}>
                 <div className="inline-flex items-center gap-2 text-[10px] sm:text-[11px] whitespace-nowrap">
-                  <span className={`font-semibold ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>
-                    ระบบเฝ้าระวังน้ำท่วมผิวจราจร จ.สมุทรปราการ (6 อำเภอ)
+                  <span className={`font-bold px-1.5 py-0.2 rounded-md ${isDark ? 'bg-blue-900/60 text-cyan-300' : 'bg-blue-100 text-blue-700'}`}>
+                    แพท 1.0 ล่าสุด
                   </span>
-                  <span className="text-slate-400">•</span>
-                  <span className={isDark ? 'text-slate-300' : 'text-slate-600'}>
-                    อ้างอิงเกณฑ์ ปภ.
+                  <span className={`font-semibold ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>
+                    อัพเดทได้แม่นยำขึ้นกว่าเดิม • เฝ้าระวังน้ำท่วม 6 อำเภอ จ.สมุทรปราการ
                   </span>
                 </div>
               </AutoMarquee>

@@ -459,8 +459,16 @@ export default function App() {
       return false;
     }
   });
-  const [latestUpdateNotification, setLatestUpdateNotification] = useState(null);
+  const [latestUpdateNotification, setLatestUpdateNotification] = useState("✨ อัพเดทแพท 1.0 เวอร์ชันล่าสุด อัพเดทได้แม่นยำขึ้นกว่าเดิม");
   const [adminAlertToast, setAdminAlertToast] = useState(null);
+
+  // Auto-dismiss initial patch update notification after 12s
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setLatestUpdateNotification(prev => prev === "✨ อัพเดทแพท 1.0 เวอร์ชันล่าสุด อัพเดทได้แม่นยำขึ้นกว่าเดิม" ? null : prev);
+    }, 12000);
+    return () => clearTimeout(timer);
+  }, []);
 
   // 24/7 Official Hydro-Meteorological Telemetry Sync (TMD, Navy Hydrographic Dept, DDPM)
   const [telemetrySyncStatus, setTelemetrySyncStatus] = useState({
@@ -1312,12 +1320,13 @@ export default function App() {
 
         {/* Floating Toast Notification when Updates occur with timestamp */}
         {latestUpdateNotification && (
-          <div className="absolute top-16 sm:top-20 left-1/2 -translate-x-1/2 z-40 bg-emerald-600/95 text-white px-4 py-2.5 rounded-2xl shadow-2xl border border-emerald-400 backdrop-blur-md flex items-center gap-2.5 max-w-md pointer-events-auto">
-            <CheckCircle2 className="w-4 h-4 text-emerald-200 shrink-0" />
-            <span className="text-xs font-semibold">{latestUpdateNotification}</span>
+          <div className="absolute top-14 sm:top-16 left-1/2 -translate-x-1/2 z-50 bg-emerald-600/98 text-white px-4 py-2.5 rounded-2xl shadow-2xl border border-emerald-300 backdrop-blur-md flex items-center gap-2.5 w-auto max-w-[92vw] sm:max-w-lg pointer-events-auto animate-in fade-in slide-in-from-top-3 duration-300">
+            <CheckCircle2 className="w-4 h-4 text-emerald-100 shrink-0" />
+            <span className="text-xs sm:text-sm font-bold leading-snug">{latestUpdateNotification}</span>
             <button 
               onClick={() => setLatestUpdateNotification(null)}
               className="p-1 hover:bg-white/20 rounded-lg text-emerald-100 cursor-pointer ml-auto shrink-0"
+              title="ปิดการแจ้งเตือน"
             >
               <X className="w-3.5 h-3.5" />
             </button>
