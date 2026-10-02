@@ -113,9 +113,15 @@ export default function App() {
               ? { 
                   ...initPoint, 
                   ...item, 
+                  name: initPoint.name,
                   lat: initPoint.lat,
                   lng: initPoint.lng,
                   roadSegment: initPoint.roadSegment,
+                  waterTrend: initPoint.waterTrend || item.waterTrend,
+                  trendText: initPoint.trendText || item.trendText,
+                  depthCm: initPoint.waterTrend === 'falling' ? initPoint.depthCm : (item.depthCm !== undefined ? item.depthCm : initPoint.depthCm),
+                  trafficStatus: initPoint.waterTrend === 'falling' ? initPoint.trafficStatus : (item.trafficStatus || initPoint.trafficStatus),
+                  statusLabel: initPoint.waterTrend === 'falling' ? initPoint.statusLabel : (item.statusLabel || initPoint.statusLabel),
                   aliases: item.aliases || initPoint.aliases, 
                   keywords: item.keywords || initPoint.keywords 
                 }
@@ -1290,7 +1296,14 @@ export default function App() {
     return points.filter(point => {
       if (point.isActive === false || point.isResolved) return false;
       const matchDistrict = selectedDistrict === "ทั้งหมด" || point.district === selectedDistrict;
-      const matchSeverity = severityFilter === "all" || point.level.toString() === severityFilter;
+      let matchSeverity = true;
+      if (severityFilter === "all") {
+        matchSeverity = true;
+      } else if (severityFilter === "falling") {
+        matchSeverity = point.waterTrend === 'falling';
+      } else {
+        matchSeverity = point.level.toString() === severityFilter;
+      }
       return matchDistrict && matchSeverity;
     });
   }, [points, selectedDistrict, severityFilter]);
@@ -1301,7 +1314,14 @@ export default function App() {
       if (!report || report.isApproved !== true || report.isResolved) return false;
       if (report.id && (report.id.includes('test') || report.id.includes('verify') || report.id.startsWith('node-'))) return false;
       const matchDistrict = selectedDistrict === "ทั้งหมด" || report.district === selectedDistrict;
-      const matchSeverity = severityFilter === "all" || report.level.toString() === severityFilter;
+      let matchSeverity = true;
+      if (severityFilter === "all") {
+        matchSeverity = true;
+      } else if (severityFilter === "falling") {
+        matchSeverity = report.waterTrend === 'falling';
+      } else {
+        matchSeverity = report.level.toString() === severityFilter;
+      }
       return matchDistrict && matchSeverity;
     });
   }, [citizenReports, selectedDistrict, severityFilter]);
@@ -2050,6 +2070,28 @@ export default function App() {
                   </div>
                 </button>
 
+                {/* Receding: น้ำกำลังลด */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!legendDragRef.current.hasMoved) {
+                      setSeverityFilter(prev => prev === 'falling' ? 'all' : 'falling');
+                    }
+                  }}
+                  className={`flex items-center gap-1.5 p-1 rounded-xl text-left transition-all cursor-pointer ${
+                    severityFilter === 'falling' 
+                      ? 'bg-teal-500/25 ring-1.5 ring-teal-500' 
+                      : 'hover:bg-slate-100 dark:hover:bg-slate-800/80'
+                  }`}
+                  title="แตะเพื่อกรองดูเฉพาะจุดที่น้ำกำลังลด"
+                >
+                  <span className="text-[11px] shrink-0 leading-none">📉</span>
+                  <div className="leading-tight min-w-0">
+                    <div className="text-[10px] font-bold text-teal-600 dark:text-teal-400">ฟ้า: น้ำกำลังลด</div>
+                    <div className="text-[8px] text-slate-500 dark:text-slate-400">ระดับน้ำลดลง</div>
+                  </div>
+                </button>
+
                 {/* Tiny movable hint */}
                 <div className="text-[8px] text-center text-slate-400 dark:text-slate-500 pt-0.5 border-t border-slate-100 dark:border-slate-800">
                   ลากย้ายตำแหน่งได้
@@ -2092,6 +2134,11 @@ export default function App() {
                   <span className="text-xs font-mono font-bold text-blue-500 shrink-0">
                     {selectedPoint.hazardType === 'hail' ? '🧊 ลูกเห็บ' : `${selectedPoint.depthCm} ซม.`}
                   </span>
+                  {selectedPoint.waterTrend === 'falling' && (
+                    <span className="text-[10px] font-bold px-1.5 py-0.2 rounded-md bg-teal-100 text-teal-800 dark:bg-teal-900/60 dark:text-teal-300 shrink-0">
+                      📉 ลดลง
+                    </span>
+                  )}
                 </div>
 
                 <div className="flex items-center gap-1 shrink-0">
@@ -2122,7 +2169,7 @@ export default function App() {
                 {/* Card Header with Minimize & Close */}
                 <div className={`flex items-start justify-between gap-3 pb-3 border-b ${isDark ? 'border-slate-800' : 'border-slate-200'}`}>
                   <div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-1.5">
                       <span className={`text-xs font-bold px-2.5 py-0.5 rounded-md border ${
                         isDark ? 'bg-blue-950/80 text-blue-300 border-blue-800' : 'bg-blue-50 text-blue-700 border-blue-200'
                       }`}>
@@ -2138,6 +2185,18 @@ export default function App() {
                          getFloodLevel(selectedPoint.depthCm) === 3 ? "🔴 น้ำท่วมวิกฤต (>50 ซม.)" :
                          getFloodLevel(selectedPoint.depthCm) === 2 ? "🟠 น้ำท่วมปานกลาง (21-50 ซม.)" : "🟢 น้ำท่วมปกติ (5-20 ซม.)"}
                       </span>
+                      {selectedPoint.waterTrend === 'falling' && (
+                        <span className="text-xs font-bold px-2.5 py-0.5 rounded-md border bg-teal-50 text-teal-700 border-teal-300 dark:bg-teal-950/80 dark:text-teal-300 dark:border-teal-800 flex items-center gap-1 shadow-xs">
+                          <span>📉</span>
+                          <span>{selectedPoint.trendText || 'ระดับน้ำกำลังลดลง'}</span>
+                        </span>
+                      )}
+                      {selectedPoint.waterTrend === 'rising' && (
+                        <span className="text-xs font-bold px-2.5 py-0.5 rounded-md border bg-rose-50 text-rose-700 border-rose-300 dark:bg-rose-950/80 dark:text-rose-300 dark:border-rose-800 flex items-center gap-1 shadow-xs">
+                          <span>📈</span>
+                          <span>{selectedPoint.trendText || 'เฝ้าระวังน้ำขึ้น'}</span>
+                        </span>
+                      )}
                     </div>
                     <h3 className={`text-base sm:text-lg font-bold mt-1.5 leading-snug ${isDark ? 'text-white' : 'text-slate-900'}`}>
                       {selectedPoint.name}

@@ -267,17 +267,26 @@ export default function MapView({
         : (point.level || 1);
       const isL3 = effectiveLevel === 3;
       const isL2 = effectiveLevel === 2;
+      const isFalling = point.waterTrend === 'falling';
+      const isRising = point.waterTrend === 'rising';
       const levelClass = isL3 ? 'beacon-level-3' : (isL2 ? 'beacon-level-2' : 'beacon-level-1');
       const pulseClass = isL3 ? 'pulse-l3' : (isL2 ? 'pulse-l2' : 'pulse-l1');
       const levelBadgeName = isL3 ? '🔴 น้ำท่วมวิกฤต' : (isL2 ? '🟠 น้ำท่วมปานกลาง' : '🟢 น้ำท่วมปกติ');
       const depthBadgeText = point.depthCm ? `${point.depthCm} ซม.` : point.depthRange;
 
+      const trendIcon = isFalling
+        ? `<div style="position:absolute;top:-5px;right:-5px;background:#0d9488;color:#ffffff;border-radius:9999px;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:10px;box-shadow:0 2px 5px rgba(0,0,0,0.4);border:2px solid #ffffff;z-index:10;" title="📉 น้ำกำลังลด: ${point.trendText || ''}">📉</div>`
+        : (isRising 
+          ? `<div style="position:absolute;top:-5px;right:-5px;background:#e11d48;color:#ffffff;border-radius:9999px;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:10px;box-shadow:0 2px 5px rgba(0,0,0,0.4);border:2px solid #ffffff;z-index:10;" title="📈 ระดับน้ำกำลังเพิ่ม">📈</div>`
+          : '');
+
       // Clean, ultra-readable marker showing depth in cm or water droplet
       const markerHtml = `
-        <div class="telemetry-pin" title="${point.name} (${depthBadgeText})">
+        <div class="telemetry-pin" title="${point.name} (${depthBadgeText}) ${isFalling ? '• 📉 น้ำกำลังลด' : ''}">
           <div class="beacon-pulse ${pulseClass}"></div>
-          <div class="beacon-core ${levelClass}">
+          <div class="beacon-core ${levelClass}" style="position:relative;">
             <span style="font-size:10px;font-weight:800;color:#ffffff;line-height:1;font-family:'Prompt',sans-serif;">${point.depthCm || ''}</span>
+            ${trendIcon}
           </div>
         </div>
       `;
@@ -298,6 +307,16 @@ export default function MapView({
       const levelBorder = isL3 ? '#f43f5e' : (isL2 ? '#f59e0b' : '#10b981');
       const levelStyle = `background:${levelBg};color:${levelText};border:1px solid ${levelBorder};`;
 
+      const trendBadgeHtml = isFalling
+        ? `<div style="display:inline-flex;align-items:center;gap:4px;background:#f0fdfa;color:#0f766e;border:1px solid #99f6e4;padding:3px 7px;border-radius:6px;font-size:10px;font-weight:700;margin-bottom:6px;">
+            <span>📉</span> <span>${point.trendText || 'ระดับน้ำกำลังลดลง'}</span>
+           </div>`
+        : (isRising
+          ? `<div style="display:inline-flex;align-items:center;gap:4px;background:#fff1f2;color:#be123c;border:1px solid #fecdd3;padding:3px 7px;border-radius:6px;font-size:10px;font-weight:700;margin-bottom:6px;">
+              <span>📈</span> <span>${point.trendText || 'เฝ้าระวังน้ำขึ้น'}</span>
+             </div>`
+          : '');
+
       const popupContent = `
         <div style="font-family:'Prompt',sans-serif;padding:6px 4px 4px 4px;min-width:180px;">
           <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:6px;">
@@ -309,10 +328,11 @@ export default function MapView({
           <div style="font-size:12px;font-weight:700;color:#0f172a;line-height:1.3;margin-bottom:4px;">
             ${point.name}
           </div>
-          <div style="font-size:11px;color:${isL3 ? '#e11d48' : isL2 ? '#d97706' : '#059669'};font-weight:700;margin-bottom:8px;">
+          <div style="font-size:11px;color:${isL3 ? '#e11d48' : isL2 ? '#d97706' : '#059669'};font-weight:700;margin-bottom:4px;">
             ระดับน้ำ: ${depthBadgeText}
           </div>
-          <button id="popup-btn-${point.id}" style="width:100%;padding:6px 10px;background:#2563eb;color:white;border:none;border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;">
+          ${trendBadgeHtml}
+          <button id="popup-btn-${point.id}" style="width:100%;padding:6px 10px;background:#2563eb;color:white;border:none;border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;margin-top:2px;">
             <span>ดูรายละเอียด &rarr;</span>
           </button>
         </div>
@@ -498,7 +518,8 @@ export default function MapView({
       }).addTo(map);
 
       const depthText = item.depthCm ? `${item.depthCm} ซม.` : (item.depthRange || 'เฝ้าระวัง');
-      dashLine.bindTooltip(`🌊 ${item.name} (${depthText})`, {
+      const trendLineText = item.waterTrend === 'falling' ? ' • 📉 น้ำกำลังลด' : '';
+      dashLine.bindTooltip(`🌊 ${item.name} (${depthText}${trendLineText})`, {
         sticky: true,
         direction: 'top',
         className: 'bg-slate-900/95 text-white font-prompt text-[11px] font-bold px-2.5 py-1 rounded-xl border border-slate-700 shadow-md'

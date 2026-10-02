@@ -37,6 +37,7 @@ export default function Navbar({
   const minor = points.filter(p => p.level === 1 && p.isActive !== false && !p.isResolved).length;
   const moderate = points.filter(p => p.level === 2 && p.isActive !== false && !p.isResolved).length;
   const severe = points.filter(p => p.level === 3 && p.isActive !== false && !p.isResolved).length;
+  const falling = points.filter(p => p.waterTrend === 'falling' && p.isActive !== false && !p.isResolved).length;
 
   // Responsive Horizontal Slider Controller for Top Navigation Bar
   const sliderRef = useRef(null);
@@ -152,7 +153,7 @@ export default function Navbar({
                     แพท 1.0 ล่าสุด
                   </span>
                   <span className={`font-semibold ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>
-                    อัพเดทได้แม่นยำขึ้นกว่าเดิม • ตรวจสภาพอากาศสดทุก 30 วินาที ครอบคลุม 6 อำเภอ จ.สมุทรปราการ
+                    อัพเดทได้แม่นยำขึ้นกว่าเดิม • สภาพอากาศสด 30 วินาที • 📉 น้ำกำลังลด: ถ.ศรีนครินทร์ไปบางปู (-7 ซม.), แยกศรีเทพา (-5 ซม.), บิ๊กซีบางพลี (-6 ซม.), ซอยมังกร (-6 ซม.)
                   </span>
                 </div>
               </AutoMarquee>
@@ -223,6 +224,16 @@ export default function Navbar({
                 <span className="font-semibold text-rose-600 dark:text-rose-400">น้ำท่วมวิกฤต</span>
                 <strong className="text-rose-600 dark:text-rose-400">{severe}</strong>
               </span>
+              {falling > 0 && (
+                <>
+                  <span className="text-slate-400 text-[10px]">•</span>
+                  <span className="flex items-center gap-1" title="จุดที่ระดับน้ำกำลังลดลง">
+                    <span className="text-xs">📉</span>
+                    <span className="font-semibold text-teal-600 dark:text-teal-400">น้ำกำลังลด</span>
+                    <strong className="text-teal-600 dark:text-teal-400">{falling}</strong>
+                  </span>
+                </>
+              )}
             </div>
 
 
