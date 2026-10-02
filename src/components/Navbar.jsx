@@ -225,17 +225,6 @@ export default function Navbar({
               </span>
             </div>
 
-            {/* 24/7 Autonomous Telemetry Indicator for 6 Districts */}
-            <div 
-              onClick={onOpenAiForecast}
-              className={`shrink-0 flex items-center space-x-1.5 px-2.5 py-1 sm:py-1.5 rounded-xl border text-[11px] sm:text-xs font-semibold cursor-pointer transition-all hover:scale-[1.01] whitespace-nowrap ${
-                isDark ? 'bg-cyan-950/40 border-cyan-800/80 text-cyan-300' : 'bg-cyan-50/80 border-cyan-200 text-cyan-800'
-              }`}
-              title="ระบบคำนวณและอัปเดตข้อมูลอัตโนมัติตลอด 24 ชม. ทุก 30 วินาที ครอบคลุม 6 อำเภอ คลิกเพื่อดูสถานีโทรมาตร TMD/กองทัพเรือ"
-            >
-              <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping shrink-0"></span>
-              <span className="font-bold">อัปเดตสดอัตโนมัติทุก 30 วินาที</span>
-            </div>
 
             {/* Theme Switcher Button */}
             <button
