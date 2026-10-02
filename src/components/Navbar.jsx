@@ -148,11 +148,11 @@ export default function Navbar({
             <div className="w-24 xs:w-36 sm:w-48 md:w-56 lg:w-64 overflow-hidden mt-0.5">
               <AutoMarquee speedSeconds={18} gapPx={24} force={true}>
                 <div className="inline-flex items-center gap-2 text-[10px] sm:text-[11px] whitespace-nowrap">
-                  <span className={`font-bold px-1.5 py-0.2 rounded-md ${isDark ? 'bg-blue-900/60 text-cyan-300' : 'bg-blue-100 text-blue-700'}`}>
-                    แพท 1.0 ล่าสุด
+                  <span className={`font-bold px-1.5 py-0.5 rounded-md ${isDark ? 'bg-cyan-900/70 text-cyan-300 ring-1 ring-cyan-700' : 'bg-blue-100 text-blue-700 ring-1 ring-blue-300'}`}>
+                    🆕 v2.0
                   </span>
                   <span className={`font-semibold ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>
-                    อัพเดทได้แม่นยำขึ้นกว่าเดิม • สภาพอากาศสด 30 วินาที • 📉 น้ำกำลังลด: ถ.ศรีนครินทร์ไปบางปู (-7 ซม.), แยกศรีเทพา (-5 ซม.), บิ๊กซีบางพลี (-6 ซม.), ซอยมังกร (-6 ซม.)
+                    อัพเดท 2.0 — แม่นยำกว่าเดิม รายงานข้ามอุปกรณ์ได้ทันที • สภาพอากาศสด 30 วินาที • 📉 น้ำกำลังลด: ถ.ศรีนครินทร์ไปบางปู (-7 ซม.), แยกศรีเทพา (-5 ซม.), บิ๊กซีบางพลี (-6 ซม.)
                   </span>
                 </div>
               </AutoMarquee>

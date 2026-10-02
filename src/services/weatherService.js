@@ -63,10 +63,17 @@ export async function getLiveSamutPrakanWeather(forceRefresh = false) {
   try {
     const lats = DISTRICT_COORDINATES.map(d => d.lat).join(',');
     const lngs = DISTRICT_COORDINATES.map(d => d.lng).join(',');
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lats}&longitude=${lngs}&current=temperature_2m,relative_humidity_2m,precipitation,weather_code&hourly=precipitation_probability,precipitation,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max&timezone=Asia%2FBangkok&forecast_days=3`;
-    
+    // ขอข้อมูลเพิ่ม: wind_speed_10m, cape (ความไม่เสถียรของบรรยากาศ → พยากรณ์ฟ้าผ่า+พายุฝน), visibility
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lats}&longitude=${lngs}` +
+      `&current=temperature_2m,relative_humidity_2m,precipitation,weather_code,wind_speed_10m,apparent_temperature` +
+      `&hourly=precipitation_probability,precipitation,weather_code,cape,wind_speed_10m,visibility` +
+      `&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,wind_speed_10m_max` +
+      `&minutely_15=precipitation,precipitation_probability` +
+      `&timezone=Asia%2FBangkok&forecast_days=3`;
+
     const response = await fetch(url, { headers: { 'Accept': 'application/json' } });
     if (!response.ok) throw new Error("Weather API response not ok");
+
 
     const data = await response.json();
     
@@ -81,6 +88,33 @@ export async function getLiveSamutPrakanWeather(forceRefresh = false) {
     const tempMax = (daily.temperature_2m_max && daily.temperature_2m_max[0]) || 32;
     const tempMin = (daily.temperature_2m_min && daily.temperature_2m_min[0]) || 25;
     const weatherCode = current.weather_code !== undefined ? current.weather_code : 2;
+    const windSpeedNow = current.wind_speed_10m ? Math.round(current.wind_speed_10m) : 0;
+    const feelsLike = current.apparent_temperature ? Math.round(current.apparent_temperature) : null;
+
+    // วิเคราะห์ CAPE (Convective Available Potential Energy) — ยิ่งสูงยิ่งเสี่ยงฟ้าผ่า/พายุ
+    let maxCapeNow = 0;
+    if (hourly.cape && hourly.cape.length > 0) {
+      maxCapeNow = Math.max(...hourly.cape.slice(0, 6).filter(v => v != null));
+    }
+    const thunderstormRisk = maxCapeNow >= 2000 ? 'สูงมาก' : maxCapeNow >= 1000 ? 'สูง' : maxCapeNow >= 500 ? 'ปานกลาง' : 'ต่ำ';
+
+    // ใช้ minutely_15 หาเวลาตกเป๊ะระดับ 15 นาที
+    const minutely15 = primaryData.minutely_15 || {};
+    let nextRainIn15Min = null;
+    if (minutely15.time && minutely15.precipitation && minutely15.precipitation_probability) {
+      const nowISO = nowDate.toISOString().substring(0, 13);
+      for (let i = 0; i < minutely15.time.length; i++) {
+        if (minutely15.time[i] < nowISO) continue;
+        if ((minutely15.precipitation[i] >= 0.5 && minutely15.precipitation_probability[i] >= 40) ||
+            minutely15.precipitation_probability[i] >= 70) {
+          const t = minutely15.time[i];
+          const hh = t.substring(11, 13);
+          const mm = t.substring(14, 16);
+          nextRainIn15Min = `${hh}:${mm} น.`;
+          break;
+        }
+      }
+    }
 
     // หาชั่วโมงที่มีโอกาสฝนตกสูงสุดในวันนี้
     let peakHour = "ช่วงบ่ายถึงค่ำ";
@@ -291,6 +325,8 @@ export async function getLiveSamutPrakanWeather(forceRefresh = false) {
 
     const result = {
       temp: current.temperature_2m ? Math.round(current.temperature_2m) : 28,
+      feelsLike,
+      windSpeedKmh: windSpeedNow,
       humidity: current.relative_humidity_2m || 80,
       weatherDesc: translateWeatherCode(weatherCode),
       rainProbabilityToday: rainProbMax,
@@ -301,17 +337,23 @@ export async function getLiveSamutPrakanWeather(forceRefresh = false) {
       peakProb,
       rainAlertLevel,
       riskColor,
+      // ความแม่นยำใหม่: CAPE + minutely_15
+      thunderstormRisk,
+      maxCapeJkg: Math.round(maxCapeNow),
+      nextRainIn15Min,   // เวลาฝนตกครั้งต่อไปแม่นยำ ±15 นาที
       forecast24h,
       districtWeather,
       districtList: districtRainAnalysis,
       lastUpdated: nowDate.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) + ' น.',
       lastUpdatedDetailed: detailedTime,
-      sourceAgency: "แบบจำลองโทรมาตรอุตุนิยมวิทยามาตรฐานโลก (ECMWF / Open-Meteo) ร่วมกับ กรมอุตุนิยมวิทยา (TMD)"
+      sourceAgency: "ECMWF/Open-Meteo · minutely_15 · CAPE Analysis · กรมอุตุนิยมวิทยา (TMD)"
     };
 
     cachedWeatherData = result;
     lastFetchTime = now;
     return result;
+
+
 
   } catch (err) {
     console.warn("Failed to fetch live weather, using fallback:", err);

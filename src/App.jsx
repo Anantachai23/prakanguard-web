@@ -757,11 +757,17 @@ export default function App() {
 
   // Real-time Cloud Cross-Device Synchronization (Crowdsource Flood/Hail Reports & Feedback)
   useEffect(() => {
-    // Send anonymous heartbeat telemetry to admin server
-    sendVisitorTelemetry(selectedDistrict !== 'ทั้งหมด' ? selectedDistrict : 'เมืองสมุทรปราการ');
+    // Send anonymous heartbeat telemetry — ใช้ GPS district หากมี มิฉะนั้นใช้ selected district
+    const getReportingDistrict = () => {
+      if (userDistrict) return userDistrict;
+      if (selectedDistrict && selectedDistrict !== 'ทั้งหมด') return selectedDistrict;
+      return 'เมืองสมุทรปราการ';
+    };
+    sendVisitorTelemetry(getReportingDistrict());
     const telemetryInterval = setInterval(() => {
-      sendVisitorTelemetry(selectedDistrict !== 'ทั้งหมด' ? selectedDistrict : 'เมืองสมุทรปราการ');
+      sendVisitorTelemetry(getReportingDistrict());
     }, 30000);
+
 
     const pullCloudUpdates = () => {
       // 1. Pull recent reports from Cloud
@@ -1496,6 +1502,10 @@ export default function App() {
         const accuracyM = Math.round(pos.coords.accuracy);
         const timeStr = new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) + ' น.';
 
+        // ตรวจสอบอำเภอจาก GeoJSON boundary (ray-casting เที่ยงตรง)
+        const detectedDistrict = detectDistrictForCoordinates(coords.lat, coords.lng);
+        const districtLabel = detectedDistrict ? `อ.${detectedDistrict}` : null;
+
         // Find nearest active danger hotspot
         let minDistance = 999999;
         let closest = null;
@@ -1510,14 +1520,21 @@ export default function App() {
         });
 
         if (closest && minDistance <= 3.0) {
-          setLatestUpdateNotification(`📍 ตำแหน่งของคุณ (±${accuracyM} ม.) ใกล้จุดเสี่ยง "${closest.name}" (${minDistance} กม.)`);
+          setLatestUpdateNotification(
+            `📍 คุณอยู่ใน${districtLabel ? districtLabel : 'สมุทรปราการ'} (±${accuracyM} ม.) · ใกล้จุดเสี่ยง "${closest.name}" ${minDistance} กม.`
+          );
+        } else if (districtLabel) {
+          setLatestUpdateNotification(
+            `📍 ตำแหน่งของคุณ: ${districtLabel} (±${accuracyM} ม. · ${timeStr})`
+          );
         } else {
-          setLatestUpdateNotification(`📍 ระบุพิกัด GPS ของคุณสำเร็จ (ความแม่นยำ ±${accuracyM} ม. อัปเดต ${timeStr})`);
+          setLatestUpdateNotification(`📍 ระบุพิกัด GPS สำเร็จ (±${accuracyM} ม. · ${timeStr})`);
         }
-        setTimeout(() => setLatestUpdateNotification(null), 7000);
+        setTimeout(() => setLatestUpdateNotification(null), 8000);
 
         const isInside = coords.lat >= 13.45 && coords.lat <= 13.75 && coords.lng >= 100.45 && coords.lng <= 100.95;
         if (!isInside && !silent) {
+
           alert(`ตรวจพบตำแหน่งของคุณที่ [${coords.lat.toFixed(4)}, ${coords.lng.toFixed(4)}]\n\nหมายเหตุ: พิกัดของคุณอยู่นอกพื้นที่จังหวัดสมุทรปราการ แต่ระบบได้แสดงตำแหน่งของคุณบนแผนที่เรียบร้อยแล้วครับ`);
         }
       },
