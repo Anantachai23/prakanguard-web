@@ -185,6 +185,17 @@ export default function App() {
 
   const isDark = theme === 'dark';
 
+  // Synchronize root HTML element class with selected theme (Prevents system dark mode conflicts in light theme)
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      if (theme === 'dark') {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    }
+  }, [theme]);
+
   // Search keyword state
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearchFocused, setIsSearchFocused] = useState(false);
@@ -1298,6 +1309,45 @@ export default function App() {
     return closest ? { point: closest, distanceKm: minDistance } : null;
   }, [userLocation, points]);
 
+  // Identify which district the user is currently located in
+  const userDistrict = useMemo(() => {
+    if (!userLocation) return null;
+    let minDistance = 999999;
+    let closestDistrict = null;
+    points.forEach(p => {
+      if (p.district) {
+        const d = getDistanceKm(userLocation.lat, userLocation.lng, p.lat, p.lng);
+        if (d < minDistance) {
+          minDistance = d;
+          closestDistrict = p.district;
+        }
+      }
+    });
+
+    if (closestDistrict && minDistance <= 25) {
+      return closestDistrict;
+    }
+
+    const DISTRICT_CENTERS = [
+      { name: "เมืองสมุทรปราการ", lat: 13.5991, lng: 100.5968 },
+      { name: "บางพลี", lat: 13.6050, lng: 100.7050 },
+      { name: "พระประแดง", lat: 13.6580, lng: 100.5340 },
+      { name: "บางเสาธง", lat: 13.6000, lng: 100.8200 },
+      { name: "บางบ่อ", lat: 13.5850, lng: 100.8350 },
+      { name: "พระสมุทรเจดีย์", lat: 13.5500, lng: 100.5800 }
+    ];
+    let dMin = Infinity;
+    let fallbackDistrict = "เมืองสมุทรปราการ";
+    for (const c of DISTRICT_CENTERS) {
+      const dist = getDistanceKm(userLocation.lat, userLocation.lng, c.lat, c.lng);
+      if (dist < dMin) {
+        dMin = dist;
+        fallbackDistrict = c.name;
+      }
+    }
+    return fallbackDistrict;
+  }, [userLocation, points]);
+
   // GPS Geolocation Handler with High Accuracy (Auto-requested on entry for mobile, iPad, and all devices)
   const handleLocateMe = (silent = false) => {
     if (!navigator.geolocation) {
@@ -1693,6 +1743,8 @@ export default function App() {
           <div className="pointer-events-auto w-full">
             <RainForecast24hCard
               forecast={weather?.forecast24h}
+              userDistrict={userDistrict}
+              userLocation={userLocation}
               onOpenRadar={() => setIsOfficialModalOpen(true)}
               theme={theme}
               collapsible={true}
@@ -2087,27 +2139,27 @@ export default function App() {
               <div className={`p-3 rounded-2xl border ${
                 isDark ? 'bg-slate-800/80 border-slate-700' : 'bg-slate-50 border-slate-200'
               }`}>
-                <span className={`block text-xs font-semibold ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>สาเหตุ:</span>
-                <span className={`mt-0.5 block leading-relaxed font-medium ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>{selectedPoint.cause}</span>
+                <span className={`block text-xs font-bold ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>สาเหตุ:</span>
+                <span className={`mt-0.5 block leading-relaxed font-semibold ${isDark ? 'text-slate-100' : 'text-slate-900'}`}>{selectedPoint.cause}</span>
               </div>
               <div className={`p-3 rounded-2xl border ${
                 isDark ? 'bg-slate-800/80 border-slate-700' : 'bg-slate-50 border-slate-200'
               }`}>
-                <span className={`block text-xs font-semibold ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>คำแนะนำ:</span>
-                <span className={`mt-0.5 block leading-relaxed font-medium ${isDark ? 'text-cyan-400' : 'text-blue-700'}`}>{selectedPoint.officialGuidance}</span>
+                <span className={`block text-xs font-bold ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>คำแนะนำ:</span>
+                <span className={`mt-0.5 block leading-relaxed font-bold ${isDark ? 'text-cyan-300' : 'text-blue-900'}`}>{selectedPoint.officialGuidance}</span>
               </div>
             </div>
 
             {/* Official Source & Verification Citation */}
             <div className={`mt-2.5 p-2.5 rounded-xl border text-xs flex flex-wrap items-center justify-between gap-1 ${
-              isDark ? 'bg-slate-800/80 border-slate-700 text-slate-400' : 'bg-slate-50 border-slate-200 text-slate-500'
+              isDark ? 'bg-slate-800/80 border-slate-700 text-slate-300' : 'bg-slate-50 border-slate-200 text-slate-700'
             }`}>
               <div className="flex items-center gap-1.5 min-w-0">
                 <Shield className="w-4 h-4 text-blue-500 shrink-0" />
-                <span className="break-words">ที่มา: <strong className={isDark ? 'text-slate-200' : 'text-slate-800'}>{selectedPoint.source}</strong></span>
+                <span className="break-words">ที่มา: <strong className={isDark ? 'text-slate-100' : 'text-slate-900'}>{selectedPoint.source}</strong></span>
               </div>
               {selectedPoint.reportedAt && (
-                <span className="text-[10px] text-slate-400 shrink-0">
+                <span className={`text-[10px] shrink-0 font-medium ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
                   {selectedPoint.reportedAt}
                 </span>
               )}

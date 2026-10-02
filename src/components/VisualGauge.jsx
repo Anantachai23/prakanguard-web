@@ -105,21 +105,21 @@ export default function VisualGauge({ depthCm = 0, level, impactText = '', theme
                 สัดส่วนจริง 170 ซม.
               </span>
             </div>
-            <span className={`text-[9px] sm:text-xs block mt-0.5 font-medium truncate ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-              เกณฑ์มาตรฐาน: <strong className={isDark ? 'text-slate-200' : 'text-slate-700'}>{standard.depthRange}</strong>
+            <span className={`text-[9px] sm:text-xs block mt-0.5 font-medium truncate ${isDark ? 'text-slate-400' : 'text-slate-700'}`}>
+              เกณฑ์มาตรฐาน: <strong className={isDark ? 'text-slate-200' : 'text-slate-900'}>{standard.depthRange}</strong>
             </span>
           </div>
         </div>
 
         <div className="text-right shrink-0 pl-2">
-          <span className={`text-[9px] sm:text-xs block font-medium ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>ระดับน้ำปัจจุบัน</span>
+          <span className={`text-[9px] sm:text-xs block font-bold ${isDark ? 'text-slate-400' : 'text-slate-700'}`}>ระดับน้ำปัจจุบัน</span>
           <div className="flex items-baseline justify-end gap-1">
             <span className={`text-2xl sm:text-3xl font-black font-mono tracking-tight ${
               activeLevel === 3 ? 'text-rose-500' : activeLevel === 2 ? 'text-amber-500' : (isDark ? 'text-cyan-400' : 'text-emerald-600')
             }`}>
               {depthCm}
             </span>
-            <span className={`text-xs font-bold ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>ซม.</span>
+            <span className={`text-xs font-bold ${isDark ? 'text-slate-400' : 'text-slate-700'}`}>ซม.</span>
           </div>
         </div>
       </div>
@@ -446,15 +446,17 @@ export default function VisualGauge({ depthCm = 0, level, impactText = '', theme
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-1.5 min-w-0">
               <span className="text-base shrink-0">🚶‍♂️</span>
-              <span className={`text-[11px] font-semibold ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+              <span className={`text-xs font-bold ${isDark ? 'text-slate-300' : 'text-slate-800'}`}>
                 เทียบสรีระคนยืน 170 ซม.:
               </span>
             </div>
-            <span className={`text-[10px] px-2 py-0.5 rounded-md border shrink-0 ${humanImpactBadge}`}>
+            <span className={`text-[10px] px-2 py-0.5 rounded-md border shrink-0 font-bold ${humanImpactBadge}`}>
               {depthCm <= 50 ? 'ศีรษะพ้นน้ำ 100%' : depthCm <= 90 ? 'เอวถึงอก' : 'เสี่ยงจมน้ำ'}
             </span>
           </div>
-          <p className="text-xs font-bold leading-relaxed text-slate-800 dark:text-slate-200 break-words m-0">
+          <p className={`text-xs sm:text-sm font-semibold leading-relaxed break-words m-0 ${
+            isDark ? 'text-slate-100' : 'text-slate-900'
+          }`}>
             {humanImpact}
           </p>
         </div>
@@ -465,11 +467,13 @@ export default function VisualGauge({ depthCm = 0, level, impactText = '', theme
         }`}>
           <div className="flex items-center gap-1.5">
             <span className="text-base shrink-0">🚗</span>
-            <span className={`text-[11px] font-semibold ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+            <span className={`text-xs font-bold ${isDark ? 'text-slate-300' : 'text-slate-800'}`}>
               เทียบรถยนต์นั่งทั่วไป (ใต้ท้อง 15 ซม. / ล้อ 60 ซม.):
             </span>
           </div>
-          <p className="text-xs font-medium leading-relaxed text-slate-800 dark:text-slate-200 break-words m-0">
+          <p className={`text-xs sm:text-sm font-semibold leading-relaxed break-words m-0 ${
+            isDark ? 'text-slate-100' : 'text-slate-900'
+          }`}>
             {carImpact}
           </p>
         </div>
@@ -485,14 +489,14 @@ export default function VisualGauge({ depthCm = 0, level, impactText = '', theme
             {levelTheme.tag}
           </span>
         </div>
-        <p className={`text-xs sm:text-[13px] leading-relaxed font-medium break-words m-0 ${isDark ? 'text-slate-200' : 'text-slate-700'}`}>
+        <p className={`text-xs sm:text-[13px] leading-relaxed font-bold break-words m-0 ${isDark ? 'text-slate-100' : 'text-slate-900'}`}>
           {impactText || standard.trafficAdvice}
         </p>
       </div>
 
       {/* Official Standard Citation */}
-      <div className={`mt-2 pt-2 border-t flex flex-wrap items-center justify-between gap-1 text-[10px] ${
-        isDark ? 'border-slate-700/80 text-slate-400' : 'border-slate-200 text-slate-500'
+      <div className={`mt-2 pt-2 border-t flex flex-wrap items-center justify-between gap-1 text-[10px] sm:text-[11px] font-medium ${
+        isDark ? 'border-slate-700/80 text-slate-400' : 'border-slate-200 text-slate-700'
       }`}>
         <span>เกณฑ์: ปภ. ระดับ 1 (5-20) • 2 (21-50) • 3 (&gt;50ซม.)</span>
         <span>คปภ. ประเมินความเสียหาย</span>

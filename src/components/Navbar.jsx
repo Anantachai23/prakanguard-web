@@ -307,11 +307,11 @@ export default function Navbar({
               <span>แจ้งเตือนน้ำท่วม</span>
             </button>
 
-            {/* Citizen Feedback & Suggestion Box Button */}
+            {/* Citizen Feedback & Suggestion Box Button (ซ่อนบนมือถือเพราะมีเมนูด้านล่างแล้ว แสดงบน iPad/คอม) */}
             <button 
               onClick={onOpenFeedback}
               title="ข้อเสนอต่อเว็บ"
-              className={`shrink-0 px-2.5 sm:px-3 py-1.5 rounded-xl border text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer shadow-xs whitespace-nowrap ${
+              className={`hidden md:inline-flex shrink-0 px-2.5 sm:px-3 py-1.5 rounded-xl border text-xs font-semibold items-center gap-1.5 transition-all cursor-pointer shadow-xs whitespace-nowrap ${
                 isDark 
                   ? 'bg-slate-900 hover:bg-slate-800 text-teal-300 border-slate-700 hover:border-teal-400' 
                   : 'bg-teal-50 hover:bg-teal-100 text-teal-800 border-teal-200'
