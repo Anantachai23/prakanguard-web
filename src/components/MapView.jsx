@@ -8,7 +8,6 @@ import {
   DISTRICT_METADATA 
 } from '../data/samutPrakanBoundary';
 import { getFloodLevel } from '../data/floodStandards';
-import { getPointRoadSegment } from '../data/samutPrakanPoints';
 
 export default function MapView({ 
   points, 
@@ -35,7 +34,7 @@ export default function MapView({
   const districtLayersRef = useRef([]);
   const markersRef = useRef([]);
   const citizenMarkersRef = useRef([]);
-  const roadSegmentLayersRef = useRef([]);
+  const radarCircleLayersRef = useRef([]);
   const markersByIdRef = useRef({});
   const lastFlyToTimeRef = useRef(0);
   const temporaryPickMarkerRef = useRef(null);
@@ -510,15 +509,14 @@ export default function MapView({
     });
   }, [citizenReports, onSelectPoint]);
 
-  // 5.5 Render Localized Dotted/Dashed Road Segments (จุดไหนท่วม ทำเป็นเส้นประตามแนวถนนช่วงสั้นๆ สไตล์ Telemetry แบบ 1555 ไม่ลากยาว)
-  // ปรากฏอัตโนมัติบนทุกรูปแบบแผนที่ (ทางหลวง, ดาวเทียม, ภูมิประเทศ) โดยไม่ต้องกดเปิดเสริม
+  // 5.5 Render Radar-like Flood Coverage Circles (แทนที่เส้นปะด้วยวงกลมเรดาร์โปร่งแสง ซ้อนทับจุดน้ำท่วมครอบคลุมรัศมีบริเวณที่ท่วม)
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map) return;
 
-    // Clean up previous road segment layers
-    roadSegmentLayersRef.current.forEach(layer => map.removeLayer(layer));
-    roadSegmentLayersRef.current = [];
+    // Clean up previous radar circle layers
+    radarCircleLayersRef.current.forEach(layer => map.removeLayer(layer));
+    radarCircleLayersRef.current = [];
 
     const allActiveItems = [
       ...points.map(p => ({ ...p, isCitizen: false })),
@@ -526,6 +524,10 @@ export default function MapView({
     ];
 
     allActiveItems.forEach(item => {
+      if (typeof item.lat !== 'number' || typeof item.lng !== 'number' || isNaN(item.lat) || isNaN(item.lng)) {
+        return;
+      }
+
       // Filter by district if selectedDistrict is specified and not "ทั้งหมด"
       if (selectedDistrict && selectedDistrict !== "ทั้งหมด") {
         if (item.district !== selectedDistrict) return;
@@ -534,44 +536,51 @@ export default function MapView({
       const effectiveLevel = item.level || 1;
       const isL3 = effectiveLevel === 3;
       const isL2 = effectiveLevel === 2;
+      const isSelected = selectedPoint && selectedPoint.id === item.id;
 
-      // Extract or compute localized road segment (~200 - 300m along the actual road)
-      const coords = getPointRoadSegment(item);
-      if (!coords || coords.length < 2) return;
+      // รัศมีคลื่นเรดาร์จำลองตามระดับความรุนแรง: วิกฤต ~350ม., ปานกลาง ~250ม., ปกติ ~180ม.
+      const outerRadius = isL3 ? 350 : (isL2 ? 250 : 180);
+      const innerRadius = Math.round(outerRadius * 0.45);
 
-      const strokeColor = isL3 ? '#ef4444' : (isL2 ? '#f59e0b' : '#10b981');
-      const glowColor = isL3 ? 'rgba(239, 68, 68, 0.35)' : (isL2 ? 'rgba(245, 158, 11, 0.35)' : 'rgba(16, 185, 129, 0.35)');
+      const color = isL3 ? '#ef4444' : (isL2 ? '#f59e0b' : '#10b981');
+      const baseFillOpacity = isDark ? 0.20 : 0.16;
 
-      // 1. Subtle translucent glow underlayer for high contrast across satellite/terrain/roadmap
-      const glowLine = L.polyline(coords, {
-        color: glowColor,
-        weight: 12,
-        opacity: 0.65,
-        lineCap: 'round',
-        lineJoin: 'round',
+      // 1. Concentric Inner Radar Ring (วงกลมคลื่นเรดาร์ชั้นใน)
+      const innerCircle = L.circle([item.lat, item.lng], {
+        radius: innerRadius,
+        color: color,
+        weight: 1,
+        dashArray: '3, 4',
+        opacity: isSelected ? 0.7 : 0.45,
+        fillColor: color,
+        fillOpacity: baseFillOpacity * 0.7,
         interactive: false
       }).addTo(map);
 
-      // 2. Dotted/Dashed Segment along the road (เหมือนในตัวอย่างภาพแผนที่รายงานน้ำท่วม กทม./1555)
-      const dashLine = L.polyline(coords, {
-        color: strokeColor,
-        weight: 5.5,
-        dashArray: '7, 7',
-        opacity: 0.95,
-        lineCap: 'round',
-        lineJoin: 'round',
+      // 2. Main Outer Radar Coverage Circle (วงกลมเรดาร์ชั้นนอก สีจาง นวลตา ครอบคลุมจุดน้ำท่วม)
+      const outerCircle = L.circle([item.lat, item.lng], {
+        radius: outerRadius,
+        color: color,
+        weight: isSelected ? 2.5 : 1.5,
+        dashArray: isSelected ? 'none' : '5, 5',
+        opacity: isSelected ? 0.95 : 0.7,
+        fillColor: color,
+        fillOpacity: isSelected ? (baseFillOpacity + 0.1) : baseFillOpacity,
+        className: 'radar-flood-zone radar-pulse-active',
         interactive: true
       }).addTo(map);
 
       const depthText = item.depthCm ? `${item.depthCm} ซม.` : (item.depthRange || 'เฝ้าระวัง');
       const trendLineText = item.waterTrend === 'falling' ? ' • 📉 น้ำกำลังลด' : '';
-      dashLine.bindTooltip(`🌊 ${item.name} (${depthText}${trendLineText})`, {
+      const levelLabel = isL3 ? 'วิกฤต' : (isL2 ? 'ปานกลาง' : 'ปกติ');
+
+      outerCircle.bindTooltip(`📡 รัศมีน้ำท่วม ~${outerRadius}ม. • ${item.name} (${levelLabel} ${depthText}${trendLineText})`, {
         sticky: true,
         direction: 'top',
         className: 'bg-slate-900/95 text-white font-prompt text-[11px] font-bold px-2.5 py-1 rounded-xl border border-slate-700 shadow-md'
       });
 
-      dashLine.on('click', () => {
+      outerCircle.on('click', () => {
         onSelectPoint(item);
         const marker = markersByIdRef.current[item.id];
         if (marker) {
@@ -579,9 +588,9 @@ export default function MapView({
         }
       });
 
-      roadSegmentLayersRef.current.push(glowLine, dashLine);
+      radarCircleLayersRef.current.push(innerCircle, outerCircle);
     });
-  }, [points, citizenReports, selectedDistrict, onSelectPoint]);
+  }, [points, citizenReports, selectedDistrict, selectedPoint, onSelectPoint, isDark]);
 
   // 6. User GPS Location Marker
   useEffect(() => {
