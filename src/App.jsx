@@ -28,6 +28,7 @@ import {
   fetchRecentCloudReports, 
   fetchRecentCloudFeedback, 
   subscribeToCloudEvents,
+  syncCloudDataNow,
   isValidReport,
   isValidFeedback
 } from './services/cloudSyncService';
@@ -493,7 +494,7 @@ export default function App() {
 
   // Mobile Draggable Floating Legend State (เคลื่อนย้ายได้อิสระ ไม่บังแผนที่)
   const [mobileLegendPos, setMobileLegendPos] = useState({ x: null, y: null });
-  const [isLegendCollapsed, setIsLegendCollapsed] = useState(false);
+  const [isLegendCollapsed, setIsLegendCollapsed] = useState(() => typeof window !== 'undefined' ? window.innerWidth < 768 : true);
   const legendDragRef = useRef({
     isDragging: false,
     startX: 0,
@@ -759,8 +760,8 @@ export default function App() {
           return updated;
         });
 
-        // Trigger alert toast for admin (only visible if logged in)
-        if (!incomingReport.isApproved) {
+        // Trigger alert toast for admin (strictly visible ONLY if logged in as Admin)
+        if (!incomingReport.isApproved && isAdminAuthenticated) {
           const isHail = incomingReport.hazardType === 'hail';
           setAdminAlertToast({
             id: incomingReport.id,
@@ -866,6 +867,79 @@ export default function App() {
     setIsRefreshingData(false);
   };
 
+  // Real-time Cloud Cross-Device Synchronization Handler (Crowdsource Flood/Hail Reports & Feedback)
+  const handleManualSyncCloudData = async () => {
+    try {
+      const { reports, feedback } = await syncCloudDataNow();
+      let newReportsCount = 0;
+      let newFeedbackCount = 0;
+
+      if (Array.isArray(reports) && reports.length > 0) {
+        setCitizenReports(prev => {
+          const map = new Map(prev.map(r => [r.id, r]));
+          reports.forEach(cr => {
+            if (isValidReport(cr)) {
+              if (!map.has(cr.id)) newReportsCount++;
+              const existing = map.get(cr.id);
+              // preserve admin approval/resolution status if already acted upon locally
+              map.set(cr.id, { ...cr, ...(existing ? { isApproved: existing.isApproved, isResolved: existing.isResolved } : {}) });
+            }
+          });
+          const merged = Array.from(map.values()).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+          try {
+            localStorage.setItem('prakanguard_citizen_reports', JSON.stringify(merged));
+          } catch (e) {}
+          return merged;
+        });
+      }
+
+      if (Array.isArray(feedback) && feedback.length > 0) {
+        setFeedbackItems(prev => {
+          const map = new Map(prev.map(f => [f.id, f]));
+          feedback.forEach(cf => {
+            if (isValidFeedback(cf)) {
+              if (!map.has(cf.id)) newFeedbackCount++;
+              const existing = map.get(cf.id);
+              map.set(cf.id, { ...cf, ...(existing ? { isRead: existing.isRead } : {}) });
+            }
+          });
+          const merged = Array.from(map.values()).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+          try {
+            localStorage.setItem('prakanguard_feedback_items', JSON.stringify(merged));
+          } catch (e) {}
+          return merged;
+        });
+      }
+
+      return {
+        reportCount: reports.length,
+        feedbackCount: feedback.length,
+        newReportsCount,
+        newFeedbackCount
+      };
+    } catch (err) {
+      console.warn('[CloudSync] Manual sync error:', err);
+      return null;
+    }
+  };
+
+  // Auto-sync fresh data when Admin opens the Admin Panel
+  useEffect(() => {
+    if (isAdminModalOpen) {
+      handleManualSyncCloudData();
+    }
+  }, [isAdminModalOpen]);
+
+  // Periodic Background Polling for Cloud Updates (every 30 seconds)
+  useEffect(() => {
+    const timer = setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        handleManualSyncCloudData();
+      }
+    }, 30000);
+    return () => clearInterval(timer);
+  }, []);
+
   // Handle Admin Direct Emergency Announcement
   const handleAddAdminBroadcast = (broadcast) => {
     setCitizenReports(prev => {
@@ -896,15 +970,17 @@ export default function App() {
     publishCloudReport(newReport);
     playNotificationChime();
 
-    // Notify the admin owner immediately
-    const isHail = newReport.hazardType === 'hail';
-    setAdminAlertToast({
-      id: newReport.id,
-      name: newReport.name,
-      levelLabel: isHail ? `🧊 ${newReport.hailSizeLabel || 'ลูกเห็บตก'}` : newReport.bodyLevelLabel,
-      district: newReport.district,
-      time: newReport.reportedAt
-    });
+    // Notify the admin owner immediately (only if logged in as Admin)
+    if (isAdminAuthenticated) {
+      const isHail = newReport.hazardType === 'hail';
+      setAdminAlertToast({
+        id: newReport.id,
+        name: newReport.name,
+        levelLabel: isHail ? `🧊 ${newReport.hailSizeLabel || 'ลูกเห็บตก'}` : newReport.bodyLevelLabel,
+        district: newReport.district,
+        time: newReport.reportedAt
+      });
+    }
 
     setLatestUpdateNotification(`📍 บันทึกการแจ้งเตือนน้ำท่วม "${newReport.name}" เรียบร้อยแล้ว ขอบคุณที่ร่วมแจ้งข้อมูลครับ`);
     setTimeout(() => setLatestUpdateNotification(null), 7000);
@@ -1472,9 +1548,9 @@ export default function App() {
           </div>
         )}
 
-        {/* Prominent Patch 1.0 Version Notification on Entry */}
+        {/* Prominent Patch 1.0 Version Notification on Entry (Desktop/iPad only, hidden on mobile to avoid map obstruction) */}
         {showPatchBanner && (
-          <div className="fixed top-3.5 sm:top-5 left-1/2 -translate-x-1/2 z-[100] w-auto max-w-[95vw] sm:max-w-lg pointer-events-auto animate-in fade-in slide-in-from-top-4 duration-300 drop-shadow-2xl">
+          <div className="hidden sm:block fixed top-3.5 sm:top-5 left-1/2 -translate-x-1/2 z-[100] w-auto max-w-[95vw] sm:max-w-lg pointer-events-auto animate-in fade-in slide-in-from-top-4 duration-300 drop-shadow-2xl">
             <div className="flex items-center gap-2.5 sm:gap-3 px-3.5 sm:px-4 py-2.5 rounded-2xl bg-slate-950/95 text-white border border-emerald-400/80 shadow-2xl backdrop-blur-xl ring-2 ring-emerald-500/20">
               <span className="flex h-7 w-7 sm:h-8 sm:w-8 shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-amber-400 to-yellow-300 text-slate-950 shadow text-sm sm:text-base font-bold">
                 ✨
@@ -2266,6 +2342,7 @@ export default function App() {
         pickedCoords={pickedCoords}
         isAdminAuthenticated={isAdminAuthenticated}
         onAuthChange={setIsAdminAuthenticated}
+        onSyncCloudData={handleManualSyncCloudData}
         theme={theme}
       />
 

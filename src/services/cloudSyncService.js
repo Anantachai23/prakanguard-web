@@ -1,10 +1,15 @@
 // บริการ Cloud Real-time Sync ข้ามอุปกรณ์สำหรับ Prakanguard
-// รองรับการส่งรายงานน้ำท่วม/ลูกเห็บ และข้อเสนอแนะจากมือถือหรืออุปกรณ์อื่นเข้ามาที่แอดมินทันที
-// ใช้ HTTP API & Server-Sent Events (SSE) ข้ามเครือข่ายได้ 100% โดยไม่ต้องพึ่ง LocalStorage เพียงอย่างเดียว
+// รองรับการส่งและรับรายงานน้ำท่วม/ลูกเห็บ และข้อเสนอแนะจากมือถือหรืออุปกรณ์อื่นเข้ามาที่แอดมิน 100%
+// ใช้ Multi-Topic Fallback, HTTP Polling with since=all, Auto Attachment Resolver & Server-Sent Events (SSE)
 
-const REPORTS_TOPIC_URL = 'https://ntfy.sh/prakanguard_live_reports_v3_spk';
-const FEEDBACK_TOPIC_URL = 'https://ntfy.sh/prakanguard_live_feedback_v3_spk';
-const ACTIONS_TOPIC_URL = 'https://ntfy.sh/prakanguard_live_actions_v3_spk';
+const PRIMARY_REPORTS_TOPIC = 'https://ntfy.sh/prakanguard_live_reports_v4_spk';
+const FALLBACK_REPORTS_TOPIC = 'https://ntfy.sh/prakanguard_live_reports_v3_spk';
+
+const PRIMARY_FEEDBACK_TOPIC = 'https://ntfy.sh/prakanguard_live_feedback_v4_spk';
+const FALLBACK_FEEDBACK_TOPIC = 'https://ntfy.sh/prakanguard_live_feedback_v3_spk';
+
+const PRIMARY_ACTIONS_TOPIC = 'https://ntfy.sh/prakanguard_live_actions_v4_spk';
+const FALLBACK_ACTIONS_TOPIC = 'https://ntfy.sh/prakanguard_live_actions_v3_spk';
 
 /**
  * ตรวจสอบความถูกต้องของพิกัดและข้อมูลรายงาน เพื่อป้องกันข้อผิดพลาดแผนที่
@@ -50,15 +55,30 @@ export async function publishCloudReport(report) {
     
     const payload = JSON.stringify(report);
 
-    const res = await fetch(REPORTS_TOPIC_URL, {
+    // Publish to primary topic
+    const res = await fetch(PRIMARY_REPORTS_TOPIC, {
       method: 'POST',
       headers: {
+        'Content-Type': 'application/json; charset=utf-8',
         'Title': title,
         'Priority': report.level === 3 ? 'urgent' : 'high',
         'Tags': isHail ? 'ice_cube,cloud_with_rain' : 'droplet,warning'
       },
       body: payload
     });
+
+    // Also fire-and-forget to fallback topic for backwards compatibility
+    fetch(FALLBACK_REPORTS_TOPIC, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json; charset=utf-8',
+        'Title': title,
+        'Priority': report.level === 3 ? 'urgent' : 'high',
+        'Tags': isHail ? 'ice_cube,cloud_with_rain' : 'droplet,warning'
+      },
+      body: payload
+    }).catch(() => {});
+
     return res.ok;
   } catch (err) {
     console.warn('[CloudSync] publishCloudReport warning:', err);
@@ -75,15 +95,30 @@ export async function publishCloudFeedback(feedback) {
     const title = `💬 ข้อเสนอแนะใหม่ (${feedback.categoryLabel || 'ทั่วไป'}) จาก ${feedback.senderName || 'ประชาชน'}`;
     const payload = JSON.stringify(feedback);
 
-    const res = await fetch(FEEDBACK_TOPIC_URL, {
+    // Publish to primary feedback topic
+    const res = await fetch(PRIMARY_FEEDBACK_TOPIC, {
       method: 'POST',
       headers: {
+        'Content-Type': 'application/json; charset=utf-8',
         'Title': title,
         'Priority': 'default',
         'Tags': 'speech_balloon,star'
       },
       body: payload
     });
+
+    // Also fire-and-forget to fallback topic
+    fetch(FALLBACK_FEEDBACK_TOPIC, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json; charset=utf-8',
+        'Title': title,
+        'Priority': 'default',
+        'Tags': 'speech_balloon,star'
+      },
+      body: payload
+    }).catch(() => {});
+
     return res.ok;
   } catch (err) {
     console.warn('[CloudSync] publishCloudFeedback warning:', err);
@@ -97,14 +132,26 @@ export async function publishCloudFeedback(feedback) {
 export async function publishAdminAction(action) {
   try {
     const payload = JSON.stringify(action);
-    const res = await fetch(ACTIONS_TOPIC_URL, {
+    const res = await fetch(PRIMARY_ACTIONS_TOPIC, {
       method: 'POST',
       headers: {
+        'Content-Type': 'application/json; charset=utf-8',
         'Title': `🛡️ Admin Action: ${action.type}`,
         'Tags': 'shield,gear'
       },
       body: payload
     });
+
+    fetch(FALLBACK_ACTIONS_TOPIC, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json; charset=utf-8',
+        'Title': `🛡️ Admin Action: ${action.type}`,
+        'Tags': 'shield,gear'
+      },
+      body: payload
+    }).catch(() => {});
+
     return res.ok;
   } catch (err) {
     console.warn('[CloudSync] publishAdminAction warning:', err);
@@ -113,33 +160,84 @@ export async function publishAdminAction(action) {
 }
 
 /**
- * ดึงรายงานน้ำท่วม/ลูกเห็บย้อนหลังล่าสุดจาก Cloud
+ * ตัวช่วยดาวน์โหลดและแกะข้อมูลจากข้อความ ntfy ไม่ว่าจะเป็น inline message หรือ attachment
  */
-export async function fetchRecentCloudReports() {
+async function parseNtfyNdjsonStream(url, validator) {
   try {
-    const res = await fetch(`${REPORTS_TOPIC_URL}/json?poll=1`, { cache: 'no-cache' });
+    const res = await fetch(`${url}/json?poll=1&since=all`, { cache: 'no-cache' });
     if (!res.ok) return [];
     const text = await res.text();
+    if (!text || !text.trim()) return [];
+
     const lines = text.trim().split('\n');
-    const reports = [];
+    const items = [];
 
     for (const line of lines) {
       if (!line) continue;
       try {
-        const item = JSON.parse(line);
-        if (item.event === 'message' && item.message) {
-          const report = JSON.parse(item.message);
-          if (isValidReport(report)) {
-            reports.push(report);
+        const entry = JSON.parse(line);
+        if (entry.event === 'message') {
+          let parsedData = null;
+
+          // กรณีข้อความมีไฟล์แนบ (เช่น มีภาพถ่ายขนาดเกิน 4KB)
+          if (entry.attachment && entry.attachment.url) {
+            try {
+              const fileRes = await fetch(entry.attachment.url, { cache: 'no-cache' });
+              if (fileRes.ok) {
+                parsedData = await fileRes.json();
+              }
+            } catch (e) {
+              // fallback to message if attachment download fails
+            }
+          }
+
+          // กรณีข้อความอยู่ใน message ปกติ
+          if (!parsedData && entry.message) {
+            try {
+              parsedData = JSON.parse(entry.message);
+            } catch (e) {
+              // ignore plain string messages
+            }
+          }
+
+          if (validator(parsedData)) {
+            items.push(parsedData);
           }
         }
       } catch (e) {
         // Skip invalid line
       }
     }
-    return reports;
+    return items;
   } catch (err) {
-    console.warn('[CloudSync] fetchRecentCloudReports warning:', err);
+    console.warn(`[CloudSync] Error fetching from ${url}:`, err);
+    return [];
+  }
+}
+
+/**
+ * ดึงรายงานน้ำท่วม/ลูกเห็บย้อนหลังล่าสุดจาก Cloud (ดึงทั้ง Primary และ Fallback แล้ว Merge กัน)
+ */
+export async function fetchRecentCloudReports() {
+  try {
+    const [primaryReports, fallbackReports] = await Promise.all([
+      parseNtfyNdjsonStream(PRIMARY_REPORTS_TOPIC, isValidReport),
+      parseNtfyNdjsonStream(FALLBACK_REPORTS_TOPIC, isValidReport)
+    ]);
+
+    const reportMap = new Map();
+    // เพิ่ม fallback ก่อน แล้วตามด้วย primary เพื่อให้ข้อมูลใหม่สุดทับ
+    [...fallbackReports, ...primaryReports].forEach(r => {
+      if (isValidReport(r)) {
+        reportMap.set(r.id, r);
+      }
+    });
+
+    const results = Array.from(reportMap.values());
+    results.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+    return results;
+  } catch (err) {
+    console.warn('[CloudSync] fetchRecentCloudReports error:', err);
     return [];
   }
 }
@@ -149,31 +247,36 @@ export async function fetchRecentCloudReports() {
  */
 export async function fetchRecentCloudFeedback() {
   try {
-    const res = await fetch(`${FEEDBACK_TOPIC_URL}/json?poll=1`, { cache: 'no-cache' });
-    if (!res.ok) return [];
-    const text = await res.text();
-    const lines = text.trim().split('\n');
-    const feedbacks = [];
+    const [primaryFeedbacks, fallbackFeedbacks] = await Promise.all([
+      parseNtfyNdjsonStream(PRIMARY_FEEDBACK_TOPIC, isValidFeedback),
+      parseNtfyNdjsonStream(FALLBACK_FEEDBACK_TOPIC, isValidFeedback)
+    ]);
 
-    for (const line of lines) {
-      if (!line) continue;
-      try {
-        const item = JSON.parse(line);
-        if (item.event === 'message' && item.message) {
-          const feedback = JSON.parse(item.message);
-          if (isValidFeedback(feedback)) {
-            feedbacks.push(feedback);
-          }
-        }
-      } catch (e) {
-        // Skip invalid line
+    const feedbackMap = new Map();
+    [...fallbackFeedbacks, ...primaryFeedbacks].forEach(f => {
+      if (isValidFeedback(f)) {
+        feedbackMap.set(f.id, f);
       }
-    }
-    return feedbacks;
+    });
+
+    const results = Array.from(feedbackMap.values());
+    results.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+    return results;
   } catch (err) {
-    console.warn('[CloudSync] fetchRecentCloudFeedback warning:', err);
+    console.warn('[CloudSync] fetchRecentCloudFeedback error:', err);
     return [];
   }
+}
+
+/**
+ * ฟังก์ชันซิงก์ดึงข้อมูลสดทั้งหมดจาก Cloud แบบ Manual Trigger (สำหรับแอดมินกดรีเฟรช)
+ */
+export async function syncCloudDataNow() {
+  const [reports, feedback] = await Promise.all([
+    fetchRecentCloudReports(),
+    fetchRecentCloudFeedback()
+  ]);
+  return { reports, feedback };
 }
 
 /**
@@ -182,23 +285,34 @@ export async function fetchRecentCloudFeedback() {
 export function subscribeToCloudEvents({ onNewReport, onNewFeedback, onAdminAction }) {
   const eventSources = [];
 
+  const handleIncomingMessage = async (event, validator, callback) => {
+    try {
+      const data = JSON.parse(event.data);
+      if (data && data.event === 'message') {
+        let parsed = null;
+        if (data.attachment && data.attachment.url) {
+          try {
+            const res = await fetch(data.attachment.url);
+            if (res.ok) parsed = await res.json();
+          } catch (e) {}
+        }
+        if (!parsed && data.message) {
+          try {
+            parsed = JSON.parse(data.message);
+          } catch (e) {}
+        }
+        if (validator(parsed)) {
+          callback(parsed);
+        }
+      }
+    } catch (e) {}
+  };
+
   // 1. Subscribe to Citizen Flood & Hail Reports
   if (onNewReport && typeof window !== 'undefined' && 'EventSource' in window) {
     try {
-      const reportsSource = new EventSource(`${REPORTS_TOPIC_URL}/sse`);
-      reportsSource.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          if (data && data.event === 'message' && data.message) {
-            const report = JSON.parse(data.message);
-            if (isValidReport(report)) {
-              onNewReport(report);
-            }
-          }
-        } catch (e) {
-          // ignore parsing error
-        }
-      };
+      const reportsSource = new EventSource(`${PRIMARY_REPORTS_TOPIC}/sse`);
+      reportsSource.onmessage = (event) => handleIncomingMessage(event, isValidReport, onNewReport);
       eventSources.push(reportsSource);
     } catch (e) {
       console.warn('[CloudSync] Report EventSource error:', e);
@@ -208,20 +322,8 @@ export function subscribeToCloudEvents({ onNewReport, onNewFeedback, onAdminActi
   // 2. Subscribe to Feedback & Suggestions
   if (onNewFeedback && typeof window !== 'undefined' && 'EventSource' in window) {
     try {
-      const feedbackSource = new EventSource(`${FEEDBACK_TOPIC_URL}/sse`);
-      feedbackSource.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          if (data && data.event === 'message' && data.message) {
-            const feedback = JSON.parse(data.message);
-            if (isValidFeedback(feedback)) {
-              onNewFeedback(feedback);
-            }
-          }
-        } catch (e) {
-          // ignore parsing error
-        }
-      };
+      const feedbackSource = new EventSource(`${PRIMARY_FEEDBACK_TOPIC}/sse`);
+      feedbackSource.onmessage = (event) => handleIncomingMessage(event, isValidFeedback, onNewFeedback);
       eventSources.push(feedbackSource);
     } catch (e) {
       console.warn('[CloudSync] Feedback EventSource error:', e);
@@ -231,19 +333,20 @@ export function subscribeToCloudEvents({ onNewReport, onNewFeedback, onAdminActi
   // 3. Subscribe to Admin Actions (e.g. approve/resolve/delete sync)
   if (onAdminAction && typeof window !== 'undefined' && 'EventSource' in window) {
     try {
-      const actionsSource = new EventSource(`${ACTIONS_TOPIC_URL}/sse`);
-      actionsSource.onmessage = (event) => {
+      const actionsSource = new EventSource(`${PRIMARY_ACTIONS_TOPIC}/sse`);
+      actionsSource.onmessage = async (event) => {
         try {
           const data = JSON.parse(event.data);
-          if (data && data.event === 'message' && data.message) {
-            const action = JSON.parse(data.message);
+          if (data && data.event === 'message') {
+            let action = null;
+            if (data.message) {
+              try { action = JSON.parse(data.message); } catch (e) {}
+            }
             if (action && action.type) {
               onAdminAction(action);
             }
           }
-        } catch (e) {
-          // ignore parsing error
-        }
+        } catch (e) {}
       };
       eventSources.push(actionsSource);
     } catch (e) {

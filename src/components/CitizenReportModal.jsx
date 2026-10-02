@@ -200,7 +200,7 @@ export default function CitizenReportModal({
     reader.onload = (event) => {
       const img = new window.Image();
       img.onload = () => {
-        const maxDim = 800;
+        const maxDim = 400;
         let w = img.width;
         let h = img.height;
         if (w > maxDim || h > maxDim) {
@@ -217,7 +217,7 @@ export default function CitizenReportModal({
         canvas.height = h;
         const ctx = canvas.getContext('2d');
         ctx.drawImage(img, 0, 0, w, h);
-        const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.75);
+        const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.55);
         setPhotoPreview(compressedDataUrl);
       };
       img.src = event.target.result;
@@ -343,8 +343,8 @@ export default function CitizenReportModal({
     onSubmitReport(newReport);
     setIsSubmitting(false);
     alert(hazardType === 'hail'
-      ? "✅ บันทึกการแจ้งเตือนลูกเห็บตกเรียบร้อยแล้ว!\n\nขอบคุณที่ร่วมแจ้งข้อมูลสถานการณ์เพื่อความปลอดภัยของผู้สัญจรครับ"
-      : "✅ บันทึกการแจ้งเตือนน้ำท่วมเรียบร้อยแล้ว!\n\nขอบคุณที่ร่วมแจ้งข้อมูลสถานการณ์เพื่อความปลอดภัยของผู้สัญจรครับ");
+      ? "✅ ส่งข้อมูลรายงานลูกเห็บตกเรียบร้อยแล้ว!\n\nข้อมูลของคุณถูกส่งต่อไปยังระบบผู้ดูแลระบบ (Admin) เพื่อตรวจสอบความถูกต้องก่อนแสดงผลบนแผนที่สาธารณะ\n\nขอบคุณที่ร่วมแจ้งข้อมูลสถานการณ์เพื่อความปลอดภัยของผู้สัญจรครับ"
+      : "✅ ส่งข้อมูลรายงานน้ำท่วมเรียบร้อยแล้ว!\n\nข้อมูลของคุณถูกส่งต่อไปยังระบบผู้ดูแลระบบ (Admin) เพื่อตรวจสอบความถูกต้องก่อนแสดงผลบนแผนที่สาธารณะ\n\nขอบคุณที่ร่วมแจ้งข้อมูลสถานการณ์เพื่อความปลอดภัยของผู้สัญจรครับ");
     onClose();
   };
 

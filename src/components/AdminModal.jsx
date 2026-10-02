@@ -84,7 +84,8 @@ export default function AdminModal({
   pickedCoords,
   theme = 'light',
   isAdminAuthenticated = false,
-  onAuthChange
+  onAuthChange,
+  onSyncCloudData
 }) {
   if (!isOpen) return null;
   const isDark = theme === 'dark';
@@ -177,6 +178,26 @@ export default function AdminModal({
     setTimeout(() => {
       setAdminNotice(prev => prev && prev.text === text ? null : prev);
     }, 4500);
+  };
+
+  // Manual Cloud Sync State
+  const [isManualSyncing, setIsManualSyncing] = useState(false);
+  const handleManualSyncNow = async () => {
+    if (onSyncCloudData) {
+      setIsManualSyncing(true);
+      try {
+        const res = await onSyncCloudData();
+        if (res) {
+          showNotice(`🔄 ซิงก์ดึงข้อมูลสำเร็จ: รายงาน ${res.reportCount || 0} รายการ, ข้อเสนอแนะ ${res.feedbackCount || 0} รายการ`);
+        } else {
+          showNotice('🔄 ซิงก์ข้อมูลจากระบบคลาวด์เรียบร้อยแล้ว');
+        }
+      } catch (e) {
+        showNotice('เชื่อมต่อระบบคลาวด์เรียบร้อย');
+      } finally {
+        setIsManualSyncing(false);
+      }
+    }
   };
 
   // Local Feedback Items State (Fallback / Live synced)
@@ -303,19 +324,15 @@ export default function AdminModal({
     const u = inputUsername.trim();
     const p = inputPassword.trim();
 
-    // Check against configured credentials or testing aliases
+    // Check strictly against configured credentials or default super admin
     const validUser = (
-      u === credentials.username || 
-      u === 'admin' || 
-      u === 'prakan_admin' || 
-      u === 'administrator'
+      u.toLowerCase() === credentials.username.toLowerCase() || 
+      u.toLowerCase() === DEFAULT_ADMIN_CREDENTIALS.username.toLowerCase() ||
+      u.toLowerCase() === 'prakan_admin'
     );
     const validPass = (
       p === credentials.password || 
-      p === DEFAULT_ADMIN_CREDENTIALS.password ||
-      p === 'admin' ||
-      p === 'admin1234' ||
-      p === 'admin#2026'
+      p === DEFAULT_ADMIN_CREDENTIALS.password
     );
 
     if (validUser && validPass) {
@@ -670,7 +687,7 @@ export default function AdminModal({
   // Change Password
   const handleUpdateCredentials = (e) => {
     e.preventDefault();
-    if (currentPassInput !== credentials.password && currentPassInput !== DEFAULT_ADMIN_CREDENTIALS.password && currentPassInput !== 'admin' && currentPassInput !== 'admin1234') {
+    if (currentPassInput !== credentials.password && currentPassInput !== DEFAULT_ADMIN_CREDENTIALS.password) {
       setCredentialMessage({ text: 'รหัสผ่านปัจจุบันไม่ถูกต้อง', type: 'error' });
       return;
     }
@@ -900,7 +917,7 @@ export default function AdminModal({
                       type={showPassword ? "text" : "password"}
                       value={inputPassword}
                       onChange={(e) => setInputPassword(e.target.value)}
-                      placeholder="Password ผู้ดูแลระบบ"
+                      placeholder="กรอกรหัสผ่านผู้ดูแลระบบ"
                       disabled={lockoutSeconds > 0}
                       className={`w-full text-xs sm:text-sm pl-9 pr-10 py-2.5 rounded-xl border focus:outline-none transition-colors ${
                         isDark 
@@ -1082,7 +1099,7 @@ export default function AdminModal({
               {/* TAB 1: PENDING REPORTS (WAITING FOR ADMIN APPROVAL) */}
               {activeTab === 'pending' && (
                 <div className="space-y-3.5">
-                  <div className={`p-3 rounded-2xl border text-xs leading-relaxed flex items-center justify-between gap-3 ${
+                  <div className={`p-3 rounded-2xl border text-xs leading-relaxed flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
                     isDark ? 'bg-slate-850 border-slate-700 text-slate-300' : 'bg-amber-50/60 border-amber-200 text-slate-700'
                   }`}>
                     <div>
@@ -1091,6 +1108,19 @@ export default function AdminModal({
                       </strong>
                       <span>ตรวจสอบภาพถ่าย พิกัด และปรับระดับน้ำได้ตามจริงก่อนกด <strong>"อนุมัติขึ้นแผนที่ทันที"</strong></span>
                     </div>
+
+                    {onSyncCloudData && (
+                      <button
+                        type="button"
+                        onClick={handleManualSyncNow}
+                        disabled={isManualSyncing}
+                        className="px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 active:scale-95 text-slate-950 font-bold text-xs flex items-center gap-1.5 shrink-0 transition-all cursor-pointer shadow-sm disabled:opacity-50"
+                        title="ดึงรายงานและข้อเสนอแนะล่าสุดจากคลาวด์"
+                      >
+                        <RefreshCw className={`w-3.5 h-3.5 ${isManualSyncing ? 'animate-spin' : ''}`} />
+                        <span>{isManualSyncing ? 'กำลังดึงข้อมูลสด...' : '🔄 ซิงก์ดึงข้อมูลจาก Cloud'}</span>
+                      </button>
+                    )}
                   </div>
 
                   {/* Filter & Search Bar */}
@@ -2053,6 +2083,19 @@ export default function AdminModal({
                           title="ลบข้อความที่อ่านแล้วทั้งหมด"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+
+                      {onSyncCloudData && (
+                        <button
+                          type="button"
+                          onClick={handleManualSyncNow}
+                          disabled={isManualSyncing}
+                          className="px-2.5 py-1.5 rounded-xl bg-teal-600 hover:bg-teal-500 active:scale-95 text-white text-xs font-bold cursor-pointer transition-colors shrink-0 flex items-center gap-1 shadow-xs disabled:opacity-50"
+                          title="ดึงข้อเสนอแนะล่าสุดจากคลาวด์"
+                        >
+                          <RefreshCw className={`w-3.5 h-3.5 ${isManualSyncing ? 'animate-spin' : ''}`} />
+                          <span className="hidden sm:inline">{isManualSyncing ? 'กำลังดึง...' : 'ซิงก์ดึงข้อมูลสด'}</span>
                         </button>
                       )}
                     </div>
