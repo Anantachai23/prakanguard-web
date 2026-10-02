@@ -1755,7 +1755,7 @@ export default function App() {
                 title="แตะเพื่อดูเกณฑ์มาตรฐาน ปภ. ฉบับเต็ม"
               >
                 <BookOpen className="w-3 h-3 text-blue-500" />
-                <span>เกณฑ์สีน้ำ</span>
+                <span>เกณฑ์ระดับน้ำ</span>
               </button>
               {severityFilter !== 'all' && (
                 <button
