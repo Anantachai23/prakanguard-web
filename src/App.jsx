@@ -57,7 +57,8 @@ import {
   Trash2,
   Megaphone,
   Sparkles,
-  Flame
+  Flame,
+  GripHorizontal
 } from 'lucide-react';
 
 // Distance calculation helper (Haversine Formula)
@@ -471,6 +472,79 @@ export default function App() {
   const [showPatchBanner, setShowPatchBanner] = useState(true);
   const [latestUpdateNotification, setLatestUpdateNotification] = useState(null);
   const [adminAlertToast, setAdminAlertToast] = useState(null);
+
+  // Mobile Draggable Floating Legend State (เคลื่อนย้ายได้อิสระ ไม่บังแผนที่)
+  const [mobileLegendPos, setMobileLegendPos] = useState({ x: null, y: null });
+  const [isLegendCollapsed, setIsLegendCollapsed] = useState(false);
+  const legendDragRef = useRef({
+    isDragging: false,
+    startX: 0,
+    startY: 0,
+    elemStartX: 0,
+    elemStartY: 0,
+    hasMoved: false,
+    width: 124,
+    height: 160
+  });
+  const legendNodeRef = useRef(null);
+
+  const handleLegendPointerDown = (e) => {
+    // Only primary button (left mouse) or touch
+    if (e.button && e.button !== 0) return;
+
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+    const rect = legendNodeRef.current ? legendNodeRef.current.getBoundingClientRect() : { left: clientX, top: clientY, width: 124, height: 160 };
+
+    legendDragRef.current = {
+      isDragging: true,
+      startX: clientX,
+      startY: clientY,
+      elemStartX: rect.left,
+      elemStartY: rect.top,
+      hasMoved: false,
+      width: rect.width || 124,
+      height: rect.height || 160
+    };
+
+    const handlePointerMove = (moveEvt) => {
+      if (!legendDragRef.current.isDragging) return;
+      const curX = moveEvt.touches ? moveEvt.touches[0].clientX : moveEvt.clientX;
+      const curY = moveEvt.touches ? moveEvt.touches[0].clientY : moveEvt.clientY;
+
+      const deltaX = curX - legendDragRef.current.startX;
+      const deltaY = curY - legendDragRef.current.startY;
+
+      if (!legendDragRef.current.hasMoved && Math.hypot(deltaX, deltaY) > 5) {
+        legendDragRef.current.hasMoved = true;
+      }
+
+      if (legendDragRef.current.hasMoved) {
+        if (moveEvt.cancelable) moveEvt.preventDefault();
+        const elemWidth = legendDragRef.current.width;
+        const elemHeight = legendDragRef.current.height;
+
+        const nextX = Math.max(8, Math.min(window.innerWidth - elemWidth - 8, legendDragRef.current.elemStartX + deltaX));
+        const nextY = Math.max(56, Math.min(window.innerHeight - elemHeight - 65, legendDragRef.current.elemStartY + deltaY));
+
+        setMobileLegendPos({ x: nextX, y: nextY });
+      }
+    };
+
+    const handlePointerUp = () => {
+      legendDragRef.current.isDragging = false;
+      window.removeEventListener('mousemove', handlePointerMove);
+      window.removeEventListener('mouseup', handlePointerUp);
+      window.removeEventListener('touchmove', handlePointerMove);
+      window.removeEventListener('touchend', handlePointerUp);
+    };
+
+    window.addEventListener('mousemove', handlePointerMove, { passive: false });
+    window.addEventListener('mouseup', handlePointerUp);
+    window.addEventListener('touchmove', handlePointerMove, { passive: false });
+    window.addEventListener('touchend', handlePointerUp);
+  };
 
   // Auto-dismiss initial patch update banner after 20s
   useEffect(() => {
@@ -1622,7 +1696,7 @@ export default function App() {
               onOpenRadar={() => setIsOfficialModalOpen(true)}
               theme={theme}
               collapsible={true}
-              defaultExpanded={true}
+              defaultExpanded={typeof window !== 'undefined' ? window.innerWidth >= 768 : false}
               onManualSync={handleManualSync}
               isSyncing={telemetrySyncStatus?.isSyncing}
               onOpenPublicUpdates={() => setIsPublicUpdatesModalOpen(true)}
@@ -1718,106 +1792,153 @@ export default function App() {
 
         </div>
 
-        {/* FLOATING 3-COLOR SEVERITY CRITERIA (SIDE BAR FOR MOBILE - NO SCROLLING NEEDED) */}
-        <div className={`fixed right-2.5 sm:right-auto sm:left-4 z-20 pointer-events-auto transition-all duration-300 select-none ${
-          isTopPanelCollapsed 
-            ? 'top-16 sm:bottom-16 sm:top-auto' 
-            : 'top-[195px] sm:bottom-16 sm:top-auto'
-        }`}>
-          <div className={`p-2 rounded-2xl border shadow-xl backdrop-blur-xl transition-all flex flex-col gap-1 w-[124px] sm:w-[136px] ${
+        {/* FLOATING 3-COLOR SEVERITY CRITERIA (เฉพาะบนมือถือเท่านั้น - เคลื่อนย้าย/ลากได้ ไม่บังแผนที่) */}
+        <div 
+          ref={legendNodeRef}
+          onMouseDown={handleLegendPointerDown}
+          onTouchStart={handleLegendPointerDown}
+          style={mobileLegendPos.x !== null && mobileLegendPos.y !== null ? {
+            left: `${mobileLegendPos.x}px`,
+            top: `${mobileLegendPos.y}px`,
+            right: 'auto',
+            bottom: 'auto'
+          } : undefined}
+          className={`md:hidden fixed z-20 pointer-events-auto select-none touch-none ${
+            mobileLegendPos.x === null ? (
+              isTopPanelCollapsed ? 'top-16 right-2.5' : 'top-[160px] right-2.5'
+            ) : ''
+          }`}
+        >
+          <div className={`p-2 rounded-2xl border shadow-xl backdrop-blur-xl flex flex-col gap-1 w-[124px] ${
             isDark 
               ? 'bg-slate-900/95 border-slate-700/90 text-white shadow-slate-950/80' 
               : 'bg-white/95 border-slate-200/90 text-slate-800 shadow-slate-400/30'
           }`}>
             
-            {/* Header / Info trigger */}
-            <div className="flex items-center justify-between pb-1 mb-0.5 border-b border-slate-200/80 dark:border-slate-800">
-              <button
-                onClick={() => setIsStandardsModalOpen(true)}
-                className="text-[10px] font-bold text-slate-500 dark:text-slate-400 hover:text-blue-500 flex items-center gap-1 cursor-pointer"
-                title="แตะเพื่อดูเกณฑ์มาตรฐาน ปภ. ฉบับเต็ม"
-              >
-                <BookOpen className="w-3 h-3 text-blue-500" />
-                <span>เกณฑ์ระดับน้ำ</span>
-              </button>
-              {severityFilter !== 'all' && (
+            {/* Draggable Grip Handle & Header */}
+            <div className="drag-handle flex items-center justify-between pb-1 mb-0.5 border-b border-slate-200/80 dark:border-slate-800 cursor-grab active:cursor-grabbing">
+              <div className="flex items-center gap-1 min-w-0">
+                <GripHorizontal className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                <span className="text-[10px] font-bold text-slate-600 dark:text-slate-300 truncate">
+                  เกณฑ์ระดับน้ำ
+                </span>
+              </div>
+              <div className="flex items-center gap-1">
+                {severityFilter !== 'all' && (
+                  <button
+                    onClick={(e) => {
+                      if (!legendDragRef.current.hasMoved) {
+                        e.stopPropagation();
+                        setSeverityFilter('all');
+                      }
+                    }}
+                    className="text-[9px] px-1 py-0.2 rounded bg-blue-500/20 text-blue-600 dark:text-blue-400 font-bold cursor-pointer"
+                    title="ล้างตัวกรอง"
+                  >
+                    ล้าง
+                  </button>
+                )}
                 <button
-                  onClick={() => setSeverityFilter('all')}
-                  className="text-[9px] px-1 py-0.2 rounded bg-blue-500/20 text-blue-600 dark:text-blue-400 font-bold cursor-pointer"
-                  title="แตะเพื่อล้างตัวกรองแสดงทุกระดับ"
+                  onClick={(e) => {
+                    if (!legendDragRef.current.hasMoved) {
+                      e.stopPropagation();
+                      setIsLegendCollapsed(!isLegendCollapsed);
+                    }
+                  }}
+                  className="p-0.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+                  title={isLegendCollapsed ? "ขยาย" : "ย่อ"}
                 >
-                  ล้าง
+                  {isLegendCollapsed ? <ChevronDown className="w-3 h-3" /> : <ChevronUp className="w-3 h-3" />}
                 </button>
-              )}
+              </div>
             </div>
 
-            {/* Green: Normal */}
-            <button
-              type="button"
-              onClick={() => setSeverityFilter(prev => prev === '1' ? 'all' : '1')}
-              className={`flex items-center gap-2 p-1 rounded-xl text-left transition-all cursor-pointer ${
-                severityFilter === '1' 
-                  ? 'bg-emerald-500/25 ring-1.5 ring-emerald-500' 
-                  : 'hover:bg-slate-100 dark:hover:bg-slate-800/80'
-              }`}
-              title="แตะเพื่อกรองดูเฉพาะจุดปกติ (5 - 20 ซม.)"
-            >
-              <span className="w-3 h-3 rounded-full bg-emerald-500 shadow-sm shrink-0"></span>
-              <div className="leading-tight min-w-0">
-                <div className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400">เขียว: ปกติ</div>
-                <div className="text-[9px] text-slate-500 dark:text-slate-400">5 - 20 ซม.</div>
-              </div>
-            </button>
+            {/* Severity Levels when not collapsed */}
+            {!isLegendCollapsed && (
+              <>
+                {/* Green: Normal */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!legendDragRef.current.hasMoved) {
+                      setSeverityFilter(prev => prev === '1' ? 'all' : '1');
+                    }
+                  }}
+                  className={`flex items-center gap-1.5 p-1 rounded-xl text-left transition-all cursor-pointer ${
+                    severityFilter === '1' 
+                      ? 'bg-emerald-500/25 ring-1.5 ring-emerald-500' 
+                      : 'hover:bg-slate-100 dark:hover:bg-slate-800/80'
+                  }`}
+                  title="แตะเพื่อกรองดูเฉพาะจุดปกติ (5 - 20 ซม.)"
+                >
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-sm shrink-0"></span>
+                  <div className="leading-tight min-w-0">
+                    <div className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">เขียว: ปกติ</div>
+                    <div className="text-[8px] text-slate-500 dark:text-slate-400">5 - 20 ซม.</div>
+                  </div>
+                </button>
 
-            {/* Yellow: High Risk */}
-            <button
-              type="button"
-              onClick={() => setSeverityFilter(prev => prev === '2' ? 'all' : '2')}
-              className={`flex items-center gap-2 p-1 rounded-xl text-left transition-all cursor-pointer ${
-                severityFilter === '2' 
-                  ? 'bg-amber-500/25 ring-1.5 ring-amber-500' 
-                  : 'hover:bg-slate-100 dark:hover:bg-slate-800/80'
-              }`}
-              title="แตะเพื่อกรองดูเฉพาะจุดเสี่ยงสูง (21 - 50 ซม.)"
-            >
-              <span className="w-3 h-3 rounded-full bg-amber-500 shadow-sm shrink-0"></span>
-              <div className="leading-tight min-w-0">
-                <div className="text-[11px] font-bold text-amber-600 dark:text-amber-400">เหลือง: เสี่ยงสูง</div>
-                <div className="text-[9px] text-slate-500 dark:text-slate-400">21 - 50 ซม.</div>
-              </div>
-            </button>
+                {/* Yellow: High Risk */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!legendDragRef.current.hasMoved) {
+                      setSeverityFilter(prev => prev === '2' ? 'all' : '2');
+                    }
+                  }}
+                  className={`flex items-center gap-1.5 p-1 rounded-xl text-left transition-all cursor-pointer ${
+                    severityFilter === '2' 
+                      ? 'bg-amber-500/25 ring-1.5 ring-amber-500' 
+                      : 'hover:bg-slate-100 dark:hover:bg-slate-800/80'
+                  }`}
+                  title="แตะเพื่อกรองดูเฉพาะจุดเสี่ยงสูง (21 - 50 ซม.)"
+                >
+                  <span className="w-2.5 h-2.5 rounded-full bg-amber-500 shadow-sm shrink-0"></span>
+                  <div className="leading-tight min-w-0">
+                    <div className="text-[10px] font-bold text-amber-600 dark:text-amber-400">เหลือง: เสี่ยงสูง</div>
+                    <div className="text-[8px] text-slate-500 dark:text-slate-400">21 - 50 ซม.</div>
+                  </div>
+                </button>
 
-            {/* Red: Critical */}
-            <button
-              type="button"
-              onClick={() => setSeverityFilter(prev => prev === '3' ? 'all' : '3')}
-              className={`flex items-center gap-2 p-1 rounded-xl text-left transition-all cursor-pointer ${
-                severityFilter === '3' 
-                  ? 'bg-rose-500/25 ring-1.5 ring-rose-500' 
-                  : 'hover:bg-slate-100 dark:hover:bg-slate-800/80'
-              }`}
-              title="แตะเพื่อกรองดูเฉพาะจุดวิกฤต (> 50 ซม.)"
-            >
-              <span className="w-3 h-3 rounded-full bg-rose-500 shadow-sm shrink-0 animate-pulse"></span>
-              <div className="leading-tight min-w-0">
-                <div className="text-[11px] font-bold text-rose-600 dark:text-rose-400">แดง: วิกฤต</div>
-                <div className="text-[9px] text-slate-500 dark:text-slate-400">&gt; 50 ซม.</div>
-              </div>
-            </button>
+                {/* Red: Critical */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!legendDragRef.current.hasMoved) {
+                      setSeverityFilter(prev => prev === '3' ? 'all' : '3');
+                    }
+                  }}
+                  className={`flex items-center gap-1.5 p-1 rounded-xl text-left transition-all cursor-pointer ${
+                    severityFilter === '3' 
+                      ? 'bg-rose-500/25 ring-1.5 ring-rose-500' 
+                      : 'hover:bg-slate-100 dark:hover:bg-slate-800/80'
+                  }`}
+                  title="แตะเพื่อกรองดูเฉพาะจุดวิกฤต (> 50 ซม.)"
+                >
+                  <span className="w-2.5 h-2.5 rounded-full bg-rose-500 shadow-sm shrink-0 animate-pulse"></span>
+                  <div className="leading-tight min-w-0">
+                    <div className="text-[10px] font-bold text-rose-600 dark:text-rose-400">แดง: วิกฤต</div>
+                    <div className="text-[8px] text-slate-500 dark:text-slate-400">&gt; 50 ซม.</div>
+                  </div>
+                </button>
 
-            {/* Citizen reports pill if any */}
-            {citizenReports.length > 0 && (
-              <div className="flex items-center gap-1.5 pt-1 mt-0.5 border-t border-dashed border-slate-200 dark:border-slate-800 px-1">
-                <span className="w-2.5 h-2.5 rounded-full bg-violet-500 shrink-0"></span>
-                <div className="leading-tight min-w-0">
-                  <span className="text-[10px] font-bold text-violet-600 dark:text-violet-400 block truncate">
-                    ม่วง: แจ้งเตือน
-                  </span>
-                  <span className="text-[9px] text-slate-500 dark:text-slate-400 block">
-                    {citizenReports.length} จุด
-                  </span>
+                {/* Citizen reports pill if any */}
+                {citizenReports.length > 0 && (
+                  <div className="flex items-center gap-1.5 pt-1 mt-0.5 border-t border-dashed border-slate-200 dark:border-slate-800 px-1">
+                    <span className="w-2 h-2 rounded-full bg-violet-500 shrink-0"></span>
+                    <div className="leading-tight min-w-0">
+                      <span className="text-[9px] font-bold text-violet-600 dark:text-violet-400 block truncate">
+                        ม่วง: แจ้งเตือน ({citizenReports.length})
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Tiny movable hint */}
+                <div className="text-[8px] text-center text-slate-400 dark:text-slate-500 pt-0.5 border-t border-slate-100 dark:border-slate-800">
+                  ลากย้ายตำแหน่งได้
                 </div>
-              </div>
+              </>
             )}
 
           </div>

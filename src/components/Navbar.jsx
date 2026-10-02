@@ -197,10 +197,10 @@ export default function Navbar({
               <RealTimeClock theme={theme} />
             </div>
 
-            {/* Status Indicator with Detailed Labels (เขียนบอกว่าแต่ละจุดคืออะไร) */}
+            {/* Status Indicator with Detailed Labels (ซ่อนบนมือถือเพื่อไม่ให้ซ้ำซ้อน มีเฉพาะบน iPad และคอมพิวเตอร์) */}
             <div 
               onClick={onOpenStandards}
-              className={`shrink-0 flex items-center space-x-1.5 sm:space-x-2 px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-xl border text-[11px] sm:text-xs font-medium cursor-pointer transition-all hover:scale-[1.01] whitespace-nowrap ${
+              className={`hidden md:flex shrink-0 items-center space-x-1.5 sm:space-x-2 px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-xl border text-[11px] sm:text-xs font-medium cursor-pointer transition-all hover:scale-[1.01] whitespace-nowrap ${
                 isDark ? 'bg-slate-900/90 border-slate-800 text-slate-300' : 'bg-slate-100 border-slate-200 text-slate-700'
               }`}
               title="คลิกเพื่อดูเกณฑ์ระดับน้ำมาตรฐาน ปภ./กรมทางหลวง"
@@ -254,10 +254,10 @@ export default function Navbar({
               )}
             </button>
 
-            {/* Official Standards Button */}
+            {/* Official Standards Button (แสดงบน iPad และคอมพิวเตอร์) */}
             <button 
               onClick={onOpenStandards}
-              className={`shrink-0 px-2 sm:px-2.5 py-1.5 rounded-xl border text-xs font-semibold flex items-center gap-1 transition-all cursor-pointer shadow-xs whitespace-nowrap ${
+              className={`hidden md:inline-flex shrink-0 px-2 sm:px-2.5 py-1.5 rounded-xl border text-xs font-semibold items-center gap-1 transition-all cursor-pointer shadow-xs whitespace-nowrap ${
                 isDark 
                   ? 'bg-slate-900 hover:bg-slate-800 text-slate-200 border-slate-700' 
                   : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200'

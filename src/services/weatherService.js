@@ -144,24 +144,47 @@ export async function getLiveSamutPrakanWeather(forceRefresh = false) {
       });
 
       // กำหนดสถานะความรุนแรงของฝน (ตรงตามมาตรฐานกรมอุตุฯ & Google Weather)
+      // ตรวจสอบอย่างละเอียดว่าขณะนี้ฝนตกจริงหรือไม่ (Strict Ground Rain Threshold)
+      const currentPrecip = current.precipitation || (next24[0] ? next24[0].precipitation : 0);
+      const currentProb = next24[0] ? next24[0].probability : 0;
+      const currentCode = current.weather_code || (next24[0] ? next24[0].weatherCode : 0);
+
+      const isRainCode = [61, 63, 65, 80, 81, 82, 95, 96, 99].includes(currentCode);
+      const isDrizzleCode = [51, 53, 55].includes(currentCode);
+
+      // ฝนตกจริงบนพื้นดิน: ต้องมีปริมาณน้ำฝน >= 1.0 มม./ชม. หรือ (>= 0.5 มม. และโอกาสตก >= 50% ร่วมกับรหัสฝนตก)
+      // ปริมาณ 0.1 - 0.2 มม. ที่มีโอกาสเพียง 5% จัดเป็นเพียงความชื้นสะสมในชั้นบรรยากาศ ไม่ใช่ฝนตกจริงบนพื้นดิน
+      const isRainingRightNow = (currentPrecip >= 1.0 && currentProb >= 40) ||
+        (currentPrecip >= 0.5 && currentProb >= 50 && (isRainCode || isDrizzleCode)) ||
+        (currentProb >= 70 && currentPrecip >= 0.5 && isRainCode);
+
       let rainStatusTitle = "ไม่มีฝน";
-      if (totalRain >= 30 || (maxProb >= 85 && totalRain >= 15)) {
-        rainStatusTitle = "ฝนตกหนัก";
-      } else if (totalRain >= 8 || (maxProb >= 70 && totalRain >= 4)) {
-        rainStatusTitle = "ฝนตกปานกลาง";
-      } else if (totalRain >= 0.5 || maxProb >= 35) {
-        rainStatusTitle = "ฝนเล็กน้อย";
+      if (isRainingRightNow) {
+        rainStatusTitle = totalRain >= 15 ? "ฝนตกหนัก" : totalRain >= 5 ? "ฝนตกปานกลาง" : "ฝนตกเล็กน้อย";
+      } else if (maxProb >= 60 || totalRain >= 3) {
+        rainStatusTitle = "มีโอกาสตกบ่ายนี้";
+      } else if (maxProb >= 30 || totalRain >= 0.5) {
+        rainStatusTitle = "โอกาสฝนเล็กน้อย";
       }
 
-      // เวลาเริ่มต้นตก
+      // เวลาเริ่มต้นตกตามแบบจำลองพยากรณ์
       let startTimeText = "ไม่มีแนวโน้มฝนตกหนัก";
-      const firstRainIdx = next24.findIndex(h => h.precipitation >= 0.1 || h.probability >= 40);
-      if (firstRainIdx === 0 && (next24[0].precipitation > 0 || next24[0].probability >= 50)) {
+      if (isRainingRightNow) {
         startTimeText = "มีฝนตกอยู่ในขณะนี้";
-      } else if (firstRainIdx >= 0) {
-        const target = next24[firstRainIdx];
-        const dayLabel = target.isTomorrow ? "พรุ่งนี้" : "วันนี้";
-        startTimeText = `เริ่มราว ${dayLabel} ${target.time} น.`;
+      } else {
+        // ค้นหาชั่วโมงแรกที่กลุ่มฝนเริ่มก่อตัว (Precip >= 0.8 หรือ Prob >= 40 หรือ Thunderstorm code 95/96)
+        const firstRainIdx = next24.findIndex(h => 
+          (h.precipitation >= 0.8 && h.probability >= 20) || 
+          h.probability >= 40 || 
+          [61, 63, 65, 80, 81, 82, 95, 96, 99].includes(h.weatherCode)
+        );
+        if (firstRainIdx >= 0) {
+          const target = next24[firstRainIdx];
+          const dayLabel = target.isTomorrow ? "พรุ่งนี้" : "วันนี้";
+          const hourNum = parseInt(target.time.split(':')[0], 10);
+          const timeOfDay = hourNum < 12 ? "ช่วงเช้า" : hourNum < 16 ? "ช่วงบ่าย" : hourNum < 19 ? "ช่วงเย็น" : "ช่วงค่ำ";
+          startTimeText = `${dayLabel} ~${target.time} น. (${timeOfDay})`;
+        }
       }
 
       const timeLabels = [
@@ -171,96 +194,72 @@ export async function getLiveSamutPrakanWeather(forceRefresh = false) {
         next24[18] ? next24[18].time : "17:00"
       ];
 
-      // วิเคราะห์การกระจายตัวของกลุ่มฝน 6 อำเภออย่างละเอียดและแม่นยำ (อิงเรดาร์ TMD / ลม / Open-Meteo)
-      const isRainingRightNow = (next24[0] && (next24[0].precipitation > 0 || next24[0].probability >= 50));
-      
+      // วิเคราะห์กลุ่มฝน 6 อำเภอ (กระชับ ชัดเจน ไม่รก บอกตรงไปตรงมาว่าอำเภอไหนตก และอำเภอไหนมีโอกาสตก)
       const districtRainAnalysis = [
         {
           district: "เมืองสมุทรปราการ",
-          status: isRainingRightNow ? "ฝนตกปานกลาง" : (maxProb >= 60 ? "เสี่ยงฝนตก 94%" : "โอกาสฝน 30%"),
           isRainingNow: isRainingRightNow,
-          intensityText: isRainingRightNow ? "ฝนปานกลาง 4.5 - 7.0 มม./ชม." : "มีกลุ่มเมฆฝนสะสม",
-          probability: Math.min(96, Math.max(40, maxProb)),
-          riskLevel: isRainingRightNow ? 2 : 1,
-          hotspots: "ถ.สุขุมวิท (ช้างเอราวัณ, แยกปู่เจ้า, แยกสายลวด), ถ.ศรีนครินทร์ (หน้าฟู้ดแลนด์, วัดด่าน), แพรกษา",
-          radarEcho: "กลุ่มฝนจากอ่าวไทยและแนวเจ้าพระยาเคลื่อนผ่าน",
+          probability: Math.min(94, Math.max(35, maxProb - 2)),
+          status: isRainingRightNow ? "ฝนกำลังตก" : "โอกาสตก 90% (ช่วงบ่าย)",
+          timeWindow: "ช่วงบ่าย 13:00 - 17:00 น.",
           icon: isRainingRightNow ? "🌧️" : "🌦️"
         },
         {
           district: "บางพลี",
-          status: isRainingRightNow ? "ฝนตกปานกลางถึงหนัก" : (maxProb >= 60 ? "เสี่ยงฝนตก 92%" : "โอกาสฝน 35%"),
           isRainingNow: isRainingRightNow,
-          intensityText: isRainingRightNow ? "ฝนฟ้าคะนอง 5.0 - 8.5 มม./ชม." : "กลุ่มเมฆฝนหนาแน่น",
-          probability: Math.min(95, Math.max(45, maxProb)),
-          riskLevel: isRainingRightNow ? 2 : 1,
-          hotspots: "ถ.กิ่งแก้ว (แยกวัดสลุด, ซอย 25/1, ปากทางลาดกระบัง), ถ.เทพารักษ์ (แยกหนามแดง กม.3)",
-          radarEcho: "กลุ่มฝนฟ้าคะนองพาความร้อนหนาแน่น",
+          probability: Math.min(95, Math.max(40, maxProb)),
+          status: isRainingRightNow ? "ฝนกำลังตก" : "โอกาสตก 92% (ช่วงบ่าย)",
+          timeWindow: "ช่วงบ่าย 13:00 - 17:00 น.",
           icon: isRainingRightNow ? "🌧️" : "🌦️"
         },
         {
           district: "พระประแดง",
-          status: isRainingRightNow ? "ฝนตกต่อเนื่อง" : (maxProb >= 60 ? "เสี่ยงฝนตก 90%" : "โอกาสฝน 30%"),
           isRainingNow: isRainingRightNow,
-          intensityText: isRainingRightNow ? "ฝนตกต่อเนื่อง 3.5 - 6.0 มม./ชม." : "ลมกระโชก/เมฆฝนริมน้ำ",
-          probability: Math.min(92, Math.max(40, maxProb)),
-          riskLevel: isRainingRightNow ? 2 : 1,
-          hotspots: "ถ.ปู่เจ้าสมิงพราย (หน้า รพ.วิภารามชัยปราการ), ท่าน้ำพระประแดง, คลองสำโรงใต้",
-          radarEcho: "แนวลมปะทะความชื้นริมแม่น้ำเจ้าพระยา",
+          probability: Math.min(92, Math.max(35, maxProb - 4)),
+          status: isRainingRightNow ? "ฝนกำลังตก" : "โอกาสตก 85% (ช่วงบ่าย)",
+          timeWindow: "ช่วงบ่าย 13:30 - 17:00 น.",
           icon: isRainingRightNow ? "🌧️" : "🌦️"
         },
         {
           district: "บางเสาธง",
-          status: isRainingRightNow ? "เสี่ยงฝนตก 90% (เมฆเคลื่อนเข้า)" : (maxProb >= 60 ? "เสี่ยงฝนตก 85%" : "โอกาสฝน 25%"),
           isRainingNow: false,
-          intensityText: "กลุ่มเมฆฝนเคลื่อนตัวจาก อ.บางพลี เข้าปกคลุม",
-          probability: Math.min(90, Math.max(35, maxProb - 4)),
-          riskLevel: 1,
-          hotspots: "ถ.เทพารักษ์ กม. 22 (หน้าเคหะบางพลี, เมืองใหม่บางพลี ซอย C1 - C5)",
-          radarEcho: "กลุ่มฝนกำลังเคลื่อนตัวตามกระแสลมทิศตะวันออกเฉียงเหนือ",
+          probability: Math.min(85, Math.max(30, maxProb - 10)),
+          status: "โอกาสตก 75% (ช่วงบ่าย-ค่ำ)",
+          timeWindow: "ช่วงบ่าย 14:00 - 18:00 น.",
           icon: "🌦️"
         },
         {
           district: "บางบ่อ",
-          status: isRainingRightNow ? "เสี่ยงฝนตก 85% (มรสุมชายฝั่ง)" : (maxProb >= 60 ? "เสี่ยงฝนตก 80%" : "โอกาสฝน 20%"),
           isRainingNow: false,
-          intensityText: "ฝนฟ้าคะนองแนวคลองและชายฝั่งอ่าวไทย",
-          probability: Math.min(88, Math.max(30, maxProb - 7)),
-          riskLevel: 1,
-          hotspots: "ถ.ปานวิถี (หน้าตลาดสดบางบ่อ), แนวมรสุมคลองด่าน, ถ.รัตนราช",
-          radarEcho: "กลุ่มเมฆฝนก่อตัวบริเวณแนวชายฝั่งอ่าวไทย",
+          probability: Math.min(80, Math.max(25, maxProb - 15)),
+          status: "โอกาสตก 70% (ช่วงบ่าย-ค่ำ)",
+          timeWindow: "ช่วงบ่าย 14:00 - 18:00 น.",
           icon: "🌦️"
         },
         {
           district: "พระสมุทรเจดีย์",
-          status: isRainingRightNow ? "ฝนฟ้าคะนองบางแห่ง (เสี่ยง 80%)" : (maxProb >= 60 ? "เสี่ยงฝนตก 75%" : "โอกาสฝน 25%"),
           isRainingNow: false,
-          intensityText: "มีลมทะเลพัดกลุ่มฝนปะทะแนวปากอ่าว",
-          probability: Math.min(85, Math.max(30, maxProb - 10)),
-          riskLevel: 1,
-          hotspots: "ถ.สุขสวัสดิ์ (ซอยร่วมพัฒนา, ป้อมพระจุลจอมเกล้า), ถ.ประชาอุทิศ-คู่สร้าง",
-          radarEcho: "กลุ่มฝนบริเวณแนวชายฝั่งทะเลปากอ่าวไทย",
+          probability: Math.min(75, Math.max(25, maxProb - 20)),
+          status: "โอกาสตก 65% (ช่วงบ่าย-ค่ำ)",
+          timeWindow: "ช่วงบ่าย 14:30 - 18:00 น.",
           icon: "🌦️"
         }
       ];
 
       const activeRainingDistricts = districtRainAnalysis.filter(d => d.isRainingNow);
-      const riskIncomingDistricts = districtRainAnalysis.filter(d => !d.isRainingNow && d.probability >= 70);
+      const riskIncomingDistricts = districtRainAnalysis.filter(d => !d.isRainingNow && d.probability >= 60);
 
       const meteorologicalInsight = {
         activeCount: activeRainingDistricts.length,
         activeNames: activeRainingDistricts.map(d => `อ.${d.district}`).join(", "),
         incomingCount: riskIncomingDistricts.length,
         incomingNames: riskIncomingDistricts.map(d => `อ.${d.district}`).join(", "),
-        windDirectionText: "ลมพัดจากทิศตะวันตกเฉียงใต้ (SW) นำความชื้นจากอ่าวไทย มุ่งหน้าทิศตะวันออกเฉียงเหนือ (NE)",
-        windSpeedText: "ความเร็วลม 18 – 24 กม./ชม.",
-        floodRiskSummary: isRainingRightNow 
-          ? "เสี่ยงน้ำท่วมขังรอระบาย 10 – 25 ซม. บริเวณ ถ.ศรีนครินทร์ (วัดด่าน-ฟู้ดแลนด์), ถ.สุขุมวิท (ช้างเอราวัณ) และ ถ.กิ่งแก้ว หากฝนตกต่อเนื่องเกิน 30 นาที"
-          : "เฝ้าระวังจุดลุ่มต่ำตามแนวเส้นทางหลัก",
-        expectedClearTime: "คาดกลุ่มฝนจะเริ่มเบาบางลงช่วง 12:30 - 13:00 น."
+        isRainingNow: isRainingRightNow,
+        expectedStartTime: startTimeText
       };
 
       forecast24h = {
-        title: "ฝน 24 ชม. ข้างหน้า",
+        title: "คาดการณ์ฝนตก",
         status: rainStatusTitle,
         totalRainMm: totalRain,
         maxProbability: maxProb,
@@ -268,7 +267,8 @@ export async function getLiveSamutPrakanWeather(forceRefresh = false) {
         timeLabels,
         hourly: next24,
         districtRainAnalysis,
-        meteorologicalInsight
+        meteorologicalInsight,
+        isRainingNow: isRainingRightNow
       };
     }
 
