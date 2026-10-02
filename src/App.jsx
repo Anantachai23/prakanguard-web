@@ -444,6 +444,9 @@ export default function App() {
       const cleaned = (Array.isArray(parsed) ? parsed : []).filter(r => 
         r && 
         r.id && 
+        !r.id.includes('test') &&
+        !r.id.includes('verify') &&
+        !r.id.startsWith('node-') &&
         !r.isAiGenerated && 
         !r.id?.startsWith('ai-alert-') &&
         typeof r.lat === 'number' &&
@@ -1278,10 +1281,11 @@ export default function App() {
     });
   }, [points, selectedDistrict, severityFilter]);
 
-  // 2. Citizen Reports shown on Map (filtered by district & severity, requires Admin Approval)
+  // 2. Citizen Reports shown on Map (filtered by district & severity, requires explicit Admin Approval)
   const mapCitizenReports = useMemo(() => {
     return citizenReports.filter(report => {
-      if (report.isApproved === false || report.isResolved) return false;
+      if (!report || report.isApproved !== true || report.isResolved) return false;
+      if (report.id && (report.id.includes('test') || report.id.includes('verify') || report.id.startsWith('node-'))) return false;
       const matchDistrict = selectedDistrict === "ทั้งหมด" || report.district === selectedDistrict;
       const matchSeverity = severityFilter === "all" || report.level.toString() === severityFilter;
       return matchDistrict && matchSeverity;
@@ -1304,7 +1308,8 @@ export default function App() {
     if (!searchQuery.trim()) return [];
     return citizenReports
       .filter(report => {
-        if (report.isApproved === false || report.isResolved) return false;
+        if (!report || report.isApproved !== true || report.isResolved) return false;
+        if (report.id && (report.id.includes('test') || report.id.includes('verify') || report.id.startsWith('node-'))) return false;
         return matchesLocationSearch(report, searchQuery);
       })
       .sort((a, b) => scoreLocationSearch(b, searchQuery) - scoreLocationSearch(a, searchQuery));
@@ -1766,7 +1771,7 @@ export default function App() {
                         >
                           <div className="truncate pr-2">
                             <span className={`font-bold flex items-center gap-1 ${isDark ? 'text-cyan-300' : 'text-blue-700'}`}>
-                              <span>📢 {cr.name}</span>
+                              <span>💧 {cr.name}</span>
                             </span>
                             <span className={`text-[10px] block ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>อ.{cr.district} • ระดับ{cr.bodyLevelLabel}</span>
                           </div>

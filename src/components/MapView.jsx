@@ -7,7 +7,7 @@ import {
   DISTRICT_METADATA 
 } from '../data/samutPrakanBoundary';
 import { getFloodLevel } from '../data/floodStandards';
-import { MAJOR_FLOOD_CORRIDORS } from '../data/samutPrakanPoints';
+import { getPointRoadSegment } from '../data/samutPrakanPoints';
 
 export default function MapView({ 
   points, 
@@ -33,7 +33,7 @@ export default function MapView({
   const districtLayersRef = useRef([]);
   const markersRef = useRef([]);
   const citizenMarkersRef = useRef([]);
-  const corridorLayersRef = useRef([]);
+  const roadSegmentLayersRef = useRef([]);
   const markersByIdRef = useRef({});
   const lastFlyToTimeRef = useRef(0);
   const temporaryPickMarkerRef = useRef(null);
@@ -47,8 +47,6 @@ export default function MapView({
 
   // Map Tile Style: 'google-roadmap' | 'google-satellite' | 'google-terrain'
   const [mapStyle, setMapStyle] = useState('google-roadmap');
-  // Continuous Flood Corridors Toggle (โครงข่ายเส้นทางน้ำท่วมขังต่อเนื่อง)
-  const [showCorridors, setShowCorridors] = useState(true);
 
   // Robust Tile Config Helper with Fallbacks
   const getTileConfig = (style) => {
@@ -366,7 +364,7 @@ export default function MapView({
         chest: '👕',
         neck: '🧣'
       };
-      const emoji = isHail ? (report.level === 3 ? '💥' : '🧊') : (emojiMap[report.bodyLevel] || '📢');
+      const emoji = isHail ? (report.level === 3 ? '💥' : '🧊') : (emojiMap[report.bodyLevel] || '💧');
 
       const citizenMarkerHtml = `
         <div class="telemetry-pin" title="${isHail ? 'รายงานลูกเห็บตก' : 'รายงานน้ำท่วม'}: ${report.name}">
@@ -397,7 +395,7 @@ export default function MapView({
         <div style="font-family:'Prompt',sans-serif;padding:6px 4px 4px 4px;min-width:200px;max-width:240px;">
           <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:6px;">
             <div style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:6px;${isHail ? 'background:#ecfeff;color:#0891b2;border:1px solid #a5f3fc;' : 'background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;'}">
-              ${isHail ? '🧊 ลูกเห็บตก' : '📢 รายงานโดยประชาชน'}
+              ${isHail ? '🧊 ลูกเห็บตก' : '🌊 รายงานโดยประชาชน'}
             </div>
             <span style="font-size:10px;color:#64748b;font-weight:600;">อ.${report.district}</span>
           </div>
@@ -446,99 +444,77 @@ export default function MapView({
     });
   }, [citizenReports, onSelectPoint]);
 
-  // 5.5 Render Major Continuous Flood Corridors (โครงข่ายเส้นทางน้ำท่วมขังต่อเนื่อง)
+  // 5.5 Render Localized Dotted/Dashed Road Segments (จุดไหนท่วม ทำเป็นเส้นประตามแนวถนนช่วงสั้นๆ สไตล์ Telemetry แบบ 1555 ไม่ลากยาว)
+  // ปรากฏอัตโนมัติบนทุกรูปแบบแผนที่ (ทางหลวง, ดาวเทียม, ภูมิประเทศ) โดยไม่ต้องกดเปิดเสริม
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map) return;
 
-    // Clean up previous corridor layers
-    corridorLayersRef.current.forEach(layer => map.removeLayer(layer));
-    corridorLayersRef.current = [];
+    // Clean up previous road segment layers
+    roadSegmentLayersRef.current.forEach(layer => map.removeLayer(layer));
+    roadSegmentLayersRef.current = [];
 
-    if (!showCorridors) return;
+    const allActiveItems = [
+      ...points.map(p => ({ ...p, isCitizen: false })),
+      ...citizenReports.map(c => ({ ...c, isCitizen: true }))
+    ];
 
-    MAJOR_FLOOD_CORRIDORS.forEach(corridor => {
-      // Filter by district if selectedDistrict is not "ทั้งหมด"
+    allActiveItems.forEach(item => {
+      // Filter by district if selectedDistrict is specified and not "ทั้งหมด"
       if (selectedDistrict && selectedDistrict !== "ทั้งหมด") {
-        const isMatched = corridor.district === selectedDistrict || 
-                          (corridor.coveredDistricts && corridor.coveredDistricts.includes(selectedDistrict));
-        if (!isMatched) return;
+        if (item.district !== selectedDistrict) return;
       }
 
-      const color = corridor.level === 3 ? '#ef4444' : corridor.level === 2 ? '#f59e0b' : '#10b981';
-      const glowColor = corridor.level === 3 ? 'rgba(239, 68, 68, 0.4)' : corridor.level === 2 ? 'rgba(245, 158, 11, 0.4)' : 'rgba(16, 185, 129, 0.4)';
+      const effectiveLevel = item.level || 1;
+      const isL3 = effectiveLevel === 3;
+      const isL2 = effectiveLevel === 2;
 
-      // Outer glow polyline (ความกว้างถนน)
-      const glowPolyline = L.polyline(corridor.coordinates, {
+      // Extract or compute localized road segment (~200 - 300m along the actual road)
+      const coords = getPointRoadSegment(item);
+      if (!coords || coords.length < 2) return;
+
+      const strokeColor = isL3 ? '#ef4444' : (isL2 ? '#f59e0b' : '#10b981');
+      const glowColor = isL3 ? 'rgba(239, 68, 68, 0.35)' : (isL2 ? 'rgba(245, 158, 11, 0.35)' : 'rgba(16, 185, 129, 0.35)');
+
+      // 1. Subtle translucent glow underlayer for high contrast across satellite/terrain/roadmap
+      const glowLine = L.polyline(coords, {
         color: glowColor,
-        weight: 14,
+        weight: 12,
         opacity: 0.65,
         lineCap: 'round',
         lineJoin: 'round',
         interactive: false
       }).addTo(map);
 
-      // Core vivid road polyline
-      const corePolyline = L.polyline(corridor.coordinates, {
-        color: color,
-        weight: 5,
+      // 2. Dotted/Dashed Segment along the road (เหมือนในตัวอย่างภาพแผนที่รายงานน้ำท่วม กทม./1555)
+      const dashLine = L.polyline(coords, {
+        color: strokeColor,
+        weight: 5.5,
+        dashArray: '7, 7',
         opacity: 0.95,
-        dashArray: corridor.level === 3 ? '8, 6' : undefined,
         lineCap: 'round',
         lineJoin: 'round',
         interactive: true
       }).addTo(map);
 
-      corePolyline.bindTooltip(`🛣️ ${corridor.shortName} (${corridor.distanceKm} กม.) • ระดับ ${corridor.level}`, {
+      const depthText = item.depthCm ? `${item.depthCm} ซม.` : (item.depthRange || 'เฝ้าระวัง');
+      dashLine.bindTooltip(`🌊 ${item.name} (${depthText})`, {
         sticky: true,
         direction: 'top',
-        className: 'bg-slate-900/90 text-white font-prompt text-[11px] font-bold px-2.5 py-1 rounded-xl border border-slate-700 shadow-md'
+        className: 'bg-slate-900/95 text-white font-prompt text-[11px] font-bold px-2.5 py-1 rounded-xl border border-slate-700 shadow-md'
       });
 
-      const popupHtml = `
-        <div style="font-family:'Prompt',sans-serif;padding:6px 4px 4px 4px;min-width:240px;max-width:280px;">
-          <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:6px;">
-            <div style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:6px;background:${corridor.level === 3 ? '#fef2f2' : corridor.level === 2 ? '#fffbeb' : '#ecfdf5'};color:${corridor.level === 3 ? '#dc2626' : corridor.level === 2 ? '#d97706' : '#059669'};border:1px solid ${corridor.level === 3 ? '#fecaca' : corridor.level === 2 ? '#fde68a' : '#a7f3d0'};">
-              🛣️ เส้นทางน้ำท่วมขังต่อเนื่อง (${corridor.distanceKm} กม.)
-            </div>
-            <span style="font-size:10px;color:#64748b;font-weight:600;">อ.${corridor.district}</span>
-          </div>
-          <div style="font-size:13px;font-weight:800;color:#0f172a;line-height:1.3;margin-bottom:4px;">
-            ${corridor.name}
-          </div>
-          <div style="font-size:11px;color:${color};font-weight:700;margin-bottom:4px;">
-            🌊 ระดับความลึก: ${corridor.depthRange} (${corridor.affectedLanes})
-          </div>
-          <div style="font-size:10px;color:#475569;margin-bottom:5px;line-height:1.4;">
-            🚗 <strong>สภาพการจราจร:</strong> ${corridor.trafficStatus}
-          </div>
-          <div style="font-size:10px;color:#64748b;margin-bottom:6px;line-height:1.4;">
-            💡 <strong>คำแนะนำ:</strong> ${corridor.guidance}
-          </div>
-          <button id="corridor-btn-${corridor.id}" style="width:100%;padding:6px 10px;background:linear-gradient(135deg, #0284c7, #0369a1);color:white;border:none;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;">
-            <span>🔍 ซูมดูตลอดสายทาง (${corridor.distanceKm} กม.)</span>
-          </button>
-        </div>
-      `;
-
-      corePolyline.bindPopup(popupHtml, {
-        className: 'custom-leaflet-popup',
-        closeButton: true,
-        autoPan: true
-      });
-
-      corePolyline.on('popupopen', () => {
-        const btn = document.getElementById(`corridor-btn-${corridor.id}`);
-        if (btn) {
-          btn.onclick = () => {
-            map.fitBounds(corePolyline.getBounds(), { padding: [50, 50], maxZoom: 15 });
-          };
+      dashLine.on('click', () => {
+        onSelectPoint(item);
+        const marker = markersByIdRef.current[item.id];
+        if (marker) {
+          marker.openPopup();
         }
       });
 
-      corridorLayersRef.current.push(glowPolyline, corePolyline);
+      roadSegmentLayersRef.current.push(glowLine, dashLine);
     });
-  }, [selectedDistrict, showCorridors]);
+  }, [points, citizenReports, selectedDistrict, onSelectPoint]);
 
   // 6. User GPS Location Marker
   useEffect(() => {
@@ -705,21 +681,6 @@ export default function MapView({
           >
             <span>⛰️</span>
             <span className="hidden sm:inline">ภูมิประเทศ</span>
-          </button>
-
-          {/* Continuous Flood Corridors Toggle Button */}
-          <button
-            type="button"
-            onClick={() => setShowCorridors(prev => !prev)}
-            title={showCorridors ? "คลิกเพื่อซ่อนเส้นทางน้ำท่วมขังต่อเนื่อง" : "คลิกเพื่อแสดงเส้นทางน้ำท่วมขังต่อเนื่อง"}
-            className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-xl font-semibold transition-all cursor-pointer flex items-center gap-1 border ${
-              showCorridors
-                ? (isDark ? 'bg-cyan-950 border-cyan-500 text-cyan-300 shadow-sm' : 'bg-blue-50 border-blue-400 text-blue-800 shadow-xs')
-                : (isDark ? 'border-transparent text-slate-500 hover:text-slate-300' : 'border-transparent text-slate-400 hover:text-slate-700')
-            }`}
-          >
-            <span>🛣️</span>
-            <span className="hidden sm:inline">แนวสายทาง</span>
           </button>
         </div>
 
