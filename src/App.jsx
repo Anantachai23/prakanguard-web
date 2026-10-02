@@ -15,7 +15,7 @@ import RainForecast24hCard from './components/RainForecast24hCard';
 import MobileBottomNav from './components/MobileBottomNav';
 import AutoMarquee from './components/AutoMarquee';
 import ChatBot from './components/ChatBot';
-import { INITIAL_FLOOD_POINTS, DISTRICTS, matchesLocationSearch, scoreLocationSearch, POPULAR_SEARCH_SUGGESTIONS } from './data/samutPrakanPoints';
+import { INITIAL_FLOOD_POINTS, DISTRICTS, matchesLocationSearch, scoreLocationSearch, POPULAR_SEARCH_SUGGESTIONS, findCorridorForPoint, MAJOR_FLOOD_CORRIDORS } from './data/samutPrakanPoints';
 import { getFloodLevel, FLOOD_STANDARDS } from './data/floodStandards';
 import { detectDistrictForCoordinates } from './data/samutPrakanBoundary';
 import { getOfficialAdvisorySummary } from './services/aiPredictor';
@@ -982,7 +982,7 @@ export default function App() {
       });
     }
 
-    setLatestUpdateNotification(`📍 บันทึกการแจ้งเตือนน้ำท่วม "${newReport.name}" เรียบร้อยแล้ว ขอบคุณที่ร่วมแจ้งข้อมูลครับ`);
+    setLatestUpdateNotification(`📍 บันทึกรายงานจุดน้ำท่วม "${newReport.name}" เรียบร้อยแล้ว ขอบคุณที่ร่วมแจ้งข้อมูลครับ`);
     setTimeout(() => setLatestUpdateNotification(null), 7000);
   };
 
@@ -1516,11 +1516,11 @@ export default function App() {
 
         {/* Floating Instruction Banner when User is Picking Location on Map */}
         {isPickingLocationOnMap && (
-          <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 bg-violet-900/95 text-white px-5 py-3 rounded-2xl shadow-2xl border border-violet-400/50 backdrop-blur-xl flex items-center gap-3 pointer-events-auto">
+          <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 bg-slate-950/95 text-white px-5 py-3 rounded-2xl shadow-2xl border border-cyan-500/50 backdrop-blur-xl flex items-center gap-3 pointer-events-auto">
             <span className="w-3 h-3 rounded-full bg-cyan-400 animate-ping shrink-0"></span>
             <div className="text-xs sm:text-sm">
-              <strong className="block text-violet-200 font-bold">📍 โหมดแตะเลือกจุดบนแผนที่</strong>
-              <span>แตะบนถนนหรือพิกัดที่พบน้ำท่วมเพื่อบันทึกจุด</span>
+              <strong className="block text-cyan-300 font-bold">📍 โหมดแตะเลือกจุดบนแผนที่</strong>
+              <span className="text-slate-200">แตะบนถนนหรือพิกัดที่พบน้ำท่วมเพื่อบันทึกจุด</span>
             </div>
             <button 
               onClick={handleCancelPickOnMap}
@@ -1761,16 +1761,16 @@ export default function App() {
                             handleSelectLocation(cr);
                           }}
                           className={`w-full p-2.5 rounded-xl cursor-pointer flex items-center justify-between transition-colors border-t border-dashed text-left select-none active:scale-[0.98] ${
-                            isDark ? 'hover:bg-violet-950/50 text-slate-200 border-slate-800' : 'hover:bg-violet-50 text-slate-800 border-slate-100'
+                            isDark ? 'hover:bg-blue-950/50 text-slate-200 border-slate-800' : 'hover:bg-blue-50 text-slate-800 border-slate-100'
                           }`}
                         >
                           <div className="truncate pr-2">
-                            <span className={`font-bold flex items-center gap-1 ${isDark ? 'text-violet-300' : 'text-violet-700'}`}>
+                            <span className={`font-bold flex items-center gap-1 ${isDark ? 'text-cyan-300' : 'text-blue-700'}`}>
                               <span>📢 {cr.name}</span>
                             </span>
                             <span className={`text-[10px] block ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>อ.{cr.district} • ระดับ{cr.bodyLevelLabel}</span>
                           </div>
-                          <span className={`text-[10px] px-2 py-0.5 rounded font-bold shrink-0 bg-violet-100 text-violet-800 border border-violet-200`}>
+                          <span className={`text-[10px] px-2 py-0.5 rounded font-bold shrink-0 bg-blue-100 text-blue-800 border border-blue-200 dark:bg-blue-950/80 dark:text-cyan-300 dark:border-blue-800`}>
                             ภาคประชาชน
                           </span>
                         </button>
@@ -2031,18 +2031,6 @@ export default function App() {
                   </div>
                 </button>
 
-                {/* Citizen reports pill if any */}
-                {citizenReports.length > 0 && (
-                  <div className="flex items-center gap-1.5 pt-1 mt-0.5 border-t border-dashed border-slate-200 dark:border-slate-800 px-1">
-                    <span className="w-2 h-2 rounded-full bg-violet-500 shrink-0"></span>
-                    <div className="leading-tight min-w-0">
-                      <span className="text-[9px] font-bold text-violet-600 dark:text-violet-400 block truncate">
-                        ม่วง: แจ้งเตือน ({citizenReports.length})
-                      </span>
-                    </div>
-                  </div>
-                )}
-
                 {/* Tiny movable hint */}
                 <div className="text-[8px] text-center text-slate-400 dark:text-slate-500 pt-0.5 border-t border-slate-100 dark:border-slate-800">
                   ลากย้ายตำแหน่งได้
@@ -2164,6 +2152,49 @@ export default function App() {
                     </button>
                   </div>
                 </div>
+
+                {/* Continuous Corridor Banner & Citizen Stretch Telemetry */}
+                {(() => {
+                  const matchedCorridor = findCorridorForPoint(selectedPoint);
+                  if (!matchedCorridor && !selectedPoint.stretchDesc) return null;
+                  return (
+                    <div className={`mt-3 p-3 rounded-2xl border text-xs ${
+                      isDark ? 'bg-slate-800/90 border-blue-900/60 text-slate-200' : 'bg-blue-50/80 border-blue-200 text-blue-950'
+                    }`}>
+                      <div className="flex items-center justify-between font-bold mb-1">
+                        <span className="flex items-center gap-1.5 text-blue-600 dark:text-cyan-400">
+                          <span>🛣️</span>
+                          <span>{matchedCorridor ? 'โครงข่ายเส้นทางน้ำท่วมขังต่อเนื่อง' : 'แนวน้ำท่วมขัง'}</span>
+                        </span>
+                        {matchedCorridor && (
+                          <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/80 dark:text-cyan-300 font-bold">
+                            ยาว {matchedCorridor.distanceKm} กม.
+                          </span>
+                        )}
+                      </div>
+                      {matchedCorridor && (
+                        <div className="font-semibold text-xs mt-0.5 text-slate-900 dark:text-white">
+                          {matchedCorridor.name}
+                        </div>
+                      )}
+                      {selectedPoint.stretchDesc && (
+                        <div className="text-[11px] font-semibold text-cyan-600 dark:text-cyan-300 mt-1">
+                          📏 <strong>ขอบเขต:</strong> {selectedPoint.stretchDesc}
+                        </div>
+                      )}
+                      {matchedCorridor && (
+                        <div className="text-[11px] opacity-80 mt-1">
+                          🌊 <strong>แนวผิวจราจร:</strong> {matchedCorridor.affectedLanes} ({matchedCorridor.depthRange})
+                        </div>
+                      )}
+                      {matchedCorridor && (
+                        <div className="text-[11px] opacity-80 mt-0.5">
+                          🚗 <strong>สภาพการจราจรสายทาง:</strong> {matchedCorridor.trafficStatus}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
 
             {/* Citizen Uploaded Photo Preview (If available) */}
             {selectedPoint.photoUrl && (
@@ -2448,6 +2479,7 @@ export default function App() {
         onOpenAiForecast={() => setIsOfficialModalOpen(true)}
         onOpenCitizenReport={() => setIsCitizenReportModalOpen(true)}
         onOpenPublicUpdates={() => setIsPublicUpdatesModalOpen(true)}
+        onOpenFeedback={() => setIsFeedbackModalOpen(true)}
         onOpenEmergency={() => setIsEmergencyModalOpen(true)}
         hasGps={!!userLocation}
         theme={theme}

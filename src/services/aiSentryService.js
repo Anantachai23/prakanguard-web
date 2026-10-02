@@ -8,6 +8,7 @@
 
 import { getLiveSamutPrakanWeather } from './weatherService.js';
 import { getFloodLevel } from '../data/floodStandards.js';
+import { MAJOR_FLOOD_CORRIDORS } from '../data/samutPrakanPoints.js';
 
 /**
  * คำนวณกราฟคาบน้ำขึ้น-น้ำลงดาราศาสตร์ (Astronomical Tide Calculation)
@@ -245,6 +246,42 @@ export function evaluateDynamicFloodLifecycle(points = [], citizenReports = [], 
     return report;
   });
 
+  // 3. ประเมินโครงข่ายแนวเส้นทางน้ำท่วมขังต่อเนื่อง (MAJOR_FLOOD_CORRIDORS) แบบไดนามิก 24 ชม.
+  const updatedCorridors = MAJOR_FLOOD_CORRIDORS.map(corridor => {
+    let level = corridor.level;
+    let depthCm = corridor.depthCm;
+    let trafficStatus = corridor.trafficStatus;
+
+    const isTidalCorridor = corridor.id === 'corridor-suksawat' || corridor.id === 'corridor-puchao' || corridor.id === 'corridor-panwithi';
+
+    if (isTidalCorridor) {
+      if (tideInfo.isSpringTidePeak) {
+        level = 3;
+        depthCm = Math.max(depthCm, 40);
+        trafficStatus = 'วิกฤตน้ำทะเลหนุนสูงสุด! น้ำท่วมเอ่อล้นผิวจราจรเต็มช่องทาง รถเล็กห้ามผ่านเด็ดขาด';
+      } else if (!tideInfo.isHighTide && isDryWeather) {
+        level = 1;
+        depthCm = 5;
+        trafficStatus = 'น้ำทะเลลงต่ำสุด ระบายน้ำแห้ง คืนผิวจราจรทุกช่องทาง สัญจรได้ปกติ';
+      }
+    } else if (isDryWeather) {
+      level = 1;
+      depthCm = Math.min(depthCm, 8);
+      trafficStatus = 'สภาพอากาศแห้ง ระบายน้ำคลี่คลาย ผิวจราจรแห้งปกติ สัญจรได้คล่องตัว';
+    } else if (isHeavyRainWeather) {
+      level = Math.max(level, 2);
+      trafficStatus = 'ฝนตกหนักสะสม มีน้ำท่วมขังรอการระบายแนวยาว เลนซ้ายมีน้ำท่วมขัง ชิดเลนขวา';
+    }
+
+    return {
+      ...corridor,
+      level,
+      depthCm,
+      trafficStatus,
+      lastEvaluatedTime: nowTime
+    };
+  });
+
   // สร้างข้อความแจ้งเตือนสำหรับผู้ใช้งาน
   let notificationMessage = null;
   let changelogEntry = null;
@@ -284,6 +321,8 @@ export function evaluateDynamicFloodLifecycle(points = [], citizenReports = [], 
   return {
     updatedPoints,
     updatedReports,
+    updatedCorridors,
+    corridorsCount: updatedCorridors.length,
     newlyClearedPoints,
     newlyActivatedPoints,
     notificationMessage,

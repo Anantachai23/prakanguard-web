@@ -327,10 +327,10 @@ export default function PublicUpdatesModal({
               onClick={() => setActiveTab('changelog')}
               className={`min-h-[44px] px-3.5 sm:px-4 py-2 rounded-xl sm:rounded-2xl text-xs sm:text-sm font-bold flex items-center gap-2 whitespace-nowrap cursor-pointer transition-all duration-150 shrink-0 select-none active:scale-95 ${
                 activeTab === 'changelog'
-                  ? 'bg-purple-600 text-white shadow-md shadow-purple-500/30 ring-2 ring-purple-400/50 border border-purple-500'
+                  ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/30 ring-2 ring-indigo-400/50 border border-indigo-500'
                   : isDark 
-                    ? 'bg-slate-900/90 hover:bg-slate-800 text-purple-300 border border-purple-900/60 hover:text-purple-200 hover:border-purple-700/60'
-                    : 'bg-purple-50/90 hover:bg-purple-100 text-purple-800 border border-purple-200/90 shadow-2xs hover:text-purple-900'
+                    ? 'bg-slate-900/90 hover:bg-slate-800 text-indigo-300 border border-indigo-900/60 hover:text-indigo-200 hover:border-indigo-700/60'
+                    : 'bg-indigo-50/90 hover:bg-indigo-100 text-indigo-800 border border-indigo-200/90 shadow-2xs hover:text-indigo-900'
               }`}
             >
               <Activity className="w-4 h-4 shrink-0" />
@@ -657,9 +657,9 @@ export default function PublicUpdatesModal({
             <div className="space-y-3 pt-1">
               <div className="flex items-center justify-between">
                 <h4 className={`text-xs sm:text-sm font-bold flex items-center gap-1.5 ${
-                  isDark ? 'text-purple-300' : 'text-purple-900'
+                  isDark ? 'text-indigo-300' : 'text-indigo-900'
                 }`}>
-                  <Activity className="w-4 h-4 text-purple-500 shrink-0" />
+                  <Activity className="w-4 h-4 text-indigo-500 shrink-0" />
                   <span>บันทึกประวัติการปรับปรุงสถานะจุดเสี่ยงอัตโนมัติ 24 ชม. (Changelog)</span>
                 </h4>
                 <span className="text-[11px] text-slate-400">

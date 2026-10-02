@@ -1,11 +1,12 @@
 import React from 'react';
-import { Navigation, CloudRain, Camera, Activity, PhoneCall } from 'lucide-react';
+import { Navigation, CloudRain, Camera, Activity, PhoneCall, MessageSquare } from 'lucide-react';
 
 export default function MobileBottomNav({
   onLocateMe,
   onOpenAiForecast,
   onOpenCitizenReport,
   onOpenPublicUpdates,
+  onOpenFeedback,
   onOpenEmergency,
   hasGps = false,
   theme = 'light'
@@ -21,7 +22,7 @@ export default function MobileBottomNav({
           : 'bg-white/95 border-slate-200/90 text-slate-700 shadow-[0_-6px_20px_rgba(0,0,0,0.08)]'
       }`}
     >
-      <div className="flex items-center justify-around px-2 py-1.5 max-w-md mx-auto">
+      <div className="flex items-center justify-between px-1 py-1 max-w-lg mx-auto">
         {/* 1. Locate Me */}
         <button
           type="button"
@@ -34,12 +35,12 @@ export default function MobileBottomNav({
           title="ระบุตำแหน่ง GPS ของฉันบนแผนที่"
         >
           <div className="relative">
-            <Navigation className="w-5 h-5 mb-0.5" />
+            <Navigation className="w-4 h-4 mb-0.5" />
             {hasGps && (
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping absolute -top-0.5 -right-0.5" />
             )}
           </div>
-          <span className="text-[10px] tracking-tight">พิกัดฉัน</span>
+          <span className="text-[9px] tracking-tight">พิกัดฉัน</span>
         </button>
 
         {/* 2. Live Weather / Radar */}
@@ -51,20 +52,20 @@ export default function MobileBottomNav({
           }`}
           title="ดูเรดาร์ตรวจฝนและสภาพอากาศสด"
         >
-          <CloudRain className="w-5 h-5 mb-0.5 text-blue-500" />
-          <span className="text-[10px] tracking-tight">เรดาร์ฝน</span>
+          <CloudRain className="w-4 h-4 mb-0.5 text-blue-500" />
+          <span className="text-[9px] tracking-tight">เรดาร์ฝน</span>
         </button>
 
-        {/* 3. Center Hero: Report Flood (แจ้งเตือนน้ำท่วม - ปุ่มเด่นกลาง สดใส กดง่าย) */}
-        <div className="flex-1 flex justify-center -mt-5">
+        {/* 3. Center Hero: Report Flood Point (แจ้งจุดท่วม - โทนฟ้าเข้มสดใส ปราศจากสีม่วง) */}
+        <div className="flex-1 flex justify-center -mt-4">
           <button
             type="button"
             onClick={onOpenCitizenReport}
-            className="flex flex-col items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-tr from-violet-600 via-indigo-600 to-blue-600 text-white shadow-lg shadow-violet-600/40 border-2 border-white dark:border-slate-900 active:scale-90 transition-transform cursor-pointer"
-            title="แจ้งเตือนน้ำท่วม"
+            className="flex flex-col items-center justify-center w-11 h-11 rounded-2xl bg-gradient-to-tr from-blue-600 via-cyan-500 to-teal-500 text-white shadow-lg shadow-blue-500/40 border-2 border-white dark:border-slate-900 active:scale-90 transition-transform cursor-pointer"
+            title="แจ้งรายงานจุดน้ำท่วม"
           >
-            <Camera className="w-5 h-5" />
-            <span className="text-[9px] font-bold tracking-tight mt-0.5">แจ้งเตือน</span>
+            <Camera className="w-4 h-4" />
+            <span className="text-[8px] font-bold tracking-tight mt-0.5">แจ้งจุดท่วม</span>
           </button>
         </div>
 
@@ -78,23 +79,37 @@ export default function MobileBottomNav({
           title="ดูอัปเดตรายงานสถานการณ์สด"
         >
           <div className="relative">
-            <Activity className="w-5 h-5 mb-0.5 text-emerald-500" />
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse absolute -top-0.5 -right-0.5" />
+            <Activity className="w-4 h-4 mb-0.5 text-emerald-500" />
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse absolute -top-0.5 -right-0.5" />
           </div>
-          <span className="text-[10px] tracking-tight">อัปเดตสด</span>
+          <span className="text-[9px] tracking-tight">อัปเดตสด</span>
         </button>
 
-        {/* 5. Emergency Hotline */}
+        {/* 5. Feedback Box (ข้อเสนอแนะ) */}
+        <button
+          type="button"
+          onClick={onOpenFeedback}
+          className={`flex-1 flex flex-col items-center justify-center py-1 rounded-xl transition-all active:scale-90 cursor-pointer ${
+            isDark ? 'text-slate-400 hover:text-teal-400' : 'text-slate-500 hover:text-teal-600'
+          }`}
+          title="ส่งข้อเสนอแนะต่อระบบ"
+        >
+          <MessageSquare className="w-4 h-4 mb-0.5 text-teal-500" />
+          <span className="text-[9px] tracking-tight">ข้อเสนอแนะ</span>
+        </button>
+
+        {/* 6. Emergency Hotline */}
         <button
           type="button"
           onClick={onOpenEmergency}
           className="flex-1 flex flex-col items-center justify-center py-1 rounded-xl text-rose-500 hover:text-rose-600 active:scale-90 cursor-pointer"
           title="โทรสายด่วนฉุกเฉิน ปภ./กู้ภัย"
         >
-          <PhoneCall className="w-5 h-5 mb-0.5" />
-          <span className="text-[10px] font-bold tracking-tight">สายด่วน</span>
+          <PhoneCall className="w-4 h-4 mb-0.5" />
+          <span className="text-[9px] font-bold tracking-tight">สายด่วน</span>
         </button>
       </div>
     </nav>
   );
 }
+

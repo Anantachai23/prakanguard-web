@@ -67,8 +67,8 @@ export const BODY_WATER_LEVELS = [
     depthApprox: 110,
     severity: 3,
     emoji: '👕',
-    badgeClass: 'bg-purple-50 text-purple-800 border-purple-300',
-    darkBadgeClass: 'bg-purple-950/80 text-purple-300 border-purple-800',
+    badgeClass: 'bg-rose-50 text-rose-800 border-rose-300',
+    darkBadgeClass: 'bg-rose-950/80 text-rose-300 border-rose-800',
     desc: 'น้ำท่วมสูงระดับหน้าอก มิดกระโปรงหน้ารถยนต์',
     traffic: '🚫 วิกฤตสูงสุด (>50 ซม.)! รถทุกชนิดห้ามผ่าน สัญจรได้เฉพาะเรือท้องแบนยกสูง',
     guidance: 'อพยพผู้ป่วยติดเตียงและผู้สูงอายุทันที ประสานสายด่วน ปภ. 1784'
@@ -154,6 +154,8 @@ export default function CitizenReportModal({
   const [lat, setLat] = useState('13.5991');
   const [lng, setLng] = useState('100.6012');
   const [hasCustomPicked, setHasCustomPicked] = useState(false);
+  const [stretchLength, setStretchLength] = useState('stretch'); // 'point' | 'stretch' | 'long'
+  const [corridorChoice, setCorridorChoice] = useState('');
   const [notes, setNotes] = useState('');
   const [photoPreview, setPhotoPreview] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -312,6 +314,11 @@ export default function CitizenReportModal({
       };
     } else {
       const levelMeta = BODY_WATER_LEVELS.find(l => l.id === selectedLevel) || BODY_WATER_LEVELS[1];
+      const stretchDescriptions = {
+        point: 'เฉพาะจุด / แอ่งน้ำเฉพาะที่ (< 50 ม.)',
+        stretch: 'แนวยาวตลอดช่วงถนน (200 - 500 ม.)',
+        long: 'ท่วมขังยาวตลอดสายทาง (> 1 กม.)'
+      };
       newReport = {
         id: 'citizen-' + Date.now(),
         isCitizenReport: true,
@@ -321,6 +328,9 @@ export default function CitizenReportModal({
         district: district,
         lat: pLat,
         lng: pLng,
+        stretchLength: stretchLength,
+        stretchDesc: stretchDescriptions[stretchLength] || 'แนวยาวตลอดช่วงถนน (200 - 500 ม.)',
+        corridorName: corridorChoice || '',
         bodyLevel: selectedLevel,
         bodyLevelLabel: levelMeta.label,
         depthCm: levelMeta.depthApprox,
@@ -361,7 +371,7 @@ export default function CitizenReportModal({
         <div className={`h-1.5 w-full bg-gradient-to-r ${
           hazardType === 'hail' 
             ? 'from-cyan-500 via-blue-500 to-indigo-500' 
-            : 'from-violet-600 via-indigo-500 to-cyan-500'
+            : 'from-blue-600 via-cyan-500 to-teal-500'
         }`}></div>
 
         {/* Modal Header */}
@@ -372,13 +382,13 @@ export default function CitizenReportModal({
             <div className={`w-9 h-9 rounded-2xl flex items-center justify-center shadow-inner ${
               hazardType === 'hail'
                 ? (isDark ? 'bg-cyan-950/80 text-cyan-400 border border-cyan-800' : 'bg-cyan-50 text-cyan-600 border border-cyan-200')
-                : (isDark ? 'bg-violet-950/80 text-violet-400 border border-violet-800' : 'bg-violet-50 text-violet-600 border border-violet-200')
+                : (isDark ? 'bg-blue-950/80 text-cyan-400 border border-blue-800' : 'bg-blue-50 text-blue-600 border border-blue-200')
             }`}>
               {hazardType === 'hail' ? <CloudHail className="w-5 h-5" /> : <Camera className="w-5 h-5" />}
             </div>
             <div>
               <h2 className={`text-base sm:text-lg font-bold leading-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                {hazardType === 'hail' ? 'แจ้งเตือนพายุลูกเห็บ' : 'แจ้งเตือนน้ำท่วม'}
+                {hazardType === 'hail' ? 'รายงานพายุลูกเห็บ' : 'รายงานจุดน้ำท่วม'}
               </h2>
               <p className={`text-[11px] sm:text-xs mt-0.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
                 ร่วมแจ้งข้อมูลจุดน้ำท่วมเพื่อความปลอดภัยในการสัญจรใน 6 อำเภอสมุทรปราการ
@@ -410,7 +420,7 @@ export default function CitizenReportModal({
                 onClick={() => setHazardType('flood')}
                 className={`py-2.5 px-3 rounded-xl border font-bold text-xs sm:text-sm flex items-center justify-center gap-2 cursor-pointer transition-all ${
                   hazardType === 'flood'
-                    ? (isDark ? 'bg-violet-950/90 border-violet-500 text-violet-200 ring-2 ring-violet-500/40 shadow-sm' : 'bg-violet-50 border-violet-500 text-violet-900 ring-2 ring-violet-200 shadow-sm')
+                    ? (isDark ? 'bg-blue-950/90 border-blue-500 text-cyan-200 ring-2 ring-blue-500/40 shadow-sm' : 'bg-blue-50 border-blue-500 text-blue-900 ring-2 ring-blue-200 shadow-sm')
                     : (isDark ? 'bg-slate-800/80 border-slate-700 text-slate-400 hover:text-slate-200' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50')
                 }`}
               >
@@ -441,7 +451,7 @@ export default function CitizenReportModal({
                 isDark ? 'text-slate-200' : 'text-slate-800'
               }`}>
                 <span>1. ประเมินระดับความสูงของน้ำ (5-20, 21-50, &gt;50 ซม.) *</span>
-                <span className="text-[11px] font-semibold text-violet-500">
+                <span className="text-[11px] font-semibold text-blue-500">
                   {selectedFloodMeta.emoji} {selectedFloodMeta.label} ({selectedFloodMeta.range})
                 </span>
               </label>
@@ -457,8 +467,8 @@ export default function CitizenReportModal({
                       className={`p-2.5 rounded-2xl border text-center transition-all cursor-pointer flex flex-col items-center justify-between gap-1 shadow-xs ${
                         isSelected
                           ? (isDark 
-                              ? 'bg-violet-950/80 border-violet-500 text-white ring-2 ring-violet-500/50' 
-                              : 'bg-violet-50 border-violet-500 text-violet-900 ring-2 ring-violet-200')
+                              ? 'bg-blue-950/80 border-blue-500 text-white ring-2 ring-blue-500/50' 
+                              : 'bg-blue-50 border-blue-500 text-blue-900 ring-2 ring-blue-200')
                           : (isDark 
                               ? 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-750' 
                               : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50')
@@ -486,6 +496,61 @@ export default function CitizenReportModal({
                 <div>
                   <strong className={isDark ? 'text-white' : 'text-slate-900'}>{selectedFloodMeta.desc}</strong>
                   <p className="mt-0.5 text-[11px] text-slate-500">{selectedFloodMeta.traffic}</p>
+                </div>
+              </div>
+
+              {/* 1.1 CONTINUOUS ROAD STRETCH EXTENSION (โครงข่ายถนนน้ำท่วมขังต่อเนื่อง) */}
+              <div className="mt-3 p-3 rounded-2xl border border-blue-200/80 dark:border-blue-900/60 bg-blue-50/40 dark:bg-blue-950/20">
+                <div className="flex items-center justify-between mb-2">
+                  <span className={`text-xs font-bold flex items-center gap-1.5 ${isDark ? 'text-cyan-300' : 'text-blue-900'}`}>
+                    <span>📏 ขอบเขตแนวน้ำท่วมขัง (เฉพาะจุด หรือ ลากยาวตลอดสายทาง) *</span>
+                  </span>
+                  <span className="text-[10px] font-bold text-blue-600 dark:text-cyan-400">
+                    {stretchLength === 'long' ? '🌊 ยาวตลอดสายทาง (> 1 กม.)' : stretchLength === 'stretch' ? '📏 แนวยาวตลอดช่วงถนน (200-500 ม.)' : '📍 เฉพาะจุด (< 50 ม.)'}
+                  </span>
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setStretchLength('point')}
+                    className={`py-2 px-2 rounded-xl border text-center transition-all cursor-pointer ${
+                      stretchLength === 'point'
+                        ? (isDark ? 'bg-blue-900/90 border-cyan-400 text-white ring-2 ring-cyan-500/40 font-bold' : 'bg-white border-blue-600 text-blue-900 ring-2 ring-blue-200 font-bold shadow-xs')
+                        : (isDark ? 'bg-slate-900/80 border-slate-700 text-slate-400 hover:text-slate-200' : 'bg-white/80 border-slate-200 text-slate-600 hover:bg-slate-50')
+                    }`}
+                  >
+                    <span className="block text-sm sm:text-base">📍</span>
+                    <span className="text-xs block">เฉพาะจุด</span>
+                    <span className="text-[9px] opacity-75">&lt; 50 ม.</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setStretchLength('stretch')}
+                    className={`py-2 px-2 rounded-xl border text-center transition-all cursor-pointer ${
+                      stretchLength === 'stretch'
+                        ? (isDark ? 'bg-blue-900/90 border-cyan-400 text-white ring-2 ring-cyan-500/40 font-bold' : 'bg-white border-blue-600 text-blue-900 ring-2 ring-blue-200 font-bold shadow-xs')
+                        : (isDark ? 'bg-slate-900/80 border-slate-700 text-slate-400 hover:text-slate-200' : 'bg-white/80 border-slate-200 text-slate-600 hover:bg-slate-50')
+                    }`}
+                  >
+                    <span className="block text-sm sm:text-base">📏</span>
+                    <span className="text-xs block">ตลอดช่วงถนน</span>
+                    <span className="text-[9px] opacity-75">200 - 500 ม.</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setStretchLength('long')}
+                    className={`py-2 px-2 rounded-xl border text-center transition-all cursor-pointer ${
+                      stretchLength === 'long'
+                        ? (isDark ? 'bg-blue-900/90 border-cyan-400 text-white ring-2 ring-cyan-500/40 font-bold' : 'bg-white border-blue-600 text-blue-900 ring-2 ring-blue-200 font-bold shadow-xs')
+                        : (isDark ? 'bg-slate-900/80 border-slate-700 text-slate-400 hover:text-slate-200' : 'bg-white/80 border-slate-200 text-slate-600 hover:bg-slate-50')
+                    }`}
+                  >
+                    <span className="block text-sm sm:text-base">🌊</span>
+                    <span className="text-xs block">ตลอดสายทาง</span>
+                    <span className="text-[9px] opacity-75">&gt; 1 กม.</span>
+                  </button>
                 </div>
               </div>
             </div>
@@ -602,12 +667,12 @@ export default function CitizenReportModal({
                 onClick={() => fileInputRef.current?.click()}
                 className={`p-4 rounded-2xl border-2 border-dashed flex flex-col items-center justify-center gap-2 cursor-pointer transition-all ${
                   isDark 
-                    ? 'border-slate-700 hover:border-violet-400 bg-slate-850/50 hover:bg-slate-800' 
-                    : 'border-slate-300 hover:border-violet-500 bg-slate-50 hover:bg-violet-50/30'
+                    ? 'border-slate-700 hover:border-blue-400 bg-slate-850/50 hover:bg-slate-800' 
+                    : 'border-slate-300 hover:border-blue-500 bg-slate-50 hover:bg-blue-50/30'
                 }`}
               >
                 <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shadow-xs ${
-                  isDark ? 'bg-slate-800 text-violet-400' : 'bg-white text-violet-600 border border-slate-200'
+                  isDark ? 'bg-slate-800 text-cyan-400' : 'bg-white text-blue-600 border border-slate-200'
                 }`}>
                   <Upload className="w-5 h-5" />
                 </div>
@@ -639,7 +704,7 @@ export default function CitizenReportModal({
                   onStartPickOnMap();
                   onClose();
                 }}
-                className="py-2.5 px-3 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-md transition-all cursor-pointer"
+                className="py-2.5 px-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-md transition-all cursor-pointer"
                 title="ย่อหน้าต่างแล้วแตะบนแผนที่เพื่อเลือกจุด"
               >
                 <MapPin className="w-4 h-4" />
@@ -657,13 +722,49 @@ export default function CitizenReportModal({
                 }`}
                 title="ดึงพิกัดจาก GPS เครื่องของคุณ"
               >
-                <LocateFixed className={`w-4 h-4 ${isLocatingGps ? 'animate-spin text-violet-400' : 'text-blue-500'}`} />
+                <LocateFixed className={`w-4 h-4 ${isLocatingGps ? 'animate-spin text-cyan-400' : 'text-blue-500'}`} />
                 <span>{isLocatingGps ? 'กำลังค้นหา GPS...' : 'ใช้พิกัดปัจจุบัน (GPS)'}</span>
               </button>
             </div>
 
             {gpsError && (
               <p className="text-[11px] text-rose-500 font-medium">{gpsError}</p>
+            )}
+
+            {/* Optional Major Corridor Alignment Dropdown */}
+            {hazardType === 'flood' && (
+              <div>
+                <span className={`block text-[11px] mb-1 font-medium ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+                  เชื่อมโยงกับแนวถนนสายหลัก (หากเกิดบนสายทางเหล่านี้)
+                </span>
+                <select
+                  value={corridorChoice}
+                  onChange={(e) => {
+                    const chosen = e.target.value;
+                    setCorridorChoice(chosen);
+                    if (chosen && !locationName) {
+                      setLocationName(chosen);
+                    }
+                  }}
+                  className={`w-full rounded-xl px-3 py-2 text-xs border focus:outline-none transition-colors ${
+                    isDark 
+                      ? 'border-slate-700 bg-slate-900 text-slate-200 focus:border-blue-400' 
+                      : 'border-slate-300 bg-white text-slate-800 focus:border-blue-500'
+                  }`}
+                >
+                  <option value="">-- ระบุถนนเอง หรือเลือกถนนสายหลักด้านล่าง --</option>
+                  <option value="ถนนศรีนครินทร์">ถนนศรีนครินทร์ (แบริ่ง - วัดด่าน - หนามแดง - ทรัพย์บุญชัย)</option>
+                  <option value="ถนนสุขุมวิท">ถนนสุขุมวิท (แบริ่ง - สำโรง - ช้างเอราวัณ - ปากน้ำ - บางปู)</option>
+                  <option value="ถนนเทพารักษ์">ถนนเทพารักษ์ (สำโรง - คลองขุด - บิ๊กซีบางพลี - เคหะบางพลี)</option>
+                  <option value="ถนนบางนา-ตราด ทางคู่ขนาน">ถนนบางนา-ตราด ทางคู่ขนาน (ไบเทค - เมกาบางนา - หัวเฉียว - บางบ่อ)</option>
+                  <option value="ถนนกิ่งแก้ว">ถนนกิ่งแก้ว (บางนา-ตราด - ซอย 45 - ลาดกระบัง/สุวรรณภูมิ)</option>
+                  <option value="ถนนปู่เจ้าสมิงพราย">ถนนปู่เจ้าสมิงพราย (สำโรงใต้ - สะพานภูมิพล - ท่าน้ำพระประแดง)</option>
+                  <option value="ถนนสุขสวัสดิ์ - ป้อมพระจุลฯ">ถนนสุขสวัสดิ์ - พระสมุทรเจดีย์ - ป้อมพระจุลฯ</option>
+                  <option value="ถนนแพรกษา">ถนนแพรกษา (สายลวด - ซอยมังกรขันดี - นิคมฯ บางปู)</option>
+                  <option value="ถนนปานวิถี - คลองด่าน">ถนนปานวิถี - ตลาดบางบ่อ - ชายฝั่งคลองด่าน</option>
+                  <option value="ถนนประชาอุทิศ - คู่สร้าง">ถนนประชาอุทิศ - ทุ่งครุ - วัดคู่สร้าง</option>
+                </select>
+              </div>
             )}
 
             {/* Road/Location Name & District Inputs */}
@@ -680,8 +781,8 @@ export default function CitizenReportModal({
                   placeholder={hazardType === 'hail' ? "เช่น ตลาดปากน้ำ, ซอยมังกรขันดี" : "เช่น ซอยวัดด่านสำโรง, ถนนกิ่งแก้ว หน้าปั๊ม ปตท."}
                   className={`w-full rounded-xl px-3 py-2 text-xs sm:text-sm border focus:outline-none transition-colors ${
                     isDark 
-                      ? 'border-slate-700 focus:border-violet-400' 
-                      : 'border-slate-300 focus:border-violet-500'
+                      ? 'border-slate-700 focus:border-blue-400' 
+                      : 'border-slate-300 focus:border-blue-500'
                   }`}
                   style={{
                     backgroundColor: isDark ? '#0f172a' : '#ffffff',
@@ -699,8 +800,8 @@ export default function CitizenReportModal({
                   onChange={(e) => handleDistrictChange(e.target.value)}
                   className={`w-full rounded-xl px-3 py-2 text-xs sm:text-sm border focus:outline-none transition-colors font-medium ${
                     isDark 
-                      ? 'border-slate-700 focus:border-violet-400' 
-                      : 'border-slate-300 focus:border-violet-500'
+                      ? 'border-slate-700 focus:border-blue-400' 
+                      : 'border-slate-300 focus:border-blue-500'
                   }`}
                   style={{
                     backgroundColor: isDark ? '#0f172a' : '#ffffff',
@@ -717,7 +818,7 @@ export default function CitizenReportModal({
             {/* Friendly Location Indicator (No Raw Latitude/Longitude Shown) */}
             {hasCustomPicked && (
               <div className={`p-2.5 rounded-xl border flex items-center justify-between gap-2 text-xs ${
-                isDark ? 'bg-violet-950/40 border-violet-800 text-violet-300' : 'bg-violet-50 border-violet-200 text-violet-700'
+                isDark ? 'bg-blue-950/40 border-blue-800 text-cyan-300' : 'bg-blue-50 border-blue-200 text-blue-700'
               }`}>
                 <div className="flex items-center gap-2">
                   <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
@@ -772,10 +873,10 @@ export default function CitizenReportModal({
             <button
               type="submit"
               disabled={isSubmitting}
-              className="px-6 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-500 disabled:opacity-50 text-white font-bold text-xs sm:text-sm transition-all cursor-pointer shadow-md shadow-violet-600/30 flex items-center gap-1.5"
+              className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 disabled:opacity-50 text-white font-bold text-xs sm:text-sm transition-all cursor-pointer shadow-md shadow-blue-500/30 flex items-center gap-1.5"
             >
               <CheckCircle2 className="w-4 h-4" />
-              <span>{hazardType === 'hail' ? 'แจ้งเตือนลูกเห็บ' : 'แจ้งเตือนน้ำท่วม'}</span>
+              <span>{hazardType === 'hail' ? 'ส่งรายงานลูกเห็บ' : 'ส่งรายงานจุดน้ำท่วม'}</span>
             </button>
           </div>
 

@@ -300,11 +300,11 @@ export default function Navbar({
             {/* Citizen Flood Report Button (Desktop only, mobile uses center hero button in bottom nav) */}
             <button 
               onClick={onOpenCitizenReport}
-              title="แจ้งเตือนน้ำท่วม"
-              className="hidden sm:inline-flex shrink-0 px-2.5 sm:px-3 py-1.5 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white text-xs font-bold items-center gap-1.5 transition-all cursor-pointer shadow-md shadow-violet-600/25 whitespace-nowrap"
+              title="รายงานจุดน้ำท่วม"
+              className="hidden sm:inline-flex shrink-0 px-2.5 sm:px-3 py-1.5 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white text-xs font-bold items-center gap-1.5 transition-all cursor-pointer shadow-md shadow-blue-600/25 whitespace-nowrap"
             >
               <Camera className="w-3.5 h-3.5 shrink-0" />
-              <span>แจ้งเตือนน้ำท่วม</span>
+              <span>แจ้งจุดท่วม</span>
             </button>
 
             {/* Citizen Feedback & Suggestion Box Button (ซ่อนบนมือถือเพราะมีเมนูด้านล่างแล้ว แสดงบน iPad/คอม) */}
