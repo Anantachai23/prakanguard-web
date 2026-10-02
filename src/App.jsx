@@ -509,6 +509,30 @@ export default function App() {
   const [latestUpdateNotification, setLatestUpdateNotification] = useState(null);
   const [adminAlertToast, setAdminAlertToast] = useState(null);
 
+  // Secret Admin Access via URL hash (#admin) or keyboard shortcut (Ctrl+Shift+A / Alt+A)
+  useEffect(() => {
+    const checkHash = () => {
+      if (typeof window !== 'undefined' && window.location.hash === '#admin') {
+        setIsAdminModalOpen(true);
+      }
+    };
+    checkHash();
+    window.addEventListener('hashchange', checkHash);
+
+    const handleKeyDown = (e) => {
+      if ((e.ctrlKey && e.shiftKey && (e.key === 'A' || e.key === 'a')) || (e.altKey && (e.key === 'A' || e.key === 'a'))) {
+        e.preventDefault();
+        setIsAdminModalOpen(prev => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      window.removeEventListener('hashchange', checkHash);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
+
   // Mobile Draggable Floating Legend State (เคลื่อนย้ายได้อิสระ ไม่บังแผนที่)
   const [mobileLegendPos, setMobileLegendPos] = useState({ x: null, y: null });
   const [isLegendCollapsed, setIsLegendCollapsed] = useState(() => typeof window !== 'undefined' ? window.innerWidth < 768 : true);

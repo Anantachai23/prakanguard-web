@@ -8,7 +8,6 @@ import {
   Sun, 
   Moon, 
   Camera, 
-  ShieldAlert,
   ChevronLeft,
   ChevronRight,
   MessageSquare,
@@ -319,26 +318,6 @@ export default function Navbar({
             >
               <MessageSquare className="w-3.5 h-3.5 text-teal-500 shrink-0" />
               <span>ข้อเสนอแนะ</span>
-            </button>
-
-            {/* Admin Management System Button - Explicitly Labeled ADMIN */}
-            <button 
-              onClick={onOpenAdmin}
-              title="ระบบจัดการ ADMIN (ตรวจสอบและอนุมัติจุดรายงานน้ำท่วม)"
-              className={`shrink-0 relative px-2.5 sm:px-3 py-1.5 rounded-xl border text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-xs whitespace-nowrap ${
-                isDark 
-                  ? 'bg-slate-900 hover:bg-slate-800 text-amber-300 border-slate-700 hover:border-amber-400' 
-                  : 'bg-amber-50 hover:bg-amber-100 text-amber-800 border-amber-200'
-              }`}
-            >
-              <ShieldAlert className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-              <span className="font-bold tracking-wider">ADMIN</span>
-              {pendingReportsCount > 0 && (
-                <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping absolute -top-1 -right-1"></span>
-              )}
-              {pendingReportsCount > 0 && (
-                <span className="w-2.5 h-2.5 rounded-full bg-rose-600 absolute -top-0.5 -right-0.5"></span>
-              )}
             </button>
 
             {/* Emergency Hotline Button (Desktop only, mobile uses bottom nav) */}
