@@ -13,8 +13,8 @@ export function getFloodLevel(depthCm) {
 export const FLOOD_STANDARDS = [
   {
     level: 1,
-    name: "ระดับ 1: ปกติ / เฝ้าระวังเบื้องต้น",
-    shortName: "ปกติ",
+    name: "ระดับ 1: น้ำท่วมปกติ / เฝ้าระวังเบื้องต้น",
+    shortName: "น้ำท่วมปกติ",
     depthRange: "5 - 20 ซม.",
     depthCmMin: 5,
     depthCmMax: 20,
@@ -36,8 +36,8 @@ export const FLOOD_STANDARDS = [
   },
   {
     level: 2,
-    name: "ระดับ 2: ปานกลาง / เสี่ยงสูงสำหรับรถเล็ก",
-    shortName: "เสี่ยงสูง",
+    name: "ระดับ 2: น้ำท่วมปานกลาง / เฝ้าระวังสำหรับรถเล็ก",
+    shortName: "น้ำท่วมปานกลาง",
     depthRange: "21 - 50 ซม.",
     depthCmMin: 21,
     depthCmMax: 50,
@@ -59,8 +59,8 @@ export const FLOOD_STANDARDS = [
   },
   {
     level: 3,
-    name: "ระดับ 3: วิกฤต / ห้ามสัญจรเด็ดขาด",
-    shortName: "วิกฤต",
+    name: "ระดับ 3: น้ำท่วมวิกฤต / ห้ามสัญจรเด็ดขาด",
+    shortName: "น้ำท่วมวิกฤต",
     depthRange: "> 50 ซม.",
     depthCmMin: 51,
     depthCmMax: 100,

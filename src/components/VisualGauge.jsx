@@ -59,7 +59,7 @@ export default function VisualGauge({ depthCm = 0, level, impactText = '', theme
     badge: isDark ? "bg-emerald-950/80 text-emerald-300 border-emerald-800" : "bg-emerald-50 text-emerald-800 border-emerald-300",
     waterFill: "url(#waterGradientEmerald)",
     waterColor: "#10b981",
-    tag: "🟢 ระดับ 1: ปกติ (5 - 20 ซม.) • รถทุกชนิดผ่านได้ปกติ",
+    tag: "🟢 ระดับ 1: น้ำท่วมปกติ (5 - 20 ซม.) • รถทุกชนิดผ่านได้ปกติ",
     tagStyle: isDark ? "bg-emerald-950/80 text-emerald-300 border-emerald-800" : "bg-emerald-100 text-emerald-800 border-emerald-300"
   };
 
@@ -68,7 +68,7 @@ export default function VisualGauge({ depthCm = 0, level, impactText = '', theme
       badge: isDark ? "bg-amber-950/80 text-amber-300 border-amber-800" : "bg-amber-50 text-amber-800 border-amber-300",
       waterFill: "url(#waterGradientAmber)",
       waterColor: "#f59e0b",
-      tag: "🟠 ระดับ 2: เสี่ยงสูง (21 - 50 ซม.) • รถเล็กเสี่ยงสูง ควรเลี่ยงเส้นทาง",
+      tag: "🟠 ระดับ 2: น้ำท่วมปานกลาง (21 - 50 ซม.) • รถเล็กควรเลี่ยงเส้นทาง",
       tagStyle: isDark ? "bg-amber-950/80 text-amber-300 border-amber-800" : "bg-amber-100 text-amber-800 border-amber-300"
     };
   } else if (activeLevel === 3) {
@@ -76,7 +76,7 @@ export default function VisualGauge({ depthCm = 0, level, impactText = '', theme
       badge: isDark ? "bg-rose-950/80 text-rose-300 border-rose-800" : "bg-rose-50 text-rose-800 border-rose-300",
       waterFill: "url(#waterGradientRose)",
       waterColor: "#f43f5e",
-      tag: "🔴 ระดับ 3: วิกฤต (>50 ซม.) • ท่วมมิดล้อ ห้ามผ่านเด็ดขาด",
+      tag: "🔴 ระดับ 3: น้ำท่วมวิกฤต (>50 ซม.) • ท่วมมิดล้อ ห้ามผ่านเด็ดขาด",
       tagStyle: isDark ? "bg-rose-950/80 text-rose-300 border-rose-800" : "bg-rose-100 text-rose-800 border-rose-300"
     };
   }

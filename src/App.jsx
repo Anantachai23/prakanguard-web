@@ -1989,16 +1989,16 @@ export default function App() {
                       ? 'bg-emerald-500/25 ring-1.5 ring-emerald-500' 
                       : 'hover:bg-slate-100 dark:hover:bg-slate-800/80'
                   }`}
-                  title="แตะเพื่อกรองดูเฉพาะจุดปกติ (5 - 20 ซม.)"
+                  title="แตะเพื่อกรองดูเฉพาะจุดน้ำท่วมปกติ (5 - 20 ซม.)"
                 >
                   <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-sm shrink-0"></span>
                   <div className="leading-tight min-w-0">
-                    <div className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">เขียว: ปกติ</div>
+                    <div className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">เขียว: น้ำท่วมปกติ</div>
                     <div className="text-[8px] text-slate-500 dark:text-slate-400">5 - 20 ซม.</div>
                   </div>
                 </button>
 
-                {/* Yellow: High Risk */}
+                {/* Orange: Moderate */}
                 <button
                   type="button"
                   onClick={() => {
@@ -2011,11 +2011,11 @@ export default function App() {
                       ? 'bg-amber-500/25 ring-1.5 ring-amber-500' 
                       : 'hover:bg-slate-100 dark:hover:bg-slate-800/80'
                   }`}
-                  title="แตะเพื่อกรองดูเฉพาะจุดเสี่ยงสูง (21 - 50 ซม.)"
+                  title="แตะเพื่อกรองดูเฉพาะจุดน้ำท่วมปานกลาง (21 - 50 ซม.)"
                 >
                   <span className="w-2.5 h-2.5 rounded-full bg-amber-500 shadow-sm shrink-0"></span>
                   <div className="leading-tight min-w-0">
-                    <div className="text-[10px] font-bold text-amber-600 dark:text-amber-400">เหลือง: เสี่ยงสูง</div>
+                    <div className="text-[10px] font-bold text-amber-600 dark:text-amber-400">ส้ม: น้ำท่วมปานกลาง</div>
                     <div className="text-[8px] text-slate-500 dark:text-slate-400">21 - 50 ซม.</div>
                   </div>
                 </button>
@@ -2033,11 +2033,11 @@ export default function App() {
                       ? 'bg-rose-500/25 ring-1.5 ring-rose-500' 
                       : 'hover:bg-slate-100 dark:hover:bg-slate-800/80'
                   }`}
-                  title="แตะเพื่อกรองดูเฉพาะจุดวิกฤต (> 50 ซม.)"
+                  title="แตะเพื่อกรองดูเฉพาะจุดน้ำท่วมวิกฤต (> 50 ซม.)"
                 >
                   <span className="w-2.5 h-2.5 rounded-full bg-rose-500 shadow-sm shrink-0 animate-pulse"></span>
                   <div className="leading-tight min-w-0">
-                    <div className="text-[10px] font-bold text-rose-600 dark:text-rose-400">แดง: วิกฤต</div>
+                    <div className="text-[10px] font-bold text-rose-600 dark:text-rose-400">แดง: น้ำท่วมวิกฤต</div>
                     <div className="text-[8px] text-slate-500 dark:text-slate-400">&gt; 50 ซม.</div>
                   </div>
                 </button>
@@ -2075,8 +2075,8 @@ export default function App() {
                     (isDark ? 'bg-emerald-950/80 text-emerald-300 border-emerald-800' : 'bg-emerald-50 text-emerald-700 border-emerald-200')
                   }`}>
                     {selectedPoint.hazardType === 'hail' ? `🧊 ${selectedPoint.hailSizeLabel || 'ลูกเห็บตก'}` :
-                     getFloodLevel(selectedPoint.depthCm) === 3 ? "🔴 วิกฤต (>50 ซม.)" :
-                     getFloodLevel(selectedPoint.depthCm) === 2 ? "🟠 เสี่ยงสูง (21-50 ซม.)" : "🟢 ปกติ (5-20 ซม.)"}
+                     getFloodLevel(selectedPoint.depthCm) === 3 ? "🔴 น้ำท่วมวิกฤต (>50 ซม.)" :
+                     getFloodLevel(selectedPoint.depthCm) === 2 ? "🟠 น้ำท่วมปานกลาง (21-50 ซม.)" : "🟢 น้ำท่วมปกติ (5-20 ซม.)"}
                   </span>
                   <span className="font-bold text-xs sm:text-sm truncate text-slate-900 dark:text-white">
                     {selectedPoint.name}
@@ -2127,8 +2127,8 @@ export default function App() {
                         (isDark ? 'bg-emerald-950/80 text-emerald-300 border-emerald-800' : 'bg-emerald-50 text-emerald-700 border-emerald-200')
                       }`}>
                         {selectedPoint.hazardType === 'hail' ? `🧊 ลูกเห็บ: ${selectedPoint.hailSizeLabel || 'ลูกเห็บตก'}` :
-                         getFloodLevel(selectedPoint.depthCm) === 3 ? "🔴 วิกฤต (>50 ซม.)" :
-                         getFloodLevel(selectedPoint.depthCm) === 2 ? "🟠 เสี่ยงสูง (21-50 ซม.)" : "🟢 ปกติ (5-20 ซม.)"}
+                         getFloodLevel(selectedPoint.depthCm) === 3 ? "🔴 น้ำท่วมวิกฤต (>50 ซม.)" :
+                         getFloodLevel(selectedPoint.depthCm) === 2 ? "🟠 น้ำท่วมปานกลาง (21-50 ซม.)" : "🟢 น้ำท่วมปกติ (5-20 ซม.)"}
                       </span>
                     </div>
                     <h3 className={`text-base sm:text-lg font-bold mt-1.5 leading-snug ${isDark ? 'text-white' : 'text-slate-900'}`}>

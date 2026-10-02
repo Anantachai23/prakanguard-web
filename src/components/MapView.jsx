@@ -269,7 +269,7 @@ export default function MapView({
       const isL2 = effectiveLevel === 2;
       const levelClass = isL3 ? 'beacon-level-3' : (isL2 ? 'beacon-level-2' : 'beacon-level-1');
       const pulseClass = isL3 ? 'pulse-l3' : (isL2 ? 'pulse-l2' : 'pulse-l1');
-      const levelBadgeName = isL3 ? '🔴 วิกฤต' : (isL2 ? '🟠 เสี่ยงสูง' : '🟢 ปกติ');
+      const levelBadgeName = isL3 ? '🔴 น้ำท่วมวิกฤต' : (isL2 ? '🟠 น้ำท่วมปานกลาง' : '🟢 น้ำท่วมปกติ');
       const depthBadgeText = point.depthCm ? `${point.depthCm} ซม.` : point.depthRange;
 
       // Clean, ultra-readable marker showing depth in cm or water droplet
@@ -750,21 +750,21 @@ export default function MapView({
 
           <div className="flex items-center space-x-1.5">
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
-            <span className={`font-medium ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>ปกติ (5-20 ซม.)</span>
+            <span className={`font-medium ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>น้ำท่วมปกติ (5-20 ซม.)</span>
           </div>
 
           <span className={isDark ? 'text-slate-700' : 'text-slate-300'}>•</span>
 
           <div className="flex items-center space-x-1.5">
             <span className="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
-            <span className={`font-medium ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>เสี่ยงสูง (21-50 ซม.)</span>
+            <span className={`font-medium ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>น้ำท่วมปานกลาง (21-50 ซม.)</span>
           </div>
 
           <span className={isDark ? 'text-slate-700' : 'text-slate-300'}>•</span>
 
           <div className="flex items-center space-x-1.5">
             <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse"></span>
-            <span className="text-rose-500 font-bold">วิกฤต (&gt;50 ซม.)</span>
+            <span className="text-rose-500 font-bold">น้ำท่วมวิกฤต (&gt;50 ซม.)</span>
           </div>
 
           <span className={isDark ? 'text-slate-700' : 'text-slate-300'}>•</span>

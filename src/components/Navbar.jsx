@@ -206,21 +206,21 @@ export default function Navbar({
               title="คลิกเพื่อดูเกณฑ์ระดับน้ำมาตรฐาน ปภ./กรมทางหลวง"
             >
               <Activity className="w-3.5 h-3.5 text-blue-500 shrink-0" />
-              <span className="flex items-center gap-1" title="ระดับ 1: ท่วมขังเล็กน้อย/ระบายได้ดี">
+              <span className="flex items-center gap-1" title="ระดับ 1: น้ำท่วมปกติ (5-20 ซม.)">
                 <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                <span className="font-semibold text-emerald-600 dark:text-emerald-400">ปกติ</span>
+                <span className="font-semibold text-emerald-600 dark:text-emerald-400">น้ำท่วมปกติ</span>
                 <span>{minor}</span>
               </span>
               <span className="text-slate-400 text-[10px]">•</span>
-              <span className="flex items-center gap-1" title="ระดับ 2: ปานกลาง/เฝ้าระวังพิเศษ">
+              <span className="flex items-center gap-1" title="ระดับ 2: น้ำท่วมปานกลาง (21-50 ซม.)">
                 <span className="w-2 h-2 rounded-full bg-amber-500"></span>
-                <span className="font-semibold text-amber-600 dark:text-amber-400">เสี่ยงสูง</span>
+                <span className="font-semibold text-amber-600 dark:text-amber-400">น้ำท่วมปานกลาง</span>
                 <span>{moderate}</span>
               </span>
               <span className="text-slate-400 text-[10px]">•</span>
-              <span className="flex items-center gap-1" title="ระดับ 3: วิกฤต/ห้ามสัญจร">
+              <span className="flex items-center gap-1" title="ระดับ 3: น้ำท่วมวิกฤต (>50 ซม.)">
                 <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span>
-                <span className="font-semibold text-rose-600 dark:text-rose-400">วิกฤต</span>
+                <span className="font-semibold text-rose-600 dark:text-rose-400">น้ำท่วมวิกฤต</span>
                 <strong className="text-rose-600 dark:text-rose-400">{severe}</strong>
               </span>
             </div>

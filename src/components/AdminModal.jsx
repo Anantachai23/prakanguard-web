@@ -1581,7 +1581,7 @@ export default function AdminModal({
                                         ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/80 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800'
                                         : (point.level === 3 ? 'bg-rose-50 text-rose-700 dark:bg-rose-950/80 dark:text-rose-300 border border-rose-300' : 'bg-amber-50 text-amber-700 dark:bg-amber-950/80 dark:text-amber-300 border border-amber-300')
                                     }`}>
-                                      {isResolved ? "🟢 ปกติ (แห้งแล้ว)" : point.level === 3 ? "🔴 วิกฤต" : point.level === 2 ? "🟠 เสี่ยงสูง" : "🟡 เฝ้าระวัง"} ({point.depthCm || 0} ซม.)
+                                      {isResolved ? "🟢 ปกติ (แห้งแล้ว)" : point.level === 3 ? "🔴 น้ำท่วมวิกฤต" : point.level === 2 ? "🟠 น้ำท่วมปานกลาง" : "🟢 น้ำท่วมปกติ"} ({point.depthCm || 0} ซม.)
                                     </span>
                                   </div>
 
@@ -2268,9 +2268,9 @@ export default function AdminModal({
                             isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-300'
                           }`}
                         >
-                          <option value={1}>🟡 ระดับ 1: เฝ้าระวัง (5 - 20 ซม.)</option>
-                          <option value={2}>🟠 ระดับ 2: เสี่ยงสูง รถเล็กเลี่ยง (21 - 50 ซม.)</option>
-                          <option value={3}>🔴 ระดับ 3: วิกฤต ปิดการจราจร (&gt; 50 ซม.)</option>
+                          <option value={1}>🟢 ระดับ 1: น้ำท่วมปกติ (5 - 20 ซม.)</option>
+                          <option value={2}>🟠 ระดับ 2: น้ำท่วมปานกลาง (21 - 50 ซม.)</option>
+                          <option value={3}>🔴 ระดับ 3: น้ำท่วมวิกฤต (&gt; 50 ซม.)</option>
                         </select>
                       </div>
                     </div>
