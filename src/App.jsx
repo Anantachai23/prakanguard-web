@@ -17,6 +17,7 @@ import AutoMarquee from './components/AutoMarquee';
 import ChatBot from './components/ChatBot';
 import { INITIAL_FLOOD_POINTS, DISTRICTS, matchesLocationSearch, scoreLocationSearch, POPULAR_SEARCH_SUGGESTIONS } from './data/samutPrakanPoints';
 import { getFloodLevel, FLOOD_STANDARDS } from './data/floodStandards';
+import { detectDistrictForCoordinates } from './data/samutPrakanBoundary';
 import { getOfficialAdvisorySummary } from './services/aiPredictor';
 import { getLiveSamutPrakanWeather } from './services/weatherService';
 import { runOfficial24HourSync } from './services/aiSentryService';
@@ -111,8 +112,10 @@ export default function App() {
               ? { ...initPoint, ...item, aliases: item.aliases || initPoint.aliases, keywords: item.keywords || initPoint.keywords }
               : item;
             const lvl = merged.depthCm !== undefined ? getFloodLevel(merged.depthCm) : (merged.level || 0);
+            const detectedDist = detectDistrictForCoordinates(merged.lat, merged.lng);
             return {
               ...merged,
+              district: detectedDist || merged.district,
               level: lvl,
               depthRange: lvl === 3 ? '> 50 ซม.' : lvl === 2 ? '21 - 50 ซม.' : (merged.depthCm > 0 ? '5 - 20 ซม.' : '0 ซม. (แห้งปกติ)')
             };
@@ -122,8 +125,10 @@ export default function App() {
           INITIAL_FLOOD_POINTS.forEach(ip => {
             if (!parsedIds.has(ip.id)) {
               const lvl = getFloodLevel(ip.depthCm);
+              const detectedDist = detectDistrictForCoordinates(ip.lat, ip.lng);
               list.push({
                 ...ip,
+                district: detectedDist || ip.district,
                 level: lvl,
                 depthRange: lvl === 3 ? '> 50 ซม.' : lvl === 2 ? '21 - 50 ซม.' : '5 - 20 ซม.'
               });
@@ -136,8 +141,10 @@ export default function App() {
     } catch (e) {}
     return INITIAL_FLOOD_POINTS.map(p => {
       const lvl = getFloodLevel(p.depthCm);
+      const detectedDist = detectDistrictForCoordinates(p.lat, p.lng);
       return {
         ...p,
+        district: detectedDist || p.district,
         level: lvl,
         depthRange: lvl === 3 ? '> 50 ซม.' : lvl === 2 ? '21 - 50 ซม.' : '5 - 20 ซม.'
       };
@@ -1309,44 +1316,18 @@ export default function App() {
     return closest ? { point: closest, distanceKm: minDistance } : null;
   }, [userLocation, points]);
 
-  // Identify which district the user is currently located in
+  // Identify which district the user is currently located in strictly based on GeoJSON polygon boundaries
   const userDistrict = useMemo(() => {
-    if (!userLocation) return null;
-    let minDistance = 999999;
-    let closestDistrict = null;
-    points.forEach(p => {
-      if (p.district) {
-        const d = getDistanceKm(userLocation.lat, userLocation.lng, p.lat, p.lng);
-        if (d < minDistance) {
-          minDistance = d;
-          closestDistrict = p.district;
-        }
-      }
-    });
-
-    if (closestDistrict && minDistance <= 25) {
-      return closestDistrict;
+    if (!userLocation || typeof userLocation.lat !== 'number' || typeof userLocation.lng !== 'number') {
+      return null;
     }
-
-    const DISTRICT_CENTERS = [
-      { name: "เมืองสมุทรปราการ", lat: 13.5991, lng: 100.5968 },
-      { name: "บางพลี", lat: 13.6050, lng: 100.7050 },
-      { name: "พระประแดง", lat: 13.6580, lng: 100.5340 },
-      { name: "บางเสาธง", lat: 13.6000, lng: 100.8200 },
-      { name: "บางบ่อ", lat: 13.5850, lng: 100.8350 },
-      { name: "พระสมุทรเจดีย์", lat: 13.5500, lng: 100.5800 }
-    ];
-    let dMin = Infinity;
-    let fallbackDistrict = "เมืองสมุทรปราการ";
-    for (const c of DISTRICT_CENTERS) {
-      const dist = getDistanceKm(userLocation.lat, userLocation.lng, c.lat, c.lng);
-      if (dist < dMin) {
-        dMin = dist;
-        fallbackDistrict = c.name;
-      }
+    // 1. Ray-casting check against exact 6-district GeoJSON polygon boundaries on map
+    const boundaryDistrict = detectDistrictForCoordinates(userLocation.lat, userLocation.lng);
+    if (boundaryDistrict) {
+      return boundaryDistrict;
     }
-    return fallbackDistrict;
-  }, [userLocation, points]);
+    return "เมืองสมุทรปราการ";
+  }, [userLocation]);
 
   // GPS Geolocation Handler with High Accuracy (Auto-requested on entry for mobile, iPad, and all devices)
   const handleLocateMe = (silent = false) => {

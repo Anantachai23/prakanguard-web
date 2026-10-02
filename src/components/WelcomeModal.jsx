@@ -55,24 +55,7 @@ export default function WelcomeModal({ isOpen, onClose, onEnterWithLocation, the
         {/* Modal Body (Scrollable with finger swipe on mobile) */}
         <div className={`flex-1 overflow-y-auto px-4 sm:px-6 py-2 sm:py-3 space-y-3 text-xs sm:text-sm ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
           
-          {/* GPS Auto-Prompt Highlight for Precision */}
-          <div className={`p-3.5 rounded-2xl border flex items-start gap-3 shadow-xs ${
-            isDark 
-              ? 'bg-blue-950/60 border-blue-800/80 text-cyan-200' 
-              : 'bg-blue-50/90 border-blue-200 text-blue-900'
-          }`}>
-            <div className="p-2 rounded-xl bg-blue-600 text-white shrink-0 mt-0.5 shadow-sm">
-              <Navigation2 className="w-4 h-4 animate-pulse" />
-            </div>
-            <div className="space-y-1">
-              <strong className="block text-xs sm:text-sm font-bold">
-                📍 เรียกขอตำแหน่ง GPS อัตโนมัติเพื่อความแม่นยำ
-              </strong>
-              <p className="text-[11px] sm:text-xs leading-relaxed opacity-90">
-                เมื่อเข้าสู่ระบบ อุปกรณ์ของคุณจะขออนุญาตเข้าถึงตำแหน่ง เพื่อระบุพิกัดและคำนวณระยะห่างจุดน้ำท่วมใกล้ตัวที่สุดแบบเรียลไทม์
-              </p>
-            </div>
-          </div>
+
 
           {/* Project Purpose Statement */}
           <div className={`p-3.5 sm:p-4 rounded-2xl border shadow-xs space-y-2 ${
