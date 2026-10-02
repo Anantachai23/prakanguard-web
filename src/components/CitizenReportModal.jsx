@@ -122,6 +122,15 @@ export const HAIL_SIZES = [
   }
 ];
 
+const DISTRICT_DEFAULT_COORDS = {
+  'เมืองสมุทรปราการ': { lat: '13.5991', lng: '100.6012' },
+  'บางพลี': { lat: '13.6052', lng: '100.7088' },
+  'พระประแดง': { lat: '13.6550', lng: '100.5340' },
+  'บางบ่อ': { lat: '13.5875', lng: '100.8250' },
+  'บางเสาธง': { lat: '13.5850', lng: '100.8200' },
+  'พระสมุทรเจดีย์': { lat: '13.5412', lng: '100.5845' }
+};
+
 export default function CitizenReportModal({ 
   isOpen, 
   onClose, 
@@ -144,6 +153,7 @@ export default function CitizenReportModal({
   const [district, setDistrict] = useState('เมืองสมุทรปราการ');
   const [lat, setLat] = useState('13.5991');
   const [lng, setLng] = useState('100.6012');
+  const [hasCustomPicked, setHasCustomPicked] = useState(false);
   const [notes, setNotes] = useState('');
   const [photoPreview, setPhotoPreview] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -157,12 +167,21 @@ export default function CitizenReportModal({
     if (pickedCoords && pickedCoords.lat && pickedCoords.lng) {
       setLat(Number(pickedCoords.lat).toFixed(5));
       setLng(Number(pickedCoords.lng).toFixed(5));
+      setHasCustomPicked(true);
       const detected = detectDistrictForCoordinates(pickedCoords.lat, pickedCoords.lng);
       if (detected) {
         setDistrict(detected);
       }
     }
   }, [pickedCoords]);
+
+  const handleDistrictChange = (newDistrict) => {
+    setDistrict(newDistrict);
+    if (!hasCustomPicked && DISTRICT_DEFAULT_COORDS[newDistrict]) {
+      setLat(DISTRICT_DEFAULT_COORDS[newDistrict].lat);
+      setLng(DISTRICT_DEFAULT_COORDS[newDistrict].lng);
+    }
+  };
 
   // Real-time Coordinate Precision Validation against Samut Prakan 6 Districts
   const coordValidation = useMemo(() => {
@@ -221,6 +240,7 @@ export default function CitizenReportModal({
         const cLng = pos.coords.longitude.toFixed(5);
         setLat(cLat);
         setLng(cLng);
+        setHasCustomPicked(true);
         const detected = detectDistrictForCoordinates(parseFloat(cLat), parseFloat(cLng));
         if (detected) {
           setDistrict(detected);
@@ -238,19 +258,6 @@ export default function CitizenReportModal({
     );
   };
 
-  // Fly Map to typed coordinates
-  const handleFlyToTypedCoords = () => {
-    const pLat = parseFloat(lat);
-    const pLng = parseFloat(lng);
-    if (!isNaN(pLat) && !isNaN(pLng) && pLat >= 13 && pLat <= 14 && pLng >= 100 && pLng <= 101) {
-      if (onFlyToCoords) {
-        onFlyToCoords(pLat, pLng);
-      }
-    } else {
-      alert("กรุณากรอกพิกัดละติจูดและลองจิจูดให้ถูกต้อง (เช่น 13.5991, 100.6012)");
-    }
-  };
-
   // Handle Form Submission with Boundary & Precision Guard
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -259,11 +266,12 @@ export default function CitizenReportModal({
       return;
     }
 
-    const pLat = parseFloat(lat);
-    const pLng = parseFloat(lng);
+    let pLat = parseFloat(lat);
+    let pLng = parseFloat(lng);
     if (isNaN(pLat) || isNaN(pLng)) {
-      alert("กรุณาระบุพิกัดให้ถูกต้อง");
-      return;
+      const fallback = DISTRICT_DEFAULT_COORDS[district] || DISTRICT_DEFAULT_COORDS['เมืองสมุทรปราการ'];
+      pLat = parseFloat(fallback.lat);
+      pLng = parseFloat(fallback.lng);
     }
 
     if (coordValidation && !coordValidation.isValid) {
@@ -620,7 +628,7 @@ export default function CitizenReportModal({
             <label className={`block text-xs font-bold uppercase tracking-wider ${
               isDark ? 'text-slate-200' : 'text-slate-800'
             }`}>
-              3. ระบุสถานที่และพิกัด *
+              3. ระบุสถานที่ตั้ง / ถนน *
             </label>
 
             {/* Quick Actions Bar for Picking Location */}
@@ -688,7 +696,7 @@ export default function CitizenReportModal({
                 </span>
                 <select
                   value={district}
-                  onChange={(e) => setDistrict(e.target.value)}
+                  onChange={(e) => handleDistrictChange(e.target.value)}
                   className={`w-full rounded-xl px-3 py-2 text-xs sm:text-sm border focus:outline-none transition-colors font-medium ${
                     isDark 
                       ? 'border-slate-700 focus:border-violet-400' 
@@ -706,86 +714,26 @@ export default function CitizenReportModal({
               </div>
             </div>
 
-            {/* Coordinates Inputs with "Go to Coordinates" button */}
-            <div className={`p-3 rounded-2xl border ${
-              isDark ? 'bg-slate-850/80 border-slate-750' : 'bg-slate-50 border-slate-200'
-            }`}>
-              <div className="flex flex-wrap items-center justify-between gap-1.5 mb-1.5">
-                <span className={`text-[11px] font-bold ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
-                  พิกัดละติจูด, ลองจิจูด (Latitude, Longitude)
-                </span>
-                <button
-                  type="button"
-                  onClick={handleFlyToTypedCoords}
-                  className="text-[10px] text-violet-500 hover:text-violet-400 font-bold flex items-center gap-1 cursor-pointer underline"
-                  title="ดูจุดนี้บนแผนที่ทันที"
-                >
-                  <Compass className="w-3.5 h-3.5" />
-                  <span>บินไปยังพิกัดจริง</span>
-                </button>
+            {/* Friendly Location Indicator (No Raw Latitude/Longitude Shown) */}
+            {hasCustomPicked && (
+              <div className={`p-2.5 rounded-xl border flex items-center justify-between gap-2 text-xs ${
+                isDark ? 'bg-violet-950/40 border-violet-800 text-violet-300' : 'bg-violet-50 border-violet-200 text-violet-700'
+              }`}>
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                  <span className="font-semibold">บันทึกตำแหน่งบนแผนที่แล้ว (อ.{district})</span>
+                </div>
+                {onFlyToCoords && (
+                  <button
+                    type="button"
+                    onClick={() => onFlyToCoords(parseFloat(lat), parseFloat(lng))}
+                    className="text-[11px] underline font-bold cursor-pointer hover:opacity-80"
+                  >
+                    ดูจุดบนแผนที่
+                  </button>
+                )}
               </div>
-
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <span className={`block text-[10px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>ละติจูด (Lat)</span>
-                  <input
-                    type="text"
-                    value={lat}
-                    onChange={(e) => setLat(e.target.value)}
-                    placeholder="13.5991"
-                    className="w-full rounded-lg px-2.5 py-1.5 text-xs font-mono border focus:outline-none"
-                    style={{
-                      backgroundColor: isDark ? '#0f172a' : '#ffffff',
-                      color: isDark ? '#f8fafc' : '#0f172a'
-                    }}
-                  />
-                </div>
-                <div>
-                  <span className={`block text-[10px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>ลองจิจูด (Lng)</span>
-                  <input
-                    type="text"
-                    value={lng}
-                    onChange={(e) => setLng(e.target.value)}
-                    placeholder="100.6012"
-                    className="w-full rounded-lg px-2.5 py-1.5 text-xs font-mono border focus:outline-none"
-                    style={{
-                      backgroundColor: isDark ? '#0f172a' : '#ffffff',
-                      color: isDark ? '#f8fafc' : '#0f172a'
-                    }}
-                  />
-                </div>
-              </div>
-
-              {/* Real-time 6-District Coordinate Validation Badge */}
-              {coordValidation && (
-                <div className={`mt-2 p-2 rounded-xl text-[11px] flex items-center justify-between gap-2 border ${
-                  coordValidation.isValid 
-                    ? (coordValidation.isDistrictMatch 
-                        ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400' 
-                        : 'bg-amber-500/10 border-amber-500/30 text-amber-600 dark:text-amber-400')
-                    : 'bg-rose-500/10 border-rose-500/30 text-rose-600 dark:text-rose-400'
-                }`}>
-                  <div className="flex items-center gap-1.5 min-w-0">
-                    {coordValidation.isValid ? (
-                      <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
-                    ) : (
-                      <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
-                    )}
-                    <span className="truncate">{coordValidation.reason}</span>
-                  </div>
-                  {coordValidation.isValid && !coordValidation.isDistrictMatch && (
-                    <button
-                      type="button"
-                      onClick={() => setDistrict(coordValidation.detectedDistrict)}
-                      className="px-2 py-0.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-[10px] shrink-0 cursor-pointer shadow-xs"
-                      title="กดเพื่อปรับให้ตรงกับอำเภอที่ตรวจพบจากพิกัด"
-                    >
-                      เปลี่ยนเป็น อ.{coordValidation.detectedDistrict}
-                    </button>
-                  )}
-                </div>
-              )}
-            </div>
+            )}
 
             {/* Additional Notes */}
             <div>

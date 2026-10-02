@@ -235,3 +235,23 @@ body {
   }
 }
 
+/* Visible Sleek Scrollbar for Admin Tabs & Modals */
+.custom-scrollbar-thin::-webkit-scrollbar {
+  height: 6px;
+  width: 6px;
+}
+.custom-scrollbar-thin::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.08);
+  border-radius: 9999px;
+}
+.dark .custom-scrollbar-thin::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.08);
+}
+.custom-scrollbar-thin::-webkit-scrollbar-thumb {
+  background: rgba(245, 158, 11, 0.6);
+  border-radius: 9999px;
+}
+.custom-scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: rgba(245, 158, 11, 0.9);
+}
+

@@ -468,14 +468,15 @@ export default function App() {
       return false;
     }
   });
-  const [latestUpdateNotification, setLatestUpdateNotification] = useState("✨ อัพเดทแพท 1.0 เวอร์ชันล่าสุด อัพเดทได้แม่นยำขึ้นกว่าเดิม");
+  const [showPatchBanner, setShowPatchBanner] = useState(true);
+  const [latestUpdateNotification, setLatestUpdateNotification] = useState(null);
   const [adminAlertToast, setAdminAlertToast] = useState(null);
 
-  // Auto-dismiss initial patch update notification after 12s
+  // Auto-dismiss initial patch update banner after 20s
   useEffect(() => {
     const timer = setTimeout(() => {
-      setLatestUpdateNotification(prev => prev === "✨ อัพเดทแพท 1.0 เวอร์ชันล่าสุด อัพเดทได้แม่นยำขึ้นกว่าเดิม" ? null : prev);
-    }, 12000);
+      setShowPatchBanner(false);
+    }, 20000);
     return () => clearTimeout(timer);
   }, []);
 
@@ -1366,6 +1367,33 @@ export default function App() {
           </div>
         )}
 
+        {/* Prominent Patch 1.0 Version Notification on Entry */}
+        {showPatchBanner && (
+          <div className="fixed top-3.5 sm:top-5 left-1/2 -translate-x-1/2 z-[100] w-auto max-w-[95vw] sm:max-w-lg pointer-events-auto animate-in fade-in slide-in-from-top-4 duration-300 drop-shadow-2xl">
+            <div className="flex items-center gap-2.5 sm:gap-3 px-3.5 sm:px-4 py-2.5 rounded-2xl bg-slate-950/95 text-white border border-emerald-400/80 shadow-2xl backdrop-blur-xl ring-2 ring-emerald-500/20">
+              <span className="flex h-7 w-7 sm:h-8 sm:w-8 shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-amber-400 to-yellow-300 text-slate-950 shadow text-sm sm:text-base font-bold">
+                ✨
+              </span>
+              <div className="flex flex-col sm:flex-row sm:items-center gap-0.5 sm:gap-2 min-w-0 pr-1">
+                <span className="text-xs sm:text-sm font-black text-amber-300 whitespace-nowrap">
+                  อัพเดทแพท 1.0 เวอร์ชันล่าสุด
+                </span>
+                <span className="hidden sm:inline text-slate-400 text-xs">•</span>
+                <span className="text-[11px] sm:text-xs font-semibold text-slate-200">
+                  อัพเดทได้แม่นยำขึ้นกว่าเดิม
+                </span>
+              </div>
+              <button 
+                onClick={() => setShowPatchBanner(false)}
+                className="p-1 hover:bg-white/20 rounded-xl text-slate-300 hover:text-white cursor-pointer ml-auto shrink-0 transition-colors"
+                title="ปิดการแจ้งเตือน"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Floating Toast Notification when Updates occur with timestamp */}
         {latestUpdateNotification && (
           <div className="absolute top-14 sm:top-16 left-1/2 -translate-x-1/2 z-50 bg-emerald-600/98 text-white px-4 py-2.5 rounded-2xl shadow-2xl border border-emerald-300 backdrop-blur-md flex items-center gap-2.5 w-auto max-w-[92vw] sm:max-w-lg pointer-events-auto animate-in fade-in slide-in-from-top-3 duration-300">
@@ -1687,11 +1715,11 @@ export default function App() {
               </button>
             </div>
 
-            {/* Severity Minimalist Dropdown */}
+            {/* Severity Minimalist Dropdown (Visible on Desktop, Replaced by Side Widget on Mobile) */}
             <select
               value={severityFilter}
               onChange={(e) => setSeverityFilter(e.target.value)}
-              className={`text-xs font-semibold rounded-2xl px-2 sm:px-3 py-1.5 sm:py-2 border focus:outline-none shadow-sm cursor-pointer backdrop-blur-md shrink-0 transition-colors max-w-[115px] sm:max-w-none truncate ${
+              className={`hidden sm:block text-xs font-semibold rounded-2xl px-2 sm:px-3 py-1.5 sm:py-2 border focus:outline-none shadow-sm cursor-pointer backdrop-blur-md shrink-0 transition-colors max-w-[115px] sm:max-w-none truncate ${
                 isDark 
                   ? 'bg-slate-900 text-slate-200 border-slate-700 focus:border-blue-400' 
                   : 'bg-white text-slate-800 border-slate-200 focus:border-blue-500'
@@ -1705,6 +1733,111 @@ export default function App() {
             </select>
           </div>
 
+        </div>
+
+        {/* FLOATING 3-COLOR SEVERITY CRITERIA (SIDE BAR FOR MOBILE - NO SCROLLING NEEDED) */}
+        <div className={`fixed right-2.5 sm:right-auto sm:left-4 z-20 pointer-events-auto transition-all duration-300 select-none ${
+          isTopPanelCollapsed 
+            ? 'top-16 sm:bottom-16 sm:top-auto' 
+            : 'top-[195px] sm:bottom-16 sm:top-auto'
+        }`}>
+          <div className={`p-2 rounded-2xl border shadow-xl backdrop-blur-xl transition-all flex flex-col gap-1 w-[124px] sm:w-[136px] ${
+            isDark 
+              ? 'bg-slate-900/95 border-slate-700/90 text-white shadow-slate-950/80' 
+              : 'bg-white/95 border-slate-200/90 text-slate-800 shadow-slate-400/30'
+          }`}>
+            
+            {/* Header / Info trigger */}
+            <div className="flex items-center justify-between pb-1 mb-0.5 border-b border-slate-200/80 dark:border-slate-800">
+              <button
+                onClick={() => setIsStandardsModalOpen(true)}
+                className="text-[10px] font-bold text-slate-500 dark:text-slate-400 hover:text-blue-500 flex items-center gap-1 cursor-pointer"
+                title="แตะเพื่อดูเกณฑ์มาตรฐาน ปภ. ฉบับเต็ม"
+              >
+                <BookOpen className="w-3 h-3 text-blue-500" />
+                <span>เกณฑ์สีน้ำ</span>
+              </button>
+              {severityFilter !== 'all' && (
+                <button
+                  onClick={() => setSeverityFilter('all')}
+                  className="text-[9px] px-1 py-0.2 rounded bg-blue-500/20 text-blue-600 dark:text-blue-400 font-bold cursor-pointer"
+                  title="แตะเพื่อล้างตัวกรองแสดงทุกระดับ"
+                >
+                  ล้าง
+                </button>
+              )}
+            </div>
+
+            {/* Green: Normal */}
+            <button
+              type="button"
+              onClick={() => setSeverityFilter(prev => prev === '1' ? 'all' : '1')}
+              className={`flex items-center gap-2 p-1 rounded-xl text-left transition-all cursor-pointer ${
+                severityFilter === '1' 
+                  ? 'bg-emerald-500/25 ring-1.5 ring-emerald-500' 
+                  : 'hover:bg-slate-100 dark:hover:bg-slate-800/80'
+              }`}
+              title="แตะเพื่อกรองดูเฉพาะจุดปกติ (5 - 20 ซม.)"
+            >
+              <span className="w-3 h-3 rounded-full bg-emerald-500 shadow-sm shrink-0"></span>
+              <div className="leading-tight min-w-0">
+                <div className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400">เขียว: ปกติ</div>
+                <div className="text-[9px] text-slate-500 dark:text-slate-400">5 - 20 ซม.</div>
+              </div>
+            </button>
+
+            {/* Yellow: High Risk */}
+            <button
+              type="button"
+              onClick={() => setSeverityFilter(prev => prev === '2' ? 'all' : '2')}
+              className={`flex items-center gap-2 p-1 rounded-xl text-left transition-all cursor-pointer ${
+                severityFilter === '2' 
+                  ? 'bg-amber-500/25 ring-1.5 ring-amber-500' 
+                  : 'hover:bg-slate-100 dark:hover:bg-slate-800/80'
+              }`}
+              title="แตะเพื่อกรองดูเฉพาะจุดเสี่ยงสูง (21 - 50 ซม.)"
+            >
+              <span className="w-3 h-3 rounded-full bg-amber-500 shadow-sm shrink-0"></span>
+              <div className="leading-tight min-w-0">
+                <div className="text-[11px] font-bold text-amber-600 dark:text-amber-400">เหลือง: เสี่ยงสูง</div>
+                <div className="text-[9px] text-slate-500 dark:text-slate-400">21 - 50 ซม.</div>
+              </div>
+            </button>
+
+            {/* Red: Critical */}
+            <button
+              type="button"
+              onClick={() => setSeverityFilter(prev => prev === '3' ? 'all' : '3')}
+              className={`flex items-center gap-2 p-1 rounded-xl text-left transition-all cursor-pointer ${
+                severityFilter === '3' 
+                  ? 'bg-rose-500/25 ring-1.5 ring-rose-500' 
+                  : 'hover:bg-slate-100 dark:hover:bg-slate-800/80'
+              }`}
+              title="แตะเพื่อกรองดูเฉพาะจุดวิกฤต (> 50 ซม.)"
+            >
+              <span className="w-3 h-3 rounded-full bg-rose-500 shadow-sm shrink-0 animate-pulse"></span>
+              <div className="leading-tight min-w-0">
+                <div className="text-[11px] font-bold text-rose-600 dark:text-rose-400">แดง: วิกฤต</div>
+                <div className="text-[9px] text-slate-500 dark:text-slate-400">&gt; 50 ซม.</div>
+              </div>
+            </button>
+
+            {/* Citizen reports pill if any */}
+            {citizenReports.length > 0 && (
+              <div className="flex items-center gap-1.5 pt-1 mt-0.5 border-t border-dashed border-slate-200 dark:border-slate-800 px-1">
+                <span className="w-2.5 h-2.5 rounded-full bg-violet-500 shrink-0"></span>
+                <div className="leading-tight min-w-0">
+                  <span className="text-[10px] font-bold text-violet-600 dark:text-violet-400 block truncate">
+                    ม่วง: แจ้งเตือน
+                  </span>
+                  <span className="text-[9px] text-slate-500 dark:text-slate-400 block">
+                    {citizenReports.length} จุด
+                  </span>
+                </div>
+              </div>
+            )}
+
+          </div>
         </div>
 
         {/* FLOATING POINT DETAIL CARD (CLEAN & SENIOR-FRIENDLY & COLLAPSIBLE FOR MOBILE) */}

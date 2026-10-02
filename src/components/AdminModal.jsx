@@ -40,6 +40,7 @@ import {
   FileCode,
   Check,
   RefreshCw,
+  ChevronLeft,
   ChevronRight,
   Filter,
   AlertCircle,
@@ -118,6 +119,56 @@ export default function AdminModal({
   // Tabs: 'pending' | 'approved' | 'locations' | 'feedback' | 'broadcast' | 'history' | 'security'
   const [activeTab, setActiveTab] = useState('pending');
   const [selectedPhotoModal, setSelectedPhotoModal] = useState(null);
+
+  // Admin Tabs horizontal scroll controllers
+  const adminTabsRef = React.useRef(null);
+  const [canScrollTabsLeft, setCanScrollTabsLeft] = useState(false);
+  const [canScrollTabsRight, setCanScrollTabsRight] = useState(true);
+
+  const checkAdminTabsScroll = () => {
+    const el = adminTabsRef.current;
+    if (!el) return;
+    setCanScrollTabsLeft(el.scrollLeft > 6);
+    setCanScrollTabsRight(el.scrollLeft < el.scrollWidth - el.clientWidth - 6);
+  };
+
+  useEffect(() => {
+    const timer = setTimeout(checkAdminTabsScroll, 120);
+    const el = adminTabsRef.current;
+    if (el) {
+      el.addEventListener('scroll', checkAdminTabsScroll);
+      window.addEventListener('resize', checkAdminTabsScroll);
+    }
+    return () => {
+      clearTimeout(timer);
+      if (el) el.removeEventListener('scroll', checkAdminTabsScroll);
+      window.removeEventListener('resize', checkAdminTabsScroll);
+    };
+  }, [activeTab, isAuthenticated]);
+
+  useEffect(() => {
+    const el = adminTabsRef.current;
+    if (!el) return;
+
+    const onWheel = (e) => {
+      if (e.deltaY !== 0 && el.scrollWidth > el.clientWidth) {
+        e.preventDefault();
+        el.scrollLeft += e.deltaY * 0.9;
+        checkAdminTabsScroll();
+      }
+    };
+
+    el.addEventListener('wheel', onWheel, { passive: false });
+    return () => el.removeEventListener('wheel', onWheel);
+  }, [isAuthenticated]);
+
+  const scrollAdminTabs = (dir) => {
+    const el = adminTabsRef.current;
+    if (!el) return;
+    const delta = dir === 'left' ? -220 : 220;
+    el.scrollBy({ left: delta, behavior: 'smooth' });
+    setTimeout(checkAdminTabsScroll, 320);
+  };
 
   // Internal Admin Notice Banner (No public announcements)
   const [adminNotice, setAdminNotice] = useState(null);
@@ -876,127 +927,153 @@ export default function AdminModal({
                 </button>
               </form>
 
-              {/* Helpful Hint Card for Administrator */}
-              <div className={`p-3.5 rounded-2xl border text-xs leading-relaxed ${
-                isDark ? 'bg-slate-850 border-slate-800 text-slate-300' : 'bg-slate-50 border-slate-200 text-slate-600'
-              }`}>
-                <div className="flex items-center gap-1.5 font-bold text-amber-500 mb-1">
-                  <ShieldCheck className="w-4 h-4" />
-                  <span>ข้อมูลบัญชีผู้ดูแลระบบ (Admin Access)</span>
-                </div>
-                <p className="text-[11px]">
-                  สามารถเข้าใช้งานด้วย <strong>Username:</strong> <code className="bg-amber-500/10 text-amber-400 px-1 py-0.5 rounded">admin</code> | <strong>Password:</strong> <code className="bg-amber-500/10 text-amber-400 px-1 py-0.5 rounded">admin1234</code> หรือรหัสผ่านหลัก
-                </p>
-              </div>
-
             </div>
           </div>
         ) : (
           /* 2. AUTHENTICATED ADMIN PANEL */
           <div className="flex flex-col flex-1 overflow-hidden">
             
-            {/* Admin Tabs */}
-            <div className={`px-3 sm:px-6 pt-2.5 border-b flex items-center gap-1 overflow-x-auto no-scrollbar shrink-0 ${
-              isDark ? 'bg-slate-950/40 border-slate-800' : 'bg-slate-50/80 border-slate-200'
+            {/* Admin Tabs Bar with Left/Right Scroll Controllers & Sleek Scrollbar */}
+            <div className={`relative px-2 sm:px-4 pt-2 border-b flex items-center shrink-0 ${
+              isDark ? 'bg-slate-950/60 border-slate-800' : 'bg-slate-50/90 border-slate-200'
             }`}>
-              <button
-                type="button"
-                onClick={() => setActiveTab('pending')}
-                className={`px-3 py-2 rounded-t-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 border-b-2 whitespace-nowrap ${
-                  activeTab === 'pending'
-                    ? (isDark ? 'border-amber-400 text-amber-300 bg-slate-800' : 'border-amber-500 text-amber-700 bg-white')
-                    : 'border-transparent text-slate-400 hover:text-slate-200'
-                }`}
-              >
-                <span>🚨 แจ้งเตือนน้ำท่วม</span>
-                {pendingReports.length > 0 && (
-                  <span className="px-1.5 py-0.2 rounded-full text-[10px] font-extrabold bg-rose-500 text-white animate-pulse">
-                    {pendingReports.length}
-                  </span>
-                )}
-              </button>
+              {/* Left Scroll Button */}
+              {canScrollTabsLeft && (
+                <button
+                  type="button"
+                  onClick={() => scrollAdminTabs('left')}
+                  className={`absolute left-1.5 z-20 p-1.5 rounded-xl shadow-lg border transition-all cursor-pointer ${
+                    isDark 
+                      ? 'bg-slate-800 text-slate-100 border-slate-700 hover:bg-slate-700' 
+                      : 'bg-white text-slate-800 border-slate-300 hover:bg-slate-100'
+                  }`}
+                  title="เลื่อนดูเมนูก่อนหน้า"
+                >
+                  <ChevronLeft className="w-4 h-4 text-amber-500" />
+                </button>
+              )}
 
-              <button
-                type="button"
-                onClick={() => setActiveTab('approved')}
-                className={`px-3 py-2 rounded-t-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 border-b-2 whitespace-nowrap ${
-                  activeTab === 'approved'
-                    ? (isDark ? 'border-emerald-400 text-emerald-300 bg-slate-800' : 'border-emerald-500 text-emerald-700 bg-white')
-                    : 'border-transparent text-slate-400 hover:text-slate-200'
-                }`}
+              {/* Tabs Scrollable Container */}
+              <div 
+                ref={adminTabsRef}
+                className="flex items-center gap-1.5 overflow-x-auto w-full pb-1 px-1 custom-scrollbar-thin scroll-smooth select-none"
+                style={{ scrollbarWidth: 'thin' }}
               >
-                <span>📍 แสดงบนแผนที่ ({approvedReports.length})</span>
-              </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('pending')}
+                  className={`px-3 py-2 rounded-t-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 border-b-2 whitespace-nowrap shrink-0 ${
+                    activeTab === 'pending'
+                      ? (isDark ? 'border-amber-400 text-amber-300 bg-slate-800' : 'border-amber-500 text-amber-700 bg-white')
+                      : 'border-transparent text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  <span>🚨 แจ้งเตือนน้ำท่วม</span>
+                  {pendingReports.length > 0 && (
+                    <span className="px-1.5 py-0.2 rounded-full text-[10px] font-extrabold bg-rose-500 text-white animate-pulse">
+                      {pendingReports.length}
+                    </span>
+                  )}
+                </button>
 
-              <button
-                type="button"
-                onClick={() => setActiveTab('locations')}
-                className={`px-3 py-2 rounded-t-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 border-b-2 whitespace-nowrap ${
-                  activeTab === 'locations'
-                    ? (isDark ? 'border-cyan-400 text-cyan-300 bg-slate-800' : 'border-blue-600 text-blue-700 bg-white')
-                    : 'border-transparent text-slate-400 hover:text-slate-200'
-                }`}
-              >
-                <MapPin className="w-3.5 h-3.5 text-blue-500" />
-                <span>จุดเฝ้าระวัง 6 อำเภอ ({points.length})</span>
-              </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('approved')}
+                  className={`px-3 py-2 rounded-t-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 border-b-2 whitespace-nowrap shrink-0 ${
+                    activeTab === 'approved'
+                      ? (isDark ? 'border-emerald-400 text-emerald-300 bg-slate-800' : 'border-emerald-500 text-emerald-700 bg-white')
+                      : 'border-transparent text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  <span>📍 แสดงบนแผนที่ ({approvedReports.length})</span>
+                </button>
 
-              <button
-                type="button"
-                onClick={() => setActiveTab('feedback')}
-                className={`px-3 py-2 rounded-t-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 border-b-2 whitespace-nowrap ${
-                  activeTab === 'feedback'
-                    ? (isDark ? 'border-teal-400 text-teal-300 bg-slate-800' : 'border-teal-500 text-teal-700 bg-white')
-                    : 'border-transparent text-slate-400 hover:text-slate-200'
-                }`}
-              >
-                <MessageSquare className="w-3.5 h-3.5 text-teal-400" />
-                <span>ข้อเสนอต่อเว็บ</span>
-                {unreadFeedbackCount > 0 && (
-                  <span className="px-1.5 py-0.2 rounded-full text-[10px] font-extrabold bg-teal-500 text-white animate-pulse">
-                    {unreadFeedbackCount}
-                  </span>
-                )}
-              </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('locations')}
+                  className={`px-3 py-2 rounded-t-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 border-b-2 whitespace-nowrap shrink-0 ${
+                    activeTab === 'locations'
+                      ? (isDark ? 'border-cyan-400 text-cyan-300 bg-slate-800' : 'border-blue-600 text-blue-700 bg-white')
+                      : 'border-transparent text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  <MapPin className="w-3.5 h-3.5 text-blue-500" />
+                  <span>จุดเฝ้าระวัง 6 อำเภอ ({points.length})</span>
+                </button>
 
-              <button
-                type="button"
-                onClick={() => setActiveTab('broadcast')}
-                className={`px-3 py-2 rounded-t-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 border-b-2 whitespace-nowrap ${
-                  activeTab === 'broadcast'
-                    ? (isDark ? 'border-amber-400 text-amber-300 bg-slate-800' : 'border-amber-500 text-amber-700 bg-white')
-                    : 'border-transparent text-slate-400 hover:text-slate-200'
-                }`}
-              >
-                <Megaphone className="w-3.5 h-3.5 text-blue-500" />
-                <span>ประกาศด่วน</span>
-              </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('feedback')}
+                  className={`px-3 py-2 rounded-t-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 border-b-2 whitespace-nowrap shrink-0 ${
+                    activeTab === 'feedback'
+                      ? (isDark ? 'border-teal-400 text-teal-300 bg-slate-800' : 'border-teal-500 text-teal-700 bg-white')
+                      : 'border-transparent text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  <MessageSquare className="w-3.5 h-3.5 text-teal-400" />
+                  <span>ข้อเสนอต่อเว็บ</span>
+                  {unreadFeedbackCount > 0 && (
+                    <span className="px-1.5 py-0.2 rounded-full text-[10px] font-extrabold bg-teal-500 text-white animate-pulse">
+                      {unreadFeedbackCount}
+                    </span>
+                  )}
+                </button>
 
-              <button
-                type="button"
-                onClick={() => setActiveTab('history')}
-                className={`px-3 py-2 rounded-t-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 border-b-2 whitespace-nowrap ${
-                  activeTab === 'history'
-                    ? (isDark ? 'border-amber-400 text-amber-300 bg-slate-800' : 'border-amber-500 text-amber-700 bg-white')
-                    : 'border-transparent text-slate-400 hover:text-slate-200'
-                }`}
-              >
-                <Clock className="w-3.5 h-3.5 text-slate-400" />
-                <span>ประวัติ</span>
-              </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('broadcast')}
+                  className={`px-3 py-2 rounded-t-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 border-b-2 whitespace-nowrap shrink-0 ${
+                    activeTab === 'broadcast'
+                      ? (isDark ? 'border-amber-400 text-amber-300 bg-slate-800' : 'border-amber-500 text-amber-700 bg-white')
+                      : 'border-transparent text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  <Megaphone className="w-3.5 h-3.5 text-blue-500" />
+                  <span>ประกาศด่วน</span>
+                </button>
 
-              <button
-                type="button"
-                onClick={() => setActiveTab('security')}
-                className={`px-3 py-2 rounded-t-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 border-b-2 whitespace-nowrap ml-auto ${
-                  activeTab === 'security'
-                    ? (isDark ? 'border-amber-400 text-amber-300 bg-slate-800' : 'border-amber-500 text-amber-700 bg-white')
-                    : 'border-transparent text-slate-400 hover:text-slate-200'
-                }`}
-              >
-                <KeyRound className="w-3.5 h-3.5 text-amber-500" />
-                <span>ความปลอดภัย</span>
-              </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('history')}
+                  className={`px-3 py-2 rounded-t-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 border-b-2 whitespace-nowrap shrink-0 ${
+                    activeTab === 'history'
+                      ? (isDark ? 'border-amber-400 text-amber-300 bg-slate-800' : 'border-amber-500 text-amber-700 bg-white')
+                      : 'border-transparent text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  <Clock className="w-3.5 h-3.5 text-slate-400" />
+                  <span>ประวัติ</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('security')}
+                  className={`px-3 py-2 rounded-t-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 border-b-2 whitespace-nowrap ml-auto shrink-0 ${
+                    activeTab === 'security'
+                      ? (isDark ? 'border-amber-400 text-amber-300 bg-slate-800' : 'border-amber-500 text-amber-700 bg-white')
+                      : 'border-transparent text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  <KeyRound className="w-3.5 h-3.5 text-amber-500" />
+                  <span>ความปลอดภัย</span>
+                </button>
+              </div>
+
+              {/* Right Scroll Button */}
+              {canScrollTabsRight && (
+                <button
+                  type="button"
+                  onClick={() => scrollAdminTabs('right')}
+                  className={`absolute right-1.5 z-20 p-1.5 rounded-xl shadow-lg border transition-all cursor-pointer ${
+                    isDark 
+                      ? 'bg-slate-800 text-slate-100 border-slate-700 hover:bg-slate-700' 
+                      : 'bg-white text-slate-800 border-slate-300 hover:bg-slate-100'
+                  }`}
+                  title="เลื่อนดูเมนูถัดไป"
+                >
+                  <ChevronRight className="w-4 h-4 text-amber-500" />
+                </button>
+              )}
             </div>
 
             {/* TAB CONTENTS */}
