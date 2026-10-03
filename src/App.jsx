@@ -772,14 +772,33 @@ export default function App() {
 
 
     const pullCloudUpdates = () => {
-      // 1. Pull recent reports from Cloud
+      // 1. Pull recent reports from Cloud — อัปเดตทั้ง NEW และ EXISTING (เช่น เมื่อ admin อนุมัติ)
       fetchRecentCloudReports().then(cloudReports => {
         if (Array.isArray(cloudReports) && cloudReports.length > 0) {
           setCitizenReports(prev => {
-            const existingIds = new Set(prev.map(r => r.id));
-            const newItems = cloudReports.filter(cr => isValidReport(cr) && !existingIds.has(cr.id));
-            if (newItems.length === 0) return prev;
-            const merged = [...newItems, ...prev];
+            const prevMap = new Map(prev.map(r => [r.id, r]));
+            let changed = false;
+
+            cloudReports.forEach(cr => {
+              if (!isValidReport(cr)) return;
+              const existing = prevMap.get(cr.id);
+              if (!existing) {
+                // รายการใหม่
+                prevMap.set(cr.id, cr);
+                changed = true;
+              } else {
+                // รายการมีอยู่แล้ว — ตรวจว่า cloud version ใหม่กว่า หรือสถานะเปลี่ยน
+                const cloudNewer = (cr.timestamp || 0) > (existing.timestamp || 0);
+                const statusChanged = (cr.isApproved !== existing.isApproved) || (cr.isResolved !== existing.isResolved);
+                if (cloudNewer || statusChanged) {
+                  prevMap.set(cr.id, { ...existing, ...cr });
+                  changed = true;
+                }
+              }
+            });
+
+            if (!changed) return prev;
+            const merged = Array.from(prevMap.values()).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
             try {
               localStorage.setItem('prakanguard_citizen_reports', JSON.stringify(merged));
             } catch (e) {}
@@ -787,6 +806,7 @@ export default function App() {
           });
         }
       });
+
 
       // 2. Pull recent feedback from Cloud
       fetchRecentCloudFeedback().then(cloudFeedback => {
@@ -1641,33 +1661,39 @@ export default function App() {
           </div>
         )}
 
-        {/* Prominent Patch 1.0 Version Notification on Entry (Desktop/iPad only, hidden on mobile to avoid map obstruction) */}
+        {/* v3.0 Patch Banner */}
         {showPatchBanner && (
-          <div className="fixed top-3.5 sm:top-5 left-1/2 -translate-x-1/2 z-[100] w-auto max-w-[92vw] sm:max-w-lg pointer-events-auto animate-in fade-in slide-in-from-top-4 duration-300 drop-shadow-2xl">
-            <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 sm:py-2.5 rounded-2xl bg-slate-950/95 text-white border border-emerald-400/80 shadow-2xl backdrop-blur-xl ring-2 ring-emerald-500/20">
-              <span className="flex h-6 w-6 sm:h-8 sm:w-8 shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-amber-400 to-yellow-300 text-slate-950 shadow text-xs sm:text-base font-bold">
+          <div className="fixed top-3.5 sm:top-5 left-1/2 -translate-x-1/2 z-[100] w-auto max-w-[95vw] sm:max-w-2xl pointer-events-auto animate-in fade-in slide-in-from-top-4 duration-500 drop-shadow-2xl">
+            <div className="flex items-start gap-3 px-4 py-3 rounded-2xl bg-slate-950/97 text-white border border-amber-400/70 shadow-2xl backdrop-blur-xl ring-2 ring-amber-500/20">
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-amber-400 to-yellow-300 text-slate-950 shadow-lg text-base font-black mt-0.5">
                 🆕
               </span>
-              <div className="flex flex-col sm:flex-row sm:items-center gap-0 sm:gap-2 min-w-0 pr-1">
-                <span className="text-xs font-black text-amber-300 whitespace-nowrap">
-                  🆕 v2.0 อัพเดทใหม่
-                </span>
-                <span className="hidden sm:inline text-slate-400 text-xs">•</span>
-                <span className="text-[10px] sm:text-xs font-semibold text-slate-200">
-                  GPS บอกอำเภอ · พยากรณ์ฝนแม่นยำ ±15 นาที · รายงานข้ามอุปกรณ์
-                </span>
+              <div className="flex flex-col gap-0.5 min-w-0 flex-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-sm font-black text-amber-300">
+                    🆕 อัพเดทแพท 3.0
+                  </span>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                    ใหม่ล่าสุด
+                  </span>
+                </div>
+                <p className="text-[11px] sm:text-xs text-slate-200 leading-relaxed">
+                  ประชาชนสามารถดูข้อมูลอย่างแม่นยำกว่าเดิม — การอัพเกรดจากคำแนะนำของผู้ใช้งานทุกท่าน
+                </p>
+                <p className="text-[10px] text-amber-400/80 font-semibold mt-0.5">
+                  ✨ ขอขอบพระคุณเป็นอย่างสูง — คณะนักเรียนผู้จัดทำ PrakanGuard
+                </p>
               </div>
               <button 
                 onClick={() => setShowPatchBanner(false)}
-                className="p-1 hover:bg-white/20 rounded-xl text-slate-300 hover:text-white cursor-pointer ml-auto shrink-0 transition-colors"
+                className="p-1 hover:bg-white/20 rounded-xl text-slate-400 hover:text-white cursor-pointer shrink-0 transition-colors mt-0.5"
                 title="ปิดการแจ้งเตือน"
               >
-                <X className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                <X className="w-4 h-4" />
               </button>
             </div>
           </div>
         )}
-
 
         {/* Floating Toast Notification when Updates occur with timestamp */}
         {latestUpdateNotification && (

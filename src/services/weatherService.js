@@ -277,6 +277,26 @@ export async function getLiveSamutPrakanWeather(forceRefresh = false) {
           statusText = `ฝนตก ${precip.toFixed(1)} มม./ชม.`;
         }
 
+        // คำนวณเวลาฝนตกแม่นยำ ±15 นาที จาก minutely_15 ข้อมูลของอำเภอนั้น
+        let preciseTimeWindow = '';
+        try {
+          const dMin15 = dData.minutely_15 || {};
+          const minPrecips = dMin15.precipitation || [];
+          const minTimes = dMin15.time || [];
+          const now = new Date();
+          const next4hMs = now.getTime() + 4 * 3600 * 1000;
+          const nextRainIdx = minPrecips.findIndex((p, i) => {
+            const t = new Date(minTimes[i]);
+            return p >= 0.1 && t > now && t.getTime() <= next4hMs;
+          });
+          if (nextRainIdx >= 0 && minTimes[nextRainIdx]) {
+            const t = new Date(minTimes[nextRainIdx]);
+            const hh = String(t.getHours()).padStart(2,'0');
+            const mm = String(t.getMinutes()).padStart(2,'0');
+            preciseTimeWindow = `เริ่มตกประมาณ ${hh}:${mm} น.`;
+          }
+        } catch (_) {}
+
         return {
           district: dist.name,
           isRainingNow,
@@ -285,9 +305,14 @@ export async function getLiveSamutPrakanWeather(forceRefresh = false) {
           probability: probMax,
           weatherCode: code,
           status: statusText,
-          timeWindow: isRainingNow ? "ฝนตกในขณะนี้" : (probMax >= 60 ? "มีโอกาสตกช่วงบ่าย-ค่ำ" : "โอกาสน้อย"),
+          timeWindow: isRainingNow
+            ? `ฝนตกอยู่ขณะนี้ ${precip.toFixed(1)} มม./ชม.`
+            : preciseTimeWindow
+              ? preciseTimeWindow
+              : (probMax >= 70 ? 'มีโอกาสตกช่วงบ่าย-ค่ำ' : probMax >= 40 ? 'โอกาสปานกลาง' : 'โอกาสน้อย'),
           icon
         };
+
       });
 
       const activeRainingDistricts = districtRainAnalysis.filter(d => d.isRainingNow);

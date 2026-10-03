@@ -161,6 +161,9 @@ export default function CitizenReportModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLocatingGps, setIsLocatingGps] = useState(false);
   const [gpsError, setGpsError] = useState(null);
+  const [exactDepthCm, setExactDepthCm] = useState(''); // ความลึกจริงที่ผู้ใช้วัดได้ (ซม.) — optional
+
+
 
   const fileInputRef = useRef(null);
 
@@ -314,7 +317,13 @@ export default function CitizenReportModal({
       };
     } else {
       const levelMeta = BODY_WATER_LEVELS.find(l => l.id === selectedLevel) || BODY_WATER_LEVELS[1];
+      // ใช้ exactDepthCm ถ้าผู้ใช้ระบุมา มิฉะนั้นใช้ค่ากลางจาก levelMeta
+      const parsedExact = exactDepthCm ? parseInt(exactDepthCm, 10) : NaN;
+      const finalDepthCm = (!isNaN(parsedExact) && parsedExact > 0) ? parsedExact : levelMeta.depthApprox;
+      // ปรับ severity tier อัตโนมัติตามค่า CM จริง
+      const autoLevel = finalDepthCm <= 20 ? 1 : finalDepthCm <= 50 ? 2 : 3;
       const stretchDescriptions = {
+
         point: 'เฉพาะจุด / แอ่งน้ำเฉพาะที่ (< 50 ม.)',
         stretch: 'แนวยาวตลอดช่วงถนน (200 - 500 ม.)',
         long: 'ท่วมขังยาวตลอดสายทาง (> 1 กม.)'
@@ -333,10 +342,10 @@ export default function CitizenReportModal({
         corridorName: corridorChoice || '',
         bodyLevel: selectedLevel,
         bodyLevelLabel: levelMeta.label,
-        depthCm: levelMeta.depthApprox,
-        depthRange: levelMeta.range,
-        level: levelMeta.severity,
-        statusLabel: `ระดับ${levelMeta.label}`,
+        depthCm: finalDepthCm,
+        depthRange: exactDepthCm ? `${finalDepthCm} ซม. (วัดจริง)` : levelMeta.range,
+        level: autoLevel,
+        statusLabel: `ระดับน้ำ ${finalDepthCm} ซม.`,
         trafficStatus: levelMeta.traffic,
         cause: notes.trim() || 'น้ำท่วมขังรายงานโดยประชาชนในพื้นที่',
         officialGuidance: levelMeta.guidance,
@@ -348,6 +357,7 @@ export default function CitizenReportModal({
         reportedAt: new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) + ' น.',
         timestamp: Date.now()
       };
+
     }
 
     onSubmitReport(newReport);
@@ -499,7 +509,43 @@ export default function CitizenReportModal({
                 </div>
               </div>
 
+              {/* 1.0b: ระบุความลึกจริง (ตัวเลข ซม.) — optional แต่แม่นยำกว่า */}
+              <div className={`mt-2 p-2.5 rounded-xl border flex items-center gap-2 ${
+                isDark ? 'bg-slate-800/60 border-slate-700' : 'bg-white border-slate-200'
+              }`}>
+                <span className="text-base shrink-0">📏</span>
+                <div className="flex-1 min-w-0">
+                  <label className={`text-[11px] font-bold block mb-1 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
+                    ระบุความลึกจริง (ไม่บังคับ — แต่ยิ่งแม่นยิ่งดี)
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number"
+                      min="1"
+                      max="300"
+                      value={exactDepthCm}
+                      onChange={e => setExactDepthCm(e.target.value)}
+                      placeholder={`ค่าอ้างอิง: ~${selectedFloodMeta.depthApprox} ซม.`}
+                      className={`flex-1 px-3 py-1.5 rounded-xl border text-sm font-mono ${
+                        isDark 
+                          ? 'bg-slate-900 border-slate-700 text-white placeholder-slate-500'
+                          : 'bg-slate-50 border-slate-300 text-slate-900 placeholder-slate-400'
+                      }`}
+                    />
+                    <span className={`text-xs font-bold shrink-0 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>ซม.</span>
+                  </div>
+                  {exactDepthCm && (
+                    <p className={`text-[10px] mt-0.5 font-semibold ${
+                      parseInt(exactDepthCm) <= 20 ? 'text-emerald-500' : parseInt(exactDepthCm) <= 50 ? 'text-amber-500' : 'text-rose-500'
+                    }`}>
+                      → ระดับ {parseInt(exactDepthCm) <= 20 ? '🟢 เฝ้าระวัง (≤20 ซม.)' : parseInt(exactDepthCm) <= 50 ? '🟠 เสี่ยงสูง (21-50 ซม.)' : '🔴 วิกฤต (>50 ซม.)'}
+                    </p>
+                  )}
+                </div>
+              </div>
+
               {/* 1.1 CONTINUOUS ROAD STRETCH EXTENSION (โครงข่ายถนนน้ำท่วมขังต่อเนื่อง) */}
+
               <div className="mt-3 p-3 rounded-2xl border border-blue-200/80 dark:border-blue-900/60 bg-blue-50/40 dark:bg-blue-950/20">
                 <div className="flex items-center justify-between mb-2">
                   <span className={`text-xs font-bold flex items-center gap-1.5 ${isDark ? 'text-cyan-300' : 'text-blue-900'}`}>
