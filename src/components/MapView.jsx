@@ -715,49 +715,30 @@ export default function MapView({
       {/* FLOATING MAP CONTROLS (TOP RIGHT - FULLY RESPONSIVE FOR ALL SCREENS) */}
       <div className={`absolute ${isTopPanelCollapsed ? 'top-3 sm:top-4' : 'top-[140px] sm:top-4'} right-2 sm:right-4 z-20 flex flex-col items-end gap-1.5 sm:gap-2 pointer-events-auto transition-all duration-300`}>
         
-        {/* Map Tile Switcher (Theme-aware container with Roadmap, Satellite, Terrain) */}
-        <div className={`p-1 rounded-2xl flex items-center gap-0.5 sm:gap-1 border shadow-md text-xs sm:text-sm backdrop-blur-md transition-colors ${
+        {/* Map Tile Switcher — emoji only on mobile, full label on sm+ */}
+        <div className={`p-0.5 sm:p-1 rounded-2xl flex items-center gap-0.5 sm:gap-1 border shadow-md text-xs sm:text-sm backdrop-blur-md transition-colors ${
           isDark ? 'bg-slate-900/95 border-slate-700 shadow-xl' : 'bg-white/95 border-slate-200 shadow-md'
         }`}>
-          <button
-            onClick={() => setMapStyle('google-roadmap')}
-            className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-xl font-medium transition-all cursor-pointer flex items-center gap-1 ${
-              mapStyle === 'google-roadmap'
-                ? 'bg-blue-600 text-white shadow-sm'
-                : isDark 
-                  ? 'text-slate-400 hover:text-slate-100 hover:bg-slate-800' 
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-            }`}
-          >
-            <span>🗺️</span>
-            <span className="hidden sm:inline">ทางหลวง</span>
-          </button>
-          <button
-            onClick={() => setMapStyle('google-satellite')}
-            className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-xl font-medium transition-all cursor-pointer flex items-center gap-1 ${
-              mapStyle === 'google-satellite'
-                ? 'bg-blue-600 text-white shadow-sm'
-                : isDark 
-                  ? 'text-slate-400 hover:text-slate-100 hover:bg-slate-800' 
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-            }`}
-          >
-            <span>🛰️</span>
-            <span className="hidden sm:inline">ดาวเทียม</span>
-          </button>
-          <button
-            onClick={() => setMapStyle('google-terrain')}
-            className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-xl font-medium transition-all cursor-pointer flex items-center gap-1 ${
-              mapStyle === 'google-terrain'
-                ? 'bg-blue-600 text-white shadow-sm'
-                : isDark 
-                  ? 'text-slate-400 hover:text-slate-100 hover:bg-slate-800' 
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-            }`}
-          >
-            <span>⛰️</span>
-            <span className="hidden sm:inline">ภูมิประเทศ</span>
-          </button>
+          {[
+            { style: 'google-roadmap',    emoji: '🗺️', label: 'ทางหลวง' },
+            { style: 'google-satellite',  emoji: '🛰️', label: 'ดาวเทียม' },
+            { style: 'google-terrain',    emoji: '⛰️', label: 'ภูมิประเทศ' },
+          ].map(({ style, emoji, label }) => (
+            <button
+              key={style}
+              onClick={() => setMapStyle(style)}
+              className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-xl font-medium transition-all cursor-pointer flex items-center gap-1 ${
+                mapStyle === style
+                  ? 'bg-blue-600 text-white shadow-sm'
+                  : isDark 
+                    ? 'text-slate-400 hover:text-slate-100 hover:bg-slate-800' 
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+              }`}
+            >
+              <span>{emoji}</span>
+              <span className="hidden sm:inline">{label}</span>
+            </button>
+          ))}
         </div>
 
         {/* GPS & Reset Buttons */}

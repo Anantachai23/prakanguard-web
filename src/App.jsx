@@ -224,7 +224,9 @@ export default function App() {
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const searchInputRef = useRef(null);
   const searchContainerRef = useRef(null);
-  const [isTopPanelCollapsed, setIsTopPanelCollapsed] = useState(false);
+  const [isTopPanelCollapsed, setIsTopPanelCollapsed] = useState(
+    () => typeof window !== 'undefined' && window.innerWidth < 640
+  );
 
   // Close search dropdown on click outside
   useEffect(() => {
@@ -1405,7 +1407,10 @@ export default function App() {
     }
 
     setSelectedPoint(location);
-    setIsDetailMinimized(false);
+    // บนมือถือ: default แสดงแบบย่อ (minimized) ก่อน ผู้ใช้กดเพื่อดูรายละเอียด
+    const isMobileView = typeof window !== 'undefined' && window.innerWidth < 640;
+    setIsDetailMinimized(isMobileView);
+
     setFlyToLocation({
       lat: location.lat,
       lng: location.lng,
@@ -1638,18 +1643,18 @@ export default function App() {
 
         {/* Prominent Patch 1.0 Version Notification on Entry (Desktop/iPad only, hidden on mobile to avoid map obstruction) */}
         {showPatchBanner && (
-          <div className="hidden sm:block fixed top-3.5 sm:top-5 left-1/2 -translate-x-1/2 z-[100] w-auto max-w-[95vw] sm:max-w-lg pointer-events-auto animate-in fade-in slide-in-from-top-4 duration-300 drop-shadow-2xl">
-            <div className="flex items-center gap-2.5 sm:gap-3 px-3.5 sm:px-4 py-2.5 rounded-2xl bg-slate-950/95 text-white border border-emerald-400/80 shadow-2xl backdrop-blur-xl ring-2 ring-emerald-500/20">
-              <span className="flex h-7 w-7 sm:h-8 sm:w-8 shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-amber-400 to-yellow-300 text-slate-950 shadow text-sm sm:text-base font-bold">
-                ✨
+          <div className="fixed top-3.5 sm:top-5 left-1/2 -translate-x-1/2 z-[100] w-auto max-w-[92vw] sm:max-w-lg pointer-events-auto animate-in fade-in slide-in-from-top-4 duration-300 drop-shadow-2xl">
+            <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 sm:py-2.5 rounded-2xl bg-slate-950/95 text-white border border-emerald-400/80 shadow-2xl backdrop-blur-xl ring-2 ring-emerald-500/20">
+              <span className="flex h-6 w-6 sm:h-8 sm:w-8 shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-amber-400 to-yellow-300 text-slate-950 shadow text-xs sm:text-base font-bold">
+                🆕
               </span>
-              <div className="flex flex-col sm:flex-row sm:items-center gap-0.5 sm:gap-2 min-w-0 pr-1">
-                <span className="text-xs sm:text-sm font-black text-amber-300 whitespace-nowrap">
-                  อัพเดทแพท 1.0 เวอร์ชันล่าสุด
+              <div className="flex flex-col sm:flex-row sm:items-center gap-0 sm:gap-2 min-w-0 pr-1">
+                <span className="text-xs font-black text-amber-300 whitespace-nowrap">
+                  🆕 v2.0 อัพเดทใหม่
                 </span>
                 <span className="hidden sm:inline text-slate-400 text-xs">•</span>
-                <span className="text-[11px] sm:text-xs font-semibold text-slate-200">
-                  อัพเดทได้แม่นยำขึ้นกว่าเดิม
+                <span className="text-[10px] sm:text-xs font-semibold text-slate-200">
+                  GPS บอกอำเภอ · พยากรณ์ฝนแม่นยำ ±15 นาที · รายงานข้ามอุปกรณ์
                 </span>
               </div>
               <button 
@@ -1657,11 +1662,12 @@ export default function App() {
                 className="p-1 hover:bg-white/20 rounded-xl text-slate-300 hover:text-white cursor-pointer ml-auto shrink-0 transition-colors"
                 title="ปิดการแจ้งเตือน"
               >
-                <X className="w-4 h-4" />
+                <X className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </button>
             </div>
           </div>
         )}
+
 
         {/* Floating Toast Notification when Updates occur with timestamp */}
         {latestUpdateNotification && (
@@ -1682,15 +1688,17 @@ export default function App() {
         {isTopPanelCollapsed && (
           <button
             onClick={() => setIsTopPanelCollapsed(false)}
-            className={`absolute top-2.5 sm:top-3 left-2.5 sm:left-4 z-20 pointer-events-auto p-2 sm:px-3.5 sm:py-2 rounded-2xl shadow-xl border flex items-center gap-2 text-xs sm:text-sm font-bold backdrop-blur-xl transition-all hover:scale-105 active:scale-95 cursor-pointer ${
+            className={`absolute top-2.5 sm:top-3 left-2.5 sm:left-4 z-20 pointer-events-auto flex items-center gap-1.5 px-3 py-1.5 rounded-2xl shadow-xl border text-xs font-bold backdrop-blur-xl transition-all hover:scale-105 active:scale-95 cursor-pointer ${
               isDark 
                 ? 'bg-slate-900/95 text-slate-100 border-slate-700 hover:border-blue-500' 
                 : 'bg-white/95 text-slate-800 border-slate-200 hover:border-blue-500'
             }`}
-            title="คลิกเพื่อขยายแถบเมนูค้นหาและตัวกรอง"
+            title="คลิกเพื่อขยายแถบค้นหาและตัวกรองอำเภอ"
           >
-            <PanelLeftOpen className="w-4 h-4 text-blue-500" />
-            <span className="text-xs font-bold">ค้นหา / ข้อมูล</span>
+            <PanelLeftOpen className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+            <span className="text-xs font-bold">
+              {selectedDistrict === 'ทั้งหมด' ? 'ค้นหา / กรอง' : `อ.${selectedDistrict.replace('เมืองสมุทรปราการ','เมือง')}`}
+            </span>
           </button>
         )}
 
@@ -2157,7 +2165,8 @@ export default function App() {
             isDark 
               ? 'bg-slate-900/95 border-slate-700 text-slate-100' 
               : 'bg-white/95 border-slate-200 text-slate-800'
-          } ${isDetailMinimized ? 'p-3 max-h-24' : 'p-4 sm:p-5 max-h-[75vh] sm:max-h-[82vh] overflow-y-auto'}`}>
+          } ${isDetailMinimized ? 'p-3 max-h-24' : 'p-4 sm:p-5 max-h-[50vh] sm:max-h-[82vh] overflow-y-auto'}`}>
+
             
             {isDetailMinimized ? (
               /* MINIMIZED COMPACT 1-LINE BAR FOR MOBILE */
@@ -2610,7 +2619,10 @@ export default function App() {
         onOpenEmergency={() => setIsEmergencyModalOpen(true)}
         hasGps={!!userLocation}
         theme={theme}
+        onToggleSearch={() => setIsTopPanelCollapsed(v => !v)}
+        isSearchOpen={!isTopPanelCollapsed}
       />
+
 
     </div>
   );

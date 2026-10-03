@@ -1,5 +1,5 @@
-import React from 'react';
-import { Navigation, CloudRain, Camera, Activity, PhoneCall, MessageSquare } from 'lucide-react';
+import React, { useState } from 'react';
+import { Navigation, CloudRain, Camera, Activity, PhoneCall, MessageSquare, ChevronUp, ChevronDown, Search, MapPin } from 'lucide-react';
 
 export default function MobileBottomNav({
   onLocateMe,
@@ -9,107 +9,162 @@ export default function MobileBottomNav({
   onOpenFeedback,
   onOpenEmergency,
   hasGps = false,
-  theme = 'light'
+  theme = 'light',
+  // ฟีเจอร์ใหม่: เปิด/ปิด search panel
+  onToggleSearch,
+  isSearchOpen = false,
 }) {
   const isDark = theme === 'dark';
+  const [expanded, setExpanded] = useState(false);
 
   return (
-    <nav 
+    <nav
       aria-label="เมนูหลักสำหรับมือถือ"
       className={`sm:hidden fixed bottom-0 left-0 right-0 z-40 border-t backdrop-blur-2xl transition-all duration-200 select-none pb-[env(safe-area-inset-bottom)] ${
-        isDark 
-          ? 'bg-slate-950/95 border-slate-800 text-slate-200 shadow-[0_-8px_25px_rgba(0,0,0,0.6)]' 
-          : 'bg-white/95 border-slate-200/90 text-slate-700 shadow-[0_-6px_20px_rgba(0,0,0,0.08)]'
+        isDark
+          ? 'bg-slate-950/97 border-slate-800 text-slate-200 shadow-[0_-8px_25px_rgba(0,0,0,0.7)]'
+          : 'bg-white/97 border-slate-200/90 text-slate-700 shadow-[0_-6px_20px_rgba(0,0,0,0.1)]'
       }`}
     >
+      {/* ===== SECONDARY ROW (เปิดเมื่อ expanded) ===== */}
+      {expanded && (
+        <div className={`flex items-center justify-around px-2 pt-1.5 pb-0 border-b ${isDark ? 'border-slate-800' : 'border-slate-100'}`}>
+          {/* Search / Filter */}
+          <button
+            type="button"
+            onClick={() => { onToggleSearch?.(); setExpanded(false); }}
+            className={`flex-1 flex flex-col items-center justify-center py-1.5 rounded-xl transition-all active:scale-90 cursor-pointer ${
+              isSearchOpen
+                ? (isDark ? 'text-blue-400 font-bold' : 'text-blue-600 font-bold')
+                : (isDark ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-800')
+            }`}
+          >
+            <Search className="w-4 h-4 mb-0.5 text-blue-500" />
+            <span className="text-[9px] tracking-tight">ค้นหา</span>
+          </button>
+
+          {/* Live Updates Feed */}
+          <button
+            type="button"
+            onClick={() => { onOpenPublicUpdates(); setExpanded(false); }}
+            className={`flex-1 flex flex-col items-center justify-center py-1.5 rounded-xl transition-all active:scale-90 cursor-pointer relative ${
+              isDark ? 'text-slate-400 hover:text-emerald-400' : 'text-slate-500 hover:text-emerald-600'
+            }`}
+          >
+            <div className="relative">
+              <Activity className="w-4 h-4 mb-0.5 text-emerald-500" />
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse absolute -top-0.5 -right-0.5" />
+            </div>
+            <span className="text-[9px] tracking-tight">อัปเดตสด</span>
+          </button>
+
+          {/* Feedback */}
+          <button
+            type="button"
+            onClick={() => { onOpenFeedback(); setExpanded(false); }}
+            className={`flex-1 flex flex-col items-center justify-center py-1.5 rounded-xl transition-all active:scale-90 cursor-pointer ${
+              isDark ? 'text-slate-400 hover:text-teal-400' : 'text-slate-500 hover:text-teal-600'
+            }`}
+          >
+            <MessageSquare className="w-4 h-4 mb-0.5 text-teal-500" />
+            <span className="text-[9px] tracking-tight">ข้อเสนอแนะ</span>
+          </button>
+
+          {/* Emergency */}
+          <button
+            type="button"
+            onClick={() => { onOpenEmergency(); setExpanded(false); }}
+            className="flex-1 flex flex-col items-center justify-center py-1.5 rounded-xl text-rose-500 hover:text-rose-600 active:scale-90 cursor-pointer"
+          >
+            <PhoneCall className="w-4 h-4 mb-0.5" />
+            <span className="text-[9px] font-bold tracking-tight">สายด่วน</span>
+          </button>
+        </div>
+      )}
+
+      {/* ===== MAIN ROW (แสดงเสมอ) ===== */}
       <div className="flex items-center justify-between px-1 py-1 max-w-lg mx-auto">
-        {/* 1. Locate Me */}
+
+        {/* 1. Locate Me (GPS) */}
         <button
           type="button"
           onClick={() => onLocateMe(false)}
-          className={`flex-1 flex flex-col items-center justify-center py-1 rounded-xl transition-all active:scale-90 cursor-pointer ${
-            hasGps 
-              ? (isDark ? 'text-cyan-400 font-bold' : 'text-blue-600 font-bold') 
+          className={`flex-1 flex flex-col items-center justify-center py-1.5 rounded-xl transition-all active:scale-90 cursor-pointer ${
+            hasGps
+              ? (isDark ? 'text-cyan-400 font-bold' : 'text-blue-600 font-bold')
               : (isDark ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-800')
           }`}
           title="ระบุตำแหน่ง GPS ของฉันบนแผนที่"
         >
           <div className="relative">
-            <Navigation className="w-4 h-4 mb-0.5" />
+            <Navigation className="w-5 h-5 mb-0.5" />
             {hasGps && (
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping absolute -top-0.5 -right-0.5" />
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping absolute -top-0.5 -right-0.5" />
             )}
           </div>
           <span className="text-[9px] tracking-tight">พิกัดฉัน</span>
         </button>
 
-        {/* 2. Live Weather / Radar */}
+        {/* 2. Weather / Radar */}
         <button
           type="button"
           onClick={onOpenAiForecast}
-          className={`flex-1 flex flex-col items-center justify-center py-1 rounded-xl transition-all active:scale-90 cursor-pointer ${
+          className={`flex-1 flex flex-col items-center justify-center py-1.5 rounded-xl transition-all active:scale-90 cursor-pointer ${
             isDark ? 'text-slate-400 hover:text-cyan-400' : 'text-slate-500 hover:text-blue-600'
           }`}
           title="ดูเรดาร์ตรวจฝนและสภาพอากาศสด"
         >
-          <CloudRain className="w-4 h-4 mb-0.5 text-blue-500" />
+          <CloudRain className="w-5 h-5 mb-0.5 text-blue-500" />
           <span className="text-[9px] tracking-tight">เรดาร์ฝน</span>
         </button>
 
-        {/* 3. Center Hero: Report Flood Point (แจ้งจุดท่วม - โทนฟ้าเข้มสดใส ปราศจากสีม่วง) */}
-        <div className="flex-1 flex justify-center -mt-4">
+        {/* 3. CENTER HERO: Report Flood (ปุ่มกลางยกขึ้น) */}
+        <div className="flex-1 flex justify-center -mt-5">
           <button
             type="button"
             onClick={onOpenCitizenReport}
-            className="flex flex-col items-center justify-center w-11 h-11 rounded-2xl bg-gradient-to-tr from-blue-600 via-cyan-500 to-teal-500 text-white shadow-lg shadow-blue-500/40 border-2 border-white dark:border-slate-900 active:scale-90 transition-transform cursor-pointer"
+            className="flex flex-col items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-tr from-blue-600 via-cyan-500 to-teal-500 text-white shadow-xl shadow-blue-500/50 border-2 border-white dark:border-slate-900 active:scale-90 transition-transform cursor-pointer"
             title="แจ้งรายงานจุดน้ำท่วม"
           >
-            <Camera className="w-4 h-4" />
-            <span className="text-[8px] font-bold tracking-tight mt-0.5">แจ้งจุดท่วม</span>
+            <Camera className="w-5 h-5" />
+            <span className="text-[8px] font-bold tracking-tight mt-0.5 leading-tight text-center">แจ้ง<br/>จุดท่วม</span>
           </button>
         </div>
 
-        {/* 4. Live Updates Feed */}
+        {/* 4. Map Pins (nearby points quick look) */}
         <button
           type="button"
-          onClick={onOpenPublicUpdates}
-          className={`flex-1 flex flex-col items-center justify-center py-1 rounded-xl transition-all active:scale-90 cursor-pointer relative ${
-            isDark ? 'text-slate-400 hover:text-emerald-400' : 'text-slate-500 hover:text-emerald-600'
+          onClick={() => onToggleSearch?.()}
+          className={`flex-1 flex flex-col items-center justify-center py-1.5 rounded-xl transition-all active:scale-90 cursor-pointer ${
+            isSearchOpen
+              ? (isDark ? 'text-blue-400 font-bold' : 'text-blue-600 font-bold')
+              : (isDark ? 'text-slate-400 hover:text-blue-400' : 'text-slate-500 hover:text-blue-600')
           }`}
-          title="ดูอัปเดตรายงานสถานการณ์สด"
+          title="ค้นหาจุดเสี่ยงหรือกรองอำเภอ"
         >
-          <div className="relative">
-            <Activity className="w-4 h-4 mb-0.5 text-emerald-500" />
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse absolute -top-0.5 -right-0.5" />
-          </div>
-          <span className="text-[9px] tracking-tight">อัปเดตสด</span>
+          <MapPin className="w-5 h-5 mb-0.5 text-blue-500" />
+          <span className="text-[9px] tracking-tight">ค้นหา</span>
         </button>
 
-        {/* 5. Feedback Box (ข้อเสนอแนะ) */}
+        {/* 5. More / Expand secondary row */}
         <button
           type="button"
-          onClick={onOpenFeedback}
-          className={`flex-1 flex flex-col items-center justify-center py-1 rounded-xl transition-all active:scale-90 cursor-pointer ${
-            isDark ? 'text-slate-400 hover:text-teal-400' : 'text-slate-500 hover:text-teal-600'
+          onClick={() => setExpanded(v => !v)}
+          className={`flex-1 flex flex-col items-center justify-center py-1.5 rounded-xl transition-all active:scale-90 cursor-pointer ${
+            expanded
+              ? (isDark ? 'text-amber-400 font-bold' : 'text-amber-600 font-bold')
+              : (isDark ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-800')
           }`}
-          title="ส่งข้อเสนอแนะต่อระบบ"
+          title="เมนูเพิ่มเติม"
         >
-          <MessageSquare className="w-4 h-4 mb-0.5 text-teal-500" />
-          <span className="text-[9px] tracking-tight">ข้อเสนอแนะ</span>
+          {expanded
+            ? <ChevronDown className="w-5 h-5 mb-0.5" />
+            : <ChevronUp className="w-5 h-5 mb-0.5" />
+          }
+          <span className="text-[9px] tracking-tight">เพิ่มเติม</span>
         </button>
 
-        {/* 6. Emergency Hotline */}
-        <button
-          type="button"
-          onClick={onOpenEmergency}
-          className="flex-1 flex flex-col items-center justify-center py-1 rounded-xl text-rose-500 hover:text-rose-600 active:scale-90 cursor-pointer"
-          title="โทรสายด่วนฉุกเฉิน ปภ./กู้ภัย"
-        >
-          <PhoneCall className="w-4 h-4 mb-0.5" />
-          <span className="text-[9px] font-bold tracking-tight">สายด่วน</span>
-        </button>
       </div>
     </nav>
   );
 }
-
