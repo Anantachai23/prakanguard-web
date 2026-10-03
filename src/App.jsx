@@ -538,7 +538,7 @@ export default function App() {
 
   // Mobile Draggable Floating Legend State (เคลื่อนย้ายได้อิสระ ไม่บังแผนที่)
   const [mobileLegendPos, setMobileLegendPos] = useState({ x: null, y: null });
-  const [isLegendCollapsed, setIsLegendCollapsed] = useState(() => typeof window !== 'undefined' ? window.innerWidth < 768 : true);
+  const [isLegendCollapsed, setIsLegendCollapsed] = useState(false); // เปิดเกณฑ์น้ำท่วมค้างไว้ทุกอุปกรณ์
   const legendDragRef = useRef({
     isDragging: false,
     startX: 0,
@@ -826,7 +826,7 @@ export default function App() {
     };
 
     pullCloudUpdates();
-    const cloudSyncInterval = setInterval(pullCloudUpdates, 30000); // ตรวจสอบและดึงข้อมูลอัปเดตจาก Cloud อัตโนมัติทุก 30 วินาที
+    const cloudSyncInterval = setInterval(pullCloudUpdates, 15000); // อัปเดตจาก Cloud ทุก 15 วินาที
 
     // 3. Real-time Live EventSource Listener across all devices
     const unsubscribe = subscribeToCloudEvents({
@@ -1661,9 +1661,14 @@ export default function App() {
           </div>
         )}
 
-        {/* v3.0 Patch Banner */}
+        {/* v3.0 Patch Banner — แสดงด้านล่างบนมือถือ, กลางหน้าจอบน desktop ใต้ navbar */}
         {showPatchBanner && (
-          <div className="fixed top-3.5 sm:top-5 left-1/2 -translate-x-1/2 z-[100] w-auto max-w-[95vw] sm:max-w-2xl pointer-events-auto animate-in fade-in slide-in-from-top-4 duration-500 drop-shadow-2xl">
+          <div className="
+            fixed z-[90] pointer-events-auto
+            bottom-[calc(4.5rem+env(safe-area-inset-bottom))] left-2 right-2
+            sm:bottom-auto sm:top-[68px] sm:left-1/2 sm:-translate-x-1/2 sm:right-auto sm:w-auto sm:max-w-2xl
+            animate-in fade-in slide-in-from-bottom-4 sm:slide-in-from-top-4 duration-500 drop-shadow-2xl
+          ">
             <div className="flex items-start gap-3 px-4 py-3 rounded-2xl bg-slate-950/97 text-white border border-amber-400/70 shadow-2xl backdrop-blur-xl ring-2 ring-amber-500/20">
               <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-amber-400 to-yellow-300 text-slate-950 shadow-lg text-base font-black mt-0.5">
                 🆕
@@ -1684,7 +1689,7 @@ export default function App() {
                   ✨ ขอขอบพระคุณเป็นอย่างสูง — คณะนักเรียนผู้จัดทำ PrakanGuard
                 </p>
               </div>
-              <button 
+              <button
                 onClick={() => setShowPatchBanner(false)}
                 className="p-1 hover:bg-white/20 rounded-xl text-slate-400 hover:text-white cursor-pointer shrink-0 transition-colors mt-0.5"
                 title="ปิดการแจ้งเตือน"
@@ -1695,12 +1700,12 @@ export default function App() {
           </div>
         )}
 
-        {/* Floating Toast Notification when Updates occur with timestamp */}
+        {/* Floating Toast Notification — ขึ้นใต้ Navbar ไม่ซ้อนทับ */}
         {latestUpdateNotification && (
-          <div className="absolute top-14 sm:top-16 left-1/2 -translate-x-1/2 z-50 bg-emerald-600/98 text-white px-4 py-2.5 rounded-2xl shadow-2xl border border-emerald-300 backdrop-blur-md flex items-center gap-2.5 w-auto max-w-[92vw] sm:max-w-lg pointer-events-auto animate-in fade-in slide-in-from-top-3 duration-300">
+          <div className="fixed top-[58px] sm:top-[72px] left-1/2 -translate-x-1/2 z-[85] bg-emerald-600/98 text-white px-4 py-2.5 rounded-2xl shadow-2xl border border-emerald-300 backdrop-blur-md flex items-center gap-2.5 w-auto max-w-[92vw] sm:max-w-lg pointer-events-auto animate-in fade-in slide-in-from-top-3 duration-300">
             <CheckCircle2 className="w-4 h-4 text-emerald-100 shrink-0" />
             <span className="text-xs sm:text-sm font-bold leading-snug">{latestUpdateNotification}</span>
-            <button 
+            <button
               onClick={() => setLatestUpdateNotification(null)}
               className="p-1 hover:bg-white/20 rounded-lg text-emerald-100 cursor-pointer ml-auto shrink-0"
               title="ปิดการแจ้งเตือน"
@@ -1708,6 +1713,7 @@ export default function App() {
               <X className="w-3.5 h-3.5" />
             </button>
           </div>
+
         )}
 
         {/* Toggle Button to RE-OPEN the collapsed panel (Appears docked at top-left when collapsed) */}

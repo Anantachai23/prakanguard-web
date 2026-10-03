@@ -239,12 +239,15 @@ export default function MapView({
         className: 'bg-white/95 text-slate-900 font-prompt text-xs border-2 border-slate-300 px-2.5 py-1 rounded-xl shadow-lg font-bold'
       });
 
-      // Click district polygon to filter
-      layer.on('click', () => {
-        if (onSelectDistrict) {
-          onSelectDistrict(feature.properties.districtName);
-        }
+      // กดบน polygon ของอำเภอ: แค่ขึ้น tooltip ชื่ออำเภอ ไม่เปลี่ยน filter
+      // (เปลี่ยน filter ได้เฉพาะผ่านปุ่มกรองอำเภอใน search panel เท่านั้น)
+      layer.on('click', (e) => {
+        L.popup({ maxWidth: 200, className: 'district-info-popup' })
+          .setLatLng(e.latlng)
+          .setContent(`<div style="font-family:sans-serif;text-align:center;padding:4px 2px"><b style="font-size:13px">อ.${feature.properties.districtName}</b><br/><span style="font-size:10px;color:#64748b">กดปุ่มกรองอำเภอใน<br/>แถบค้นหาเพื่อกรองจุด</span></div>`)
+          .openOn(map);
       });
+
 
       districtLayersRef.current.push(layer);
     });
@@ -611,20 +614,28 @@ export default function MapView({
     }
 
     const userIcon = L.divIcon({
-      className: 'user-gps-marker',
+      className: '',
       html: `
-        <div class="relative flex items-center justify-center">
-          <div class="w-6 h-6 rounded-full bg-blue-600 border-2 border-white shadow-xl z-10"></div>
-          <div class="absolute w-10 h-10 rounded-full bg-blue-400/40 animate-ping"></div>
+        <div style="position:relative;width:22px;height:22px;display:flex;align-items:center;justify-content:center;">
+          <!-- Outer ping ring -->
+          <div style="position:absolute;width:40px;height:40px;border-radius:50%;background:rgba(37,99,235,0.25);animation:ping 1.5s cubic-bezier(0,0,0.2,1) infinite;top:-9px;left:-9px;"></div>
+          <!-- Accuracy ring (softer) -->
+          <div style="position:absolute;width:28px;height:28px;border-radius:50%;background:rgba(59,130,246,0.18);border:1.5px solid rgba(37,99,235,0.4);top:-3px;left:-3px;"></div>
+          <!-- Main dot -->
+          <div style="width:18px;height:18px;border-radius:50%;background:#2563eb;border:3px solid #ffffff;box-shadow:0 2px 8px rgba(37,99,235,0.7);position:relative;z-index:2;"></div>
+          <!-- Center white dot -->
+          <div style="position:absolute;width:6px;height:6px;border-radius:50%;background:#fff;z-index:3;"></div>
         </div>
+        <style>@keyframes ping{75%,100%{transform:scale(2);opacity:0}}</style>
       `,
-      iconSize: [24, 24],
-      iconAnchor: [12, 12]
+      iconSize: [22, 22],
+      iconAnchor: [11, 11]
     });
 
-    const userMarker = L.marker([userLocation.lat, userLocation.lng], { icon: userIcon }).addTo(map);
-    userMarker.bindTooltip("ตำแหน่งปัจจุบันของคุณ", { permanent: false, direction: 'top' });
+    const userMarker = L.marker([userLocation.lat, userLocation.lng], { icon: userIcon, zIndexOffset: 1000 }).addTo(map);
+    userMarker.bindTooltip("📍 ตำแหน่งปัจจุบันของคุณ", { permanent: false, direction: 'top', className: 'font-bold text-xs' });
     userMarkerRef.current = userMarker;
+
 
     map.setView([userLocation.lat, userLocation.lng], 13.5, { animate: true });
   }, [userLocation, locationAccuracy]);
