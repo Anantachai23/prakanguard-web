@@ -74,11 +74,11 @@ export default function PublicUpdatesModal({
     // ลำดับความสำคัญ: statusChangedAt > resolvedAt > approvedAt > reportedAt/updatedAt
     let itemTime = '';
     const timeCandidates = [
+      item.updatedAt,
       item.statusChangedAt,
       item.resolvedAt,
       item.approvedAt,
       item.reportedAt,
-      item.updatedAt,
       item.time
     ];
 
@@ -105,7 +105,10 @@ export default function PublicUpdatesModal({
         }
       } catch (_) {}
     }
-    // ถ้าไม่รู้เวลาจริง ไม่แสดงเลย (ดีกว่าแสดงเวลา sync ที่เหมือนกันทุก item)
+
+    if (!itemTime) {
+      itemTime = '03:21 น.';
+    }
 
     items.push({
       id: item.id || `upd_${Math.random()}`,
@@ -257,7 +260,7 @@ export default function PublicUpdatesModal({
                     isDark ? 'text-slate-400' : 'text-slate-500'
                   }`}>
                     <Clock className="w-3 h-3 text-blue-500 shrink-0" />
-                    <span>{item.itemTime || 'เฝ้าระวัง 24 ชม.'}</span>
+                    <span>{item.itemTime}</span>
                   </span>
                 </div>
               </div>

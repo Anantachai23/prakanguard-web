@@ -183,9 +183,15 @@ export function evaluateDynamicFloodLifecycle(points = [], citizenReports = [], 
 
     const wasActive = point.isActive !== false && !point.isResolved;
 
-    // statusChangedAt — อัปเดตเฉพาะเมื่อสถานะเปลี่ยนจริง ไม่ใช่ทุกรอบ sync
+    // ตรวจสอบว่าสถานะจุดนี้เปลี่ยนจากเดิมหรือไม่
     const statusJustChanged = (wasActive && !shouldBeActive) || (!wasActive && shouldBeActive);
-    const statusChangedAt = statusJustChanged ? nowTime : (point.statusChangedAt || null);
+
+    // เวลาที่อัปเดต:
+    // - ถ้าสถานะเปลี่ยนจริงจากแหล่งข้อมูล -> อัปเดตเวลาใหม่ (nowTime)
+    // - ถ้ายังไม่เปลี่ยน -> คงเวลาเดิมไว้เสมอ ไม่เปลี่ยนซ้ำ
+    const pointUpdateTime = statusJustChanged 
+      ? nowTime 
+      : (point.updatedAt || point.statusChangedAt || point.resolvedAt || point.reportedAt || point.time || nowTime);
 
     if (wasActive && !shouldBeActive) {
       newlyClearedPoints.push({
@@ -223,9 +229,10 @@ export function evaluateDynamicFloodLifecycle(points = [], citizenReports = [], 
         originalDepthRange,
         isActive: false,
         isResolved: true,
-        resolvedAt: statusJustChanged ? nowTime : (point.resolvedAt || nowTime),
+        resolvedAt: statusJustChanged ? nowTime : (point.resolvedAt || pointUpdateTime),
         resolvedAtDetailed: nowDetailed,
-        statusChangedAt,
+        updatedAt: pointUpdateTime,
+        statusChangedAt: pointUpdateTime,
         statusLabel: 'สัญจรปกติ (น้ำแห้งแล้ว)',
         trafficStatus: clearanceReason || 'ผิวจราจรแห้ง สัญจรได้ปกติทุกช่องทาง',
         depthCm: 0,
@@ -245,7 +252,8 @@ export function evaluateDynamicFloodLifecycle(points = [], citizenReports = [], 
         originalDepthRange,
         isActive: true,
         isResolved: false,
-        statusChangedAt,
+        updatedAt: pointUpdateTime,
+        statusChangedAt: pointUpdateTime,
         statusLabel: originalStatusLabel,
         trafficStatus: originalTrafficStatus,
         depthCm: calculatedDepthCm,
