@@ -112,6 +112,9 @@ function declutterNearbyPoints(pointsList, isMobileView) {
   const thresholdKm = isMobileView ? 0.85 : 0.15;
 
   const sorted = [...pointsList].sort((a, b) => {
+    // Retain points with photo first so citizen & official photos are never dropped
+    if (a.photoUrl && !b.photoUrl) return -1;
+    if (!a.photoUrl && b.photoUrl) return 1;
     const lvlA = resolveLevel(a);
     const lvlB = resolveLevel(b);
     if (lvlB !== lvlA) return lvlB - lvlA;
@@ -121,6 +124,11 @@ function declutterNearbyPoints(pointsList, isMobileView) {
   const retained = [];
   for (const pt of sorted) {
     if (!pt || typeof pt.lat !== 'number' || typeof pt.lng !== 'number' || isNaN(pt.lat) || isNaN(pt.lng)) continue;
+    // Always keep points with photos so they are visible on mobile and desktop
+    if (pt.photoUrl) {
+      retained.push(pt);
+      continue;
+    }
     let isTooClose = false;
     for (const r of retained) {
       const dLat = (pt.lat - r.lat) * 111;
@@ -462,6 +470,15 @@ export default function MapView({
 
   // Helper to build unified popup HTML
   const buildPopupHtml = (item, isCitizen) => {
+    if (item && item.photoUrl && typeof window !== 'undefined') {
+      window.__pgPhotos = window.__pgPhotos || {};
+      window.__pgPhotos[item.id] = {
+        url: item.photoUrl,
+        title: item.name,
+        time: item.reportedAt || item.updatedAt || item.time || ''
+      };
+    }
+
     const level = resolveLevel(item);
     const isL3 = level === 3;
     const isL2 = level === 2;
@@ -473,12 +490,14 @@ export default function MapView({
 
     const photoHtml = item.photoUrl ? `
       <div 
-        onclick="if(window.pgOpenLightbox){window.pgOpenLightbox('${item.photoUrl}', '${(item.name || '').replace(/'/g, "\\'")}', '${item.updatedAt || item.time || ''}');}"
-        style="margin:8px 0;border-radius:12px;overflow:hidden;border:1px solid #cbd5e1;position:relative;background:#f1f5f9;cursor:pointer;"
+        onclick="if(window.pgOpenLightboxById){window.pgOpenLightboxById('${item.id}');}"
+        style="margin:8px 0;border-radius:12px;overflow:hidden;border:1.5px solid #0284c7;position:relative;background:#0f172a;cursor:pointer;box-shadow:0 3px 10px rgba(0,0,0,0.2);"
         title="แตะเพื่อดูภาพขนาดใหญ่"
       >
-        <img src="${item.photoUrl}" style="width:100%;height:120px;object-fit:cover;display:block;" alt="รูปภาพจากประชาชนรายงาน" />
-        <span style="position:absolute;bottom:5px;right:6px;background:rgba(15,23,42,0.8);color:#ffffff;font-size:9.5px;padding:2px 7px;border-radius:9999px;font-weight:700;">🔍 แตะเพื่อดูภาพใหญ่</span>
+        <img src="${item.photoUrl}" style="width:100%;height:130px;object-fit:cover;display:block;" alt="รูปภาพสถานการณ์น้ำท่วมจริง" />
+        <div style="position:absolute;bottom:6px;right:6px;background:rgba(15,23,42,0.88);color:#38bdf8;font-size:10px;padding:3px 9px;border-radius:9999px;font-weight:700;display:flex;align-items:center;gap:4px;border:1px solid rgba(56,189,248,0.6);box-shadow:0 2px 4px rgba(0,0,0,0.3);">
+          <span>🔍</span> <span>แตะเพื่อดูภาพใหญ่</span>
+        </div>
       </div>
     ` : '';
 
@@ -547,20 +566,15 @@ export default function MapView({
 
       const marker = L.marker([point.lat, point.lng], { icon: customIcon }).addTo(map);
 
-      if (!isMobile) {
-        marker.bindPopup(buildPopupHtml(point, false), {
-          className: 'custom-leaflet-popup',
-          closeButton: true,
-          autoPan: true
-        });
-      }
+      marker.bindPopup(buildPopupHtml(point, false), {
+        className: 'custom-leaflet-popup',
+        closeButton: true,
+        autoPan: true
+      });
 
       marker.on('click', () => {
         lastFlyToTimeRef.current = Date.now();
         onSelectPoint(point);
-        if (isMobile && map) {
-          map.closePopup();
-        }
       });
 
       markersRef.current.push(marker);
@@ -598,20 +612,15 @@ export default function MapView({
 
       const marker = L.marker([report.lat, report.lng], { icon: customIcon }).addTo(map);
 
-      if (!isMobile) {
-        marker.bindPopup(buildPopupHtml(report, true), {
-          className: 'custom-leaflet-popup',
-          closeButton: true,
-          autoPan: true
-        });
-      }
+      marker.bindPopup(buildPopupHtml(report, true), {
+        className: 'custom-leaflet-popup',
+        closeButton: true,
+        autoPan: true
+      });
 
       marker.on('click', () => {
         lastFlyToTimeRef.current = Date.now();
         onSelectPoint(report);
-        if (isMobile && map) {
-          map.closePopup();
-        }
       });
 
       citizenMarkersRef.current.push(marker);

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { 
   PhoneCall, 
   Radio, 
@@ -14,6 +14,9 @@ import RealTimeClock from './RealTimeClock';
 
 export default function Navbar({ 
   points, 
+  weather,
+  severityFilter = 'all',
+  onSelectSeverityFilter,
   onOpenEmergency, 
   onOpenAiForecast,
   onOpenStandards,
@@ -34,11 +37,44 @@ export default function Navbar({
   const severe = points.filter(p => p.level === 3 && p.isActive !== false && !p.isResolved).length;
   const falling = points.filter(p => p.waterTrend === 'falling' && p.isActive !== false && !p.isResolved).length;
 
+  const navScrollRef = useRef(null);
+  const isDraggingRef = useRef(false);
+  const startXRef = useRef(0);
+  const scrollLeftRef = useRef(0);
+
+  const handleMouseDown = (e) => {
+    if (e.button !== 0 || e.target.closest('button, a, input, select')) return;
+    isDraggingRef.current = true;
+    startXRef.current = e.pageX - (navScrollRef.current?.offsetLeft || 0);
+    scrollLeftRef.current = navScrollRef.current?.scrollLeft || 0;
+  };
+
+  const handleMouseMove = (e) => {
+    if (!isDraggingRef.current || !navScrollRef.current) return;
+    e.preventDefault();
+    const x = e.pageX - (navScrollRef.current?.offsetLeft || 0);
+    const walk = (x - startXRef.current) * 1.5;
+    navScrollRef.current.scrollLeft = scrollLeftRef.current - walk;
+  };
+
+  const handleMouseUp = () => {
+    isDraggingRef.current = false;
+  };
+
   return (
-    <header className={`relative z-40 w-full shrink-0 border-b shadow-sm backdrop-blur-xl transition-colors duration-200 select-none ${
+    <header className={`relative z-40 w-full shrink-0 border-b shadow-sm backdrop-blur-xl transition-colors duration-200 select-none overflow-hidden ${
       isDark ? 'bg-slate-950/95 border-slate-800 text-slate-100' : 'bg-white/95 border-slate-200 text-slate-800'
     }`}>
-      <div className="w-full px-2.5 sm:px-4 py-2 flex items-center justify-between gap-2">
+      <div 
+        ref={navScrollRef}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseUp}
+        className="w-full overflow-x-auto no-scrollbar scroll-smooth touch-pan-x"
+        style={{ WebkitOverflowScrolling: 'touch' }}
+      >
+        <div className="min-w-full w-max px-2.5 sm:px-4 py-2 flex items-center justify-between gap-2 sm:gap-3">
         
         {/* Brand Area (Left) */}
         <div className="flex items-center space-x-2 sm:space-x-2.5 shrink-0 min-w-0">
@@ -77,36 +113,109 @@ export default function Navbar({
           </div>
         </div>
 
-        {/* Center Area: Status Indicator & Clock (iPad & PC) */}
-        <div className="hidden md:flex items-center gap-2.5 shrink-0">
-          {/* Status Indicator Pill */}
-          <button 
-            type="button"
-            onClick={onOpenStandards}
-            className={`flex items-center space-x-2 px-3 py-1.5 rounded-2xl border text-xs font-medium cursor-pointer transition-all hover:scale-[1.02] shadow-xs ${
-              isDark ? 'bg-slate-900/90 border-slate-800 text-slate-300 hover:border-slate-700' : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
-            }`}
-            title="คลิกเพื่อดูเกณฑ์ระดับน้ำมาตรฐาน"
-          >
-            <Activity className="w-3.5 h-3.5 text-blue-500 shrink-0" />
-            <span className="flex items-center gap-1">
-              <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-              <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold">ปกติ</span>
-              <span className="font-bold">{minor}</span>
-            </span>
-            <span className="text-slate-400 text-[10px]">•</span>
-            <span className="flex items-center gap-1">
-              <span className="w-2 h-2 rounded-full bg-amber-500"></span>
-              <span className="text-[11px] text-amber-600 dark:text-amber-400 font-semibold">ปานกลาง</span>
-              <span className="font-bold">{moderate}</span>
-            </span>
-            <span className="text-slate-400 text-[10px]">•</span>
-            <span className="flex items-center gap-1">
-              <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span>
-              <span className="text-[11px] text-rose-600 dark:text-rose-400 font-semibold">วิกฤต</span>
-              <span className="font-bold text-rose-600 dark:text-rose-400">{severe}</span>
-            </span>
-          </button>
+        {/* Center Area: Level Filter Buttons & Live Temperature & Clock (PC & Tablet) */}
+        <div className="hidden md:flex items-center gap-2 sm:gap-2.5 shrink-0">
+          
+          {/* Level Filter Buttons (PC & Tablet): เลือกดูเฉพาะระดับน้ำแต่ละระดับ */}
+          <div className={`flex items-center gap-1 p-1 rounded-2xl border backdrop-blur-md shadow-2xs select-none ${
+            isDark ? 'bg-slate-900/90 border-slate-800' : 'bg-slate-100/90 border-slate-200/80'
+          }`}>
+            {/* Level 1: ปกติ Filter Button */}
+            <button
+              type="button"
+              onClick={() => onSelectSeverityFilter && onSelectSeverityFilter(severityFilter === '1' ? 'all' : '1')}
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-semibold cursor-pointer transition-all active:scale-95 ${
+                severityFilter === '1'
+                  ? 'bg-emerald-600 text-white shadow-xs font-bold ring-2 ring-emerald-400/40'
+                  : isDark 
+                    ? 'hover:bg-slate-800 text-emerald-400' 
+                    : 'hover:bg-white text-emerald-700'
+              }`}
+              title="คลิกเพื่อกรองแสดงเฉพาะจุดน้ำท่วมปกติ (5-20 ซม.)"
+            >
+              <span className={`w-2 h-2 rounded-full ${severityFilter === '1' ? 'bg-white' : 'bg-emerald-500'}`}></span>
+              <span>ปกติ</span>
+              <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+                severityFilter === '1' ? 'bg-white/20 text-white' : (isDark ? 'bg-emerald-950/80 text-emerald-300' : 'bg-emerald-100 text-emerald-800')
+              }`}>{minor}</span>
+            </button>
+
+            {/* Level 2: ปานกลาง Filter Button */}
+            <button
+              type="button"
+              onClick={() => onSelectSeverityFilter && onSelectSeverityFilter(severityFilter === '2' ? 'all' : '2')}
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-semibold cursor-pointer transition-all active:scale-95 ${
+                severityFilter === '2'
+                  ? 'bg-amber-500 text-slate-950 shadow-xs font-bold ring-2 ring-amber-300/50'
+                  : isDark 
+                    ? 'hover:bg-slate-800 text-amber-400' 
+                    : 'hover:bg-white text-amber-700'
+              }`}
+              title="คลิกเพื่อกรองแสดงเฉพาะจุดน้ำท่วมปานกลาง (21-50 ซม.)"
+            >
+              <span className={`w-2 h-2 rounded-full ${severityFilter === '2' ? 'bg-slate-950' : 'bg-amber-500'}`}></span>
+              <span>ปานกลาง</span>
+              <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+                severityFilter === '2' ? 'bg-black/15 text-slate-950' : (isDark ? 'bg-amber-950/80 text-amber-300' : 'bg-amber-100 text-amber-800')
+              }`}>{moderate}</span>
+            </button>
+
+            {/* Level 3: วิกฤต Filter Button */}
+            <button
+              type="button"
+              onClick={() => onSelectSeverityFilter && onSelectSeverityFilter(severityFilter === '3' ? 'all' : '3')}
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-semibold cursor-pointer transition-all active:scale-95 ${
+                severityFilter === '3'
+                  ? 'bg-rose-600 text-white shadow-xs font-bold ring-2 ring-rose-400/40'
+                  : isDark 
+                    ? 'hover:bg-slate-800 text-rose-400' 
+                    : 'hover:bg-white text-rose-700'
+              }`}
+              title="คลิกเพื่อกรองแสดงเฉพาะจุดน้ำท่วมวิกฤต (>50 ซม.)"
+            >
+              <span className={`w-2 h-2 rounded-full ${severityFilter === '3' ? 'bg-white' : 'bg-rose-500 animate-pulse'}`}></span>
+              <span>วิกฤต</span>
+              <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+                severityFilter === '3' ? 'bg-white/20 text-white' : (isDark ? 'bg-rose-950/80 text-rose-300' : 'bg-rose-100 text-rose-800')
+              }`}>{severe}</span>
+            </button>
+
+            {/* Clear Filter Button */}
+            {severityFilter !== 'all' && (
+              <button
+                type="button"
+                onClick={() => onSelectSeverityFilter && onSelectSeverityFilter('all')}
+                className="px-2 py-0.5 rounded-lg bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 text-[10px] font-bold cursor-pointer transition-all active:scale-95"
+                title="ล้างตัวกรองและแสดงระดับน้ำทั้งหมด"
+              >
+                แสดงทั้งหมด ✕
+              </button>
+            )}
+          </div>
+
+          {/* Live Real-Time Weather & Temperature Badge (อัปเดตอัตโนมัติเมื่ออุณหภูมิเปลี่ยน) */}
+          {weather && weather.temp !== undefined && (
+            <div 
+              className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-2xl border text-xs font-bold transition-all shadow-2xs select-none shrink-0 ${
+                isDark 
+                  ? 'bg-slate-900/90 border-slate-700 text-sky-300' 
+                  : 'bg-sky-50/90 border-sky-200 text-sky-800'
+              }`}
+              title={`สภาพอากาศจริง จ.สมุทรปราการ: ${weather.weatherDesc || 'มีเมฆบางส่วน'} • อุณหภูมิจริง ${weather.temp}°C (รู้สึกเหมือน ${weather.feelsLike || weather.temp}°C) • เปลี่ยนอัตโนมัติสด 24 ชม.`}
+            >
+              <span className="text-sm shrink-0">
+                {weather.forecast24h?.isRainingNow ? '🌧️' : (weather.temp >= 33 ? '☀️' : (weather.temp <= 26 ? '🌦️' : '⛅'))}
+              </span>
+              <span className="font-extrabold font-mono tracking-tight text-xs">
+                {weather.temp}°C
+              </span>
+              {weather.weatherDesc && (
+                <span className="hidden xl:inline text-[11px] font-medium opacity-85 max-w-[90px] truncate">
+                  {weather.weatherDesc}
+                </span>
+              )}
+            </div>
+          )}
 
           {/* Clock */}
           <div className="shrink-0">
@@ -117,6 +226,23 @@ export default function Navbar({
         {/* Right Area: Action Buttons (Responsive & Clean) */}
         <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           
+          {/* Mobile Real-Time Temperature & Weather Badge */}
+          {weather && weather.temp !== undefined && (
+            <div 
+              className={`md:hidden inline-flex items-center gap-1 px-2 py-1 rounded-xl border text-[11px] font-bold shadow-2xs select-none shrink-0 ${
+                isDark 
+                  ? 'bg-slate-900/90 border-slate-700 text-sky-300' 
+                  : 'bg-sky-50 border-sky-200 text-sky-800'
+              }`}
+              title={`อุณหภูมิจริง: ${weather.temp}°C (${weather.weatherDesc || ''})`}
+            >
+              <span className="text-xs">
+                {weather.forecast24h?.isRainingNow ? '🌧️' : (weather.temp >= 33 ? '☀️' : '⛅')}
+              </span>
+              <span className="font-extrabold font-mono">{weather.temp}°C</span>
+            </div>
+          )}
+
           {/* Mobile Clock: Clean & Compact */}
           <div className="md:hidden shrink-0">
             <RealTimeClock theme={theme} />
@@ -126,7 +252,7 @@ export default function Navbar({
           <button 
             type="button"
             onClick={onOpenStandards}
-            className={`hidden xl:inline-flex px-2.5 py-1.5 rounded-xl border text-xs font-semibold items-center gap-1.5 transition-all cursor-pointer shadow-xs ${
+            className={`hidden md:inline-flex px-2.5 py-1.5 rounded-xl border text-xs font-semibold items-center gap-1.5 transition-all cursor-pointer shadow-xs ${
               isDark 
                 ? 'bg-slate-900 hover:bg-slate-800 text-slate-300 border-slate-700' 
                 : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
@@ -141,7 +267,7 @@ export default function Navbar({
           <button 
             type="button"
             onClick={onOpenFeedback}
-            className={`hidden lg:inline-flex px-2.5 sm:px-3 py-1.5 rounded-xl border text-xs font-semibold items-center gap-1.5 transition-all cursor-pointer shadow-xs ${
+            className={`hidden md:inline-flex px-2.5 sm:px-3 py-1.5 rounded-xl border text-xs font-semibold items-center gap-1.5 transition-all cursor-pointer shadow-xs ${
               isDark 
                 ? 'bg-teal-950/60 hover:bg-teal-900/60 text-teal-300 border-teal-800' 
                 : 'bg-teal-50 hover:bg-teal-100 text-teal-800 border-teal-200'
@@ -224,8 +350,8 @@ export default function Navbar({
             <span className="hidden sm:inline">รีเฟรช</span>
           </button>
         </div>
-
       </div>
-    </header>
+    </div>
+  </header>
   );
 }

@@ -120,6 +120,11 @@ export default function RainForecast24hCard({
             <div className="min-w-0 truncate">
               <span className="font-bold text-xs truncate block text-slate-900 dark:text-white">
                 ตำแหน่งของท่านอยู่อำเภอ{currentDistrict} มีโอกาสฝนตก <span className="text-blue-600 dark:text-cyan-400 font-extrabold">{userDistrictProb}%</span>
+                {(matchedDistrict?.temperature || forecast?.temp) && (
+                  <span className="ml-1.5 px-1.5 py-0.5 rounded-md bg-sky-100 dark:bg-sky-950 text-sky-700 dark:text-sky-300 font-mono text-[10px] font-bold">
+                    🌡️ {matchedDistrict?.temperature || forecast?.temp}°C
+                  </span>
+                )}
               </span>
               <span className={`text-[10px] block truncate ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
                 {todayLabel} • {rainTimeToday} (แตะเพื่อดูรายอำเภอ)
@@ -213,8 +218,10 @@ export default function RainForecast24hCard({
             </span>
           </div>
           <div className="text-right shrink-0">
-            <span className={`text-[10px] block ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>สภาพอากาศ</span>
-            <span className={`text-xs font-bold ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>{status}</span>
+            <span className={`text-[10px] block ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>อุณหภูมิจริง • สภาพอากาศ</span>
+            <span className={`text-xs sm:text-sm font-black ${isDark ? 'text-cyan-300' : 'text-blue-700'}`}>
+              🌡️ {matchedDistrict?.temperature || forecast?.temp || 28}°C <span className="text-[10px] font-semibold opacity-85">({status})</span>
+            </span>
           </div>
         </div>
 
@@ -236,36 +243,45 @@ export default function RainForecast24hCard({
         {/* 6 Districts Compact List */}
         <div className="mt-3">
           <span className={`text-[11px] font-bold block mb-1.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-            คาดการณ์แยก 6 อำเภอ (ช่วงเวลา & โอกาส):
+            คาดการณ์แยก 6 อำเภอ (โอกาสฝนตก):
           </span>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-            {districtList.map((d, idx) => (
-              <div
-                key={idx}
-                className={`px-2.5 py-1.5 rounded-xl border flex items-center justify-between text-xs transition-colors ${
-                  userDistrict && userDistrict.includes(d.district)
-                    ? (isDark ? 'bg-blue-950/80 border-cyan-500/60 text-cyan-200' : 'bg-blue-50 border-blue-400 text-blue-900 font-bold')
-                    : (isDark ? 'bg-slate-850/60 border-slate-800 text-slate-300' : 'bg-slate-50 border-slate-200 text-slate-700')
-                }`}
-              >
-                <div className="flex items-center gap-1.5 truncate">
-                  <span className="text-xs">🌦️</span>
-                  <span className="font-semibold truncate">อ.{d.district.replace('เมืองสมุทรปราการ', 'เมือง')}</span>
+            {districtList.map((d, idx) => {
+              const districtName = d.district.startsWith('อำเภอ') || d.district.startsWith('อ.') 
+                ? d.district 
+                : `อำเภอ${d.district}`;
+              return (
+                <div
+                  key={idx}
+                  className={`px-3 py-2 rounded-xl border flex items-center justify-between text-xs transition-colors ${
+                    userDistrict && userDistrict.includes(d.district)
+                      ? (isDark ? 'bg-blue-950/80 border-cyan-500/60 text-cyan-200' : 'bg-blue-50 border-blue-400 text-blue-900 font-bold')
+                      : (isDark ? 'bg-slate-850/60 border-slate-800 text-slate-300' : 'bg-slate-50 border-slate-200 text-slate-700')
+                  }`}
+                >
+                  <div className="flex items-center gap-2 min-w-0 pr-1">
+                    <span className="text-xs shrink-0">{d.icon || '🌦️'}</span>
+                    <span className="font-semibold truncate">
+                      {districtName}
+                    </span>
+                    {d.temperature && (
+                      <span className="text-[10px] font-mono font-medium text-slate-500 dark:text-slate-400 shrink-0">
+                        {d.temperature}°C
+                      </span>
+                    )}
+                  </div>
+                  <div className="shrink-0">
+                    <span className={`text-[11px] px-2 py-0.5 rounded-lg font-bold border ${
+                      d.probability >= 60 
+                        ? (isDark ? 'bg-amber-950/90 text-amber-300 border-amber-800' : 'bg-amber-100 text-amber-900 border-amber-300')
+                        : (isDark ? 'bg-slate-800 text-slate-300 border-slate-700' : 'bg-slate-200 text-slate-700 border-slate-300')
+                    }`}>
+                      {d.probability}%
+                    </span>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  <span className={`text-[11px] font-mono ${isDark ? 'text-cyan-300' : 'text-blue-700'}`}>
-                    {d.timeWindow ? d.timeWindow.replace('ช่วงบ่าย ', '').replace('ช่วงเย็น ', '') : 'บ่าย-เย็น'}
-                  </span>
-                  <span className={`text-[10px] px-1.5 py-0.2 rounded font-bold ${
-                    d.probability >= 60 
-                      ? (isDark ? 'bg-amber-950 text-amber-300' : 'bg-amber-100 text-amber-800')
-                      : (isDark ? 'bg-slate-800 text-slate-300' : 'bg-slate-200 text-slate-600')
-                  }`}>
-                    {d.probability}%
-                  </span>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 

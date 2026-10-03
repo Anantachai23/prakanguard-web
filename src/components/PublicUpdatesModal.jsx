@@ -6,7 +6,8 @@ import {
   Activity,
   CheckCircle2,
   AlertTriangle,
-  TrendingDown
+  TrendingDown,
+  Clock
 } from 'lucide-react';
 
 export default function PublicUpdatesModal({ 
@@ -69,6 +70,46 @@ export default function PublicUpdatesModal({
     const districtText = cleanDistrict ? `${cleanDistrict}` : '';
     const subdistrictText = cleanSub ? `ต.${cleanSub}` : '';
 
+    // Format individual time for every item
+    let itemTime = '';
+    const timeCandidates = [
+      item.reportedAt,
+      item.updatedAt,
+      item.resolvedAt,
+      item.lastCheckedTime,
+      item.time,
+      item.syncTime
+    ];
+
+    for (const tc of timeCandidates) {
+      if (tc && typeof tc === 'string' && tc.trim()) {
+        let str = tc.trim();
+        if (/^\d{1,2}:\d{2}$/.test(str)) {
+          itemTime = `${str} น.`;
+        } else {
+          itemTime = str.replace(/:\d{2}\s*น\./, ' น.');
+        }
+        break;
+      }
+    }
+
+    if (!itemTime && item.timestamp) {
+      try {
+        const d = new Date(item.timestamp);
+        if (!isNaN(d.getTime())) {
+          itemTime = d.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) + ' น.';
+        }
+      } catch (_) {}
+    }
+
+    if (!itemTime) {
+      if (lastUpdatedTime && typeof lastUpdatedTime === 'string') {
+        itemTime = lastUpdatedTime.replace(/:\d{2}\s*น\./, ' น.');
+      } else {
+        itemTime = new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) + ' น.';
+      }
+    }
+
     items.push({
       id: item.id || `upd_${Math.random()}`,
       statusType,
@@ -77,6 +118,7 @@ export default function PublicUpdatesModal({
       icon,
       locationName,
       locationSub: [districtText, subdistrictText].filter(Boolean).join(' • '),
+      itemTime,
       rawPoint: item
     });
   }
@@ -209,10 +251,16 @@ export default function PublicUpdatesModal({
                   </div>
                 </div>
 
-                {/* Status Badge */}
-                <div className="shrink-0 flex items-center gap-1.5">
-                  <span className={`px-2 py-0.5 rounded-full text-[11px] font-bold border ${item.statusBadgeClass}`}>
+                {/* Status Badge & Time */}
+                <div className="shrink-0 flex flex-col items-end justify-center gap-1 text-right">
+                  <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${item.statusBadgeClass}`}>
                     {item.statusLabel}
+                  </span>
+                  <span className={`text-[10px] sm:text-[11px] font-medium flex items-center gap-1 ${
+                    isDark ? 'text-slate-400' : 'text-slate-500'
+                  }`}>
+                    <Clock className="w-3 h-3 text-blue-500 shrink-0" />
+                    <span>{item.itemTime}</span>
                   </span>
                 </div>
               </div>

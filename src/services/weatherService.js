@@ -334,6 +334,8 @@ export async function getLiveSamutPrakanWeather(forceRefresh = false) {
       forecast24h = {
         title: "คาดการณ์ฝนตก",
         status: rainStatusTitle,
+        temp: current.temperature_2m !== undefined ? Math.round(current.temperature_2m) : 28,
+        feelsLike,
         totalRainMm: totalRain,
         maxProbability: maxProb,
         startTimeText,

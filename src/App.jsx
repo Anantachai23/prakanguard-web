@@ -186,13 +186,29 @@ export default function App() {
 
   // Expose global lightbox opener for Leaflet map popup clicks
   useEffect(() => {
+    window.__pgPhotos = window.__pgPhotos || {};
     window.pgOpenLightbox = (url, title, time) => {
       setLightboxPhoto({ url, title, time });
     };
+    window.pgOpenLightboxById = (id) => {
+      if (window.__pgPhotos && window.__pgPhotos[id]) {
+        setLightboxPhoto(window.__pgPhotos[id]);
+      } else {
+        const found = pointsRef.current?.find(p => p.id === id) || citizenReports.find(c => c.id === id);
+        if (found && found.photoUrl) {
+          setLightboxPhoto({ 
+            url: found.photoUrl, 
+            title: found.name, 
+            time: found.reportedAt || found.updatedAt || found.time 
+          });
+        }
+      }
+    };
     return () => {
       delete window.pgOpenLightbox;
+      delete window.pgOpenLightboxById;
     };
-  }, []);
+  }, [citizenReports]);
 
   useEffect(() => {
     pointsRef.current = points;
@@ -512,6 +528,25 @@ export default function App() {
   const [isPickingLocationOnMap, setIsPickingLocationOnMap] = useState(false);
   const [pickedCoords, setPickedCoords] = useState(null);
   const [flyToLocation, setFlyToLocation] = useState(null);
+
+  // Mobile Symbols Guide Modal State
+  const [isMobileGuideOpen, setIsMobileGuideOpen] = useState(false);
+
+  // Out of Province Banner State (Auto-dismisses in 5 seconds when website opens)
+  const [showOutOfProvinceBanner, setShowOutOfProvinceBanner] = useState(false);
+
+  // Auto-hide out of province banner after 5 seconds when website opens/locates
+  useEffect(() => {
+    if (userLocation && !userDistrict) {
+      setShowOutOfProvinceBanner(true);
+      const timer = setTimeout(() => {
+        setShowOutOfProvinceBanner(false);
+      }, 5000); // หายไปหลังจาก 5 วินาที ตามที่ผู้ใช้ระบุ
+      return () => clearTimeout(timer);
+    } else {
+      setShowOutOfProvinceBanner(false);
+    }
+  }, [userLocation, userDistrict]);
 
   // Admin Management & Live Verification Notification States
   const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
@@ -1605,6 +1640,9 @@ export default function App() {
       {/* 1. TOP NAVBAR (Theme Switchable & AutoMarquee) */}
       <Navbar 
         points={points} 
+        weather={weather}
+        severityFilter={severityFilter}
+        onSelectSeverityFilter={setSeverityFilter}
         theme={theme}
         onToggleTheme={toggleTheme}
         onOpenEmergency={() => setIsEmergencyModalOpen(true)}
@@ -1703,8 +1741,8 @@ export default function App() {
           </div>
         )}
 
-        {/* Out of Province Warning Banner (เมื่อ GPS ระบุได้ว่าอยู่นอกพื้นที่ จ.สมุทรปราการ) */}
-        {userLocation && !userDistrict && (
+        {/* Out of Province Warning Banner (เมื่อเปิดเว็บขึ้นมาจะแสดง 5 วินาทีแล้วหายไปอัตโนมัติ) */}
+        {showOutOfProvinceBanner && userLocation && !userDistrict && (
           <div className="fixed top-[58px] sm:top-[72px] left-1/2 -translate-x-1/2 z-[80] w-auto max-w-[94vw] sm:max-w-md pointer-events-auto animate-in fade-in slide-in-from-top-2 duration-300">
             <div className="flex items-center gap-2.5 px-3.5 py-2 rounded-2xl bg-amber-950/95 text-amber-200 border border-amber-500/50 shadow-xl backdrop-blur-xl">
               <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 animate-bounce" />
@@ -1714,12 +1752,21 @@ export default function App() {
               </div>
               <button
                 onClick={() => {
+                  setShowOutOfProvinceBanner(false);
                   setSelectedDistrict('ทั้งหมด');
                   setFlyToLocation({ lat: 13.6000, lng: 100.6500, zoom: 11, ts: Date.now() });
                 }}
                 className="px-2.5 py-1 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-400/40 text-[10px] font-bold shrink-0 cursor-pointer active:scale-95 transition-all"
               >
                 ดูสมุทรปราการ
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowOutOfProvinceBanner(false)}
+                className="p-1 hover:bg-white/10 rounded-lg text-amber-300/80 hover:text-white cursor-pointer ml-0.5"
+                title="ปิด"
+              >
+                <X className="w-3.5 h-3.5" />
               </button>
             </div>
           </div>
@@ -2031,25 +2078,26 @@ export default function App() {
                 type="button"
                 onClick={() => handleLocateMe(false)}
                 className={`shrink-0 flex items-center gap-1.5 px-2.5 sm:px-3 py-2 rounded-2xl border text-[11px] sm:text-xs font-semibold shadow-md backdrop-blur-xl cursor-pointer active:scale-95 transition-all ${
-                  isDark ? 'bg-slate-800/90 border-slate-700 text-slate-300 hover:text-white' : 'bg-slate-100/95 border-slate-200 text-slate-700 hover:text-slate-900'
+                  isDark ? 'bg-slate-900/90 border-slate-700 text-slate-300 hover:text-white' : 'bg-white/95 border-slate-200 text-slate-700 hover:text-slate-900'
                 }`}
-                title="กดเพื่อแชร์ตำแหน่ง GPS และดูว่าคุณอยู่อำเภอไหน"
+                title="คลิกเพื่อเปิดตำแหน่งและระบุพิกัด GPS"
               >
-                <Navigation2 className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                <span>ระบุตำแหน่ง</span>
+                <Compass className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+                <span className="underline decoration-slate-400 dark:decoration-slate-500 underline-offset-2 hover:decoration-blue-500 font-medium">
+                  คุณไม่ได้เปิดตำแหน่ง
+                </span>
               </button>
             )}
           </div>
 
         </div>
 
-        {/* MOBILE DOCKED WATER LEVEL STRIP (เกณฑ์ระดับน้ำ - อยู่ชิดด้านล่างเหนือเมนู ไม่บังแผนที่ ใช้งานง่ายด้วยนิ้วโป้ง) */}
-        {/* MOBILE DOCKED WATER LEVEL STRIP (จัดวางเกณฑ์ใหม่ให้เล็กกะทัดรัด ไม่รก ไม่มีคำว่าคู่มือ) */}
-        <div className="sm:hidden fixed bottom-[66px] left-1/2 -translate-x-1/2 z-30 pointer-events-auto select-none">
-          <div className={`px-2 py-1 rounded-full border shadow-md backdrop-blur-xl flex items-center gap-1.5 text-[9.5px] font-bold ${
+        {/* MOBILE DOCKED WATER LEVEL STRIP & MAP SYMBOL GUIDE (เกณฑ์ระดับน้ำและไกด์สัญลักษณ์ 📷 และ 📉) */}
+        <div className="sm:hidden fixed bottom-[66px] left-1/2 -translate-x-1/2 z-30 pointer-events-auto select-none max-w-[96vw]">
+          <div className={`px-2.5 py-1 rounded-full border shadow-lg backdrop-blur-xl flex items-center gap-1.5 text-[9.5px] font-bold ${
             isDark 
-              ? 'bg-slate-950/90 border-slate-800 text-slate-300' 
-              : 'bg-white/90 border-slate-200 text-slate-700'
+              ? 'bg-slate-950/95 border-slate-800 text-slate-300 shadow-black/50' 
+              : 'bg-white/95 border-slate-200 text-slate-700 shadow-slate-300/50'
           }`}>
             {/* Green: 5-20 cm */}
             <button
@@ -2105,13 +2153,102 @@ export default function App() {
                 ✕
               </button>
             )}
+
+            {/* Vertical Divider */}
+            <span className="w-[1px] h-3.5 bg-slate-300 dark:bg-slate-700"></span>
+
+            {/* Mobile Symbol Guide Trigger Button */}
+            <button
+              type="button"
+              onClick={() => setIsMobileGuideOpen(prev => !prev)}
+              className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950/80 text-blue-600 dark:text-cyan-300 border border-blue-200 dark:border-blue-800 text-[9px] font-bold cursor-pointer active:scale-95 shrink-0"
+              title="แตะเพื่อดูความหมายสัญลักษณ์ 📷 (มีภาพถ่าย) และ 📉 (น้ำกำลังลด)"
+            >
+              <span className="flex items-center -space-x-1">
+                <span>📷</span>
+                <span>📉</span>
+              </span>
+              <span>ไกด์</span>
+            </button>
           </div>
         </div>
+
+        {/* MOBILE MAP SYMBOLS GUIDE MODAL (บอกความหมายของ 📷 รูปประชาชนถ่ายรูปรายงาน และ 📉 น้ำกำลังลด) */}
+        {isMobileGuideOpen && (
+          <div 
+            className="sm:hidden fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-end justify-center p-3 pb-[105px] animate-in fade-in"
+            onClick={() => setIsMobileGuideOpen(false)}
+          >
+            <div 
+              className={`w-full max-w-sm rounded-3xl border p-4 shadow-2xl backdrop-blur-2xl animate-in slide-in-from-bottom-3 ${
+                isDark 
+                  ? 'bg-slate-900/98 border-slate-700 text-slate-100 shadow-black/80' 
+                  : 'bg-white/98 border-slate-200 text-slate-800 shadow-slate-300/80'
+              }`}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between pb-2.5 border-b border-slate-200 dark:border-slate-800">
+                <span className="font-extrabold text-xs sm:text-sm flex items-center gap-1.5 text-blue-600 dark:text-cyan-400">
+                  <span>💡</span> ไกด์สัญลักษณ์บนแผนที่
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setIsMobileGuideOpen(false)}
+                  className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-white"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div className="space-y-2.5 mt-3 text-xs">
+                {/* 1. Camera Symbol Guide */}
+                <div className="flex items-start gap-2.5 p-2.5 rounded-2xl bg-blue-50/80 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800">
+                  <div className="w-8 h-8 rounded-xl bg-white dark:bg-slate-800 border border-blue-400 flex items-center justify-center text-base shadow-xs shrink-0">
+                    📷
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <span className="font-bold text-blue-700 dark:text-cyan-300 block text-xs">
+                      รูปกล้อง (📷)
+                    </span>
+                    <span className="text-[11px] text-slate-600 dark:text-slate-300 block leading-snug mt-0.5">
+                      คือ <b>จุดที่มีประชาชนถ่ายรูปรายงาน</b> สามารถแตะที่หมุดเพื่อดูรูปถ่ายสถานที่จริงขนาดใหญ่ได้
+                    </span>
+                  </div>
+                </div>
+
+                {/* 2. Graph / Falling Water Symbol Guide */}
+                <div className="flex items-start gap-2.5 p-2.5 rounded-2xl bg-teal-50/80 dark:bg-teal-950/50 border border-teal-200 dark:border-teal-800">
+                  <div className="w-8 h-8 rounded-xl bg-white dark:bg-slate-800 border border-teal-400 flex items-center justify-center text-base shadow-xs shrink-0">
+                    📉
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <span className="font-bold text-teal-700 dark:text-teal-300 block text-xs">
+                      เส้นกราฟสีฟ้า/เขียว (📉)
+                    </span>
+                    <span className="text-[11px] text-slate-600 dark:text-slate-300 block leading-snug mt-0.5">
+                      คือ <b>จุดที่น้ำกำลังลด</b> ฝนหยุดตกแล้วและเจ้าหน้าที่กำลังเร่งสูบระบายน้ำ เมื่อแห้งสนิทระบบจะนำออกจากแผนที่อัตโนมัติ
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-3 text-center">
+                <button
+                  type="button"
+                  onClick={() => setIsMobileGuideOpen(false)}
+                  className="w-full py-2 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs cursor-pointer active:scale-95 shadow-md shadow-blue-600/30 transition-all"
+                >
+                  เข้าใจแล้ว
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* CLICK-OUTSIDE BACKDROP FOR EASY EXIT ON MOBILE */}
         {selectedPoint && (
           <div 
-            className="fixed inset-0 z-25 bg-black/20 backdrop-blur-[1px] sm:hidden" 
+            className="fixed inset-0 z-[25] bg-black/20 backdrop-blur-[1px] sm:hidden" 
             onClick={() => setSelectedPoint(null)} 
           />
         )}
@@ -2262,7 +2399,7 @@ export default function App() {
         {/* FULLSCREEN PHOTO LIGHTBOX MODAL (Mobile, Tablet & PC) */}
         {lightboxPhoto && (
           <div 
-            className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex flex-col items-center justify-center p-3 sm:p-6 animate-in fade-in duration-200 pointer-events-auto"
+            className="fixed inset-0 z-[99999] bg-black/90 backdrop-blur-md flex flex-col items-center justify-center p-3 sm:p-6 animate-in fade-in duration-200 pointer-events-auto"
             onClick={() => setLightboxPhoto(null)}
           >
             <div 

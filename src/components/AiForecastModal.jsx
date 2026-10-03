@@ -189,31 +189,33 @@ export default function AiForecastModal({ isOpen, onClose, userDistrict, theme =
                 คาดการณ์แยกตามอำเภอ:
               </h4>
               <div className="space-y-1.5">
-                {districtAnalysis.map((d, i) => (
-                  <div 
-                    key={i}
-                    className={`px-3 py-2 rounded-xl border flex items-center justify-between text-xs transition-colors ${
-                      isDark ? 'bg-slate-850/60 border-slate-800 text-slate-300' : 'bg-slate-50 border-slate-200 text-slate-700'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2">
-                      <span>🌦️</span>
-                      <span className="font-semibold">อ.{d.district}</span>
+                {districtAnalysis.map((d, i) => {
+                  const districtName = d.district.startsWith('อำเภอ') || d.district.startsWith('อ.') 
+                    ? d.district 
+                    : `อำเภอ${d.district}`;
+                  return (
+                    <div 
+                      key={i}
+                      className={`px-3 py-2 rounded-xl border flex items-center justify-between text-xs transition-colors ${
+                        isDark ? 'bg-slate-850/60 border-slate-800 text-slate-300' : 'bg-slate-50 border-slate-200 text-slate-700'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2 min-w-0 pr-2">
+                        <span className="shrink-0">🌦️</span>
+                        <span className="font-semibold truncate">{districtName}</span>
+                      </div>
+                      <div className="shrink-0">
+                        <span className={`px-2 py-0.5 rounded-md font-bold text-[11px] border ${
+                          d.probability >= 60 
+                            ? (isDark ? 'bg-amber-950/90 text-amber-300 border-amber-800' : 'bg-amber-100 text-amber-900 border-amber-300')
+                            : (isDark ? 'bg-slate-800 text-slate-300 border-slate-700' : 'bg-slate-200 text-slate-700 border-slate-300')
+                        }`}>
+                          {d.probability}%
+                        </span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <span className={`font-mono ${isDark ? 'text-cyan-300' : 'text-blue-600'}`}>
-                        {d.timeWindow ? d.timeWindow.replace('ช่วงบ่าย ', '').replace('ช่วงเย็น ', '') : 'บ่าย-เย็น'}
-                      </span>
-                      <span className={`px-2 py-0.5 rounded-md font-bold text-[11px] ${
-                        d.probability >= 60 
-                          ? (isDark ? 'bg-amber-950 text-amber-300' : 'bg-amber-100 text-amber-800')
-                          : (isDark ? 'bg-slate-800 text-slate-300' : 'bg-slate-200 text-slate-600')
-                      }`}>
-                        {d.probability}%
-                      </span>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
 
