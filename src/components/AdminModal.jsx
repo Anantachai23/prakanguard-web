@@ -224,6 +224,26 @@ export default function AdminModal({
 
   const activeFeedbackList = Array.isArray(feedbackItems) && feedbackItems.length > 0 ? feedbackItems : localFeedback;
 
+  // Trash (Recently Deleted) States
+  const [deletedReports, setDeletedReports] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('pg_admin_deleted_reports') || '[]');
+    } catch (e) {
+      return [];
+    }
+  });
+
+  const [deletedFeedback, setDeletedFeedback] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('pg_admin_deleted_feedback') || '[]');
+    } catch (e) {
+      return [];
+    }
+  });
+
+  const [trashFilter, setTrashFilter] = useState('all'); // 'all' | 'report' | 'feedback'
+  const [trashSearch, setTrashSearch] = useState('');
+
   // Pending Reports Filter States
   const [pendingDistrictFilter, setPendingDistrictFilter] = useState('ทั้งหมด');
   const [pendingHazardFilter, setPendingHazardFilter] = useState('all'); // 'all' | 'flood' | 'hail'
@@ -247,7 +267,7 @@ export default function AdminModal({
   const [newLocationDepth, setNewLocationDepth] = useState(15);
   const [newLocationCause, setNewLocationCause] = useState('น้ำฝนสะสมรอการระบาย ร่วมกับแอ่งกระทะ');
   const [newLocationTraffic, setNewLocationTraffic] = useState('มีน้ำท่วมขังผิวจราจร 2 เลนซ้าย ชะลอความเร็ว');
-  const [newLocationSource, setNewLocationSource] = useState('แขวงทางหลวงสมุทรปราการ & สนง.ปภ.สมุทรปราการ');
+  const [newLocationSource, setNewLocationSource] = useState('แขวงทางหลวงสมุทรปราการ & ศูนย์ข้อมูลอุทกภัยสมุทรปราการ');
   const [newLocationAliases, setNewLocationAliases] = useState('');
   const [locationFormSuccess, setLocationFormSuccess] = useState('');
   const [locationFormError, setLocationFormError] = useState('');
@@ -408,11 +428,18 @@ export default function AdminModal({
 
   const handleReject = (reportId) => {
     const report = citizenReports.find(r => r.id === reportId);
-    if (window.confirm(`ยืนยันการปฏิเสธ / ลบรายงาน "${report?.name || 'จุดนี้'}" ออกจากระบบ?`)) {
+    if (window.confirm(`ยืนยันการลบรายงาน "${report?.name || 'จุดนี้'}" ไปยัง "ลบล่าสุด" (ถังขยะ)?`)) {
+      if (report) {
+        setDeletedReports(prev => {
+          const updated = [{ ...report, deletedAt: new Date().toISOString() }, ...prev.filter(x => x.id !== reportId)];
+          try { localStorage.setItem('pg_admin_deleted_reports', JSON.stringify(updated)); } catch (e) {}
+          return updated;
+        });
+      }
       if (onRejectReport) {
         onRejectReport(reportId);
       }
-      showNotice(`🗑️ ปฏิเสธรายงานเรียบร้อยแล้ว`, 'info');
+      showNotice(`🗑️ ย้ายรายงานไปยัง "ลบล่าสุด" เรียบร้อย (สามารถกู้คืนหรือลบถาวรได้)`, 'info');
     }
   };
 
@@ -448,7 +475,15 @@ export default function AdminModal({
   };
 
   const handleDeleteFb = (id) => {
-    if (window.confirm("ยืนยันต้องการลบข้อเสนอแนะนี้หรือไม่?")) {
+    const fb = activeFeedbackList.find(f => f.id === id);
+    if (window.confirm("ยืนยันต้องการย้ายข้อเสนอแนะนี้ไปยัง 'ลบล่าสุด' (ถังขยะ) หรือไม่?")) {
+      if (fb) {
+        setDeletedFeedback(prev => {
+          const updated = [{ ...fb, deletedAt: new Date().toISOString() }, ...prev.filter(x => x.id !== id)];
+          try { localStorage.setItem('pg_admin_deleted_feedback', JSON.stringify(updated)); } catch (e) {}
+          return updated;
+        });
+      }
       if (onDeleteFeedback) {
         onDeleteFeedback(id);
       } else {
@@ -460,8 +495,68 @@ export default function AdminModal({
           return updated;
         });
       }
-      showNotice(`🗑️ ลบข้อเสนอแนะสำเร็จ`, 'info');
+      showNotice(`🗑️ ย้ายข้อเสนอแนะไปยัง "ลบล่าสุด" เรียบร้อย`, 'info');
     }
+  };
+
+  // Trash Handlers (กู้คืน / ลบถาวร / ล้างถังขยะ)
+  const handleRestoreTrashReport = (report) => {
+    if (onAddPoint) {
+      onAddPoint(report);
+    }
+    setDeletedReports(prev => {
+      const updated = prev.filter(r => r.id !== report.id);
+      try { localStorage.setItem('pg_admin_deleted_reports', JSON.stringify(updated)); } catch (e) {}
+      return updated;
+    });
+    showNotice(`✅ กู้คืนรายงาน "${report.name || 'จุดนี้'}" เรียบร้อยแล้ว`);
+  };
+
+  const handlePermanentDeleteReport = (reportId) => {
+    if (!window.confirm("ยืนยันลบรายงานนี้ถาวร? ไม่สามารถกู้คืนได้อีก")) return;
+    setDeletedReports(prev => {
+      const updated = prev.filter(r => r.id !== reportId);
+      try { localStorage.setItem('pg_admin_deleted_reports', JSON.stringify(updated)); } catch (e) {}
+      return updated;
+    });
+    showNotice(`🗑️ ลบรายงานถาวรเรียบร้อยแล้ว`, 'info');
+  };
+
+  const handleRestoreTrashFeedback = (fb) => {
+    setLocalFeedback(prev => {
+      const updated = [fb, ...prev.filter(f => f.id !== fb.id)];
+      try { localStorage.setItem('prakanguard_feedback_items', JSON.stringify(updated)); } catch (e) {}
+      return updated;
+    });
+    setDeletedFeedback(prev => {
+      const updated = prev.filter(f => f.id !== fb.id);
+      try { localStorage.setItem('pg_admin_deleted_feedback', JSON.stringify(updated)); } catch (e) {}
+      return updated;
+    });
+    showNotice(`✅ กู้คืนข้อเสนอแนะเรียบร้อยแล้ว`);
+  };
+
+  const handlePermanentDeleteFeedback = (fbId) => {
+    if (!window.confirm("ยืนยันลบข้อเสนอแนะนี้ถาวร? ไม่สามารถกู้คืนได้อีก")) return;
+    setDeletedFeedback(prev => {
+      const updated = prev.filter(f => f.id !== fbId);
+      try { localStorage.setItem('pg_admin_deleted_feedback', JSON.stringify(updated)); } catch (e) {}
+      return updated;
+    });
+    showNotice(`🗑️ ลบข้อเสนอแนะถาวรเรียบร้อยแล้ว`, 'info');
+  };
+
+  const handleClearAllTrash = () => {
+    const total = deletedReports.length + deletedFeedback.length;
+    if (total === 0) return;
+    if (!window.confirm(`ยืนยันล้างถังขยะทั้งหมด ${total} รายการแบบถาวร?`)) return;
+    setDeletedReports([]);
+    setDeletedFeedback([]);
+    try {
+      localStorage.removeItem('pg_admin_deleted_reports');
+      localStorage.removeItem('pg_admin_deleted_feedback');
+    } catch (e) {}
+    showNotice(`🔥 ล้างถังขยะทั้งหมดเรียบร้อยแล้ว`);
   };
 
   const handleMarkAllFb = () => {
@@ -618,7 +713,7 @@ export default function AdminModal({
         "lng": 100.7092,
         "depthCm": 20,
         "cause": "พื้นที่ลุ่มต่ำริมคลองสำโรง",
-        "source": "สนง.ปภ.สมุทรปราการ"
+        "source": "ศูนย์ข้อมูลอุทกภัยสมุทรปราการ"
       }
     ];
     setImportJsonText(JSON.stringify(sample, null, 2));
@@ -1060,6 +1155,24 @@ export default function AdminModal({
                 >
                   <Clock className="w-3.5 h-3.5 text-slate-400" />
                   <span>ประวัติ</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('trash')}
+                  className={`px-3 py-2 rounded-t-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 border-b-2 whitespace-nowrap shrink-0 ${
+                    activeTab === 'trash'
+                      ? (isDark ? 'border-rose-400 text-rose-300 bg-slate-800' : 'border-rose-500 text-rose-700 bg-white')
+                      : 'border-transparent text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  <Trash2 className="w-3.5 h-3.5 text-rose-400" />
+                  <span>ลบล่าสุด</span>
+                  {(deletedReports.length + deletedFeedback.length) > 0 && (
+                    <span className="px-1.5 py-0.2 rounded-full text-[10px] font-extrabold bg-rose-500 text-white">
+                      {deletedReports.length + deletedFeedback.length}
+                    </span>
+                  )}
                 </button>
 
                 <button
@@ -2378,6 +2491,280 @@ export default function AdminModal({
                       </div>
                     ))
                   )}
+                </div>
+              )}
+
+              {/* TAB 8: TRASH (RECENTLY DELETED) */}
+              {activeTab === 'trash' && (
+                <div className="space-y-4">
+                  {/* Top Header & Actions */}
+                  <div className={`p-4 rounded-2xl border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 ${
+                    isDark ? 'bg-slate-850 border-slate-700' : 'bg-slate-50 border-slate-200'
+                  }`}>
+                    <div>
+                      <h4 className="text-sm font-bold flex items-center gap-2 text-slate-900 dark:text-white">
+                        <Trash2 className="w-4 h-4 text-rose-500" />
+                        <span>ถังขยะ / ลบล่าสุด ({deletedReports.length + deletedFeedback.length})</span>
+                      </h4>
+                      <p className="text-xs text-slate-400 mt-0.5">
+                        รายการที่ถูกลบจะถูกพักไว้ที่นี่ สามารถกดกู้คืนกลับสู่ระบบ หรือเลือกลบถาวรได้
+                      </p>
+                    </div>
+
+                    {(deletedReports.length > 0 || deletedFeedback.length > 0) && (
+                      <button
+                        type="button"
+                        onClick={handleClearAllTrash}
+                        className="px-3 py-1.5 rounded-xl bg-rose-500/15 hover:bg-rose-500 text-rose-600 dark:text-rose-400 hover:text-white text-xs font-bold transition-all flex items-center gap-1.5 border border-rose-500/30 cursor-pointer self-end sm:self-auto"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        <span>ล้างถังขยะทั้งหมด (ลบถาวร)</span>
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Filter and Search Bar */}
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <div className="flex gap-1.5 overflow-x-auto pb-1 sm:pb-0">
+                      <button
+                        type="button"
+                        onClick={() => setTrashFilter('all')}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap cursor-pointer transition-all ${
+                          trashFilter === 'all'
+                            ? (isDark ? 'bg-slate-700 text-white font-bold' : 'bg-slate-800 text-white font-bold')
+                            : (isDark ? 'bg-slate-800 text-slate-400 hover:text-white' : 'bg-slate-200 text-slate-600 hover:text-slate-900')
+                        }`}
+                      >
+                        ทั้งหมด ({deletedReports.length + deletedFeedback.length})
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setTrashFilter('report')}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap cursor-pointer transition-all ${
+                          trashFilter === 'report'
+                            ? 'bg-rose-600 text-white font-bold'
+                            : (isDark ? 'bg-slate-800 text-slate-400 hover:text-white' : 'bg-slate-200 text-slate-600 hover:text-slate-900')
+                        }`}
+                      >
+                        รายงานน้ำท่วม ({deletedReports.length})
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setTrashFilter('feedback')}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap cursor-pointer transition-all ${
+                          trashFilter === 'feedback'
+                            ? 'bg-teal-600 text-white font-bold'
+                            : (isDark ? 'bg-slate-800 text-slate-400 hover:text-white' : 'bg-slate-200 text-slate-600 hover:text-slate-900')
+                        }`}
+                      >
+                        ข้อเสนอแนะ ({deletedFeedback.length})
+                      </button>
+                    </div>
+
+                    <div className="relative flex-1">
+                      <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                      <input
+                        type="text"
+                        value={trashSearch}
+                        onChange={(e) => setTrashSearch(e.target.value)}
+                        placeholder="ค้นหาในถังขยะ..."
+                        className={`w-full pl-8 pr-3 py-1.5 rounded-xl border text-xs focus:outline-none ${
+                          isDark ? 'bg-slate-800 border-slate-700 text-white placeholder-slate-500' : 'bg-white border-slate-300 text-slate-900 placeholder-slate-400'
+                        }`}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Trash List */}
+                  {(() => {
+                    const filteredReports = deletedReports.filter(r => {
+                      if (trashFilter === 'feedback') return false;
+                      if (!trashSearch.trim()) return true;
+                      const q = trashSearch.toLowerCase();
+                      return (
+                        (r.name && r.name.toLowerCase().includes(q)) ||
+                        (r.district && r.district.toLowerCase().includes(q)) ||
+                        (r.subdistrict && r.subdistrict.toLowerCase().includes(q)) ||
+                        (r.notes && r.notes.toLowerCase().includes(q)) ||
+                        (r.reporterName && r.reporterName.toLowerCase().includes(q))
+                      );
+                    });
+
+                    const filteredFeedback = deletedFeedback.filter(f => {
+                      if (trashFilter === 'report') return false;
+                      if (!trashSearch.trim()) return true;
+                      const q = trashSearch.toLowerCase();
+                      return (
+                        (f.message && f.message.toLowerCase().includes(q)) ||
+                        (f.topic && f.topic.toLowerCase().includes(q)) ||
+                        (f.name && f.name.toLowerCase().includes(q)) ||
+                        (f.phone && f.phone.includes(q))
+                      );
+                    });
+
+                    const totalItems = filteredReports.length + filteredFeedback.length;
+
+                    if (totalItems === 0) {
+                      return (
+                        <div className={`p-8 rounded-2xl border text-center ${
+                          isDark ? 'bg-slate-850/50 border-slate-800 text-slate-400' : 'bg-slate-50 border-slate-200 text-slate-500'
+                        }`}>
+                          <Trash2 className="w-8 h-8 mx-auto text-slate-400 mb-2 opacity-50" />
+                          <div className="font-semibold text-sm text-slate-700 dark:text-slate-300">ไม่มีรายการในถังขยะ</div>
+                          <div className="text-xs text-slate-400 mt-1">
+                            {trashSearch ? 'ไม่พบข้อมูลที่ตรงกับคำค้นหา' : 'เมื่อมีการลบรายงานหรือข้อเสนอแนะ รายการจะถูกเก็บไว้ที่นี่'}
+                          </div>
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <div className="space-y-3">
+                        {/* Reports Section */}
+                        {filteredReports.map(item => (
+                          <div
+                            key={`trash-rep-${item.id}`}
+                            className={`p-3.5 rounded-2xl border flex flex-col sm:flex-row items-start justify-between gap-3 ${
+                              isDark ? 'bg-slate-850 border-slate-700/80' : 'bg-white border-slate-200 shadow-sm'
+                            }`}
+                          >
+                            <div className="flex-1 space-y-1.5 min-w-0">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-rose-500/15 text-rose-500 border border-rose-500/20">
+                                  รายงานน้ำท่วม
+                                </span>
+                                <span className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">
+                                  อ.{item.district || '-'} {item.subdistrict ? `ต.${item.subdistrict}` : ''}
+                                </span>
+                                {item.depthRange && (
+                                  <span className="text-[11px] px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-500 font-medium">
+                                    ระดับ {item.depthRange}
+                                  </span>
+                                )}
+                                {item.deletedAt && (
+                                  <span className="text-[10px] text-slate-400 ml-auto">
+                                    ลบเมื่อ: {item.deletedAt}
+                                  </span>
+                                )}
+                              </div>
+
+                              <div className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white truncate">
+                                {item.name || item.locationName || 'ไม่ระบุชื่อจุด'}
+                              </div>
+
+                              {item.notes && (
+                                <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2">
+                                  {item.notes}
+                                </p>
+                              )}
+
+                              <div className="text-[11px] text-slate-400 flex flex-wrap gap-3">
+                                <span>ผู้รายงาน: {item.reporterName || 'ประชาชนทั่วไป'}</span>
+                                {item.reporterPhone && <span>โทร: {item.reporterPhone}</span>}
+                                {item.reportedAt && <span>แจ้งเมื่อ: {item.reportedAt}</span>}
+                              </div>
+                            </div>
+
+                            {/* Photo Thumbnail */}
+                            {item.photoUrl && (
+                              <div
+                                onClick={() => setSelectedPhotoModal(item.photoUrl)}
+                                className="w-16 h-16 rounded-xl overflow-hidden shrink-0 cursor-pointer border border-white/10 hover:opacity-90 transition-opacity self-center sm:self-start"
+                                title="คลิกเพื่อดูรูปขยาย"
+                              >
+                                <img src={item.photoUrl} alt="รูปจุดท่วม" className="w-full h-full object-cover" />
+                              </div>
+                            )}
+
+                            {/* Actions */}
+                            <div className="flex sm:flex-col gap-2 shrink-0 self-end sm:self-center">
+                              <button
+                                type="button"
+                                onClick={() => handleRestoreTrashReport(item)}
+                                className="px-3 py-1.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500 text-emerald-600 dark:text-emerald-400 hover:text-white text-xs font-bold transition-all flex items-center gap-1 cursor-pointer"
+                              >
+                                <RotateCcw className="w-3 h-3" />
+                                <span>กู้คืน</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handlePermanentDeleteReport(item.id)}
+                                className="px-3 py-1.5 rounded-xl bg-rose-500/15 hover:bg-rose-500 text-rose-600 dark:text-rose-400 hover:text-white text-xs font-bold transition-all flex items-center gap-1 cursor-pointer"
+                              >
+                                <Trash2 className="w-3 h-3" />
+                                <span>ลบถาวร</span>
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+
+                        {/* Feedback Section */}
+                        {filteredFeedback.map(item => (
+                          <div
+                            key={`trash-fb-${item.id}`}
+                            className={`p-3.5 rounded-2xl border flex flex-col sm:flex-row items-start justify-between gap-3 ${
+                              isDark ? 'bg-slate-850 border-slate-700/80' : 'bg-white border-slate-200 shadow-sm'
+                            }`}
+                          >
+                            <div className="flex-1 space-y-1.5 min-w-0">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-teal-500/15 text-teal-500 border border-teal-500/20">
+                                  ข้อเสนอแนะ
+                                </span>
+                                {item.topic && (
+                                  <span className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">
+                                    หมวด: {item.topic}
+                                  </span>
+                                )}
+                                {item.rating && (
+                                  <div className="flex items-center gap-0.5 text-amber-400">
+                                    {[...Array(item.rating)].map((_, i) => (
+                                      <Star key={i} className="w-3 h-3 fill-amber-400" />
+                                    ))}
+                                  </div>
+                                )}
+                                {item.deletedAt && (
+                                  <span className="text-[10px] text-slate-400 ml-auto">
+                                    ลบเมื่อ: {item.deletedAt}
+                                  </span>
+                                )}
+                              </div>
+
+                              <p className="text-xs sm:text-sm text-slate-800 dark:text-slate-200 font-medium">
+                                "{item.message}"
+                              </p>
+
+                              <div className="text-[11px] text-slate-400 flex flex-wrap gap-3">
+                                <span>ผู้ส่ง: {item.name || 'ไม่ระบุชื่อ'}</span>
+                                {item.phone && <span>โทร: {item.phone}</span>}
+                                {item.timestamp && <span>วันที่ส่ง: {item.timestamp}</span>}
+                              </div>
+                            </div>
+
+                            {/* Actions */}
+                            <div className="flex sm:flex-col gap-2 shrink-0 self-end sm:self-center">
+                              <button
+                                type="button"
+                                onClick={() => handleRestoreTrashFeedback(item)}
+                                className="px-3 py-1.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500 text-emerald-600 dark:text-emerald-400 hover:text-white text-xs font-bold transition-all flex items-center gap-1 cursor-pointer"
+                              >
+                                <RotateCcw className="w-3 h-3" />
+                                <span>กู้คืน</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handlePermanentDeleteFeedback(item.id)}
+                                className="px-3 py-1.5 rounded-xl bg-rose-500/15 hover:bg-rose-500 text-rose-600 dark:text-rose-400 hover:text-white text-xs font-bold transition-all flex items-center gap-1 cursor-pointer"
+                              >
+                                <Trash2 className="w-3 h-3" />
+                                <span>ลบถาวร</span>
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  })()}
                 </div>
               )}
 

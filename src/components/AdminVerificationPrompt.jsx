@@ -163,7 +163,7 @@ export default function AdminVerificationPrompt({
                    currentReport.level === 2 ? '🟠 เฝ้าระวังสูง/เสี่ยง' : '🟢 ปกติ/เฝ้าระวัง'}
                 </span>
                 <span className="text-[10px] text-slate-500 block">
-                  {currentReport.hazardType === 'hail' ? 'เกณฑ์ขนาดพายุลูกเห็บ' : 'เกณฑ์ ปภ. / กรมทางหลวง'}
+                  {currentReport.hazardType === 'hail' ? 'เกณฑ์ขนาดพายุลูกเห็บ' : 'เกณฑ์ระดับน้ำมาตรฐาน'}
                 </span>
               </div>
             </div>

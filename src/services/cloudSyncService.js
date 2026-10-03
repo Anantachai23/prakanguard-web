@@ -442,14 +442,28 @@ export function getDetailedDeviceInfo() {
   if (typeof window === 'undefined' || !navigator) return 'Desktop';
   const ua = navigator.userAgent || '';
 
-  // 1. iOS / Apple (iPhone, iPad, iPod)
+  // 1. iOS / Apple (iPhone, iPad) with precise Screen Dimension & DPR Identification
   if (/iPhone/i.test(ua)) {
-    const match = ua.match(/OS (\d+[._]\d+)/i);
-    const osVer = match ? match[1].replace('_', '.') : '';
-    return osVer ? `iPhone (iOS ${osVer})` : 'iPhone';
+    const w = window.screen?.width || 0;
+    const h = window.screen?.height || 0;
+    const dpr = window.devicePixelRatio || 1;
+    const minD = Math.min(w, h);
+    const maxD = Math.max(w, h);
+
+    if (minD === 430 && maxD === 932) return 'iPhone 14 Pro Max';
+    if (minD === 393 && maxD === 852) return 'iPhone 14 Pro';
+    if (minD === 428 && maxD === 926) return 'iPhone 14 Plus';
+    if (minD === 390 && maxD === 844) return 'iPhone 14';
+    if (minD === 414 && maxD === 896) return dpr >= 3 ? 'iPhone 11 Pro Max' : 'iPhone 11';
+    if (minD === 375 && maxD === 812) return 'iPhone 11 Pro';
+    if (minD === 375 && maxD === 667) return 'iPhone SE';
+    if (minD === 360 && maxD === 780) return 'iPhone 13 mini';
+    return 'iPhone';
   }
-  if (/iPad/i.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) {
-    return 'iPad (iPadOS)';
+
+  // iPad or Tablet -> ระบุ "แท็บเล็ต" ตามที่ผู้ใช้สั่ง
+  if (/iPad/i.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1) || /Tablet|Android(?!.*Mobile)/i.test(ua)) {
+    return 'แท็บเล็ต';
   }
 
   // 2. Android Brands & Specific Models
@@ -462,8 +476,14 @@ export function getDetailedDeviceInfo() {
       const modelMatch = ua.match(/(V2\d{3}[A-Z]?|Y\d{2}[s]?|V\d{2}[s]?|X\d{2}[s]?)/i);
       brand = modelMatch ? `Vivo ${modelMatch[1]}` : 'Vivo';
     } else if (/SAMSUNG|SM-[A-Z0-9]+/i.test(ua)) {
-      const modelMatch = ua.match(/SM-([A-Z0-9]+)/i);
-      brand = modelMatch ? `Samsung (${modelMatch[1]})` : 'Samsung Galaxy';
+      const sMatch = ua.match(/SM-([A-Z0-9]+)/i);
+      const code = sMatch ? sMatch[1] : '';
+      if (code.startsWith('S928') || code.startsWith('S92')) brand = 'Samsung Galaxy S24';
+      else if (code.startsWith('S918') || code.startsWith('S91')) brand = 'Samsung Galaxy S23';
+      else if (code.startsWith('S908') || code.startsWith('S90')) brand = 'Samsung Galaxy S22';
+      else if (code.startsWith('A54')) brand = 'Samsung Galaxy A54';
+      else if (code.startsWith('A53')) brand = 'Samsung Galaxy A53';
+      else brand = code ? `Samsung ${code}` : 'Samsung Galaxy';
     } else if (/Xiaomi|Redmi|POCO|2[0-9]{3}[A-Z0-9]+/i.test(ua)) {
       const modelMatch = ua.match(/(Redmi[^\s;]+|POCO[^\s;]+|Mi\s?[A-Z0-9]+)/i);
       brand = modelMatch ? `Xiaomi ${modelMatch[1]}` : 'Xiaomi / Redmi';
@@ -472,33 +492,24 @@ export function getDetailedDeviceInfo() {
     } else if (/Huawei|HONOR/i.test(ua)) {
       brand = 'Huawei';
     } else {
-      brand = 'Android Mobile';
+      brand = 'สมาร์ตโฟน';
     }
-
-    const andVerMatch = ua.match(/Android (\d+(\.\d+)?)/i);
-    const andVer = andVerMatch ? ` (v${andVerMatch[1]})` : '';
-    return `${brand}${andVer}`;
+    return brand;
   }
 
-  // 3. Desktop Operating Systems
-  if (/Windows NT/i.test(ua)) {
-    return 'Windows PC';
-  }
-  if (/Macintosh/i.test(ua)) {
-    return 'Mac / macOS';
-  }
-  if (/Linux/i.test(ua)) {
-    return 'Linux PC';
+  // 3. Desktop / Computer -> ระบุ "PC" ตามที่ผู้ใช้สั่ง
+  if (/Windows|Macintosh|Linux/i.test(ua) && !/Mobile|Android|iPhone|iPad/i.test(ua)) {
+    return 'PC';
   }
 
-  return /Mobile/i.test(ua) ? 'Mobile' : 'Desktop';
+  return 'PC';
 }
 
 /**
  * ส่ง Heartbeat ข้อมูลการเข้าชมเบาๆ ไปยัง Supabase + Admin Server (Non-blocking)
- * บันทึกตำแหน่ง GPS อำเภอ และประเภท/รุ่นอุปกรณ์จริง (เช่น iPhone, OPPO, Vivo)
+ * บันทึกตำแหน่ง GPS อำเภอ และประเภท/รุ่นอุปกรณ์จริง (เช่น iPhone 14, Samsung Galaxy S24)
  */
-export function sendVisitorTelemetry(district = 'เมืองสมุทรปราการ', customDevice = null) {
+export function sendVisitorTelemetry(district = null, customDevice = null, activeSection = null) {
   if (typeof window === 'undefined') return;
   try {
     let sessionId = sessionStorage.getItem('pg_visitor_sid');
@@ -507,11 +518,22 @@ export function sendVisitorTelemetry(district = 'เมืองสมุทร�
       sessionStorage.setItem('pg_visitor_sid', sessionId);
     }
     const deviceModel = customDevice || getDetailedDeviceInfo();
+
+    // Determine district status as requested by user
+    let finalDistrict = 'ไม่ได้เปิด GPS';
+    if (!district || district === 'none' || district === 'no_gps') {
+      finalDistrict = 'ไม่ได้เปิด GPS';
+    } else if (district === 'outside' || district.includes('นอก')) {
+      finalDistrict = 'ไม่ได้อยู่ในพื้นที่จังหวัดสมุทรปราการ';
+    } else {
+      finalDistrict = district.startsWith('อ.') ? district : `อ.${district.replace('เมืองสมุทรปราการ', 'เมือง')}`;
+    }
+
     const payload = {
       session_id: sessionId,
       device: deviceModel,
-      district: district || 'เมืองสมุทรปราการ',
-      page: document.title || 'หน้าหลัก',
+      district: finalDistrict,
+      page: activeSection || document.title || 'หน้าหลัก (แผนที่)',
       last_ping: new Date().toISOString()
     };
 

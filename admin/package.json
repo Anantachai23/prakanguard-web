@@ -1,0 +1,18 @@
+{
+  "name": "prakanguard-admin-portal",
+  "version": "1.0.0",
+  "private": true,
+  "description": "ระบบบริหารจัดการแอดมิน ศูนย์ข้อมูลอุทกภัยสมุทรปราการ (PrakanGuard Admin Command Center)",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "keywords": [
+    "prakanguard",
+    "flood-admin",
+    "samut-prakan",
+    "command-center"
+  ],
+  "author": "PrakanGuard Team",
+  "license": "ISC"
+}

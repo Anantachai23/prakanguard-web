@@ -1,0 +1,190 @@
+{
+  "summary": {
+    "totalVisitorsAllTime": 14269,
+    "totalVisitorsToday": 367,
+    "peakOnlineToday": 65,
+    "activeNow": 30,
+    "lastUpdated": "2026-10-03T13:42:38.189Z"
+  },
+  "deviceBreakdown": {
+    "mobile": 72,
+    "desktop": 23,
+    "tablet": 5
+  },
+  "districtBreakdown": {
+    "เมืองสมุทรปราการ": 139,
+    "บางพลี": 95,
+    "พระประแดง": 56,
+    "บางบ่อ": 32,
+    "พระสมุทรเจดีย์": 22,
+    "บางเสาธง": 16,
+    "กำลังระบุพิกัด...": 7
+  },
+  "recentSessions": [
+    {
+      "sessionId": "v-1x7xdxb-musjp3zc",
+      "ipMasked": "127.0.0.xxx",
+      "device": "Desktop",
+      "district": "เมืองสมุทรปราการ",
+      "currentPage": "PrakanGuard | ระบบสารสนเทศและเฝ้าระวังอุทกภัย จ.สมุทรปราการ",
+      "durationSec": 5,
+      "lastActive": "เมื่อสักครู่",
+      "timestamp": 1791041337398,
+      "isOnline": true
+    },
+    {
+      "sessionId": "v-xp0d37l-murpug2f",
+      "ipMasked": "127.0.0.xxx",
+      "device": "Desktop",
+      "district": "เมืองสมุทรปราการ",
+      "currentPage": "PrakanGuard | ระบบสารสนเทศและเฝ้าระวังอุทกภัย จ.สมุทรปราการ",
+      "durationSec": 47,
+      "lastActive": "เมื่อสักครู่",
+      "timestamp": 1791034911158,
+      "isOnline": true
+    },
+    {
+      "sessionId": "v-n5ingds-mur9nqqx",
+      "ipMasked": "127.0.0.xxx",
+      "device": "Desktop",
+      "district": "เมืองสมุทรปราการ",
+      "currentPage": "PrakanGuard | ระบบสารสนเทศและเฝ้าระวังอุทกภัย จ.สมุทรปราการ",
+      "durationSec": 37,
+      "lastActive": "เมื่อสักครู่",
+      "timestamp": 1791034921645,
+      "isOnline": true
+    },
+    {
+      "sessionId": "v-awxm0ln-mursicxv",
+      "ipMasked": "127.0.0.xxx",
+      "device": "Desktop",
+      "district": "เมืองสมุทรปราการ",
+      "currentPage": "PrakanGuard | ระบบสารสนเทศและเฝ้าระวังอุทกภัย จ.สมุทรปราการ",
+      "durationSec": 43,
+      "lastActive": "เมื่อสักครู่",
+      "timestamp": 1791034914847,
+      "isOnline": true
+    },
+    {
+      "sessionId": "v-1nna37e-murx87gb",
+      "ipMasked": "127.0.0.xxx",
+      "device": "Windows PC",
+      "district": "กำลังระบุพิกัด...",
+      "currentPage": "PrakanGuard | ระบบสารสนเทศและเฝ้าระวังอุทกภัย จ.สมุทรปราการ",
+      "durationSec": 59,
+      "lastActive": "เมื่อสักครู่",
+      "timestamp": 1791034898750,
+      "isOnline": true
+    },
+    {
+      "sessionId": "v-6fkin31-mut5llwi",
+      "ipMasked": "127.0.0.xxx",
+      "device": "Desktop",
+      "district": "เมืองสมุทรปราการ",
+      "currentPage": "PrakanGuard | ระบบสารสนเทศและเฝ้าระวังอุทกภัย จ.สมุทรปราการ",
+      "durationSec": 5,
+      "lastActive": "เมื่อสักครู่",
+      "timestamp": 1791078035556,
+      "isOnline": true
+    },
+    {
+      "sessionId": "v-vcaxvk9-mus9u9nq",
+      "ipMasked": "127.0.0.xxx",
+      "device": "Desktop",
+      "district": "เมืองสมุทรปราการ",
+      "currentPage": "PrakanGuard | ระบบสารสนเทศและเฝ้าระวังอุทกภัย จ.สมุทรปราการ",
+      "durationSec": 33,
+      "lastActive": "เมื่อสักครู่",
+      "timestamp": 1791034925108,
+      "isOnline": true
+    },
+    {
+      "sessionId": "v-78m0fle-mus7saf3",
+      "ipMasked": "127.0.0.xxx",
+      "device": "Desktop",
+      "district": "เมืองสมุทรปราการ",
+      "currentPage": "PrakanGuard | ระบบสารสนเทศและเฝ้าระวังอุทกภัย จ.สมุทรปราการ",
+      "durationSec": 36,
+      "lastActive": "เมื่อสักครู่",
+      "timestamp": 1791034921723,
+      "isOnline": true
+    },
+    {
+      "sessionId": "v-5dzoasw-mus94ttm",
+      "ipMasked": "127.0.0.xxx",
+      "device": "Desktop",
+      "district": "เมืองสมุทรปราการ",
+      "currentPage": "PrakanGuard | ระบบสารสนเทศและเฝ้าระวังอุทกภัย จ.สมุทรปราการ",
+      "durationSec": 46,
+      "lastActive": "เมื่อสักครู่",
+      "timestamp": 1791034912560,
+      "isOnline": true
+    },
+    {
+      "sessionId": "v-hyyop6g-musbovv2",
+      "ipMasked": "127.0.0.xxx",
+      "device": "Windows PC",
+      "district": "กำลังระบุพิกัด...",
+      "currentPage": "PrakanGuard | ระบบสารสนเทศและเฝ้าระวังอุทกภัย จ.สมุทรปราการ",
+      "durationSec": 44,
+      "lastActive": "เมื่อสักครู่",
+      "timestamp": 1791034914082,
+      "isOnline": true
+    },
+    {
+      "sessionId": "v-x422pfs-mur8eseu",
+      "ipMasked": "127.0.0.xxx",
+      "device": "Windows PC",
+      "district": "กำลังระบุพิกัด...",
+      "currentPage": "PrakanGuard | ระบบสารสนเทศและเฝ้าระวังอุทกภัย จ.สมุทรปราการ",
+      "durationSec": 48,
+      "lastActive": "เมื่อสักครู่",
+      "timestamp": 1791034910302,
+      "isOnline": true
+    },
+    {
+      "sessionId": "v-pg0e269-muse0huh",
+      "ipMasked": "127.0.0.xxx",
+      "device": "Windows PC",
+      "district": "กำลังระบุพิกัด...",
+      "currentPage": "PrakanGuard | ระบบสารสนเทศและเฝ้าระวังอุทกภัย จ.สมุทรปราการ",
+      "durationSec": 32,
+      "lastActive": "เมื่อสักครู่",
+      "timestamp": 1791034925874,
+      "isOnline": true
+    },
+    {
+      "sessionId": "v-rncfr94-murmv338",
+      "ipMasked": "127.0.0.xxx",
+      "device": "Windows PC",
+      "district": "กำลังระบุพิกัด...",
+      "currentPage": "PrakanGuard | ระบบสารสนเทศและเฝ้าระวังอุทกภัย จ.สมุทรปราการ",
+      "durationSec": 42,
+      "lastActive": "เมื่อสักครู่",
+      "timestamp": 1791034915724,
+      "isOnline": true
+    },
+    {
+      "sessionId": "v-777cs96-mursjxd0",
+      "ipMasked": "127.0.0.xxx",
+      "device": "Desktop",
+      "district": "เมืองสมุทรปราการ",
+      "currentPage": "PrakanGuard | ระบบสารสนเทศและเฝ้าระวังอุทกภัย จ.สมุทรปราการ",
+      "durationSec": 43,
+      "lastActive": "เมื่อสักครู่",
+      "timestamp": 1791034915266,
+      "isOnline": true
+    },
+    {
+      "sessionId": "v-lw3y1il-murh22fu",
+      "ipMasked": "127.0.0.xxx",
+      "device": "Desktop",
+      "district": "เมืองสมุทรปราการ",
+      "currentPage": "PrakanGuard | ระบบสารสนเทศและเฝ้าระวังอุทกภัย จ.สมุทรปราการ",
+      "durationSec": 52,
+      "lastActive": "เมื่อสักครู่",
+      "timestamp": 1791034906052,
+      "isOnline": true
+    }
+  ]
+}

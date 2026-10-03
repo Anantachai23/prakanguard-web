@@ -1,19 +1,14 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React from 'react';
 import { 
   PhoneCall, 
   Radio, 
   BookOpen, 
   Activity, 
-  Info, 
   Sun, 
   Moon, 
   Camera, 
-  ChevronLeft,
-  ChevronRight,
-  MessageSquare,
-  GraduationCap
+  MessageSquare
 } from 'lucide-react';
-import AutoMarquee from './AutoMarquee';
 import RealTimeClock from './RealTimeClock';
 
 export default function Navbar({ 
@@ -38,90 +33,13 @@ export default function Navbar({
   const severe = points.filter(p => p.level === 3 && p.isActive !== false && !p.isResolved).length;
   const falling = points.filter(p => p.waterTrend === 'falling' && p.isActive !== false && !p.isResolved).length;
 
-  // Responsive Horizontal Slider Controller for Top Navigation Bar
-  const sliderRef = useRef(null);
-  const animRef = useRef(null);
-  const [canScrollLeft, setCanScrollLeft] = useState(false);
-  const [canScrollRight, setCanScrollRight] = useState(false);
-
-  const checkScrollBounds = () => {
-    const el = sliderRef.current;
-    if (!el) return;
-    setCanScrollLeft(el.scrollLeft > 6);
-    setCanScrollRight(el.scrollLeft < el.scrollWidth - el.clientWidth - 6);
-  };
-
-  useEffect(() => {
-    const el = sliderRef.current;
-    if (!el) return;
-    checkScrollBounds();
-    const handleResize = () => checkScrollBounds();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, [points, pendingReportsCount]);
-
-  // 60fps Butter-Smooth Eased Slide Gliding
-  const scrollSlider = (direction) => {
-    const el = sliderRef.current;
-    if (!el) return;
-    if (animRef.current) cancelAnimationFrame(animRef.current);
-
-    const distance = direction === 'left' ? -240 : 240;
-    const startPos = el.scrollLeft;
-    const maxScroll = el.scrollWidth - el.clientWidth;
-    const targetPos = Math.max(0, Math.min(maxScroll, startPos + distance));
-    const delta = targetPos - startPos;
-
-    if (Math.abs(delta) < 1) return;
-
-    const duration = 420;
-    const startTime = performance.now();
-    const easeOutQuint = (x) => 1 - Math.pow(1 - x, 5);
-
-    const step = (now) => {
-      const elapsed = now - startTime;
-      const progress = Math.min(elapsed / duration, 1);
-      el.scrollLeft = startPos + delta * easeOutQuint(progress);
-
-      if (progress < 1) {
-        animRef.current = requestAnimationFrame(step);
-      } else {
-        animRef.current = null;
-        checkScrollBounds();
-      }
-    };
-
-    animRef.current = requestAnimationFrame(step);
-  };
-
-  // Wheel horizontal scroll integration
-  useEffect(() => {
-    const el = sliderRef.current;
-    if (!el) return;
-
-    const onWheel = (e) => {
-      if (e.deltaY !== 0 && el.scrollWidth > el.clientWidth) {
-        e.preventDefault();
-        el.scrollLeft += e.deltaY * 0.9;
-        checkScrollBounds();
-      }
-    };
-
-    el.addEventListener('wheel', onWheel, { passive: false });
-    el.addEventListener('scroll', checkScrollBounds);
-    return () => {
-      el.removeEventListener('wheel', onWheel);
-      el.removeEventListener('scroll', checkScrollBounds);
-    };
-  }, []);
-
   return (
-    <header className={`sticky top-0 z-40 w-full max-w-full overflow-hidden border-b shadow-sm backdrop-blur-xl transition-colors duration-200 select-none ${
+    <header className={`sticky top-0 z-40 w-full max-w-full border-b shadow-sm backdrop-blur-xl transition-colors duration-200 select-none ${
       isDark ? 'bg-slate-950/95 border-slate-800 text-slate-100' : 'bg-white/95 border-slate-200 text-slate-800'
     }`}>
-      <div className="w-full px-2 sm:px-3 py-1.5 sm:py-2 flex items-center justify-between gap-1.5 sm:gap-2.5 overflow-hidden">
+      <div className="w-full px-2.5 sm:px-4 py-2 flex items-center justify-between gap-2">
         
-        {/* Brand Area with Animated Marquee Text (Pinned on Left) */}
+        {/* Brand Area (Left) */}
         <div className="flex items-center space-x-2 sm:space-x-2.5 shrink-0 min-w-0">
           {/* Hydro Telemetry Shield Crest */}
           <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-2xl bg-gradient-to-tr from-blue-600 via-cyan-500 to-teal-400 p-[1.5px] shadow-md shadow-blue-500/20 shrink-0">
@@ -139,227 +57,150 @@ export default function Navbar({
 
           <div className="flex flex-col justify-center min-w-0">
             <div className="flex items-center gap-1.5">
-              <span className={`text-xs sm:text-sm md:text-base font-black tracking-tight leading-tight ${
+              <span className={`text-sm sm:text-base font-black tracking-tight leading-tight ${
                 isDark ? 'text-white' : 'text-slate-900'
               }`}>
                 PrakanGuard
               </span>
-              <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-semibold shrink-0 ${
+              <span className={`text-[9px] sm:text-[10px] px-1.5 py-0.5 rounded-full font-bold shrink-0 ${
                 isDark ? 'bg-blue-950 text-cyan-300 border border-blue-800' : 'bg-blue-50 text-blue-700 border border-blue-200'
               }`}>
                 สมุทรปราการ
               </span>
             </div>
-
-            {/* Responsive Animated Marquee Scrolling Left */}
-            <div className="w-24 xs:w-36 sm:w-48 md:w-56 lg:w-64 overflow-hidden mt-0.5">
-              <AutoMarquee speedSeconds={18} gapPx={24} force={true}>
-                <div className="inline-flex items-center gap-2 text-[10px] sm:text-[11px] whitespace-nowrap">
-                  <span className={`font-medium ${isDark ? 'text-blue-300' : 'text-blue-700'}`}>
-                    ระบบเฝ้าระวังน้ำท่วม จ.สมุทรปราการ • อัปเดตสดทุก 15 วินาที • ตัดจุดน้ำแห้งอัตโนมัติ
-                  </span>
-                </div>
-              </AutoMarquee>
-            </div>
-
+            <span className={`hidden lg:block text-[11px] font-medium leading-none mt-0.5 ${
+              isDark ? 'text-slate-400' : 'text-slate-500'
+            }`}>
+              ระบบเฝ้าระวังน้ำท่วมและเส้นทางสัญจร อัปเดตสด 24 ชม.
+            </span>
           </div>
         </div>
 
-        {/* Responsive Horizontal Action Strip Slider (Balanced alignment, Starts naturally after brand) */}
-        <div className="flex-1 min-w-0 relative flex items-center justify-start overflow-hidden ml-2 sm:ml-4">
-          
-          {/* Left Arrow Button */}
-          {canScrollLeft && (
-            <button
-              type="button"
-              onClick={() => scrollSlider('left')}
-              className={`absolute left-0 z-30 p-1.5 rounded-xl shadow-lg border transition-all cursor-pointer ${
-                isDark 
-                  ? 'bg-slate-900 text-slate-100 border-slate-700 hover:bg-slate-800' 
-                  : 'bg-white text-slate-800 border-slate-300 hover:bg-slate-100'
-              }`}
-              title="เลื่อนดูเมนูก่อนหน้า"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-          )}
-
-          {/* Left Gradient Fade Mask */}
-          {canScrollLeft && (
-            <div className={`absolute left-0 top-0 bottom-0 w-8 z-20 pointer-events-none ${
-              isDark ? 'bg-gradient-to-r from-slate-950 via-slate-950/80 to-transparent' : 'bg-gradient-to-r from-white via-white/80 to-transparent'
-            }`} />
-          )}
-
-          {/* Scrollable Track containing Real-Time Clock, Status & All Buttons */}
-          <div
-            ref={sliderRef}
-            className="w-full flex items-center justify-start gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar scroll-smooth py-0.5 px-0.5 touch-pan-x"
-            style={{ WebkitOverflowScrolling: 'touch' }}
+        {/* Center Area: Status Indicator & Clock (iPad & PC) */}
+        <div className="hidden md:flex items-center gap-2.5 shrink-0">
+          {/* Status Indicator Pill */}
+          <button 
+            type="button"
+            onClick={onOpenStandards}
+            className={`flex items-center space-x-2 px-3 py-1.5 rounded-2xl border text-xs font-medium cursor-pointer transition-all hover:scale-[1.02] shadow-xs ${
+              isDark ? 'bg-slate-900/90 border-slate-800 text-slate-300 hover:border-slate-700' : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
+            }`}
+            title="คลิกเพื่อดูเกณฑ์ระดับน้ำมาตรฐาน"
           >
-            {/* Real-Time Thai Date & Digital Clock */}
-            <div className="shrink-0 whitespace-nowrap">
-              <RealTimeClock theme={theme} />
-            </div>
+            <Activity className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+            <span className="flex items-center gap-1">
+              <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+              <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold">ปกติ</span>
+              <span className="font-bold">{minor}</span>
+            </span>
+            <span className="text-slate-400 text-[10px]">•</span>
+            <span className="flex items-center gap-1">
+              <span className="w-2 h-2 rounded-full bg-amber-500"></span>
+              <span className="text-[11px] text-amber-600 dark:text-amber-400 font-semibold">ปานกลาง</span>
+              <span className="font-bold">{moderate}</span>
+            </span>
+            <span className="text-slate-400 text-[10px]">•</span>
+            <span className="flex items-center gap-1">
+              <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span>
+              <span className="text-[11px] text-rose-600 dark:text-rose-400 font-semibold">วิกฤต</span>
+              <span className="font-bold text-rose-600 dark:text-rose-400">{severe}</span>
+            </span>
+            {falling > 0 && (
+              <>
+                <span className="text-slate-400 text-[10px]">•</span>
+                <span className="flex items-center gap-1">
+                  <span className="text-xs">📉</span>
+                  <span className="text-[11px] text-teal-600 dark:text-teal-400 font-semibold">น้ำลด</span>
+                  <span className="font-bold text-teal-600 dark:text-teal-400">{falling}</span>
+                </span>
+              </>
+            )}
+          </button>
 
-            {/* Status Indicator with Detailed Labels (ซ่อนบนมือถือเพื่อไม่ให้ซ้ำซ้อน มีเฉพาะบน iPad และคอมพิวเตอร์) */}
-            <div 
-              onClick={onOpenStandards}
-              className={`hidden md:flex shrink-0 items-center space-x-1.5 sm:space-x-2 px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-xl border text-[11px] sm:text-xs font-medium cursor-pointer transition-all hover:scale-[1.01] whitespace-nowrap ${
-                isDark ? 'bg-slate-900/90 border-slate-800 text-slate-300' : 'bg-slate-100 border-slate-200 text-slate-700'
-              }`}
-              title="คลิกเพื่อดูเกณฑ์ระดับน้ำมาตรฐาน ปภ./กรมทางหลวง"
-            >
-              <Activity className="w-3.5 h-3.5 text-blue-500 shrink-0" />
-              <span className="flex items-center gap-1" title="ระดับ 1: น้ำท่วมปกติ (5-20 ซม.)">
-                <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                <span className="font-semibold text-emerald-600 dark:text-emerald-400">น้ำท่วมปกติ</span>
-                <span>{minor}</span>
-              </span>
-              <span className="text-slate-400 text-[10px]">•</span>
-              <span className="flex items-center gap-1" title="ระดับ 2: น้ำท่วมปานกลาง (21-50 ซม.)">
-                <span className="w-2 h-2 rounded-full bg-amber-500"></span>
-                <span className="font-semibold text-amber-600 dark:text-amber-400">น้ำท่วมปานกลาง</span>
-                <span>{moderate}</span>
-              </span>
-              <span className="text-slate-400 text-[10px]">•</span>
-              <span className="flex items-center gap-1" title="ระดับ 3: น้ำท่วมวิกฤต (>50 ซม.)">
-                <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span>
-                <span className="font-semibold text-rose-600 dark:text-rose-400">น้ำท่วมวิกฤต</span>
-                <strong className="text-rose-600 dark:text-rose-400">{severe}</strong>
-              </span>
-              {falling > 0 && (
-                <>
-                  <span className="text-slate-400 text-[10px]">•</span>
-                  <span className="flex items-center gap-1" title="จุดที่ระดับน้ำกำลังลดลง">
-                    <span className="text-xs">📉</span>
-                    <span className="font-semibold text-teal-600 dark:text-teal-400">น้ำกำลังลด</span>
-                    <strong className="text-teal-600 dark:text-teal-400">{falling}</strong>
-                  </span>
-                </>
-              )}
-            </div>
+          {/* Clock */}
+          <div className="shrink-0">
+            <RealTimeClock theme={theme} />
+          </div>
+        </div>
 
-
-            {/* Theme Switcher Button */}
-            <button
-              onClick={onToggleTheme}
-              className={`shrink-0 p-1.5 sm:p-2 rounded-xl border text-xs font-semibold flex items-center justify-center transition-all cursor-pointer shadow-xs ${
-                isDark 
-                  ? 'bg-slate-900 hover:bg-slate-800 text-amber-300 border-slate-700 hover:border-amber-400/50' 
-                  : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200 hover:border-slate-300'
-              }`}
-              title={isDark ? "เปลี่ยนเป็นธีมสว่าง" : "เปลี่ยนเป็นธีมมืด"}
-            >
-              {isDark ? (
-                <Sun className="w-4 h-4 text-amber-400 animate-spin-slow" />
-              ) : (
-                <Moon className="w-4 h-4 text-slate-700" />
-              )}
-            </button>
-
-            {/* Standards Button (แสดงบน iPad และคอมพิวเตอร์) */}
-            <button 
-              onClick={onOpenStandards}
-              className={`hidden md:inline-flex shrink-0 px-2 sm:px-2.5 py-1.5 rounded-xl border text-xs font-semibold items-center gap-1 transition-all cursor-pointer shadow-xs whitespace-nowrap ${
-                isDark 
-                  ? 'bg-slate-900 hover:bg-slate-800 text-slate-200 border-slate-700' 
-                  : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200'
-              }`}
-              title="เกณฑ์วัดระดับน้ำและผลกระทบต่อรถยนต์"
-            >
-              <BookOpen className="w-3.5 h-3.5 text-blue-500 shrink-0" />
-              <span>เกณฑ์ระดับน้ำ</span>
-            </button>
-
-
-            {/* Real-time Stations & Radar Button (Desktop only, mobile uses bottom nav) */}
-            <button 
-              onClick={onOpenAiForecast}
-              className={`hidden sm:inline-flex shrink-0 px-2 sm:px-2.5 py-1.5 rounded-xl border text-xs font-semibold items-center gap-1 transition-all cursor-pointer shadow-xs whitespace-nowrap ${
-                isDark 
-                  ? 'bg-blue-950/60 hover:bg-blue-900/60 text-cyan-300 border-blue-800' 
-                  : 'bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200'
-              }`}
-              title="เรดาร์ฝน TMD และสถานีตรวจวัดน้ำขึ้น-น้ำลงกองทัพเรือ"
-            >
-              <Radio className="w-3.5 h-3.5 text-blue-500 animate-pulse shrink-0" />
-              <span>เรดาร์สด</span>
-            </button>
-
-            {/* Public Live Situation Updates Button (Desktop only, mobile uses bottom nav) */}
-            <button 
-              onClick={onOpenPublicUpdates}
-              className={`hidden sm:inline-flex shrink-0 px-2 sm:px-2.5 py-1.5 rounded-xl border text-xs font-semibold items-center gap-1.5 transition-all cursor-pointer shadow-xs whitespace-nowrap ${
-                isDark 
-                  ? 'bg-emerald-950/60 hover:bg-emerald-900/60 text-emerald-300 border-emerald-800' 
-                  : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border-emerald-200'
-              }`}
-              title={`อัปเดตสถานการณ์น้ำท่วมและเส้นทาง (อัปเดตล่าสุด: ${lastUpdatedTimeDetailed || lastUpdatedTime || 'สด 24 ชม.'} • ซิงก์อัตโนมัติทุก 30 วินาที)`}
-            >
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
-              <span>อัปเดตสด</span>
-            </button>
-
-            {/* Citizen Flood Report Button (Desktop only, mobile uses center hero button in bottom nav) */}
-            <button 
-              onClick={onOpenCitizenReport}
-              title="รายงานจุดน้ำท่วม"
-              className="hidden sm:inline-flex shrink-0 px-2.5 sm:px-3 py-1.5 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white text-xs font-bold items-center gap-1.5 transition-all cursor-pointer shadow-md shadow-blue-600/25 whitespace-nowrap"
-            >
-              <Camera className="w-3.5 h-3.5 shrink-0" />
-              <span>แจ้งจุดท่วม</span>
-            </button>
-
-            {/* Citizen Feedback & Suggestion Box Button (ซ่อนบนมือถือเพราะมีเมนูด้านล่างแล้ว แสดงบน iPad/คอม) */}
-            <button 
-              onClick={onOpenFeedback}
-              title="ข้อเสนอแนะ"
-              className={`hidden md:inline-flex shrink-0 px-2.5 sm:px-3 py-1.5 rounded-xl border text-xs font-semibold items-center gap-1.5 transition-all cursor-pointer shadow-xs whitespace-nowrap ${
-                isDark 
-                  ? 'bg-slate-900 hover:bg-slate-800 text-teal-300 border-slate-700 hover:border-teal-400' 
-                  : 'bg-teal-50 hover:bg-teal-100 text-teal-800 border-teal-200'
-              }`}
-            >
-              <MessageSquare className="w-3.5 h-3.5 text-teal-500 shrink-0" />
-              <span>ข้อเสนอแนะ</span>
-            </button>
-
-            {/* Emergency Hotline Button (Desktop only, mobile uses bottom nav) */}
-            <button 
-              onClick={onOpenEmergency}
-              title="เบอร์สายด่วน ปภ. และกู้ภัยสมุทรปราการ"
-              className="hidden sm:inline-flex shrink-0 px-2 sm:px-2.5 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold items-center gap-1 transition-all cursor-pointer shadow-md shadow-rose-600/30 whitespace-nowrap"
-            >
-              <PhoneCall className="w-3.5 h-3.5 shrink-0" />
-              <span>สายด่วน</span>
-            </button>
-
+        {/* Right Area: Action Buttons (Responsive & Clean) */}
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+          
+          {/* Mobile Clock: Clean & Compact */}
+          <div className="md:hidden shrink-0">
+            <RealTimeClock theme={theme} />
           </div>
 
-          {/* Right Gradient Fade Mask */}
-          {canScrollRight && (
-            <div className={`absolute right-0 top-0 bottom-0 w-8 z-20 pointer-events-none ${
-              isDark ? 'bg-gradient-to-l from-slate-950 via-slate-950/80 to-transparent' : 'bg-gradient-to-l from-white via-white/80 to-transparent'
-            }`} />
-          )}
+          {/* Desktop/Tablet Standards Button */}
+          <button 
+            type="button"
+            onClick={onOpenStandards}
+            className={`hidden xl:inline-flex px-2.5 py-1.5 rounded-xl border text-xs font-semibold items-center gap-1.5 transition-all cursor-pointer shadow-xs ${
+              isDark 
+                ? 'bg-slate-900 hover:bg-slate-800 text-slate-300 border-slate-700' 
+                : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
+            }`}
+            title="เกณฑ์วัดระดับน้ำและผลกระทบต่อยานพาหนะ"
+          >
+            <BookOpen className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+            <span>เกณฑ์ระดับน้ำ</span>
+          </button>
 
-          {/* Right Arrow Button */}
-          {canScrollRight && (
-            <button
-              type="button"
-              onClick={() => scrollSlider('right')}
-              className={`absolute right-0 z-30 p-1.5 rounded-xl shadow-lg border transition-all cursor-pointer ${
-                isDark 
-                  ? 'bg-slate-900 text-slate-100 border-slate-700 hover:bg-slate-800' 
-                  : 'bg-white text-slate-800 border-slate-300 hover:bg-slate-100'
-              }`}
-              title="เลื่อนดูเมนูถัดไป"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          )}
+          {/* Desktop/Tablet Live Updates Button */}
+          <button 
+            type="button"
+            onClick={onOpenPublicUpdates}
+            className={`hidden sm:inline-flex px-2.5 sm:px-3 py-1.5 rounded-xl border text-xs font-semibold items-center gap-1.5 transition-all cursor-pointer shadow-xs ${
+              isDark 
+                ? 'bg-emerald-950/60 hover:bg-emerald-900/60 text-emerald-300 border-emerald-800' 
+                : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border-emerald-200'
+            }`}
+            title="อัปเดตสถานการณ์น้ำท่วมสด"
+          >
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
+            <span>อัปเดตสด</span>
+          </button>
 
+          {/* Desktop/Tablet Citizen Flood Report Button */}
+          <button 
+            type="button"
+            onClick={onOpenCitizenReport}
+            title="รายงานจุดน้ำท่วม"
+            className="hidden sm:inline-flex px-2.5 sm:px-3 py-1.5 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white text-xs font-bold items-center gap-1.5 transition-all cursor-pointer shadow-md shadow-blue-600/25"
+          >
+            <Camera className="w-3.5 h-3.5 shrink-0" />
+            <span>แจ้งจุดท่วม</span>
+          </button>
+
+          {/* Desktop Emergency Hotline */}
+          <button 
+            type="button"
+            onClick={onOpenEmergency}
+            title="สายด่วนฉุกเฉิน 1784"
+            className="hidden sm:inline-flex px-2.5 sm:px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold items-center gap-1.5 transition-all cursor-pointer shadow-md shadow-rose-600/25"
+          >
+            <PhoneCall className="w-3.5 h-3.5 shrink-0" />
+            <span>สายด่วน 1784</span>
+          </button>
+
+          {/* Theme Switcher Button (Always accessible) */}
+          <button
+            type="button"
+            onClick={onToggleTheme}
+            className={`p-1.5 sm:p-2 rounded-xl border text-xs font-semibold flex items-center justify-center transition-all cursor-pointer shadow-xs ${
+              isDark 
+                ? 'bg-slate-900 hover:bg-slate-800 text-amber-300 border-slate-700 hover:border-amber-400/50' 
+                : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200 hover:border-slate-300'
+            }`}
+            title={isDark ? "เปลี่ยนเป็นธีมสว่าง" : "เปลี่ยนเป็นธีมมืด"}
+            aria-label="เปลี่ยนธีมสี"
+          >
+            {isDark ? (
+              <Sun className="w-4 h-4 text-amber-400" />
+            ) : (
+              <Moon className="w-4 h-4 text-slate-700" />
+            )}
+          </button>
         </div>
 
       </div>

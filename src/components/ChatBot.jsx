@@ -35,6 +35,61 @@ import {
   FLOOD_SAFETY_TIPS, 
   FAQS_OFFICIAL 
 } from '../data/chatKnowledgeBase';
+
+// โลโก้ทางการ PrakanGuard AI (Governmental / Civic Shield Emblem)
+function AiOfficialEmblem({ size = 32, className = "" }) {
+  return (
+    <div 
+      className={`relative flex items-center justify-center shrink-0 rounded-2xl overflow-hidden shadow-md select-none ${className}`}
+      style={{ width: size, height: size }}
+    >
+      <svg width={size} height={size} viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="pgAiShieldGrad" x1="18" y1="2" x2="18" y2="34" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stopColor="#0284c7" />
+            <stop offset="60%" stopColor="#1e3a8a" />
+            <stop offset="100%" stopColor="#0f172a" />
+          </linearGradient>
+          <linearGradient id="pgAiGoldRim" x1="6" y1="2" x2="30" y2="34" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stopColor="#38bdf8" />
+            <stop offset="50%" stopColor="#93c5fd" />
+            <stop offset="100%" stopColor="#0284c7" />
+          </linearGradient>
+        </defs>
+
+        {/* Civic Defense Shield Frame */}
+        <path 
+          d="M18 3.5L29 7.8V17.5C29 24.2 24.3 29.8 18 32.5C11.7 29.8 7 24.2 7 17.5V7.8L18 3.5Z" 
+          fill="url(#pgAiShieldGrad)" 
+          stroke="url(#pgAiGoldRim)" 
+          strokeWidth="1.8" 
+          strokeLinejoin="round"
+        />
+
+        {/* Inner Water Droplet */}
+        <path 
+          d="M18 9C18 9 12.5 16 12.5 19.5C12.5 22.5 15 25 18 25C21 25 23.5 22.5 23.5 19.5C23.5 16 18 9 18 9Z" 
+          fill="#38bdf8" 
+          fillOpacity="0.25"
+          stroke="#38bdf8"
+          strokeWidth="1.3"
+        />
+
+        {/* Hydro Wave */}
+        <path 
+          d="M14.5 20C15.6 19 16.8 21 18 20C19.2 19 20.4 21 21.5 20" 
+          stroke="#ffffff" 
+          strokeWidth="1.6" 
+          strokeLinecap="round"
+        />
+
+        {/* Central AI Node */}
+        <circle cx="18" cy="15" r="1.8" fill="#ffffff" />
+        <circle cx="18" cy="15" r="3" stroke="#67e8f9" strokeWidth="0.8" strokeDasharray="1.5 1.5" />
+      </svg>
+    </div>
+  );
+}
 // พจนานุกรมสถานที่ในจังหวัดสมุทรปราการ พร้อมระบบจับคู่คำสะกดผิด/คำพ้องเสียง (Fuzzy Typo Dictionary) และข้อมูลคาดการณ์ฝนเฉพาะจุด
 export const LOCATION_TYPO_DICTIONARY = [
   {
@@ -1202,7 +1257,7 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
       q.includes("ระดับน้ำ");
 
     if (isVehicleStandardQuery) {
-      return `🚗 **เกณฑ์มาตรฐานระดับน้ำและความปลอดภัยในการขับขี่ (ปภ. / กรมทางหลวง):**\n\n` +
+      return `🚗 **เกณฑ์มาตรฐานระดับน้ำและความปลอดภัยในการขับขี่ (เกณฑ์ระดับน้ำมาตรฐาน / กรมทางหลวง):**\n\n` +
         `🟢 **ระดับ 1: ท่วมปกติ (5 - 20 ซม.)**\n` +
         `• มอเตอร์ไซค์และรถเก๋งสัญจรผ่านได้ ขับช้าๆ ไม่เร่งเครื่อง เว้นระยะห่าง\n\n` +
         `🟡 **ระดับ 2: ท่วมปานกลาง (21 - 50 ซม.)**\n` +
@@ -1900,15 +1955,13 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
           }`}
           title="ผู้ช่วยถาม-ตอบข้อมูลน้ำท่วม"
         >
-          <div className="w-8 h-8 rounded-2xl bg-gradient-to-tr from-blue-600 to-cyan-500 text-white flex items-center justify-center shadow-md shrink-0">
-            <MessageSquareText className="w-4 h-4" />
-          </div>
+          <AiOfficialEmblem size={32} />
           <div className="text-left">
             <div className="flex items-center gap-1.5">
               <span className={`block text-xs sm:text-sm font-bold leading-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>PrakanGuard AI</span>
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
             </div>
-            <span className={`hidden sm:block text-[10px] font-medium ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>สอบถามข้อมูลน้ำท่วม 24 ชม.</span>
+            <span className={`hidden sm:block text-[10px] font-medium ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>ศูนย์ข้อมูลน้ำท่วมและเส้นทาง 24 ชม.</span>
           </div>
         </button>
       )}
@@ -1934,9 +1987,7 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
             className="flex items-center gap-2 cursor-pointer select-none flex-1 min-w-0"
             title="คลิกเพื่อขยายหน้าต่างแชท AI กลับขึ้นมา"
           >
-            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-gradient-to-tr from-blue-600 to-cyan-500 text-white flex items-center justify-center shadow-md shrink-0">
-              <Sparkles className="w-3.5 h-3.5 text-white" />
-            </div>
+            <AiOfficialEmblem size={28} />
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1">
                 <span className="font-bold text-xs sm:text-sm truncate">PrakanGuard AI</span>
@@ -2057,9 +2108,7 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
             title="กดค้างที่แถบนี้เพื่อลากย้ายหน้าต่าง AI ChatBot ได้อย่างอิสระ"
           >
             <div className="flex items-center space-x-2.5 min-w-0 pointer-events-none">
-              <div className="w-8 h-8 rounded-2xl bg-gradient-to-tr from-blue-600 to-cyan-500 flex items-center justify-center text-white shadow-sm shrink-0">
-                <Sparkles className="w-4 h-4 text-white" />
-              </div>
+              <AiOfficialEmblem size={32} />
               <div className="min-w-0">
                 <h4 className={`text-xs sm:text-sm font-bold flex items-center gap-1.5 truncate ${
                   isDark ? 'text-white' : 'text-slate-900'
@@ -2076,16 +2125,16 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
 
             {/* Drag Handle Badge & Control Buttons */}
             <div className="flex items-center gap-1.5 shrink-0 ml-2">
+              {/* Drag symbol only */}
               <div 
-                className={`hidden sm:flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-medium pointer-events-none select-none border transition-colors ${
+                className={`flex items-center justify-center p-1.5 rounded-xl pointer-events-none select-none border transition-colors ${
                   isDark 
-                    ? 'bg-slate-800/80 text-slate-300 border-slate-700' 
-                    : 'bg-white/90 text-slate-600 border-slate-200 shadow-xs'
+                    ? 'bg-slate-800/80 text-slate-400 border-slate-700' 
+                    : 'bg-white/90 text-slate-500 border-slate-200 shadow-xs'
                 }`}
-                title="คลิกค้างแล้วลากเพื่อย้ายหน้าต่าง หรือลากมุมซ้ายบนเพื่อปรับขนาด"
+                title="คลิกหรือแตะค้างเพื่อลากย้ายหน้าต่างได้อย่างอิสระ"
               >
-                <GripHorizontal className="w-3.5 h-3.5 text-blue-500" />
-                <span>ปรับขนาดได้</span>
+                <GripHorizontal className="w-4 h-4 text-blue-500" />
               </div>
 
               {(customSize.width || customSize.height) && (
@@ -2117,20 +2166,6 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
                   <RotateCcw className="w-4 h-4" />
                 </button>
               )}
-
-              {/* Size Expand/Normal Toggle Button */}
-              <button
-                type="button"
-                onClick={() => setIsExpanded(prev => !prev)}
-                className={`p-1.5 rounded-xl transition-all cursor-pointer ${
-                  isDark 
-                    ? 'bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-cyan-300 border border-slate-700' 
-                    : 'bg-white hover:bg-slate-100 text-slate-600 hover:text-blue-600 border border-slate-200 shadow-xs'
-                }`}
-                title={isExpanded ? "ย่อขนาดหน้าต่างให้กะทัดรัด" : "ขยายขนาดหน้าต่างให้กว้างขึ้น"}
-              >
-                {isExpanded ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
-              </button>
 
               {/* Minimize Dock Button */}
               <button

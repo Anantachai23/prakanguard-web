@@ -476,8 +476,8 @@ export default function MapView({
 
     const photoHtml = item.photoUrl ? `
       <div style="margin:8px 0;border-radius:12px;overflow:hidden;border:1px solid #cbd5e1;position:relative;background:#f1f5f9;">
-        <img src="${item.photoUrl}" style="width:100%;height:120px;object-fit:cover;display:block;" alt="ภาพถ่ายสถานการณ์จริง" />
-        <span style="position:absolute;bottom:5px;right:6px;background:rgba(15,23,42,0.75);color:#ffffff;font-size:9.5px;padding:2px 7px;border-radius:9999px;font-weight:700;">📷 ภาพถ่ายจริง</span>
+        <img src="${item.photoUrl}" style="width:100%;height:120px;object-fit:cover;display:block;" alt="รูปภาพจากประชาชนรายงาน" />
+        <span style="position:absolute;bottom:5px;right:6px;background:rgba(15,23,42,0.75);color:#ffffff;font-size:9.5px;padding:2px 7px;border-radius:9999px;font-weight:700;">📷 รูปภาพจากประชาชนรายงาน</span>
       </div>
     ` : '';
 
@@ -886,10 +886,10 @@ export default function MapView({
             className={`font-bold transition-colors flex items-center gap-1.5 cursor-pointer ${
               isDark ? 'text-white hover:text-cyan-400' : 'text-slate-900 hover:text-blue-600'
             }`}
-            title="คลิกเพื่อดูเกณฑ์มาตรฐาน ปภ./กรมทางหลวง"
+            title="คลิกเพื่อดูเกณฑ์ระดับน้ำมาตรฐาน"
           >
             <BookOpen className={`w-4 h-4 ${isDark ? 'text-cyan-400' : 'text-blue-600'}`} />
-            <span>เกณฑ์ ปภ.:</span>
+            <span>เกณฑ์ระดับน้ำ:</span>
           </button>
 
           <div className="flex items-center space-x-1.5">

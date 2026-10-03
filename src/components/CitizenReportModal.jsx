@@ -12,6 +12,7 @@ import {
   Trash2
 } from 'lucide-react';
 import { SAMUT_PRAKAN_DISTRICTS_DATA } from '../data/samutPrakanDistricts';
+import { detectDistrictForCoordinates } from '../data/samutPrakanBoundary';
 
 // 3 ระดับน้ำกระชับชัดเจน (ไม่ใช้สัญลักษณ์ < >)
 export const WATER_LEVEL_OPTIONS = [
@@ -56,13 +57,16 @@ export default function CitizenReportModal({
   isOpen, 
   onClose, 
   onSubmitReport, 
+  onStartPickOnMap,
+  pickedCoords,
   theme = 'light' 
 }) {
   const isDark = theme === 'dark';
 
-  // Form States: อำเภอ, ตำบล, จุดสังเกต, ระดับน้ำ, รูปภาพ
+  // Form States: อำเภอ, ตำบล, จุดสังเกต, ระดับน้ำ, รูปภาพ, พิกัดแผนที่
   const [district, setDistrict] = useState(SAMUT_PRAKAN_DISTRICTS_DATA[0].name);
   const [subdistrict, setSubdistrict] = useState(SAMUT_PRAKAN_DISTRICTS_DATA[0].subdistricts[0].name);
+  const [customCoords, setCustomCoords] = useState(null);
   const [notes, setNotes] = useState('');
   const [selectedLevelId, setSelectedLevelId] = useState('level2');
   const [photoPreview, setPhotoPreview] = useState(null);
@@ -71,6 +75,21 @@ export default function CitizenReportModal({
   const [submitSuccess, setSubmitSuccess] = useState(false);
 
   const fileInputRef = useRef(null);
+
+  // Sync picked coordinates from map
+  useEffect(() => {
+    if (pickedCoords && typeof pickedCoords.lat === 'number' && typeof pickedCoords.lng === 'number') {
+      setCustomCoords(pickedCoords);
+      const detected = detectDistrictForCoordinates(pickedCoords.lat, pickedCoords.lng);
+      if (detected) {
+        setDistrict(detected);
+        const distObj = SAMUT_PRAKAN_DISTRICTS_DATA.find(d => d.name === detected);
+        if (distObj && distObj.subdistricts.length > 0) {
+          setSubdistrict(distObj.subdistricts[0].name);
+        }
+      }
+    }
+  }, [pickedCoords]);
 
   // Available subdistricts based on selected district
   const currentDistrictObj = SAMUT_PRAKAN_DISTRICTS_DATA.find(d => d.name === district) || SAMUT_PRAKAN_DISTRICTS_DATA[0];
@@ -130,6 +149,9 @@ export default function CitizenReportModal({
       lng: currentDistrictObj.center.lng
     };
 
+    const finalLat = customCoords ? customCoords.lat : subdistrictObj.lat;
+    const finalLng = customCoords ? customCoords.lng : subdistrictObj.lng;
+
     const newReport = {
       id: `citizen_${Date.now()}`,
       name: `${notes.trim()}`,
@@ -139,8 +161,8 @@ export default function CitizenReportModal({
       severity: levelObj.level,
       depthCm: levelObj.depthCm,
       depthRange: levelObj.range,
-      lat: subdistrictObj.lat,
-      lng: subdistrictObj.lng,
+      lat: finalLat,
+      lng: finalLng,
       photoUrl: photoPreview || null,
       reportedAt: new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }),
       timestamp: Date.now(),
@@ -222,6 +244,46 @@ export default function CitizenReportModal({
         ) : (
           /* Form Content (Clean & Streamlined) */
           <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
+
+            {/* Location & Map Point Picker */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <label className={`block text-xs font-bold ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
+                  เลือกพื้นที่รายงาน หรือ จิ้มจุดบนแผนที่
+                </label>
+                {onStartPickOnMap && (
+                  <button
+                    type="button"
+                    onClick={() => onStartPickOnMap('citizen')}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white text-xs font-bold shadow-md shadow-blue-500/20 transition-all cursor-pointer active:scale-95"
+                    title="แตะเพื่อเลือกจุดบนแผนที่โดยตรง"
+                  >
+                    <MapPin className="w-3.5 h-3.5 text-white" />
+                    <span>📍 เลือกจุดบนแผนที่</span>
+                  </button>
+                )}
+              </div>
+
+              {customCoords && (
+                <div className={`p-2.5 rounded-2xl border text-xs flex items-center justify-between gap-2 animate-in fade-in ${
+                  isDark ? 'bg-blue-950/80 border-blue-800 text-cyan-300' : 'bg-blue-50 border-blue-200 text-blue-900'
+                }`}>
+                  <div className="flex items-center gap-2 min-w-0">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                    <span className="truncate">
+                      ปักหมุดแล้ว: <strong>อ.{district}</strong> ต.{subdistrict} [{customCoords.lat.toFixed(4)}, {customCoords.lng.toFixed(4)}]
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setCustomCoords(null)}
+                    className="text-[10px] text-rose-500 font-bold hover:underline shrink-0 cursor-pointer"
+                  >
+                    ล้างพิกัด
+                  </button>
+                </div>
+              )}
+            </div>
 
             {/* 1. เลือกอำเภอ & ตำบล (Cascading Dropdown) */}
             <div className="grid grid-cols-2 gap-3">

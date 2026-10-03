@@ -16,6 +16,7 @@ import MobileBottomNav from './components/MobileBottomNav';
 import AutoMarquee from './components/AutoMarquee';
 import ChatBot from './components/ChatBot';
 import { INITIAL_FLOOD_POINTS, DISTRICTS, matchesLocationSearch, scoreLocationSearch, POPULAR_SEARCH_SUGGESTIONS, findCorridorForPoint, MAJOR_FLOOD_CORRIDORS } from './data/samutPrakanPoints';
+import { SAMUT_PRAKAN_DISTRICTS_DATA } from './data/samutPrakanDistricts';
 import { getFloodLevel, FLOOD_STANDARDS } from './data/floodStandards';
 import { detectDistrictForCoordinates } from './data/samutPrakanBoundary';
 import { getOfficialAdvisorySummary } from './services/aiPredictor';
@@ -62,7 +63,8 @@ import {
   Megaphone,
   Sparkles,
   Flame,
-  GripHorizontal
+  GripHorizontal,
+  Compass
 } from 'lucide-react';
 
 // Distance calculation helper (Haversine Formula)
@@ -101,7 +103,7 @@ function playNotificationChime() {
 export default function App() {
   const [points, setPoints] = useState(() => {
     try {
-      const saved = localStorage.getItem('prakanguard_points_state_v3');
+      const saved = localStorage.getItem('prakanguard_points_state_v4');
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
@@ -184,7 +186,7 @@ export default function App() {
   useEffect(() => {
     pointsRef.current = points;
     try {
-      localStorage.setItem('prakanguard_points_state_v3', JSON.stringify(points));
+      localStorage.setItem('prakanguard_points_state_v4', JSON.stringify(points));
     } catch (e) {}
   }, [points]);
 
@@ -753,18 +755,31 @@ export default function App() {
 
   // Real-time Cloud Cross-Device Synchronization (Crowdsource Flood/Hail Reports & Feedback)
   useEffect(() => {
-    // Send anonymous heartbeat telemetry — ระบุอำเภอจาก GPS จริง พร้อมรุ่นอุปกรณ์ (iPhone, OPPO, Vivo, ฯลฯ)
     const getReportingDistrict = () => {
-      if (userLocation && typeof userLocation.lat === 'number' && typeof userLocation.lng === 'number') {
-        const detected = detectDistrictForCoordinates(userLocation.lat, userLocation.lng);
-        return detected || 'นอกเขตสมุทรปราการ';
+      if (!userLocation || typeof userLocation.lat !== 'number' || typeof userLocation.lng !== 'number') {
+        return 'ไม่ได้เปิด GPS';
       }
-      if (selectedDistrict && selectedDistrict !== 'ทั้งหมด') return selectedDistrict;
-      return 'กำลังระบุพิกัด...';
+      const detected = detectDistrictForCoordinates(userLocation.lat, userLocation.lng);
+      if (!detected) {
+        return 'ไม่ได้อยู่ในพื้นที่จังหวัดสมุทรปราการ';
+      }
+      return detected;
     };
-    sendVisitorTelemetry(getReportingDistrict(), getDetailedDeviceInfo());
+
+    const getActiveSection = () => {
+      if (isCitizenReportModalOpen) return 'แบบฟอร์มแจ้งจุดท่วม';
+      if (isFeedbackModalOpen) return 'กล่องข้อเสนอแนะ';
+      if (isAiForecastModalOpen) return 'เรดาร์ฝนและพยากรณ์';
+      if (isStandardsModalOpen) return 'เกณฑ์ระดับน้ำ';
+      if (isPublicUpdatesModalOpen) return 'อัปเดตสดสถานการณ์';
+      if (isEmergencyModalOpen) return 'สายด่วนฉุกเฉิน 1784';
+      if (isAdminModalOpen) return 'ศูนย์บัญชาการแอดมิน';
+      return 'หน้าหลัก (แผนที่)';
+    };
+
+    sendVisitorTelemetry(getReportingDistrict(), getDetailedDeviceInfo(), getActiveSection());
     const telemetryInterval = setInterval(() => {
-      sendVisitorTelemetry(getReportingDistrict(), getDetailedDeviceInfo());
+      sendVisitorTelemetry(getReportingDistrict(), getDetailedDeviceInfo(), getActiveSection());
     }, 15000);
 
 
@@ -1220,7 +1235,7 @@ export default function App() {
       const filtered = prev.filter(p => p.id !== newPoint.id);
       const updated = [newPoint, ...filtered];
       try {
-        localStorage.setItem('prakanguard_points_state_v3', JSON.stringify(updated));
+        localStorage.setItem('prakanguard_points_state_v4', JSON.stringify(updated));
       } catch (e) {}
       return updated;
     });
@@ -1247,7 +1262,7 @@ export default function App() {
         return merged;
       });
       try {
-        localStorage.setItem('prakanguard_points_state_v3', JSON.stringify(updated));
+        localStorage.setItem('prakanguard_points_state_v4', JSON.stringify(updated));
       } catch (e) {}
       return updated;
     });
@@ -1264,7 +1279,7 @@ export default function App() {
     setPoints(prev => {
       const updated = prev.filter(p => p.id !== pointId);
       try {
-        localStorage.setItem('prakanguard_points_state_v3', JSON.stringify(updated));
+        localStorage.setItem('prakanguard_points_state_v4', JSON.stringify(updated));
       } catch (e) {}
       return updated;
     });
@@ -1284,7 +1299,7 @@ export default function App() {
       const newItems = pointsToImport.filter(p => !existingIds.has(p.id) && !existingNames.has(p.name));
       const updated = [...newItems, ...prev];
       try {
-        localStorage.setItem('prakanguard_points_state_v3', JSON.stringify(updated));
+        localStorage.setItem('prakanguard_points_state_v4', JSON.stringify(updated));
       } catch (e) {}
       return updated;
     });
@@ -1307,7 +1322,7 @@ export default function App() {
     });
     setPoints(defaultPoints);
     try {
-      localStorage.setItem('prakanguard_points_state_v3', JSON.stringify(defaultPoints));
+      localStorage.setItem('prakanguard_points_state_v4', JSON.stringify(defaultPoints));
     } catch (e) {}
   };
 
@@ -1535,18 +1550,16 @@ export default function App() {
 
         // 1. ตรวจสอบว่าพิกัดอยู่ภายในขอบเขตจังหวัดสมุทรปราการหรือไม่
         if (!detectedDistrict) {
-          // อยู่นอกพื้นที่ จ.สมุทรปราการ (แสดงผ่านแบนเนอร์สีส้มแทน ไม่ซ้อน toast)
-          sendVisitorTelemetry('นอกเขตสมุทรปราการ', deviceModel);
+          sendVisitorTelemetry('ไม่ได้อยู่ในพื้นที่จังหวัดสมุทรปราการ', deviceModel);
 
           if (!silent) {
-            alert(`📍 ตรวจพบพิกัดของคุณที่ [${coords.lat.toFixed(4)}, ${coords.lng.toFixed(4)}]\n\n⚠️ ตำแหน่งท่านไม่ได้อยู่ในจังหวัดสมุทรปราการ\n\nระบบ PrakanGuard พัฒนาขึ้นเพื่อติดตามและรายงานสถานการณ์น้ำท่วมในพื้นที่ 6 อำเภอของจังหวัดสมุทรปราการครับ\n\n(ระบบได้ปักหมุดตำแหน่งของคุณบนแผนที่ไว้เรียบร้อยแล้ว)`);
+            alert(`📍 ตรวจพบพิกัดของคุณที่ [${coords.lat.toFixed(4)}, ${coords.lng.toFixed(4)}]\n\n⚠️ ตำแหน่งท่านไม่ได้อยู่ในพื้นที่จังหวัดสมุทรปราการ\n\nระบบ PrakanGuard พัฒนาขึ้นเพื่อติดตามและรายงานสถานการณ์น้ำท่วมในพื้นที่ 6 อำเภอของจังหวัดสมุทรปราการครับ\n\n(ระบบได้ปักหมุดตำแหน่งของคุณบนแผนที่ไว้เรียบร้อยแล้ว)`);
           }
         } else {
-          // อยู่ภายใน จ.สมุทรปราการ (เมืองสมุทรปราการ, บางพลี, บางบ่อ, บางเสาธง, พระประแดง, พระสมุทรเจดีย์)
+          // อยู่ภายใน จ.สมุทรปราการ
           const districtLabel = `อ.${detectedDistrict}`;
           sendVisitorTelemetry(detectedDistrict, deviceModel);
 
-          // แสดง toast เฉพาะตอนผู้ใช้กดปุ่ม GPS เอง (ตอนเปิดเว็บไม่ต้องเด้ง เพื่อไม่ให้รก)
           if (!silent) {
             setLatestUpdateNotification(`📍 คุณอยู่ที่ ${districtLabel} จ.สมุทรปราการ`);
             setTimeout(() => setLatestUpdateNotification(null), 5000);
@@ -1554,8 +1567,9 @@ export default function App() {
         }
       },
       (err) => {
+        sendVisitorTelemetry('ไม่ได้เปิด GPS', getDetailedDeviceInfo());
         if (!silent) {
-          let msg = "ไม่สามารถเข้าถึงตำแหน่งของคุณได้ กรุณาอนุญาต Location บนเบราว์เซอร์เพื่อความแม่นยำ";
+          let msg = "ไม่ได้เปิด GPS หรือไม่ได้อนุญาตการเข้าถึงตำแหน่ง กรุณาเปิดการอนุญาต Location ในการตั้งค่าเบราว์เซอร์เพื่อระบุพิกัด";
           if (err.code === 1) msg = "คุณปฏิเสธการเข้าถึงตำแหน่ง GPS กรุณาเปิดการอนุญาต Location ในการตั้งค่าเบราว์เซอร์เพื่อระบุพิกัด";
           else if (err.code === 2) msg = "สัญญาณ GPS ขัดข้อง ไม่สามารถระบุพิกัดได้ในขณะนี้";
           alert(msg);
@@ -1920,8 +1934,8 @@ export default function App() {
             </button>
           </div>
 
-          {/* 24-HOUR RAIN FORECAST & LIVE METEOROLOGICAL TELEMETRY CARD */}
-          <div className="pointer-events-auto w-full">
+          {/* 24-HOUR RAIN FORECAST & LIVE METEOROLOGICAL TELEMETRY CARD (ซ่อนบนมือถือตามสั่ง ให้เหลือแค่ด้านล่าง/เปิดดูได้บนจอใหญ่) */}
+          <div className="pointer-events-auto w-full hidden sm:block">
             <RainForecast24hCard
               forecast={weather?.forecast24h}
               userDistrict={userDistrict}
@@ -1959,68 +1973,75 @@ export default function App() {
             </div>
           )}
 
-          {/* District & Severity Filter Pills (Fully Responsive on All Devices) */}
+          {/* District Dropdown Selector (แถบเลือกอำเภอแบบกดแถบลงมาตามรูปที่ 2 พร้อมระบุตำแหน่ง) */}
           <div className="pointer-events-auto flex items-center gap-1.5 w-full max-w-full">
-            
-            {/* Scrollable Districts Container with Navigation Arrows */}
-            <div className={`relative flex-1 min-w-0 flex items-center p-1 rounded-2xl border shadow-md backdrop-blur-md transition-colors ${
-              isDark ? 'bg-slate-900/95 border-slate-700' : 'bg-white/95 border-slate-200'
+            <div className={`relative flex-1 min-w-0 flex items-center px-3 py-2 rounded-2xl border shadow-md backdrop-blur-xl transition-colors ${
+              isDark ? 'bg-slate-900/95 border-slate-700 text-slate-100' : 'bg-white/95 border-slate-200 text-slate-800'
             }`}>
-              
-              {/* Left Scroll Arrow */}
-              <button
-                type="button"
-                onClick={() => scrollDistrict('left')}
-                className={`p-1.5 rounded-xl transition-all cursor-pointer shrink-0 mr-0.5 ${
-                  isDark 
-                    ? 'text-slate-400 hover:text-white hover:bg-slate-800 active:scale-95' 
-                    : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100 active:scale-95'
+              <MapPin className="w-4 h-4 text-blue-500 shrink-0 mr-2" />
+              <select
+                value={selectedDistrict}
+                onChange={(e) => {
+                  const dist = e.target.value;
+                  setSelectedDistrict(dist);
+                  if (dist === "ทั้งหมด") {
+                    setFlyToLocation({ lat: 13.6000, lng: 100.6500, zoom: 11, ts: Date.now() });
+                  } else {
+                    const dData = SAMUT_PRAKAN_DISTRICTS_DATA.find(d => d.name === dist);
+                    if (dData && dData.center) {
+                      setFlyToLocation({ lat: dData.center.lat, lng: dData.center.lng, zoom: 13, ts: Date.now() });
+                    }
+                  }
+                }}
+                className={`w-full bg-transparent text-xs sm:text-sm font-bold focus:outline-hidden cursor-pointer appearance-none ${
+                  isDark ? 'text-white' : 'text-slate-900'
                 }`}
-                title="เลื่อนดูอำเภอก่อนหน้า"
+                title="คลิกเพื่อเลือกดูตามอำเภอ"
               >
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-
-              {/* District Pills Strip (Touch, Wheel & Drag Scrollable with Butter-Smooth Gliding) */}
-              <div 
-                ref={districtScrollRef}
-                onMouseDown={handleDistrictMouseDown}
-                onMouseMove={handleDistrictMouseMove}
-                onMouseUp={handleDistrictMouseUp}
-                onMouseLeave={handleDistrictMouseUp}
-                className="flex items-center gap-1 overflow-x-auto smooth-slider no-scrollbar py-0.5 touch-pan-x cursor-grab active:cursor-grabbing select-none"
-              >
-                {DISTRICTS.map(dist => (
-                  <button
-                    key={dist}
-                    onClick={(e) => handleSelectDistrict(dist, e)}
-                    className={`px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer shrink-0 select-none ${
-                      selectedDistrict === dist 
-                        ? 'bg-blue-600 text-white shadow-sm font-bold' 
-                        : isDark
-                          ? 'text-slate-400 hover:text-white hover:bg-slate-800'
-                          : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-                    }`}
+                <option value="ทั้งหมด" className={isDark ? 'bg-slate-900 text-white' : 'bg-white text-slate-900'}>
+                  🏛️ ทุกอำเภอ (จ.สมุทรปราการ)
+                </option>
+                {DISTRICTS.filter(d => d !== "ทั้งหมด").map(dist => (
+                  <option 
+                    key={dist} 
+                    value={dist}
+                    className={isDark ? 'bg-slate-900 text-white' : 'bg-white text-slate-900'}
                   >
-                    {dist === "ทั้งหมด" ? "ทุกอำเภอ" : dist}
-                  </button>
+                    📍 อ.{dist}
+                  </option>
                 ))}
-              </div>
+              </select>
+              <ChevronDown className="w-4 h-4 text-slate-400 shrink-0 pointer-events-none ml-1" />
+            </div>
 
-              {/* Right Scroll Arrow */}
+            {/* User GPS Location Badge (ระบุว่าอยู่อำเภอไหน) */}
+            {userLocation ? (
+              <div 
+                className={`shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-2xl border text-xs font-bold shadow-md backdrop-blur-xl ${
+                  userDistrict 
+                    ? (isDark ? 'bg-blue-950/90 border-blue-800 text-cyan-300' : 'bg-blue-50/95 border-blue-200 text-blue-900')
+                    : (isDark ? 'bg-amber-950/90 border-amber-800 text-amber-300' : 'bg-amber-50/95 border-amber-200 text-amber-900')
+                }`}
+                title="ตำแหน่งปัจจุบันของคุณ"
+              >
+                <Compass className="w-3.5 h-3.5 text-blue-500 animate-spin-slow shrink-0" />
+                <span className="truncate max-w-[140px] sm:max-w-none">
+                  {userDistrict ? `คุณอยู่: อ.${userDistrict.replace('เมืองสมุทรปราการ', 'เมือง')}` : 'อยู่นอกสมุทรปราการ'}
+                </span>
+              </div>
+            ) : (
               <button
                 type="button"
-                onClick={() => scrollDistrict('right')}
-                className={`p-1.5 rounded-xl transition-all cursor-pointer shrink-0 ml-0.5 ${
-                  isDark 
-                    ? 'text-slate-400 hover:text-white hover:bg-slate-800 active:scale-95' 
-                    : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100 active:scale-95'
+                onClick={handleGetLocation}
+                className={`shrink-0 flex items-center gap-1.5 px-2.5 sm:px-3 py-2 rounded-2xl border text-[11px] sm:text-xs font-semibold shadow-md backdrop-blur-xl cursor-pointer active:scale-95 transition-all ${
+                  isDark ? 'bg-slate-800/90 border-slate-700 text-slate-300 hover:text-white' : 'bg-slate-100/95 border-slate-200 text-slate-700 hover:text-slate-900'
                 }`}
-                title="เลื่อนดูอำเภอถัดไป"
+                title="กดเพื่อแชร์ตำแหน่ง GPS และดูว่าคุณอยู่อำเภอไหน"
               >
-                <ChevronRight className="w-4 h-4" />
+                <Navigation2 className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                <span>ระบุตำแหน่ง</span>
               </button>
-            </div>
+            )}
           </div>
 
         </div>
@@ -2230,61 +2251,18 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* Continuous Corridor Banner & Citizen Stretch Telemetry */}
-                {(() => {
-                  const matchedCorridor = findCorridorForPoint(selectedPoint);
-                  if (!matchedCorridor && !selectedPoint.stretchDesc) return null;
-                  return (
-                    <div className={`mt-3 p-3 rounded-2xl border text-xs ${
-                      isDark ? 'bg-slate-800/90 border-blue-900/60 text-slate-200' : 'bg-blue-50/80 border-blue-200 text-blue-950'
-                    }`}>
-                      <div className="flex items-center justify-between font-bold mb-1">
-                        <span className="flex items-center gap-1.5 text-blue-600 dark:text-cyan-400">
-                          <span>🛣️</span>
-                          <span>{matchedCorridor ? 'โครงข่ายเส้นทางน้ำท่วมขังต่อเนื่อง' : 'แนวน้ำท่วมขัง'}</span>
-                        </span>
-                        {matchedCorridor && (
-                          <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/80 dark:text-cyan-300 font-bold">
-                            ยาว {matchedCorridor.distanceKm} กม.
-                          </span>
-                        )}
-                      </div>
-                      {matchedCorridor && (
-                        <div className="font-semibold text-xs mt-0.5 text-slate-900 dark:text-white">
-                          {matchedCorridor.name}
-                        </div>
-                      )}
-                      {selectedPoint.stretchDesc && (
-                        <div className="text-[11px] font-semibold text-cyan-600 dark:text-cyan-300 mt-1">
-                          📏 <strong>ขอบเขต:</strong> {selectedPoint.stretchDesc}
-                        </div>
-                      )}
-                      {matchedCorridor && (
-                        <div className="text-[11px] opacity-80 mt-1">
-                          🌊 <strong>แนวผิวจราจร:</strong> {matchedCorridor.affectedLanes} ({matchedCorridor.depthRange})
-                        </div>
-                      )}
-                      {matchedCorridor && (
-                        <div className="text-[11px] opacity-80 mt-0.5">
-                          🚗 <strong>สภาพการจราจรสายทาง:</strong> {matchedCorridor.trafficStatus}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })()}
-
             {/* Citizen Uploaded Photo Preview (If available) */}
             {selectedPoint.photoUrl && (
               <div className="mt-3 rounded-2xl overflow-hidden border border-slate-300 shadow-md">
                 <img 
                   src={selectedPoint.photoUrl} 
-                  alt="ภาพถ่ายน้ำท่วมจากประชาชน" 
+                  alt="รูปภาพจากประชาชนรายงาน" 
                   className="w-full h-44 object-cover" 
                 />
-                <div className={`p-2 text-[11px] text-center font-medium ${
+                <div className={`p-2 text-[11px] text-center font-semibold ${
                   isDark ? 'bg-slate-800 text-slate-300' : 'bg-slate-100 text-slate-600'
                 }`}>
-                  📷 ภาพถ่ายจากผู้ใช้ในพื้นที่ • แจ้งเมื่อ {selectedPoint.reportedAt || 'วันนี้'}
+                  📷 รูปภาพจากประชาชนรายงาน{selectedPoint.reportedAt ? ` • ${selectedPoint.reportedAt}` : ''}
                 </div>
               </div>
             )}
@@ -2299,21 +2277,15 @@ export default function App() {
               />
             </div>
 
-            {/* Fact-based Summary Details with Citations */}
-            <div className="space-y-2 mt-3 text-xs sm:text-sm">
-              <div className={`p-3 rounded-2xl border ${
+            {/* Fact-based Summary Details: มีแค่สาเหตุตามที่ผู้ใช้กำหนด */}
+            {selectedPoint.cause && (
+              <div className={`mt-3 p-3 rounded-2xl border text-xs sm:text-sm ${
                 isDark ? 'bg-slate-800/80 border-slate-700' : 'bg-slate-50 border-slate-200'
               }`}>
                 <span className={`block text-xs font-bold ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>สาเหตุ:</span>
                 <span className={`mt-0.5 block leading-relaxed font-semibold ${isDark ? 'text-slate-100' : 'text-slate-900'}`}>{selectedPoint.cause}</span>
               </div>
-              <div className={`p-3 rounded-2xl border ${
-                isDark ? 'bg-slate-800/80 border-slate-700' : 'bg-slate-50 border-slate-200'
-              }`}>
-                <span className={`block text-xs font-bold ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>คำแนะนำ:</span>
-                <span className={`mt-0.5 block leading-relaxed font-bold ${isDark ? 'text-cyan-300' : 'text-blue-900'}`}>{selectedPoint.officialGuidance}</span>
-              </div>
-            </div>
+            )}
 
             {/* Official Source & Verification Citation */}
             <div className={`mt-2.5 p-2.5 rounded-xl border text-xs flex flex-wrap items-center justify-between gap-1 ${
