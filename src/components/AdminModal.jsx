@@ -588,14 +588,14 @@ export default function AdminModal({
       !points.some(p => p.name === item.name || (Math.abs(p.lat - item.lat) < 0.001 && Math.abs(p.lng - item.lng) < 0.001))
     );
     if (untracked.length === 0) {
-      alert("นำเข้าจุดทั้งหมดในแคตตาล็อกทางการเรียบร้อยแล้ว");
+      alert("นำเข้าจุดทั้งหมดในแคตตาล็อกระบบเรียบร้อยแล้ว");
       return;
     }
     const formattedList = untracked.map(formatPointForTracking);
     if (onImportPoints) {
       onImportPoints(formattedList);
     }
-    showNotice(`📥 นำเข้าจุดทางการสำเร็จ +${formattedList.length} จุด`);
+    showNotice(`📥 นำเข้าจุดพิกัดระบบสำเร็จ +${formattedList.length} จุด`);
   };
 
   const loadJsonSample = () => {
@@ -1482,7 +1482,7 @@ export default function AdminModal({
                       }`}
                     >
                       <Database className="w-3.5 h-3.5" />
-                      <span>คลัง 30 จุดทางการ ({OFFICIAL_LOCATION_CATALOG.length})</span>
+                      <span>คลัง 30 จุดเสี่ยงมาตรฐาน ({OFFICIAL_LOCATION_CATALOG.length})</span>
                     </button>
 
                     <button

@@ -44,15 +44,15 @@ class ErrorBoundary extends React.Component {
 
           <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-xs font-semibold mb-4">
             <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
-            PrakanGuard AI • ระบบรายงานน้ำท่วม
+            PrakanGuard • ระบบรายงานน้ำท่วม
           </div>
 
           <h1 className="text-xl sm:text-2xl font-bold text-white mb-2 tracking-tight">
-            กำลังทำการอัปเดตระบบ...
+            ไม่สามารถโหลดข้อมูลได้
           </h1>
 
           <p className="text-sm text-slate-400 max-w-md leading-relaxed mb-6 font-normal">
-            กำลังทำการอัปเดตโปรดรอสักครู่ เว็บไซต์จะเปิดให้บริการทันทีหลังการอัปเดตเสร็จสิ้น
+            เกิดข้อผิดพลาดในการโหลดข้อมูลชั่วคราว กรุณากดปุ่มด้านล่างเพื่อโหลดหน้าเว็บใหม่อีกครั้ง
           </p>
 
           <button

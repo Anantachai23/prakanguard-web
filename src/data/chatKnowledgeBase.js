@@ -1,6 +1,6 @@
 /**
- * ฐานข้อมูลองค์ความรู้ทางการ (Official Knowledge Base) - PrakanGuard Patch 4.0
- * ศูนย์ข้อมูลเตือนภัยและประสานงานน้ำท่วม จังหวัดสมุทรปราการ
+ * ฐานข้อมูลความรู้ PrakanGuard
+ * ระบบเฝ้าระวังและประสานงานน้ำท่วม จังหวัดสมุทรปราการ
  */
 
 export const OFFICIAL_EMERGENCY_CONTACTS = [

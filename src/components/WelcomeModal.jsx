@@ -101,7 +101,7 @@ export default function WelcomeModal({ isOpen, onClose, onEnterWithLocation, the
               <div className="flex items-start gap-2">
                 <CheckCircle2 className={`w-3.5 h-3.5 shrink-0 mt-0.5 ${isDark ? 'text-cyan-400' : 'text-blue-600'}`} />
                 <span>
-                  <strong className={isDark ? 'text-white' : 'text-slate-800'}>ข้อแนะนำการใช้งาน:</strong> ข้อมูลนี้จัดทำขึ้นเพื่อเป็นข้อมูลประกอบการตัดสินใจเบื้องต้น ในสถานการณ์ฉุกเฉิน ขอแนะนำให้ประชาชนติดตามประกาศอย่างเป็นทางการจากหน่วยงานในพื้นที่ควบคู่กันไปด้วย
+                  <strong className={isDark ? 'text-white' : 'text-slate-800'}>ข้อแนะนำการใช้งาน:</strong> ข้อมูลนี้จัดทำขึ้นเพื่อเป็นข้อมูลประกอบการตัดสินใจเบื้องต้น ในสถานการณ์ฉุกเฉิน ขอแนะนำให้ประชาชนติดตามประกาศเตือนภัยจากหน่วยงานในพื้นที่ควบคู่กันไปด้วย
                 </span>
               </div>
             </div>
