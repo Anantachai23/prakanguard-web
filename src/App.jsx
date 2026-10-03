@@ -1537,9 +1537,7 @@ export default function App() {
 
         // 1. ตรวจสอบว่าพิกัดอยู่ภายในขอบเขตจังหวัดสมุทรปราการหรือไม่
         if (!detectedDistrict) {
-          // อยู่นอกพื้นที่ จ.สมุทรปราการ
-          const outMsg = '⚠️ ตำแหน่งท่านไม่ได้อยู่ในจังหวัดสมุทรปราการ';
-          setLatestUpdateNotification(outMsg);
+          // อยู่นอกพื้นที่ จ.สมุทรปราการ (แสดงผ่านแบนเนอร์สีส้มแทน ไม่ซ้อน toast)
           sendVisitorTelemetry('นอกเขตสมุทรปราการ', deviceModel);
 
           if (!silent) {
@@ -1550,30 +1548,13 @@ export default function App() {
           const districtLabel = `อ.${detectedDistrict}`;
           sendVisitorTelemetry(detectedDistrict, deviceModel);
 
-          // Find nearest active danger hotspot
-          let minDistance = 999999;
-          let closest = null;
-          pointsRef.current.forEach(p => {
-            if (p.isActive !== false && !p.isResolved) {
-              const d = getDistanceKm(coords.lat, coords.lng, p.lat, p.lng);
-              if (d < minDistance) {
-                minDistance = d;
-                closest = p;
-              }
-            }
-          });
-
-          if (closest && minDistance <= 3.0) {
-            setLatestUpdateNotification(
-              `📍 คุณอยู่ใน${districtLabel} (±${accuracyM} ม.) · ใกล้จุดเสี่ยง "${closest.name}" ${minDistance} กม.`
-            );
-          } else {
-            setLatestUpdateNotification(
-              `📍 ตำแหน่งของคุณ: ${districtLabel} จ.สมุทรปราการ (±${accuracyM} ม. · ${timeStr})`
-            );
+          // แสดง toast เฉพาะตอนผู้ใช้กดปุ่ม GPS เอง (ตอนเปิดเว็บไม่ต้องเด้ง เพื่อไม่ให้รก)
+          if (!silent) {
+            setShowPatchBanner(false);
+            setLatestUpdateNotification(`📍 คุณอยู่ที่ ${districtLabel} จ.สมุทรปราการ`);
+            setTimeout(() => setLatestUpdateNotification(null), 5000);
           }
         }
-        setTimeout(() => setLatestUpdateNotification(null), 8000);
       },
       (err) => {
         if (!silent) {
@@ -1673,40 +1654,19 @@ export default function App() {
           </div>
         )}
 
-        {/* v3.0 Patch Banner — แสดงด้านล่างบนมือถือ, กลางหน้าจอบน desktop ใต้ navbar */}
-        {showPatchBanner && (
-          <div className="
-            fixed z-[90] pointer-events-auto
-            bottom-[calc(4.5rem+env(safe-area-inset-bottom))] left-2 right-2
-            sm:bottom-auto sm:top-[68px] sm:left-1/2 sm:-translate-x-1/2 sm:right-auto sm:w-auto sm:max-w-2xl
-            animate-in fade-in slide-in-from-bottom-4 sm:slide-in-from-top-4 duration-500 drop-shadow-2xl
-          ">
-            <div className="flex items-start gap-3 px-4 py-3 rounded-2xl bg-slate-950/97 text-white border border-amber-400/70 shadow-2xl backdrop-blur-xl ring-2 ring-amber-500/20">
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-amber-400 to-yellow-300 text-slate-950 shadow-lg text-base font-black mt-0.5">
-                🆕
-              </span>
-              <div className="flex flex-col gap-0.5 min-w-0 flex-1">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-sm font-black text-amber-300">
-                    🆕 อัพเดทแพท 3.0
-                  </span>
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                    ใหม่ล่าสุด
-                  </span>
-                </div>
-                <p className="text-[11px] sm:text-xs text-slate-200 leading-relaxed">
-                  ประชาชนสามารถดูข้อมูลอย่างแม่นยำกว่าเดิม — การอัพเกรดจากคำแนะนำของผู้ใช้งานทุกท่าน
-                </p>
-                <p className="text-[10px] text-amber-400/80 font-semibold mt-0.5">
-                  ✨ ขอขอบพระคุณเป็นอย่างสูง — คณะนักเรียนผู้จัดทำ PrakanGuard
-                </p>
-              </div>
+        {/* v3.0 Patch Banner — ข้อความสั้นบรรทัดเดียว ไม่ซ้อนกับแจ้งเตือนอื่น */}
+        {showPatchBanner && !latestUpdateNotification && !(userLocation && !userDistrict) && (
+          <div className="fixed z-[90] pointer-events-auto top-[62px] sm:top-[72px] left-1/2 -translate-x-1/2 animate-in fade-in slide-in-from-top-3 duration-300">
+            <div className="flex items-center gap-2 pl-3 pr-1.5 py-1.5 rounded-full bg-slate-950/95 text-white border border-amber-400/60 shadow-xl backdrop-blur-xl whitespace-nowrap">
+              <span className="text-sm">🆕</span>
+              <span className="text-xs sm:text-sm font-bold text-amber-300">อัพเดทแพท 3.0</span>
+              <span className="text-xs sm:text-sm font-medium text-slate-100">แม่นยำกว่าเดิม</span>
               <button
                 onClick={() => setShowPatchBanner(false)}
-                className="p-1 hover:bg-white/20 rounded-xl text-slate-400 hover:text-white cursor-pointer shrink-0 transition-colors mt-0.5"
-                title="ปิดการแจ้งเตือน"
+                className="p-1 hover:bg-white/20 rounded-full text-slate-400 hover:text-white cursor-pointer shrink-0 transition-colors"
+                title="ปิด"
               >
-                <X className="w-4 h-4" />
+                <X className="w-3.5 h-3.5" />
               </button>
             </div>
           </div>
