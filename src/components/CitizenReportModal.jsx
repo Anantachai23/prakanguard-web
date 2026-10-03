@@ -112,23 +112,66 @@ export default function CitizenReportModal({
     }
   };
 
+  // Image Compression & Optimization for Mobile Uploads
+  const compressImage = (file, maxWidth = 1200, maxHeight = 1200, quality = 0.8) => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const img = new Image();
+        img.onload = () => {
+          let { width, height } = img;
+          if (width > maxWidth || height > maxHeight) {
+            if (width / maxWidth > height / maxHeight) {
+              height = Math.round((height * maxWidth) / width);
+              width = maxWidth;
+            } else {
+              width = Math.round((width * maxHeight) / height);
+              height = maxHeight;
+            }
+          }
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.drawImage(img, 0, 0, width, height);
+            const dataUrl = canvas.toDataURL('image/jpeg', quality);
+            resolve(dataUrl);
+            return;
+          }
+          resolve(event.target?.result);
+        };
+        img.onerror = () => resolve(event.target?.result);
+        img.src = event.target?.result;
+      };
+      reader.onerror = () => resolve(null);
+      reader.readAsDataURL(file);
+    });
+  };
+
   // Image Upload Handler
-  const handlePhotoSelect = (e) => {
+  const handlePhotoSelect = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Check size limit: max 12MB
-    if (file.size > 12 * 1024 * 1024) {
-      alert("ไฟล์รูปภาพมีขนาดใหญ่เกินไป (กรุณาเลือกรูปขนาดไม่เกิน 12 MB)");
+    if (file.size > 20 * 1024 * 1024) {
+      alert("ไฟล์รูปภาพมีขนาดใหญ่เกินไป (กรุณาเลือกรูปขนาดไม่เกิน 20 MB)");
       return;
     }
 
     setPhotoFile(file);
-    const reader = new FileReader();
-    reader.onload = (uploadEvent) => {
-      setPhotoPreview(uploadEvent.target?.result);
-    };
-    reader.readAsDataURL(file);
+    try {
+      const optimized = await compressImage(file, 1200, 1200, 0.8);
+      if (optimized) {
+        setPhotoPreview(optimized);
+      }
+    } catch (err) {
+      const reader = new FileReader();
+      reader.onload = (uploadEvent) => {
+        setPhotoPreview(uploadEvent.target?.result);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const handleRemovePhoto = () => {

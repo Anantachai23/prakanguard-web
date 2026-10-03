@@ -110,7 +110,7 @@ export async function rpcChangePassword(username, oldPass, newPass) {
 }
 
 /* ============================================================ Reports */
-const REPORT_BASE_COLS = 'id,hazard_type,name,subdistrict,district,lat,lng,body_level_label,depth_cm,depth_range,level,traffic_status,cause,source,phone,is_approved,is_resolved,reported_at,timestamp,created_at';
+const REPORT_BASE_COLS = 'id,hazard_type,name,subdistrict,district,lat,lng,body_level_label,depth_cm,depth_range,level,traffic_status,cause,source,phone,photo_url,is_approved,is_resolved,reported_at,timestamp,created_at';
 const REPORT_EXT_COLS = 'reporter_device,reporter_district,reporter_gps,reporter_ip';
 
 export async function fetchReports() {

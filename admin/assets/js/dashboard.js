@@ -543,15 +543,28 @@ function renderReports() {
         )
       ),
       // Photo thumbnail (if any)
-      h('td', {},
-        r.photo_url
-          ? h('button', {
-              class: 'btn btn-secondary btn-sm',
-              onclick: () => showPhotoModal(r.photo_url, r.name),
-              html: `${icon('image', 14)} ดูรูป`
-            })
-          : h('span', { class: 'text-muted' }, 'ไม่มีรูป')
-      ),
+      (() => {
+        const photo = r.photo_url || r.photoUrl || (r.photo && r.photo.url);
+        return h('td', {},
+          photo
+            ? h('div', { style: { display: 'flex', alignItems: 'center', gap: '8px' } },
+                h('img', {
+                  src: photo,
+                  alt: 'รูปสภาพน้ำท่วม',
+                  title: 'คลิกเพื่อดูรูปภาพขนาดเต็ม',
+                  style: { width: '38px', height: '38px', borderRadius: '8px', objectFit: 'cover', cursor: 'pointer', border: '1px solid var(--border-subtle)', flexShrink: 0 },
+                  onclick: () => showPhotoModal(photo, r.name)
+                }),
+                h('button', {
+                  class: 'btn btn-secondary btn-sm',
+                  onclick: () => showPhotoModal(photo, r.name),
+                  style: { padding: '4px 8px', fontSize: '12px' },
+                  html: `${icon('image', 14)} ดูรูป`
+                })
+              )
+            : h('span', { class: 'text-muted' }, 'ไม่มีรูป')
+        );
+      })(),
       // Actions
       h('td', {},
         h('div', { style: { display: 'flex', gap: '6px' } },
