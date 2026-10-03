@@ -14,13 +14,14 @@ import {
 import { SAMUT_PRAKAN_DISTRICTS_DATA } from '../data/samutPrakanDistricts';
 import { detectDistrictForCoordinates } from '../data/samutPrakanBoundary';
 
-// 3 ระดับน้ำกระชับชัดเจน (ไม่ใช้สัญลักษณ์ < >)
+// 3 ระดับน้ำกระชับชัดเจน ตรงตามเกณฑ์มาตรฐาน (ปกติ, ปานกลาง, วิกฤต)
 export const WATER_LEVEL_OPTIONS = [
   {
     id: 'level1',
     level: 1,
+    label: 'ปกติ',
     title: 'ระดับ 1: ปกติ',
-    range: '5 - 20 cm',
+    range: '5 - 20 ซม.',
     depthCm: 15,
     color: 'emerald',
     badgeClass: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30',
@@ -30,8 +31,9 @@ export const WATER_LEVEL_OPTIONS = [
   {
     id: 'level2',
     level: 2,
+    label: 'ปานกลาง',
     title: 'ระดับ 2: ปานกลาง',
-    range: '21 - 50 cm',
+    range: '21 - 50 ซม.',
     depthCm: 35,
     color: 'amber',
     badgeClass: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30',
@@ -41,8 +43,9 @@ export const WATER_LEVEL_OPTIONS = [
   {
     id: 'level3',
     level: 3,
+    label: 'วิกฤต',
     title: 'ระดับ 3: วิกฤต',
-    range: 'มากกว่า 50 cm',
+    range: '> 50 ซม.',
     depthCm: 65,
     color: 'rose',
     badgeClass: 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/30',
@@ -158,7 +161,11 @@ export default function CitizenReportModal({
       district: district,
       subdistrict: subdistrict,
       notes: notes.trim(),
+      level: levelObj.level,
       severity: levelObj.level,
+      bodyLevelLabel: levelObj.label,
+      levelLabel: levelObj.label,
+      waterLevel: levelObj.label,
       depthCm: levelObj.depthCm,
       depthRange: levelObj.range,
       lat: finalLat,
@@ -189,8 +196,8 @@ export default function CitizenReportModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 smooth-backdrop">
-      <div className={`w-full sm:max-w-lg rounded-t-3xl sm:rounded-3xl border shadow-2xl overflow-hidden flex flex-col max-h-[92vh] sm:max-h-[88vh] smooth-pop transition-colors ${
+    <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-2 sm:p-4 smooth-backdrop">
+      <div className={`w-full sm:max-w-md rounded-3xl border shadow-2xl overflow-hidden flex flex-col max-h-[72vh] sm:max-h-[82vh] mb-2 sm:mb-0 smooth-pop transition-colors ${
         isDark ? 'bg-slate-900 border-slate-700 text-slate-100' : 'bg-white border-slate-200 text-slate-900'
       }`}>
         
@@ -243,7 +250,7 @@ export default function CitizenReportModal({
           </div>
         ) : (
           /* Form Content (Clean & Streamlined) */
-          <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
+          <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-3 sm:p-5 space-y-3 sm:space-y-4">
 
             {/* Location & Map Point Picker */}
             <div className="space-y-2">

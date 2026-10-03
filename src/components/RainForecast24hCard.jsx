@@ -27,9 +27,31 @@ export default function RainForecast24hCard({
     return true;
   });
 
+  const [currentDate, setCurrentDate] = useState(() => new Date());
+
+  useEffect(() => {
+    const scheduleMidnight = () => {
+      const now = new Date();
+      const tomorrowMidnight = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate() + 1,
+        0, 0, 1
+      );
+      const delay = Math.max(1000, tomorrowMidnight.getTime() - now.getTime());
+      return setTimeout(() => {
+        setCurrentDate(new Date());
+        scheduleMidnight();
+      }, delay);
+    };
+
+    const timer = scheduleMidnight();
+    return () => clearTimeout(timer);
+  }, []);
+
   if (!forecast) return null;
 
-  const todayDate = new Date();
+  const todayDate = currentDate;
   const thaiDays = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'];
   const thaiMonths = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
   const todayLabel = `วัน${thaiDays[todayDate.getDay()]}ที่ ${todayDate.getDate()} ${thaiMonths[todayDate.getMonth()]}`;
@@ -60,6 +82,22 @@ export default function RainForecast24hCard({
     { district: "พระสมุทรเจดีย์", probability: 45, timeWindow: "17:00 - 19:00 น." }
   ];
 
+  const cleanDistrictName = (dName) => {
+    if (!dName) return 'เมืองสมุทรปราการ';
+    let s = dName.replace(/^(อ\.|อำเภอ)/, '').trim();
+    if (s.includes('เมือง')) return 'เมืองสมุทรปราการ';
+    if (s.includes('บางพลี')) return 'บางพลี';
+    if (s.includes('พระประแดง')) return 'พระประแดง';
+    if (s.includes('บางเสาธง')) return 'บางเสาธง';
+    if (s.includes('บางบ่อ')) return 'บางบ่อ';
+    if (s.includes('พระสมุทรเจดีย์')) return 'พระสมุทรเจดีย์';
+    return s || 'เมืองสมุทรปราการ';
+  };
+
+  const currentDistrict = cleanDistrictName(userDistrict);
+  const matchedDistrict = districtList.find(d => d.district.includes(currentDistrict) || currentDistrict.includes(d.district)) || districtList[0];
+  const userDistrictProb = matchedDistrict ? matchedDistrict.probability : maxProb;
+
   // Collapsed Minimal Pill
   if (collapsible && !isExpanded) {
     return (
@@ -81,10 +119,10 @@ export default function RainForecast24hCard({
             </div>
             <div className="min-w-0 truncate">
               <span className="font-bold text-xs truncate block text-slate-900 dark:text-white">
-                ฝนตกวันนี้: <span className="text-blue-600 dark:text-cyan-400 font-extrabold">{rainTimeToday}</span>
+                ตำแหน่งของท่านอยู่อำเภอ{currentDistrict} มีโอกาสฝนตก <span className="text-blue-600 dark:text-cyan-400 font-extrabold">{userDistrictProb}%</span>
               </span>
               <span className={`text-[10px] block truncate ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                {todayLabel} • โอกาส {maxProb}% (แตะเพื่อดูรายอำเภอ)
+                {todayLabel} • {rainTimeToday} (แตะเพื่อดูรายอำเภอ)
               </span>
             </div>
           </button>
@@ -128,7 +166,7 @@ export default function RainForecast24hCard({
                 คาดการณ์ฝนตกวันนี้
               </span>
               <span className={`text-[10px] sm:text-[11px] block ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                {todayLabel} • จ.สมุทรปราการ
+                {todayLabel} • อัพเดทวันใหม่เที่ยงคืน
               </span>
             </div>
           </div>
@@ -161,22 +199,37 @@ export default function RainForecast24hCard({
           </div>
         </div>
 
-        {/* Hero Spotlight: วันนี้มีโอกาสตกกี่โมง */}
+        {/* User District Highlight Banner */}
         <div className={`mt-3 p-3 rounded-2xl border flex items-center justify-between gap-3 ${
-          isDark ? 'bg-slate-800/80 border-slate-700' : 'bg-blue-50/60 border-blue-200/80'
+          isDark ? 'bg-blue-950/60 border-cyan-500/40 text-cyan-200' : 'bg-blue-50/90 border-blue-300 text-blue-900'
         }`}>
           <div className="min-w-0">
-            <span className={`text-[11px] font-semibold flex items-center gap-1.5 ${isDark ? 'text-slate-300' : 'text-blue-900'}`}>
-              <Clock className="w-3.5 h-3.5 text-blue-500 shrink-0" />
-              <span>ช่วงเวลาที่มีโอกาสฝนตก:</span>
+            <span className="text-[11px] font-semibold flex items-center gap-1.5 opacity-90">
+              <Compass className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+              <span>ตำแหน่งปัจจุบันของคุณ:</span>
             </span>
-            <span className={`text-sm sm:text-base font-extrabold mt-0.5 block ${isDark ? 'text-cyan-300' : 'text-blue-700'}`}>
-              {rainTimeToday}
+            <span className="text-xs sm:text-sm font-extrabold mt-0.5 block leading-tight">
+              ตำแหน่งของท่านอยู่อำเภอ{currentDistrict} มีโอกาสฝนตก <span className="text-blue-600 dark:text-cyan-400 font-black">{userDistrictProb}%</span>
             </span>
           </div>
           <div className="text-right shrink-0">
             <span className={`text-[10px] block ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>สภาพอากาศ</span>
             <span className={`text-xs font-bold ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>{status}</span>
+          </div>
+        </div>
+
+        {/* Hero Spotlight: วันนี้มีโอกาสตกกี่โมง */}
+        <div className={`mt-2 p-2.5 rounded-2xl border flex items-center justify-between gap-3 ${
+          isDark ? 'bg-slate-850/80 border-slate-800' : 'bg-slate-50 border-slate-200'
+        }`}>
+          <div className="min-w-0">
+            <span className={`text-[11px] font-semibold flex items-center gap-1.5 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
+              <Clock className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+              <span>ช่วงเวลาที่มีโอกาสฝนตก:</span>
+            </span>
+            <span className={`text-xs sm:text-sm font-bold mt-0.5 block ${isDark ? 'text-cyan-300' : 'text-blue-700'}`}>
+              {rainTimeToday}
+            </span>
           </div>
         </div>
 

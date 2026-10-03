@@ -786,6 +786,18 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
     modalY: 0
   });
 
+  // Launcher Draggable State (PC & Tablet)
+  const [launcherPosition, setLauncherPosition] = useState(null);
+  const [isDraggingLauncher, setIsDraggingLauncher] = useState(false);
+  const launcherDragRef = useRef({
+    startX: 0,
+    startY: 0,
+    initialX: 0,
+    initialY: 0,
+    hasMoved: false
+  });
+  const launcherRef = useRef(null);
+
   const streamingIntervalRef = useRef(null);
   const thinkingTimeoutRef = useRef(null);
 
@@ -1013,6 +1025,127 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
     window.addEventListener('mousemove', onMouseMove);
     window.addEventListener('mouseup', onMouseUp);
   };
+
+  // Touch Drag Resize Handler from Corner (drag corner with finger on Mobile / Tablet)
+  const handleTouchStartResizeCorner = (e) => {
+    if (e.touches.length !== 1) return;
+    const touch = e.touches[0];
+    const startX = touch.clientX;
+    const startY = touch.clientY;
+    const modalEl = modalRef.current;
+    if (!modalEl) return;
+
+    const startW = modalEl.offsetWidth;
+    const startH = modalEl.offsetHeight;
+    setIsResizingModal(true);
+
+    const onTouchMove = (moveEvent) => {
+      if (moveEvent.touches.length !== 1) return;
+      const curTouch = moveEvent.touches[0];
+      const dx = startX - curTouch.clientX; // dragging left expands width
+      const dy = startY - curTouch.clientY; // dragging up expands height
+      const newW = Math.max(280, Math.min(window.innerWidth - 16, startW + dx));
+      const newH = Math.max(260, Math.min(window.innerHeight - 50, startH + dy));
+      setCustomSize({ width: newW, height: newH });
+      if (moveEvent.cancelable) moveEvent.preventDefault();
+    };
+
+    const onTouchEnd = () => {
+      setIsResizingModal(false);
+      window.removeEventListener('touchmove', onTouchMove);
+      window.removeEventListener('touchend', onTouchEnd);
+    };
+
+    window.addEventListener('touchmove', onTouchMove, { passive: false });
+    window.addEventListener('touchend', onTouchEnd);
+  };
+
+  // Launcher Drag Handlers (Drag floating launcher button before opening chat on PC & Tablet)
+  const handleMouseDownLauncher = (e) => {
+    if (e.button !== 0) return;
+    const el = launcherRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    launcherDragRef.current = {
+      startX: e.clientX,
+      startY: e.clientY,
+      initialX: rect.left,
+      initialY: rect.top,
+      hasMoved: false
+    };
+    setIsDraggingLauncher(true);
+  };
+
+  const handleTouchStartLauncher = (e) => {
+    if (e.touches.length !== 1) return;
+    const touch = e.touches[0];
+    const el = launcherRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    launcherDragRef.current = {
+      startX: touch.clientX,
+      startY: touch.clientY,
+      initialX: rect.left,
+      initialY: rect.top,
+      hasMoved: false
+    };
+    setIsDraggingLauncher(true);
+  };
+
+  useEffect(() => {
+    if (!isDraggingLauncher) return;
+
+    const onMouseMove = (e) => {
+      const dx = e.clientX - launcherDragRef.current.startX;
+      const dy = e.clientY - launcherDragRef.current.startY;
+      if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
+        launcherDragRef.current.hasMoved = true;
+      }
+      const el = launcherRef.current;
+      const w = el ? el.offsetWidth : 160;
+      const h = el ? el.offsetHeight : 50;
+      const newX = Math.max(8, Math.min(window.innerWidth - w - 8, launcherDragRef.current.initialX + dx));
+      const newY = Math.max(8, Math.min(window.innerHeight - h - 8, launcherDragRef.current.initialY + dy));
+      setLauncherPosition({ x: newX, y: newY });
+    };
+
+    const onMouseUp = () => {
+      setIsDraggingLauncher(false);
+    };
+
+    const onTouchMove = (e) => {
+      if (e.touches.length !== 1) return;
+      const touch = e.touches[0];
+      const dx = touch.clientX - launcherDragRef.current.startX;
+      const dy = touch.clientY - launcherDragRef.current.startY;
+      if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
+        launcherDragRef.current.hasMoved = true;
+      }
+      const el = launcherRef.current;
+      const w = el ? el.offsetWidth : 160;
+      const h = el ? el.offsetHeight : 50;
+      const newX = Math.max(8, Math.min(window.innerWidth - w - 8, launcherDragRef.current.initialX + dx));
+      const newY = Math.max(8, Math.min(window.innerHeight - h - 8, launcherDragRef.current.initialY + dy));
+      setLauncherPosition({ x: newX, y: newY });
+      if (e.cancelable) e.preventDefault();
+    };
+
+    const onTouchEnd = () => {
+      setIsDraggingLauncher(false);
+    };
+
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', onMouseUp);
+    window.addEventListener('touchmove', onTouchMove, { passive: false });
+    window.addEventListener('touchend', onTouchEnd);
+
+    return () => {
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
+      window.removeEventListener('touchmove', onTouchMove);
+      window.removeEventListener('touchend', onTouchEnd);
+    };
+  }, [isDraggingLauncher]);
 
   // Touch Drag Resize Handler for Mobile / Tablets (drag top bar with finger)
   const handleTouchStartResizeTop = (e) => {
@@ -1955,28 +2088,46 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
 
   return (
     <>
-      {/* Floating Helpdesk Launcher Button - Theme-Adaptive */}
+      {/* Floating Helpdesk Launcher Button - Theme-Adaptive & Draggable on PC and Tablet */}
       {!isOpen && (
-        <button
-          onClick={() => setIsOpen(true)}
-          className={`fixed bottom-[calc(7.25rem+env(safe-area-inset-bottom,0px))] right-2.5 sm:bottom-6 sm:right-6 z-40 px-2.5 sm:px-4 py-2 sm:py-3 rounded-2xl font-semibold text-xs sm:text-sm shadow-xl items-center gap-2 border cursor-pointer transition-all hover:scale-105 active:scale-95 backdrop-blur-xl group ${
+        <div
+          ref={launcherRef}
+          onMouseDown={handleMouseDownLauncher}
+          onTouchStart={handleTouchStartLauncher}
+          onClick={(e) => {
+            if (launcherDragRef.current.hasMoved) {
+              e.preventDefault();
+              e.stopPropagation();
+              return;
+            }
+            setIsOpen(true);
+          }}
+          style={launcherPosition ? {
+            position: 'fixed',
+            left: `${launcherPosition.x}px`,
+            top: `${launcherPosition.y}px`,
+            bottom: 'auto',
+            right: 'auto',
+            touchAction: 'none'
+          } : undefined}
+          className={`fixed bottom-[calc(7.25rem+env(safe-area-inset-bottom,0px))] right-2.5 sm:bottom-6 sm:right-6 z-40 px-2.5 sm:px-4 py-2 sm:py-3 rounded-2xl font-semibold text-xs sm:text-sm shadow-xl items-center gap-2 border cursor-grab active:cursor-grabbing transition-shadow select-none backdrop-blur-xl group ${
             isPointSelected ? 'hidden sm:flex' : 'flex'
           } ${
             isDark 
               ? 'bg-slate-900/95 hover:bg-slate-800 text-slate-100 border-slate-700 hover:border-blue-500 shadow-blue-900/30' 
               : 'bg-white hover:bg-slate-50 text-slate-800 border-slate-200 hover:border-blue-400 shadow-blue-500/10'
           }`}
-          title="ผู้ช่วยถาม-ตอบข้อมูลน้ำท่วม"
+          title="ผู้ช่วยถาม-ตอบข้อมูลน้ำท่วม (คลิกเพื่อเปิด หรือลากย้ายได้)"
         >
           <AiOfficialEmblem size={32} />
-          <div className="text-left">
+          <div className="text-left pointer-events-none">
             <div className="flex items-center gap-1.5">
               <span className={`block text-xs sm:text-sm font-bold leading-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>PrakanGuard AI</span>
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
             </div>
             <span className={`hidden sm:block text-[10px] font-medium ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>ศูนย์ข้อมูลน้ำท่วมและเส้นทาง 24 ชม.</span>
           </div>
-        </button>
+        </div>
       )}
 
       {/* Minimized Floating Dock Bar (When minimized) */}
@@ -2091,13 +2242,14 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
             isDark ? 'bg-slate-900/95 border-slate-700 text-slate-100' : 'bg-white border-slate-200 text-slate-800'
           }`}
         >
-          {/* Desktop Mouse Resize Corner (มุมซ้ายบนสำหรับใช้เมาส์ลากปรับขนาด) */}
+          {/* Mouse & Touch Resize Corner (มุมสำหรับใช้นิ้วหรือเมาส์ลากขอบเพื่อย่อหรือขยาย) */}
           <div
             onMouseDown={handleMouseDownResizeCorner}
-            className="hidden sm:block absolute top-0 left-0 w-6 h-6 cursor-nwse-resize z-50 group select-none"
-            title="คลิกแล้วลากด้วยเมาส์เพื่อปรับขนาดความกว้างและความสูง"
+            onTouchStart={handleTouchStartResizeCorner}
+            className="absolute top-0 left-0 w-8 h-8 cursor-nwse-resize z-50 flex items-start justify-start p-1.5 select-none touch-none group"
+            title="ลากมุมนี้ด้วยเมาส์หรือใช้นิ้วลากขอบเพื่อย่อหรือขยายขนาด"
           >
-            <div className="w-2.5 h-2.5 border-t-2 border-l-2 border-slate-400 dark:border-slate-500 m-1.5 rounded-tl-sm group-hover:border-blue-500 group-hover:scale-110 transition-all" />
+            <div className="w-3.5 h-3.5 border-t-2 border-l-2 border-blue-500 group-hover:border-cyan-400 rounded-tl transition-colors shadow-xs" />
           </div>
 
           {/* Mobile Ergonomic Touch Handle Bar (แตะเพื่อสลับ ย่อ/ขยาย หรือใช้นิ้วลากขึ้น-ลง) */}
@@ -2121,12 +2273,12 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
           >
             <div className="flex items-center gap-1 text-[10px] font-bold text-slate-400">
               <ChevronDown className="w-3.5 h-3.5" />
-              <span>ย่อจอ</span>
+              <span>ย่อ</span>
             </div>
 
             <div className="flex flex-col items-center gap-0.5">
               <div className="w-14 h-1.5 rounded-full bg-slate-400/80 dark:bg-slate-500 active:bg-blue-500 transition-colors" />
-              <span className="text-[9px] text-slate-400 font-medium">ใช้นิ้วลากหรือแตะเพื่อปรับขนาด</span>
+              <span className="text-[9px] text-slate-400 font-medium">ลากมุมหรือแถบนี้เพื่อปรับขนาด</span>
             </div>
 
             <div className="flex items-center gap-1 text-[10px] font-bold text-blue-500">
@@ -2162,11 +2314,11 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
               </div>
             </div>
 
-            {/* Drag Handle Badge & Control Buttons */}
+            {/* Drag Handle Badge & Close Button Only (ทุกอุปกรณ์มีแค่สัญลักษณ์การย้ายและปุ่มกดปิด) */}
             <div className="flex items-center gap-1.5 shrink-0 ml-2">
               {/* Drag symbol only */}
               <div 
-                className={`flex items-center justify-center p-1.5 rounded-xl pointer-events-none select-none border transition-colors ${
+                className={`flex items-center justify-center p-1.5 rounded-xl select-none border transition-colors cursor-grab active:cursor-grabbing ${
                   isDark 
                     ? 'bg-slate-800/80 text-slate-400 border-slate-700' 
                     : 'bg-white/90 text-slate-500 border-slate-200 shadow-xs'
@@ -2175,61 +2327,6 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
               >
                 <GripHorizontal className="w-4 h-4 text-blue-500" />
               </div>
-
-              {/* Dedicated Expand / Shrink Toggle Button (Mobile & Desktop) */}
-              <button
-                type="button"
-                onClick={() => {
-                  if (customSize.height && customSize.height > 380) {
-                    setCustomSize({ width: null, height: 310 });
-                  } else if (customSize.height && customSize.height <= 380) {
-                    setCustomSize({ width: null, height: Math.min(window.innerHeight - 80, 680) });
-                  } else {
-                    setIsExpanded(prev => !prev);
-                  }
-                }}
-                className={`p-1.5 rounded-xl border transition-all cursor-pointer ${
-                  isDark 
-                    ? 'bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-cyan-300 border-slate-700' 
-                    : 'bg-white hover:bg-slate-100 text-slate-600 hover:text-blue-600 border border-slate-200 shadow-xs'
-                }`}
-                title="ย่อ / ขยายขนาดหน้าต่าง"
-              >
-                {(customSize.height && customSize.height > 380) || isExpanded ? (
-                  <Minimize2 className="w-4 h-4 text-cyan-400" />
-                ) : (
-                  <Maximize2 className="w-4 h-4 text-blue-500" />
-                )}
-              </button>
-
-              {position && (
-                <button
-                  type="button"
-                  onClick={handleResetPosition}
-                  className={`p-1.5 rounded-xl transition-all cursor-pointer ${
-                    isDark 
-                      ? 'bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-cyan-300 border border-slate-700' 
-                      : 'bg-white hover:bg-slate-100 text-slate-600 hover:text-blue-600 border border-slate-200 shadow-xs'
-                  }`}
-                  title="รีเซ็ตตำแหน่งกลับมุมจอขวาล่าง"
-                >
-                  <RotateCcw className="w-4 h-4" />
-                </button>
-              )}
-
-              {/* Minimize Dock Button */}
-              <button
-                type="button"
-                onClick={() => setIsMinimized(true)}
-                className={`p-1.5 rounded-xl transition-all cursor-pointer ${
-                  isDark 
-                    ? 'bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-amber-300 border border-slate-700' 
-                    : 'bg-white hover:bg-slate-100 text-slate-600 hover:text-amber-600 border border-slate-200 shadow-xs'
-                }`}
-                title="ย่อขนาดเก็บลงแถบด้านข้าง/มุมล่าง"
-              >
-                <Minus className="w-4 h-4" />
-              </button>
 
               {/* Close Button */}
               <button

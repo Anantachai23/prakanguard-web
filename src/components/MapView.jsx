@@ -27,7 +27,7 @@ function isPointDry(item) {
 }
 
 // Unified Official Flood Pin Icon Generator for ALL points and citizen reports
-function createOfficialFloodPin({ level, depthCm, hasPhoto, isSelected, name }) {
+function createOfficialFloodPin({ level, depthCm, hasPhoto, isSelected, isFalling, name }) {
   // Colors strictly conforming to standard:
   // Level 1: Green #16a34a (5-20 cm)
   // Level 2: Amber/Yellow #eab308 (21-50 cm)
@@ -62,6 +62,10 @@ function createOfficialFloodPin({ level, depthCm, hasPhoto, isSelected, name }) 
     ? `<div style="position:absolute;top:-4px;right:-4px;width:17px;height:17px;background:#ffffff;border:1.5px solid ${primaryColor};border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;box-shadow:0 2px 4px rgba(0,0,0,0.3);z-index:10;" title="มีภาพถ่ายสถานการณ์จริง">📷</div>`
     : '';
 
+  const fallingBadgeHtml = isFalling
+    ? `<div style="position:absolute;top:-4px;left:-4px;width:17px;height:17px;background:#0d9488;border:1.5px solid #ffffff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;color:#ffffff;box-shadow:0 2px 4px rgba(0,0,0,0.3);z-index:10;" title="น้ำกำลังลด">📉</div>`
+    : '';
+
   const selectedRingHtml = isSelected
     ? `<div style="position:absolute;inset:-6px;border-radius:24px;border:2.5px solid #0284c7;box-shadow:0 0 12px rgba(2,132,199,0.8);animation:pgSelectedGlow 1.5s ease-in-out infinite alternate;pointer-events:none;z-index:1;"></div>`
     : '';
@@ -75,6 +79,7 @@ function createOfficialFloodPin({ level, depthCm, hasPhoto, isSelected, name }) 
       ${pulseHtml}
       ${selectedRingHtml}
       ${photoBadgeHtml}
+      ${fallingBadgeHtml}
       <svg width="34" height="44" viewBox="0 0 34 44" fill="none" xmlns="http://www.w3.org/2000/svg" style="position:relative;z-index:2;filter:drop-shadow(0 4px 6px rgba(0,0,0,0.38));">
         <defs>
           <linearGradient id="pgGrad-${level}" x1="17" y1="2" x2="17" y2="43" gradientUnits="userSpaceOnUse">
@@ -229,21 +234,6 @@ export default function MapView({
           updateWhenIdle: false,
           crossOrigin: true,
           attribution: '&copy; ภาพถ่ายดาวเทียม Google / Esri'
-        }
-      };
-    }
-    if (style === 'google-terrain') {
-      return {
-        url: 'https://mt{s}.google.com/vt/lyrs=p&hl=th&x={x}&y={y}&z={z}',
-        fallbackUrl: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}',
-        options: {
-          subdomains: ['0', '1', '2', '3'],
-          maxZoom: 20,
-          keepBuffer: 12,
-          updateWhenZooming: false,
-          updateWhenIdle: false,
-          crossOrigin: true,
-          attribution: '&copy; แผนที่ภูมิประเทศ Google / Esri'
         }
       };
     }
@@ -426,13 +416,7 @@ export default function MapView({
         className: 'bg-white/95 text-slate-800 font-prompt text-[11px] border border-slate-300 px-2 py-0.5 rounded-lg shadow-sm font-bold'
       });
 
-      // Click on district polygon shows tooltip only, doesn't change filter
-      layer.on('click', (e) => {
-        L.popup({ maxWidth: 220, className: 'district-info-popup' })
-          .setLatLng(e.latlng)
-          .setContent(`<div style="font-family:'Prompt',sans-serif;text-align:center;padding:4px 2px"><b style="font-size:13px;color:#0f172a">อำเภอ${feature.properties.districtName}</b><br/><span style="font-size:10px;color:#64748b">กดเลือกอำเภอในแถบค้นหาด้านบนเพื่อกรองข้อมูล</span></div>`)
-          .openOn(map);
-      });
+
 
       districtLayersRef.current.push(layer);
     });
@@ -488,9 +472,13 @@ export default function MapView({
     const depthBadgeText = item.depthCm ? `${item.depthCm} ซม.` : (item.depthRange || 'เฝ้าระวัง');
 
     const photoHtml = item.photoUrl ? `
-      <div style="margin:8px 0;border-radius:12px;overflow:hidden;border:1px solid #cbd5e1;position:relative;background:#f1f5f9;">
+      <div 
+        onclick="if(window.pgOpenLightbox){window.pgOpenLightbox('${item.photoUrl}', '${(item.name || '').replace(/'/g, "\\'")}', '${item.updatedAt || item.time || ''}');}"
+        style="margin:8px 0;border-radius:12px;overflow:hidden;border:1px solid #cbd5e1;position:relative;background:#f1f5f9;cursor:pointer;"
+        title="แตะเพื่อดูภาพขนาดใหญ่"
+      >
         <img src="${item.photoUrl}" style="width:100%;height:120px;object-fit:cover;display:block;" alt="รูปภาพจากประชาชนรายงาน" />
-        <span style="position:absolute;bottom:5px;right:6px;background:rgba(15,23,42,0.75);color:#ffffff;font-size:9.5px;padding:2px 7px;border-radius:9999px;font-weight:700;">📷 รูปภาพจากประชาชนรายงาน</span>
+        <span style="position:absolute;bottom:5px;right:6px;background:rgba(15,23,42,0.8);color:#ffffff;font-size:9.5px;padding:2px 7px;border-radius:9999px;font-weight:700;">🔍 แตะเพื่อดูภาพใหญ่</span>
       </div>
     ` : '';
 
@@ -505,8 +493,8 @@ export default function MapView({
     ` : '');
 
     const sourceHtml = isCitizen 
-      ? `<div style="font-size:9.5px;color:#2563eb;font-weight:700;margin-bottom:6px;">👤 รายงานจากประชาชน (ยืนยันแล้ว)</div>`
-      : `<div style="font-size:9.5px;color:#64748b;font-weight:600;margin-bottom:6px;">📍 จุดเฝ้าระวัง จ.สมุทรปราการ</div>`;
+      ? `<div style="font-size:9.5px;color:#2563eb;font-weight:700;margin-bottom:4px;">👤 รายงานจากประชาชน (ยืนยันแล้ว)</div>`
+      : `<div style="font-size:9.5px;color:#64748b;font-weight:600;margin-bottom:4px;">📍 จุดเฝ้าระวัง จ.สมุทรปราการ</div>`;
 
     return `
       <div style="font-family:'Prompt',sans-serif;padding:6px 4px 4px 4px;min-width:210px;max-width:260px;">
@@ -525,9 +513,6 @@ export default function MapView({
         ${photoHtml}
         ${trendHtml}
         ${sourceHtml}
-        <button id="pg-popup-btn-${item.id}" style="width:100%;padding:7px 10px;background:linear-gradient(135deg, #2563eb, #1d4ed8);color:white;border:none;border-radius:10px;font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;box-shadow:0 2px 6px rgba(37,99,235,0.25);">
-          <span>ดูรายละเอียดสถานการณ์ &rarr;</span>
-        </button>
       </div>
     `;
   };
@@ -555,6 +540,7 @@ export default function MapView({
         level,
         depthCm: point.depthCm,
         hasPhoto: !!point.photoUrl,
+        isFalling: point.waterTrend === 'falling',
         isSelected,
         name: point.name
       });
@@ -566,16 +552,6 @@ export default function MapView({
           className: 'custom-leaflet-popup',
           closeButton: true,
           autoPan: true
-        });
-
-        marker.on('popupopen', () => {
-          const btn = document.getElementById(`pg-popup-btn-${point.id}`);
-          if (btn) {
-            btn.onclick = () => {
-              onSelectPoint(point);
-              map.closePopup();
-            };
-          }
         });
       }
 
@@ -615,6 +591,7 @@ export default function MapView({
         level,
         depthCm: report.depthCm,
         hasPhoto: !!report.photoUrl,
+        isFalling: report.waterTrend === 'falling',
         isSelected,
         name: report.name
       });
@@ -626,16 +603,6 @@ export default function MapView({
           className: 'custom-leaflet-popup',
           closeButton: true,
           autoPan: true
-        });
-
-        marker.on('popupopen', () => {
-          const btn = document.getElementById(`pg-popup-btn-${report.id}`);
-          if (btn) {
-            btn.onclick = () => {
-              onSelectPoint(report);
-              map.closePopup();
-            };
-          }
         });
       }
 
@@ -847,7 +814,6 @@ export default function MapView({
           {[
             { style: 'google-roadmap',    emoji: '🗺️', label: 'ถนน' },
             { style: 'google-satellite',  emoji: '🛰️', label: 'ดาวเทียม' },
-            { style: 'google-terrain',    emoji: '⛰️', label: 'ภูมิประเทศ' },
           ].map(({ style, emoji, label }) => (
             <button
               key={style}

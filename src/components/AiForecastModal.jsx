@@ -2,11 +2,32 @@ import React, { useState, useEffect } from 'react';
 import { X, Radio, CloudRain, Clock, Thermometer, Droplets, ExternalLink, Calendar } from 'lucide-react';
 import { getLiveSamutPrakanWeather } from '../services/weatherService';
 
-export default function AiForecastModal({ isOpen, onClose, theme = 'light' }) {
+export default function AiForecastModal({ isOpen, onClose, userDistrict, theme = 'light' }) {
   const [weather, setWeather] = useState(null);
   const [loadingWeather, setLoadingWeather] = useState(true);
+  const [currentDate, setCurrentDate] = useState(() => new Date());
 
   const isDark = theme === 'dark';
+
+  useEffect(() => {
+    const scheduleMidnight = () => {
+      const now = new Date();
+      const tomorrowMidnight = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate() + 1,
+        0, 0, 1
+      );
+      const delay = Math.max(1000, tomorrowMidnight.getTime() - now.getTime());
+      return setTimeout(() => {
+        setCurrentDate(new Date());
+        scheduleMidnight();
+      }, delay);
+    };
+
+    const timer = scheduleMidnight();
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     if (isOpen) {
@@ -25,7 +46,7 @@ export default function AiForecastModal({ isOpen, onClose, theme = 'light' }) {
 
   if (!isOpen) return null;
 
-  const todayDate = new Date();
+  const todayDate = currentDate;
   const thaiDays = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'];
   const thaiMonths = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
   const todayTitle = `วัน${thaiDays[todayDate.getDay()]}ที่ ${todayDate.getDate()} ${thaiMonths[todayDate.getMonth()]}`;
@@ -54,6 +75,22 @@ export default function AiForecastModal({ isOpen, onClose, theme = 'light' }) {
     { district: "บางบ่อ", probability: 50, timeWindow: "16:30 - 18:30 น." },
     { district: "พระสมุทรเจดีย์", probability: 45, timeWindow: "17:00 - 19:00 น." }
   ];
+
+  const cleanDistrictName = (dName) => {
+    if (!dName) return 'เมืองสมุทรปราการ';
+    let s = dName.replace(/^(อ\.|อำเภอ)/, '').trim();
+    if (s.includes('เมือง')) return 'เมืองสมุทรปราการ';
+    if (s.includes('บางพลี')) return 'บางพลี';
+    if (s.includes('พระประแดง')) return 'พระประแดง';
+    if (s.includes('บางเสาธง')) return 'บางเสาธง';
+    if (s.includes('บางบ่อ')) return 'บางบ่อ';
+    if (s.includes('พระสมุทรเจดีย์')) return 'พระสมุทรเจดีย์';
+    return s || 'เมืองสมุทรปราการ';
+  };
+
+  const currentDistrict = cleanDistrictName(userDistrict);
+  const matchedDistrict = districtAnalysis.find(d => d.district.includes(currentDistrict) || currentDistrict.includes(d.district)) || districtAnalysis[0];
+  const userDistrictProb = matchedDistrict ? matchedDistrict.probability : maxProb;
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-3.5 sm:p-4 smooth-backdrop">
@@ -95,8 +132,30 @@ export default function AiForecastModal({ isOpen, onClose, theme = 'light' }) {
             <span>กำลังดึงข้อมูลคาดการณ์สภาพอากาศล่าสุด...</span>
           </div>
         ) : (
-          <div className="mt-4 space-y-4">
+          <div className="mt-4 space-y-3.5">
             
+            {/* User District Highlight Banner */}
+            <div className={`p-3.5 rounded-2xl border flex items-center justify-between gap-3 ${
+              isDark ? 'bg-blue-950/60 border-cyan-500/40 text-cyan-200' : 'bg-blue-50/90 border-blue-300 text-blue-900'
+            }`}>
+              <div className="min-w-0">
+                <span className="text-[11px] font-semibold flex items-center gap-1.5 opacity-90">
+                  <span className="text-sm">📍</span>
+                  <span>ตำแหน่งปัจจุบันของคุณ:</span>
+                </span>
+                <span className="text-sm sm:text-base font-extrabold mt-0.5 block leading-tight">
+                  ตำแหน่งของท่านอยู่อำเภอ{currentDistrict} มีโอกาสฝนตก <span className="text-blue-600 dark:text-cyan-400 font-black">{userDistrictProb}%</span>
+                </span>
+              </div>
+              <span className={`text-[11px] px-2.5 py-1 rounded-full font-bold shrink-0 ${
+                userDistrictProb >= 60 
+                  ? (isDark ? 'bg-amber-900/60 text-amber-300 border border-amber-600' : 'bg-amber-100 text-amber-900 border border-amber-300')
+                  : (isDark ? 'bg-cyan-900/60 text-cyan-300 border border-cyan-600' : 'bg-blue-100 text-blue-800 border border-blue-200')
+              }`}>
+                {userDistrictProb >= 60 ? 'เฝ้าระวัง' : 'ปกติ'}
+              </span>
+            </div>
+
             {/* Primary Spotlight Card: วันนี้มีโอกาสตกกี่โมง */}
             <div className={`p-4 rounded-2xl border ${
               isDark ? 'bg-slate-800/80 border-slate-700' : 'bg-blue-50/70 border-blue-200'

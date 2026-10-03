@@ -2591,7 +2591,10 @@
         if (!r.lat || !r.lng) return;
 
         const isHail = r.hazardType === 'hail';
-        const color = isHail ? '#06b6d4' : r.level === 3 ? '#ef4444' : r.level === 2 ? '#f59e0b' : '#10b981';
+        const isCritical = r.level === 3 || r.severity === 3 || r.bodyLevelLabel === 'วิกฤต';
+        const isModerate = r.level === 2 || r.severity === 2 || r.bodyLevelLabel === 'ปานกลาง';
+        const color = isHail ? '#06b6d4' : isCritical ? '#ef4444' : isModerate ? '#f59e0b' : '#10b981';
+        const levelText = isHail ? (r.hailSizeLabel || 'ลูกเห็บตก') : (r.bodyLevelLabel || (isCritical ? 'วิกฤต' : isModerate ? 'ปานกลาง' : 'ปกติ'));
 
         const customIcon = L.divIcon({
           className: 'custom-map-pin',
@@ -2604,7 +2607,7 @@
         const popupContent = `
           <div style="font-family: 'Prompt', sans-serif; min-width: 180px; color: #0f172a;">
             <b style="font-size: 13px; display: block; margin-bottom: 4px;">${r.name || 'จุดรายงาน'}</b>
-            <div style="font-size: 11px; color: #475569; margin-bottom: 6px;">${r.district || ''} • ${r.bodyLevelLabel || r.depthCm + ' ซม.'}</div>
+            <div style="font-size: 11px; color: #475569; margin-bottom: 6px;">${r.district || ''} • ระดับ: ${levelText} (${r.depthRange || `${r.depthCm || 15} ซม.`})</div>
             <div style="font-size: 11px; margin-bottom: 8px;"><b>สถานะ:</b> ${r.isResolved ? 'คลี่คลายแล้ว' : r.isApproved ? 'อนุมัติแล้ว' : 'รอดำเนินการ'}</div>
             <button onclick="openReportDetail('${r.id}')" style="width: 100%; background: #2563eb; color: #ffffff; border: none; padding: 5px 8px; border-radius: 8px; font-size: 11px; font-weight: bold; cursor: pointer;">ดูรายละเอียดและจัดการ</button>
           </div>

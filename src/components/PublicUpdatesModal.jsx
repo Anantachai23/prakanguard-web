@@ -120,11 +120,11 @@ export default function PublicUpdatesModal({
               <Activity className="w-4 h-4 text-blue-500 animate-pulse" />
             </div>
             <div className="min-w-0">
-              <h3 className={`text-sm sm:text-base font-bold leading-tight truncate ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                อัปเดตสถานการณ์น้ำล่าสุด
+              <h3 className={`text-sm sm:text-base font-bold leading-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                อัปเดตสถานการณ์น้ำ
               </h3>
               <p className={`text-[10px] sm:text-xs text-slate-400 truncate`}>
-                {lastUpdatedTime ? `อัปเดตเมื่อ ${lastUpdatedTime}` : 'ตรวจสอบสถานะทุก 15 วินาที'}
+                {lastUpdatedTime ? `อัปเดตเมื่อ: ${lastUpdatedTime}` : 'อัปเดตอัตโนมัติทุก 30 วินาที (24 ชม.)'}
               </p>
             </div>
           </div>
@@ -193,16 +193,16 @@ export default function PublicUpdatesModal({
                 }`}
               >
                 {/* Location and District */}
-                <div className="flex items-center gap-2 min-w-0">
-                  <div className={`p-1.5 rounded-xl border shrink-0 ${item.statusBadgeClass}`}>
+                <div className="flex items-start gap-2 min-w-0 flex-1">
+                  <div className={`p-1.5 rounded-xl border shrink-0 mt-0.5 ${item.statusBadgeClass}`}>
                     {item.icon}
                   </div>
-                  <div className="min-w-0">
-                    <span className={`text-xs sm:text-sm font-bold block truncate ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                  <div className="min-w-0 flex-1">
+                    <span className={`text-xs sm:text-sm font-bold block line-clamp-2 break-words leading-snug ${isDark ? 'text-white' : 'text-slate-900'}`}>
                       {item.locationName}
                     </span>
                     {item.locationSub && (
-                      <span className={`text-[10px] block truncate ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                      <span className={`text-[10px] block mt-0.5 truncate ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
                         {item.locationSub}
                       </span>
                     )}

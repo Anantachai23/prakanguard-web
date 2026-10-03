@@ -106,16 +106,6 @@ export default function Navbar({
               <span className="text-[11px] text-rose-600 dark:text-rose-400 font-semibold">วิกฤต</span>
               <span className="font-bold text-rose-600 dark:text-rose-400">{severe}</span>
             </span>
-            {falling > 0 && (
-              <>
-                <span className="text-slate-400 text-[10px]">•</span>
-                <span className="flex items-center gap-1">
-                  <span className="text-xs">📉</span>
-                  <span className="text-[11px] text-teal-600 dark:text-teal-400 font-semibold">น้ำลด</span>
-                  <span className="font-bold text-teal-600 dark:text-teal-400">{falling}</span>
-                </span>
-              </>
-            )}
           </button>
 
           {/* Clock */}
@@ -171,10 +161,10 @@ export default function Navbar({
                 ? 'bg-emerald-950/60 hover:bg-emerald-900/60 text-emerald-300 border-emerald-800' 
                 : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border-emerald-200'
             }`}
-            title="อัปเดตสถานการณ์น้ำท่วมสด"
+            title="อัปเดตสถานการณ์น้ำล่าสุดตลอด 24 ชม."
           >
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
-            <span>อัปเดตสด</span>
+            <span>อัปเดต</span>
           </button>
 
           {/* Desktop/Tablet Citizen Flood Report Button */}

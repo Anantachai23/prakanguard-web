@@ -182,6 +182,17 @@ export default function App() {
   const [selectedDistrict, setSelectedDistrict] = useState("ทั้งหมด");
   const [severityFilter, setSeverityFilter] = useState("all");
   const [selectedPoint, setSelectedPoint] = useState(null);
+  const [lightboxPhoto, setLightboxPhoto] = useState(null); // { url, title, time }
+
+  // Expose global lightbox opener for Leaflet map popup clicks
+  useEffect(() => {
+    window.pgOpenLightbox = (url, title, time) => {
+      setLightboxPhoto({ url, title, time });
+    };
+    return () => {
+      delete window.pgOpenLightbox;
+    };
+  }, []);
 
   useEffect(() => {
     pointsRef.current = points;
@@ -730,7 +741,7 @@ export default function App() {
     };
 
     executeBackgroundSync();
-    const interval = setInterval(executeBackgroundSync, 15 * 1000); // ซิงก์ข้อมูลสภาพอากาศและสถานการณ์สดทุก 15 วินาที ตลอด 24 ชม.
+    const interval = setInterval(executeBackgroundSync, 30 * 1000); // ซิงก์ข้อมูลอ้างอิงจากแหล่งข้อมูลสดทุก 30 วินาที ตลอด 24 ชม. อัตโนมัติ
 
     // ซิงก์ทันทีเมื่อผู้ใช้สลับกลับมาที่หน้าแท็บ หรือเมื่ออินเทอร์เน็ตกลับมาเชื่อมต่อ
     const handleVisibilityChange = () => {
@@ -857,10 +868,11 @@ export default function App() {
         // Trigger alert toast for admin (strictly visible ONLY if logged in as Admin)
         if (!incomingReport.isApproved && isAdminAuthenticated) {
           const isHail = incomingReport.hazardType === 'hail';
+          const resolvedLevel = incomingReport.bodyLevelLabel || (incomingReport.level === 3 || incomingReport.severity === 3 ? 'วิกฤต' : incomingReport.level === 2 || incomingReport.severity === 2 ? 'ปานกลาง' : 'ปกติ');
           setAdminAlertToast({
             id: incomingReport.id,
             name: incomingReport.name,
-            levelLabel: isHail ? `🧊 ${incomingReport.hailSizeLabel || 'ลูกเห็บตก'}` : incomingReport.bodyLevelLabel,
+            levelLabel: isHail ? `🧊 ${incomingReport.hailSizeLabel || 'ลูกเห็บตก'}` : `ระดับ${resolvedLevel}`,
             district: incomingReport.district,
             time: incomingReport.reportedAt || 'เมื่อสักครู่'
           });
@@ -1069,10 +1081,11 @@ export default function App() {
     // Notify the admin owner immediately (only if logged in as Admin)
     if (isAdminAuthenticated) {
       const isHail = newReport.hazardType === 'hail';
+      const resolvedLevel = newReport.bodyLevelLabel || (newReport.level === 3 || newReport.severity === 3 ? 'วิกฤต' : newReport.level === 2 || newReport.severity === 2 ? 'ปานกลาง' : 'ปกติ');
       setAdminAlertToast({
         id: newReport.id,
         name: newReport.name,
-        levelLabel: isHail ? `🧊 ${newReport.hailSizeLabel || 'ลูกเห็บตก'}` : newReport.bodyLevelLabel,
+        levelLabel: isHail ? `🧊 ${newReport.hailSizeLabel || 'ลูกเห็บตก'}` : `ระดับ${resolvedLevel}`,
         district: newReport.district,
         time: newReport.reportedAt
       });
@@ -1745,7 +1758,7 @@ export default function App() {
         )}
 
         {/* FLOATING TOP BAR: SEARCH, TICKER & DISTRICT PILLS */}
-        <div className={`absolute top-2.5 sm:top-3 left-2.5 sm:left-4 right-2.5 sm:right-auto z-20 flex flex-col gap-2 max-w-xl pointer-events-none transition-all duration-300 ease-in-out ${
+        <div className={`absolute top-2.5 sm:top-3 left-2.5 sm:left-4 right-2.5 sm:right-auto z-20 flex flex-col gap-2 w-auto sm:w-[350px] md:w-[340px] lg:w-[380px] xl:w-[420px] pointer-events-none transition-all duration-300 ease-in-out ${
           isTopPanelCollapsed ? '-translate-x-[120%] opacity-0 pointer-events-none' : 'translate-x-0 opacity-100'
         }`}>
           
@@ -1810,10 +1823,6 @@ export default function App() {
                             key={idx}
                             type="button"
                             onClick={() => handleSelectPopularSuggestion(item)}
-                            onPointerDown={(e) => {
-                              e.preventDefault();
-                              handleSelectPopularSuggestion(item);
-                            }}
                             className={`w-full p-2.5 rounded-xl cursor-pointer border transition-all text-left flex flex-col justify-between select-none active:scale-[0.98] ${
                               isDark 
                                 ? 'bg-slate-800/80 hover:bg-blue-900/40 border-slate-700/80 hover:border-blue-500/60 text-slate-200' 
@@ -1845,10 +1854,6 @@ export default function App() {
                             key={idx}
                             type="button"
                             onClick={() => handleSelectPopularSuggestion(item)}
-                            onPointerDown={(e) => {
-                              e.preventDefault();
-                              handleSelectPopularSuggestion(item);
-                            }}
                             className="px-2.5 py-1 rounded-lg text-[10px] bg-blue-500/10 text-blue-500 hover:bg-blue-500 hover:text-white border border-blue-400/20 font-medium transition-colors cursor-pointer active:scale-95"
                           >
                             {item.label}
@@ -1864,10 +1869,6 @@ export default function App() {
                           key={p.id}
                           type="button"
                           onClick={() => handleSelectLocation(p)}
-                          onPointerDown={(e) => {
-                            e.preventDefault();
-                            handleSelectLocation(p);
-                          }}
                           className={`w-full p-2.5 rounded-xl cursor-pointer flex items-center justify-between transition-colors text-left select-none active:scale-[0.98] ${
                             isDark ? 'hover:bg-slate-800 text-slate-200' : 'hover:bg-blue-50 text-slate-800'
                           }`}
@@ -1894,10 +1895,6 @@ export default function App() {
                           key={cr.id}
                           type="button"
                           onClick={() => handleSelectLocation(cr)}
-                          onPointerDown={(e) => {
-                            e.preventDefault();
-                            handleSelectLocation(cr);
-                          }}
                           className={`w-full p-2.5 rounded-xl cursor-pointer flex items-center justify-between transition-colors border-t border-dashed text-left select-none active:scale-[0.98] ${
                             isDark ? 'hover:bg-blue-950/50 text-slate-200 border-slate-800' : 'hover:bg-blue-50 text-slate-800 border-slate-100'
                           }`}
@@ -2121,7 +2118,7 @@ export default function App() {
 
         {/* FLOATING POINT DETAIL CARD (COMPACT & NON-INTRUSIVE & EASY TO EXIT) */}
         {selectedPoint && (
-          <div className={`absolute bottom-[calc(4.25rem+env(safe-area-inset-bottom,0px))] left-3 right-3 sm:bottom-4 sm:left-auto sm:right-4 z-30 sm:w-[410px] max-w-md mx-auto border rounded-3xl shadow-2xl backdrop-blur-2xl smooth-sheet transition-all max-h-[42vh] sm:max-h-[78vh] flex flex-col p-3.5 sm:p-4 overflow-y-auto ${
+          <div className={`absolute bottom-[calc(4.25rem+env(safe-area-inset-bottom,0px))] left-3 right-3 sm:bottom-4 sm:left-auto sm:right-4 z-30 sm:w-[360px] md:w-[340px] lg:w-[380px] max-w-md mx-auto border rounded-3xl shadow-2xl backdrop-blur-2xl smooth-sheet transition-all max-h-[44vh] sm:max-h-[78vh] flex flex-col p-3.5 sm:p-4 overflow-y-auto ${
             isDark 
               ? 'bg-slate-900/95 border-slate-700 text-slate-100' 
               : 'bg-white/95 border-slate-200 text-slate-800'
@@ -2157,7 +2154,7 @@ export default function App() {
                     </span>
                   )}
                 </div>
-                <h3 className={`text-sm sm:text-base font-bold mt-1 leading-snug truncate ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                <h3 className={`text-sm sm:text-base font-bold mt-1 leading-snug line-clamp-2 break-words ${isDark ? 'text-white' : 'text-slate-900'}`}>
                   {selectedPoint.name}
                 </h3>
               </div>
@@ -2177,20 +2174,27 @@ export default function App() {
               </button>
             </div>
 
-            {/* Citizen Uploaded Photo Preview (Compact & Clean) */}
+            {/* Citizen Uploaded Photo Preview (Tap to open full lightbox) */}
             {selectedPoint.photoUrl && (
-              <div className="mt-2.5 rounded-xl overflow-hidden border border-slate-300 dark:border-slate-700 shadow-sm relative">
+              <div 
+                className="mt-2.5 rounded-2xl overflow-hidden border border-slate-300 dark:border-slate-700 shadow-sm relative cursor-pointer group bg-black/10"
+                onClick={() => setLightboxPhoto({
+                  url: selectedPoint.photoUrl,
+                  title: selectedPoint.name,
+                  time: selectedPoint.reportedAt || selectedPoint.time
+                })}
+                title="แตะเพื่อดูภาพขนาดเต็ม"
+              >
                 <img 
                   src={selectedPoint.photoUrl} 
                   alt="รูปภาพจากประชาชนรายงาน" 
-                  className="w-full h-28 object-cover cursor-pointer hover:opacity-95 transition-opacity" 
-                  onClick={() => window.open(selectedPoint.photoUrl, '_blank')}
-                  title="แตะเพื่อดูภาพขนาดเต็ม"
+                  className="w-full h-32 object-cover group-hover:scale-105 transition-transform duration-200" 
                 />
-                <div className={`p-1 text-[10px] text-center font-medium ${
-                  isDark ? 'bg-slate-800 text-slate-300' : 'bg-slate-100 text-slate-600'
+                <div className={`p-1.5 text-[11px] text-center font-bold flex items-center justify-center gap-1.5 ${
+                  isDark ? 'bg-slate-800/90 text-cyan-300' : 'bg-slate-100/90 text-blue-700'
                 }`}>
-                  📷 รูปภาพจากประชาชนรายงาน{selectedPoint.reportedAt ? ` • ${selectedPoint.reportedAt}` : ''}
+                  <span>🔍 แตะเพื่อดูรูปภาพขนาดใหญ่</span>
+                  {selectedPoint.reportedAt && <span className="opacity-70 text-[10px]">({selectedPoint.reportedAt})</span>}
                 </div>
               </div>
             )}
@@ -2252,6 +2256,51 @@ export default function App() {
               <span>ปิดหน้าต่าง</span>
             </button>
 
+          </div>
+        )}
+
+        {/* FULLSCREEN PHOTO LIGHTBOX MODAL (Mobile, Tablet & PC) */}
+        {lightboxPhoto && (
+          <div 
+            className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex flex-col items-center justify-center p-3 sm:p-6 animate-in fade-in duration-200 pointer-events-auto"
+            onClick={() => setLightboxPhoto(null)}
+          >
+            <div 
+              className="relative max-w-3xl max-h-[90vh] w-full flex flex-col items-center"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header / Close */}
+              <div className="w-full flex items-center justify-between pb-2.5 px-2 text-white">
+                <div className="min-w-0 pr-3">
+                  <h4 className="text-sm sm:text-base font-bold truncate">
+                    {lightboxPhoto.title || 'รูปภาพจากประชาชนรายงาน'}
+                  </h4>
+                  {lightboxPhoto.time && (
+                    <p className="text-xs text-slate-300">รายงานเมื่อ: {lightboxPhoto.time}</p>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setLightboxPhoto(null)}
+                  className="p-2 rounded-full bg-white/20 hover:bg-white/30 text-white transition-colors cursor-pointer"
+                  title="ปิดรูปภาพ"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Image Preview Container */}
+              <div className="relative rounded-2xl overflow-hidden border border-white/20 shadow-2xl max-h-[75vh] w-full flex items-center justify-center bg-black/60">
+                <img 
+                  src={lightboxPhoto.url} 
+                  alt="รูปภาพรายงานน้ำท่วม" 
+                  className="max-h-[75vh] max-w-full object-contain rounded-2xl"
+                />
+              </div>
+              <div className="mt-2.5 text-center text-xs text-slate-300">
+                แตะที่ใดก็ได้เพื่อปิดรูปภาพ
+              </div>
+            </div>
           </div>
         )}
 
@@ -2404,6 +2453,7 @@ export default function App() {
       <AiForecastModal 
         isOpen={isOfficialModalOpen} 
         onClose={() => setIsOfficialModalOpen(false)}
+        userDistrict={userDistrict}
         theme={theme}
       />
 

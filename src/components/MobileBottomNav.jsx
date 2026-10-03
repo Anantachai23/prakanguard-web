@@ -135,7 +135,7 @@ export default function MobileBottomNav({
         className={`sm:hidden fixed bottom-0 left-0 right-0 z-40 border-t backdrop-blur-2xl transition-all duration-200 select-none pb-[calc(env(safe-area-inset-bottom,0px)+2px)] ${
           isDark
             ? 'bg-slate-950/95 border-slate-800 text-slate-200 shadow-[0_-8px_25px_rgba(0,0,0,0.6)]'
-            : 'bg-white/98 border-slate-200 text-slate-700 shadow-[0_-6px_20px_rgba(0,0,0,0.08)]'
+            : 'bg-white border-slate-300 text-slate-900 shadow-[0_-6px_20px_rgba(15,23,42,0.12)]'
         }`}
       >
         <div className="flex items-stretch justify-around px-2 max-w-md mx-auto" style={{ height: '62px' }}>
@@ -145,12 +145,12 @@ export default function MobileBottomNav({
             type="button"
             onClick={onOpenFeedback}
             className={`flex-1 flex flex-col items-center justify-center gap-1 rounded-2xl transition-all active:scale-95 cursor-pointer py-1 ${
-              isDark ? 'text-slate-300 hover:text-cyan-400' : 'text-slate-600 hover:text-teal-600'
+              isDark ? 'text-slate-200 hover:text-cyan-400' : 'text-slate-800 hover:text-teal-700'
             }`}
             title="ข้อเสนอแนะ"
           >
-            <MessageSquare className="w-5 h-5 text-teal-500" />
-            <span className="text-xs font-semibold leading-none">ข้อเสนอแนะ</span>
+            <MessageSquare className="w-5 h-5 text-teal-600 dark:text-teal-400" />
+            <span className="text-xs font-bold leading-none">ข้อเสนอแนะ</span>
           </button>
 
           {/* 2. อัปเดตสถานการณ์สด */}
@@ -158,11 +158,11 @@ export default function MobileBottomNav({
             type="button"
             onClick={() => onOpenPublicUpdates?.()}
             className={`flex-1 flex flex-col items-center justify-center gap-1 rounded-2xl transition-all active:scale-95 cursor-pointer py-1 ${
-              isDark ? 'text-slate-300 hover:text-emerald-400' : 'text-slate-600 hover:text-emerald-600'
+              isDark ? 'text-slate-200 hover:text-emerald-400' : 'text-slate-800 hover:text-emerald-700'
             }`}
           >
-            <Activity className="w-5 h-5 text-emerald-500" />
-            <span className="text-xs font-semibold leading-none">อัปเดต</span>
+            <Activity className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+            <span className="text-xs font-bold leading-none">อัปเดต</span>
           </button>
 
           {/* 3. CENTER HERO — แจ้งน้ำท่วม */}
@@ -184,11 +184,11 @@ export default function MobileBottomNav({
             type="button"
             onClick={onOpenAiForecast}
             className={`flex-1 flex flex-col items-center justify-center gap-1 rounded-2xl transition-all active:scale-95 cursor-pointer py-1 ${
-              isDark ? 'text-slate-300 hover:text-cyan-400' : 'text-slate-600 hover:text-blue-600'
+              isDark ? 'text-slate-200 hover:text-cyan-400' : 'text-slate-800 hover:text-blue-700'
             }`}
           >
-            <CloudRain className="w-5 h-5 text-blue-500" />
-            <span className="text-xs font-semibold leading-none">ฝนวันนี้</span>
+            <CloudRain className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+            <span className="text-xs font-bold leading-none">ฝนวันนี้</span>
           </button>
 
           {/* 5. เมนู */}
@@ -197,12 +197,12 @@ export default function MobileBottomNav({
             onClick={() => setIsMenuOpen(true)}
             className={`flex-1 flex flex-col items-center justify-center gap-1 rounded-2xl transition-all active:scale-95 cursor-pointer py-1 ${
               isMenuOpen
-                ? (isDark ? 'text-amber-400 font-bold' : 'text-amber-600 font-bold')
-                : (isDark ? 'text-slate-300 hover:text-white' : 'text-slate-600 hover:text-slate-900')
+                ? (isDark ? 'text-amber-400 font-bold' : 'text-amber-700 font-bold')
+                : (isDark ? 'text-slate-200 hover:text-white' : 'text-slate-800 hover:text-slate-950')
             }`}
           >
-            <Grid className="w-5 h-5 text-amber-500" />
-            <span className="text-xs font-semibold leading-none">เมนู</span>
+            <Grid className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+            <span className="text-xs font-bold leading-none">เมนู</span>
           </button>
 
         </div>

@@ -121,11 +121,25 @@ export default function FloodStandardsModal({ isOpen, onClose, theme = 'light' }
                 {currentStandard.depthRange}
               </span>
             </div>
-            <p className={`text-xs font-semibold ${isDark ? 'text-white' : 'text-slate-900'}`}>
-              สภาพน้ำ: {currentStandard.waterDepthVisual}
-            </p>
-            <p className={`text-xs mt-1 text-slate-600 dark:text-slate-300 leading-relaxed`}>
-              คำแนะนำ: {currentStandard.trafficAdvice}
+            <div className="space-y-1.5 mt-2">
+              <div className="flex items-start gap-1.5 text-xs">
+                <span className="font-bold shrink-0 text-blue-600 dark:text-cyan-400">🚶 ระดับร่างกายมนุษย์:</span>
+                <span className={isDark ? 'text-slate-200' : 'text-slate-800'}>{currentStandard.humanLevel}</span>
+              </div>
+              <div className="flex items-start gap-1.5 text-xs">
+                <span className="font-bold shrink-0 text-amber-600 dark:text-amber-400">🚗 ระดับส่วนของรถยนต์:</span>
+                <span className={isDark ? 'text-slate-200' : 'text-slate-800'}>{currentStandard.vehicleLevel}</span>
+              </div>
+            </div>
+            {currentStandard.descriptionFormal && (
+              <p className={`text-xs mt-2 font-medium ${isDark ? 'text-slate-300' : 'text-slate-700'} leading-relaxed border-t border-slate-200/50 dark:border-slate-700/50 pt-1.5`}>
+                <strong className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">คำอธิบายสถานการณ์อย่างเป็นทางการ:</strong>
+                {currentStandard.descriptionFormal}
+              </p>
+            )}
+            <p className={`text-xs mt-2 text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-200/50 dark:border-slate-700/50 pt-1.5`}>
+              <strong className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">คำแนะนำด้านความปลอดภัย:</strong>
+              {currentStandard.trafficAdvice}
             </p>
           </div>
 
