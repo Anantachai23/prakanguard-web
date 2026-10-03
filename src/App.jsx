@@ -769,7 +769,7 @@ export default function App() {
     const getActiveSection = () => {
       if (isCitizenReportModalOpen) return 'แบบฟอร์มแจ้งจุดท่วม';
       if (isFeedbackModalOpen) return 'กล่องข้อเสนอแนะ';
-      if (isAiForecastModalOpen) return 'เรดาร์ฝนและพยากรณ์';
+      if (isOfficialModalOpen) return 'เรดาร์ฝนและพยากรณ์';
       if (isStandardsModalOpen) return 'เกณฑ์ระดับน้ำ';
       if (isPublicUpdatesModalOpen) return 'อัปเดตสดสถานการณ์';
       if (isEmergencyModalOpen) return 'สายด่วนฉุกเฉิน 1784';
@@ -2032,7 +2032,7 @@ export default function App() {
             ) : (
               <button
                 type="button"
-                onClick={handleGetLocation}
+                onClick={() => handleLocateMe(false)}
                 className={`shrink-0 flex items-center gap-1.5 px-2.5 sm:px-3 py-2 rounded-2xl border text-[11px] sm:text-xs font-semibold shadow-md backdrop-blur-xl cursor-pointer active:scale-95 transition-all ${
                   isDark ? 'bg-slate-800/90 border-slate-700 text-slate-300 hover:text-white' : 'bg-slate-100/95 border-slate-200 text-slate-700 hover:text-slate-900'
                 }`}
