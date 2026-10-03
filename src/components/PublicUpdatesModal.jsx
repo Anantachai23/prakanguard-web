@@ -70,15 +70,16 @@ export default function PublicUpdatesModal({
     const districtText = cleanDistrict ? `${cleanDistrict}` : '';
     const subdistrictText = cleanSub ? `ต.${cleanSub}` : '';
 
-    // Format individual time for every item
+    // เวลาที่แสดง = เวลาที่สถานะเปลี่ยนจริง ไม่ใช่เวลา sync ทุก 30 วิ
+    // ลำดับความสำคัญ: statusChangedAt > resolvedAt > approvedAt > reportedAt/updatedAt
     let itemTime = '';
     const timeCandidates = [
+      item.statusChangedAt,
+      item.resolvedAt,
+      item.approvedAt,
       item.reportedAt,
       item.updatedAt,
-      item.resolvedAt,
-      item.lastCheckedTime,
-      item.time,
-      item.syncTime
+      item.time
     ];
 
     for (const tc of timeCandidates) {
@@ -86,8 +87,11 @@ export default function PublicUpdatesModal({
         let str = tc.trim();
         if (/^\d{1,2}:\d{2}$/.test(str)) {
           itemTime = `${str} น.`;
+        } else if (/^\d{1,2}:\d{2}:\d{2}\s*น\.?/.test(str)) {
+          // HH:MM:SS น. → ตัด seconds ออก
+          itemTime = str.replace(/^(\d{1,2}:\d{2}):\d{2}\s*น\.?/, '$1 น.');
         } else {
-          itemTime = str.replace(/:\d{2}\s*น\./, ' น.');
+          itemTime = str;
         }
         break;
       }
@@ -101,14 +105,7 @@ export default function PublicUpdatesModal({
         }
       } catch (_) {}
     }
-
-    if (!itemTime) {
-      if (lastUpdatedTime && typeof lastUpdatedTime === 'string') {
-        itemTime = lastUpdatedTime.replace(/:\d{2}\s*น\./, ' น.');
-      } else {
-        itemTime = new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) + ' น.';
-      }
-    }
+    // ถ้าไม่รู้เวลาจริง ไม่แสดงเลย (ดีกว่าแสดงเวลา sync ที่เหมือนกันทุก item)
 
     items.push({
       id: item.id || `upd_${Math.random()}`,
@@ -260,7 +257,7 @@ export default function PublicUpdatesModal({
                     isDark ? 'text-slate-400' : 'text-slate-500'
                   }`}>
                     <Clock className="w-3 h-3 text-blue-500 shrink-0" />
-                    <span>{item.itemTime}</span>
+                    <span>{item.itemTime || 'เฝ้าระวัง 24 ชม.'}</span>
                   </span>
                 </div>
               </div>

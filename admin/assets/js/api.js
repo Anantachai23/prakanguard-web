@@ -127,6 +127,16 @@ export async function fetchReportPhoto(id) {
   return r.ok && r.data && r.data[0] ? r.data[0].photo_url : null;
 }
 
+const LIVE_ACTIONS_TOPIC = 'https://ntfy.sh/prakanguard_live_actions_v4_spk';
+
+function publishActionToLiveClients(type, id, extra = {}) {
+  fetch(LIVE_ACTIONS_TOPIC, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json; charset=utf-8', Title: `Admin Action: ${type}`, Tags: type === 'approve' ? 'white_check_mark' : type === 'resolve' ? 'droplet' : 'wastebasket' },
+    body: JSON.stringify({ type, id, timestamp: Date.now(), ...extra })
+  }).catch(() => {});
+}
+
 /** อนุมัติ / ถอนอนุมัติ — เว็บหลักดึงข้อมูลจากตาราง reports โดยตรง จึงขึ้นบนเว็บหลักจริงทันที */
 export async function setReportsApproval(ids, approved) {
   let okCount = 0;
@@ -136,23 +146,37 @@ export async function setReportsApproval(ids, approved) {
       body: approved ? { is_approved: true, is_resolved: false } : { is_approved: false },
       prefer: 'return=representation'
     });
-    if (r.ok && Array.isArray(r.data) && r.data.length > 0) okCount++;
+    if (r.ok && Array.isArray(r.data) && r.data.length > 0) {
+      okCount++;
+      // แจ้งเว็บหลักทันทีผ่าน ntfy.sh (ไม่ต้องรอ 15 วิ poll)
+      publishActionToLiveClients(approved ? 'approve' : 'reject', id);
+    }
   }
   return okCount;
 }
 
+/** ทำเครื่องหมายแห้งแล้ว/คลี่คลาย — ลบออกจากแผนที่เว็บหลักทันที */
+export async function setReportResolved(id, resolved = true) {
+  const r = await rest(`reports?id=eq.${encodeURIComponent(id)}`, {
+    method: 'PATCH',
+    body: resolved ? { is_resolved: true } : { is_resolved: false },
+    prefer: 'return=representation'
+  });
+  if (r.ok && Array.isArray(r.data) && r.data.length > 0) {
+    publishActionToLiveClients(resolved ? 'resolve' : 'approve', id);
+    return true;
+  }
+  return false;
+}
+
 function publishRejectToLiveClients(id) {
-  // แจ้งเว็บหลักที่เปิดอยู่ให้ถอดรายการที่ถูกลบออกทันที (ไม่กระทบถ้าส่งไม่สำเร็จ)
-  fetch('https://ntfy.sh/prakanguard_live_actions_v4_spk', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json; charset=utf-8', Title: 'Admin Action: reject', Tags: 'wastebasket' },
-    body: JSON.stringify({ type: 'reject', id, timestamp: Date.now() })
-  }).catch(() => {});
+  publishActionToLiveClients('reject', id);
 }
 
 /* ============================================================ Trash */
 const LS_TRASH = 'pg_admin_trash_v2';
 const lsTrashRead = () => { try { return JSON.parse(localStorage.getItem(LS_TRASH) || '[]'); } catch { return []; } };
+
 const lsTrashWrite = (v) => { try { localStorage.setItem(LS_TRASH, JSON.stringify(v)); } catch { /* quota */ } };
 
 async function trashPut(kind, row, by) {

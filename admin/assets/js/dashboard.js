@@ -9,7 +9,7 @@ import {
 } from './core.js';
 import { 
   detectCaps, caps, fetchReports, fetchFeedback, fetchTrash, 
-  fetchOnlineSessions, fetchTodaySessions, setReportsApproval, deleteToTrash, 
+  fetchOnlineSessions, fetchTodaySessions, setReportsApproval, setReportResolved, deleteToTrash, 
   restoreFromTrash, purgeTrash, fetchReportPhoto, fetchAnnouncements, 
   createAnnouncement, setAnnouncementActive, deleteAnnouncement, 
   fetchAdminSessions, buildBackup, serverNow

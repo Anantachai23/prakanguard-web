@@ -864,29 +864,71 @@ export default function App() {
         );
         if (!isMounted) return;
         if (freshWeather) setWeather(freshWeather);
-        setLastUpdatedTime(telemetryReport.syncTime);
-
         if (lifecycleResult) {
-          if (lifecycleResult.updatedPoints) {
-            setPoints(lifecycleResult.updatedPoints);
-          }
-          if (lifecycleResult.updatedReports) {
-            setCitizenReports(lifecycleResult.updatedReports);
+          const storedSig = (() => {
             try {
-              localStorage.setItem('prakanguard_citizen_reports', JSON.stringify(lifecycleResult.updatedReports));
+              return localStorage.getItem('prakanguard_last_flood_sig');
+            } catch (e) {
+              return null;
+            }
+          })();
+          const lastSig = lastFloodSignatureRef.current || storedSig;
+          const hasStateChange = lifecycleResult.statusSignature && lastSig !== lifecycleResult.statusSignature;
+
+          if (!lastSig) {
+            // First run on page load: record initial signature, update points quietly without spamming
+            lastFloodSignatureRef.current = lifecycleResult.statusSignature;
+            try {
+              localStorage.setItem('prakanguard_last_flood_sig', lifecycleResult.statusSignature);
             } catch (e) {}
-          }
-          if (lifecycleResult.notificationMessage && lifecycleResult.statusSignature) {
-            notifyOnFloodStateChange(lifecycleResult.notificationMessage, lifecycleResult.statusSignature);
-          }
-          if (lifecycleResult.changelogEntry) {
-            setChangelog(prev => {
-              const updated = [lifecycleResult.changelogEntry, ...prev.filter(x => x.id !== lifecycleResult.changelogEntry.id)].slice(0, 30);
+            if (lifecycleResult.updatedPoints) setPoints(lifecycleResult.updatedPoints);
+            if (lifecycleResult.updatedReports) setCitizenReports(lifecycleResult.updatedReports);
+          } else if (hasStateChange) {
+            // มีการเปลี่ยนแปลงจริงของสถานการณ์น้ำท่วม (จุดท่วมใหม่ หรือน้ำแห้งคลี่คลาย)
+            const nowTime = telemetryReport.syncTime;
+            setLastUpdatedTime(nowTime);
+
+            if (lifecycleResult.updatedPoints) {
+              setPoints(lifecycleResult.updatedPoints);
+            }
+            if (lifecycleResult.updatedReports) {
+              setCitizenReports(lifecycleResult.updatedReports);
               try {
-                localStorage.setItem('prakanguard_24h_changelog', JSON.stringify(updated));
+                localStorage.setItem('prakanguard_citizen_reports', JSON.stringify(lifecycleResult.updatedReports));
               } catch (e) {}
-              return updated;
-            });
+            }
+
+            if (lifecycleResult.notificationMessage && lifecycleResult.statusSignature) {
+              notifyOnFloodStateChange(lifecycleResult.notificationMessage, lifecycleResult.statusSignature);
+            }
+
+            if (lifecycleResult.changelogEntry) {
+              setChangelog(prev => {
+                const updated = [lifecycleResult.changelogEntry, ...prev.filter(x => x.id !== lifecycleResult.changelogEntry.id)].slice(0, 30);
+                try {
+                  localStorage.setItem('prakanguard_24h_changelog', JSON.stringify(updated));
+                } catch (e) {}
+                return updated;
+              });
+            }
+
+            // ซิงก์จุดที่น้ำแห้งแล้วเข้า Supabase ทันที เพื่อนำออกจากแผนที่ทุกเครื่อง
+            if (lifecycleResult.newlyClearedPoints && lifecycleResult.newlyClearedPoints.length > 0) {
+              lifecycleResult.newlyClearedPoints.forEach(p => {
+                if (p.id && (p.id.startsWith('citizen') || p.id.startsWith('c_'))) {
+                  fetch(`${SUPABASE_URL}/rest/v1/reports?id=eq.${encodeURIComponent(p.id)}`, {
+                    method: 'PATCH',
+                    headers: {
+                      'apikey': SUPABASE_KEY,
+                      'Authorization': `Bearer ${SUPABASE_KEY}`,
+                      'Content-Type': 'application/json',
+                      'Prefer': 'return=minimal'
+                    },
+                    body: JSON.stringify({ is_resolved: true })
+                  }).catch(() => {});
+                }
+              });
+            }
           }
         }
 
@@ -1342,13 +1384,26 @@ export default function App() {
     const timeStr = new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) + ' น.';
     let approvedPoint = null;
     setCitizenReports(prev => {
+      let found = false;
       const updated = prev.map(r => {
         if (r.id === id) {
-          approvedPoint = { ...r, isApproved: true, approvedAt: timeStr };
+          found = true;
+          approvedPoint = { ...r, isApproved: true, isResolved: false, isActive: true, approvedAt: timeStr, statusChangedAt: timeStr };
           return approvedPoint;
         }
         return r;
       });
+      if (!found) {
+        fetchRecentCloudReports().then(cloudReports => {
+          const remote = (cloudReports || []).find(c => c.id === id);
+          if (remote) {
+            const fresh = { ...remote, isApproved: true, isResolved: false, isActive: true, approvedAt: timeStr, statusChangedAt: timeStr };
+            setCitizenReports(curr => [fresh, ...curr.filter(x => x.id !== id)]);
+            setSelectedPoint(fresh);
+            setFlyToLocation({ lat: fresh.lat, lng: fresh.lng });
+          }
+        });
+      }
       try {
         localStorage.setItem('prakanguard_citizen_reports', JSON.stringify(updated));
       } catch (e) {}
@@ -1394,7 +1449,7 @@ export default function App() {
     setCitizenReports(prev => {
       const updated = prev.map(r => {
         if (r.id === id) {
-          return { ...r, isResolved: true, resolvedAt: timeStr };
+          return { ...r, isResolved: true, isActive: false, depthCm: 0, statusLabel: 'สัญจรปกติ (น้ำแห้งแล้ว)', resolvedAt: timeStr, statusChangedAt: timeStr };
         }
         return r;
       });
@@ -1404,6 +1459,9 @@ export default function App() {
       return updated;
     });
     setLastUpdatedTime(timeStr);
+    if (selectedPoint && selectedPoint.id === id) {
+      setSelectedPoint(null);
+    }
     if (shouldBroadcast) {
       publishAdminAction({ type: 'resolve', id });
     }

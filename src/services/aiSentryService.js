@@ -183,6 +183,10 @@ export function evaluateDynamicFloodLifecycle(points = [], citizenReports = [], 
 
     const wasActive = point.isActive !== false && !point.isResolved;
 
+    // statusChangedAt — อัปเดตเฉพาะเมื่อสถานะเปลี่ยนจริง ไม่ใช่ทุกรอบ sync
+    const statusJustChanged = (wasActive && !shouldBeActive) || (!wasActive && shouldBeActive);
+    const statusChangedAt = statusJustChanged ? nowTime : (point.statusChangedAt || null);
+
     if (wasActive && !shouldBeActive) {
       newlyClearedPoints.push({
         id: point.id,
@@ -219,8 +223,9 @@ export function evaluateDynamicFloodLifecycle(points = [], citizenReports = [], 
         originalDepthRange,
         isActive: false,
         isResolved: true,
-        resolvedAt: nowTime,
+        resolvedAt: statusJustChanged ? nowTime : (point.resolvedAt || nowTime),
         resolvedAtDetailed: nowDetailed,
+        statusChangedAt,
         statusLabel: 'สัญจรปกติ (น้ำแห้งแล้ว)',
         trafficStatus: clearanceReason || 'ผิวจราจรแห้ง สัญจรได้ปกติทุกช่องทาง',
         depthCm: 0,
@@ -240,6 +245,7 @@ export function evaluateDynamicFloodLifecycle(points = [], citizenReports = [], 
         originalDepthRange,
         isActive: true,
         isResolved: false,
+        statusChangedAt,
         statusLabel: originalStatusLabel,
         trafficStatus: originalTrafficStatus,
         depthCm: calculatedDepthCm,
@@ -274,15 +280,17 @@ export function evaluateDynamicFloodLifecycle(points = [], citizenReports = [], 
     if (!isDistrictRaining) {
       if (reportAgeMinutes > 60 || report.waterTrend === 'dry') {
         // น้ำแห้งสนิทแล้ว -> นำออกจากแผนที่อัตโนมัติ
-        newlyClearedPoints.push({
-          id: report.id,
-          name: report.name,
-          district: report.district,
-          reason: 'การประเมินสภาพอากาศและระบบระบายน้ำ: ผิวจราจรแห้งสนิท คืนการสัญจรปกติแล้ว',
-          time: nowTime,
-          timeDetailed: nowDetailed,
-          agency: 'เครือข่ายประชาชนสมุทรปราการ (ระบบ AI Telemetry ประเมินน้ำแห้ง)'
-        });
+        if (report.waterTrend !== 'dry') {
+          newlyClearedPoints.push({
+            id: report.id,
+            name: report.name,
+            district: report.district,
+            reason: 'การประเมินสภาพอากาศและระบบระบายน้ำ: ผิวจราจรแห้งสนิท คืนการสัญจรปกติแล้ว',
+            time: nowTime,
+            timeDetailed: nowDetailed,
+            agency: 'เครือข่ายประชาชนสมุทรปราการ (ระบบ AI Telemetry ประเมินน้ำแห้ง)'
+          });
+        }
 
         return {
           ...report,
@@ -291,7 +299,9 @@ export function evaluateDynamicFloodLifecycle(points = [], citizenReports = [], 
           depthCm: 0,
           depthRange: '0 ซม. (แห้งปกติ)',
           waterTrend: 'dry',
-          resolvedAt: nowTime,
+          // resolvedAt / statusChangedAt — เขียนเฉพาะเมื่อเพิ่งเปลี่ยน
+          resolvedAt: report.waterTrend !== 'dry' ? nowTime : (report.resolvedAt || nowTime),
+          statusChangedAt: report.waterTrend !== 'dry' ? nowTime : (report.statusChangedAt || null),
           resolvedAtDetailed: nowDetailed,
           statusLabel: 'ระบายแห้งแล้ว (สัญจรปกติ)',
           trafficStatus: 'ผิวจราจรแห้งสนิท น้ำระบายหมดแล้ว สัญจรได้ปกติทุกช่องทาง',
@@ -299,7 +309,7 @@ export function evaluateDynamicFloodLifecycle(points = [], citizenReports = [], 
           lastCheckedTime: nowTime
         };
       } else if (reportAgeMinutes >= 20 || report.waterTrend === 'falling') {
-        // น้ำกำลังลด -> แสดงสัญลักษณ์กำกับว่า "น้ำกำลังลด" (แสดงไอคอน 📉 บนแผนที่)
+        // น้ำกำลังลด -> แสดงสัญลักษณ์กำกับว่า "น้ำกำลังลด"
         const fallingDepth = Math.max(5, Math.min(report.depthCm || 15, 12));
         if (report.waterTrend !== 'falling') {
           newlyFallingPoints.push({
@@ -316,6 +326,8 @@ export function evaluateDynamicFloodLifecycle(points = [], citizenReports = [], 
           depthCm: fallingDepth,
           depthRange: `${fallingDepth} ซม. (กำลังลดลง)`,
           level: 1,
+          // statusChangedAt — เขียนเฉพาะเมื่อเพิ่งเปลี่ยนเป็น falling
+          statusChangedAt: report.waterTrend !== 'falling' ? nowTime : (report.statusChangedAt || null),
           trafficStatus: 'ระดับน้ำกำลังลดลงเรื่อยๆ การระบายน้ำคลี่คลาย ใกล้คืนผิวจราจรปกติ',
           lastCheckedTime: nowTime,
           verifiedSource: 'เครือข่ายประชาชน (ระบบ AI ตรวจพบน้ำกำลังลด)'
