@@ -296,8 +296,8 @@ export default function MapView({
     ];
 
     const map = L.map(mapContainerRef.current, {
-      center: [13.6000, 100.6500], // Samut Prakan Center
-      zoom: 11,
+      center: [13.5850, 100.6500], // Samut Prakan Center
+      zoom: 10.3, // Wider overview for cinematic welcome entrance zoom
       minZoom: 10,
       maxZoom: 19,
       maxBounds: SAMUT_PRAKAN_BOUNDS_RESTRICT,
@@ -744,8 +744,8 @@ export default function MapView({
 
     map.stop();
     map.flyTo([flyToLocation.lat, flyToLocation.lng], targetZoom, {
-      duration: 1.2,
-      easeLinearity: 0.25
+      duration: flyToLocation.duration || 1.2,
+      easeLinearity: flyToLocation.easeLinearity || 0.25
     });
 
     const targetId = flyToLocation.pointId || selectedPoint?.id;

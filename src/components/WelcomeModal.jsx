@@ -1,127 +1,237 @@
-import React from 'react';
-import { X, Shield, CheckCircle2, Navigation2, Info, MapPin } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { 
+  X, 
+  Shield, 
+  Waves, 
+  CloudRain, 
+  Camera, 
+  ArrowRight, 
+  MapPin, 
+  Sparkles,
+  Compass
+} from 'lucide-react';
 
-export default function WelcomeModal({ isOpen, onClose, onEnterWithLocation, theme = 'light' }) {
-  if (!isOpen) return null;
+export default function WelcomeModal({ 
+  isOpen, 
+  onClose, 
+  onEnterWebsite, 
+  theme = 'light' 
+}) {
   const isDark = theme === 'dark';
+  const [isEntering, setIsEntering] = useState(false);
+  const [isExiting, setIsExiting] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      setIsExiting(false);
+      // Small frame delay to trigger entrance transition
+      const timer = setTimeout(() => {
+        setIsEntering(true);
+      }, 30);
+      return () => clearTimeout(timer);
+    } else {
+      setIsEntering(false);
+      setIsExiting(false);
+    }
+  }, [isOpen]);
+
+  if (!isOpen) return null;
 
   const handleEnter = () => {
-    if (onEnterWithLocation) {
-      onEnterWithLocation();
-    } else if (onClose) {
-      onClose();
+    if (isExiting) return;
+    setIsExiting(true);
+
+    // 1. Immediately trigger the cinematic smooth map zoom-in
+    if (onEnterWebsite) {
+      onEnterWebsite();
     }
+
+    // 2. Allow 800ms for the card to slide up smoothly from bottom to top and fade out
+    setTimeout(() => {
+      if (onClose) onClose();
+    }, 800);
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 smooth-backdrop">
-      <div className={`w-full max-w-lg border rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh] sm:max-h-[88vh] relative smooth-pop transition-colors ${
-        isDark ? 'bg-slate-900 border-slate-700 text-slate-100' : 'bg-white border-slate-200 text-slate-800'
-      }`}>
-        
-        {/* Accent Bar */}
-        <div className="h-1.5 w-full bg-gradient-to-r from-blue-600 via-cyan-500 to-indigo-600 shrink-0"></div>
+    <div 
+      className={`fixed inset-0 z-50 flex items-center justify-center p-3.5 sm:p-5 overflow-hidden select-none transition-all duration-700 ${
+        isEntering && !isExiting 
+          ? 'bg-slate-950/75 backdrop-blur-md opacity-100 pointer-events-auto' 
+          : 'bg-slate-950/0 backdrop-blur-none opacity-0 pointer-events-none'
+      }`}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) handleEnter();
+      }}
+      style={{
+        transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)'
+      }}
+    >
+      {/* Welcome Card Container with Smooth Slide-Up Exit Animation */}
+      <div 
+        className={`w-full max-w-lg sm:max-w-xl border rounded-3xl shadow-2xl overflow-hidden flex flex-col relative transition-all duration-800 ${
+          isDark 
+            ? 'bg-slate-900/95 border-slate-700/80 text-slate-100 shadow-cyan-950/40' 
+            : 'bg-white/95 border-slate-200/90 text-slate-800 shadow-blue-900/20'
+        }`}
+        style={{
+          transform: !isEntering 
+            ? 'translate3d(0, 32px, 0) scale(0.96)' 
+            : isExiting 
+              ? 'translate3d(0, -120vh, 0) scale(0.95)' 
+              : 'translate3d(0, 0, 0) scale(1)',
+          opacity: !isEntering || isExiting ? 0 : 1,
+          transitionProperty: 'transform, opacity',
+          transitionDuration: isExiting ? '850ms' : '650ms',
+          transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)',
+          willChange: 'transform, opacity'
+        }}
+      >
+        {/* Glowing Top Rainbow Bar */}
+        <div className="h-1.5 w-full bg-gradient-to-r from-blue-600 via-cyan-400 to-teal-400 shrink-0"></div>
 
         {/* Modal Header */}
-        <div className={`p-4 sm:p-6 pb-2.5 sm:pb-3 flex items-start justify-between gap-3 shrink-0 ${isDark ? 'bg-slate-950/40' : ''}`}>
-          <div className="flex items-center space-x-3">
-            <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shadow-sm shrink-0 border ${
-              isDark ? 'bg-blue-950 text-cyan-400 border-blue-800' : 'bg-blue-50 text-blue-600 border-blue-200'
-            }`}>
-              <Shield className="w-5 h-5" />
-            </div>
-            <div>
-              <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full tracking-wide uppercase border ${
-                isDark ? 'bg-blue-950/80 text-cyan-300 border-blue-800' : 'bg-blue-50 text-blue-700 border-blue-200'
-              }`}>
-                สารสนเทศสาธารณประโยชน์
+        <div className={`p-4 sm:p-6 pb-2 sm:pb-3 flex items-start justify-between gap-3 shrink-0 ${
+          isDark ? 'bg-slate-950/40' : 'bg-slate-50/60'
+        }`}>
+          <div className="flex items-center space-x-3 sm:space-x-3.5">
+            <div className="relative">
+              <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-tr from-blue-600 via-cyan-500 to-teal-400 p-[1.5px] shadow-lg shadow-cyan-500/20 flex items-center justify-center">
+                <div className={`w-full h-full rounded-[14px] flex items-center justify-center ${
+                  isDark ? 'bg-slate-900' : 'bg-white'
+                }`}>
+                  <Shield className="w-5 h-5 sm:w-6 sm:h-6 text-blue-500" />
+                </div>
+              </div>
+              <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-3 w-3 bg-cyan-500"></span>
               </span>
-              <h3 className={`text-base sm:text-lg font-bold mt-0.5 leading-snug ${isDark ? 'text-white' : 'text-slate-900'}`}>
+            </div>
+
+            <div>
+              <div className="flex items-center gap-1.5">
+                <span className={`text-[10.5px] sm:text-[11px] font-extrabold px-2.5 py-0.5 rounded-full uppercase tracking-wider border ${
+                  isDark 
+                    ? 'bg-blue-950/80 text-cyan-300 border-blue-800/80' 
+                    : 'bg-blue-50 text-blue-700 border-blue-200'
+                }`}>
+                  ยินดีต้อนรับสู่ระบบ
+                </span>
+                <span className="flex items-center gap-1 text-[11px] font-bold text-amber-500">
+                  <Sparkles className="w-3 h-3" />
+                  <span>PrakanGuard</span>
+                </span>
+              </div>
+              <h2 className={`text-base sm:text-lg font-black mt-0.5 leading-snug tracking-tight ${
+                isDark ? 'text-white' : 'text-slate-900'
+              }`}>
                 ระบบสารสนเทศและเฝ้าระวังอุทกภัย จ.สมุทรปราการ
-              </h3>
+              </h2>
             </div>
           </div>
+
           <button 
-            onClick={onClose} 
+            type="button"
+            onClick={handleEnter} 
             className={`p-1.5 rounded-xl transition-all cursor-pointer shrink-0 ${
-              isDark ? 'bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white' : 'bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800'
+              isDark 
+                ? 'bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white' 
+                : 'bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800'
             }`}
-            title="ปิดหน้าต่าง"
+            title="ปิดหน้าต่างและเข้าสู่แผนที่"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
-        {/* Modal Body (Scrollable with finger swipe on mobile) */}
-        <div className={`flex-1 overflow-y-auto px-4 sm:px-6 py-2 sm:py-3 space-y-3 text-xs sm:text-sm ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
+        {/* Modal Body: Concise explanation of what the web app does */}
+        <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-2.5 sm:py-3.5 space-y-2.5 sm:space-y-3 text-xs sm:text-sm">
           
-
-
-          {/* Project Purpose Statement */}
-          <div className={`p-3.5 sm:p-4 rounded-2xl border shadow-xs space-y-2 ${
-            isDark ? 'bg-slate-855/80 border-slate-700' : 'bg-slate-50 border-slate-200'
+          <p className={`text-xs sm:text-[13px] leading-relaxed font-medium ${
+            isDark ? 'text-slate-300' : 'text-slate-600'
           }`}>
-            <div className="flex items-center gap-2">
-              <Info className={`w-4 h-4 shrink-0 ${isDark ? 'text-cyan-400' : 'text-blue-600'}`} />
-              <h4 className={`text-xs font-bold uppercase tracking-wider ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                วัตถุประสงค์ระบบสารสนเทศ
-              </h4>
-            </div>
-            <p className={`text-xs sm:text-sm leading-relaxed ${isDark ? 'text-slate-200' : 'text-slate-700'}`}>
-              เว็บไซต์นี้จัดทำขึ้นเพื่อเป็นสื่อกลางในการรวบรวมและเผยแพร่ข้อมูลสารสนเทศเกี่ยวกับสถานการณ์น้ำท่วมขังบนผิวจราจรในพื้นที่จังหวัดสมุทรปราการ โดยมีวัตถุประสงค์เพื่อสนับสนุนการวางแผนการเดินทางและความปลอดภัยในการสัญจรของประชาชน
-            </p>
-          </div>
+            เว็บไซต์นี้พัฒนาขึ้นเพื่อติดตาม เฝ้าระวัง และรายงานสถานการณ์น้ำท่วมขังบนผิวจราจรในพื้นที่ <strong className={isDark ? 'text-white' : 'text-slate-900'}>6 อำเภอ จังหวัดสมุทรปราการ</strong> แบบเรียลไทม์ ตลอด 24 ชั่วโมง เพื่อความปลอดภัยและสนับสนุนการเดินทางของประชาชน
+          </p>
 
-          {/* Data Reference & Disclaimers */}
-          <div className={`space-y-2 p-3.5 sm:p-4 rounded-2xl border ${
-            isDark ? 'bg-slate-855/80 border-slate-700' : 'bg-slate-50 border-slate-200'
-          }`}>
-            <h4 className={`text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 ${
-              isDark ? 'text-slate-200' : 'text-slate-800'
+          {/* 3 Core Highlights */}
+          <div className="grid grid-cols-1 gap-2 sm:gap-2.5 pt-1">
+            
+            {/* Feature 1: Real-time Flood Hotspots */}
+            <div className={`p-3 rounded-2xl border flex items-start gap-3 transition-colors ${
+              isDark ? 'bg-slate-800/60 border-slate-700/70' : 'bg-blue-50/50 border-blue-100'
             }`}>
-              <Shield className={`w-4 h-4 ${isDark ? 'text-cyan-400' : 'text-blue-600'}`} />
-              <span>การอ้างอิงแหล่งข้อมูลและการเฝ้าระวัง 24 ชั่วโมง</span>
-            </h4>
-
-            <div className={`space-y-2 text-xs leading-relaxed ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
-              <div className="flex items-start gap-2">
-                <CheckCircle2 className={`w-3.5 h-3.5 shrink-0 mt-0.5 ${isDark ? 'text-cyan-400' : 'text-blue-600'}`} />
-                <span>
-                  <strong className={isDark ? 'text-white' : 'text-slate-800'}>อัปเดต 24 ชั่วโมง:</strong> ระบบตรวจสภาพอากาศ เรดาร์ฝน และน้ำทะเลหนุนอัตโนมัติตลอด 24 ชม. จุดไหนน้ำระบายแห้งจะถูกนำออกจากแผนที่เสี่ยงภัยทันที
-                </span>
+              <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 border ${
+                isDark ? 'bg-blue-950 text-cyan-400 border-blue-800' : 'bg-white text-blue-600 border-blue-200 shadow-xs'
+              }`}>
+                <Waves className="w-4 h-4 text-blue-500" />
               </div>
-
-              <div className="flex items-start gap-2">
-                <CheckCircle2 className={`w-3.5 h-3.5 shrink-0 mt-0.5 ${isDark ? 'text-cyan-400' : 'text-blue-600'}`} />
-                <span>
-                  <strong className={isDark ? 'text-white' : 'text-slate-800'}>การรวบรวมข้อมูล:</strong> ข้อมูลสถิติ พิกัดจุดเสี่ยง เกณฑ์ระดับน้ำ และพยากรณ์อากาศ เป็นการรวบรวมจากแหล่งข้อมูลเปิดและประกาศที่เป็นประโยชน์ต่อสาธารณชน เพื่อประกอบการติดตามสถานการณ์เบื้องต้น
-                </span>
-              </div>
-
-              <div className="flex items-start gap-2">
-                <CheckCircle2 className={`w-3.5 h-3.5 shrink-0 mt-0.5 ${isDark ? 'text-cyan-400' : 'text-blue-600'}`} />
-                <span>
-                  <strong className={isDark ? 'text-white' : 'text-slate-800'}>ข้อแนะนำการใช้งาน:</strong> ข้อมูลนี้จัดทำขึ้นเพื่อเป็นข้อมูลประกอบการตัดสินใจเบื้องต้น ในสถานการณ์ฉุกเฉิน ขอแนะนำให้ประชาชนติดตามประกาศเตือนภัยจากหน่วยงานในพื้นที่ควบคู่กันไปด้วย
-                </span>
+              <div className="min-w-0">
+                <h3 className={`text-xs sm:text-[13px] font-bold ${isDark ? 'text-slate-100' : 'text-slate-900'}`}>
+                  เฝ้าระวังระดับน้ำ 3 ระดับ พร้อมรูปถ่ายจริง
+                </h3>
+                <p className={`text-[11px] sm:text-xs leading-normal mt-0.5 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+                  ตรวจสอบจุดเสี่ยงน้ำท่วม (ปกติ, ปานกลาง, วิกฤต) จุดที่น้ำกำลังลด (📉) และจุดที่มีประชาชนถ่ายภาพรายงาน (📷)
+                </p>
               </div>
             </div>
-          </div>
 
+            {/* Feature 2: Weather & Rain Radar */}
+            <div className={`p-3 rounded-2xl border flex items-start gap-3 transition-colors ${
+              isDark ? 'bg-slate-800/60 border-slate-700/70' : 'bg-sky-50/50 border-sky-100'
+            }`}>
+              <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 border ${
+                isDark ? 'bg-sky-950 text-sky-400 border-sky-800' : 'bg-white text-sky-600 border-sky-200 shadow-xs'
+              }`}>
+                <CloudRain className="w-4 h-4 text-sky-500" />
+              </div>
+              <div className="min-w-0">
+                <h3 className={`text-xs sm:text-[13px] font-bold ${isDark ? 'text-slate-100' : 'text-slate-900'}`}>
+                  พยากรณ์ฝน 24 ชม. & อุณหภูมิสด
+                </h3>
+                <p className={`text-[11px] sm:text-xs leading-normal mt-0.5 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+                  อุณหภูมิจริงตามสภาพอากาศอัปเดตอัตโนมัติ พร้อมเรดาร์ฝนและสถิติน้ำทะเลหนุนตลอดทั้งวัน
+                </p>
+              </div>
+            </div>
+
+            {/* Feature 3: Citizen Crowdsource Reporting */}
+            <div className={`p-3 rounded-2xl border flex items-start gap-3 transition-colors ${
+              isDark ? 'bg-slate-800/60 border-slate-700/70' : 'bg-teal-50/50 border-teal-100'
+            }`}>
+              <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 border ${
+                isDark ? 'bg-teal-950 text-teal-400 border-teal-800' : 'bg-white text-teal-600 border-teal-200 shadow-xs'
+              }`}>
+                <Camera className="w-4 h-4 text-teal-500" />
+              </div>
+              <div className="min-w-0">
+                <h3 className={`text-xs sm:text-[13px] font-bold ${isDark ? 'text-slate-100' : 'text-slate-900'}`}>
+                  ร่วมปักหมุดรายงานน้ำท่วม
+                </h3>
+                <p className={`text-[11px] sm:text-xs leading-normal mt-0.5 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+                  ประชาชนสามารถถ่ายรูปและปักหมุดแจ้งเตือนจุดน้ำท่วมได้ทันที เพื่อความปลอดภัยของทุกคนในชุมชน
+                </p>
+              </div>
+            </div>
+
+          </div>
         </div>
 
-        {/* Modal Footer (Pinned at bottom, ALWAYS accessible on any mobile device) */}
-        <div className={`p-3.5 sm:p-5 border-t flex items-center justify-between gap-3 shrink-0 ${
-          isDark ? 'border-slate-800 bg-slate-950/80' : 'border-slate-200 bg-slate-50'
+        {/* Modal Footer with the Hero "เข้าสู่เว็บ" Button */}
+        <div className={`p-4 sm:p-5 border-t flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0 ${
+          isDark ? 'border-slate-800 bg-slate-950/80' : 'border-slate-200 bg-slate-50/90'
         }`}>
-          <span className={`text-[11px] hidden sm:inline ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-            PrakanGuard • ระบบสารสนเทศเพื่อความปลอดภัยในการสัญจร จ.สมุทรปราการ
-          </span>
+          <div className="hidden sm:flex items-center gap-1.5 text-[11px] font-semibold text-slate-400 dark:text-slate-500">
+            <Compass className="w-3.5 h-3.5 text-blue-500 animate-spin-slow" />
+            <span>PrakanGuard • แผนที่สารสนเทศอัจฉริยะ</span>
+          </div>
+
           <button
+            type="button"
             onClick={handleEnter}
-            className="w-full sm:w-auto px-6 py-2.5 sm:py-3 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs sm:text-sm transition-all cursor-pointer shadow-lg shadow-blue-600/30 hover:scale-102 active:scale-98 text-center flex items-center justify-center gap-2"
+            className="w-full sm:w-auto px-7 py-3 sm:py-3.5 rounded-2xl bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white font-black text-sm sm:text-base transition-all duration-300 cursor-pointer shadow-lg shadow-blue-500/25 hover:shadow-cyan-500/30 hover:scale-102 active:scale-98 flex items-center justify-center gap-2.5 group"
           >
-            <Navigation2 className="w-4 h-4 fill-white" />
-            <span>เข้าสู่ระบบสารสนเทศ (เปิดพิกัด GPS)</span>
+            <span>เข้าสู่เว็บไซต์</span>
+            <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 transition-transform group-hover:translate-x-1" />
           </button>
         </div>
 

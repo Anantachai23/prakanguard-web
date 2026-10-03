@@ -444,8 +444,8 @@ export default function App() {
     };
   }, []);
 
-  // Welcome Announcement Modal (ปิดเป็นค่าเริ่มต้น เพื่อไม่ให้รกหน้าจอเมื่อเปิดเข้ามา)
-  const [isWelcomeModalOpen, setIsWelcomeModalOpen] = useState(false);
+  // Welcome Announcement Modal (เปิดเป็นค่าเริ่มต้น เพื่อแสดงข้อความต้อนรับและอธิบายคร่าวๆ)
+  const [isWelcomeModalOpen, setIsWelcomeModalOpen] = useState(true);
 
   // GPS User Location
   const [userLocation, setUserLocation] = useState(null);
@@ -2578,11 +2578,18 @@ export default function App() {
         isOpen={isWelcomeModalOpen}
         onClose={() => {
           setIsWelcomeModalOpen(false);
-          handleLocateMe(false);
         }}
-        onEnterWithLocation={() => {
-          setIsWelcomeModalOpen(false);
-          handleLocateMe(false);
+        onEnterWebsite={() => {
+          const isMobileScreen = typeof window !== 'undefined' && window.innerWidth < 640;
+          setFlyToLocation({
+            lat: 13.6000,
+            lng: 100.6500,
+            zoom: isMobileScreen ? 11.2 : 11.6,
+            duration: 2.2,
+            easeLinearity: 0.22,
+            ts: Date.now()
+          });
+          handleLocateMe(true);
         }}
         theme={theme}
       />
