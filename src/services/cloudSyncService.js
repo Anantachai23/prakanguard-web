@@ -436,9 +436,69 @@ export async function syncCloudDataNow() {
 }
 
 /**
- * ส่ง Heartbeat ข้อมูลการเข้าชมเบาๆ ไปยัง Supabase + Admin Server (Non-blocking)
+ * ตรวจสอบประเภทและยี่ห้อ/รุ่นของอุปกรณ์ผู้ใช้ (iPhone, iPad, OPPO, Vivo, Samsung, Xiaomi, PC, ฯลฯ)
  */
-export function sendVisitorTelemetry(district = 'เมืองสมุทรปราการ') {
+export function getDetailedDeviceInfo() {
+  if (typeof window === 'undefined' || !navigator) return 'Desktop';
+  const ua = navigator.userAgent || '';
+
+  // 1. iOS / Apple (iPhone, iPad, iPod)
+  if (/iPhone/i.test(ua)) {
+    const match = ua.match(/OS (\d+[._]\d+)/i);
+    const osVer = match ? match[1].replace('_', '.') : '';
+    return osVer ? `iPhone (iOS ${osVer})` : 'iPhone';
+  }
+  if (/iPad/i.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) {
+    return 'iPad (iPadOS)';
+  }
+
+  // 2. Android Brands & Specific Models
+  if (/Android/i.test(ua)) {
+    let brand = '';
+    if (/OPPO|CPH\d{4}|P[C-G][A-Z0-9]+/i.test(ua)) {
+      const modelMatch = ua.match(/(CPH\d{4}|Find\s?[A-Z0-9]+|Reno\s?[A-Z0-9]+|A\d{2}[s]?)/i);
+      brand = modelMatch ? `OPPO ${modelMatch[1]}` : 'OPPO';
+    } else if (/vivo|V2\d{3}|V1\d{3}/i.test(ua)) {
+      const modelMatch = ua.match(/(V2\d{3}[A-Z]?|Y\d{2}[s]?|V\d{2}[s]?|X\d{2}[s]?)/i);
+      brand = modelMatch ? `Vivo ${modelMatch[1]}` : 'Vivo';
+    } else if (/SAMSUNG|SM-[A-Z0-9]+/i.test(ua)) {
+      const modelMatch = ua.match(/SM-([A-Z0-9]+)/i);
+      brand = modelMatch ? `Samsung (${modelMatch[1]})` : 'Samsung Galaxy';
+    } else if (/Xiaomi|Redmi|POCO|2[0-9]{3}[A-Z0-9]+/i.test(ua)) {
+      const modelMatch = ua.match(/(Redmi[^\s;]+|POCO[^\s;]+|Mi\s?[A-Z0-9]+)/i);
+      brand = modelMatch ? `Xiaomi ${modelMatch[1]}` : 'Xiaomi / Redmi';
+    } else if (/Realme|RMX\d{4}/i.test(ua)) {
+      brand = 'Realme';
+    } else if (/Huawei|HONOR/i.test(ua)) {
+      brand = 'Huawei';
+    } else {
+      brand = 'Android Mobile';
+    }
+
+    const andVerMatch = ua.match(/Android (\d+(\.\d+)?)/i);
+    const andVer = andVerMatch ? ` (v${andVerMatch[1]})` : '';
+    return `${brand}${andVer}`;
+  }
+
+  // 3. Desktop Operating Systems
+  if (/Windows NT/i.test(ua)) {
+    return 'Windows PC';
+  }
+  if (/Macintosh/i.test(ua)) {
+    return 'Mac / macOS';
+  }
+  if (/Linux/i.test(ua)) {
+    return 'Linux PC';
+  }
+
+  return /Mobile/i.test(ua) ? 'Mobile' : 'Desktop';
+}
+
+/**
+ * ส่ง Heartbeat ข้อมูลการเข้าชมเบาๆ ไปยัง Supabase + Admin Server (Non-blocking)
+ * บันทึกตำแหน่ง GPS อำเภอ และประเภท/รุ่นอุปกรณ์จริง (เช่น iPhone, OPPO, Vivo)
+ */
+export function sendVisitorTelemetry(district = 'เมืองสมุทรปราการ', customDevice = null) {
   if (typeof window === 'undefined') return;
   try {
     let sessionId = sessionStorage.getItem('pg_visitor_sid');
@@ -446,10 +506,10 @@ export function sendVisitorTelemetry(district = 'เมืองสมุทร�
       sessionId = 'v-' + Math.random().toString(36).substring(2, 9) + '-' + Date.now().toString(36);
       sessionStorage.setItem('pg_visitor_sid', sessionId);
     }
-    const isMobile = /Mobile|Android|iP(hone|od)/i.test(navigator.userAgent);
+    const deviceModel = customDevice || getDetailedDeviceInfo();
     const payload = {
       session_id: sessionId,
-      device: isMobile ? 'Mobile' : 'Desktop',
+      device: deviceModel,
       district: district || 'เมืองสมุทรปราการ',
       page: document.title || 'หน้าหลัก',
       last_ping: new Date().toISOString()

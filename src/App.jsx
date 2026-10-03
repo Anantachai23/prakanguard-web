@@ -31,7 +31,8 @@ import {
   syncCloudDataNow,
   isValidReport,
   isValidFeedback,
-  sendVisitorTelemetry
+  sendVisitorTelemetry,
+  getDetailedDeviceInfo
 } from './services/cloudSyncService';
 import { 
   Phone, 
@@ -759,16 +760,20 @@ export default function App() {
 
   // Real-time Cloud Cross-Device Synchronization (Crowdsource Flood/Hail Reports & Feedback)
   useEffect(() => {
-    // Send anonymous heartbeat telemetry — ใช้ GPS district หากมี มิฉะนั้นใช้ selected district
+    // Send anonymous heartbeat telemetry — ระบุอำเภอจาก GPS จริง พร้อมรุ่นอุปกรณ์ (iPhone, OPPO, Vivo, ฯลฯ)
     const getReportingDistrict = () => {
-      if (userDistrict) return userDistrict;
+      if (userLocation && typeof userLocation.lat === 'number' && typeof userLocation.lng === 'number') {
+        const detected = detectDistrictForCoordinates(userLocation.lat, userLocation.lng);
+        return detected || 'นอกเขตสมุทรปราการ';
+      }
       if (selectedDistrict && selectedDistrict !== 'ทั้งหมด') return selectedDistrict;
-      return 'เมืองสมุทรปราการ';
+      return 'กำลังระบุพิกัด...';
     };
-    sendVisitorTelemetry(getReportingDistrict());
+    sendVisitorTelemetry(getReportingDistrict(), getDetailedDeviceInfo());
     const telemetryInterval = setInterval(() => {
-      sendVisitorTelemetry(getReportingDistrict());
-    }, 30000);
+      sendVisitorTelemetry(getReportingDistrict(), getDetailedDeviceInfo());
+    }, 15000);
+
 
 
     const pullCloudUpdates = () => {
@@ -1501,10 +1506,7 @@ export default function App() {
     }
     // 1. Ray-casting check against exact 6-district GeoJSON polygon boundaries on map
     const boundaryDistrict = detectDistrictForCoordinates(userLocation.lat, userLocation.lng);
-    if (boundaryDistrict) {
-      return boundaryDistrict;
-    }
-    return "เมืองสมุทรปราการ";
+    return boundaryDistrict || null;
   }, [userLocation]);
 
   // GPS Geolocation Handler with High Accuracy (Auto-requested on entry for mobile, iPad, and all devices)
@@ -1526,47 +1528,53 @@ export default function App() {
 
         const accuracyM = Math.round(pos.coords.accuracy);
         const timeStr = new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) + ' น.';
-
-        // ตรวจสอบอำเภอจาก GeoJSON boundary (ray-casting เที่ยงตรง)
         const detectedDistrict = detectDistrictForCoordinates(coords.lat, coords.lng);
-        const districtLabel = detectedDistrict ? `อ.${detectedDistrict}` : null;
+        const deviceModel = getDetailedDeviceInfo();
 
-        // Find nearest active danger hotspot
-        let minDistance = 999999;
-        let closest = null;
-        pointsRef.current.forEach(p => {
-          if (p.isActive !== false && !p.isResolved) {
-            const d = getDistanceKm(coords.lat, coords.lng, p.lat, p.lng);
-            if (d < minDistance) {
-              minDistance = d;
-              closest = p;
-            }
+        // 1. ตรวจสอบว่าพิกัดอยู่ภายในขอบเขตจังหวัดสมุทรปราการหรือไม่
+        if (!detectedDistrict) {
+          // อยู่นอกพื้นที่ จ.สมุทรปราการ
+          const outMsg = '⚠️ ตำแหน่งท่านไม่ได้อยู่ในจังหวัดสมุทรปราการ';
+          setLatestUpdateNotification(outMsg);
+          sendVisitorTelemetry('นอกเขตสมุทรปราการ', deviceModel);
+
+          if (!silent) {
+            alert(`📍 ตรวจพบพิกัดของคุณที่ [${coords.lat.toFixed(4)}, ${coords.lng.toFixed(4)}]\n\n⚠️ ตำแหน่งท่านไม่ได้อยู่ในจังหวัดสมุทรปราการ\n\nระบบ PrakanGuard พัฒนาขึ้นเพื่อติดตามและรายงานสถานการณ์น้ำท่วมในพื้นที่ 6 อำเภอของจังหวัดสมุทรปราการครับ\n\n(ระบบได้ปักหมุดตำแหน่งของคุณบนแผนที่ไว้เรียบร้อยแล้ว)`);
           }
-        });
-
-        if (closest && minDistance <= 3.0) {
-          setLatestUpdateNotification(
-            `📍 คุณอยู่ใน${districtLabel ? districtLabel : 'สมุทรปราการ'} (±${accuracyM} ม.) · ใกล้จุดเสี่ยง "${closest.name}" ${minDistance} กม.`
-          );
-        } else if (districtLabel) {
-          setLatestUpdateNotification(
-            `📍 ตำแหน่งของคุณ: ${districtLabel} (±${accuracyM} ม. · ${timeStr})`
-          );
         } else {
-          setLatestUpdateNotification(`📍 ระบุพิกัด GPS สำเร็จ (±${accuracyM} ม. · ${timeStr})`);
+          // อยู่ภายใน จ.สมุทรปราการ (เมืองสมุทรปราการ, บางพลี, บางบ่อ, บางเสาธง, พระประแดง, พระสมุทรเจดีย์)
+          const districtLabel = `อ.${detectedDistrict}`;
+          sendVisitorTelemetry(detectedDistrict, deviceModel);
+
+          // Find nearest active danger hotspot
+          let minDistance = 999999;
+          let closest = null;
+          pointsRef.current.forEach(p => {
+            if (p.isActive !== false && !p.isResolved) {
+              const d = getDistanceKm(coords.lat, coords.lng, p.lat, p.lng);
+              if (d < minDistance) {
+                minDistance = d;
+                closest = p;
+              }
+            }
+          });
+
+          if (closest && minDistance <= 3.0) {
+            setLatestUpdateNotification(
+              `📍 คุณอยู่ใน${districtLabel} (±${accuracyM} ม.) · ใกล้จุดเสี่ยง "${closest.name}" ${minDistance} กม.`
+            );
+          } else {
+            setLatestUpdateNotification(
+              `📍 ตำแหน่งของคุณ: ${districtLabel} จ.สมุทรปราการ (±${accuracyM} ม. · ${timeStr})`
+            );
+          }
         }
         setTimeout(() => setLatestUpdateNotification(null), 8000);
-
-        const isInside = coords.lat >= 13.45 && coords.lat <= 13.75 && coords.lng >= 100.45 && coords.lng <= 100.95;
-        if (!isInside && !silent) {
-
-          alert(`ตรวจพบตำแหน่งของคุณที่ [${coords.lat.toFixed(4)}, ${coords.lng.toFixed(4)}]\n\nหมายเหตุ: พิกัดของคุณอยู่นอกพื้นที่จังหวัดสมุทรปราการ แต่ระบบได้แสดงตำแหน่งของคุณบนแผนที่เรียบร้อยแล้วครับ`);
-        }
       },
       (err) => {
         if (!silent) {
           let msg = "ไม่สามารถเข้าถึงตำแหน่งของคุณได้ กรุณาอนุญาต Location บนเบราว์เซอร์เพื่อความแม่นยำ";
-          if (err.code === 1) msg = "คุณปฏิเสธการเข้าถึงตำแหน่ง GPS กรุณาเปิดการอนุญาต Location ในการตั้งค่าเบราว์เซอร์ (Settings > Site Permissions > Location) เพื่อระบุพิกัดและเตือนจุดน้ำท่วมใกล้ตัวแม่นยำ";
+          if (err.code === 1) msg = "คุณปฏิเสธการเข้าถึงตำแหน่ง GPS กรุณาเปิดการอนุญาต Location ในการตั้งค่าเบราว์เซอร์เพื่อระบุพิกัด";
           else if (err.code === 2) msg = "สัญญาณ GPS ขัดข้อง ไม่สามารถระบุพิกัดได้ในขณะนี้";
           alert(msg);
         }
@@ -1702,18 +1710,61 @@ export default function App() {
 
         {/* Floating Toast Notification — ขึ้นใต้ Navbar ไม่ซ้อนทับ */}
         {latestUpdateNotification && (
-          <div className="fixed top-[58px] sm:top-[72px] left-1/2 -translate-x-1/2 z-[85] bg-emerald-600/98 text-white px-4 py-2.5 rounded-2xl shadow-2xl border border-emerald-300 backdrop-blur-md flex items-center gap-2.5 w-auto max-w-[92vw] sm:max-w-lg pointer-events-auto animate-in fade-in slide-in-from-top-3 duration-300">
-            <CheckCircle2 className="w-4 h-4 text-emerald-100 shrink-0" />
+          <div className={`fixed top-[58px] sm:top-[72px] left-1/2 -translate-x-1/2 z-[85] text-white px-4 py-2.5 rounded-2xl shadow-2xl backdrop-blur-md flex items-center gap-2.5 w-auto max-w-[92vw] sm:max-w-lg pointer-events-auto animate-in fade-in slide-in-from-top-3 duration-300 border ${
+            latestUpdateNotification.includes('⚠️') || latestUpdateNotification.includes('ไม่ได้อยู่ใน')
+              ? 'bg-amber-700/98 border-amber-300 shadow-amber-900/50'
+              : 'bg-emerald-600/98 border-emerald-300 shadow-emerald-900/50'
+          }`}>
+            {latestUpdateNotification.includes('⚠️') || latestUpdateNotification.includes('ไม่ได้อยู่ใน') ? (
+              <AlertTriangle className="w-4 h-4 text-amber-200 shrink-0" />
+            ) : (
+              <CheckCircle2 className="w-4 h-4 text-emerald-100 shrink-0" />
+            )}
             <span className="text-xs sm:text-sm font-bold leading-snug">{latestUpdateNotification}</span>
             <button
               onClick={() => setLatestUpdateNotification(null)}
-              className="p-1 hover:bg-white/20 rounded-lg text-emerald-100 cursor-pointer ml-auto shrink-0"
+              className="p-1 hover:bg-white/20 rounded-lg text-white/90 cursor-pointer ml-auto shrink-0"
               title="ปิดการแจ้งเตือน"
             >
               <X className="w-3.5 h-3.5" />
             </button>
           </div>
+        )}
 
+        {/* Out of Province Warning Banner (เมื่อ GPS ระบุได้ว่าอยู่นอกพื้นที่ จ.สมุทรปราการ) */}
+        {userLocation && !userDistrict && (
+          <div className="fixed top-[58px] sm:top-[72px] left-1/2 -translate-x-1/2 z-[80] w-auto max-w-[94vw] sm:max-w-md pointer-events-auto animate-in fade-in slide-in-from-top-2 duration-300">
+            <div className="flex items-center gap-2.5 px-3.5 py-2 rounded-2xl bg-amber-950/95 text-amber-200 border border-amber-500/50 shadow-xl backdrop-blur-xl">
+              <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 animate-bounce" />
+              <div className="flex-1 min-w-0 text-xs">
+                <span className="font-bold block text-white">ตำแหน่งท่านไม่ได้อยู่ในจังหวัดสมุทรปราการ</span>
+                <span className="text-[10px] text-amber-300/80">ระบบติดตามและรายงานครอบคลุม 6 อำเภอ จ.สมุทรปราการ</span>
+              </div>
+              <button
+                onClick={() => {
+                  setSelectedDistrict('ทั้งหมด');
+                  setFlyToLocation({ lat: 13.6000, lng: 100.6500, zoom: 11, ts: Date.now() });
+                }}
+                className="px-2.5 py-1 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-400/40 text-[10px] font-bold shrink-0 cursor-pointer active:scale-95 transition-all"
+              >
+                ดูสมุทรปราการ
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Active District Mobile Indicator with Quick Reset (กดครั้งเดียวกลับดูทั้งจังหวัด ไม่สับสน) */}
+        {selectedDistrict !== 'ทั้งหมด' && isTopPanelCollapsed && (
+          <div className="sm:hidden absolute top-2.5 right-14 z-20 pointer-events-auto flex items-center gap-1.5 px-2.5 py-1.5 rounded-2xl bg-blue-600/95 text-white shadow-lg border border-blue-400 text-xs font-bold animate-in fade-in">
+            <span className="truncate max-w-[120px]">📍 อ.{selectedDistrict.replace('เมืองสมุทรปราการ', 'เมือง')}</span>
+            <button
+              onClick={() => setSelectedDistrict('ทั้งหมด')}
+              className="px-1.5 py-0.5 rounded-lg bg-white/20 hover:bg-white/30 text-[10px] cursor-pointer"
+              title="ล้างตัวกรองอำเภอ กลับสู่มุมมองรวม"
+            >
+              ✕ ดูทั้งหมด
+            </button>
+          </div>
         )}
 
         {/* Toggle Button to RE-OPEN the collapsed panel (Appears docked at top-left when collapsed) */}
@@ -2029,165 +2080,78 @@ export default function App() {
 
         </div>
 
-        {/* FLOATING 3-COLOR SEVERITY CRITERIA (เฉพาะบนมือถือเท่านั้น - เคลื่อนย้าย/ลากได้ ไม่บังแผนที่) */}
-        <div 
-          ref={legendNodeRef}
-          onMouseDown={handleLegendPointerDown}
-          onTouchStart={handleLegendPointerDown}
-          style={mobileLegendPos.x !== null && mobileLegendPos.y !== null ? {
-            left: `${mobileLegendPos.x}px`,
-            top: `${mobileLegendPos.y}px`,
-            right: 'auto',
-            bottom: 'auto'
-          } : undefined}
-          className={`md:hidden fixed z-20 pointer-events-auto select-none touch-none ${
-            mobileLegendPos.x === null ? (
-              isTopPanelCollapsed ? 'top-16 right-2.5' : 'top-[160px] right-2.5'
-            ) : ''
-          }`}
-        >
-          <div className={`p-2 rounded-2xl border shadow-xl backdrop-blur-xl flex flex-col gap-1 w-[124px] ${
+        {/* MOBILE DOCKED WATER LEVEL STRIP (เกณฑ์ระดับน้ำ - อยู่ชิดด้านล่างเหนือเมนู ไม่บังแผนที่ ใช้งานง่ายด้วยนิ้วโป้ง) */}
+        <div className="sm:hidden fixed bottom-[54px] left-2 right-2 z-30 pointer-events-auto select-none">
+          <div className={`px-2.5 py-1.5 rounded-2xl border shadow-lg backdrop-blur-xl flex items-center justify-between gap-1 text-[10px] font-bold ${
             isDark 
-              ? 'bg-slate-900/95 border-slate-700/90 text-white shadow-slate-950/80' 
-              : 'bg-white/95 border-slate-200/90 text-slate-800 shadow-slate-400/30'
+              ? 'bg-slate-950/95 border-slate-800 text-slate-200' 
+              : 'bg-white/95 border-slate-200/90 text-slate-800 shadow-slate-300/40'
           }`}>
+            <span className="text-[9px] text-slate-400 shrink-0 font-medium">เกณฑ์น้ำ:</span>
             
-            {/* Draggable Grip Handle & Header */}
-            <div className="drag-handle flex items-center justify-between pb-1 mb-0.5 border-b border-slate-200/80 dark:border-slate-800 cursor-grab active:cursor-grabbing">
-              <div className="flex items-center gap-1 min-w-0">
-                <GripHorizontal className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                <span className="text-[10px] font-bold text-slate-600 dark:text-slate-300 truncate">
-                  เกณฑ์ระดับน้ำ
-                </span>
-              </div>
-              <div className="flex items-center gap-1">
-                {severityFilter !== 'all' && (
-                  <button
-                    onClick={(e) => {
-                      if (!legendDragRef.current.hasMoved) {
-                        e.stopPropagation();
-                        setSeverityFilter('all');
-                      }
-                    }}
-                    className="text-[9px] px-1 py-0.2 rounded bg-blue-500/20 text-blue-600 dark:text-blue-400 font-bold cursor-pointer"
-                    title="ล้างตัวกรอง"
-                  >
-                    ล้าง
-                  </button>
-                )}
-                <button
-                  onClick={(e) => {
-                    if (!legendDragRef.current.hasMoved) {
-                      e.stopPropagation();
-                      setIsLegendCollapsed(!isLegendCollapsed);
-                    }
-                  }}
-                  className="p-0.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
-                  title={isLegendCollapsed ? "ขยาย" : "ย่อ"}
-                >
-                  {isLegendCollapsed ? <ChevronDown className="w-3 h-3" /> : <ChevronUp className="w-3 h-3" />}
-                </button>
-              </div>
-            </div>
+            {/* Green: 5-20 cm */}
+            <button
+              type="button"
+              onClick={() => setSeverityFilter(prev => prev === '1' ? 'all' : '1')}
+              className={`px-2 py-0.5 rounded-xl border flex items-center gap-1 cursor-pointer transition-all active:scale-95 ${
+                severityFilter === '1'
+                  ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400 ring-1 ring-emerald-500 font-extrabold'
+                  : 'border-transparent text-emerald-600 dark:text-emerald-400'
+              }`}
+              title="กรองดูจุดน้ำท่วมปกติ (5-20 ซม.)"
+            >
+              <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>
+              <span>ปกติ 5-20ซม.</span>
+            </button>
 
-            {/* Severity Levels when not collapsed */}
-            {!isLegendCollapsed && (
-              <>
-                {/* Green: Normal */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (!legendDragRef.current.hasMoved) {
-                      setSeverityFilter(prev => prev === '1' ? 'all' : '1');
-                    }
-                  }}
-                  className={`flex items-center gap-1.5 p-1 rounded-xl text-left transition-all cursor-pointer ${
-                    severityFilter === '1' 
-                      ? 'bg-emerald-500/25 ring-1.5 ring-emerald-500' 
-                      : 'hover:bg-slate-100 dark:hover:bg-slate-800/80'
-                  }`}
-                  title="แตะเพื่อกรองดูเฉพาะจุดน้ำท่วมปกติ (5 - 20 ซม.)"
-                >
-                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-sm shrink-0"></span>
-                  <div className="leading-tight min-w-0">
-                    <div className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">เขียว: น้ำท่วมปกติ</div>
-                    <div className="text-[8px] text-slate-500 dark:text-slate-400">5 - 20 ซม.</div>
-                  </div>
-                </button>
+            {/* Orange: 21-50 cm */}
+            <button
+              type="button"
+              onClick={() => setSeverityFilter(prev => prev === '2' ? 'all' : '2')}
+              className={`px-2 py-0.5 rounded-xl border flex items-center gap-1 cursor-pointer transition-all active:scale-95 ${
+                severityFilter === '2'
+                  ? 'bg-amber-500/20 border-amber-500 text-amber-400 ring-1 ring-amber-500 font-extrabold'
+                  : 'border-transparent text-amber-600 dark:text-amber-400'
+              }`}
+              title="กรองดูจุดน้ำท่วมปานกลาง (21-50 ซม.)"
+            >
+              <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0"></span>
+              <span>เสี่ยง 21-50ซม.</span>
+            </button>
 
-                {/* Orange: Moderate */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (!legendDragRef.current.hasMoved) {
-                      setSeverityFilter(prev => prev === '2' ? 'all' : '2');
-                    }
-                  }}
-                  className={`flex items-center gap-1.5 p-1 rounded-xl text-left transition-all cursor-pointer ${
-                    severityFilter === '2' 
-                      ? 'bg-amber-500/25 ring-1.5 ring-amber-500' 
-                      : 'hover:bg-slate-100 dark:hover:bg-slate-800/80'
-                  }`}
-                  title="แตะเพื่อกรองดูเฉพาะจุดน้ำท่วมปานกลาง (21 - 50 ซม.)"
-                >
-                  <span className="w-2.5 h-2.5 rounded-full bg-amber-500 shadow-sm shrink-0"></span>
-                  <div className="leading-tight min-w-0">
-                    <div className="text-[10px] font-bold text-amber-600 dark:text-amber-400">ส้ม: น้ำท่วมปานกลาง</div>
-                    <div className="text-[8px] text-slate-500 dark:text-slate-400">21 - 50 ซม.</div>
-                  </div>
-                </button>
+            {/* Red: >50 cm */}
+            <button
+              type="button"
+              onClick={() => setSeverityFilter(prev => prev === '3' ? 'all' : '3')}
+              className={`px-2 py-0.5 rounded-xl border flex items-center gap-1 cursor-pointer transition-all active:scale-95 ${
+                severityFilter === '3'
+                  ? 'bg-rose-500/20 border-rose-500 text-rose-400 ring-1 ring-rose-500 font-extrabold'
+                  : 'border-transparent text-rose-600 dark:text-rose-400'
+              }`}
+              title="กรองดูจุดน้ำท่วมวิกฤต (>50 ซม.)"
+            >
+              <span className="w-2 h-2 rounded-full bg-rose-500 shrink-0 animate-pulse"></span>
+              <span>วิกฤต &gt;50ซม.</span>
+            </button>
 
-                {/* Red: Critical */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (!legendDragRef.current.hasMoved) {
-                      setSeverityFilter(prev => prev === '3' ? 'all' : '3');
-                    }
-                  }}
-                  className={`flex items-center gap-1.5 p-1 rounded-xl text-left transition-all cursor-pointer ${
-                    severityFilter === '3' 
-                      ? 'bg-rose-500/25 ring-1.5 ring-rose-500' 
-                      : 'hover:bg-slate-100 dark:hover:bg-slate-800/80'
-                  }`}
-                  title="แตะเพื่อกรองดูเฉพาะจุดน้ำท่วมวิกฤต (> 50 ซม.)"
-                >
-                  <span className="w-2.5 h-2.5 rounded-full bg-rose-500 shadow-sm shrink-0 animate-pulse"></span>
-                  <div className="leading-tight min-w-0">
-                    <div className="text-[10px] font-bold text-rose-600 dark:text-rose-400">แดง: น้ำท่วมวิกฤต</div>
-                    <div className="text-[8px] text-slate-500 dark:text-slate-400">&gt; 50 ซม.</div>
-                  </div>
-                </button>
-
-                {/* Receding: น้ำกำลังลด */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (!legendDragRef.current.hasMoved) {
-                      setSeverityFilter(prev => prev === 'falling' ? 'all' : 'falling');
-                    }
-                  }}
-                  className={`flex items-center gap-1.5 p-1 rounded-xl text-left transition-all cursor-pointer ${
-                    severityFilter === 'falling' 
-                      ? 'bg-teal-500/25 ring-1.5 ring-teal-500' 
-                      : 'hover:bg-slate-100 dark:hover:bg-slate-800/80'
-                  }`}
-                  title="แตะเพื่อกรองดูเฉพาะจุดที่น้ำกำลังลด"
-                >
-                  <span className="text-[11px] shrink-0 leading-none">📉</span>
-                  <div className="leading-tight min-w-0">
-                    <div className="text-[10px] font-bold text-teal-600 dark:text-teal-400">ฟ้า: น้ำกำลังลด</div>
-                    <div className="text-[8px] text-slate-500 dark:text-slate-400">ระดับน้ำลดลง</div>
-                  </div>
-                </button>
-
-                {/* Tiny movable hint */}
-                <div className="text-[8px] text-center text-slate-400 dark:text-slate-500 pt-0.5 border-t border-slate-100 dark:border-slate-800">
-                  ลากย้ายตำแหน่งได้
-                </div>
-              </>
+            {severityFilter !== 'all' ? (
+              <button
+                type="button"
+                onClick={() => setSeverityFilter('all')}
+                className="px-1.5 py-0.5 rounded-lg bg-blue-500 text-white text-[9px] shrink-0 font-bold cursor-pointer active:scale-95"
+              >
+                ล้าง
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setIsStandardsModalOpen(true)}
+                className="text-slate-400 hover:text-blue-500 text-[9px] shrink-0 px-1 cursor-pointer"
+                title="ดูเกณฑ์มาตรฐานฉบับเต็ม"
+              >
+                คู่มือ
+              </button>
             )}
-
           </div>
         </div>
 
@@ -2649,6 +2613,9 @@ export default function App() {
         onOpenPublicUpdates={() => setIsPublicUpdatesModalOpen(true)}
         onOpenFeedback={() => setIsFeedbackModalOpen(true)}
         onOpenEmergency={() => setIsEmergencyModalOpen(true)}
+        onOpenStandards={() => setIsStandardsModalOpen(true)}
+        onOpenAdmin={() => setIsAdminModalOpen(true)}
+        onToggleTheme={toggleTheme}
         hasGps={!!userLocation}
         theme={theme}
         onToggleSearch={() => setIsTopPanelCollapsed(v => !v)}

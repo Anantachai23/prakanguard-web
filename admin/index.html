@@ -1755,15 +1755,15 @@
         return;
       }
       
-      container.innerHTML = allDistricts.map(d => {
+      let html = allDistricts.map(d => {
         const visitors = districtCount[d] || 0;
         const activeReports = reportDistrictCount[d] || 0;
         const shortName = d.replace('เมืองสมุทรปราการ', 'เมือง').replace('พระสมุทรเจดีย์', 'พระสมุทรฯ');
         return `
           <div class="p-3 bg-slate-800/60 rounded-2xl border border-slate-700/60 flex flex-col gap-1">
-            <span class="text-xs font-bold text-white truncate">อ.${shortName}</span>
+            <span class="text-xs font-bold text-white truncate">📍 อ.${shortName}</span>
             <div class="flex items-center justify-between">
-              <span class="text-[10px] text-slate-400">ผู้ใช้</span>
+              <span class="text-[10px] text-slate-400">ผู้ใช้สด</span>
               <span class="text-xs font-bold ${visitors > 0 ? 'text-emerald-400' : 'text-slate-500'}">${visitors > 0 ? visitors + ' คน' : '-'}</span>
             </div>
             <div class="flex items-center justify-between">
@@ -1773,6 +1773,84 @@
           </div>
         `;
       }).join('');
+
+      // แสดงการ์ดสำหรับผู้ใช้นอกเขตสมุทรปราการ (ถ้ามี)
+      const outsideCount = districtCount['นอกเขตสมุทรปราการ'] || districtCount['อยู่นอกเขต จ.สมุทรปราการ'] || 0;
+      if (outsideCount > 0) {
+        html += `
+          <div class="p-3 bg-rose-950/40 rounded-2xl border border-rose-800/60 flex flex-col gap-1">
+            <span class="text-xs font-bold text-rose-300 truncate">⚠️ นอกเขตสมุทรปราการ</span>
+            <div class="flex items-center justify-between">
+              <span class="text-[10px] text-slate-400">ผู้ใช้สด</span>
+              <span class="text-xs font-bold text-rose-400">${outsideCount} คน</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-[10px] text-slate-400">สถานะ</span>
+              <span class="text-[10px] text-slate-400">พิกัดนอกพื้นที่</span>
+            </div>
+          </div>
+        `;
+      }
+
+      container.innerHTML = html;
+    }
+
+    // ฟังก์ชันสร้าง Badge แสดงรุ่น/ประเภทอุปกรณ์
+    function formatDeviceBadge(device) {
+      if (!device) return '<span class="text-slate-400">สมาร์ตโฟน</span>';
+      const dev = String(device);
+      if (/iPhone/i.test(dev)) {
+        return `<span class="px-2.5 py-1 rounded-xl text-xs font-bold bg-slate-800 text-white border border-slate-700 flex items-center gap-1.5 w-max">
+          <span>🍏</span>
+          <span>${dev}</span>
+        </span>`;
+      }
+      if (/iPad/i.test(dev)) {
+        return `<span class="px-2.5 py-1 rounded-xl text-xs font-bold bg-slate-800 text-slate-200 border border-slate-700 flex items-center gap-1.5 w-max">
+          <span>📱</span>
+          <span>${dev}</span>
+        </span>`;
+      }
+      if (/OPPO/i.test(dev)) {
+        return `<span class="px-2.5 py-1 rounded-xl text-xs font-bold bg-emerald-950/80 text-emerald-300 border border-emerald-600/50 flex items-center gap-1.5 w-max">
+          <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+          <span>${dev}</span>
+        </span>`;
+      }
+      if (/Vivo/i.test(dev)) {
+        return `<span class="px-2.5 py-1 rounded-xl text-xs font-bold bg-blue-950/80 text-cyan-300 border border-blue-600/50 flex items-center gap-1.5 w-max">
+          <span class="w-2 h-2 rounded-full bg-cyan-400"></span>
+          <span>${dev}</span>
+        </span>`;
+      }
+      if (/Samsung/i.test(dev)) {
+        return `<span class="px-2.5 py-1 rounded-xl text-xs font-bold bg-indigo-950/80 text-indigo-300 border border-indigo-600/50 flex items-center gap-1.5 w-max">
+          <span class="w-2 h-2 rounded-full bg-indigo-400"></span>
+          <span>${dev}</span>
+        </span>`;
+      }
+      if (/Xiaomi|Redmi|POCO/i.test(dev)) {
+        return `<span class="px-2.5 py-1 rounded-xl text-xs font-bold bg-amber-950/80 text-amber-300 border border-amber-600/50 flex items-center gap-1.5 w-max">
+          <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+          <span>${dev}</span>
+        </span>`;
+      }
+      if (/Windows/i.test(dev)) {
+        return `<span class="px-2.5 py-1 rounded-xl text-xs font-bold bg-sky-950/80 text-sky-300 border border-sky-600/50 flex items-center gap-1.5 w-max">
+          <span>💻</span>
+          <span>${dev}</span>
+        </span>`;
+      }
+      if (/Mac/i.test(dev)) {
+        return `<span class="px-2.5 py-1 rounded-xl text-xs font-bold bg-slate-800 text-slate-200 border border-slate-700 flex items-center gap-1.5 w-max">
+          <span>💻</span>
+          <span>${dev}</span>
+        </span>`;
+      }
+      return `<span class="px-2.5 py-1 rounded-xl text-xs font-medium bg-slate-800 text-slate-300 border border-slate-700 flex items-center gap-1.5 w-max">
+        <span>📱</span>
+        <span>${dev}</span>
+      </span>`;
     }
 
     // --- Render Visitors & Live Sessions ---
@@ -1786,21 +1864,32 @@
         return;
       }
 
-      tbody.innerHTML = sessions.map(s => `
-        <tr class="hover:bg-slate-800/40 transition">
-          <td class="py-3 px-4 font-mono text-slate-400">${s.sessionId || 'sess-xyz'}</td>
-          <td class="py-3 px-4 font-mono text-slate-300">${s.ipMasked || '182.232.xxx.xxx'}</td>
-          <td class="py-3 px-4">${s.device || 'Mobile'}</td>
-          <td class="py-3 px-4 text-white font-semibold">${s.district || 'เมืองสมุทรปราการ'}</td>
-          <td class="py-3 px-4 text-slate-400">${s.currentPage || 'หน้าแผนที่'}</td>
-          <td class="py-3 px-4">${s.durationSec || 60} วินาที</td>
-          <td class="py-3 px-4">
-            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center gap-1 w-max">
-              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span> กำลังออนไลน์
-            </span>
-          </td>
-        </tr>
-      `).join('');
+      tbody.innerHTML = sessions.map(s => {
+        const isOutside = s.district === 'นอกเขตสมุทรปราการ' || (s.district && s.district.includes('นอกเขต'));
+        const districtBadge = isOutside
+          ? `<span class="px-2.5 py-1 rounded-xl text-xs font-bold bg-rose-500/20 text-rose-300 border border-rose-500/40 flex items-center gap-1 w-max">
+              <span>⚠️</span> นอกเขต จ.สมุทรปราการ
+            </span>`
+          : `<span class="px-2.5 py-1 rounded-xl text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 flex items-center gap-1 w-max">
+              <span>📍</span> อ.${(s.district || 'เมืองสมุทรปราการ').replace('เมืองสมุทรปราการ', 'เมือง')}
+            </span>`;
+
+        return `
+          <tr class="hover:bg-slate-800/40 transition">
+            <td class="py-3 px-4 font-mono text-slate-400 font-semibold">${s.sessionId || 'sess-xyz'}</td>
+            <td class="py-3 px-4 font-mono text-slate-300">${s.ipMasked || '182.232.xxx.xxx'}</td>
+            <td class="py-3 px-4">${formatDeviceBadge(s.device)}</td>
+            <td class="py-3 px-4">${districtBadge}</td>
+            <td class="py-3 px-4 text-slate-400">${s.currentPage || 'หน้าแผนที่'}</td>
+            <td class="py-3 px-4 text-slate-300">${s.durationSec || 60} วินาที</td>
+            <td class="py-3 px-4">
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center gap-1 w-max">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span> กำลังออนไลน์
+              </span>
+            </td>
+          </tr>
+        `;
+      }).join('');
     }
 
     // --- Detail Modal Actions ---
