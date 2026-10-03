@@ -219,6 +219,10 @@ export default function MapView({
         options: {
           subdomains: ['0', '1', '2', '3'],
           maxZoom: 20,
+          keepBuffer: 12,
+          updateWhenZooming: false,
+          updateWhenIdle: false,
+          crossOrigin: true,
           attribution: '&copy; ภาพถ่ายดาวเทียม Google / Esri'
         }
       };
@@ -230,18 +234,26 @@ export default function MapView({
         options: {
           subdomains: ['0', '1', '2', '3'],
           maxZoom: 20,
+          keepBuffer: 12,
+          updateWhenZooming: false,
+          updateWhenIdle: false,
+          crossOrigin: true,
           attribution: '&copy; แผนที่ภูมิประเทศ Google / Esri'
         }
       };
     }
-    // Default: Google Roadmap (คมชัด มาตรฐานราชการ)
+    // Default: Google Roadmap (คมชัด โหลดไว)
     return {
       url: 'https://mt{s}.google.com/vt/lyrs=m&hl=th&x={x}&y={y}&z={z}',
       fallbackUrl: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',
       options: {
         subdomains: ['0', '1', '2', '3'],
         maxZoom: 20,
-        attribution: '&copy; Google Maps / Esri ประเทศไทย'
+        keepBuffer: 12,
+        updateWhenZooming: false,
+        updateWhenIdle: false,
+        crossOrigin: true,
+        attribution: '&copy; Google Maps / Esri'
       }
     };
   };
@@ -271,12 +283,19 @@ export default function MapView({
       mapContainerRef.current._leaflet_id = null;
     }
 
+    // Set seamless background color to avoid grey flashing when zooming
+    mapContainerRef.current.style.backgroundColor = isDark ? '#0b132b' : '#e6ecf2';
+
     const map = L.map(mapContainerRef.current, {
       center: [13.6000, 100.6500], // Samut Prakan Center
       zoom: 11,
       minZoom: 9,
       maxZoom: 19,
-      zoomControl: false
+      zoomControl: false,
+      preferCanvas: true,
+      zoomAnimation: true,
+      fadeAnimation: true,
+      markerZoomAnimation: true
     });
 
     if (typeof window !== 'undefined' && window.innerWidth >= 640) {
@@ -341,8 +360,8 @@ export default function MapView({
       maskLayerRef.current = null;
     }
 
-    const maskFillColor = (isDark || mapStyle === 'google-satellite') ? '#020617' : '#0f172a';
-    const maskFillOpacity = (isDark || mapStyle === 'google-satellite') ? 0.72 : 0.58;
+    const maskFillColor = (isDark || mapStyle === 'google-satellite') ? '#020617' : '#1e293b';
+    const maskFillOpacity = (isDark || mapStyle === 'google-satellite') ? 0.32 : 0.16;
 
     maskLayerRef.current = L.geoJSON(SAMUT_PRAKAN_MASK_GEOJSON, {
       pane: 'provinceMaskPane',
@@ -350,8 +369,8 @@ export default function MapView({
         fillColor: maskFillColor,
         fillOpacity: maskFillOpacity,
         color: '#0284c7',
-        weight: 3.5,
-        opacity: 0.95,
+        weight: 2,
+        opacity: 0.8,
         className: 'outside-province-mask'
       },
       interactive: false

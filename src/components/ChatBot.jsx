@@ -719,9 +719,11 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
   const chipsAnimRef = useRef(null);
   const modalRef = useRef(null);
 
-  // Draggable Modal State & Free Movement Tracking
+  // Draggable & Resizable Modal State
   const [position, setPosition] = useState(null);
+  const [customSize, setCustomSize] = useState({ width: null, height: null });
   const [isDraggingModal, setIsDraggingModal] = useState(false);
+  const [isResizingModal, setIsResizingModal] = useState(false);
   const modalDragRef = useRef({
     startX: 0,
     startY: 0,
@@ -917,6 +919,71 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
   const handleResetPosition = (e) => {
     e?.stopPropagation();
     setPosition(null);
+  };
+
+  const handleResetSize = (e) => {
+    e?.stopPropagation();
+    setCustomSize({ width: null, height: null });
+  };
+
+  // Mouse Drag Resize Handler for PC (drag from top-left corner)
+  const handleMouseDownResizeCorner = (e) => {
+    if (e.button !== 0) return;
+    e.preventDefault();
+    e.stopPropagation();
+
+    const modalEl = modalRef.current;
+    if (!modalEl) return;
+
+    const startX = e.clientX;
+    const startY = e.clientY;
+    const startW = modalEl.offsetWidth;
+    const startH = modalEl.offsetHeight;
+    setIsResizingModal(true);
+
+    const onMouseMove = (moveEvent) => {
+      const dx = startX - moveEvent.clientX; // dragging left expands width
+      const dy = startY - moveEvent.clientY; // dragging up expands height
+      const newW = Math.max(320, Math.min(window.innerWidth - 32, startW + dx));
+      const newH = Math.max(340, Math.min(window.innerHeight - 60, startH + dy));
+      setCustomSize({ width: newW, height: newH });
+    };
+
+    const onMouseUp = () => {
+      setIsResizingModal(false);
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
+    };
+
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', onMouseUp);
+  };
+
+  // Touch Drag Resize Handler for Mobile / Tablets (drag top bar with finger)
+  const handleTouchStartResizeTop = (e) => {
+    if (e.touches.length !== 1) return;
+    const startY = e.touches[0].clientY;
+    const modalEl = modalRef.current;
+    const startH = modalEl ? modalEl.offsetHeight : 480;
+    setIsResizingModal(true);
+
+    const onTouchMove = (moveEvent) => {
+      if (moveEvent.touches.length !== 1) return;
+      moveEvent.preventDefault();
+      const currentY = moveEvent.touches[0].clientY;
+      const dy = startY - currentY; // dragging finger up increases height
+      const newH = Math.max(280, Math.min(window.innerHeight - 80, startH + dy));
+      setCustomSize(prev => ({ ...prev, height: newH }));
+    };
+
+    const onTouchEnd = () => {
+      setIsResizingModal(false);
+      window.removeEventListener('touchmove', onTouchMove);
+      window.removeEventListener('touchend', onTouchEnd);
+    };
+
+    window.addEventListener('touchmove', onTouchMove, { passive: false });
+    window.addEventListener('touchend', onTouchEnd);
   };
 
   // 60fps Butter-Smooth RequestAnimationFrame Glide for Quick Question Chips
@@ -1932,32 +1999,57 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
         </div>
       )}
 
-      {/* Official Public Information Dialog - Theme-Adaptive & Freely Draggable */}
+      {/* Official Public Information Dialog - Theme-Adaptive & Freely Draggable & Resizable */}
       {isOpen && !isMinimized && (
         <div 
           ref={modalRef}
-          style={position ? {
-            left: `${position.x}px`,
-            top: `${position.y}px`,
-            right: 'auto',
-            bottom: 'auto'
-          } : undefined}
+          style={{
+            ...(position ? {
+              left: `${position.x}px`,
+              top: `${position.y}px`,
+              right: 'auto',
+              bottom: 'auto'
+            } : {}),
+            ...(customSize.width ? { width: `${customSize.width}px`, maxWidth: '98vw' } : {}),
+            ...(customSize.height ? { height: `${customSize.height}px`, maxHeight: '94vh' } : {})
+          }}
           className={`fixed z-50 w-[94vw] max-w-[420px] sm:max-w-none ${
-            isExpanded ? 'sm:w-[620px] h-[660px] max-h-[90vh]' : 'sm:w-[460px] h-[480px] max-h-[calc(100dvh-7.5rem)] sm:h-[600px] sm:max-h-[88vh]'
-          } border rounded-3xl shadow-2xl flex flex-col overflow-hidden backdrop-blur-2xl transition-[width,height,box-shadow,border-color] duration-200 ${
+            customSize.width || customSize.height
+              ? ''
+              : isExpanded 
+              ? 'sm:w-[620px] h-[660px] max-h-[90vh]' 
+              : 'sm:w-[460px] h-[480px] max-h-[calc(100dvh-7.5rem)] sm:h-[600px] sm:max-h-[88vh]'
+          } border rounded-3xl shadow-2xl flex flex-col overflow-hidden backdrop-blur-2xl transition-[box-shadow,border-color] duration-150 ${
             !position ? 'bottom-[calc(4.25rem+env(safe-area-inset-bottom,0px))] left-1/2 -translate-x-1/2 sm:translate-x-0 sm:left-auto sm:bottom-6 sm:right-6' : ''
           } ${
-            isDraggingModal ? 'ring-2 ring-blue-500/60 shadow-blue-500/30 cursor-grabbing' : ''
+            isDraggingModal || isResizingModal ? 'ring-2 ring-blue-500/60 shadow-blue-500/30' : ''
           } ${
             isDark ? 'bg-slate-900/95 border-slate-700 text-slate-100' : 'bg-white border-slate-200 text-slate-800'
           }`}
         >
+          {/* Desktop Mouse Resize Corner (มุมซ้ายบนสำหรับใช้เมาส์ลากปรับขนาด) */}
+          <div
+            onMouseDown={handleMouseDownResizeCorner}
+            className="hidden sm:block absolute top-0 left-0 w-6 h-6 cursor-nwse-resize z-50 group select-none"
+            title="คลิกแล้วลากด้วยเมาส์เพื่อปรับขนาดความกว้างและความสูง"
+          >
+            <div className="w-2.5 h-2.5 border-t-2 border-l-2 border-slate-400 dark:border-slate-500 m-1.5 rounded-tl-sm group-hover:border-blue-500 group-hover:scale-110 transition-all" />
+          </div>
+
+          {/* Mobile Finger Drag Handle (ใช้นิ้วลากขึ้น-ลงเพื่อย่อ/ขยายความสูง) */}
+          <div 
+            onTouchStart={handleTouchStartResizeTop}
+            className="w-full pt-2 pb-1 flex items-center justify-center cursor-ns-resize touch-none select-none sm:hidden border-b border-transparent active:border-blue-500/30"
+            title="ใช้นิ้วลากขึ้นหรือลงเพื่อปรับขนาดความสูง"
+          >
+            <div className="w-12 h-1.5 rounded-full bg-slate-300 dark:bg-slate-600 active:bg-blue-500 transition-colors" />
+          </div>
           
           {/* Header (Freely Draggable Handle for PC Mouse & Mobile Touch) */}
           <div 
             onMouseDown={handleMouseDownHeader}
             onTouchStart={handleTouchStartHeader}
-            className={`px-4 py-3 border-b flex items-center justify-between cursor-grab active:cursor-grabbing select-none transition-colors ${
+            className={`px-4 py-2.5 border-b flex items-center justify-between cursor-grab active:cursor-grabbing select-none transition-colors ${
               isDraggingModal 
                 ? (isDark ? 'bg-blue-950/90 border-blue-700' : 'bg-blue-50/90 border-blue-300')
                 : (isDark ? 'bg-slate-950/90 border-slate-800' : 'bg-slate-50 border-slate-200')
@@ -1990,11 +2082,26 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
                     ? 'bg-slate-800/80 text-slate-300 border-slate-700' 
                     : 'bg-white/90 text-slate-600 border-slate-200 shadow-xs'
                 }`}
-                title="คลิกค้างแล้วลากเพื่อย้ายหน้าต่าง"
+                title="คลิกค้างแล้วลากเพื่อย้ายหน้าต่าง หรือลากมุมซ้ายบนเพื่อปรับขนาด"
               >
-                <GripHorizontal className="w-3.5 h-3.5 text-blue-500 animate-pulse" />
-                <span>ลากย้ายได้</span>
+                <GripHorizontal className="w-3.5 h-3.5 text-blue-500" />
+                <span>ปรับขนาดได้</span>
               </div>
+
+              {(customSize.width || customSize.height) && (
+                <button
+                  type="button"
+                  onClick={handleResetSize}
+                  className={`p-1.5 rounded-xl transition-all cursor-pointer ${
+                    isDark 
+                      ? 'bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-cyan-300 border border-slate-700' 
+                      : 'bg-white hover:bg-slate-100 text-slate-600 hover:text-blue-600 border border-slate-200 shadow-xs'
+                  }`}
+                  title="รีเซ็ตขนาดกลับสู่ค่าเริ่มต้น"
+                >
+                  <Minimize2 className="w-3.5 h-3.5" />
+                </button>
+              )}
 
               {position && (
                 <button

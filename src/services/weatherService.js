@@ -228,18 +228,21 @@ export async function getLiveSamutPrakanWeather(forceRefresh = false) {
       if (isRainingRightNow) {
         startTimeText = "มีฝนตกอยู่ในขณะนี้";
       } else {
-        // ค้นหาชั่วโมงแรกที่กลุ่มฝนเริ่มก่อตัว (Precip >= 0.8 หรือ Prob >= 40 หรือ Thunderstorm code 95/96)
+        // ค้นหาชั่วโมงแรกที่กลุ่มฝนเริ่มก่อตัวเฉพาะวันนี้
         const firstRainIdx = next24.findIndex(h => 
-          (h.precipitation >= 0.8 && h.probability >= 20) || 
-          h.probability >= 40 || 
-          [61, 63, 65, 80, 81, 82, 95, 96, 99].includes(h.weatherCode)
+          !h.isTomorrow && (
+            (h.precipitation >= 0.8 && h.probability >= 20) || 
+            h.probability >= 40 || 
+            [61, 63, 65, 80, 81, 82, 95, 96, 99].includes(h.weatherCode)
+          )
         );
         if (firstRainIdx >= 0) {
           const target = next24[firstRainIdx];
-          const dayLabel = target.isTomorrow ? "พรุ่งนี้" : "วันนี้";
           const hourNum = parseInt(target.time.split(':')[0], 10);
           const timeOfDay = hourNum < 12 ? "ช่วงเช้า" : hourNum < 16 ? "ช่วงบ่าย" : hourNum < 19 ? "ช่วงเย็น" : "ช่วงค่ำ";
-          startTimeText = `${dayLabel} ~${target.time} น. (${timeOfDay})`;
+          startTimeText = `วันนี้ ~${target.time} น. (${timeOfDay})`;
+        } else {
+          startTimeText = "วันนี้ไม่มีสัญญาณฝนตกหนัก";
         }
       }
 
@@ -389,32 +392,32 @@ export async function getLiveSamutPrakanWeather(forceRefresh = false) {
       const p = (i === 16 || i === 17) ? 1.4 : (i === 15 || i === 18) ? 0.5 : 0;
       return {
         time: `${String(hNum).padStart(2, '0')}:00`,
-        dayLabel: isTom ? "พรุ่งนี้" : "วันนี้",
+        dayLabel: "วันนี้",
         precipitation: p,
-        probability: p > 0 ? 85 : 15,
+        probability: p > 0 ? 65 : 15,
         barHeightPercent: p === 1.4 ? 90 : p === 0.5 ? 40 : 0
       };
     });
 
     const fallback = {
-      temp: 28,
-      humidity: 82,
-      weatherDesc: "มีเมฆบางส่วน โอกาสฝนฟ้าคะนองช่วงบ่าย-ค่ำ",
+      temp: 29,
+      humidity: 80,
+      weatherDesc: "มีเมฆบางส่วน โอกาสฝนฟ้าคะนองช่วงบ่าย",
       rainProbabilityToday: 55,
       rainSumToday: 3.8,
       tempMax: 32,
       tempMin: 26,
-      peakHour: "15:00 - 18:00 น. (ช่วงบ่ายค่ำ)",
-      peakProb: 85,
+      peakHour: "ช่วงบ่าย-เย็น (15:00 - 18:00 น.)",
+      peakProb: 65,
       rainAlertLevel: "เฝ้าระวังฝนฟ้าคะนอง",
       riskColor: "amber",
       forecast24h: {
-        title: "ฝน 24 ชม. ข้างหน้า",
-        status: "ฝนเล็กน้อย",
+        title: "ฝนตกวันนี้",
+        status: "โอกาสฝนปานกลาง",
         totalRainMm: 3.8,
-        maxProbability: 85,
-        startTimeText: "เริ่มราว พรุ่งนี้ 15:00 น.",
-        timeLabels: ["23:00", "05:00", "11:00", "17:00"],
+        maxProbability: 65,
+        startTimeText: "ช่วงบ่าย-เย็น (15:00 - 18:00 น.)",
+        timeLabels: ["12:00", "15:00", "18:00", "21:00"],
         hourly: fallbackHourly
       },
       lastUpdated: nowDate.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) + ' น.',
