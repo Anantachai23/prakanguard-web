@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { SAMUT_PRAKAN_DISTRICTS_DATA } from '../data/samutPrakanDistricts';
 import { detectDistrictForCoordinates } from '../data/samutPrakanBoundary';
+import { getDetailedDeviceInfo } from '../services/cloudSyncService';
 
 // 3 ระดับน้ำกระชับชัดเจน ตรงตามเกณฑ์มาตรฐาน (ปกติ, ปานกลาง, วิกฤต)
 export const WATER_LEVEL_OPTIONS = [
@@ -62,6 +63,7 @@ export default function CitizenReportModal({
   onSubmitReport, 
   onStartPickOnMap,
   pickedCoords,
+  userLocation,
   theme = 'light' 
 }) {
   const isDark = theme === 'dark';
@@ -155,6 +157,13 @@ export default function CitizenReportModal({
     const finalLat = customCoords ? customCoords.lat : subdistrictObj.lat;
     const finalLng = customCoords ? customCoords.lng : subdistrictObj.lng;
 
+    let reporterDistrict = 'ปิด GPS';
+    if (userLocation && typeof userLocation.lat === 'number' && typeof userLocation.lng === 'number') {
+      const detected = detectDistrictForCoordinates(userLocation.lat, userLocation.lng);
+      reporterDistrict = detected ? detected.replace(/^อ\./, '').replace(/^อำเภอ/, '').replace('เมืองสมุทรปราการ', 'เมือง').trim() : 'ผู้ใช้อยู่นอกขอบเขตจังหวัด';
+    }
+    const reporterDevice = getDetailedDeviceInfo();
+
     const newReport = {
       id: `citizen_${Date.now()}`,
       name: `${notes.trim()}`,
@@ -174,7 +183,12 @@ export default function CitizenReportModal({
       reportedAt: new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }),
       timestamp: Date.now(),
       status: 'pending',
-      reporterName: 'ประชาชนผู้ใช้เส้นทาง'
+      reporterName: 'ประชาชนผู้ใช้เส้นทาง',
+      reporterDevice: reporterDevice,
+      reporterDistrict: reporterDistrict,
+      reporter_device: reporterDevice,
+      reporter_district: reporterDistrict,
+      source: `รายงานจากประชาชน [อุปกรณ์: ${reporterDevice} | พิกัดผู้แจ้ง: ${reporterDistrict}]`
     };
 
     if (onSubmitReport) {

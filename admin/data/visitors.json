@@ -1,10 +1,10 @@
 {
   "summary": {
-    "totalVisitorsAllTime": 14276,
-    "totalVisitorsToday": 374,
+    "totalVisitorsAllTime": 14286,
+    "totalVisitorsToday": 384,
     "peakOnlineToday": 65,
-    "activeNow": 19,
-    "lastUpdated": "2026-10-03T17:50:36.723Z"
+    "activeNow": 10,
+    "lastUpdated": "2026-10-03T19:00:49.201Z"
   },
   "deviceBreakdown": {
     "mobile": 72,
@@ -20,7 +20,7 @@
     "บางเสาธง": 16,
     "กำลังระบุพิกัด...": 7,
     "อ.ไม่ได้เปิด GPS": 3,
-    "ปิด GPS": 4
+    "ปิด GPS": 14
   },
   "recentSessions": [
     {
@@ -40,31 +40,9 @@
       "device": "Windows PC",
       "district": "กำลังระบุพิกัด...",
       "currentPage": "PrakanGuard | ระบบสารสนเทศและเฝ้าระวังอุทกภัย จ.สมุทรปราการ",
-      "durationSec": 33,
+      "durationSec": 46,
       "lastActive": "เมื่อสักครู่",
-      "timestamp": 1791049803381,
-      "isOnline": true
-    },
-    {
-      "sessionId": "v-ruwy0lw-musnmexp",
-      "ipMasked": "127.0.0.xxx",
-      "device": "PC",
-      "district": "ปิด GPS",
-      "currentPage": "หน้าหลัก (แผนที่)",
-      "durationSec": 17,
-      "lastActive": "เมื่อสักครู่",
-      "timestamp": 1791049820081,
-      "isOnline": true
-    },
-    {
-      "sessionId": "v-dt586yh-mushblne",
-      "ipMasked": "127.0.0.xxx",
-      "device": "PC",
-      "district": "อ.ไม่ได้เปิด GPS",
-      "currentPage": "หน้าหลัก (แผนที่)",
-      "durationSec": 17,
-      "lastActive": "เมื่อสักครู่",
-      "timestamp": 1791049819938,
+      "timestamp": 1791054003379,
       "isOnline": true
     },
     {
@@ -73,9 +51,9 @@
       "device": "PC",
       "district": "ปิด GPS",
       "currentPage": "หน้าหลัก (แผนที่)",
-      "durationSec": 26,
+      "durationSec": 39,
       "lastActive": "เมื่อสักครู่",
-      "timestamp": 1791049810504,
+      "timestamp": 1791054010594,
       "isOnline": true
     },
     {
@@ -84,42 +62,9 @@
       "device": "PC",
       "district": "ปิด GPS",
       "currentPage": "หน้าหลัก (แผนที่)",
-      "durationSec": 35,
+      "durationSec": 48,
       "lastActive": "เมื่อสักครู่",
-      "timestamp": 1791049801349,
-      "isOnline": true
-    },
-    {
-      "sessionId": "v-fxfr9sm-murzskm7",
-      "ipMasked": "127.0.0.xxx",
-      "device": "PC",
-      "district": "ปิด GPS",
-      "currentPage": "หน้าหลัก (แผนที่)",
-      "durationSec": 49,
-      "lastActive": "เมื่อสักครู่",
-      "timestamp": 1791049788010,
-      "isOnline": true
-    },
-    {
-      "sessionId": "v-0z7a2tj-musmhc3b",
-      "ipMasked": "127.0.0.xxx",
-      "device": "PC",
-      "district": "ปิด GPS",
-      "currentPage": "หน้าหลัก (แผนที่)",
-      "durationSec": 13,
-      "lastActive": "เมื่อสักครู่",
-      "timestamp": 1791049823891,
-      "isOnline": true
-    },
-    {
-      "sessionId": "v-1nna37e-murx87gb",
-      "ipMasked": "127.0.0.xxx",
-      "device": "Windows PC",
-      "district": "กำลังระบุพิกัด...",
-      "currentPage": "PrakanGuard | ระบบสารสนเทศและเฝ้าระวังอุทกภัย จ.สมุทรปราการ",
-      "durationSec": 58,
-      "lastActive": "เมื่อสักครู่",
-      "timestamp": 1791049778747,
+      "timestamp": 1791054001352,
       "isOnline": true
     },
     {
@@ -128,9 +73,9 @@
       "device": "Desktop",
       "district": "เมืองสมุทรปราการ",
       "currentPage": "PrakanGuard | ระบบสารสนเทศและเฝ้าระวังอุทกภัย จ.สมุทรปราการ",
-      "durationSec": 44,
+      "durationSec": 57,
       "lastActive": "เมื่อสักครู่",
-      "timestamp": 1791049792484,
+      "timestamp": 1791053992383,
       "isOnline": true
     },
     {
@@ -139,31 +84,31 @@
       "device": "PC",
       "district": "ปิด GPS",
       "currentPage": "หน้าหลัก (แผนที่)",
-      "durationSec": 41,
+      "durationSec": 54,
       "lastActive": "เมื่อสักครู่",
-      "timestamp": 1791049795272,
+      "timestamp": 1791053995273,
       "isOnline": true
     },
     {
-      "sessionId": "v-48xvwwr-musopwrt",
-      "ipMasked": "127.0.0.xxx",
-      "device": "iPhone 14",
-      "district": "ปิด GPS",
-      "currentPage": "หน้าหลัก (แผนที่)",
-      "durationSec": 19,
-      "lastActive": "เมื่อสักครู่",
-      "timestamp": 1791049817971,
-      "isOnline": true
-    },
-    {
-      "sessionId": "v-3t558cu-musos0p2",
-      "ipMasked": "127.0.0.xxx",
+      "sessionId": "v-7e5ilya-musqtvtg",
+      "ipMasked": "127.0.xxx.xxx",
       "device": "PC",
       "district": "ปิด GPS",
       "currentPage": "หน้าหลัก (แผนที่)",
-      "durationSec": 10,
+      "durationSec": 49,
       "lastActive": "เมื่อสักครู่",
-      "timestamp": 1791049826617,
+      "timestamp": 1791054049201,
+      "isOnline": true
+    },
+    {
+      "sessionId": "v-lhkxo13-musr9hk8",
+      "ipMasked": "127.0.0.xxx",
+      "device": "iPhone 14 Pro",
+      "district": "ปิด GPS",
+      "currentPage": "หน้าหลัก (แผนที่)",
+      "durationSec": 34,
+      "lastActive": "เมื่อสักครู่",
+      "timestamp": 1791054015435,
       "isOnline": true
     },
     {
@@ -172,20 +117,20 @@
       "device": "Desktop",
       "district": "เมืองสมุทรปราการ",
       "currentPage": "PrakanGuard | ระบบสารสนเทศและเฝ้าระวังอุทกภัย จ.สมุทรปราการ",
-      "durationSec": 15,
+      "durationSec": 38,
       "lastActive": "เมื่อสักครู่",
-      "timestamp": 1791049822183,
+      "timestamp": 1791054010765,
       "isOnline": true
     },
     {
-      "sessionId": "v-rhiwgj6-musotkvz",
+      "sessionId": "v-bck3xsk-musjf1il",
       "ipMasked": "127.0.0.xxx",
-      "device": "แท็บเล็ต",
+      "device": "iPhone",
       "district": "ปิด GPS",
       "currentPage": "หน้าหลัก (แผนที่)",
-      "durationSec": 13,
+      "durationSec": 51,
       "lastActive": "เมื่อสักครู่",
-      "timestamp": 1791049823999,
+      "timestamp": 1791053997841,
       "isOnline": true
     }
   ]

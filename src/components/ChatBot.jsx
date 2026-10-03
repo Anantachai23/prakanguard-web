@@ -749,6 +749,13 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
     lastUpdated: 'สด'
   });
 
+  useEffect(() => {
+    window.__prakanguard_is_chat_open = isOpen && !isMinimized;
+    return () => {
+      window.__prakanguard_is_chat_open = false;
+    };
+  }, [isOpen, isMinimized]);
+
   const [messages, setMessages] = useState([
     {
       id: 'welcome',

@@ -1,807 +1,316 @@
 <!DOCTYPE html>
-<html lang="th" class="h-full">
+<html lang="th" data-theme="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PrakanGuard | ระบบบริหารจัดการแอดมิน ศูนย์ข้อมูลอุทกภัยสมุทรปราการ</title>
+  <title>PrakanGuard | ศูนย์บัญชาการข้อมูลและเฝ้าระวังอุทกภัย จ.สมุทรปราการ (Admin Portal)</title>
   
-  <!-- Google Fonts: Prompt & Plus Jakarta Sans -->
+  <!-- Favicon & Fonts -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%231e40af'><path d='M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5'/></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Prompt:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700;800&family=Sarabun:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   
-  <!-- Tailwind CSS CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          fontFamily: {
-            prompt: ['Prompt', 'sans-serif'],
-            sans: ['"Plus Jakarta Sans"', 'Prompt', 'sans-serif']
-          },
-          colors: {
-            flood: {
-              safe: '#10b981',
-              warn: '#f59e0b',
-              danger: '#ef4444',
-              ice: '#06b6d4',
-              navy: '#0f172a'
-            }
-          }
-        }
-      }
-    }
-  </script>
-
-  <!-- Leaflet CSS & JS -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
-  <!-- Chart.js CDN -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-  <!-- Lucide Icons CDN -->
-  <script src="https://unpkg.com/lucide@latest"></script>
-
-  <style>
-    body {
-      font-family: 'Prompt', -apple-system, BlinkMacSystemFont, sans-serif;
-    }
-    .custom-scrollbar::-webkit-scrollbar {
-      width: 6px;
-      height: 6px;
-    }
-    .custom-scrollbar::-webkit-scrollbar-track {
-      background: rgba(15, 23, 42, 0.2);
-    }
-    .custom-scrollbar::-webkit-scrollbar-thumb {
-      background: rgba(148, 163, 184, 0.4);
-      border-radius: 9999px;
-    }
-    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-      background: rgba(148, 163, 184, 0.7);
-    }
-    @keyframes pulse-ring {
-      0% { transform: scale(0.95); opacity: 0.8; }
-      50% { transform: scale(1.2); opacity: 0.3; }
-      100% { transform: scale(0.95); opacity: 0.8; }
-    }
-    .pulse-ring {
-      animation: pulse-ring 2s cubic-bezier(0, 0, 0.2, 1) infinite;
-    }
-    .badge-glow {
-      box-shadow: 0 0 12px currentColor;
-    }
-  </style>
+  <link rel="stylesheet" href="./assets/css/admin.css">
+  <script src="./assets/vendor/chart.umd.js"></script>
 </head>
-<body class="bg-slate-950 text-slate-100 h-full flex flex-col antialiased selection:bg-blue-600 selection:text-white">
+<body>
 
-  <!-- ADMIN LOGIN MODAL (When not authenticated) -->
-  <div id="loginModal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
-    <div class="bg-slate-900 border border-slate-700/80 rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl relative overflow-hidden">
-      <div class="h-2 w-full bg-gradient-to-r from-blue-600 via-cyan-500 to-indigo-600 absolute top-0 left-0"></div>
-      
-      <div class="flex items-center gap-3 mb-6">
-        <div class="w-12 h-12 rounded-2xl bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400">
-          <i data-lucide="shield-check" class="w-7 h-7"></i>
+  <!-- =========================================================================
+       1. LOGIN WALL (แสดงเฉพาะเมื่อยังไม่ได้เข้าสู่ระบบ - ห้ามใส่รหัสผ่านค้างไว้)
+       ========================================================================= -->
+  <div id="login-wall" style="display: none;">
+    <div class="login-card">
+      <div class="login-header">
+        <div class="login-emblem">
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/>
+            <path d="m9 12 2 2 4-4"/>
+          </svg>
         </div>
-        <div>
-          <h2 class="text-xl font-bold text-white tracking-wide">เข้าสู่ระบบแอดมิน</h2>
-          <p class="text-xs text-slate-400">ศูนย์บัญชาการข้อมูลอุทกภัยสมุทรปราการ</p>
-        </div>
+        <h2 class="login-title">PrakanGuard Command Center</h2>
+        <p class="login-sub">ระบบบริหารจัดการศูนย์ข้อมูลอุทกภัย จ.สมุทรปราการ</p>
       </div>
 
-      <form id="loginForm" class="space-y-4" onsubmit="handleLogin(event)">
-        <div>
-          <label class="block text-xs font-semibold text-slate-300 mb-1.5">ชื่อผู้ดูแลระบบ (Username)</label>
-          <div class="relative">
-            <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400">
-              <i data-lucide="user" class="w-4 h-4"></i>
-            </span>
-            <input type="text" id="loginUser" required class="w-full pl-10 pr-4 py-2.5 bg-slate-800/80 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" value="admin_prakanguard" />
-          </div>
+      <div id="login-error" class="login-error"></div>
+
+      <form id="login-form" autocomplete="off">
+        <div class="login-field">
+          <label class="login-label" for="login-username">ชื่อผู้ใช้งาน (Username)</label>
+          <input 
+            type="text" 
+            id="login-username" 
+            name="username" 
+            class="login-input" 
+            placeholder="กรอกชื่อผู้ใช้แอดมิน" 
+            autocomplete="off" 
+            required
+            value=""
+          >
         </div>
 
-        <div>
-          <label class="block text-xs font-semibold text-slate-300 mb-1.5">รหัสผ่านความปลอดภัย (Password)</label>
-          <div class="relative">
-            <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400">
-              <i data-lucide="lock" class="w-4 h-4"></i>
-            </span>
-            <input type="password" id="loginPass" required class="w-full pl-10 pr-4 py-2.5 bg-slate-800/80 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" value="Prakan#Guard2026!Secured" />
-          </div>
+        <div class="login-field">
+          <label class="login-label" for="login-password">รหัสผ่าน (Password)</label>
+          <input 
+            type="password" 
+            id="login-password" 
+            name="password" 
+            class="login-input" 
+            placeholder="กรอกรหัสผ่านเพื่อเข้าสู่ระบบ" 
+            autocomplete="new-password" 
+            required
+            value=""
+          >
         </div>
 
-        <div id="loginError" class="hidden text-xs text-rose-400 bg-rose-950/40 border border-rose-800/50 p-2.5 rounded-xl flex items-center gap-2">
-          <i data-lucide="alert-circle" class="w-4 h-4 shrink-0"></i>
-          <span>ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง โปรดตรวจสอบอีกครั้ง</span>
-        </div>
-
-        <button type="submit" class="w-full py-3 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white font-semibold rounded-xl text-sm transition shadow-lg shadow-blue-500/25 flex items-center justify-center gap-2">
-          <i data-lucide="key" class="w-4 h-4"></i>
-          ยืนยันและเข้าสู่แผงควบคุม
+        <button type="submit" id="btn-login-submit" class="login-btn" style="margin-top: 10px;">
+          เข้าสู่ระบบ Admin
         </button>
       </form>
-
-      <div class="mt-4 pt-4 border-t border-slate-800 text-center">
-        <p class="text-[11px] text-slate-500">
-          ระบบแยกส่วนเฉพาะผู้ดูแลระบบ (Isolated Admin Command System)
-        </p>
-      </div>
     </div>
   </div>
 
-  <!-- TOP COMMAND HEADER -->
-  <header class="bg-slate-900/90 border-b border-slate-800 backdrop-blur-md sticky top-0 z-40 px-4 py-2.5 flex items-center justify-between gap-4">
-    <!-- Brand / Title -->
-    <div class="flex items-center gap-3">
-      <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 to-cyan-500 flex items-center justify-center text-white shadow-lg shadow-blue-600/30">
-        <i data-lucide="shield" class="w-5 h-5"></i>
-      </div>
-      <div>
-        <div class="flex items-center gap-2">
-          <h1 class="text-base font-bold text-white leading-tight">PrakanGuard Admin Command</h1>
-          <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/20 text-blue-400 border border-blue-500/30">
-            ระบบแอดมินศูนย์ควบคุม
-          </span>
+  <!-- =========================================================================
+       2. APP SHELL
+       ========================================================================= -->
+  <div id="app-shell">
+
+    <!-- SIDEBAR -->
+    <aside class="app-sidebar">
+      <div class="brand-section">
+        <div class="brand-emblem">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/>
+            <path d="m9 12 2 2 4-4"/>
+          </svg>
         </div>
-        <p class="text-[11px] text-slate-400 hidden sm:block">ระบบจัดการรายงานน้ำท่วม • สถิติผู้ใช้งาน • ข้อเสนอแนะประชาชน</p>
-      </div>
-    </div>
-
-    <!-- Live Telemetry Badges & Controls -->
-    <div class="flex items-center gap-2 sm:gap-4">
-      <!-- Active Visitors Badge -->
-      <div class="flex items-center gap-2 px-3 py-1.5 bg-emerald-950/60 border border-emerald-500/40 rounded-full text-emerald-400 text-xs font-semibold cursor-pointer hover:bg-emerald-900/50 transition" onclick="switchTab('visitors')" title="คลิกเพื่อดูสถิติผู้เข้าชมแบบละเอียด">
-        <span class="relative flex h-2.5 w-2.5">
-          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-          <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
-        </span>
-        <span>ออนไลน์ขณะนี้: <b id="topOnlineCount" class="text-sm font-extrabold text-white">--</b> คน</span>
-      </div>
-
-      <!-- Cloud Sync Status -->
-      <div id="cloudStatusBadge" class="hidden md:flex items-center gap-1.5 px-2.5 py-1 bg-slate-800/80 border border-slate-700 rounded-full text-slate-300 text-xs">
-        <i data-lucide="radio" class="w-3.5 h-3.5 text-cyan-400 animate-pulse"></i>
-        <span class="text-[11px]">คลาวด์ซิงก์สด 100%</span>
-      </div>
-
-      <!-- Real-time Clock -->
-      <div class="hidden lg:flex items-center gap-1.5 text-xs text-slate-300 font-mono bg-slate-800/50 px-3 py-1 rounded-xl border border-slate-700/60">
-        <i data-lucide="clock" class="w-3.5 h-3.5 text-slate-400"></i>
-        <span id="liveClock">กำลังโหลดเวลา...</span>
-      </div>
-
-      <!-- Sound Toggle -->
-      <button id="soundToggleBtn" onclick="toggleSound()" class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 transition" title="เปิด/ปิด เสียงเตือนเมื่อมีรายงานหรือข้อเสนอแนะใหม่">
-        <i id="soundIcon" data-lucide="volume-2" class="w-4 h-4 text-emerald-400"></i>
-      </button>
-
-      <!-- Logout Button -->
-      <button onclick="handleLogout()" class="px-3 py-1.5 rounded-xl bg-rose-950/60 hover:bg-rose-900/80 border border-rose-800/60 text-rose-300 text-xs font-semibold flex items-center gap-1.5 transition">
-        <i data-lucide="log-out" class="w-3.5 h-3.5"></i>
-        <span class="hidden sm:inline">ออกจากระบบ</span>
-      </button>
-    </div>
-  </header>
-
-  <!-- MAIN BODY LAYOUT (Sidebar + Content) -->
-  <div class="flex-1 flex overflow-hidden">
-    <!-- SIDEBAR NAVIGATION -->
-    <aside class="w-64 bg-slate-900 border-r border-slate-800 flex flex-col shrink-0 custom-scrollbar overflow-y-auto hidden md:flex">
-      <div class="p-4 space-y-1.5">
-        <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400 px-3 py-1">เมนูหลัก (Core Modules)</div>
-        
-        <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-btn w-full flex items-center justify-between px-3 py-2.5 rounded-2xl text-sm font-semibold transition bg-blue-600 text-white shadow-md shadow-blue-600/20">
-          <div class="flex items-center gap-3">
-            <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
-            <span>แดชบอร์ดภาพรวม</span>
-          </div>
-        </button>
-
-        <button onclick="switchTab('reports')" id="nav-reports" class="nav-btn w-full flex items-center justify-between px-3 py-2.5 rounded-2xl text-sm font-semibold transition text-slate-300 hover:bg-slate-800/70 hover:text-white">
-          <div class="flex items-center gap-3">
-            <i data-lucide="droplets" class="w-4 h-4 text-cyan-400"></i>
-            <span>รายงานน้ำท่วม & ลูกเห็บ</span>
-          </div>
-          <span id="badgePendingReports" class="px-2 py-0.5 rounded-full text-xs font-bold bg-rose-500 text-white">0</span>
-        </button>
-
-        <button onclick="switchTab('visitors')" id="nav-visitors" class="nav-btn w-full flex items-center justify-between px-3 py-2.5 rounded-2xl text-sm font-semibold transition text-slate-300 hover:bg-slate-800/70 hover:text-white">
-          <div class="flex items-center gap-3">
-            <i data-lucide="users" class="w-4 h-4 text-emerald-400"></i>
-            <span>สถิติผู้เข้าใช้งานเว็บ</span>
-          </div>
-          <span id="badgeActiveVisitors" class="px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-500 text-white">0</span>
-        </button>
-
-        <button onclick="switchTab('feedback')" id="nav-feedback" class="nav-btn w-full flex items-center justify-between px-3 py-2.5 rounded-2xl text-sm font-semibold transition text-slate-300 hover:bg-slate-800/70 hover:text-white">
-          <div class="flex items-center gap-3">
-            <i data-lucide="message-square" class="w-4 h-4 text-amber-400"></i>
-            <span>ข้อเสนอแนะประชาชน</span>
-          </div>
-          <span id="badgeUnreadFeedback" class="px-2 py-0.5 rounded-full text-xs font-bold bg-amber-500 text-slate-900">0</span>
-        </button>
-
-        <button onclick="switchTab('broadcast')" id="nav-broadcast" class="nav-btn w-full flex items-center justify-between px-3 py-2.5 rounded-2xl text-sm font-semibold transition text-slate-300 hover:bg-slate-800/70 hover:text-white">
-          <div class="flex items-center gap-3">
-            <i data-lucide="megaphone" class="w-4 h-4 text-purple-400"></i>
-            <span>ประกาศเตือนภัยฉุกเฉิน</span>
-          </div>
-        </button>
-
-        <button onclick="switchTab('trash')" id="nav-trash" class="nav-btn w-full flex items-center justify-between px-3 py-2.5 rounded-2xl text-sm font-semibold transition text-slate-300 hover:bg-slate-800/70 hover:text-white">
-          <div class="flex items-center gap-3">
-            <i data-lucide="trash-2" class="w-4 h-4 text-rose-400"></i>
-            <span>ลบล่าสุด (ถังขยะ)</span>
-          </div>
-          <span id="badgeTrashCount" class="px-2 py-0.5 rounded-full text-xs font-bold bg-rose-950 text-rose-400 border border-rose-800/60">0</span>
-        </button>
-
-        <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400 px-3 py-1 pt-4">การจัดการระบบ</div>
-
-
-        <button onclick="switchTab('loginlog')" id="nav-loginlog" class="nav-btn w-full flex items-center justify-between px-3 py-2.5 rounded-2xl text-sm font-semibold transition text-slate-300 hover:bg-slate-800/70 hover:text-white">
-          <div class="flex items-center gap-3">
-            <i data-lucide="clock" class="w-4 h-4 text-amber-400"></i>
-            <span>ประวัติเข้าระบบ Admin</span>
-          </div>
-          <span id="loginlog-count-badge" class="text-[10px] bg-amber-500/20 text-amber-400 border border-amber-500/30 px-1.5 py-0.5 rounded-full font-bold"></span>
-        </button>
-        <button onclick="switchTab('settings')" id="nav-settings" class="nav-btn w-full flex items-center justify-between px-3 py-2.5 rounded-2xl text-sm font-semibold transition text-slate-300 hover:bg-slate-800/70 hover:text-white">
-          <div class="flex items-center gap-3">
-            <i data-lucide="settings" class="w-4 h-4 text-slate-400"></i>
-            <span>ตั้งค่า & สำรองข้อมูล</span>
-          </div>
-        </button>
-      </div>
-
-      <!-- Quick Server & System Card at bottom -->
-      <div class="mt-auto p-4 border-t border-slate-800">
-        <div class="p-3 bg-slate-800/60 rounded-2xl border border-slate-700/60 space-y-2">
-          <div class="flex items-center justify-between text-xs">
-            <span class="text-slate-400">สถานะเซิร์ฟเวอร์:</span>
-            <span class="text-emerald-400 font-bold flex items-center gap-1">
-              <span class="w-2 h-2 rounded-full bg-emerald-400"></span> ปกติ (Port 4000)
-            </span>
-          </div>
-          <div class="flex items-center justify-between text-xs">
-            <span class="text-slate-400">โหมดการจัดเก็บ:</span>
-            <span class="text-blue-400 font-semibold">JSON Persistent</span>
-          </div>
-          <button onclick="triggerManualSync()" class="w-full mt-1 py-1.5 bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 border border-blue-500/30 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition">
-            <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
-            รีเฟรชข้อมูลคลาวด์สด
-          </button>
+        <div class="brand-titles">
+          <span class="brand-title">PrakanGuard Admin</span>
+          <span class="brand-subtitle">ศูนย์ข้อมูลอุทกภัย 6 อำเภอ</span>
         </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-label">เมนูหลัก</div>
+        <a class="nav-item active" data-tab="overview">
+          <svg class="ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
+          <span>ภาพรวมระบบ</span>
+        </a>
+        <a class="nav-item" data-tab="reports">
+          <svg class="ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 16.3c2.2 0 4-1.83 4-4.05 0-1.16-.57-2.26-1.71-3.19S7.29 6.75 7 5.3c-.29 1.45-1.14 2.84-2.29 3.76S3 11.1 3 12.25c0 2.22 1.8 4.05 4 4.05z"/></svg>
+          <span>ผู้แจ้งรายงานน้ำท่วม</span>
+          <span id="badge-reports-count" class="nav-badge">0</span>
+        </a>
+        <a class="nav-item" data-tab="visitors">
+          <svg class="ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+          <span>ผู้เข้าใช้งานสด</span>
+          <span id="badge-visitors-count" class="nav-badge">0</span>
+        </a>
+        <a class="nav-item" data-tab="feedback">
+          <svg class="ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          <span>ข้อเสนอจากประชาชน</span>
+        </a>
+
+        <div class="nav-label" style="margin-top: 12px;">การจัดการ & ระบบ</div>
+        <a class="nav-item" data-tab="announcements">
+          <svg class="ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg>
+          <span>การประกาศหน้าเว็บ</span>
+        </a>
+        <a class="nav-item" data-tab="trash">
+          <svg class="ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+          <span>ลบล่าสุด (ถังขยะ)</span>
+          <span id="badge-trash-count" class="nav-badge">0</span>
+        </a>
+        <a class="nav-item" data-tab="logins">
+          <svg class="ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          <span>ประวัติเข้าระบบแอดมิน</span>
+        </a>
+        <a class="nav-item" data-tab="settings">
+          <svg class="ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          <span>ตั้งค่า & สำรองข้อมูล</span>
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="admin-pill">
+          <div class="admin-avatar">AD</div>
+          <div class="admin-meta">
+            <span id="sidebar-admin-name" class="admin-name">Admin</span>
+            <span class="admin-status"><span class="status-dot pulse"></span> กำลังใช้งาน</span>
+          </div>
+        </div>
+        <button id="btn-logout" class="icon-btn" title="ออกจากระบบ">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
+        </button>
       </div>
     </aside>
 
-    <!-- MOBILE BOTTOM NAVIGATION -->
-    <nav class="md:hidden fixed bottom-0 inset-x-0 bg-slate-900/95 border-t border-slate-800 z-30 flex items-center justify-around py-2 px-1 backdrop-blur-lg">
-      <button onclick="switchTab('dashboard')" class="flex flex-col items-center gap-1 text-[10px] text-slate-400 hover:text-white p-1">
-        <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
-        <span>แดชบอร์ด</span>
-      </button>
-      <button onclick="switchTab('reports')" class="flex flex-col items-center gap-1 text-[10px] text-slate-400 hover:text-white p-1 relative">
-        <i data-lucide="droplets" class="w-5 h-5 text-cyan-400"></i>
-        <span>รายงาน</span>
-        <span id="mobileBadgeReports" class="absolute -top-1 right-1 w-4 h-4 bg-rose-500 text-white rounded-full text-[9px] flex items-center justify-center font-bold">0</span>
-      </button>
-      <button onclick="switchTab('visitors')" class="flex flex-col items-center gap-1 text-[10px] text-slate-400 hover:text-white p-1">
-        <i data-lucide="users" class="w-5 h-5 text-emerald-400"></i>
-        <span>ผู้เข้าชม</span>
-      </button>
-      <button onclick="switchTab('feedback')" class="flex flex-col items-center gap-1 text-[10px] text-slate-400 hover:text-white p-1 relative">
-        <i data-lucide="message-square" class="w-5 h-5 text-amber-400"></i>
-        <span>ข้อเสนอ</span>
-        <span id="mobileBadgeFeedback" class="absolute -top-1 right-1 w-4 h-4 bg-amber-500 text-slate-900 rounded-full text-[9px] flex items-center justify-center font-bold">0</span>
-      </button>
-    </nav>
-
-    <!-- MAIN VIEW CONTAINER -->
-    <main class="flex-1 overflow-y-auto custom-scrollbar p-4 sm:p-6 lg:p-8 space-y-6 pb-20 md:pb-8">
-
-      <!-- ================= SECTION 1: OVERVIEW DASHBOARD ================= -->
-      <section id="view-dashboard" class="space-y-6">
-        <!-- Top Stats Row (6 Cards) -->
-        <div class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-4">
-          <!-- Card 1: Online Users -->
-          <div class="bg-slate-900/80 border border-slate-800 rounded-3xl p-4 shadow-lg relative overflow-hidden flex flex-col justify-between">
-            <div class="flex items-center justify-between">
-              <span class="text-xs font-semibold text-slate-400">ผู้เข้าใช้งานขณะนี้</span>
-              <div class="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
-                <i data-lucide="activity" class="w-4 h-4 animate-pulse"></i>
-              </div>
-            </div>
-            <div class="mt-3">
-              <div class="flex items-baseline gap-2">
-                <span id="statActiveNow" class="text-3xl font-extrabold text-white">--</span>
-                <span class="text-xs text-emerald-400 font-semibold">คน</span>
-              </div>
-              <p class="text-[11px] text-slate-400 mt-1">ออนไลน์สดใน 60 วินาที</p>
-            </div>
-          </div>
-
-          <!-- Card 2: Today's Visitors -->
-          <div class="bg-slate-900/80 border border-slate-800 rounded-3xl p-4 shadow-lg relative overflow-hidden flex flex-col justify-between">
-            <div class="flex items-center justify-between">
-              <span class="text-xs font-semibold text-slate-400">ผู้เข้าชมวันนี้</span>
-              <div class="w-8 h-8 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center">
-                <i data-lucide="user-check" class="w-4 h-4"></i>
-              </div>
-            </div>
-            <div class="mt-3">
-              <div class="flex items-baseline gap-2">
-                <span id="statTotalToday" class="text-3xl font-extrabold text-white">--</span>
-                <span class="text-xs text-blue-400 font-semibold">ครั้ง</span>
-              </div>
-              <p class="text-[11px] text-slate-400 mt-1">สูงสุดพร้อมกัน <span id="statPeakToday" class="font-bold text-white">--</span> คน</p>
-            </div>
-          </div>
-
-          <!-- Card 3: Pending Reports -->
-          <div class="bg-slate-900/80 border border-slate-800 rounded-3xl p-4 shadow-lg relative overflow-hidden flex flex-col justify-between">
-            <div class="flex items-center justify-between">
-              <span class="text-xs font-semibold text-slate-400">รายงานรอดำเนินการ</span>
-              <div class="w-8 h-8 rounded-xl bg-rose-500/20 text-rose-400 flex items-center justify-center">
-                <i data-lucide="alert-triangle" class="w-4 h-4"></i>
-              </div>
-            </div>
-            <div class="mt-3">
-              <div class="flex items-baseline gap-2">
-                <span id="statPendingReports" class="text-3xl font-extrabold text-rose-400">--</span>
-                <span class="text-xs text-rose-400 font-semibold">จุด</span>
-              </div>
-              <p class="text-[11px] text-slate-400 mt-1">รอแอดมินตรวจสอบ</p>
-            </div>
-          </div>
-
-          <!-- Card 4: Approved Active Points -->
-          <div class="bg-slate-900/80 border border-slate-800 rounded-3xl p-4 shadow-lg relative overflow-hidden flex flex-col justify-between">
-            <div class="flex items-center justify-between">
-              <span class="text-xs font-semibold text-slate-400">จุดเฝ้าระวังที่อนุมัติ</span>
-              <div class="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center">
-                <i data-lucide="shield-alert" class="w-4 h-4"></i>
-              </div>
-            </div>
-            <div class="mt-3">
-              <div class="flex items-baseline gap-2">
-                <span id="statApprovedReports" class="text-3xl font-extrabold text-amber-400">--</span>
-                <span class="text-xs text-amber-400 font-semibold">จุด</span>
-              </div>
-              <p class="text-[11px] text-slate-400 mt-1">แสดงผลบนแผนที่หลัก</p>
-            </div>
-          </div>
-
-          <!-- Card 5: Resolved Points -->
-          <div class="bg-slate-900/80 border border-slate-800 rounded-3xl p-4 shadow-lg relative overflow-hidden flex flex-col justify-between">
-            <div class="flex items-center justify-between">
-              <span class="text-xs font-semibold text-slate-400">สถานการณ์คลี่คลาย</span>
-              <div class="w-8 h-8 rounded-xl bg-teal-500/20 text-teal-400 flex items-center justify-center">
-                <i data-lucide="check-circle-2" class="w-4 h-4"></i>
-              </div>
-            </div>
-            <div class="mt-3">
-              <div class="flex items-baseline gap-2">
-                <span id="statResolvedReports" class="text-3xl font-extrabold text-teal-400">--</span>
-                <span class="text-xs text-teal-400 font-semibold">จุด</span>
-              </div>
-              <p class="text-[11px] text-slate-400 mt-1">น้ำลดสู่สภาวะปกติ</p>
-            </div>
-          </div>
-
-          <!-- Card 6: Citizen Feedback & Rating -->
-          <div class="bg-slate-900/80 border border-slate-800 rounded-3xl p-4 shadow-lg relative overflow-hidden flex flex-col justify-between">
-            <div class="flex items-center justify-between">
-              <span class="text-xs font-semibold text-slate-400">ข้อเสนอแนะประชาชน</span>
-              <div class="w-8 h-8 rounded-xl bg-yellow-500/20 text-yellow-400 flex items-center justify-center">
-                <i data-lucide="star" class="w-4 h-4"></i>
-              </div>
-            </div>
-            <div class="mt-3">
-              <div class="flex items-baseline gap-2">
-                <span id="statTotalFeedback" class="text-3xl font-extrabold text-white">--</span>
-                <span class="text-xs text-yellow-400 font-semibold">รายการ</span>
-              </div>
-              <p class="text-[11px] text-slate-400 mt-1">ยังไม่อ่าน <span id="statUnreadFeedback" class="font-bold text-amber-400">--</span> | ⭐ <span id="statAvgRating" class="font-bold text-yellow-300">5.0</span></p>
-            </div>
+    <!-- MAIN BODY -->
+    <main class="app-main">
+      <header class="app-header">
+        <div class="header-left">
+          <div class="header-title-group">
+            <h1 id="header-view-title">ภาพรวมระบบและการเข้าชม</h1>
+            <p>ระบบเชื่อมต่อข้อมูลตรงกับเว็บหลัก (Supabase Real-time Telemetry)</p>
           </div>
         </div>
+        <div class="header-actions">
+          <button id="btn-global-refresh" class="btn btn-secondary btn-sm" title="รีเฟรชข้อมูลสดทันที">
+            <svg class="ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
+            <span>รีเฟรชข้อมูล</span>
+          </button>
+          <button id="btn-theme-toggle" class="icon-btn" title="สลับธีม">
+            <svg class="ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+          </button>
+        </div>
+      </header>
 
-        <!-- Middle Section: Recent Live Reports & Recent Suggestions Preview -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <!-- Recent Reports Stream -->
-          <div class="bg-slate-900/80 border border-slate-800 rounded-3xl p-5 shadow-xl flex flex-col">
-            <div class="flex items-center justify-between mb-4">
-              <div class="flex items-center gap-2.5">
-                <div class="w-8 h-8 rounded-xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center">
-                  <i data-lucide="droplets" class="w-4 h-4"></i>
-                </div>
+      <div class="app-content">
+
+        <!-- ================= VIEW 1: OVERVIEW ================= -->
+        <section id="view-overview" class="view-section">
+          <!-- 4 Stat Cards -->
+          <div class="stat-grid-4">
+            <div class="stat-card">
+              <div class="stat-info">
+                <span class="stat-label"><span class="status-dot pulse"></span> กำลังออนไลน์อยู่ขณะนี้</span>
+                <span id="stat-active-now" class="stat-value">0</span>
+                <span class="stat-sub">มีกิจกรรมในรอบ 60 วินาทีล่าสุด</span>
+              </div>
+              <div class="stat-icon-wrap primary">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+              </div>
+            </div>
+
+            <div class="stat-card">
+              <div class="stat-info">
+                <span class="stat-label">ยอดเข้าชมวันนี้ (อุปกรณ์จริง)</span>
+                <span id="stat-visitors-today" class="stat-value">0</span>
+                <span class="stat-sub">อุปกรณ์ของประชาชนที่เข้าใช้งานจริง</span>
+              </div>
+              <div class="stat-icon-wrap accent">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+              </div>
+            </div>
+
+            <div class="stat-card">
+              <div class="stat-info">
+                <span class="stat-label">เข้าใช้งานพร้อมกันสูงสุดวันนี้</span>
+                <span id="stat-peak-online" class="stat-value">0</span>
+                <span class="stat-sub">ยอดผู้เข้าชมสูงสุดพร้อมกัน</span>
+              </div>
+              <div class="stat-icon-wrap warning">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2"/></svg>
+              </div>
+            </div>
+
+            <div class="stat-card">
+              <div class="stat-info">
+                <span class="stat-label">อำเภอที่มีคนดูเยอะที่สุด (GPS จริง)</span>
+                <span id="stat-top-district" class="stat-value" style="font-size: 20px;">—</span>
+                <span id="stat-top-district-sub" class="stat-sub">อิงจากพิกัดเปิดจริงในพื้นที่</span>
+              </div>
+              <div class="stat-icon-wrap success">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 4.99-5.54 10.19-7.4 11.8a1 1 0 0 1-1.2 0C9.54 20.19 4 14.99 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></svg>
+              </div>
+            </div>
+          </div>
+
+          <!-- 2 Stat Cards for Reports -->
+          <div class="stat-grid-3" style="margin-top: 16px;">
+            <div class="stat-card">
+              <div class="stat-info">
+                <span class="stat-label">รายงานน้ำท่วม: รอการอนุมัติ</span>
+                <span id="stat-pending-reports" class="stat-value" style="color: var(--warning);">0</span>
+                <span class="stat-sub">รอแอดมินตรวจสอบเพื่อขึ้นแผนที่หลัก</span>
+              </div>
+              <div class="stat-icon-wrap warning">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              </div>
+            </div>
+
+            <div class="stat-card">
+              <div class="stat-info">
+                <span class="stat-label">รายงานน้ำท่วม: อนุมัติขึ้นเว็บแล้ว</span>
+                <span id="stat-approved-reports" class="stat-value" style="color: var(--success);">0</span>
+                <span class="stat-sub">กำลังแสดงผลให้ประชาชนเห็นบนเว็บหลัก</span>
+              </div>
+              <div class="stat-icon-wrap success">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg>
+              </div>
+            </div>
+          </div>
+
+          <!-- Charts Grid (30-min telemetry) -->
+          <div class="grid-2" style="margin-top: 20px;">
+            <div class="card">
+              <div class="card-header">
                 <div>
-                  <h3 class="text-sm font-bold text-white">รายงานน้ำท่วมล่าสุดจากประชาชน</h3>
-                  <p class="text-xs text-slate-400">ข้อมูลส่งตรงจากผู้ใช้บนถนนแบบเรียลไทม์</p>
+                  <h3 class="card-title">แนวโน้มผู้เข้าใช้งานตลอดวัน</h3>
+                  <p class="card-subtitle">กราฟอัปเดตข้อมูลจริงทุก 30 นาที</p>
                 </div>
               </div>
-              <button onclick="switchTab('reports')" class="text-xs text-blue-400 hover:text-blue-300 font-semibold flex items-center gap-1">
-                ดูทั้งหมด <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
-              </button>
+              <div style="position: relative; height: 260px; width: 100%;">
+                <canvas id="chart-visitor-trend"></canvas>
+              </div>
             </div>
 
-            <div id="dashReportsList" class="space-y-3 flex-1 overflow-y-auto max-h-[360px] custom-scrollbar pr-1">
-              <div class="text-center py-8 text-xs text-slate-500">กำลังโหลดรายงานล่าสุด...</div>
-            </div>
-          </div>
-
-          <!-- Recent Suggestions Stream -->
-          <div class="bg-slate-900/80 border border-slate-800 rounded-3xl p-5 shadow-xl flex flex-col">
-            <div class="flex items-center justify-between mb-4">
-              <div class="flex items-center gap-2.5">
-                <div class="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center">
-                  <i data-lucide="message-square" class="w-4 h-4"></i>
-                </div>
+            <div class="card">
+              <div class="card-header">
                 <div>
-                  <h3 class="text-sm font-bold text-white">ข้อเสนอแนะและข้อคิดเห็นล่าสุด</h3>
-                  <p class="text-xs text-slate-400">ประชาชนเขียนเสนอแนะเข้ามาอย่างไร</p>
+                  <h3 class="card-title">สัดส่วนอุปกรณ์ผู้ใช้งานจริง</h3>
+                  <p class="card-subtitle">แผนภาพวงกลมอัปเดตข้อมูลจริงทุก 30 นาที</p>
                 </div>
               </div>
-              <button onclick="switchTab('feedback')" class="text-xs text-blue-400 hover:text-blue-300 font-semibold flex items-center gap-1">
-                ดูทั้งหมด <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
-              </button>
-            </div>
-
-            <div id="dashFeedbackList" class="space-y-3 flex-1 overflow-y-auto max-h-[360px] custom-scrollbar pr-1">
-              <div class="text-center py-8 text-xs text-slate-500">กำลังโหลดข้อเสนอแนะล่าสุด...</div>
+              <div style="position: relative; height: 260px; width: 100%;">
+                <canvas id="chart-device-share"></canvas>
+              </div>
             </div>
           </div>
-        </div>
 
-        <!-- District Visitor Breakdown -->
-        <div class="bg-slate-900/80 border border-slate-800 rounded-3xl p-5 shadow-xl">
-          <div class="flex items-center justify-between mb-4">
-            <div class="flex items-center gap-2.5">
-              <div class="w-8 h-8 rounded-xl bg-purple-500/20 text-purple-400 flex items-center justify-center">
-                <i data-lucide="map-pin" class="w-4 h-4"></i>
-              </div>
+          <!-- Mini Live Session Activity Feed -->
+          <div class="card" style="margin-top: 20px;">
+            <div class="card-header">
               <div>
-                <h3 class="text-sm font-bold text-white">ผู้เข้าชมแยกตามอำเภอ (สด)</h3>
-                <p class="text-xs text-slate-400">อำเภอที่มีผู้ใช้งานอยู่ในขณะนี้</p>
+                <h3 class="card-title">เซสชันผู้เข้าใช้งานสดล่าสุด</h3>
+                <p class="card-subtitle">ประชาชนที่เปิดเว็บอยู่ ณ ขณะนี้</p>
               </div>
+              <button class="btn btn-secondary btn-sm" onclick="switchTab('visitors')">ดูทั้งหมด</button>
+            </div>
+            <div class="table-wrap">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>รหัสเซสชัน</th>
+                    <th>ไอพี</th>
+                    <th>อุปกรณ์ / รุ่นมือถือ</th>
+                    <th>อำเภอ (GPS จริง)</th>
+                    <th>หน้าที่เปิดอยู่</th>
+                    <th>ระยะเวลาบนเว็บ</th>
+                  </tr>
+                </thead>
+                <tbody id="overview-live-feed-tbody">
+                  <tr><td colspan="6" class="text-center text-muted" style="padding: 24px;">กำลังโหลดข้อมูล...</td></tr>
+                </tbody>
+              </table>
             </div>
           </div>
-          <div id="dashDistrictBreakdown" class="grid grid-cols-2 sm:grid-cols-3 gap-2">
-            <div class="text-center py-4 text-xs text-slate-500 col-span-3">กำลังโหลดข้อมูลอำเภอ...</div>
-          </div>
-        </div>
+        </section>
 
-        <!-- Live Activity Ticker -->
-        <div class="bg-slate-900/80 border border-slate-800 rounded-3xl p-4 shadow-xl">
-          <div class="flex items-center gap-3">
-            <span class="flex items-center gap-1.5 px-3 py-1 bg-blue-500/20 text-blue-400 border border-blue-500/30 rounded-xl text-xs font-bold uppercase tracking-wider shrink-0">
-              <i data-lucide="rss" class="w-3.5 h-3.5 animate-pulse"></i>
-              กิจกรรมสด
-            </span>
-            <div id="liveActivityTicker" class="text-xs text-slate-300 truncate">
-              พร้อมรับรายงานน้ำท่วมและสถิติผู้ใช้งานจากสมุทรปราการ 6 อำเภอแบบเรียลไทม์
-            </div>
-          </div>
-        </div>
-      </section>
+        <!-- ================= VIEW 2: FLOOD REPORTS ================= -->
+        <section id="view-reports" class="view-section" style="display: none;">
+          <div class="card">
+            <!-- Filter & Search Controls -->
+            <div class="filter-bar">
+              <div class="filter-group">
+                <div class="tabs-pill">
+                  <button class="tab-pill-btn reports-filter-btn active" data-filter="all">ทั้งหมด</button>
+                  <button class="tab-pill-btn reports-filter-btn" data-filter="pending">รออนุมัติ</button>
+                  <button class="tab-pill-btn reports-filter-btn" data-filter="approved">อนุมัติแล้ว</button>
+                </div>
 
-      <!-- ================= SECTION 2: FLOOD & HAZARD REPORTS HUB ================= -->
-      <section id="view-reports" class="hidden space-y-6">
-        <!-- Controls & Filters Header -->
-        <div class="bg-slate-900/90 border border-slate-800 rounded-3xl p-5 shadow-xl space-y-4">
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <h2 class="text-lg font-bold text-white flex items-center gap-2">
-                <i data-lucide="droplets" class="w-5 h-5 text-cyan-400"></i>
-                ระบบจัดการรายงานน้ำท่วมและลูกเห็บ
-              </h2>
-              <p class="text-xs text-slate-400">ตรวจสอบ อนุมัติ ปรับระดับน้ำ หรือปิดงานเพื่ออัปเดตแผนที่แก่ประชาชน</p>
-            </div>
-
-            <!-- Export / Quick Action -->
-            <div class="flex items-center gap-2">
-              <button onclick="exportReportsCSV()" class="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition">
-                <i data-lucide="download" class="w-3.5 h-3.5"></i>
-                ส่งออก CSV
-              </button>
-              <button onclick="openNewReportModal()" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 shadow-lg shadow-blue-600/30 transition">
-                <i data-lucide="plus-circle" class="w-4 h-4"></i>
-                เพิ่มจุดน้ำท่วมโดยแอดมิน
-              </button>
-            </div>
-          </div>
-
-          <!-- Filter Toolbar -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-2 border-t border-slate-800">
-            <!-- Status Filter -->
-            <div>
-              <label class="block text-[11px] font-semibold text-slate-400 mb-1">สถานะรายงาน</label>
-              <select id="filterReportStatus" onchange="renderReports()" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
-                <option value="all">ทั้งหมด ทุกสถานะ</option>
-                <option value="pending" selected>รอดำเนินการ (รออนุมัติ)</option>
-                <option value="approved">อนุมัติแล้ว (แสดงบนแผนที่)</option>
-                <option value="resolved">สถานการณ์คลี่คลายแล้ว (น้ำแห้ง)</option>
-                <option value="hail">ลูกเห็บตก (Hail)</option>
-              </select>
-            </div>
-
-            <!-- District Filter -->
-            <div>
-              <label class="block text-[11px] font-semibold text-slate-400 mb-1">อำเภอ (สมุทรปราการ 6 อำเภอ)</label>
-              <select id="filterReportDistrict" onchange="renderReports()" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
-                <option value="all">ทุกอำเภอ</option>
-                <option value="เมืองสมุทรปราการ">เมืองสมุทรปราการ</option>
-                <option value="บางพลี">บางพลี</option>
-                <option value="พระประแดง">พระประแดง</option>
-                <option value="บางบ่อ">บางบ่อ</option>
-                <option value="พระสมุทรเจดีย์">พระสมุทรเจดีย์</option>
-                <option value="บางเสาธง">บางเสาธง</option>
-              </select>
-            </div>
-
-            <!-- Search Filter -->
-            <div class="sm:col-span-2">
-              <label class="block text-[11px] font-semibold text-slate-400 mb-1">ค้นหาจุดรายงาน</label>
-              <div class="relative">
-                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
-                  <i data-lucide="search" class="w-3.5 h-3.5"></i>
-                </span>
-                <input type="text" id="searchReportText" oninput="renderReports()" placeholder="พิมพ์ชื่อถนน, สี่แยก, ตำบล, หรือชื่อผู้แจ้ง..." class="w-full pl-9 pr-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500" />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Reports Cards Grid -->
-        <div id="reportsGrid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          <!-- Dynamically Injected -->
-        </div>
-
-        <!-- Empty state -->
-        <div id="emptyReportsState" class="hidden text-center py-16 bg-slate-900/60 border border-slate-800 rounded-3xl">
-          <i data-lucide="inbox" class="w-12 h-12 text-slate-600 mx-auto mb-3"></i>
-          <p class="text-sm font-semibold text-slate-300">ไม่พบรายงานน้ำท่วมตามเงื่อนไขที่เลือก</p>
-          <p class="text-xs text-slate-500 mt-1">เมื่อมีประชาชนส่งรายงานเข้ามา รายการจะปรากฏที่นี่ทันที</p>
-        </div>
-      </section>
-
-      <!-- ================= SECTION 3: VISITOR ANALYTICS & STATUS ================= -->
-      <section id="view-visitors" class="hidden space-y-6">
-        <!-- Visitor Summary Header -->
-        <div class="bg-slate-900/90 border border-slate-800 rounded-3xl p-5 shadow-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h2 class="text-lg font-bold text-white flex items-center gap-2">
-              <i data-lucide="users" class="w-5 h-5 text-emerald-400"></i>
-              สถิติและสถานะผู้เข้าใช้งานเว็บแบบเรียลไทม์
-            </h2>
-            <p class="text-xs text-slate-400">ติดตามจำนวนผู้เข้าใช้งานปัจจุบัน อุปกรณ์ที่ใช้ และอำเภอที่มีผู้สนใจเข้าดูมากที่สุด</p>
-          </div>
-
-          <div class="flex flex-wrap items-center gap-2.5">
-            <div class="flex items-center gap-2 bg-slate-800/90 px-3.5 py-1.5 rounded-2xl border border-slate-700/80 text-xs shadow-xs">
-              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-              <span class="text-emerald-400 font-bold">ข้อมูลสดจริง (Live)</span>
-              <span class="text-slate-600 hidden sm:inline">•</span>
-              <span class="text-slate-400 text-[11px] hidden sm:inline">รอบอัปเดตอัตโนมัติ: ทุก 1 ชม.</span>
-            </div>
-            <button onclick="manualRefreshData()" class="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer shadow-xs">
-              <i data-lucide="refresh-cw" class="w-3.5 h-3.5 text-blue-400"></i>
-              <span>รีเฟรชทันที</span>
-            </button>
-          </div>
-        </div>
-
-        <!-- Real-time Stats Cards -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div class="bg-slate-900/80 border border-slate-800 rounded-3xl p-5 shadow-lg relative overflow-hidden">
-            <span class="text-xs text-slate-400 font-semibold">กำลังเปิดใช้งานขณะนี้ (Active Now)</span>
-            <div class="mt-3 flex items-baseline gap-2">
-              <span id="vStatActiveNow" class="text-4xl font-extrabold text-emerald-400">--</span>
-              <span class="text-xs text-emerald-400 font-bold">คน</span>
-            </div>
-            <div class="mt-2 flex items-center gap-1.5 text-[11px] text-emerald-400/80">
-              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-              <span>เซสชันอัปเดตสดจากผู้ใช้จริง (รอบตรวจทุก 1 ชม.)</span>
-            </div>
-          </div>
-
-          <div class="bg-slate-900/80 border border-slate-800 rounded-3xl p-5 shadow-lg relative overflow-hidden">
-            <span class="text-xs text-slate-400 font-semibold">ยอดผู้เข้าชมสะสมวันนี้</span>
-            <div class="mt-3 flex items-baseline gap-2">
-              <span id="vStatToday" class="text-4xl font-extrabold text-white">--</span>
-              <span class="text-xs text-blue-400 font-bold">ครั้ง</span>
-            </div>
-            <p class="mt-2 text-[11px] text-slate-400">Peak สูงสุดพร้อมกัน <b id="vStatPeak" class="text-white">--</b> คน</p>
-          </div>
-
-          <div class="bg-slate-900/80 border border-slate-800 rounded-3xl p-5 shadow-lg relative overflow-hidden">
-            <span class="text-xs text-slate-400 font-semibold">สัดส่วนผู้ใช้มือถือ (Mobile Traffic)</span>
-            <div class="mt-3 flex items-baseline gap-2">
-              <span id="vStatMobilePct" class="text-4xl font-extrabold text-cyan-400">72%</span>
-              <span class="text-xs text-cyan-400 font-bold">สมาร์ตโฟน</span>
-            </div>
-            <p class="mt-2 text-[11px] text-slate-400">ผู้ขับขี่และประชาชนบนท้องถนน</p>
-          </div>
-
-          <div class="bg-slate-900/80 border border-slate-800 rounded-3xl p-5 shadow-lg relative overflow-hidden">
-            <span class="text-xs text-slate-400 font-semibold">อำเภอที่มีผู้เข้าชมสูงสุด</span>
-            <div class="mt-3 flex items-baseline gap-2">
-              <span id="vStatTopDistrict" class="text-2xl font-extrabold text-amber-400 truncate">เมืองสมุทรปราการ</span>
-            </div>
-            <p class="mt-2 text-[11px] text-slate-400">37% ของผู้เข้าชมทั้งหมด</p>
-          </div>
-        </div>
-
-        <!-- Charts Row -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <!-- Hourly Traffic Line Chart -->
-          <div class="lg:col-span-2 bg-slate-900/80 border border-slate-800 rounded-3xl p-5 shadow-xl">
-            <div class="flex items-center justify-between mb-4">
-              <div>
-                <h3 class="text-sm font-bold text-white">แนวโน้มผู้เข้าใช้งานในรอบวัน (Traffic by Hour)</h3>
-                <p class="text-xs text-slate-400">จำนวนการเปิดดูเว็บตามช่วงเวลา</p>
-              </div>
-            </div>
-            <div class="h-64">
-              <canvas id="trafficChart"></canvas>
-            </div>
-          </div>
-
-          <!-- Device Doughnut Chart -->
-          <div class="bg-slate-900/80 border border-slate-800 rounded-3xl p-5 shadow-xl flex flex-col justify-between">
-            <div class="mb-4">
-              <h3 class="text-sm font-bold text-white">สัดส่วนประเภทอุปกรณ์ (Devices)</h3>
-              <p class="text-xs text-slate-400">สมาร์ตโฟน, คอมพิวเตอร์, แท็บเล็ต</p>
-            </div>
-            <div class="h-52 relative flex items-center justify-center">
-              <canvas id="deviceChart"></canvas>
-            </div>
-            <div class="mt-4 pt-3 border-t border-slate-800 text-xs text-slate-400 flex justify-around">
-              <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span> มือถือ 72%</span>
-              <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-cyan-400"></span> คอมพิวเตอร์ 23%</span>
-              <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-indigo-500"></span> แท็บเล็ต 5%</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Live Active Sessions Table -->
-        <div class="bg-slate-900/80 border border-slate-800 rounded-3xl p-5 shadow-xl space-y-4">
-          <div class="flex items-center justify-between">
-            <div>
-              <h3 class="text-sm font-bold text-white flex items-center gap-2">
-                <i data-lucide="shield" class="w-4 h-4 text-emerald-400"></i>
-                รายการเซสชันผู้เข้าใช้งานสด (Live Session Activity Feed)
-              </h3>
-              <p class="text-xs text-slate-400">แสดงสถานะผู้ใช้งานที่กำลังเปิดเว็บอยู่ ณ ขณะนี้</p>
-            </div>
-            <span class="text-xs text-slate-400">รักษาความเป็นส่วนตัว (Masked IP)</span>
-          </div>
-
-          <div class="overflow-x-auto">
-            <table class="w-full text-left text-xs">
-              <thead class="text-slate-400 uppercase tracking-wider bg-slate-800/60 border-b border-slate-700">
-                <tr>
-                  <th class="py-3 px-4 rounded-l-xl">รหัสเซสชัน</th>
-                  <th class="py-3 px-4">ไอพี (พรางตัว)</th>
-                  <th class="py-3 px-4">อุปกรณ์</th>
-                  <th class="py-3 px-4">อำเภอที่กำลังเปิดดู</th>
-                  <th class="py-3 px-4">หน้าที่เปิดอยู่</th>
-                  <th class="py-3 px-4">ระยะเวลาบนเว็บ</th>
-                  <th class="py-3 px-4 rounded-r-xl">สถานะ</th>
-                </tr>
-              </thead>
-              <tbody id="visitorsTableBody" class="divide-y divide-slate-800 text-slate-300">
-                <!-- Dynamically Injected -->
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </section>
-
-      <!-- ================= SECTION 4: CITIZEN FEEDBACK & SUGGESTIONS ================= -->
-      <section id="view-feedback" class="hidden space-y-6">
-        <!-- Feedback Header -->
-        <div class="bg-slate-900/90 border border-slate-800 rounded-3xl p-5 shadow-xl space-y-4">
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <h2 class="text-lg font-bold text-white flex items-center gap-2">
-                <i data-lucide="message-square" class="w-5 h-5 text-amber-400"></i>
-                กล่องข้อเสนอแนะและข้อคิดเห็นจากผู้เข้าใช้งานเว็บ
-              </h2>
-              <p class="text-xs text-slate-400">อ่านข้อเสนอที่ประชาชนเขียนมาทุกประเด็น พร้อมคะแนนดาวความพึงพอใจ</p>
-            </div>
-
-            <div class="flex items-center gap-2">
-              <button onclick="markAllFeedbackRead()" class="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition">
-                <i data-lucide="check-check" class="w-3.5 h-3.5 text-emerald-400"></i>
-                ทำเครื่องหมายอ่านแล้วทั้งหมด
-              </button>
-              <button onclick="exportFeedbackCSV()" class="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition">
-                <i data-lucide="download" class="w-3.5 h-3.5"></i>
-                ส่งออก CSV
-              </button>
-            </div>
-          </div>
-
-          <!-- Filters Row -->
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 border-t border-slate-800">
-            <!-- Read / Unread Status -->
-            <div>
-              <label class="block text-[11px] font-semibold text-slate-400 mb-1">สถานะการอ่าน</label>
-              <select id="filterFbStatus" onchange="renderFeedback()" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500">
-                <option value="all">ทั้งหมด</option>
-                <option value="unread" selected>ยังไม่อ่าน (Unread)</option>
-                <option value="read">อ่านแล้ว (Read)</option>
-              </select>
-            </div>
-
-            <!-- Category Filter -->
-            <div>
-              <label class="block text-[11px] font-semibold text-slate-400 mb-1">หมวดหมู่ข้อเสนอแนะ</label>
-              <select id="filterFbCategory" onchange="renderFeedback()" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500">
-                <option value="all">ทุกหมวดหมู่</option>
-                <option value="suggestion">💡 ข้อเสนอแนะฟีเจอร์ใหม่</option>
-                <option value="issue">⚠️ แจ้งปัญหาการใช้งาน</option>
-                <option value="compliment">💖 ติชม / ให้กำลังใจ</option>
-                <option value="other">📝 อื่นๆ</option>
-              </select>
-            </div>
-
-            <!-- Search Filter -->
-            <div>
-              <label class="block text-[11px] font-semibold text-slate-400 mb-1">ค้นหาข้อความ / ผู้ส่ง</label>
-              <div class="relative">
-                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
-                  <i data-lucide="search" class="w-3.5 h-3.5"></i>
-                </span>
-                <input type="text" id="searchFbText" oninput="renderFeedback()" placeholder="พิมพ์คำค้นหา..." class="w-full pl-9 pr-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500" />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Feedback Cards Grid -->
-        <div id="feedbackGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <!-- Dynamically Injected -->
-        </div>
-
-        <!-- Empty State -->
-        <div id="emptyFeedbackState" class="hidden text-center py-16 bg-slate-900/60 border border-slate-800 rounded-3xl">
-          <i data-lucide="message-square-dashed" class="w-12 h-12 text-slate-600 mx-auto mb-3"></i>
-          <p class="text-sm font-semibold text-slate-300">ไม่มีข้อเสนอแนะตามเงื่อนไขที่เลือก</p>
-          <p class="text-xs text-slate-500 mt-1">ข้อคิดเห็นจากประชาชนจะถูกจัดเก็บและแสดงผลที่นี่ทั้งหมด</p>
-        </div>
-      </section>
-
-      <!-- ================= SECTION 6: EMERGENCY BROADCAST ================= -->
-      <section id="view-broadcast" class="hidden space-y-6">
-        <div class="bg-slate-900/90 border border-slate-800 rounded-3xl p-6 shadow-xl max-w-3xl mx-auto space-y-6">
-          <div class="flex items-center gap-3 pb-4 border-b border-slate-800">
-            <div class="w-12 h-12 rounded-2xl bg-purple-500/20 text-purple-400 flex items-center justify-center">
-              <i data-lucide="megaphone" class="w-6 h-6"></i>
-            </div>
-            <div>
-              <h2 class="text-lg font-bold text-white">ส่งประกาศเตือนภัยฉุกเฉิน (Emergency Broadcast)</h2>
-              <p class="text-xs text-slate-400">ข้อความประกาศจะถูกส่งขึ้นระบบคลาวด์และแสดงบนแถบเตือนภัยของผู้เข้าใช้งานเว็บทุกคน</p>
-            </div>
-          </div>
-
-          <form onsubmit="handleSendBroadcast(event)" class="space-y-4">
-            <div>
-              <label class="block text-xs font-semibold text-slate-300 mb-1.5">หัวข้อประกาศเตือนภัย</label>
-              <input type="text" id="bcTitle" required placeholder="เช่น เตือนภัยน้ำทะเลหนุนสูง ปิดการจราจร ถ.สุขุมวิท ช่วงช้างสามเศียร" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-purple-500" />
-            </div>
-
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label class="block text-xs font-semibold text-slate-300 mb-1.5">อำเภอที่ได้รับผลกระทบ</label>
-                <select id="bcDistrict" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-purple-500">
-                  <option value="ทุกอำเภอในสมุทรปราการ">ทุกอำเภอในสมุทรปราการ</option>
+                <select id="reports-district-select" class="select-ctrl">
+                  <option value="all">ทุกอำเภอ</option>
                   <option value="เมืองสมุทรปราการ">เมืองสมุทรปราการ</option>
                   <option value="บางพลี">บางพลี</option>
                   <option value="พระประแดง">พระประแดง</option>
@@ -811,2064 +320,338 @@
                 </select>
               </div>
 
+              <div class="filter-group">
+                <div class="search-input-wrap">
+                  <svg class="ico search-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                  <input type="text" id="reports-search-input" class="search-input" placeholder="ค้นหาจุดน้ำท่วม, ตำบล...">
+                </div>
+              </div>
+            </div>
+
+            <!-- Batch Action Bar (เมื่อเลือกหลายรายการ) -->
+            <div id="reports-batch-actions" style="display: none; align-items: center; justify-content: space-between; background: var(--bg-subtle); padding: 10px 16px; border-radius: var(--radius-md); margin-bottom: 14px; border: 1px solid var(--border-subtle);">
+              <span id="reports-selected-count" style="font-weight: 600; font-size: 13px;">เลือกแล้ว 0 รายการ</span>
+              <div style="display: flex; gap: 8px;">
+                <button id="btn-reports-approve-selected" class="btn btn-success btn-sm">อนุมัติที่เลือก</button>
+                <button id="btn-reports-delete-selected" class="btn btn-danger btn-sm">ลบที่เลือก (ย้ายไปถังขยะ)</button>
+              </div>
+            </div>
+
+            <!-- Reports Table -->
+            <div class="table-wrap">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th style="width: 38px;">#</th>
+                    <th>ระดับน้ำ (3 เกณฑ์)</th>
+                    <th>จุดสังเกต / อำเภอ</th>
+                    <th>ข้อมูลผู้แจ้ง & อุปกรณ์ (GPS)</th>
+                    <th>เวลาที่แจ้ง</th>
+                    <th>สถานะ</th>
+                    <th>รูปภาพ</th>
+                    <th>จัดการ</th>
+                  </tr>
+                </thead>
+                <tbody id="reports-tbody">
+                  <tr><td colspan="8" class="text-center text-muted" style="padding: 24px;">กำลังโหลดข้อมูล...</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div style="margin-top: 14px; font-size: 12px; color: var(--text-muted); display: flex; justify-content: space-between;">
+              <span>รายการทั้งหมด: <strong id="reports-count-total">0</strong> รายการ</span>
+              <span>เกณฑ์ระดับน้ำ: 🟢 ปกติ (5-20cm) · 🟠 ปานกลาง (21-50cm) · 🔴 วิกฤต (>50cm)</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= VIEW 3: LIVE SESSIONS FEED ================= -->
+        <section id="view-visitors" class="view-section" style="display: none;">
+          <div class="card">
+            <div class="card-header">
               <div>
-                <label class="block text-xs font-semibold text-slate-300 mb-1.5">ระดับความรุนแรง</label>
-                <select id="bcSeverity" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-purple-500">
-                  <option value="warning">🟠 เฝ้าระวังพิเศษ (ระดับ 2)</option>
-                  <option value="critical">🔴 วิกฤตฉุกเฉิน ห้ามสัญจร (ระดับ 3)</option>
-                  <option value="info">🔵 แจ้งเตือนทั่วไป / แนะนำเส้นทางเลี่ยง</option>
-                </select>
-              </div>
-            </div>
-
-            <div>
-              <label class="block text-xs font-semibold text-slate-300 mb-1.5">รายละเอียดและข้อแนะนำสำหรับประชาชน</label>
-              <textarea id="bcMessage" rows="4" required placeholder="ระบุรายละเอียด ข้อควรระวัง เส้นทางเลี่ยง และสายด่วนประสานงาน..." class="w-full bg-slate-800 border border-slate-700 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-purple-500"></textarea>
-            </div>
-
-            <button type="submit" class="w-full py-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-semibold rounded-xl text-sm transition shadow-lg shadow-purple-600/30 flex items-center justify-center gap-2">
-              <i data-lucide="send" class="w-4 h-4"></i>
-              ส่งประกาศเตือนภัยไปยังผู้ใช้งานเว็บทันที
-            </button>
-          </form>
-        </div>
-      </section>
-
-      <!-- ================= SECTION 8: LOGIN HISTORY ================= -->
-      <section id="view-loginlog" class="hidden space-y-6">
-        <div class="bg-slate-900/90 border border-slate-800 rounded-3xl p-6 shadow-xl space-y-5">
-          <div class="flex items-center justify-between flex-wrap gap-3">
-            <div class="flex items-center gap-3">
-              <div class="w-10 h-10 rounded-2xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400">
-                <i data-lucide="clock" class="w-5 h-5"></i>
+                <h3 class="card-title">รายการเซสชันผู้เข้าใช้งานสด (Live Session Activity Feed)</h3>
+                <p class="card-subtitle">แสดงสถานะผู้ใช้งานจริงที่กำลังเปิดเว็บอยู่ ณ ขณะนี้ รีเฟรชอัตโนมัติทุก 1 นาที</p>
               </div>
               <div>
-                <h2 class="text-lg font-bold text-white">ประวัติการเข้าสู่ระบบ Admin</h2>
-                <p class="text-xs text-slate-400">บันทึกการเข้า-ออกทุกครั้งของผู้ดูแลระบบทุกคน</p>
+                <span class="badge badge-ok"><span class="status-dot pulse"></span> ออนไลน์ <span id="visitors-active-count">0</span> คน</span>
               </div>
             </div>
-            <button onclick="clearLoginLog()" class="px-3 py-1.5 bg-rose-950/60 hover:bg-rose-900/60 border border-rose-800/50 text-rose-400 text-xs font-semibold rounded-xl transition flex items-center gap-1.5">
-              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> ล้างประวัติทั้งหมด
-            </button>
-          </div>
 
-          <!-- Summary Stats -->
-          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <div class="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-3 text-center">
-              <div class="text-xl font-bold text-amber-400" id="loginlog-stat-total">0</div>
-              <div class="text-[11px] text-slate-400 mt-0.5">ครั้งทั้งหมด</div>
-            </div>
-            <div class="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-3 text-center">
-              <div class="text-xl font-bold text-emerald-400" id="loginlog-stat-today">0</div>
-              <div class="text-[11px] text-slate-400 mt-0.5">วันนี้</div>
-            </div>
-            <div class="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-3 text-center">
-              <div class="text-xl font-bold text-blue-400" id="loginlog-stat-users">0</div>
-              <div class="text-[11px] text-slate-400 mt-0.5">ผู้ใช้ที่เข้า</div>
-            </div>
-            <div class="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-3 text-center">
-              <div class="text-xl font-bold text-cyan-400" id="loginlog-stat-last">—</div>
-              <div class="text-[11px] text-slate-400 mt-0.5">ล่าสุด</div>
+            <div class="table-wrap">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>รหัสเซสชัน</th>
+                    <th>ไอพี</th>
+                    <th>อุปกรณ์ / รุ่นมือถือ</th>
+                    <th>อำเภอที่เปิดดู (GPS จริง)</th>
+                    <th>หน้าที่เปิดอยู่</th>
+                    <th>ระยะเวลาบนเว็บ</th>
+                    <th>สถานะ</th>
+                  </tr>
+                </thead>
+                <tbody id="visitors-tbody">
+                  <tr><td colspan="7" class="text-center text-muted" style="padding: 30px;">กำลังโหลดเซสชันสด...</td></tr>
+                </tbody>
+              </table>
             </div>
           </div>
+        </section>
 
-          <!-- Log Table -->
-          <div class="overflow-x-auto rounded-2xl border border-slate-800">
-            <table class="w-full text-sm">
-              <thead>
-                <tr class="bg-slate-800/80 text-slate-300 text-xs">
-                  <th class="px-4 py-3 text-left font-semibold">#</th>
-                  <th class="px-4 py-3 text-left font-semibold">ชื่อผู้ใช้</th>
-                  <th class="px-4 py-3 text-left font-semibold">วันที่ / เวลา</th>
-                  <th class="px-4 py-3 text-left font-semibold">สถานะ</th>
-                  <th class="px-4 py-3 text-left font-semibold">อุปกรณ์</th>
-                  <th class="px-4 py-3 text-left font-semibold">ระยะ Session</th>
-                </tr>
-              </thead>
-              <tbody id="loginlog-tbody" class="divide-y divide-slate-800/60">
-                <tr><td colspan="6" class="px-4 py-8 text-center text-slate-500 text-xs">ยังไม่มีประวัติการเข้าระบบ</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </section>
-
-      <!-- ================= SECTION 7: SETTINGS & BACKUP ================= -->
-      <section id="view-settings" class="hidden space-y-6">
-        <div class="bg-slate-900/90 border border-slate-800 rounded-3xl p-6 shadow-xl max-w-3xl mx-auto space-y-6">
-          <div class="flex items-center gap-3 pb-4 border-b border-slate-800">
-            <div class="w-12 h-12 rounded-2xl bg-slate-800 text-slate-300 flex items-center justify-center">
-              <i data-lucide="settings" class="w-6 h-6"></i>
+        <!-- ================= VIEW 4: CITIZEN FEEDBACK ================= -->
+        <section id="view-feedback" class="view-section" style="display: none;">
+          <div class="card">
+            <div class="filter-bar">
+              <div class="filter-group">
+                <div class="search-input-wrap">
+                  <svg class="ico search-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                  <input type="text" id="feedback-search-input" class="search-input" placeholder="ค้นหาข้อความ, ชื่อผู้ส่ง...">
+                </div>
+              </div>
             </div>
+
+            <div id="feedback-batch-actions" style="display: none; align-items: center; justify-content: space-between; background: var(--bg-subtle); padding: 10px 16px; border-radius: var(--radius-md); margin-bottom: 14px; border: 1px solid var(--border-subtle);">
+              <span id="feedback-selected-count" style="font-weight: 600; font-size: 13px;">เลือกแล้ว 0 รายการ</span>
+              <button id="btn-feedback-delete-selected" class="btn btn-danger btn-sm">ลบที่เลือก (ย้ายไปถังขยะ)</button>
+            </div>
+
+            <div class="table-wrap">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th style="width: 38px;">#</th>
+                    <th>ข้อความข้อเสนอแนะ</th>
+                    <th>ผู้ส่ง</th>
+                    <th>ช่องทางติดต่อ</th>
+                    <th>ดาว</th>
+                    <th>วันที่เวลา</th>
+                    <th>จัดการ</th>
+                  </tr>
+                </thead>
+                <tbody id="feedback-tbody">
+                  <tr><td colspan="7" class="text-center text-muted" style="padding: 24px;">กำลังโหลดข้อเสนอแนะ...</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div style="margin-top: 14px; font-size: 12px; color: var(--text-muted);">
+              ข้อเสนอแนะทั้งหมด: <strong id="feedback-count-total">0</strong> รายการ
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= VIEW 5: ANNOUNCEMENTS ================= -->
+        <section id="view-announcements" class="view-section" style="display: none;">
+          <div class="grid-2">
+            <!-- Create Announcement Card -->
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">สร้างการประกาศหน้าเว็บ</h3>
+              </div>
+              <form id="form-create-announcement">
+                <div class="login-field">
+                  <label class="login-label">ข้อความที่ต้องการประกาศ</label>
+                  <textarea 
+                    id="announcement-message" 
+                    rows="4" 
+                    class="login-input" 
+                    style="resize: vertical;" 
+                    placeholder="เช่น แจ้งเตือนน้ำทะเลหนุนสูง หรือ ประกาศอัปเดตระบบ..." 
+                    required
+                  ></textarea>
+                </div>
+
+                <div class="login-field">
+                  <label class="login-label">ขอบเขตพื้นที่ที่ต้องการประกาศ</label>
+                  <div style="display: flex; gap: 16px; margin: 8px 0;">
+                    <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                      <input type="radio" name="ann-target" value="all" checked>
+                      <span>ประกาศทุกอำเภอ</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                      <input type="radio" name="ann-target" value="specific">
+                      <span>ระบุเฉพาะอำเภอ</span>
+                    </label>
+                  </div>
+                </div>
+
+                <!-- Specific District Checkboxes -->
+                <div id="ann-district-checkboxes" style="display: none; grid-template-columns: 1fr 1fr; gap: 10px; background: var(--bg-subtle); padding: 14px; border-radius: var(--radius-md); margin-bottom: 16px;">
+                  <label style="display: flex; align-items: center; gap: 6px;"><input type="checkbox" name="ann-district" value="เมืองสมุทรปราการ"> อ.เมืองสมุทรปราการ</label>
+                  <label style="display: flex; align-items: center; gap: 6px;"><input type="checkbox" name="ann-district" value="บางพลี"> อ.บางพลี</label>
+                  <label style="display: flex; align-items: center; gap: 6px;"><input type="checkbox" name="ann-district" value="พระประแดง"> อ.พระประแดง</label>
+                  <label style="display: flex; align-items: center; gap: 6px;"><input type="checkbox" name="ann-district" value="บางบ่อ"> อ.บางบ่อ</label>
+                  <label style="display: flex; align-items: center; gap: 6px;"><input type="checkbox" name="ann-district" value="พระสมุทรเจดีย์"> อ.พระสมุทรเจดีย์</label>
+                  <label style="display: flex; align-items: center; gap: 6px;"><input type="checkbox" name="ann-district" value="บางเสาธง"> อ.บางเสาธง</label>
+                </div>
+
+                <div style="background: var(--bg-subtle); border-left: 3px solid var(--primary); padding: 10px 14px; font-size: 11.5px; color: var(--text-muted); margin-bottom: 16px; border-radius: 4px;">
+                  💡 <strong>เงื่อนไขการแสดงผล:</strong> ประกาศจะแสดงเตือนเฉพาะผู้ที่เปิด GPS เท่านั้น หากผู้ใช้ไม่เปิด GPS จะไม่เห็นประกาศ
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="width: 100%;">
+                  เผยแพร่การประกาศหน้าเว็บ
+                </button>
+              </form>
+            </div>
+
+            <!-- Active Announcements List -->
             <div>
-              <h2 class="text-lg font-bold text-white">ตั้งค่าระบบและความปลอดภัย</h2>
-              <p class="text-xs text-slate-400">จัดการข้อมูลสำรอง รหัสผ่านแอดมิน และตรวจสอบสถานะระบบ</p>
+              <div class="card-header" style="margin-bottom: 12px;">
+                <h3 class="card-title">รายการประกาศที่กำลังเผยแพร่</h3>
+              </div>
+              <div id="announcements-list">
+                <div class="card" style="text-align: center; padding: 36px; color: var(--text-muted);">
+                  กำลังโหลดรายการประกาศ...
+                </div>
+              </div>
             </div>
           </div>
+        </section>
 
-          <!-- Backup & Restore -->
-          <div class="p-4 bg-slate-800/40 rounded-2xl border border-slate-700/60 space-y-3">
-            <h3 class="text-sm font-bold text-white flex items-center gap-2">
-              <i data-lucide="database" class="w-4 h-4 text-blue-400"></i>
-              การสำรองและนำเข้าข้อมูล (Data Backup & Export)
-            </h3>
-            <p class="text-xs text-slate-400">ดาวน์โหลดข้อมูลรายงานน้ำท่วม ข้อเสนอแนะ และสถิติผู้เข้าชมทั้งหมดเก็บไว้ในเครื่อง</p>
-            <div class="flex flex-wrap gap-2 pt-2">
-              <button onclick="downloadFullBackupJSON()" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-semibold flex items-center gap-2 transition">
-                <i data-lucide="download" class="w-4 h-4"></i>
-                สำรองข้อมูลทั้งหมดเป็น JSON
-              </button>
-            </div>
-          </div>
-
-          <!-- Credentials -->
-          <div class="p-4 bg-slate-800/40 rounded-2xl border border-slate-700/60 space-y-3">
-            <h3 class="text-sm font-bold text-white flex items-center gap-2">
-              <i data-lucide="key" class="w-4 h-4 text-amber-400"></i>
-              เปลี่ยนรหัสผ่านแอดมิน
-            </h3>
-            <form onsubmit="handleChangePassword(event)" class="space-y-3 max-w-md">
+        <!-- ================= VIEW 6: TRASH (ลบล่าสุด) ================= -->
+        <section id="view-trash" class="view-section" style="display: none;">
+          <div class="card">
+            <div class="card-header">
               <div>
-                <label class="block text-xs text-slate-300 mb-1">รหัสผ่านใหม่</label>
-                <input type="password" id="newAdminPass" required class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white" />
+                <h3 class="card-title">ลบล่าสุด (ถังขยะส่วนกลาง)</h3>
+                <p class="card-subtitle">รายการที่ถูกลบออกจากแจ้งน้ำท่วมและข้อเสนอแนะ สามารถกู้คืนกลับสู่ระบบเดิม หรือกดลบแบบถาวรได้</p>
               </div>
-              <button type="submit" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white rounded-xl text-xs font-semibold transition">
-                บันทึกรหัสผ่านใหม่
-              </button>
-            </form>
-          </div>
-        </div>
-      </section>
-
-      <!-- ================= SECTION 8: TRASH & RECENTLY DELETED ================= -->
-      <section id="view-trash" class="hidden space-y-6">
-        <!-- Trash Header -->
-        <div class="bg-slate-900/90 border border-slate-800 rounded-3xl p-5 shadow-xl space-y-4">
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <h2 class="text-lg font-bold text-white flex items-center gap-2">
-                <i data-lucide="trash-2" class="w-5 h-5 text-rose-400"></i>
-                รายการที่ลบล่าสุด (Recently Deleted / ถังขยะ)
-              </h2>
-              <p class="text-xs text-slate-400">รายการรายงานน้ำท่วมหรือข้อเสนอแนะที่ถูกลบออกจากหน้าหลัก สามารถกดกู้คืนกลับมา หรือกดลบถาวรได้</p>
-            </div>
-
-            <div class="flex items-center gap-2">
-              <button onclick="emptyTrashAll()" class="px-3.5 py-2 bg-rose-950/80 hover:bg-rose-900 text-rose-200 border border-rose-800/80 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer">
-                <i data-lucide="flame" class="w-3.5 h-3.5 text-rose-400"></i>
-                ล้างถังขยะทั้งหมด (ลบถาวร)
-              </button>
-            </div>
-          </div>
-
-          <!-- Trash Filter & Search -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-slate-800">
-            <div>
-              <label class="block text-[11px] font-semibold text-slate-400 mb-1">ประเภทข้อมูลที่ลบ</label>
-              <select id="filterTrashType" onchange="renderTrash()" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-rose-500">
-                <option value="all">ทั้งหมด (รายงานน้ำท่วม + ข้อเสนอแนะ)</option>
-                <option value="report">💧 เฉพาะรายงานน้ำท่วม</option>
-                <option value="feedback">💬 เฉพาะข้อเสนอแนะประชาชน</option>
-              </select>
-            </div>
-            <div>
-              <label class="block text-[11px] font-semibold text-slate-400 mb-1">ค้นหาในถังขยะ</label>
-              <div class="relative">
-                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
-                  <i data-lucide="search" class="w-3.5 h-3.5"></i>
-                </span>
-                <input type="text" id="searchTrashText" oninput="renderTrash()" placeholder="พิมพ์ชื่อจุด, ผู้แจ้ง, หรือข้อความ..." class="w-full bg-slate-800 border border-slate-700 rounded-xl pl-9 pr-3 py-2 text-xs text-white focus:outline-none focus:border-rose-500" />
+              <div class="tabs-pill">
+                <button class="tab-pill-btn trash-filter-btn active" data-filter="all">ทั้งหมด</button>
+                <button class="tab-pill-btn trash-filter-btn" data-filter="report">เฉพาะน้ำท่วม</button>
+                <button class="tab-pill-btn trash-filter-btn" data-filter="feedback">เฉพาะข้อเสนอแนะ</button>
               </div>
             </div>
+
+            <div id="trash-batch-actions" style="display: none; align-items: center; justify-content: space-between; background: var(--bg-subtle); padding: 10px 16px; border-radius: var(--radius-md); margin-bottom: 14px; border: 1px solid var(--border-subtle);">
+              <span id="trash-selected-count" style="font-weight: 600; font-size: 13px;">เลือกแล้ว 0 รายการ</span>
+              <div style="display: flex; gap: 8px;">
+                <button id="btn-trash-restore-selected" class="btn btn-secondary btn-sm">กู้คืนที่เลือก</button>
+                <button id="btn-trash-purge-selected" class="btn btn-danger btn-sm">ลบถาวรที่เลือก</button>
+              </div>
+            </div>
+
+            <div class="table-wrap">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th style="width: 38px;">#</th>
+                    <th>ประเภท</th>
+                    <th>รายละเอียดข้อความ / จุดน้ำท่วม</th>
+                    <th>ผู้แจ้ง / พื้นที่</th>
+                    <th>เวลาที่ลบ</th>
+                    <th>จัดการ</th>
+                  </tr>
+                </thead>
+                <tbody id="trash-tbody">
+                  <tr><td colspan="6" class="text-center text-muted" style="padding: 24px;">ถังขยะว่างเปล่า</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div style="margin-top: 14px; font-size: 12px; color: var(--text-muted);">
+              รายการในถังขยะ: <strong id="trash-count-total">0</strong> รายการ
+            </div>
           </div>
-        </div>
+        </section>
 
-        <!-- Trash Items Grid -->
-        <div id="trashGrid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          <!-- Dynamically Injected -->
-        </div>
+        <!-- ================= VIEW 7: ADMIN LOGINS ================= -->
+        <section id="view-logins" class="view-section" style="display: none;">
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <h3 class="card-title">ประวัติเข้าระบบแอดมิน (Admin Login Sessions)</h3>
+                <p class="card-subtitle">บันทึกข้อมูลการเข้าสู่ระบบของแอดมินทั้ง 2 คน</p>
+              </div>
+            </div>
 
-        <div id="emptyTrashState" class="hidden text-center py-16 bg-slate-900/60 border border-slate-800 rounded-3xl">
-          <i data-lucide="trash" class="w-12 h-12 text-slate-600 mx-auto mb-3"></i>
-          <p class="text-sm font-semibold text-slate-300">ไม่มีรายการในถังขยะ</p>
-          <p class="text-xs text-slate-500 mt-1">เมื่อมีการลบรายงานหรือข้อเสนอแนะ รายการจะถูกเก็บไว้ที่นี่ชั่วคราวเพื่อรอการกู้คืนหรือลบถาวร</p>
-        </div>
-      </section>
+            <div class="table-wrap">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>ชื่อผู้ใช้</th>
+                    <th>แอดมินคนที่...</th>
+                    <th>อุปกรณ์</th>
+                    <th>สถานะ</th>
+                    <th>เวลาที่เข้าสู่ระบบ</th>
+                  </tr>
+                </thead>
+                <tbody id="logins-tbody">
+                  <tr><td colspan="5" class="text-center text-muted" style="padding: 24px;">กำลังโหลดประวัติ...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
 
+        <!-- ================= VIEW 8: SETTINGS & BACKUP ================= -->
+        <section id="view-settings" class="view-section" style="display: none;">
+          <div class="grid-2">
+            <!-- Password Change -->
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">เปลี่ยนรหัสผ่านแอดมิน</h3>
+              </div>
+              <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 16px;">
+                กำลังเข้าสู่ระบบในชื่อ: <strong id="settings-current-admin" style="color: var(--text-main);">Admin</strong>
+              </p>
+              <form id="form-change-password">
+                <div class="login-field">
+                  <label class="login-label">รหัสผ่านปัจจุบัน</label>
+                  <input type="password" id="pwd-old" class="login-input" placeholder="กรอกรหัสผ่านเดิม" required>
+                </div>
+                <div class="login-field">
+                  <label class="login-label">รหัสผ่านใหม่ (อย่างน้อย 10 ตัวอักษร)</label>
+                  <input type="password" id="pwd-new" class="login-input" placeholder="กรอกรหัสผ่านใหม่" required>
+                </div>
+                <div class="login-field">
+                  <label class="login-label">ยืนยันรหัสผ่านใหม่</label>
+                  <input type="password" id="pwd-confirm" class="login-input" placeholder="กรอกรหัสผ่านใหม่อีกครั้ง" required>
+                </div>
+                <button type="submit" class="btn btn-primary" style="margin-top: 8px;">
+                  บันทึกรหัสผ่านใหม่
+                </button>
+              </form>
+            </div>
+
+            <!-- Backup & Theme Settings -->
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">สำรองข้อมูล & ตัวเลือกการแสดงผล</h3>
+              </div>
+              
+              <div style="margin-bottom: 24px;">
+                <h4 style="font-size: 13.5px; font-weight: 600; margin-bottom: 8px;">สำรองข้อมูลระบบทั้งหมด</h4>
+                <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px;">
+                  ดาวน์โหลดข้อมูลรายงานน้ำท่วม ข้อเสนอแนะ และการตั้งค่าเป็นไฟล์ JSON เพื่อเก็บสำรองไว้ในเครื่อง
+                </p>
+                <button id="btn-download-backup" class="btn btn-secondary">
+                  <svg class="ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+                  ดาวน์โหลดไฟล์สำรองข้อมูล (JSON)
+                </button>
+              </div>
+
+              <div style="border-top: 1px solid var(--border-subtle); padding-top: 20px;">
+                <h4 style="font-size: 13.5px; font-weight: 600; margin-bottom: 8px;">สถานะการเชื่อมต่อฐานข้อมูล</h4>
+                <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 8px;">
+                  Supabase Cloud Database (Primary Real-time Telemetry):
+                </p>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <span class="badge badge-ok"><span class="status-dot pulse"></span> เชื่อมต่อสมบูรณ์ (Active)</span>
+                  <span style="font-size: 11px; color: var(--text-muted);">cnjufleeibbgmpvuvrpg.supabase.co</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+      </div>
     </main>
   </div>
 
-  <!-- REPORT DETAIL & ACTION MODAL -->
-  <div id="reportActionModal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
-    <div class="bg-slate-900 border border-slate-700 rounded-3xl max-w-2xl w-full shadow-2xl flex flex-col max-h-[90vh] overflow-hidden">
-      <!-- Modal Header -->
-      <div class="p-4 sm:p-5 border-b border-slate-800 flex items-center justify-between">
-        <div class="flex items-center gap-2.5">
-          <div id="modalSeverityBadge" class="w-9 h-9 rounded-2xl flex items-center justify-center bg-blue-500/20 text-blue-400">
-            <i data-lucide="droplet" class="w-5 h-5"></i>
-          </div>
-          <div>
-            <h3 id="modalReportTitle" class="text-base font-bold text-white">รายละเอียดรายงานน้ำท่วม</h3>
-            <p id="modalReportSub" class="text-xs text-slate-400">อ.เมืองสมุทรปราการ</p>
-          </div>
-        </div>
-        <button onclick="closeReportActionModal()" class="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition">
-          <i data-lucide="x" class="w-5 h-5"></i>
-        </button>
-      </div>
-
-      <!-- Modal Body -->
-      <div class="p-4 sm:p-6 overflow-y-auto space-y-4 custom-scrollbar flex-1 text-xs">
-        <!-- Photo Preview (if any) -->
-        <div id="modalPhotoContainer" class="hidden">
-          <img id="modalPhotoImg" src="" alt="ภาพรายงานน้ำท่วม" class="w-full max-h-64 object-cover rounded-2xl border border-slate-700 shadow-md" />
-        </div>
-
-        <!-- Key Meta Grid -->
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <div class="bg-slate-800/60 p-3 rounded-2xl border border-slate-700/60">
-            <span class="text-slate-400 block mb-1">ระดับน้ำเทียบสรีระ</span>
-            <span id="modalBodyLevel" class="font-bold text-white text-sm">--</span>
-          </div>
-          <div class="bg-slate-800/60 p-3 rounded-2xl border border-slate-700/60">
-            <span class="text-slate-400 block mb-1">ความลึกโดยประมาณ</span>
-            <span id="modalDepth" class="font-bold text-white text-sm">-- ซม.</span>
-          </div>
-          <div class="bg-slate-800/60 p-3 rounded-2xl border border-slate-700/60">
-            <span class="text-slate-400 block mb-1">สถานะปัจจุบัน</span>
-            <span id="modalStatusText" class="font-bold text-sm">--</span>
-          </div>
-          <div class="bg-slate-800/60 p-3 rounded-2xl border border-slate-700/60">
-            <span class="text-slate-400 block mb-1">เวลาที่แจ้งเหตุ</span>
-            <span id="modalTime" class="font-bold text-white text-sm">--</span>
-          </div>
-        </div>
-
-        <!-- Traffic & Guidance -->
-        <div class="bg-slate-800/40 p-4 rounded-2xl border border-slate-700/60 space-y-2">
-          <div>
-            <span class="text-slate-400 block font-semibold mb-0.5">สภาพผิวจราจรและการสัญจร:</span>
-            <p id="modalTraffic" class="text-white">--</p>
-          </div>
-          <div>
-            <span class="text-slate-400 block font-semibold mb-0.5">สาเหตุการเกิดเหตุ:</span>
-            <p id="modalCause" class="text-slate-300">--</p>
-          </div>
-          <div>
-            <span class="text-slate-400 block font-semibold mb-0.5">คำแนะนำอย่างเป็นทางการ (Official Guidance):</span>
-            <p id="modalGuidance" class="text-cyan-300">--</p>
-          </div>
-        </div>
-
-        <!-- Reporter Info -->
-        <div class="bg-slate-800/40 p-3.5 rounded-2xl border border-slate-700/60 flex items-center justify-between">
-          <div>
-            <span class="text-slate-400 block">ผู้รายงาน:</span>
-            <span id="modalReporter" class="font-semibold text-white">--</span>
-          </div>
-          <div class="text-right">
-            <span class="text-slate-400 block">เบอร์โทรติดต่อ:</span>
-            <a id="modalPhoneLink" href="#" class="text-blue-400 font-semibold hover:underline">--</a>
-          </div>
-        </div>
-
-        <!-- GPS Coordinates -->
-        <div class="flex items-center justify-between text-slate-400">
-          <span>พิกัด GPS: <b id="modalGps" class="text-slate-200">--</b></span>
-          <a id="modalGoogleMapsLink" href="#" target="_blank" class="text-blue-400 hover:text-blue-300 flex items-center gap-1 font-semibold">
-            เปิดดูใน Google Maps <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
-          </a>
-        </div>
-      </div>
-
-      <!-- Modal Footer (Action Buttons) -->
-      <div class="p-4 sm:p-5 border-t border-slate-800 bg-slate-900/80 flex flex-wrap items-center justify-between gap-2">
-        <button onclick="handleDeleteCurrentReport()" class="px-3 py-2 bg-rose-950/60 hover:bg-rose-900 border border-rose-800/80 text-rose-300 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition">
-          <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-          ลบรายงาน
-        </button>
-
-        <div class="flex items-center gap-2">
-          <button id="btnModalResolve" onclick="handleResolveCurrentReport()" class="px-3.5 py-2 bg-teal-600/30 hover:bg-teal-600/50 text-teal-300 border border-teal-500/40 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition">
-            <i data-lucide="check" class="w-3.5 h-3.5"></i>
-            ทำเครื่องหมายน้ำลด/คลี่คลาย
-          </button>
-
-          <button id="btnModalApprove" onclick="handleApproveCurrentReport()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-lg shadow-emerald-600/30 transition">
-            <i data-lucide="check-circle-2" class="w-4 h-4"></i>
-            อนุมัติรายงานขึ้นแผนที่
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- IMAGE LIGHTBOX MODAL (คลิกขยายดูรูปจากผู้ที่ส่งมาในรายงานน้ำท่วม) -->
-  <div id="imageLightboxModal" class="hidden fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-md flex flex-col items-center justify-center p-4">
-    <!-- Close Button -->
-    <button onclick="closeImageLightbox()" class="absolute top-4 right-4 p-3 rounded-2xl bg-slate-800/80 hover:bg-slate-700 text-white transition z-10 cursor-pointer shadow-lg">
-      <i data-lucide="x" class="w-6 h-6"></i>
-    </button>
-    <!-- Modal Card -->
-    <div class="max-w-4xl w-full flex flex-col items-center bg-slate-900 border border-slate-700 rounded-3xl p-4 shadow-2xl overflow-hidden">
-      <div class="w-full flex items-center justify-between pb-3 border-b border-slate-800 mb-3 text-xs">
-        <div class="flex items-center gap-2">
-          <i data-lucide="image" class="w-4 h-4 text-cyan-400"></i>
-          <span id="lightboxTitle" class="font-bold text-white text-sm">ภาพจากประชาชนรายงาน</span>
-        </div>
-        <span id="lightboxReporter" class="text-slate-400 text-xs"></span>
-      </div>
-      <div class="w-full max-h-[72vh] flex items-center justify-center overflow-hidden rounded-2xl bg-black/40">
-        <img id="lightboxImg" src="" alt="ภาพขยายจากรายงาน" class="max-w-full max-h-[70vh] object-contain rounded-2xl" />
-      </div>
-      <div class="w-full flex items-center justify-between pt-3 mt-3 border-t border-slate-800 text-xs">
-        <span class="text-slate-500 text-[11px]">ภาพต้นฉบับความละเอียดสูงจากจุดเกิดเหตุ</span>
-        <div class="flex items-center gap-2">
-          <a id="lightboxDownloadBtn" href="#" target="_blank" download class="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-semibold flex items-center gap-1.5 transition">
-            <i data-lucide="download" class="w-3.5 h-3.5"></i> ดาวน์โหลดรูป
-          </a>
-          <button onclick="closeImageLightbox()" class="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl font-semibold transition">
-            ปิด
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- TOAST NOTIFICATION CONTAINER -->
-  <div id="toastContainer" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none"></div>
-
-  <!-- APP LOGIC SCRIPT -->
-  <script>
-    // --- Application State ---
-    let reports = [];
-    let feedback = [];
-    let trash = { reports: [], feedback: [] };
-    let visitors = {
-      summary: { activeNow: 1, totalVisitorsToday: 0, peakOnlineToday: 0 },
-      deviceBreakdown: { mobile: 72, desktop: 23, tablet: 5 },
-      districtBreakdown: {},
-      recentSessions: []
-    };
-    let currentTab = 'dashboard';
-    let soundEnabled = true;
-    let selectedReport = null;
-    let leafletMapInstance = null;
-    let trafficChartInstance = null;
-    let deviceChartInstance = null;
-
-    // Hardened Admin Auth
-    const ADMIN_CREDENTIALS = {
-      user: 'admin_prakanguard',
-      pass: 'Prakan#Guard2026!Secured'
-    };
-
-    function checkAuth() {
-      const isAuth = sessionStorage.getItem('pg_admin_authed') === 'true';
-      if (!isAuth) {
-        document.getElementById('loginModal').classList.remove('hidden');
-      } else {
-        document.getElementById('loginModal').classList.add('hidden');
-      }
-      return isAuth;
-    }
-
-    function handleLogin(e) {
-      e.preventDefault();
-      const u = document.getElementById('loginUser').value.trim();
-      const p = document.getElementById('loginPass').value.trim();
-      const storedPass = localStorage.getItem('pg_admin_override_pass') || ADMIN_CREDENTIALS.pass;
-
-      if (u === ADMIN_CREDENTIALS.user && p === storedPass) {
-        sessionStorage.setItem('pg_admin_authed', 'true');
-        sessionStorage.setItem('pg_admin_login_time', Date.now().toString());
-        document.getElementById('loginModal').classList.add('hidden');
-        recordLoginLog(u, 'success');
-        showToast('เข้าสู่ระบบสำเร็จ ยินดีต้อนรับสู่ศูนย์บัญชาการ', 'success');
-        playChime();
-        initData();
-      } else {
-        recordLoginLog(u, 'failed');
-        document.getElementById('loginError').classList.remove('hidden');
-      }
-    }
-
-    function handleLogout() {
-      const loginTime = parseInt(sessionStorage.getItem('pg_admin_login_time') || '0');
-      const duration = loginTime ? Math.round((Date.now() - loginTime) / 60000) : 0;
-      // Update last entry with logout time
-      const logs = JSON.parse(localStorage.getItem('pg_admin_login_logs') || '[]');
-      if (logs.length > 0 && logs[0].status === 'success') {
-        logs[0].logoutTime = new Date().toISOString();
-        logs[0].duration = duration;
-        localStorage.setItem('pg_admin_login_logs', JSON.stringify(logs));
-      }
-      sessionStorage.removeItem('pg_admin_authed');
-      sessionStorage.removeItem('pg_admin_login_time');
-      document.getElementById('loginModal').classList.remove('hidden');
-    }
-
-    // --- Login History System ---
-    function getDeviceInfo() {
-      const ua = navigator.userAgent;
-      if (/mobile/i.test(ua)) return '📱 มือถือ';
-      if (/tablet|ipad/i.test(ua)) return '📟 แท็บเล็ต';
-      return '💻 คอมพิวเตอร์';
-    }
-
-    function recordLoginLog(username, status) {
-      const logs = JSON.parse(localStorage.getItem('pg_admin_login_logs') || '[]');
-      const entry = {
-        id: Date.now().toString(),
-        username: username || 'ไม่ระบุ',
-        status: status,
-        loginTime: new Date().toISOString(),
-        logoutTime: null,
-        duration: null,
-        device: getDeviceInfo()
-      };
-      logs.unshift(entry); // newest first
-      // Keep max 200 entries
-      if (logs.length > 200) logs.splice(200);
-      localStorage.setItem('pg_admin_login_logs', JSON.stringify(logs));
-      // Update badge
-      const badge = document.getElementById('loginlog-count-badge');
-      if (badge) badge.textContent = logs.length;
-    }
-
-    function renderLoginLog() {
-      const logs = JSON.parse(localStorage.getItem('pg_admin_login_logs') || '[]');
-      const tbody = document.getElementById('loginlog-tbody');
-      if (!tbody) return;
-
-      // Update stats
-      const today = new Date().toDateString();
-      const todayCount = logs.filter(l => new Date(l.loginTime).toDateString() === today && l.status === 'success').length;
-      const uniqueUsers = [...new Set(logs.filter(l => l.status === 'success').map(l => l.username))].length;
-      const lastEntry = logs.find(l => l.status === 'success');
-
-      const statTotal = document.getElementById('loginlog-stat-total');
-      const statToday = document.getElementById('loginlog-stat-today');
-      const statUsers = document.getElementById('loginlog-stat-users');
-      const statLast  = document.getElementById('loginlog-stat-last');
-      if (statTotal) statTotal.textContent = logs.filter(l => l.status === 'success').length;
-      if (statToday) statToday.textContent = todayCount;
-      if (statUsers) statUsers.textContent = uniqueUsers;
-      if (statLast && lastEntry) {
-        const d = new Date(lastEntry.loginTime);
-        statLast.textContent = d.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
-      }
-
-      // Update badge in nav
-      const badge = document.getElementById('loginlog-count-badge');
-      if (badge) badge.textContent = logs.length > 0 ? logs.length : '';
-
-      if (logs.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" class="px-4 py-8 text-center text-slate-500 text-xs">ยังไม่มีประวัติการเข้าระบบ</td></tr>';
-        return;
-      }
-
-      tbody.innerHTML = logs.map((entry, i) => {
-        const dt = new Date(entry.loginTime);
-        const dateStr = dt.toLocaleDateString('th-TH', { day: '2-digit', month: 'short', year: 'numeric' });
-        const timeStr = dt.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-        const isSuccess = entry.status === 'success';
-        const statusBadge = isSuccess
-          ? '<span class="px-2 py-0.5 rounded-full bg-emerald-950/60 text-emerald-400 border border-emerald-800/50 text-[10px] font-bold">✅ สำเร็จ</span>'
-          : '<span class="px-2 py-0.5 rounded-full bg-rose-950/60 text-rose-400 border border-rose-800/50 text-[10px] font-bold">❌ ผิดพลาด</span>';
-        const dur = entry.duration != null ? `${entry.duration} นาที` : (isSuccess ? '<span class="text-emerald-400 text-[10px]">● กำลังใช้งาน</span>' : '—');
-        return `<tr class="hover:bg-slate-800/40 transition-colors ${isSuccess ? '' : 'opacity-60'}">
-          <td class="px-4 py-2.5 text-slate-400 text-xs font-mono">${logs.length - i}</td>
-          <td class="px-4 py-2.5 text-white text-xs font-semibold">${entry.username}</td>
-          <td class="px-4 py-2.5 text-slate-300 text-xs">${dateStr} ${timeStr}</td>
-          <td class="px-4 py-2.5">${statusBadge}</td>
-          <td class="px-4 py-2.5 text-slate-300 text-xs">${entry.device || '—'}</td>
-          <td class="px-4 py-2.5 text-slate-400 text-xs">${dur}</td>
-        </tr>`;
-      }).join('');
-    }
-
-    function clearLoginLog() {
-      if (!confirm('ล้างประวัติการเข้าระบบทั้งหมด? ไม่สามารถกู้คืนได้')) return;
-      localStorage.removeItem('pg_admin_login_logs');
-      renderLoginLog();
-      showToast('ล้างประวัติเรียบร้อยแล้ว', 'success');
-    }
-
-    function handleChangePassword(e) {
-      e.preventDefault();
-      const newPass = document.getElementById('newAdminPass').value.trim();
-      if (newPass.length < 6) {
-        showToast('รหัสผ่านต้องมีความยาวอย่างน้อย 6 ตัวอักษร', 'error');
-        return;
-      }
-      localStorage.setItem('pg_admin_override_pass', newPass);
-      showToast('บันทึกรหัสผ่านใหม่เรียบร้อยแล้ว', 'success');
-      document.getElementById('newAdminPass').value = '';
-    }
-
-    // --- Web Audio API Chime ---
-    function playChime() {
-      if (!soundEnabled) return;
-      try {
-        const AudioCtx = window.AudioContext || window.webkitAudioContext;
-        if (!AudioCtx) return;
-        const ctx = new AudioCtx();
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
-        osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.15); // A5
-        gain.gain.setValueAtTime(0.15, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.start();
-        osc.stop(ctx.currentTime + 0.38);
-      } catch (e) {}
-    }
-
-    function toggleSound() {
-      soundEnabled = !soundEnabled;
-      const icon = document.getElementById('soundIcon');
-      if (soundEnabled) {
-        icon.setAttribute('data-lucide', 'volume-2');
-        icon.className = 'w-4 h-4 text-emerald-400';
-        showToast('เปิดเสียงแจ้งเตือนแล้ว', 'info');
-        playChime();
-      } else {
-        icon.setAttribute('data-lucide', 'volume-x');
-        icon.className = 'w-4 h-4 text-slate-500';
-        showToast('ปิดเสียงแจ้งเตือนแล้ว', 'info');
-      }
-      lucide.createIcons();
-    }
-
-    // --- Toast Notifications ---
-    function showToast(message, type = 'info') {
-      const container = document.getElementById('toastContainer');
-      const toast = document.createElement('div');
-      toast.className = `p-3.5 rounded-2xl border text-xs font-semibold shadow-xl flex items-center gap-2.5 transition transform translate-y-2 opacity-0 pointer-events-auto ${
-        type === 'success' ? 'bg-emerald-950/90 border-emerald-500/50 text-emerald-200' :
-        type === 'error' ? 'bg-rose-950/90 border-rose-500/50 text-rose-200' :
-        type === 'warning' ? 'bg-amber-950/90 border-amber-500/50 text-amber-200' :
-        'bg-slate-900/90 border-slate-700 text-slate-200'
-      }`;
-      
-      const iconName = type === 'success' ? 'check-circle' : type === 'error' ? 'alert-triangle' : 'info';
-      toast.innerHTML = `<i data-lucide="${iconName}" class="w-4 h-4 shrink-0"></i><span>${message}</span>`;
-      container.appendChild(toast);
-      lucide.createIcons();
-
-      requestAnimationFrame(() => {
-        toast.classList.remove('translate-y-2', 'opacity-0');
-      });
-
-      setTimeout(() => {
-        toast.classList.add('opacity-0', 'translate-y-2');
-        setTimeout(() => toast.remove(), 300);
-      }, 4500);
-    }
-
-    // --- Tab Switching ---
-    function switchTab(tab) {
-      currentTab = tab;
-      document.querySelectorAll('main > section').forEach(sec => sec.classList.add('hidden'));
-      const activeSec = document.getElementById(`view-${tab}`);
-      if (activeSec) activeSec.classList.remove('hidden');
-
-      // Update Nav buttons styling
-      document.querySelectorAll('.nav-btn').forEach(btn => {
-        btn.classList.remove('bg-blue-600', 'text-white', 'shadow-md');
-        btn.classList.add('text-slate-300');
-      });
-      const activeNav = document.getElementById(`nav-${tab}`);
-      if (activeNav) {
-        activeNav.classList.remove('text-slate-300');
-        activeNav.classList.add('bg-blue-600', 'text-white', 'shadow-md');
-      }
-
-      if (tab === 'map') {
-        setTimeout(initOrRefreshMap, 150);
-      }
-      if (tab === 'visitors') {
-        setTimeout(initOrRefreshCharts, 150);
-      }
-      if (tab === 'loginlog') {
-        setTimeout(renderLoginLog, 100);
-      }
-      if (tab === 'trash') {
-        setTimeout(renderTrash, 100);
-      }
-    }
-
-    // --- Clock update ---
-    function startClock() {
-      function update() {
-        const d = new Date();
-        const buddhistYear = d.getFullYear() + 543;
-        const months = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
-        const dateStr = `${d.getDate()} ${months[d.getMonth()]} ${buddhistYear}`;
-        const timeStr = d.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) + ' น.';
-        const el = document.getElementById('liveClock');
-        if (el) el.innerText = `${dateStr} | ${timeStr}`;
-      }
-      update();
-      setInterval(update, 1000);
-    }
-
-    // --- API Data Fetching & Sync ---
-    async function loadStats() {
-      try {
-        const res = await fetch('/api/stats');
-        if (res.ok) {
-          const stats = await res.json();
-          updateStatsUI(stats);
-        }
-      } catch (err) {}
-    }
-
-    async function loadReports() {
-      try {
-        const res = await fetch('/api/reports');
-        if (res.ok) {
-          reports = await res.json();
-          renderReports();
-          renderDashReports();
-          renderDistrictBreakdown();
-          if (leafletMapInstance) updateMapMarkers();
-        }
-      } catch (err) {}
-    }
-
-    async function loadFeedback() {
-      try {
-        const res = await fetch('/api/feedback');
-        if (res.ok) {
-          feedback = await res.json();
-          renderFeedback();
-          renderDashFeedback();
-        }
-      } catch (err) {}
-    }
-
-    async function loadVisitors() {
-      try {
-        const res = await fetch('/api/visitors');
-        if (res.ok) {
-          visitors = await res.json();
-          renderVisitors();
-        }
-      } catch (err) {}
-    }
-
-    async function loadTrash() {
-      try {
-        const res = await fetch('/api/trash');
-        if (res.ok) {
-          trash = await res.json();
-          if (!Array.isArray(trash.reports)) trash.reports = [];
-          if (!Array.isArray(trash.feedback)) trash.feedback = [];
-        } else {
-          loadTrashFromLocalStorage();
-        }
-      } catch (err) {
-        loadTrashFromLocalStorage();
-      }
-      updateTrashUI();
-      if (currentTab === 'trash') renderTrash();
-    }
-
-    function loadTrashFromLocalStorage() {
-      try {
-        const r = JSON.parse(localStorage.getItem('pg_admin_deleted_reports') || '[]');
-        const f = JSON.parse(localStorage.getItem('pg_admin_deleted_feedback') || '[]');
-        trash = { reports: r, feedback: f };
-      } catch (e) {
-        trash = { reports: [], feedback: [] };
-      }
-    }
-
-    function saveTrashToLocalStorage() {
-      try {
-        localStorage.setItem('pg_admin_deleted_reports', JSON.stringify(trash.reports || []));
-        localStorage.setItem('pg_admin_deleted_feedback', JSON.stringify(trash.feedback || []));
-      } catch (e) {}
-    }
-
-    function updateTrashUI() {
-      const count = (trash.reports ? trash.reports.length : 0) + (trash.feedback ? trash.feedback.length : 0);
-      const badge = document.getElementById('badgeTrashCount');
-      if (badge) {
-        badge.innerText = count;
-        if (count > 0) {
-          badge.className = 'px-2 py-0.5 rounded-full text-xs font-bold bg-rose-500 text-white';
-        } else {
-          badge.className = 'px-2 py-0.5 rounded-full text-xs font-bold bg-rose-950 text-rose-400 border border-rose-800/60';
-        }
-      }
-    }
-
-    async function manualRefreshData() {
-      showToast('กำลังรีเฟรชข้อมูลสดทั้งหมด...', 'info');
-      await Promise.all([loadStats(), loadVisitors(), loadReports(), loadFeedback(), loadTrash()]);
-      showToast('อัปเดตข้อมูลสดล่าสุดเรียบร้อยแล้ว', 'success');
-      playChime();
-    }
-
-    function updateStatsUI(stats) {
-      if (!stats) return;
-      document.getElementById('statActiveNow').innerText = stats.visitors.activeNow;
-      document.getElementById('topOnlineCount').innerText = stats.visitors.activeNow;
-      document.getElementById('vStatActiveNow').innerText = stats.visitors.activeNow;
-      document.getElementById('badgeActiveVisitors').innerText = stats.visitors.activeNow;
-
-      document.getElementById('statTotalToday').innerText = stats.visitors.totalToday;
-      document.getElementById('statPeakToday').innerText = stats.visitors.peakToday;
-      document.getElementById('vStatToday').innerText = stats.visitors.totalToday;
-      document.getElementById('vStatPeak').innerText = stats.visitors.peakToday;
-
-      document.getElementById('statPendingReports').innerText = stats.reports.pending;
-      document.getElementById('badgePendingReports').innerText = stats.reports.pending;
-      document.getElementById('mobileBadgeReports').innerText = stats.reports.pending;
-
-      document.getElementById('statApprovedReports').innerText = stats.reports.approved;
-      document.getElementById('statResolvedReports').innerText = stats.reports.resolved;
-
-      document.getElementById('statTotalFeedback').innerText = stats.feedback.total;
-      document.getElementById('statUnreadFeedback').innerText = stats.feedback.unread;
-      document.getElementById('badgeUnreadFeedback').innerText = stats.feedback.unread;
-      document.getElementById('mobileBadgeFeedback').innerText = stats.feedback.unread;
-      document.getElementById('statAvgRating').innerText = stats.feedback.avgRating.toFixed(1);
-    }
-
-    // --- Render Reports ---
-    function renderReports() {
-      const statusFilter = document.getElementById('filterReportStatus').value;
-      const districtFilter = document.getElementById('filterReportDistrict').value;
-      const searchText = document.getElementById('searchReportText').value.toLowerCase().trim();
-
-      let list = [...reports];
-
-      if (statusFilter === 'pending') list = list.filter(r => !r.isApproved && !r.isResolved);
-      if (statusFilter === 'approved') list = list.filter(r => r.isApproved && !r.isResolved);
-      if (statusFilter === 'resolved') list = list.filter(r => r.isResolved);
-      if (statusFilter === 'hail') list = list.filter(r => r.hazardType === 'hail');
-
-      if (districtFilter !== 'all') list = list.filter(r => r.district === districtFilter);
-
-      if (searchText) {
-        list = list.filter(r => 
-          (r.name && r.name.toLowerCase().includes(searchText)) ||
-          (r.subdistrict && r.subdistrict.toLowerCase().includes(searchText)) ||
-          (r.reporterName && r.reporterName.toLowerCase().includes(searchText)) ||
-          (r.trafficStatus && r.trafficStatus.toLowerCase().includes(searchText))
-        );
-      }
-
-      const grid = document.getElementById('reportsGrid');
-      const emptyState = document.getElementById('emptyReportsState');
-
-      if (list.length === 0) {
-        grid.innerHTML = '';
-        emptyState.classList.remove('hidden');
-        return;
-      }
-
-      emptyState.classList.add('hidden');
-      grid.innerHTML = list.map(r => {
-        const isPending = !r.isApproved && !r.isResolved;
-        const isResolved = r.isResolved;
-        const isHail = r.hazardType === 'hail';
-
-        const severityBadge = isHail
-          ? '<span class="px-2.5 py-1 rounded-full text-xs font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">🧊 ลูกเห็บตก</span>'
-          : r.level === 3
-          ? '<span class="px-2.5 py-1 rounded-full text-xs font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30">🔴 วิกฤต >50 ซม.</span>'
-          : r.level === 2
-          ? '<span class="px-2.5 py-1 rounded-full text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">🟠 เสี่ยงสูง 21-50 ซม.</span>'
-          : '<span class="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">🟢 เฝ้าระวัง 5-20 ซม.</span>';
-
-        const statusPill = isResolved
-          ? '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-teal-500/20 text-teal-300 border border-teal-500/30">✓ คลี่คลายแล้ว</span>'
-          : isPending
-          ? '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/20 text-rose-400 border border-rose-500/30 animate-pulse">● รอดำเนินการ</span>'
-          : '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/20 text-blue-300 border border-blue-500/30">● กำลังเฝ้าระวัง</span>';
-
-        return `
-          <div class="bg-slate-900/90 border border-slate-800 hover:border-slate-700 rounded-3xl p-5 shadow-lg flex flex-col justify-between transition group">
-            <div>
-              <div class="flex items-center justify-between gap-2 mb-2.5">
-                <div class="flex items-center gap-1.5 flex-wrap">
-                  ${severityBadge}
-                  ${statusPill}
-                </div>
-                <span class="text-[11px] text-slate-400 font-mono">${r.reportedAt || 'ไม่ระบุเวลา'}</span>
-              </div>
-
-              <h4 class="text-sm font-bold text-white group-hover:text-blue-400 transition leading-snug">
-                ${r.name || 'ไม่ระบุชื่อจุด'}
-              </h4>
-              <p class="text-xs text-slate-400 mt-0.5">${r.subdistrict || ''} ${r.district || 'จ.สมุทรปราการ'}</p>
-
-              <div class="mt-3 p-3 bg-slate-800/50 rounded-2xl border border-slate-700/50 space-y-1.5 text-xs">
-                <div class="flex items-center justify-between">
-                  <span class="text-slate-400">ระดับน้ำ:</span>
-                  <span class="font-bold text-white">${r.bodyLevelLabel || r.depthCm + ' ซม.'}</span>
-                </div>
-                <div class="flex items-center justify-between">
-                  <span class="text-slate-400">การจราจร:</span>
-                  <span class="text-slate-300 text-right truncate max-w-[180px]">${r.trafficStatus || 'ชะลอความเร็ว'}</span>
-                </div>
-                <div class="flex items-center justify-between">
-                  <span class="text-slate-400">ผู้แจ้ง:</span>
-                  <span class="text-slate-300">${r.reporterName || 'ประชาชนในพื้นที่'} (${r.phone || '-'})</span>
-                </div>
-                ${r.photoUrl ? `
-                  <div class="mt-2 rounded-xl overflow-hidden border border-slate-700 relative group cursor-pointer" onclick="openImageLightbox('${r.photoUrl}', '${(r.name || '').replace(/'/g, "\\'")}', '${(r.reporterName || '').replace(/'/g, "\\'")}')" title="คลิกเพื่อขยายดูรูปภาพขนาดใหญ่">
-                    <img src="${r.photoUrl}" alt="ภาพสถานการณ์" class="w-full h-24 object-cover group-hover:scale-105 transition duration-300" />
-                    <div class="absolute inset-0 bg-slate-950/40 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-1.5 text-white text-[11px] font-semibold transition">
-                      <i data-lucide="zoom-in" class="w-4 h-4"></i> ขยายดูรูปภาพ
-                    </div>
-                  </div>
-                ` : ''}
-              </div>
-            </div>
-
-            <!-- Action Bar -->
-            <div class="mt-4 pt-3 border-t border-slate-800 flex items-center justify-between gap-2">
-              <button onclick="openReportDetail('${r.id}')" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold flex items-center gap-1 transition">
-                <i data-lucide="eye" class="w-3.5 h-3.5"></i>
-                ดูรายละเอียด
-              </button>
-
-              <div class="flex items-center gap-1.5">
-                ${isPending ? `
-                  <button onclick="approveReport('${r.id}')" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold flex items-center gap-1 shadow-sm transition">
-                    <i data-lucide="check" class="w-3.5 h-3.5"></i>
-                    อนุมัติ
-                  </button>
-                ` : !isResolved ? `
-                  <button onclick="resolveReport('${r.id}')" class="px-3 py-1.5 bg-teal-600/30 hover:bg-teal-600/50 text-teal-300 border border-teal-500/40 rounded-xl text-xs font-semibold flex items-center gap-1 transition">
-                    <i data-lucide="check-check" class="w-3.5 h-3.5"></i>
-                    ปิดงาน
-                  </button>
-                ` : `
-                  <span class="text-xs text-teal-400 font-semibold px-2">เรียบร้อย</span>
-                `}
-                <button onclick="deleteReport('${r.id}')" class="p-1.5 rounded-xl text-slate-500 hover:text-rose-400 hover:bg-rose-950/40 transition" title="ลบรายงาน">
-                  <i data-lucide="trash-2" class="w-4 h-4"></i>
-                </button>
-              </div>
-            </div>
-          </div>
-        `;
-      }).join('');
-
-      lucide.createIcons();
-    }
-
-    // --- Render Dashboard Mini Streams ---
-    function renderDashReports() {
-      const container = document.getElementById('dashReportsList');
-      if (!container) return;
-      const latest = reports.slice(0, 4);
-
-      if (latest.length === 0) {
-        container.innerHTML = '<div class="text-center py-6 text-xs text-slate-500">ยังไม่มีรายงานเข้ามาในระบบ</div>';
-        return;
-      }
-
-      container.innerHTML = latest.map(r => `
-        <div class="p-3 bg-slate-800/40 hover:bg-slate-800/70 border border-slate-700/60 rounded-2xl flex items-center justify-between gap-3 cursor-pointer transition" onclick="openReportDetail('${r.id}')">
-          <div class="flex items-center gap-3">
-            <div class="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
-              r.level === 3 ? 'bg-rose-500/20 text-rose-400' :
-              r.level === 2 ? 'bg-amber-500/20 text-amber-400' :
-              r.hazardType === 'hail' ? 'bg-cyan-500/20 text-cyan-400' : 'bg-emerald-500/20 text-emerald-400'
-            }">
-              <i data-lucide="${r.hazardType === 'hail' ? 'snowflake' : 'droplet'}" class="w-4 h-4"></i>
-            </div>
-            <div>
-              <h5 class="text-xs font-bold text-white truncate max-w-[200px] sm:max-w-[260px]">${r.name || 'ไม่ระบุจุด'}</h5>
-              <p class="text-[11px] text-slate-400">${r.district || 'สมุทรปราการ'} • ${r.bodyLevelLabel || r.depthCm + ' ซม.'}</p>
-            </div>
-          </div>
-          <span class="text-[10px] text-slate-400 font-mono shrink-0">${r.reportedAt || ''}</span>
-        </div>
-      `).join('');
-      lucide.createIcons();
-      renderDistrictBreakdown();
-    }
-
-    // --- Render Feedback ---
-    function renderFeedback() {
-      const statusFilter = document.getElementById('filterFbStatus').value;
-      const catFilter = document.getElementById('filterFbCategory').value;
-      const searchText = document.getElementById('searchFbText').value.toLowerCase().trim();
-
-      let list = [...feedback];
-
-      if (statusFilter === 'unread') list = list.filter(f => !f.isRead);
-      if (statusFilter === 'read') list = list.filter(f => f.isRead);
-      if (catFilter !== 'all') list = list.filter(f => f.category === catFilter);
-
-      if (searchText) {
-        list = list.filter(f => 
-          (f.message && f.message.toLowerCase().includes(searchText)) ||
-          (f.senderName && f.senderName.toLowerCase().includes(searchText)) ||
-          (f.contact && f.contact.toLowerCase().includes(searchText))
-        );
-      }
-
-      const grid = document.getElementById('feedbackGrid');
-      const emptyState = document.getElementById('emptyFeedbackState');
-
-      if (list.length === 0) {
-        grid.innerHTML = '';
-        emptyState.classList.remove('hidden');
-        return;
-      }
-
-      emptyState.classList.add('hidden');
-      grid.innerHTML = list.map(f => {
-        const isUnread = !f.isRead;
-        const stars = '★'.repeat(f.rating || 5) + '☆'.repeat(5 - (f.rating || 5));
-
-        return `
-          <div class="bg-slate-900/90 border ${isUnread ? 'border-amber-500/40 bg-amber-950/10' : 'border-slate-800'} rounded-3xl p-5 shadow-lg flex flex-col justify-between transition">
-            <div>
-              <div class="flex items-center justify-between gap-2 mb-3">
-                <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-800 border border-slate-700 text-slate-200">
-                  ${f.categoryLabel || '💡 ข้อเสนอแนะ'}
-                </span>
-                <div class="flex items-center gap-2">
-                  <span class="text-xs text-yellow-400 font-bold tracking-widest">${stars}</span>
-                  ${isUnread ? `
-                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 animate-pulse">
-                      ● ยังไม่อ่าน
-                    </span>
-                  ` : `
-                    <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-800 text-slate-400">
-                      อ่านแล้ว
-                    </span>
-                  `}
-                </div>
-              </div>
-
-              <!-- ข้อเสนอแนะที่เขียนมา (ข้อความจริงเต็มๆ) -->
-              <div class="p-3.5 bg-slate-800/60 rounded-2xl border border-slate-700/60 text-xs text-slate-200 leading-relaxed font-normal whitespace-pre-wrap">
-                "${f.message || 'ไม่มีข้อความ'}"
-              </div>
-
-              <!-- ข้อมูลผู้ส่งและวันที่เวลา -->
-              <div class="mt-3 flex items-center justify-between text-xs text-slate-400">
-                <span class="font-semibold text-white">${f.senderName || 'ประชาชนทั่วไป'} <span class="text-slate-400 font-normal">(${f.contact || '-'})</span></span>
-                <span class="text-[11px] font-mono">${f.submittedAt || ''}</span>
-              </div>
-
-              ${f.adminNote ? `
-                <div class="mt-2.5 p-2 bg-blue-950/40 border border-blue-800/40 rounded-xl text-[11px] text-blue-300">
-                  <b>บันทึกแอดมิน:</b> ${f.adminNote}
-                </div>
-              ` : ''}
-            </div>
-
-            <!-- Action Controls -->
-            <div class="mt-4 pt-3 border-t border-slate-800 flex items-center justify-between gap-2">
-              <button onclick="toggleFeedbackRead('${f.id}')" class="px-3 py-1.5 rounded-xl text-xs font-semibold transition ${
-                isUnread ? 'bg-amber-600/20 hover:bg-amber-600/30 text-amber-300 border border-amber-500/30' : 'bg-slate-800 hover:bg-slate-700 text-slate-300'
-              }">
-                ${isUnread ? 'ทำเครื่องหมายว่าอ่านแล้ว' : 'เปลี่ยนเป็นยังไม่อ่าน'}
-              </button>
-
-              <div class="flex items-center gap-2">
-                <button onclick="promptAdminNote('${f.id}')" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold flex items-center gap-1 transition">
-                  <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
-                  บันทึกโน้ต
-                </button>
-                <button onclick="deleteFeedback('${f.id}')" class="p-1.5 rounded-xl text-slate-500 hover:text-rose-400 hover:bg-rose-950/40 transition">
-                  <i data-lucide="trash-2" class="w-4 h-4"></i>
-                </button>
-              </div>
-            </div>
-          </div>
-        `;
-      }).join('');
-
-      lucide.createIcons();
-    }
-
-    function renderDashFeedback() {
-      const container = document.getElementById('dashFeedbackList');
-      if (!container) return;
-      const latest = feedback.slice(0, 4);
-
-      if (latest.length === 0) {
-        container.innerHTML = '<div class="text-center py-6 text-xs text-slate-500">ยังไม่มีข้อเสนอแนะส่งเข้ามา</div>';
-        return;
-      }
-
-      container.innerHTML = latest.map(f => `
-        <div class="p-3 bg-slate-800/40 hover:bg-slate-800/70 border border-slate-700/60 rounded-2xl flex items-center justify-between gap-3 cursor-pointer transition" onclick="switchTab('feedback')">
-          <div class="flex items-center gap-3">
-            <div class="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0">
-              <i data-lucide="star" class="w-4 h-4"></i>
-            </div>
-            <div>
-              <p class="text-xs text-slate-200 line-clamp-1 font-medium">"${f.message}"</p>
-              <p class="text-[11px] text-slate-400">${f.senderName || 'ประชาชน'} • ${f.categoryLabel || 'ทั่วไป'}</p>
-            </div>
-          </div>
-          <span class="text-[10px] text-slate-400 font-mono shrink-0">${f.submittedAt || ''}</span>
-        </div>
-      `).join('');
-      lucide.createIcons();
-    }
-
-    function renderDistrictBreakdown() {
-      const container = document.getElementById('dashDistrictBreakdown');
-      if (!container) return;
-      
-      // Count visitors per district from recent sessions
-      const sessions = (visitors && visitors.recentSessions) ? visitors.recentSessions : [];
-      const districtCount = {};
-      sessions.forEach(s => {
-        const d = s.district || 'ไม่ระบุ';
-        districtCount[d] = (districtCount[d] || 0) + 1;
-      });
-      
-      // Also count from reports by district
-      const reportDistrictCount = {};
-      reports.forEach(r => {
-        if (!r.isResolved && r.isApproved) {
-          const d = r.district || 'ไม่ระบุ';
-          reportDistrictCount[d] = (reportDistrictCount[d] || 0) + 1;
-        }
-      });
-      
-      const allDistricts = ['เมืองสมุทรปราการ', 'บางพลี', 'บางบ่อ', 'บางเสาธง', 'พระประแดง', 'พระสมุทรเจดีย์'];
-      
-      if (Object.keys(districtCount).length === 0 && sessions.length === 0) {
-        container.innerHTML = '<div class="text-center py-4 text-xs text-slate-500 col-span-3">ยังไม่มีข้อมูลผู้เข้าชม</div>';
-        return;
-      }
-      
-      let html = allDistricts.map(d => {
-        const visitors = districtCount[d] || 0;
-        const activeReports = reportDistrictCount[d] || 0;
-        const shortName = d.replace('เมืองสมุทรปราการ', 'เมือง').replace('พระสมุทรเจดีย์', 'พระสมุทรฯ');
-        return `
-          <div class="p-3 bg-slate-800/60 rounded-2xl border border-slate-700/60 flex flex-col gap-1">
-            <span class="text-xs font-bold text-white truncate">📍 ${shortName}</span>
-            <div class="flex items-center justify-between">
-              <span class="text-[10px] text-slate-400">ผู้ใช้สด</span>
-              <span class="text-xs font-bold ${visitors > 0 ? 'text-emerald-400' : 'text-slate-500'}">${visitors > 0 ? visitors + ' คน' : '-'}</span>
-            </div>
-            <div class="flex items-center justify-between">
-              <span class="text-[10px] text-slate-400">จุดท่วม</span>
-              <span class="text-xs font-bold ${activeReports > 0 ? 'text-amber-400' : 'text-slate-500'}">${activeReports > 0 ? activeReports + ' จุด' : '-'}</span>
-            </div>
-          </div>
-        `;
-      }).join('');
-
-      // แสดงการ์ดสำหรับผู้ใช้นอกเขตสมุทรปราการ (ถ้ามี)
-      const outsideCount = districtCount['นอกเขตสมุทรปราการ'] || districtCount['อยู่นอกเขต จ.สมุทรปราการ'] || 0;
-      if (outsideCount > 0) {
-        html += `
-          <div class="p-3 bg-rose-950/40 rounded-2xl border border-rose-800/60 flex flex-col gap-1">
-            <span class="text-xs font-bold text-rose-300 truncate">⚠️ นอกเขตสมุทรปราการ</span>
-            <div class="flex items-center justify-between">
-              <span class="text-[10px] text-slate-400">ผู้ใช้สด</span>
-              <span class="text-xs font-bold text-rose-400">${outsideCount} คน</span>
-            </div>
-            <div class="flex items-center justify-between">
-              <span class="text-[10px] text-slate-400">สถานะ</span>
-              <span class="text-[10px] text-slate-400">พิกัดนอกพื้นที่</span>
-            </div>
-          </div>
-        `;
-      }
-
-      container.innerHTML = html;
-    }
-
-    // ฟังก์ชันสร้าง Badge แสดงรุ่น/ประเภทอุปกรณ์ (iPhone 14, แท็บเล็ต, PC, ฯลฯ)
-    function formatDeviceBadge(device) {
-      if (!device) return '<span class="text-slate-400">สมาร์ตโฟน</span>';
-      const dev = String(device).trim();
-
-      // Tablet / iPad -> ระบุ "แท็บเล็ต"
-      if (/iPad|Tablet|แท็บเล็ต|แท็บแล็ต|แท็บแลต/i.test(dev)) {
-        return `<span class="px-2.5 py-1 rounded-xl text-xs font-bold bg-indigo-950/80 text-indigo-300 border border-indigo-600/50 flex items-center gap-1.5 w-max">
-          <span>📱</span>
-          <span>แท็บเล็ต</span>
-        </span>`;
-      }
-
-      // Computer / PC / Desktop -> ระบุ "PC"
-      if (dev === 'PC' || /Windows|Macintosh|Linux|Desktop|คอม/i.test(dev)) {
-        return `<span class="px-2.5 py-1 rounded-xl text-xs font-bold bg-sky-950/80 text-sky-300 border border-sky-600/50 flex items-center gap-1.5 w-max">
-          <span>💻</span>
-          <span>PC</span>
-        </span>`;
-      }
-
-      // iPhone (เช่น iPhone 14, iPhone 14 Pro, iPhone 13)
-      if (/iPhone/i.test(dev)) {
-        return `<span class="px-2.5 py-1 rounded-xl text-xs font-bold bg-slate-800 text-white border border-slate-600 flex items-center gap-1.5 w-max shadow-xs">
-          <span>🍏</span>
-          <span>${dev}</span>
-        </span>`;
-      }
-
-      // Android specific models (Samsung Galaxy S24, OPPO, Vivo, Xiaomi, etc.)
-      if (/Samsung/i.test(dev)) {
-        return `<span class="px-2.5 py-1 rounded-xl text-xs font-bold bg-indigo-950/80 text-indigo-300 border border-indigo-600/50 flex items-center gap-1.5 w-max">
-          <span class="w-2 h-2 rounded-full bg-indigo-400"></span>
-          <span>${dev}</span>
-        </span>`;
-      }
-      if (/OPPO/i.test(dev)) {
-        return `<span class="px-2.5 py-1 rounded-xl text-xs font-bold bg-emerald-950/80 text-emerald-300 border border-emerald-600/50 flex items-center gap-1.5 w-max">
-          <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
-          <span>${dev}</span>
-        </span>`;
-      }
-      if (/Vivo/i.test(dev)) {
-        return `<span class="px-2.5 py-1 rounded-xl text-xs font-bold bg-blue-950/80 text-cyan-300 border border-blue-600/50 flex items-center gap-1.5 w-max">
-          <span class="w-2 h-2 rounded-full bg-cyan-400"></span>
-          <span>${dev}</span>
-        </span>`;
-      }
-      if (/Xiaomi|Redmi|POCO/i.test(dev)) {
-        return `<span class="px-2.5 py-1 rounded-xl text-xs font-bold bg-amber-950/80 text-amber-300 border border-amber-600/50 flex items-center gap-1.5 w-max">
-          <span class="w-2 h-2 rounded-full bg-amber-400"></span>
-          <span>${dev}</span>
-        </span>`;
-      }
-
-      return `<span class="px-2.5 py-1 rounded-xl text-xs font-semibold bg-slate-800 text-slate-200 border border-slate-700 flex items-center gap-1.5 w-max">
-        <span>📱</span>
-        <span>${dev}</span>
-      </span>`;
-    }
-
-    // --- Render Visitors & Live Sessions ---
-    function renderVisitors() {
-      const tbody = document.getElementById('visitorsTableBody');
-      if (!tbody) return;
-
-      const sessions = visitors.recentSessions || [];
-      if (sessions.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" class="py-6 text-center text-slate-500">ไม่มีเซสชันที่บันทึกไว้ในขณะนี้</td></tr>';
-        return;
-      }
-
-      tbody.innerHTML = sessions.map(s => {
-        let d = (s.district || '').trim();
-        // Remove any prefix "อ." or "อำเภอ"
-        d = d.replace(/^อ\./, '').replace(/^อำเภอ/, '').trim();
-
-        let districtBadge = '';
-        if (!d || d === 'ปิด GPS' || d === 'ไม่ได้เปิด GPS' || d.includes('GPS') || d.includes('พิกัด') || d === 'none' || d === 'no_gps') {
-          districtBadge = `<span class="px-2.5 py-1 rounded-xl text-xs font-semibold bg-slate-800 text-slate-300 border border-slate-700 flex items-center gap-1.5 w-max">
-            <span>⚠️</span> ปิด GPS
-          </span>`;
-        } else if (d === 'ไม่ได้อยู่สมุทรปราการ' || d.includes('ไม่ได้อยู่') || d.includes('นอก')) {
-          districtBadge = `<span class="px-2.5 py-1 rounded-xl text-xs font-bold bg-rose-500/20 text-rose-300 border border-rose-500/40 flex items-center gap-1.5 w-max">
-            <span>🌐</span> ไม่ได้อยู่สมุทรปราการ
-          </span>`;
-        } else {
-          const cleanName = d.replace('เมืองสมุทรปราการ', 'เมือง');
-          districtBadge = `<span class="px-2.5 py-1 rounded-xl text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 flex items-center gap-1.5 w-max">
-            <span>📍</span> ${cleanName}
-          </span>`;
-        }
-
-        const pageLabel = s.currentPage || s.page || 'หน้าหลัก (แผนที่)';
-
-        return `
-          <tr class="hover:bg-slate-800/40 transition">
-            <td class="py-3 px-4 font-mono text-slate-400 font-semibold">${s.sessionId || 'sess-xyz'}</td>
-            <td class="py-3 px-4 font-mono text-slate-300">${s.ipMasked || '182.232.xxx.xxx'}</td>
-            <td class="py-3 px-4">${formatDeviceBadge(s.device)}</td>
-            <td class="py-3 px-4">${districtBadge}</td>
-            <td class="py-3 px-4 text-slate-300 font-medium">
-              <span class="px-2.5 py-1 rounded-xl bg-slate-800/80 border border-slate-700 text-xs">${pageLabel}</span>
-            </td>
-            <td class="py-3 px-4 text-slate-300">${s.durationSec || 60} วินาที</td>
-            <td class="py-3 px-4">
-              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center gap-1 w-max">
-                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span> กำลังออนไลน์
-              </span>
-            </td>
-          </tr>
-        `;
-      }).join('');
-    }
-
-    // --- Detail Modal Actions ---
-    function openReportDetail(id) {
-      const r = reports.find(item => item.id === id);
-      if (!r) return;
-      selectedReport = r;
-
-      document.getElementById('modalReportTitle').innerText = r.name || 'จุดรายงานน้ำท่วม';
-      document.getElementById('modalReportSub').innerText = `${r.subdistrict || ''} ${r.district || 'จ.สมุทรปราการ'}`;
-      document.getElementById('modalBodyLevel').innerText = r.bodyLevelLabel || r.depthCm + ' ซม.';
-      document.getElementById('modalDepth').innerText = (r.depthCm || 0) + ' ซม.';
-      document.getElementById('modalStatusText').innerText = r.isResolved ? 'คลี่คลายแล้ว' : r.isApproved ? 'อนุมัติแล้ว' : 'รอดำเนินการ';
-      document.getElementById('modalStatusText').className = `font-bold text-sm ${r.isResolved ? 'text-teal-400' : r.isApproved ? 'text-blue-400' : 'text-rose-400'}`;
-      document.getElementById('modalTime').innerText = r.reportedAt || '-';
-      document.getElementById('modalTraffic').innerText = r.trafficStatus || 'ไม่มีข้อมูล';
-      document.getElementById('modalCause').innerText = r.cause || 'ฝนตกสะสมรอการระบาย';
-      document.getElementById('modalGuidance').innerText = r.officialGuidance || 'โปรดสัญจรด้วยความระมัดระวัง';
-      document.getElementById('modalReporter').innerText = r.reporterName || 'ประชาชนทั่วไป';
-      document.getElementById('modalPhoneLink').innerText = r.phone || '-';
-      document.getElementById('modalPhoneLink').href = r.phone ? `tel:${r.phone}` : '#';
-      document.getElementById('modalGps').innerText = `${r.lat}, ${r.lng}`;
-      document.getElementById('modalGoogleMapsLink').href = `https://www.google.com/maps?q=${r.lat},${r.lng}`;
-
-      const photoCont = document.getElementById('modalPhotoContainer');
-      const photoImg = document.getElementById('modalPhotoImg');
-      if (r.photoUrl) {
-        photoImg.src = r.photoUrl;
-        photoCont.classList.remove('hidden');
-        photoCont.onclick = () => openImageLightbox(r.photoUrl, r.name, r.reporterName);
-        photoCont.title = 'คลิกเพื่อขยายดูรูปภาพขนาดใหญ่';
-      } else {
-        photoCont.classList.add('hidden');
-      }
-
-      // Toggle approve button visibility
-      const btnApprove = document.getElementById('btnModalApprove');
-      if (r.isApproved || r.isResolved) {
-        btnApprove.classList.add('hidden');
-      } else {
-        btnApprove.classList.remove('hidden');
-      }
-
-      document.getElementById('reportActionModal').classList.remove('hidden');
-      lucide.createIcons();
-    }
-
-    function closeReportActionModal() {
-      document.getElementById('reportActionModal').classList.add('hidden');
-      selectedReport = null;
-    }
-
-    async function approveReport(id) {
-      try {
-        const res = await fetch(`/api/reports/${id}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ isApproved: true, isResolved: false })
-        });
-        if (res.ok) {
-          showToast('อนุมัติรายงานเรียบร้อยแล้ว แสดงผลสู่แผนที่สาธารณะทันที', 'success');
-          playChime();
-          loadReports();
-          loadStats();
-          closeReportActionModal();
-        }
-      } catch (err) {}
-    }
-
-    async function resolveReport(id) {
-      try {
-        const res = await fetch(`/api/reports/${id}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ isResolved: true })
-        });
-        if (res.ok) {
-          showToast('ทำเครื่องหมายสถานการณ์คลี่คลายเรียบร้อยแล้ว', 'success');
-          loadReports();
-          loadStats();
-          closeReportActionModal();
-        }
-      } catch (err) {}
-    }
-
-    // --- Lightbox Functions (ขยายดูภาพจากประชาชนรายงาน) ---
-    function openImageLightbox(url, title, reporter) {
-      if (!url) return;
-      const modal = document.getElementById('imageLightboxModal');
-      const img = document.getElementById('lightboxImg');
-      const titleEl = document.getElementById('lightboxTitle');
-      const repEl = document.getElementById('lightboxReporter');
-      const dlBtn = document.getElementById('lightboxDownloadBtn');
-      if (!modal || !img) return;
-
-      img.src = url;
-      if (titleEl) titleEl.textContent = title ? `ภาพจาก: ${title}` : 'ภาพจากประชาชนรายงาน';
-      if (repEl) repEl.textContent = reporter ? `ผู้ส่งรายงาน: ${reporter}` : 'ประชาชนในพื้นที่';
-      if (dlBtn) dlBtn.href = url;
-
-      modal.classList.remove('hidden');
-      lucide.createIcons();
-    }
-
-    function closeImageLightbox() {
-      const modal = document.getElementById('imageLightboxModal');
-      if (modal) modal.classList.add('hidden');
-    }
-
-    async function deleteReport(id) {
-      if (!confirm('ยืนยันที่จะย้ายรายงานนี้ไปยัง "ลบล่าสุด" (ถังขยะ) ใช่หรือไม่?')) return;
-      const r = reports.find(item => item.id === id);
-      try {
-        await fetch(`/api/reports/${id}`, { method: 'DELETE' });
-      } catch (err) {}
-
-      // Add to local trash state
-      if (r) {
-        if (!trash.reports) trash.reports = [];
-        trash.reports.unshift({ ...r, deletedAt: new Date().toISOString() });
-        saveTrashToLocalStorage();
-      }
-      reports = reports.filter(item => item.id !== id);
-      renderReports();
-      renderDashReports();
-      updateTrashUI();
-      showToast('ย้ายรายงานไปยัง "ลบล่าสุด" เรียบร้อยแล้ว (สามารถกู้คืนหรือลบถาวรได้)', 'info');
-      closeReportActionModal();
-      loadStats();
-      loadTrash();
-    }
-
-    function handleApproveCurrentReport() {
-      if (selectedReport) approveReport(selectedReport.id);
-    }
-    function handleResolveCurrentReport() {
-      if (selectedReport) resolveReport(selectedReport.id);
-    }
-    function handleDeleteCurrentReport() {
-      if (selectedReport) deleteReport(selectedReport.id);
-    }
-
-    // --- Feedback Actions ---
-    async function toggleFeedbackRead(id) {
-      const fb = feedback.find(f => f.id === id);
-      if (!fb) return;
-      try {
-        const res = await fetch(`/api/feedback/${id}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ isRead: !fb.isRead })
-        });
-        if (res.ok) {
-          loadFeedback();
-          loadStats();
-        }
-      } catch (err) {}
-    }
-
-    async function promptAdminNote(id) {
-      const fb = feedback.find(f => f.id === id);
-      if (!fb) return;
-      const currentNote = fb.adminNote || '';
-      const newNote = prompt('พิมพ์บันทึกการดำเนินการของแอดมินสำหรับข้อเสนอแนะนี้:', currentNote);
-      if (newNote === null) return;
-      try {
-        const res = await fetch(`/api/feedback/${id}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ adminNote: newNote, isRead: true })
-        });
-        if (res.ok) {
-          showToast('บันทึกโน้ตสำเร็จ', 'success');
-          loadFeedback();
-          loadStats();
-        }
-      } catch (err) {}
-    }
-
-    async function deleteFeedback(id) {
-      if (!confirm('ยืนยันที่จะย้ายข้อเสนอแนะนี้ไปยัง "ลบล่าสุด" (ถังขยะ) ใช่หรือไม่?')) return;
-      const f = feedback.find(item => item.id === id);
-      try {
-        await fetch(`/api/feedback/${id}`, { method: 'DELETE' });
-      } catch (err) {}
-
-      // Add to local trash state
-      if (f) {
-        if (!trash.feedback) trash.feedback = [];
-        trash.feedback.unshift({ ...f, deletedAt: new Date().toISOString() });
-        saveTrashToLocalStorage();
-      }
-      feedback = feedback.filter(item => item.id !== id);
-      renderFeedback();
-      renderDashFeedback();
-      updateTrashUI();
-      showToast('ย้ายข้อเสนอแนะไปยัง "ลบล่าสุด" เรียบร้อยแล้ว (สามารถกู้คืนหรือลบถาวรได้)', 'info');
-      loadStats();
-      loadTrash();
-    }
-
-    async function markAllFeedbackRead() {
-      try {
-        const res = await fetch('/api/feedback-mark-all-read', { method: 'POST' });
-        if (res.ok) {
-          showToast('ทำเครื่องหมายอ่านแล้วทั้งหมดเรียบร้อยแล้ว', 'success');
-          loadFeedback();
-          loadStats();
-        }
-      } catch (err) {}
-    }
-
-    // --- Render Trash (ลบล่าสุด) ---
-    function renderTrash() {
-      const typeFilter = document.getElementById('filterTrashType') ? document.getElementById('filterTrashType').value : 'all';
-      const searchText = document.getElementById('searchTrashText') ? document.getElementById('searchTrashText').value.toLowerCase().trim() : '';
-      const grid = document.getElementById('trashGrid');
-      const emptyState = document.getElementById('emptyTrashState');
-      if (!grid) return;
-
-      let items = [];
-      const repList = (trash.reports || []).map(r => ({ ...r, trashType: 'report' }));
-      const fbList = (trash.feedback || []).map(f => ({ ...f, trashType: 'feedback' }));
-
-      if (typeFilter === 'all') {
-        items = [...repList, ...fbList];
-      } else if (typeFilter === 'report') {
-        items = [...repList];
-      } else if (typeFilter === 'feedback') {
-        items = [...fbList];
-      }
-
-      // Sort by deletedAt desc
-      items.sort((a, b) => new Date(b.deletedAt || 0) - new Date(a.deletedAt || 0));
-
-      if (searchText) {
-        items = items.filter(it => {
-          if (it.trashType === 'report') {
-            return (it.name && it.name.toLowerCase().includes(searchText)) ||
-                   (it.district && it.district.toLowerCase().includes(searchText)) ||
-                   (it.reporterName && it.reporterName.toLowerCase().includes(searchText));
-          } else {
-            return (it.message && it.message.toLowerCase().includes(searchText)) ||
-                   (it.senderName && it.senderName.toLowerCase().includes(searchText)) ||
-                   (it.categoryLabel && it.categoryLabel.toLowerCase().includes(searchText));
-          }
-        });
-      }
-
-      if (items.length === 0) {
-        grid.innerHTML = '';
-        if (emptyState) emptyState.classList.remove('hidden');
-        return;
-      }
-
-      if (emptyState) emptyState.classList.add('hidden');
-      grid.innerHTML = items.map(it => {
-        const isReport = it.trashType === 'report';
-        const dStr = it.deletedAt ? new Date(it.deletedAt).toLocaleString('th-TH', { dateStyle: 'short', timeStyle: 'short' }) : 'ไม่ระบุเวลา';
-
-        if (isReport) {
-          return `
-            <div class="bg-slate-900/90 border border-rose-950/60 rounded-3xl p-5 shadow-lg flex flex-col justify-between transition hover:border-rose-900/80">
-              <div>
-                <div class="flex items-center justify-between gap-2 mb-2">
-                  <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-cyan-950/80 text-cyan-300 border border-cyan-700/60 flex items-center gap-1">
-                    💧 รายงานน้ำท่วม
-                  </span>
-                  <span class="text-[11px] text-slate-500 font-mono">ลบเมื่อ: ${dStr}</span>
-                </div>
-
-                <h4 class="text-sm font-bold text-white leading-snug mt-2">
-                  ${it.name || 'ไม่ระบุชื่อจุด'}
-                </h4>
-                <p class="text-xs text-slate-400 mt-0.5">${it.subdistrict || ''} ${it.district || 'จ.สมุทรปราการ'}</p>
-
-                <div class="mt-3 p-3 bg-slate-800/40 rounded-2xl border border-slate-700/40 space-y-1 text-xs text-slate-300">
-                  <div>ระดับน้ำ: <b class="text-white">${it.bodyLevelLabel || (it.depthCm + ' ซม.')}</b></div>
-                  <div>ผู้แจ้ง: <span>${it.reporterName || 'ประชาชน'} (${it.phone || '-'})</span></div>
-                  ${it.photoUrl ? `
-                    <div class="mt-2 rounded-xl overflow-hidden border border-slate-700">
-                      <img src="${it.photoUrl}" alt="ภาพสถานการณ์" class="w-full h-20 object-cover cursor-pointer" onclick="openImageLightbox('${it.photoUrl}', '${(it.name || '').replace(/'/g, "\\'")}', '${(it.reporterName || '').replace(/'/g, "\\'")}')" />
-                    </div>
-                  ` : ''}
-                </div>
-              </div>
-
-              <!-- Controls -->
-              <div class="mt-4 pt-3 border-t border-slate-800 flex items-center justify-between gap-2">
-                <button onclick="restoreTrashItem('report', '${it.id}')" class="px-3 py-1.5 bg-emerald-600/30 hover:bg-emerald-600/50 text-emerald-300 border border-emerald-500/40 rounded-xl text-xs font-semibold flex items-center gap-1 transition cursor-pointer">
-                  <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
-                  กู้คืนรายการ
-                </button>
-                <button onclick="deletePermanent('report', '${it.id}')" class="px-3 py-1.5 bg-rose-950/80 hover:bg-rose-900 text-rose-300 border border-rose-800/70 rounded-xl text-xs font-semibold flex items-center gap-1 transition cursor-pointer">
-                  <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-                  ลบถาวร
-                </button>
-              </div>
-            </div>
-          `;
-        } else {
-          return `
-            <div class="bg-slate-900/90 border border-amber-950/60 rounded-3xl p-5 shadow-lg flex flex-col justify-between transition hover:border-amber-900/80">
-              <div>
-                <div class="flex items-center justify-between gap-2 mb-2">
-                  <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-950/80 text-amber-300 border border-amber-700/60 flex items-center gap-1">
-                    💬 ข้อเสนอแนะ
-                  </span>
-                  <span class="text-[11px] text-slate-500 font-mono">ลบเมื่อ: ${dStr}</span>
-                </div>
-
-                <div class="mt-2 p-3 bg-slate-800/40 rounded-2xl border border-slate-700/40 text-xs text-slate-200 leading-relaxed font-normal whitespace-pre-wrap">
-                  "${it.message || 'ไม่มีข้อความ'}"
-                </div>
-
-                <div class="mt-3 flex items-center justify-between text-xs text-slate-400">
-                  <span class="text-white font-medium">${it.senderName || 'ประชาชนทั่วไป'}</span>
-                  <span>⭐ ${it.rating || 5}/5</span>
-                </div>
-              </div>
-
-              <!-- Controls -->
-              <div class="mt-4 pt-3 border-t border-slate-800 flex items-center justify-between gap-2">
-                <button onclick="restoreTrashItem('feedback', '${it.id}')" class="px-3 py-1.5 bg-emerald-600/30 hover:bg-emerald-600/50 text-emerald-300 border border-emerald-500/40 rounded-xl text-xs font-semibold flex items-center gap-1 transition cursor-pointer">
-                  <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
-                  กู้คืนรายการ
-                </button>
-                <button onclick="deletePermanent('feedback', '${it.id}')" class="px-3 py-1.5 bg-rose-950/80 hover:bg-rose-900 text-rose-300 border border-rose-800/70 rounded-xl text-xs font-semibold flex items-center gap-1 transition cursor-pointer">
-                  <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-                  ลบถาวร
-                </button>
-              </div>
-            </div>
-          `;
-        }
-      }).join('');
-
-      lucide.createIcons();
-    }
-
-    async function restoreTrashItem(type, id) {
-      try {
-        await fetch('/api/trash/restore', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ type, id })
-        });
-      } catch (e) {}
-
-      if (type === 'report') {
-        const idx = (trash.reports || []).findIndex(r => r.id === id);
-        if (idx !== -1) {
-          const restored = trash.reports.splice(idx, 1)[0];
-          delete restored.deletedAt;
-          reports.unshift(restored);
-        }
-      } else {
-        const idx = (trash.feedback || []).findIndex(f => f.id === id);
-        if (idx !== -1) {
-          const restored = trash.feedback.splice(idx, 1)[0];
-          delete restored.deletedAt;
-          feedback.unshift(restored);
-        }
-      }
-
-      saveTrashToLocalStorage();
-      updateTrashUI();
-      renderTrash();
-      renderReports();
-      renderDashReports();
-      renderFeedback();
-      renderDashFeedback();
-      loadStats();
-      showToast('กู้คืนรายการกลับมาสู่หน้าหลักเรียบร้อยแล้ว', 'success');
-      playChime();
-    }
-
-    async function deletePermanent(type, id) {
-      if (!confirm('ยืนยันลบรายการนี้ถาวร? ไม่สามารถกู้คืนได้อีก')) return;
-      try {
-        await fetch(`/api/trash/${type === 'report' ? 'reports' : 'feedback'}/${id}`, {
-          method: 'DELETE'
-        });
-      } catch (e) {}
-
-      if (type === 'report') {
-        trash.reports = (trash.reports || []).filter(r => r.id !== id);
-      } else {
-        trash.feedback = (trash.feedback || []).filter(f => f.id !== id);
-      }
-
-      saveTrashToLocalStorage();
-      updateTrashUI();
-      renderTrash();
-      showToast('ลบรายการออกจากระบบถาวรเรียบร้อยแล้ว', 'info');
-    }
-
-    async function emptyTrashAll() {
-      const count = (trash.reports ? trash.reports.length : 0) + (trash.feedback ? trash.feedback.length : 0);
-      if (count === 0) {
-        showToast('ถังขยะว่างเปล่าอยู่แล้ว', 'info');
-        return;
-      }
-      if (!confirm(`ยืนยันล้างถังขยะทั้งหมด ${count} รายการแบบถาวร?`)) return;
-      try {
-        await fetch('/api/trash', { method: 'DELETE' });
-      } catch (e) {}
-
-      trash.reports = [];
-      trash.feedback = [];
-      saveTrashToLocalStorage();
-      updateTrashUI();
-      renderTrash();
-      showToast('ล้างถังขยะทั้งหมดเรียบร้อยแล้ว', 'success');
-    }
-
-    // --- Emergency Broadcast Form ---
-    async function handleSendBroadcast(e) {
-      e.preventDefault();
-      const title = document.getElementById('bcTitle').value.trim();
-      const district = document.getElementById('bcDistrict').value;
-      const severity = document.getElementById('bcSeverity').value;
-      const message = document.getElementById('bcMessage').value.trim();
-
-      const broadcastReport = {
-        id: 'broadcast-' + Date.now(),
-        isCitizenReport: false,
-        name: `🚨 ประกาศด่วน: ${title}`,
-        district: district,
-        subdistrict: 'ทุกตำบล',
-        lat: 13.599,
-        lng: 100.605,
-        level: severity === 'critical' ? 3 : 2,
-        bodyLevelLabel: severity === 'critical' ? '🔴 วิกฤตฉุกเฉิน' : '🟠 เฝ้าระวังพิเศษ',
-        depthCm: severity === 'critical' ? 60 : 30,
-        statusLabel: title,
-        trafficStatus: message,
-        cause: 'ประกาศเตือนภัยจากศูนย์บัญชาการแอดมิน PrakanGuard',
-        officialGuidance: message,
-        isApproved: true,
-        isResolved: false,
-        reporterName: 'ศูนย์ควบคุมข้อมูลอุทกภัยสมุทรปราการ',
-        phone: '1784'
-      };
-
-      try {
-        const res = await fetch('/api/reports', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(broadcastReport)
-        });
-        if (res.ok) {
-          showToast('ส่งประกาศเตือนภัยฉุกเฉินเรียบร้อยแล้ว!', 'success');
-          playChime();
-          document.getElementById('bcTitle').value = '';
-          document.getElementById('bcMessage').value = '';
-          loadReports();
-          loadStats();
-          switchTab('reports');
-        }
-      } catch (err) {}
-    }
-
-    // --- Manual Cloud Sync Trigger ---
-    async function triggerManualSync() {
-      showToast('กำลังซิงก์ดึงข้อมูลสดจากคลาวด์ ntfy.sh...', 'info');
-      try {
-        const res = await fetch('/api/cloud-sync', { method: 'POST' });
-        if (res.ok) {
-          showToast('ซิงก์ข้อมูลสดสำเร็จ ข้อมูลอัปเดตตรงกับคลาวด์แล้ว', 'success');
-          playChime();
-          loadReports();
-          loadFeedback();
-          loadStats();
-        }
-      } catch (err) {}
-    }
-
-    // --- Map Initialization ---
-    let adminMapStyle = 'google-roadmap';
-
-    function getAdminTileConfig(style) {
-      if (style === 'google-satellite') {
-        return {
-          url: 'https://mt{s}.google.com/vt/lyrs=y&hl=th&x={x}&y={y}&z={z}',
-          fallbackUrl: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-          options: { subdomains: ['0','1','2','3'], maxZoom: 20, attribution: '© ภาพถ่ายดาวเทียม Google / Esri' }
-        };
-      }
-      if (style === 'google-terrain') {
-        return {
-          url: 'https://mt{s}.google.com/vt/lyrs=p&hl=th&x={x}&y={y}&z={z}',
-          fallbackUrl: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}',
-          options: { subdomains: ['0','1','2','3'], maxZoom: 20, attribution: '© แผนที่ภูมิประเทศ Google / Esri' }
-        };
-      }
-      return {
-        url: 'https://mt{s}.google.com/vt/lyrs=m&hl=th&x={x}&y={y}&z={z}',
-        fallbackUrl: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',
-        options: { subdomains: ['0','1','2','3'], maxZoom: 20, attribution: '© Google Maps (ภาษาไทย)' }
-      };
-    }
-
-    let adminTileLayerRef = null;
-
-    function createAdminTileLayer(config) {
-      const layer = L.tileLayer(config.url, config.options);
-      if (config.fallbackUrl) {
-        layer.on('tileerror', (e) => {
-          if (e.tile && !e.tile._hasFallenBack) {
-            e.tile._hasFallenBack = true;
-            const { x, y, z } = e.coords;
-            e.tile.src = config.fallbackUrl
-              .replace('{z}', z).replace('{x}', x).replace('{y}', y);
-          }
-        });
-      }
-      return layer;
-    }
-
-    function switchAdminMapStyle(style) {
-      adminMapStyle = style;
-      if (!leafletMapInstance) return;
-      if (adminTileLayerRef) leafletMapInstance.removeLayer(adminTileLayerRef);
-      const config = getAdminTileConfig(style);
-      adminTileLayerRef = createAdminTileLayer(config).addTo(leafletMapInstance);
-      adminTileLayerRef.setZIndex(1);
-      // Update button active states
-      ['google-roadmap','google-satellite','google-terrain'].forEach(s => {
-        const btn = document.getElementById('adminMapBtn_' + s);
-        if (!btn) return;
-        if (s === style) {
-          btn.classList.add('bg-blue-600','text-white');
-          btn.classList.remove('text-slate-400','hover:text-slate-100','hover:bg-slate-700');
-        } else {
-          btn.classList.remove('bg-blue-600','text-white');
-          btn.classList.add('text-slate-400','hover:text-slate-100','hover:bg-slate-700');
-        }
-      });
-    }
-
-    function initOrRefreshMap() {
-      const container = document.getElementById('adminLeafletMap');
-      if (!container) return;
-
-      if (!leafletMapInstance) {
-        leafletMapInstance = L.map('adminLeafletMap', {
-          center: [13.599, 100.605],
-          zoom: 11,
-          minZoom: 9,
-          maxZoom: 20,
-          zoomControl: false
-        });
-
-        L.control.zoom({ position: 'bottomright' }).addTo(leafletMapInstance);
-
-        // Initial tile layer (Google Roadmap)
-        const config = getAdminTileConfig('google-roadmap');
-        adminTileLayerRef = createAdminTileLayer(config);
-        adminTileLayerRef.addTo(leafletMapInstance);
-
-        // Province boundary outline (Samut Prakan)
-        if (window.SAMUT_PRAKAN_BOUNDARY_COORDS) {
-          L.polygon(window.SAMUT_PRAKAN_BOUNDARY_COORDS, {
-            color: '#0284c7', weight: 2.5, opacity: 0.85, fillOpacity: 0
-          }).addTo(leafletMapInstance);
-        }
-      } else {
-        leafletMapInstance.invalidateSize();
-      }
-
-      updateMapMarkers();
-    }
-
-    let mapMarkerGroup = null;
-    function updateMapMarkers() {
-      if (!leafletMapInstance) return;
-      if (mapMarkerGroup) leafletMapInstance.removeLayer(mapMarkerGroup);
-      mapMarkerGroup = L.layerGroup().addTo(leafletMapInstance);
-
-      reports.forEach(r => {
-        if (!r.lat || !r.lng) return;
-
-        const isHail = r.hazardType === 'hail';
-        const isCritical = r.level === 3 || r.severity === 3 || r.bodyLevelLabel === 'วิกฤต';
-        const isModerate = r.level === 2 || r.severity === 2 || r.bodyLevelLabel === 'ปานกลาง';
-        const color = isHail ? '#06b6d4' : isCritical ? '#ef4444' : isModerate ? '#f59e0b' : '#10b981';
-        const levelText = isHail ? (r.hailSizeLabel || 'ลูกเห็บตก') : (r.bodyLevelLabel || (isCritical ? 'วิกฤต' : isModerate ? 'ปานกลาง' : 'ปกติ'));
-
-        const customIcon = L.divIcon({
-          className: 'custom-map-pin',
-          html: `<div style="background-color: ${color}; width: 18px; height: 18px; border-radius: 50%; border: 3px solid #ffffff; box-shadow: 0 0 10px ${color};"></div>`,
-          iconSize: [18, 18],
-          iconAnchor: [9, 9]
-        });
-
-        const marker = L.marker([r.lat, r.lng], { icon: customIcon });
-        const popupContent = `
-          <div style="font-family: 'Prompt', sans-serif; min-width: 180px; color: #0f172a;">
-            <b style="font-size: 13px; display: block; margin-bottom: 4px;">${r.name || 'จุดรายงาน'}</b>
-            <div style="font-size: 11px; color: #475569; margin-bottom: 6px;">${r.district || ''} • ระดับ: ${levelText} (${r.depthRange || `${r.depthCm || 15} ซม.`})</div>
-            <div style="font-size: 11px; margin-bottom: 8px;"><b>สถานะ:</b> ${r.isResolved ? 'คลี่คลายแล้ว' : r.isApproved ? 'อนุมัติแล้ว' : 'รอดำเนินการ'}</div>
-            <button onclick="openReportDetail('${r.id}')" style="width: 100%; background: #2563eb; color: #ffffff; border: none; padding: 5px 8px; border-radius: 8px; font-size: 11px; font-weight: bold; cursor: pointer;">ดูรายละเอียดและจัดการ</button>
-          </div>
-        `;
-        marker.bindPopup(popupContent);
-        mapMarkerGroup.addLayer(marker);
-      });
-    }
-
-    function resetMapCenter() {
-      if (leafletMapInstance) {
-        leafletMapInstance.setView([13.599, 100.605], 11);
-      }
-    }
-
-    // --- Charts Initialization ---
-    function initOrRefreshCharts() {
-      // 1. Traffic Line Chart
-      const trafficCanvas = document.getElementById('trafficChart');
-      if (trafficCanvas && !trafficChartInstance) {
-        const hours = ['06:00', '08:00', '10:00', '12:00', '14:00', '16:00', '17:00', '18:00', '19:00', '20:00', '22:00'];
-        const values = [12, 45, 38, 28, 30, 58, 84, 92, 65, 40, 18];
-
-        trafficChartInstance = new Chart(trafficCanvas, {
-          type: 'line',
-          data: {
-            labels: hours,
-            datasets: [{
-              label: 'ผู้เข้าชม (คน)',
-              data: values,
-              borderColor: '#0284c7',
-              backgroundColor: 'rgba(2, 132, 199, 0.15)',
-              borderWidth: 2.5,
-              tension: 0.35,
-              fill: true,
-              pointBackgroundColor: '#38bdf8',
-              pointRadius: 4
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-              legend: { display: false }
-            },
-            scales: {
-              x: {
-                grid: { color: 'rgba(255,255,255,0.05)' },
-                ticks: { color: '#94a3b8', font: { family: 'Prompt', size: 10 } }
-              },
-              y: {
-                grid: { color: 'rgba(255,255,255,0.05)' },
-                ticks: { color: '#94a3b8', font: { family: 'Prompt', size: 10 } }
-              }
-            }
-          }
-        });
-      }
-
-      // 2. Device Doughnut Chart
-      const deviceCanvas = document.getElementById('deviceChart');
-      if (deviceCanvas && !deviceChartInstance) {
-        deviceChartInstance = new Chart(deviceCanvas, {
-          type: 'doughnut',
-          data: {
-            labels: ['มือถือ', 'คอมพิวเตอร์', 'แท็บเล็ต'],
-            datasets: [{
-              data: [72, 23, 5],
-              backgroundColor: ['#3b82f6', '#22d3ee', '#6366f1'],
-              borderWidth: 0
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-              legend: { display: false }
-            },
-            cutout: '72%'
-          }
-        });
-      }
-    }
-
-    // --- Export Functions ---
-    function exportReportsCSV() {
-      if (reports.length === 0) {
-        showToast('ไม่มีข้อมูลรายงานสำหรับส่งออก', 'warning');
-        return;
-      }
-      let csv = '\uFEFFรหัส,ชื่อจุด,ตำบล,อำเภอ,ระดับน้ำ,ความลึก(ซม.),การจราจร,ผู้แจ้ง,เบอร์โทร,เวลา,สถานะ\n';
-      reports.forEach(r => {
-        csv += `"${r.id}","${r.name || ''}","${r.subdistrict || ''}","${r.district || ''}","${r.bodyLevelLabel || ''}","${r.depthCm || 0}","${r.trafficStatus || ''}","${r.reporterName || ''}","${r.phone || ''}","${r.reportedAt || ''}","${r.isResolved ? 'คลี่คลาย' : r.isApproved ? 'อนุมัติ' : 'รอดำเนินการ'}"\n`;
-      });
-      downloadFile(csv, 'prakanguard_flood_reports.csv', 'text/csv;charset=utf-8;');
-    }
-
-    function exportFeedbackCSV() {
-      if (feedback.length === 0) {
-        showToast('ไม่มีข้อมูลข้อเสนอแนะสำหรับส่งออก', 'warning');
-        return;
-      }
-      let csv = '\uFEFFรหัส,หมวดหมู่,คะแนนดาว,ข้อความข้อเสนอแนะ,ผู้ส่ง,เบอร์ติดต่อ,วันที่เวลา,สถานะการอ่าน\n';
-      feedback.forEach(f => {
-        csv += `"${f.id}","${f.categoryLabel || ''}","${f.rating || 5}","${(f.message || '').replace(/"/g, '""')}","${f.senderName || ''}","${f.contact || ''}","${f.submittedAt || ''}","${f.isRead ? 'อ่านแล้ว' : 'ยังไม่อ่าน'}"\n`;
-      });
-      downloadFile(csv, 'prakanguard_citizen_feedback.csv', 'text/csv;charset=utf-8;');
-    }
-
-    function downloadFullBackupJSON() {
-      const backup = {
-        exportedAt: new Date().toISOString(),
-        reports: reports,
-        feedback: feedback,
-        visitors: visitors
-      };
-      downloadFile(JSON.stringify(backup, null, 2), `prakanguard_full_backup_${Date.now()}.json`, 'application/json');
-      showToast('ดาวน์โหลดสำรองข้อมูลสำเร็จ', 'success');
-    }
-
-    function downloadFile(content, fileName, mimeType) {
-      const blob = new Blob([content], { type: mimeType });
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = fileName;
-      a.click();
-      URL.revokeObjectURL(a.href);
-    }
-
-    // --- Server-Sent Events (SSE) Live Feed ---
-    function connectSSE() {
-      if (!('EventSource' in window)) return;
-      try {
-        const es = new EventSource('/api/events');
-        es.addEventListener('new_report', (e) => {
-          try {
-            const parsed = JSON.parse(e.data);
-            showToast(`🚨 ได้รับรายงานน้ำท่วมใหม่: "${parsed.data.name || 'ไม่ระบุจุด'}"`, 'warning');
-            playChime();
-            loadReports();
-            loadStats();
-          } catch (err) {}
-        });
-
-        es.addEventListener('new_feedback', (e) => {
-          try {
-            const parsed = JSON.parse(e.data);
-            showToast(`💬 ได้รับข้อเสนอแนะใหม่จาก ${parsed.data.senderName || 'ประชาชน'}`, 'info');
-            playChime();
-            loadFeedback();
-            loadStats();
-          } catch (err) {}
-        });
-
-        es.addEventListener('visitor_update', (e) => {
-          try {
-            const parsed = JSON.parse(e.data);
-            if (parsed && parsed.data) {
-              document.getElementById('topOnlineCount').innerText = parsed.data.activeNow || 1;
-              document.getElementById('statActiveNow').innerText = parsed.data.activeNow || 1;
-              document.getElementById('vStatActiveNow').innerText = parsed.data.activeNow || 1;
-              if (parsed.data.recentSessions) {
-                visitors.recentSessions = parsed.data.recentSessions;
-                renderVisitors();
-              }
-            }
-          } catch (err) {}
-        });
-
-        es.onerror = () => {
-          // Reconnects automatically
-        };
-      } catch (err) {}
-    }
-
-    // Direct Cloud Fallback Listener (ntfy.sh) in case running statically
-    function connectNtfyCloudDirect() {
-      if (!('EventSource' in window)) return;
-      
-      const reportTopics = [
-        'https://ntfy.sh/prakanguard_live_reports_v4_spk/sse',
-        'https://ntfy.sh/prakanguard_live_reports_v3_spk/sse',
-        'https://ntfy.sh/prakanguard_spk_reports_v5/sse'
-      ];
-      const feedbackTopics = [
-        'https://ntfy.sh/prakanguard_live_feedback_v4_spk/sse',
-        'https://ntfy.sh/prakanguard_live_feedback_v3_spk/sse',
-        'https://ntfy.sh/prakanguard_spk_feedback_v5/sse'
-      ];
-
-      reportTopics.forEach(url => {
-        try {
-          const es = new EventSource(url);
-          es.onmessage = (event) => {
-            try {
-              const data = JSON.parse(event.data);
-              if (data.event === 'message' && data.message) {
-                const rep = JSON.parse(data.message);
-                if (rep && rep.id && !reports.some(r => r.id === rep.id)) {
-                  reports.unshift(rep);
-                  renderReports();
-                  renderDashReports();
-                  showToast(`📍 [Cloud] มีรายงานน้ำท่วมเข้ามาใหม่: ${rep.name}`, 'warning');
-                  playChime();
-                }
-              }
-            } catch (e) {}
-          };
-        } catch (e) {}
-      });
-
-      feedbackTopics.forEach(url => {
-        try {
-          const es = new EventSource(url);
-          es.onmessage = (event) => {
-            try {
-              const data = JSON.parse(event.data);
-              if (data.event === 'message' && data.message) {
-                const fb = JSON.parse(data.message);
-                if (fb && fb.id && !feedback.some(f => f.id === fb.id)) {
-                  feedback.unshift(fb);
-                  renderFeedback();
-                  renderDashFeedback();
-                  showToast(`💬 [Cloud] ได้รับข้อเสนอแนะใหม่: "${fb.message.slice(0, 30)}..."`, 'info');
-                  playChime();
-                }
-              }
-            } catch (e) {}
-          };
-        } catch (e) {}
-      });
-    }
-
-    // --- App Init ---
-    function initData() {
-      loadStats();
-      loadReports();
-      loadFeedback();
-      loadVisitors();
-      loadTrash();
-      connectSSE();
-      connectNtfyCloudDirect();
-
-      // รอบรีเฟรชข้อมูลอัตโนมัติทุก 1 ชั่วโมง (3,600,000 มิลลิวินาที)
-      setInterval(() => {
-        loadStats();
-        loadVisitors();
-        loadReports();
-        loadFeedback();
-        loadTrash();
-      }, 3600000);
-    }
-
-    document.addEventListener('DOMContentLoaded', () => {
-      lucide.createIcons();
-      startClock();
-      if (checkAuth()) {
-        initData();
-      }
-    });
+  <!-- Entry Script -->
+  <script type="module">
+    import { initDashboard } from './assets/js/dashboard.js';
+    initDashboard();
   </script>
 </body>
 </html>
-

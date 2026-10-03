@@ -563,6 +563,73 @@ export default function App() {
     }
   }, [userLocation, userDistrict]);
 
+  // Admin Web Announcement Banner (GPS-gated: ONLY visible to users with GPS ON)
+  const [activeAnnouncement, setActiveAnnouncement] = useState(null);
+  const [showAnnouncementBanner, setShowAnnouncementBanner] = useState(false);
+
+  const SUPABASE_URL_ANN = 'https://cnjufleeibbgmpvuvrpg.supabase.co';
+  const SUPABASE_KEY_ANN = 'sb_publishable_cwxpTPIFXkyWVgXksZASAQ_76DreEAw';
+  const LS_ANN_DISMISSED = 'pg_dismissed_announcements_v2';
+  const lsAnnDismissed = () => { try { return new Set(JSON.parse(localStorage.getItem(LS_ANN_DISMISSED) || '[]')); } catch { return new Set(); } };
+  const lsAnnAddDismiss = (id) => { try { const s = lsAnnDismissed(); s.add(id); localStorage.setItem(LS_ANN_DISMISSED, JSON.stringify([...s])); } catch {} };
+
+  const checkAnnouncements = React.useCallback(() => {
+    // RULE 1: Never show to users without GPS
+    if (!userLocation || typeof userLocation.lat !== 'number') return;
+
+    const userDistrictName = userDistrict
+      ? userDistrict.replace(/^อ\./, '').replace(/^อำเภอ/, '').replace('เมืองสมุทรปราการ', 'เมือง').trim()
+      : null;
+
+    const trySupabase = async () => {
+      try {
+        const r = await fetch(`${SUPABASE_URL_ANN}/rest/v1/announcements?select=*&is_active=eq.true&order=created_at.desc&limit=5`, {
+          headers: { apikey: SUPABASE_KEY_ANN, Authorization: `Bearer ${SUPABASE_KEY_ANN}` }
+        });
+        if (!r.ok) return null;
+        return await r.json();
+      } catch { return null; }
+    };
+
+    const readLocalAnn = () => {
+      try { return JSON.parse(localStorage.getItem('pg_admin_announcements_v2') || '[]'); } catch { return []; }
+    };
+
+    (async () => {
+      let anns = await trySupabase();
+      if (!Array.isArray(anns) || anns.length === 0) anns = readLocalAnn();
+      if (!Array.isArray(anns) || anns.length === 0) return;
+
+      const dismissed = lsAnnDismissed();
+      const active = anns.filter(a => a.is_active !== false && !dismissed.has(a.id));
+      if (active.length === 0) { setShowAnnouncementBanner(false); return; }
+
+      const ann = active.find(a => {
+        const isAll = a.target_type === 'all' || !a.districts || a.districts.length === 0;
+        if (isAll) return true;
+        if (!userDistrictName) return false;
+        return a.districts.some(d => {
+          const dn = String(d).replace(/^อ\./, '').replace(/^อำเภอ/, '').replace('เมืองสมุทรปราการ', 'เมือง').trim();
+          const un = userDistrictName.replace('เมืองสมุทรปราการ', 'เมือง').trim();
+          return dn === un || dn.includes(un) || un.includes(dn);
+        });
+      });
+
+      if (ann) {
+        setActiveAnnouncement(ann);
+        setShowAnnouncementBanner(true);
+      } else {
+        setShowAnnouncementBanner(false);
+      }
+    })();
+  }, [userLocation, userDistrict]);
+
+  useEffect(() => {
+    checkAnnouncements();
+    const annInterval = setInterval(checkAnnouncements, 60000); // check every 1 min
+    return () => clearInterval(annInterval);
+  }, [checkAnnouncements]);
+
   // Admin Management & Live Verification Notification States
   const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(() => {
@@ -872,14 +939,11 @@ export default function App() {
     };
 
     const getActiveSection = () => {
-      if (isCitizenReportModalOpen) return 'แบบฟอร์มแจ้งจุดท่วม';
-      if (isFeedbackModalOpen) return 'กล่องข้อเสนอแนะ';
-      if (isOfficialModalOpen) return 'เรดาร์ฝนและพยากรณ์';
-      if (isStandardsModalOpen) return 'เกณฑ์ระดับน้ำ';
-      if (isPublicUpdatesModalOpen) return 'อัปเดตสดสถานการณ์';
-      if (isEmergencyModalOpen) return 'สายด่วนฉุกเฉิน 1784';
-      if (isAdminModalOpen) return 'ศูนย์บัญชาการแอดมิน';
-      return 'หน้าหลัก (แผนที่)';
+      // Strictly one of 4 admin-recognized pages
+      if (window.__prakanguard_is_chat_open) return 'AI CHATBOT';
+      if (isFeedbackModalOpen) return 'ข้อเสนอแนะ';
+      if (isCitizenReportModalOpen) return 'รายงานน้ำท่วม';
+      return 'PrakanGuard | ระบบสารสนเทศและเฝ้าระวังอุทกภัย จ.สมุทรปราการ';
     };
 
     sendVisitorTelemetry(getReportingDistrict(), getDetailedDeviceInfo(), getActiveSection());
@@ -1899,6 +1963,34 @@ export default function App() {
           </div>
         )}
 
+        {/* Admin Web Announcement Banner (GPS-gated: only for users with GPS ON) */}
+        {showAnnouncementBanner && userLocation && activeAnnouncement && (
+          <div className="fixed top-[58px] sm:top-[72px] left-1/2 -translate-x-1/2 z-[85] w-auto max-w-[94vw] sm:max-w-lg pointer-events-auto animate-in fade-in slide-in-from-top-2 duration-300">
+            <div className={`flex items-start gap-2.5 px-3.5 py-2.5 rounded-2xl border shadow-2xl backdrop-blur-xl ${
+              isDark ? 'bg-blue-950/97 text-blue-100 border-blue-500/60' : 'bg-blue-50/98 text-blue-900 border-blue-400/60'
+            }`}>
+              <div className="flex items-center justify-center w-7 h-7 rounded-xl bg-blue-600 text-white shrink-0 mt-0.5">
+                <Bell className="w-4 h-4" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <span className="text-[10px] font-bold text-blue-400 block uppercase tracking-wider mb-0.5">📢 ประกาศจากเจ้าหน้าที่ PrakanGuard</span>
+                <span className="text-[12px] sm:text-xs font-medium leading-snug break-words">{activeAnnouncement.message}</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  lsAnnAddDismiss(activeAnnouncement.id);
+                  setShowAnnouncementBanner(false);
+                }}
+                className="p-1 hover:bg-blue-400/20 rounded-lg text-blue-400 hover:text-blue-200 cursor-pointer shrink-0 ml-0.5 mt-0.5"
+                title="ปิดประกาศ"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Active District Mobile Indicator with Quick Reset (กดครั้งเดียวกลับดูทั้งจังหวัด ไม่สับสน) */}
         {selectedDistrict !== 'ทั้งหมด' && isTopPanelCollapsed && (
           <div className="sm:hidden absolute top-2.5 right-14 z-20 pointer-events-auto flex items-center gap-1.5 px-2.5 py-1.5 rounded-2xl bg-blue-600/95 text-white shadow-lg border border-blue-400 text-xs font-bold animate-in fade-in">
@@ -2642,6 +2734,7 @@ export default function App() {
         onStartPickOnMap={handleStartPickOnMap}
         pickedCoords={pickedCoords}
         onFlyToCoords={handleFlyToCoords}
+        userLocation={userLocation}
         theme={theme}
       />
 
