@@ -166,7 +166,7 @@ export default function MobileBottomNav({
         </div>
       )}
 
-      {/* ===== MAIN 5-BUTTON BAR (ใช้งานง่ายด้วยนิ้วโป้ง) ===== */}
+      {/* ===== MAIN 5-BUTTON BAR ===== */}
       <nav
         aria-label="เมนูหลักสำหรับมือถือ"
         className={`sm:hidden fixed bottom-0 left-0 right-0 z-40 border-t backdrop-blur-2xl transition-all duration-200 select-none pb-[env(safe-area-inset-bottom)] ${
@@ -175,82 +175,78 @@ export default function MobileBottomNav({
             : 'bg-white/97 border-slate-200/90 text-slate-700 shadow-[0_-6px_20px_rgba(0,0,0,0.1)]'
         }`}
       >
-        <div className="flex items-center justify-between px-2 py-1 max-w-lg mx-auto">
-          {/* 1. Locate Me (GPS) */}
+        <div className="flex items-stretch justify-between px-1 max-w-lg mx-auto" style={{ height: '58px' }}>
+
+          {/* 1. GPS */}
           <button
             type="button"
             onClick={() => onLocateMe(false)}
-            className={`flex-1 flex flex-col items-center justify-center py-1 rounded-xl transition-all active:scale-90 cursor-pointer ${
+            className={`flex-1 flex flex-col items-center justify-center gap-0.5 rounded-xl transition-all active:scale-90 cursor-pointer ${
               hasGps
-                ? (isDark ? 'text-cyan-400 font-bold' : 'text-blue-600 font-bold')
+                ? (isDark ? 'text-cyan-400' : 'text-blue-600')
                 : (isDark ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-800')
             }`}
-            title="ระบุตำแหน่ง GPS ของฉันบนแผนที่"
           >
             <div className="relative">
-              <Navigation className="w-5 h-5 mb-0.5" />
-              {hasGps && (
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping absolute -top-0.5 -right-0.5" />
-              )}
+              <Navigation className={`w-[22px] h-[22px] ${hasGps ? 'fill-current opacity-20' : ''}`} />
+              {hasGps && <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping absolute -top-0.5 -right-0.5" />}
             </div>
-            <span className="text-[10px] tracking-tight">พิกัดฉัน</span>
+            <span className={`text-[11px] font-medium leading-none ${hasGps ? 'font-semibold' : ''}`}>GPS</span>
           </button>
 
-          {/* 2. Search / Filter District */}
+          {/* 2. ค้นหา */}
           <button
             type="button"
             onClick={() => onToggleSearch?.()}
-            className={`flex-1 flex flex-col items-center justify-center py-1 rounded-xl transition-all active:scale-90 cursor-pointer ${
+            className={`flex-1 flex flex-col items-center justify-center gap-0.5 rounded-xl transition-all active:scale-90 cursor-pointer ${
               isSearchOpen
-                ? (isDark ? 'text-blue-400 font-bold' : 'text-blue-600 font-bold')
+                ? (isDark ? 'text-blue-400' : 'text-blue-600')
                 : (isDark ? 'text-slate-400 hover:text-blue-400' : 'text-slate-500 hover:text-blue-600')
             }`}
-            title="ค้นหาจุดเสี่ยงหรือกรองอำเภอ"
           >
-            <Search className="w-5 h-5 mb-0.5 text-blue-500" />
-            <span className="text-[10px] tracking-tight">ค้นหา/อำเภอ</span>
+            <Search className="w-[22px] h-[22px]" />
+            <span className="text-[11px] font-medium leading-none">ค้นหา</span>
           </button>
 
-          {/* 3. CENTER HERO: Report Flood (ปุ่มใหญ่พิเศษ โทนฟ้าเข้มสดใส ปราศจากสีม่วง) */}
-          <div className="flex-1 flex justify-center -mt-5">
+          {/* 3. CENTER HERO — แจ้งน้ำท่วม */}
+          <div className="flex-1 flex items-center justify-center" style={{ marginTop: '-18px' }}>
             <button
               type="button"
               onClick={onOpenCitizenReport}
-              className="flex flex-col items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-tr from-blue-600 via-cyan-500 to-teal-500 text-white shadow-xl shadow-blue-500/50 border-2 border-white dark:border-slate-900 active:scale-90 transition-transform cursor-pointer"
-              title="แจ้งรายงานจุดน้ำท่วม"
+              className="flex flex-col items-center justify-center w-[56px] h-[56px] rounded-2xl bg-gradient-to-tr from-blue-600 via-cyan-500 to-teal-500 text-white shadow-lg shadow-blue-500/40 border-[3px] active:scale-90 transition-transform cursor-pointer"
+              style={{ borderColor: isDark ? '#1e293b' : '#ffffff' }}
             >
               <Camera className="w-6 h-6" />
-              <span className="text-[8px] font-bold tracking-tight mt-0.5">แจ้งน้ำท่วม</span>
+              <span className="text-[9px] font-bold mt-0.5 leading-none">แจ้ง</span>
             </button>
           </div>
 
-          {/* 4. Weather / Rain Forecast */}
+          {/* 4. เรดาร์ฝน */}
           <button
             type="button"
             onClick={onOpenAiForecast}
-            className={`flex-1 flex flex-col items-center justify-center py-1 rounded-xl transition-all active:scale-90 cursor-pointer ${
+            className={`flex-1 flex flex-col items-center justify-center gap-0.5 rounded-xl transition-all active:scale-90 cursor-pointer ${
               isDark ? 'text-slate-400 hover:text-cyan-400' : 'text-slate-500 hover:text-blue-600'
             }`}
-            title="ดูเรดาร์ตรวจฝนและสภาพอากาศสด"
           >
-            <CloudRain className="w-5 h-5 mb-0.5 text-blue-500" />
-            <span className="text-[10px] tracking-tight">เรดาร์ฝน</span>
+            <CloudRain className="w-[22px] h-[22px] text-blue-500" />
+            <span className="text-[11px] font-medium leading-none">ฝน</span>
           </button>
 
-          {/* 5. Quick Menu Drawer Toggle */}
+          {/* 5. เมนู */}
           <button
             type="button"
             onClick={() => setIsMenuOpen(true)}
-            className={`flex-1 flex flex-col items-center justify-center py-1 rounded-xl transition-all active:scale-90 cursor-pointer ${
+            className={`flex-1 flex flex-col items-center justify-center gap-0.5 rounded-xl transition-all active:scale-90 cursor-pointer ${
               isMenuOpen
-                ? (isDark ? 'text-amber-400 font-bold' : 'text-amber-600 font-bold')
+                ? (isDark ? 'text-amber-400' : 'text-amber-600')
                 : (isDark ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-800')
             }`}
-            title="เปิดเมนูด่วนและสายด่วนฉุกเฉิน"
           >
-            <Grid className="w-5 h-5 mb-0.5 text-amber-500" />
-            <span className="text-[10px] tracking-tight">เมนู</span>
+            <Grid className="w-[22px] h-[22px] text-amber-500" />
+            <span className="text-[11px] font-medium leading-none">เมนู</span>
           </button>
+
         </div>
       </nav>
     </>

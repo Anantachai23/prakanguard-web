@@ -441,8 +441,8 @@ export default function App() {
     };
   }, []);
 
-  // Welcome Announcement Modal (Pops up automatically on first entry)
-  const [isWelcomeModalOpen, setIsWelcomeModalOpen] = useState(true);
+  // Welcome Announcement Modal (ปิดเป็นค่าเริ่มต้น เพื่อไม่ให้รกหน้าจอเมื่อเปิดเข้ามา)
+  const [isWelcomeModalOpen, setIsWelcomeModalOpen] = useState(false);
 
   // GPS User Location
   const [userLocation, setUserLocation] = useState(null);
@@ -510,6 +510,10 @@ export default function App() {
     }
   });
   const [showPatchBanner, setShowPatchBanner] = useState(true);
+  useEffect(() => {
+    const timer = setTimeout(() => setShowPatchBanner(false), 5000);
+    return () => clearTimeout(timer);
+  }, []);
   const [latestUpdateNotification, setLatestUpdateNotification] = useState(null);
   const [adminAlertToast, setAdminAlertToast] = useState(null);
 

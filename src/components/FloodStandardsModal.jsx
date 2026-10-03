@@ -1,296 +1,203 @@
-import React, { useState } from 'react';
-import { X, ShieldAlert, Car, Bike, Truck, AlertTriangle, CheckCircle, Info, ExternalLink } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { X, Car, Bike, Truck, Info, ChevronLeft, ChevronRight } from 'lucide-react';
 import { FLOOD_STANDARDS, VEHICLE_TOLERANCES } from '../data/floodStandards';
+
+const LEVEL_COLORS = {
+  1: { dot: 'bg-emerald-500', badge: 'emerald', ring: 'ring-emerald-400', bar: 'bg-emerald-500', text: 'text-emerald-600', darkText: 'text-emerald-300', bg: 'bg-emerald-50', darkBg: 'bg-emerald-950/60', border: 'border-emerald-200', darkBorder: 'border-emerald-800' },
+  2: { dot: 'bg-amber-500',   badge: 'amber',   ring: 'ring-amber-400',   bar: 'bg-amber-500',   text: 'text-amber-600',   darkText: 'text-amber-300',   bg: 'bg-amber-50',   darkBg: 'bg-amber-950/60',   border: 'border-amber-200',   darkBorder: 'border-amber-800'   },
+  3: { dot: 'bg-rose-500',    badge: 'rose',    ring: 'ring-rose-400',    bar: 'bg-rose-500',    text: 'text-rose-600',    darkText: 'text-rose-300',    bg: 'bg-rose-50',    darkBg: 'bg-rose-950/60',    border: 'border-rose-200',    darkBorder: 'border-rose-800'    },
+};
+
+function StatusBadge({ status, isDark }) {
+  const map = {
+    safe:    { label: 'ผ่านได้', cls: isDark ? 'bg-emerald-900/80 text-emerald-300 border-emerald-700' : 'bg-emerald-50 text-emerald-700 border-emerald-300' },
+    warning: { label: 'เสี่ยง',   cls: isDark ? 'bg-amber-900/80 text-amber-300 border-amber-700'     : 'bg-amber-50 text-amber-700 border-amber-300'     },
+    danger:  { label: 'อันตราย', cls: isDark ? 'bg-rose-900/80 text-rose-300 border-rose-700'         : 'bg-rose-50 text-rose-700 border-rose-300'         },
+  };
+  const s = map[status] || map.safe;
+  return (
+    <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold border ${s.cls}`}>
+      {s.label}
+    </span>
+  );
+}
 
 export default function FloodStandardsModal({ isOpen, onClose, theme = 'light' }) {
   const [activeTab, setActiveTab] = useState(1);
-
-  if (!isOpen) return null;
+  const tabsRef = useRef(null);
   const isDark = theme === 'dark';
 
-  const currentStandard = FLOOD_STANDARDS.find(s => s.level === activeTab) || FLOOD_STANDARDS[0];
+  if (!isOpen) return null;
+
+  const cs = FLOOD_STANDARDS.find(s => s.level === activeTab) || FLOOD_STANDARDS[0];
+  const lc = LEVEL_COLORS[activeTab] || LEVEL_COLORS[1];
+
+  const scrollTabs = (dir) => {
+    if (tabsRef.current) tabsRef.current.scrollBy({ left: dir * 100, behavior: 'smooth' });
+  };
+
+  const vehicles = [
+    { key: 'sedan',      icon: <Car className="w-4 h-4" />,   data: cs.vehicleImpact?.sedan },
+    { key: 'motorcycle', icon: <Bike className="w-4 h-4" />,  data: cs.vehicleImpact?.motorcycle },
+    { key: 'suv',        icon: <Truck className="w-4 h-4" />, data: cs.vehicleImpact?.suv },
+    { key: 'truck',      icon: <Truck className="w-4 h-4" />, data: { ...cs.vehicleImpact?.truck, status: cs.vehicleImpact?.truck?.status || 'safe' } },
+  ];
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 smooth-backdrop">
-      <div className={`w-full max-w-2xl border rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] smooth-pop transition-colors ${
-        isDark ? 'bg-slate-900 border-slate-700 text-slate-100' : 'bg-white border-slate-200 text-slate-800'
+    <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
+      <div className={`w-full sm:max-w-xl flex flex-col rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden max-h-[92vh] sm:max-h-[85vh] transition-colors ${
+        isDark ? 'bg-slate-900 border border-slate-700 text-slate-100' : 'bg-white text-slate-800'
       }`}>
-        
-        {/* Modal Header */}
-        <div className={`px-5 py-4 border-b flex items-center justify-between ${
-          isDark ? 'bg-slate-950/80 border-slate-800' : 'bg-slate-50 border-slate-200'
-        }`}>
-          <div className="flex items-center space-x-3">
-            <div className={`w-10 h-10 rounded-2xl border flex items-center justify-center ${
-              isDark ? 'bg-blue-950 text-cyan-400 border-blue-800' : 'bg-blue-50 text-blue-600 border-blue-200'
-            }`}>
-              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" />
-                <path d="M6 14c1.5-1 3.5-1 5 0s3.5 1 5 0" />
-                <path d="M6 18c1.5-1 3.5-1 5 0s3.5 1 5 0" />
-              </svg>
-            </div>
-            <div>
-              <h3 className={`text-sm sm:text-base font-bold flex flex-wrap items-center gap-1.5 ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                <span>เกณฑ์มาตรฐานระดับน้ำท่วมผิวจราจร</span>
-                <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium border shrink-0 ${
-                  isDark ? 'bg-blue-950/80 text-cyan-300 border-blue-800' : 'bg-blue-50 text-blue-700 border-blue-200'
-                }`}>
-                  มาตรฐาน ปภ. / กรมทางหลวง
-                </span>
-              </h3>
-              <p className={`text-[11px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                เกณฑ์ประเมินความปลอดภัยในการสัญจรและผลกระทบต่อยานพาหนะ
-              </p>
-            </div>
+
+        {/* ── HEADER ── */}
+        <div className={`flex items-center gap-3 px-4 pt-5 pb-3 ${isDark ? 'border-b border-slate-800' : 'border-b border-slate-100'}`}>
+          {/* Drag handle on mobile */}
+          <span className="sm:hidden absolute left-1/2 -translate-x-1/2 top-2 w-10 h-1 rounded-full bg-slate-300 dark:bg-slate-600 block" />
+          <div className={`w-9 h-9 rounded-2xl flex items-center justify-center shrink-0 ${isDark ? 'bg-blue-950 text-cyan-400' : 'bg-blue-50 text-blue-600'}`}>
+            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" />
+              <path d="M6 14c1.5-1 3.5-1 5 0s3.5 1 5 0" />
+            </svg>
           </div>
-          <button 
-            onClick={onClose} 
-            className={`p-1.5 rounded-xl transition-all cursor-pointer ${
-              isDark ? 'bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white' : 'bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800'
-            }`}
-            title="ปิดหน้าต่าง"
-          >
+          <div className="flex-1 min-w-0">
+            <h3 className={`text-sm font-bold leading-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>
+              เกณฑ์มาตรฐานระดับน้ำท่วม
+            </h3>
+            <p className={`text-[11px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>ปภ. / กรมทางหลวง — ผลกระทบต่อยานพาหนะ</p>
+          </div>
+          <button onClick={onClose} className={`p-2 rounded-xl cursor-pointer transition-colors ${isDark ? 'bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white' : 'bg-slate-100 hover:bg-slate-200 text-slate-500'}`}>
             <X className="w-4 h-4" />
           </button>
         </div>
 
-        {/* Level Switcher Tabs */}
-        <div className={`p-3 border-b flex items-center gap-2 ${
-          isDark ? 'bg-slate-950/50 border-slate-800' : 'bg-slate-50 border-slate-200'
-        }`}>
-          {FLOOD_STANDARDS.map(s => {
-            const isActive = activeTab === s.level;
-            let activeStyle = isDark 
-              ? "bg-emerald-950/80 text-emerald-300 border-emerald-800 shadow-sm"
-              : "bg-emerald-50 text-emerald-800 border-emerald-300 shadow-sm";
-            if (s.level === 2) {
-              activeStyle = isDark 
-                ? "bg-amber-950/80 text-amber-300 border-amber-800 shadow-sm" 
-                : "bg-amber-50 text-amber-800 border-amber-300 shadow-sm";
-            }
-            if (s.level === 3) {
-              activeStyle = isDark 
-                ? "bg-rose-950/80 text-rose-300 border-rose-800 shadow-sm" 
-                : "bg-rose-50 text-rose-800 border-rose-300 shadow-sm";
-            }
+        {/* ── SCROLLABLE TAB PILLS ── */}
+        <div className={`flex items-center gap-1 px-2 py-2 ${isDark ? 'bg-slate-950/40 border-b border-slate-800' : 'bg-slate-50 border-b border-slate-100'}`}>
+          <button
+            onClick={() => scrollTabs(-1)}
+            className={`p-1.5 rounded-lg shrink-0 cursor-pointer ${isDark ? 'bg-slate-800 text-slate-300 hover:bg-slate-700' : 'bg-slate-200 text-slate-600 hover:bg-slate-300'}`}
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </button>
 
-            return (
-              <button
-                key={s.level}
-                onClick={() => setActiveTab(s.level)}
-                className={`flex-1 py-2 px-2.5 rounded-xl text-xs font-semibold border transition-all cursor-pointer flex items-center justify-center gap-2 ${
-                  isActive 
-                    ? activeStyle
-                    : isDark
-                    ? "bg-slate-800 border-slate-700 text-slate-300 hover:text-white hover:bg-slate-750"
-                    : "bg-white border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-100"
-                }`}
-              >
-                <span className={`w-2 h-2 rounded-full ${
-                  s.level === 1 ? 'bg-emerald-500' : s.level === 2 ? 'bg-amber-500' : 'bg-rose-500'
-                }`}></span>
-                <span className="truncate">{s.shortName} ({s.depthRange})</span>
-              </button>
-            );
-          })}
+          <div ref={tabsRef} className="flex gap-2 overflow-x-auto flex-1 no-scrollbar scroll-smooth px-1">
+            {FLOOD_STANDARDS.map(s => {
+              const c = LEVEL_COLORS[s.level];
+              const isActive = activeTab === s.level;
+              return (
+                <button
+                  key={s.level}
+                  onClick={() => setActiveTab(s.level)}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border whitespace-nowrap shrink-0 transition-all cursor-pointer ${
+                    isActive
+                      ? (isDark ? `${c.darkBg} ${c.darkText} ${c.darkBorder}` : `${c.bg} ${c.text} ${c.border}`)
+                      : (isDark ? 'bg-slate-800 border-slate-700 text-slate-400' : 'bg-white border-slate-200 text-slate-500')
+                  }`}
+                >
+                  <span className={`w-2 h-2 rounded-full shrink-0 ${c.dot}`} />
+                  {s.shortName}
+                  <span className={`font-mono text-[10px] opacity-80`}>{s.depthRange}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          <button
+            onClick={() => scrollTabs(1)}
+            className={`p-1.5 rounded-lg shrink-0 cursor-pointer ${isDark ? 'bg-slate-800 text-slate-300 hover:bg-slate-700' : 'bg-slate-200 text-slate-600 hover:bg-slate-300'}`}
+          >
+            <ChevronRight className="w-4 h-4" />
+          </button>
         </div>
 
-        {/* Modal Body */}
-        <div className={`flex-1 overflow-y-auto p-5 space-y-4 text-xs ${
-          isDark ? 'bg-slate-900 text-slate-300' : 'bg-white text-slate-700'
-        }`}>
-          
-          {/* Main Level Feature Card */}
-          <div className={`p-4 rounded-2xl border ${
-            isDark ? 'border-slate-750 bg-slate-850/80' : 'border-slate-200 bg-slate-50'
-          }`}>
-            <div className="flex items-center justify-between">
-              <div>
-                <span className={`text-[11px] font-bold uppercase tracking-wider ${isDark ? 'text-cyan-400' : 'text-blue-700'}`}>
-                  เกณฑ์วัดระดับความลึก
-                </span>
-                <h4 className={`text-base sm:text-lg font-bold mt-0.5 ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                  {currentStandard.name}
-                </h4>
-              </div>
-              <div className="text-right">
-                <span className={`text-[10px] block font-medium ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>ช่วงความลึกผิวน้ำ</span>
-                <span className={`text-xl font-bold font-mono ${isDark ? 'text-cyan-400' : 'text-blue-600'}`}>
-                  {currentStandard.depthRange}
-                </span>
-              </div>
-            </div>
+        {/* ── BODY ── */}
+        <div className={`flex-1 overflow-y-auto ${isDark ? 'bg-slate-900' : 'bg-white'}`}>
 
-            <p className={`mt-2.5 text-xs leading-relaxed ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
-              <strong className={isDark ? 'text-white' : 'text-slate-900'}>ความสูงเทียบร่างกาย:</strong> {currentStandard.waterDepthVisual}
-            </p>
-            <p className={`mt-1 text-xs leading-relaxed ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
-              <strong className={isDark ? 'text-white' : 'text-slate-900'}>คำแนะนำทางการ:</strong> {currentStandard.trafficAdvice}
-            </p>
-          </div>
-
-          {/* Vehicle Impact Grid */}
-          <div>
-            <h5 className={`text-xs font-bold mb-2.5 flex items-center gap-1.5 uppercase tracking-wider ${
-              isDark ? 'text-slate-200' : 'text-slate-800'
-            }`}>
-              <span>ผลกระทบและเกณฑ์สัญจรรายประเภทยานพาหนะ</span>
-            </h5>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-              
-              {/* Sedan */}
-              <div className={`p-3 rounded-xl border flex items-start gap-2.5 shadow-xs ${
-                isDark ? 'bg-slate-850/80 border-slate-750' : 'bg-slate-50 border-slate-200'
-              }`}>
-                <div className={`p-1.5 rounded-lg border shrink-0 ${
-                  isDark ? 'bg-slate-800 border-slate-700 text-cyan-400' : 'bg-white border-slate-200 text-blue-600'
-                }`}>
-                  <Car className="w-4 h-4" />
+          {/* Level Summary Card */}
+          <div className={`mx-4 mt-4 p-4 rounded-2xl border ${isDark ? `${lc.darkBg} ${lc.darkBorder}` : `${lc.bg} ${lc.border}`}`}>
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex-1 min-w-0">
+                <div className={`flex items-center gap-2 mb-1`}>
+                  <span className={`w-3 h-3 rounded-full shrink-0 ${lc.dot}`} />
+                  <span className={`text-xs font-bold uppercase tracking-wide ${isDark ? lc.darkText : lc.text}`}>
+                    {cs.name}
+                  </span>
                 </div>
-                <div className="min-w-0">
-                  <div className="flex items-center gap-1.5">
-                    <span className={`font-semibold ${isDark ? 'text-white' : 'text-slate-900'}`}>{currentStandard.vehicleImpact.sedan.label}</span>
-                    <span className={`text-[10px] px-1.5 py-0.2 rounded font-bold ${
-                      currentStandard.vehicleImpact.sedan.status === 'safe'
-                        ? (isDark ? 'bg-emerald-950/80 text-emerald-300 border border-emerald-800' : 'bg-emerald-50 text-emerald-800 border border-emerald-300')
-                        : currentStandard.vehicleImpact.sedan.status === 'warning'
-                        ? (isDark ? 'bg-amber-950/80 text-amber-300 border border-amber-800' : 'bg-amber-50 text-amber-800 border border-amber-300')
-                        : (isDark ? 'bg-rose-950/80 text-rose-300 border border-rose-800' : 'bg-rose-50 text-rose-800 border border-rose-300')
-                    }`}>
-                      {currentStandard.vehicleImpact.sedan.status === 'safe' ? 'ผ่านได้' : currentStandard.vehicleImpact.sedan.status === 'warning' ? 'เสี่ยงสูง' : 'ห้ามผ่าน'}
-                    </span>
-                  </div>
-                  <p className={`text-[11px] mt-1 leading-snug ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
-                    {currentStandard.vehicleImpact.sedan.desc}
-                  </p>
+                <p className={`text-[11px] leading-relaxed ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
+                  <strong className={isDark ? 'text-white' : 'text-slate-900'}>ความลึก:</strong> {cs.waterDepthVisual}
+                </p>
+                <p className={`text-[11px] mt-1 leading-relaxed ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
+                  <strong className={isDark ? 'text-white' : 'text-slate-900'}>คำแนะนำ:</strong> {cs.trafficAdvice}
+                </p>
+              </div>
+              <div className={`text-right shrink-0`}>
+                <div className={`text-[10px] font-medium mb-0.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>ช่วงความลึก</div>
+                <div className={`text-2xl font-black font-mono ${isDark ? lc.darkText : lc.text}`}>
+                  {cs.depthRange}
                 </div>
               </div>
-
-              {/* Motorcycle */}
-              <div className={`p-3 rounded-xl border flex items-start gap-2.5 shadow-xs ${
-                isDark ? 'bg-slate-850/80 border-slate-750' : 'bg-slate-50 border-slate-200'
-              }`}>
-                <div className={`p-1.5 rounded-lg border shrink-0 ${
-                  isDark ? 'bg-slate-800 border-slate-700 text-cyan-400' : 'bg-white border-slate-200 text-blue-600'
-                }`}>
-                  <Bike className="w-4 h-4" />
-                </div>
-                <div className="min-w-0">
-                  <div className="flex items-center gap-1.5">
-                    <span className={`font-semibold ${isDark ? 'text-white' : 'text-slate-900'}`}>{currentStandard.vehicleImpact.motorcycle.label}</span>
-                    <span className={`text-[10px] px-1.5 py-0.2 rounded font-bold ${
-                      currentStandard.vehicleImpact.motorcycle.status === 'safe'
-                        ? (isDark ? 'bg-emerald-950/80 text-emerald-300 border border-emerald-800' : 'bg-emerald-50 text-emerald-800 border border-emerald-300')
-                        : currentStandard.vehicleImpact.motorcycle.status === 'warning'
-                        ? (isDark ? 'bg-amber-950/80 text-amber-300 border border-amber-800' : 'bg-amber-50 text-amber-800 border border-amber-300')
-                        : (isDark ? 'bg-rose-950/80 text-rose-300 border border-rose-800' : 'bg-rose-50 text-rose-800 border border-rose-300')
-                    }`}>
-                      {currentStandard.vehicleImpact.motorcycle.status === 'safe' ? 'ผ่านได้' : currentStandard.vehicleImpact.motorcycle.status === 'warning' ? 'เสี่ยงดับ' : 'ห้ามผ่าน'}
-                    </span>
-                  </div>
-                  <p className={`text-[11px] mt-1 leading-snug ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
-                    {currentStandard.vehicleImpact.motorcycle.desc}
-                  </p>
-                </div>
-              </div>
-
-              {/* SUV / Pickup */}
-              <div className={`p-3 rounded-xl border flex items-start gap-2.5 shadow-xs ${
-                isDark ? 'bg-slate-850/80 border-slate-750' : 'bg-slate-50 border-slate-200'
-              }`}>
-                <div className={`p-1.5 rounded-lg border shrink-0 ${
-                  isDark ? 'bg-slate-800 border-slate-700 text-cyan-400' : 'bg-white border-slate-200 text-blue-600'
-                }`}>
-                  <Truck className="w-4 h-4" />
-                </div>
-                <div className="min-w-0">
-                  <div className="flex items-center gap-1.5">
-                    <span className={`font-semibold ${isDark ? 'text-white' : 'text-slate-900'}`}>{currentStandard.vehicleImpact.suv.label}</span>
-                    <span className={`text-[10px] px-1.5 py-0.2 rounded font-bold ${
-                      currentStandard.vehicleImpact.suv.status === 'safe'
-                        ? (isDark ? 'bg-emerald-950/80 text-emerald-300 border border-emerald-800' : 'bg-emerald-50 text-emerald-800 border border-emerald-300')
-                        : (isDark ? 'bg-amber-950/80 text-amber-300 border border-amber-800' : 'bg-amber-50 text-amber-800 border border-amber-300')
-                    }`}>
-                      {currentStandard.vehicleImpact.suv.status === 'safe' ? 'ผ่านได้' : 'ระวังพิเศษ'}
-                    </span>
-                  </div>
-                  <p className={`text-[11px] mt-1 leading-snug ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
-                    {currentStandard.vehicleImpact.suv.desc}
-                  </p>
-                </div>
-              </div>
-
-              {/* Truck */}
-              <div className={`p-3 rounded-xl border flex items-start gap-2.5 shadow-xs ${
-                isDark ? 'bg-slate-850/80 border-slate-750' : 'bg-slate-50 border-slate-200'
-              }`}>
-                <div className={`p-1.5 rounded-lg border shrink-0 ${
-                  isDark ? 'bg-slate-800 border-slate-700 text-cyan-400' : 'bg-white border-slate-200 text-blue-600'
-                }`}>
-                  <Truck className="w-4 h-4" />
-                </div>
-                <div className="min-w-0">
-                  <div className="flex items-center gap-1.5">
-                    <span className={`font-semibold ${isDark ? 'text-white' : 'text-slate-900'}`}>{currentStandard.vehicleImpact.truck.label}</span>
-                    <span className={`text-[10px] px-1.5 py-0.2 rounded font-bold ${
-                      isDark ? 'bg-emerald-950/80 text-emerald-300 border border-emerald-800' : 'bg-emerald-50 text-emerald-800 border border-emerald-300'
-                    }`}>
-                      ผ่านได้
-                    </span>
-                  </div>
-                  <p className={`text-[11px] mt-1 leading-snug ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
-                    {currentStandard.vehicleImpact.truck.desc}
-                  </p>
-                </div>
-              </div>
-
             </div>
           </div>
 
-          {/* Quick Tolerance Table */}
-          <div className={`p-3.5 rounded-2xl border ${
-            isDark ? 'bg-slate-850/80 border-slate-750' : 'bg-slate-50 border-slate-200'
-          }`}>
-            <h5 className={`text-xs font-bold mb-2 ${isDark ? 'text-white' : 'text-slate-900'}`}>ตารางขีดจำกัดความลึกปลอดภัยของรถแต่ละรุ่น (Ground Clearance)</h5>
-            <div className="space-y-1.5">
-              {VEHICLE_TOLERANCES.map((v, i) => (
-                <div key={i} className={`flex items-center justify-between text-[11px] py-1 border-b last:border-0 ${
-                  isDark ? 'border-slate-750' : 'border-slate-200'
-                }`}>
-                  <span className={`font-medium ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>{v.type}</span>
-                  <div className="flex items-center gap-2">
-                    <span className={`text-[10px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{v.note}</span>
-                    <span className={`font-mono font-bold ${isDark ? 'text-cyan-400' : 'text-blue-600'}`}>ปลอดภัย &le; {v.limitCm} ซม.</span>
+          {/* Vehicle Cards */}
+          <div className="mx-4 mt-3">
+            <p className={`text-[11px] font-bold uppercase tracking-wide mb-2 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+              ผลกระทบต่อยานพาหนะ
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              {vehicles.map(({ key, icon, data }) => data && (
+                <div
+                  key={key}
+                  className={`p-3 rounded-xl border flex flex-col gap-1.5 ${isDark ? 'bg-slate-800/60 border-slate-700' : 'bg-slate-50 border-slate-200'}`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className={`p-1 rounded-lg ${isDark ? 'bg-slate-700 text-cyan-400' : 'bg-white text-blue-600 border border-slate-200'}`}>
+                      {icon}
+                    </div>
+                    <StatusBadge status={data.status} isDark={isDark} />
+                  </div>
+                  <div>
+                    <p className={`text-[11px] font-semibold ${isDark ? 'text-white' : 'text-slate-900'}`}>{data.label}</p>
+                    <p className={`text-[10px] leading-snug mt-0.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{data.desc}</p>
                   </div>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* OIC Insurance & Reference */}
-          <div className={`p-3 rounded-xl border text-[11px] flex items-center justify-between ${
-            isDark ? 'bg-blue-950/60 border-blue-900 text-blue-200' : 'bg-blue-50/60 border-blue-200 text-slate-600'
-          }`}>
-            <div className="flex items-center gap-2">
-              <Info className={`w-3.5 h-3.5 shrink-0 ${isDark ? 'text-cyan-400' : 'text-blue-600'}`} />
-              <span>เกณฑ์ความเสียหาย คปภ.: <strong className={isDark ? 'text-white' : 'text-slate-800'}>{currentStandard.oicDamageLevel}</strong></span>
+          {/* Ground Clearance Table */}
+          <div className={`mx-4 mt-3 mb-2 p-3 rounded-2xl border ${isDark ? 'bg-slate-800/40 border-slate-700' : 'bg-slate-50 border-slate-200'}`}>
+            <p className={`text-[11px] font-bold mb-2 ${isDark ? 'text-white' : 'text-slate-900'}`}>
+              ขีดจำกัดความลึกปลอดภัย (Ground Clearance)
+            </p>
+            <div className="space-y-1">
+              {VEHICLE_TOLERANCES.map((v, i) => (
+                <div key={i} className={`flex items-center justify-between text-[11px] py-1 border-b last:border-0 ${isDark ? 'border-slate-700' : 'border-slate-200'}`}>
+                  <span className={`font-medium ${isDark ? 'text-slate-200' : 'text-slate-700'}`}>{v.type}</span>
+                  <div className="flex items-center gap-2">
+                    <span className={`text-[10px] ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>{v.note}</span>
+                    <span className={`font-mono font-bold ${isDark ? 'text-cyan-400' : 'text-blue-600'}`}>&le; {v.limitCm} ซม.</span>
+                  </div>
+                </div>
+              ))}
             </div>
-            <span className={`text-[10px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>อ้างอิง: {currentStandard.officialRef}</span>
           </div>
 
+          {/* OIC Reference */}
+          <div className={`mx-4 mb-4 p-3 rounded-xl border text-[11px] flex items-center gap-2 ${isDark ? 'bg-blue-950/40 border-blue-900 text-blue-200' : 'bg-blue-50 border-blue-200 text-slate-600'}`}>
+            <Info className={`w-3.5 h-3.5 shrink-0 ${isDark ? 'text-cyan-400' : 'text-blue-600'}`} />
+            <span>คปภ.: <strong className={isDark ? 'text-white' : 'text-slate-800'}>{cs.oicDamageLevel}</strong></span>
+            <span className={`ml-auto text-[10px] ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>อ้างอิง: {cs.officialRef}</span>
+          </div>
         </div>
 
-        {/* Modal Footer */}
-        <div className={`p-3.5 border-t flex items-center justify-between text-xs ${
-          isDark ? 'border-slate-800 bg-slate-950/60 text-slate-400' : 'border-slate-200 bg-slate-50 text-slate-600'
-        }`}>
-          <span className="text-[11px]">
-            ขับขี่ปลอดภัย เมื่อน้ำท่วมทาง: ปิดแอร์ทันที • ห้ามเร่งเครื่อง • ห้ามสตาร์ทรถซ้ำ
-          </span>
+        {/* ── FOOTER ── */}
+        <div className={`flex items-center justify-between gap-3 px-4 py-3 border-t ${isDark ? 'border-slate-800 bg-slate-950/60 text-slate-400' : 'border-slate-100 bg-slate-50 text-slate-500'}`}>
+          <p className="text-[11px] leading-snug flex-1">
+            🚗 น้ำท่วมทาง: ปิดแอร์ทันที · ไม่เร่งเครื่อง · ไม่สตาร์ทซ้ำ
+          </p>
           <button
             onClick={onClose}
-            className="px-4 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold transition-all cursor-pointer shadow-sm"
+            className="shrink-0 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-all cursor-pointer shadow-sm"
           >
             เข้าใจแล้ว
           </button>
