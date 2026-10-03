@@ -1627,11 +1627,6 @@ export default function App() {
     );
   };
 
-  // Auto-request location on website entry across all devices (Mobile, iPad, Desktop)
-  useEffect(() => {
-    handleLocateMe(true);
-  }, []);
-
   return (
     <div className={`fixed inset-0 h-full w-full flex flex-col font-prompt selection:bg-blue-600 selection:text-white overflow-hidden overscroll-none select-none transition-colors duration-200 ${
       isDark ? 'bg-slate-950 text-slate-100' : 'bg-slate-100 text-slate-800'
@@ -2589,7 +2584,6 @@ export default function App() {
             easeLinearity: 0.22,
             ts: Date.now()
           });
-          handleLocateMe(true);
         }}
         theme={theme}
       />

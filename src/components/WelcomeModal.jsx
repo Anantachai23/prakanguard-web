@@ -41,15 +41,17 @@ export default function WelcomeModal({
     if (isExiting) return;
     setIsExiting(true);
 
-    // 1. Immediately trigger the cinematic smooth map zoom-in
-    if (onEnterWebsite) {
-      onEnterWebsite();
-    }
+    // 1. First the card begins sliding up; then after 150ms the map smoothly zooms in
+    setTimeout(() => {
+      if (onEnterWebsite) {
+        onEnterWebsite();
+      }
+    }, 150);
 
-    // 2. Allow 800ms for the card to slide up smoothly from bottom to top and fade out
+    // 2. Allow 850ms for the card to slide up smoothly from bottom to top and fade out
     setTimeout(() => {
       if (onClose) onClose();
-    }, 800);
+    }, 850);
   };
 
   return (
@@ -230,7 +232,7 @@ export default function WelcomeModal({
             onClick={handleEnter}
             className="w-full sm:w-auto px-7 py-3 sm:py-3.5 rounded-2xl bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white font-black text-sm sm:text-base transition-all duration-300 cursor-pointer shadow-lg shadow-blue-500/25 hover:shadow-cyan-500/30 hover:scale-102 active:scale-98 flex items-center justify-center gap-2.5 group"
           >
-            <span>เข้าสู่เว็บไซต์</span>
+            <span>เข้าสู่ระบบเว็บไซต์</span>
             <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 transition-transform group-hover:translate-x-1" />
           </button>
         </div>
