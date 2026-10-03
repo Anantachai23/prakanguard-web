@@ -1718,25 +1718,26 @@ export default function App() {
 
 
 
-        {/* Floating Toast Notification — ขึ้นใต้ Navbar ไม่ซ้อนทับ */}
+        {/* Floating Toast Notification — ขนาดกะทัดรัด ตัวอักษรคมชัด อ่านง่าย */}
         {latestUpdateNotification && (
-          <div className={`fixed top-[58px] sm:top-[72px] left-1/2 -translate-x-1/2 z-[85] text-white px-4 py-2.5 rounded-2xl shadow-2xl backdrop-blur-md flex items-center gap-2.5 w-auto max-w-[92vw] sm:max-w-lg pointer-events-auto animate-in fade-in slide-in-from-top-3 duration-300 border ${
+          <div className={`fixed top-[56px] sm:top-[68px] left-1/2 -translate-x-1/2 z-[85] px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-full shadow-2xl backdrop-blur-md flex items-center gap-2 max-w-[90vw] sm:max-w-md pointer-events-auto animate-in fade-in slide-in-from-top-2 duration-300 border ${
             latestUpdateNotification.includes('⚠️') || latestUpdateNotification.includes('ไม่ได้อยู่ใน')
-              ? 'bg-amber-700/98 border-amber-300 shadow-amber-900/50'
-              : 'bg-emerald-600/98 border-emerald-300 shadow-emerald-900/50'
+              ? 'bg-slate-900 border-amber-400 text-amber-200 shadow-amber-950/50'
+              : 'bg-slate-900 border-emerald-400 text-emerald-200 shadow-emerald-950/50'
           }`}>
             {latestUpdateNotification.includes('⚠️') || latestUpdateNotification.includes('ไม่ได้อยู่ใน') ? (
-              <AlertTriangle className="w-4 h-4 text-amber-200 shrink-0" />
+              <AlertTriangle className="w-3.5 h-3.5 text-amber-400 shrink-0" />
             ) : (
-              <CheckCircle2 className="w-4 h-4 text-emerald-100 shrink-0" />
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
             )}
-            <span className="text-xs sm:text-sm font-bold leading-snug">{latestUpdateNotification}</span>
+            <span className="text-[11.5px] sm:text-xs font-bold leading-tight truncate text-white">{latestUpdateNotification}</span>
             <button
+              type="button"
               onClick={() => setLatestUpdateNotification(null)}
-              className="p-1 hover:bg-white/20 rounded-lg text-white/90 cursor-pointer ml-auto shrink-0"
+              className="p-0.5 hover:bg-white/20 rounded-full text-slate-400 hover:text-white cursor-pointer ml-1 shrink-0"
               title="ปิดการแจ้งเตือน"
             >
-              <X className="w-3.5 h-3.5" />
+              <X className="w-3 h-3" />
             </button>
           </div>
         )}
@@ -2161,14 +2162,13 @@ export default function App() {
             <button
               type="button"
               onClick={() => setIsMobileGuideOpen(prev => !prev)}
-              className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950/80 text-blue-600 dark:text-cyan-300 border border-blue-200 dark:border-blue-800 text-[9px] font-bold cursor-pointer active:scale-95 shrink-0"
+              className="flex items-center px-1.5 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950/80 text-blue-600 dark:text-cyan-300 border border-blue-200 dark:border-blue-800 text-[10px] font-bold cursor-pointer active:scale-95 shrink-0"
               title="แตะเพื่อดูความหมายสัญลักษณ์ 📷 (มีภาพถ่าย) และ 📉 (น้ำกำลังลด)"
             >
-              <span className="flex items-center -space-x-1">
+              <span className="flex items-center -space-x-0.5">
                 <span>📷</span>
                 <span>📉</span>
               </span>
-              <span>ไกด์</span>
             </button>
           </div>
         </div>

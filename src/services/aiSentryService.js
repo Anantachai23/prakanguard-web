@@ -327,9 +327,10 @@ export function evaluateDynamicFloodLifecycle(points = [], citizenReports = [], 
   let changelogEntry = null;
 
   if (newlyClearedPoints.length > 0) {
-    const pointNames = newlyClearedPoints.slice(0, 2).map(p => p.name).join(', ');
-    const countText = newlyClearedPoints.length > 2 ? ` และอีก ${newlyClearedPoints.length - 2} จุด` : '';
-    notificationMessage = `💧 อัปเดตสด 24 ชม. (6 อำเภอ): จุด "${pointNames}"${countText} น้ำแห้งแล้ว คืนผิวจราจรเรียบร้อย (${nowTime})`;
+    const count = newlyClearedPoints.length;
+    const timeMatch = nowTime.match(/\d{2}:\d{2}/);
+    const shortTime = timeMatch ? `${timeMatch[0]} น.` : nowTime;
+    notificationMessage = `💧 น้ำแห้งแล้ว ${count} จุด คืนผิวจราจรปกติ (${shortTime})`;
     
     changelogEntry = {
       id: 'log-clear-' + Date.now(),
@@ -342,9 +343,10 @@ export function evaluateDynamicFloodLifecycle(points = [], citizenReports = [], 
       points: newlyClearedPoints
     };
   } else if (newlyActivatedPoints.length > 0) {
-    const pointNames = newlyActivatedPoints.slice(0, 2).map(p => p.name).join(', ');
-    const countText = newlyActivatedPoints.length > 2 ? ` และอีก ${newlyActivatedPoints.length - 2} จุด` : '';
-    notificationMessage = `⚠️ เฝ้าระวัง 24 ชม. (6 อำเภอ): ยกระดับเฝ้าระวังจุด "${pointNames}"${countText} ตามปัจจัยสภาพอากาศ/น้ำหนุน (${nowTime})`;
+    const count = newlyActivatedPoints.length;
+    const timeMatch = nowTime.match(/\d{2}:\d{2}/);
+    const shortTime = timeMatch ? `${timeMatch[0]} น.` : nowTime;
+    notificationMessage = `⚠️ เฝ้าระวังน้ำท่วม ${count} จุด (${shortTime})`;
     
     changelogEntry = {
       id: 'log-activate-' + Date.now(),
