@@ -7,7 +7,8 @@ import {
   Sun, 
   Moon, 
   Camera, 
-  MessageSquare
+  MessageSquare,
+  RotateCw
 } from 'lucide-react';
 import RealTimeClock from './RealTimeClock';
 
@@ -215,6 +216,22 @@ export default function Navbar({
             ) : (
               <Moon className="w-4 h-4 text-slate-700" />
             )}
+          </button>
+
+          {/* Reload Web Page Button (Every Device) */}
+          <button
+            type="button"
+            onClick={() => window.location.reload()}
+            className={`p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl border text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer shadow-xs active:scale-95 ${
+              isDark 
+                ? 'bg-slate-900 hover:bg-slate-800 text-sky-400 border-slate-700 hover:border-sky-500/50' 
+                : 'bg-slate-100 hover:bg-slate-200 text-sky-700 border-slate-200 hover:border-sky-300'
+            }`}
+            title="รีเฟรชหน้าเว็บ (Reload)"
+            aria-label="รีเฟรชหน้าเว็บ"
+          >
+            <RotateCw className="w-4 h-4 text-sky-500 hover:rotate-180 transition-transform duration-500" />
+            <span className="hidden sm:inline">รีเฟรช</span>
           </button>
         </div>
 

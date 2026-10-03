@@ -519,14 +519,14 @@ export function sendVisitorTelemetry(district = null, customDevice = null, activ
     }
     const deviceModel = customDevice || getDetailedDeviceInfo();
 
-    // Determine district status as requested by user
+    // Determine district status as requested by user (ไม่ต้องมี อ. นำหน้า)
     let finalDistrict = 'ปิด GPS';
-    if (!district || district === 'none' || district === 'no_gps' || district === 'ปิด GPS') {
+    if (!district || district === 'none' || district === 'no_gps' || district === 'ปิด GPS' || district.includes('GPS') || district.includes('พิกัด')) {
       finalDistrict = 'ปิด GPS';
     } else if (district === 'outside' || district.includes('นอก') || district.includes('ไม่ได้อยู่')) {
       finalDistrict = 'ไม่ได้อยู่สมุทรปราการ';
     } else {
-      finalDistrict = district.startsWith('อ.') ? district : `อ.${district.replace('เมืองสมุทรปราการ', 'เมือง')}`;
+      finalDistrict = district.replace(/^อ\./, '').replace(/^อำเภอ/, '').replace('เมืองสมุทรปราการ', 'เมือง').trim();
     }
 
     const payload = {

@@ -420,7 +420,7 @@ export default function MapView({
       }).addTo(map);
 
       // Clean, small district label tooltip
-      layer.bindTooltip(`อ.${feature.properties.districtName}`, {
+      layer.bindTooltip(`${feature.properties.districtName}`, {
         permanent: true,
         direction: 'center',
         className: 'bg-white/95 text-slate-800 font-prompt text-[11px] border border-slate-300 px-2 py-0.5 rounded-lg shadow-sm font-bold'
@@ -514,7 +514,7 @@ export default function MapView({
           <div style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:8px;background:${levelBg};color:${levelText};border:1px solid ${levelBorder};">
             ${levelBadgeName}
           </div>
-          <span style="font-size:10.5px;color:#64748b;font-weight:700;">อ.${item.district}</span>
+          <span style="font-size:10.5px;color:#64748b;font-weight:700;">${(item.district || '').replace(/^อ\./, '')}</span>
         </div>
         <div style="font-size:13px;font-weight:800;color:#0f172a;line-height:1.3;margin-bottom:4px;">
           ${item.name}

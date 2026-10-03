@@ -104,22 +104,7 @@ export default function MobileBottomNav({
                 </div>
               </button>
 
-              {/* 3. Feedback */}
-              <button
-                type="button"
-                onClick={() => handleMenuAction(onOpenFeedback)}
-                className="col-span-2 p-3.5 rounded-2xl bg-cyan-500/10 hover:bg-cyan-500/15 border border-cyan-500/30 text-cyan-600 dark:text-cyan-400 flex items-center gap-3 transition-all active:scale-95 text-left cursor-pointer"
-              >
-                <div className="w-10 h-10 rounded-2xl bg-cyan-600 text-white flex items-center justify-center shrink-0 shadow-md">
-                  <MessageSquare className="w-5 h-5" />
-                </div>
-                <div>
-                  <span className="text-xs font-bold block text-slate-900 dark:text-white">ข้อเสนอแนะประชาชน</span>
-                  <span className="text-[11px] text-cyan-600 dark:text-cyan-400 font-medium">ส่งความคิดเห็นและข้อเสนอแนะ</span>
-                </div>
-              </button>
-
-              {/* 4. Dark / Light Theme Toggle (Full Width) */}
+              {/* 3. Dark / Light Theme Toggle (Full Width) */}
               <button
                 type="button"
                 onClick={() => handleMenuAction(onToggleTheme)}
@@ -155,21 +140,17 @@ export default function MobileBottomNav({
       >
         <div className="flex items-stretch justify-around px-2 max-w-md mx-auto" style={{ height: '62px' }}>
 
-          {/* 1. พิกัดฉัน (GPS) */}
+          {/* 1. ข้อเสนอแนะประชาชน */}
           <button
             type="button"
-            onClick={() => onLocateMe(false)}
+            onClick={onOpenFeedback}
             className={`flex-1 flex flex-col items-center justify-center gap-1 rounded-2xl transition-all active:scale-95 cursor-pointer py-1 ${
-              hasGps
-                ? (isDark ? 'text-cyan-400 font-bold' : 'text-blue-600 font-bold')
-                : (isDark ? 'text-slate-300 hover:text-white' : 'text-slate-600 hover:text-slate-900')
+              isDark ? 'text-slate-300 hover:text-cyan-400' : 'text-slate-600 hover:text-teal-600'
             }`}
+            title="ข้อเสนอแนะ"
           >
-            <div className="relative">
-              <Navigation className={`w-5 h-5 ${hasGps ? 'fill-current' : ''}`} />
-              {hasGps && <span className="w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-slate-900 absolute -top-0.5 -right-0.5" />}
-            </div>
-            <span className="text-xs font-semibold leading-none">พิกัดฉัน</span>
+            <MessageSquare className="w-5 h-5 text-teal-500" />
+            <span className="text-xs font-semibold leading-none">ข้อเสนอแนะ</span>
           </button>
 
           {/* 2. อัปเดตสถานการณ์สด */}

@@ -1860,7 +1860,7 @@
         const shortName = d.replace('เมืองสมุทรปราการ', 'เมือง').replace('พระสมุทรเจดีย์', 'พระสมุทรฯ');
         return `
           <div class="p-3 bg-slate-800/60 rounded-2xl border border-slate-700/60 flex flex-col gap-1">
-            <span class="text-xs font-bold text-white truncate">📍 อ.${shortName}</span>
+            <span class="text-xs font-bold text-white truncate">📍 ${shortName}</span>
             <div class="flex items-center justify-between">
               <span class="text-[10px] text-slate-400">ผู้ใช้สด</span>
               <span class="text-xs font-bold ${visitors > 0 ? 'text-emerald-400' : 'text-slate-500'}">${visitors > 0 ? visitors + ' คน' : '-'}</span>
@@ -1967,9 +1967,12 @@
       }
 
       tbody.innerHTML = sessions.map(s => {
-        const d = (s.district || '').trim();
+        let d = (s.district || '').trim();
+        // Remove any prefix "อ." or "อำเภอ"
+        d = d.replace(/^อ\./, '').replace(/^อำเภอ/, '').trim();
+
         let districtBadge = '';
-        if (!d || d === 'ปิด GPS' || d === 'ไม่ได้เปิด GPS' || d === 'none' || d === 'no_gps') {
+        if (!d || d === 'ปิด GPS' || d === 'ไม่ได้เปิด GPS' || d.includes('GPS') || d.includes('พิกัด') || d === 'none' || d === 'no_gps') {
           districtBadge = `<span class="px-2.5 py-1 rounded-xl text-xs font-semibold bg-slate-800 text-slate-300 border border-slate-700 flex items-center gap-1.5 w-max">
             <span>⚠️</span> ปิด GPS
           </span>`;
@@ -1978,9 +1981,9 @@
             <span>🌐</span> ไม่ได้อยู่สมุทรปราการ
           </span>`;
         } else {
-          const cleanName = d.replace(/^อ\./, '').replace('เมืองสมุทรปราการ', 'เมือง');
+          const cleanName = d.replace('เมืองสมุทรปราการ', 'เมือง');
           districtBadge = `<span class="px-2.5 py-1 rounded-xl text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 flex items-center gap-1.5 w-max">
-            <span>📍</span> อ.${cleanName}
+            <span>📍</span> ${cleanName}
           </span>`;
         }
 

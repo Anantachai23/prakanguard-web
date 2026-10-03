@@ -757,13 +757,13 @@ export default function App() {
   useEffect(() => {
     const getReportingDistrict = () => {
       if (!userLocation || typeof userLocation.lat !== 'number' || typeof userLocation.lng !== 'number') {
-        return 'ไม่ได้เปิด GPS';
+        return 'ปิด GPS';
       }
       const detected = detectDistrictForCoordinates(userLocation.lat, userLocation.lng);
       if (!detected) {
-        return 'ไม่ได้อยู่ในพื้นที่จังหวัดสมุทรปราการ';
+        return 'ไม่ได้อยู่สมุทรปราการ';
       }
-      return detected;
+      return detected.replace(/^อ\./, '').replace(/^อำเภอ/, '').replace('เมืองสมุทรปราการ', 'เมือง');
     };
 
     const getActiveSection = () => {
@@ -1550,24 +1550,24 @@ export default function App() {
 
         // 1. ตรวจสอบว่าพิกัดอยู่ภายในขอบเขตจังหวัดสมุทรปราการหรือไม่
         if (!detectedDistrict) {
-          sendVisitorTelemetry('ไม่ได้อยู่ในพื้นที่จังหวัดสมุทรปราการ', deviceModel);
+          sendVisitorTelemetry('ไม่ได้อยู่สมุทรปราการ', deviceModel);
 
           if (!silent) {
             alert(`📍 ตรวจพบพิกัดของคุณที่ [${coords.lat.toFixed(4)}, ${coords.lng.toFixed(4)}]\n\n⚠️ ตำแหน่งท่านไม่ได้อยู่ในพื้นที่จังหวัดสมุทรปราการ\n\nระบบ PrakanGuard พัฒนาขึ้นเพื่อติดตามและรายงานสถานการณ์น้ำท่วมในพื้นที่ 6 อำเภอของจังหวัดสมุทรปราการครับ\n\n(ระบบได้ปักหมุดตำแหน่งของคุณบนแผนที่ไว้เรียบร้อยแล้ว)`);
           }
         } else {
           // อยู่ภายใน จ.สมุทรปราการ
-          const districtLabel = `อ.${detectedDistrict}`;
-          sendVisitorTelemetry(detectedDistrict, deviceModel);
+          const cleanDistrict = detectedDistrict.replace(/^อ\./, '').replace(/^อำเภอ/, '').replace('เมืองสมุทรปราการ', 'เมือง');
+          sendVisitorTelemetry(cleanDistrict, deviceModel);
 
           if (!silent) {
-            setLatestUpdateNotification(`📍 คุณอยู่ที่ ${districtLabel} จ.สมุทรปราการ`);
+            setLatestUpdateNotification(`📍 คุณอยู่ที่ ${cleanDistrict} จ.สมุทรปราการ`);
             setTimeout(() => setLatestUpdateNotification(null), 5000);
           }
         }
       },
       (err) => {
-        sendVisitorTelemetry('ไม่ได้เปิด GPS', getDetailedDeviceInfo());
+        sendVisitorTelemetry('ปิด GPS', getDetailedDeviceInfo());
         if (!silent) {
           let msg = "ไม่ได้เปิด GPS หรือไม่ได้อนุญาตการเข้าถึงตำแหน่ง กรุณาเปิดการอนุญาต Location ในการตั้งค่าเบราว์เซอร์เพื่อระบุพิกัด";
           if (err.code === 1) msg = "คุณปฏิเสธการเข้าถึงตำแหน่ง GPS กรุณาเปิดการอนุญาต Location ในการตั้งค่าเบราว์เซอร์เพื่อระบุพิกัด";
@@ -1715,7 +1715,7 @@ export default function App() {
         {/* Active District Mobile Indicator with Quick Reset (กดครั้งเดียวกลับดูทั้งจังหวัด ไม่สับสน) */}
         {selectedDistrict !== 'ทั้งหมด' && isTopPanelCollapsed && (
           <div className="sm:hidden absolute top-2.5 right-14 z-20 pointer-events-auto flex items-center gap-1.5 px-2.5 py-1.5 rounded-2xl bg-blue-600/95 text-white shadow-lg border border-blue-400 text-xs font-bold animate-in fade-in">
-            <span className="truncate max-w-[120px]">📍 อ.{selectedDistrict.replace('เมืองสมุทรปราการ', 'เมือง')}</span>
+            <span className="truncate max-w-[120px]">📍 {selectedDistrict.replace(/^อ\./, '').replace('เมืองสมุทรปราการ', 'เมือง')}</span>
             <button
               onClick={() => setSelectedDistrict('ทั้งหมด')}
               className="px-1.5 py-0.5 rounded-lg bg-white/20 hover:bg-white/30 text-[10px] cursor-pointer"
@@ -1739,7 +1739,7 @@ export default function App() {
           >
             <PanelLeftOpen className="w-3.5 h-3.5 text-blue-500 shrink-0" />
             <span className="text-xs font-bold">
-              {selectedDistrict === 'ทั้งหมด' ? 'ค้นหา / กรอง' : `อ.${selectedDistrict.replace('เมืองสมุทรปราการ','เมือง')}`}
+              {selectedDistrict === 'ทั้งหมด' ? 'ค้นหา / กรอง' : selectedDistrict.replace(/^อ\./, '').replace('เมืองสมุทรปราการ','เมือง')}
             </span>
           </button>
         )}
@@ -1825,7 +1825,7 @@ export default function App() {
                               <span className={`text-[9px] px-1.5 py-0.5 rounded font-medium shrink-0 ${
                                 isDark ? 'bg-slate-700 text-slate-300' : 'bg-slate-200 text-slate-700'
                               }`}>
-                                อ.{item.district.replace('เมืองสมุทรปราการ', 'เมือง')}
+                                {item.district.replace(/^อ\./, '').replace('เมืองสมุทรปราการ', 'เมือง')}
                               </span>
                             </div>
                             <span className={`text-[10px] truncate ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
@@ -1875,7 +1875,7 @@ export default function App() {
                           <div className="truncate pr-2">
                             <span className={`font-bold block truncate ${isDark ? 'text-white' : 'text-slate-900'}`}>{p.name}</span>
                             <span className={`text-[10px] block truncate ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                              อ.{p.district} • {p.depthRange} {p.aliases ? `• ${p.aliases.slice(0, 3).join(', ')}` : ''}
+                              {p.district.replace(/^อ\./, '')} • {p.depthRange} {p.aliases ? `• ${p.aliases.slice(0, 3).join(', ')}` : ''}
                             </span>
                           </div>
                           <span className={`text-[10px] px-2 py-0.5 rounded font-bold shrink-0 ${
@@ -1906,7 +1906,7 @@ export default function App() {
                             <span className={`font-bold flex items-center gap-1 ${isDark ? 'text-cyan-300' : 'text-blue-700'}`}>
                               <span>💧 {cr.name}</span>
                             </span>
-                            <span className={`text-[10px] block ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>อ.{cr.district} • ระดับ{cr.bodyLevelLabel}</span>
+                            <span className={`text-[10px] block ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{cr.district.replace(/^อ\./, '')} • ระดับ{cr.bodyLevelLabel}</span>
                           </div>
                           <span className={`text-[10px] px-2 py-0.5 rounded font-bold shrink-0 bg-blue-100 text-blue-800 border border-blue-200 dark:bg-blue-950/80 dark:text-cyan-300 dark:border-blue-800`}>
                             ภาคประชาชน

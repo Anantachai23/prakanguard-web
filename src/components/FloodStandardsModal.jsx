@@ -39,24 +39,30 @@ export default function FloodStandardsModal({ isOpen, onClose, theme = 'light' }
   ];
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 smooth-backdrop">
-      <div className={`w-full sm:max-w-lg flex flex-col rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden max-h-[90vh] sm:max-h-[85vh] transition-colors ${
+    <div 
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+      className="fixed inset-0 z-50 bg-slate-950/65 backdrop-blur-xs flex items-end sm:items-center justify-center p-2.5 sm:p-4 smooth-backdrop"
+    >
+      <div className={`w-full sm:max-w-md flex flex-col rounded-3xl shadow-2xl overflow-hidden max-h-[60vh] sm:max-h-[72vh] mb-1 sm:mb-0 transition-colors ${
         isDark ? 'bg-slate-900 border border-slate-700 text-slate-100' : 'bg-white border border-slate-200 text-slate-900'
       }`}>
 
+        {/* Mobile pull handle */}
+        <div className="w-10 h-1 bg-slate-400/30 rounded-full mx-auto my-1.5 shrink-0 sm:hidden" />
+
         {/* Header */}
-        <div className={`flex items-center justify-between p-4 sm:p-5 pb-3 border-b ${isDark ? 'border-slate-800' : 'border-slate-100'}`}>
-          <div className="flex items-center gap-2.5">
-            <div className={`w-9 h-9 rounded-2xl flex items-center justify-center shrink-0 border ${
+        <div className={`flex items-center justify-between px-4 py-2.5 border-b shrink-0 ${isDark ? 'border-slate-800' : 'border-slate-100'}`}>
+          <div className="flex items-center gap-2 min-w-0">
+            <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 border ${
               isDark ? 'bg-blue-950 text-cyan-400 border-blue-800' : 'bg-blue-50 text-blue-600 border-blue-200'
             }`}>
-              <ShieldAlert className="w-5 h-5" />
+              <ShieldAlert className="w-4 h-4" />
             </div>
             <div>
-              <h3 className={`text-base font-bold leading-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>
+              <h3 className={`text-sm sm:text-base font-bold leading-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>
                 เกณฑ์ระดับน้ำท่วม
               </h3>
-              <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+              <p className={`text-[10px] sm:text-xs text-slate-400`}>
                 คำแนะนำความปลอดภัยต่อยานพาหนะ
               </p>
             </div>

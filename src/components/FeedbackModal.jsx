@@ -96,23 +96,26 @@ export default function FeedbackModal({ isOpen, onClose, theme = 'light', onFeed
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 smooth-backdrop">
-      <div className={`w-full max-w-lg border rounded-3xl shadow-2xl flex flex-col max-h-[92vh] overflow-hidden smooth-pop transition-colors ${
+    <div 
+      onClick={(e) => { if (e.target === e.currentTarget) handleResetAndClose(); }}
+      className="fixed inset-0 z-50 bg-slate-950/65 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 smooth-backdrop"
+    >
+      <div className={`w-full max-w-md border rounded-3xl shadow-2xl flex flex-col max-h-[68vh] sm:max-h-[78vh] overflow-hidden smooth-pop transition-colors ${
         isDark ? 'bg-slate-900 border-slate-700 text-slate-100' : 'bg-white border-slate-200 text-slate-800'
       }`}>
         
         {/* Top Gradient Ribbon */}
-        <div className="h-1.5 w-full bg-gradient-to-r from-teal-500 via-emerald-500 to-cyan-500"></div>
+        <div className="h-1.5 w-full bg-gradient-to-r from-teal-500 via-emerald-500 to-cyan-500 shrink-0"></div>
 
         {/* Header */}
-        <div className={`p-4 sm:p-5 border-b flex items-center justify-between gap-3 ${
+        <div className={`px-4 py-3 border-b flex items-center justify-between gap-2.5 shrink-0 ${
           isDark ? 'border-slate-800 bg-slate-900/80' : 'border-slate-100 bg-slate-50/80'
         }`}>
-          <div className="flex items-center gap-2.5">
-            <div className={`w-9 h-9 rounded-2xl flex items-center justify-center shadow-inner ${
+          <div className="flex items-center gap-2 min-w-0">
+            <div className={`w-8 h-8 rounded-xl flex items-center justify-center shadow-inner shrink-0 ${
               isDark ? 'bg-teal-950/80 text-teal-400 border border-teal-800' : 'bg-teal-50 text-teal-600 border border-teal-200'
             }`}>
-              <MessageSquare className="w-4.5 h-4.5" />
+              <MessageSquare className="w-4 h-4" />
             </div>
             <div>
               <h2 className={`text-base sm:text-lg font-bold leading-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>
