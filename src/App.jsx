@@ -1397,7 +1397,7 @@ export default function App() {
       } else if (severityFilter === "falling") {
         matchSeverity = point.waterTrend === 'falling';
       } else {
-        matchSeverity = point.level.toString() === severityFilter;
+        matchSeverity = point.level !== undefined && point.level !== null && point.level.toString() === severityFilter;
       }
       return matchDistrict && matchSeverity;
     });
@@ -1415,7 +1415,7 @@ export default function App() {
       } else if (severityFilter === "falling") {
         matchSeverity = report.waterTrend === 'falling';
       } else {
-        matchSeverity = report.level.toString() === severityFilter;
+        matchSeverity = report.level !== undefined && report.level !== null && report.level.toString() === severityFilter;
       }
       return matchDistrict && matchSeverity;
     });
@@ -1834,7 +1834,7 @@ export default function App() {
                               <span className={`text-[9px] px-1.5 py-0.5 rounded font-medium shrink-0 ${
                                 isDark ? 'bg-slate-700 text-slate-300' : 'bg-slate-200 text-slate-700'
                               }`}>
-                                {item.district.replace(/^อ\./, '').replace('เมืองสมุทรปราการ', 'เมือง')}
+                                {item.district ? item.district.replace(/^อ\./, '').replace('เมืองสมุทรปราการ', 'เมือง') : ''}
                               </span>
                             </div>
                             <span className={`text-[10px] truncate ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
@@ -2023,7 +2023,7 @@ export default function App() {
               >
                 <Compass className="w-3.5 h-3.5 text-blue-500 animate-spin-slow shrink-0" />
                 <span className="truncate max-w-[140px] sm:max-w-none">
-                  {userDistrict ? `คุณอยู่: อ.${userDistrict.replace('เมืองสมุทรปราการ', 'เมือง')}` : 'อยู่นอกสมุทรปราการ'}
+                  {userDistrict && typeof userDistrict === 'string' ? `คุณอยู่: อ.${userDistrict.replace('เมืองสมุทรปราการ', 'เมือง')}` : 'อยู่นอกสมุทรปราการ'}
                 </span>
               </div>
             ) : (

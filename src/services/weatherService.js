@@ -147,6 +147,7 @@ export async function getLiveSamutPrakanWeather(forceRefresh = false) {
 
     // ประมวลผลพยากรณ์ฝน 24 ชั่วโมงข้างหน้า (โมเดล Open-Meteo & TMD)
     let forecast24h = null;
+    let districtRainAnalysis = [];
     if (hourly.time && hourly.precipitation && hourly.precipitation_probability) {
       const bkkDatePart = nowDate.toLocaleDateString("en-CA", { timeZone: "Asia/Bangkok" });
       const bkkHourPart = nowDate.toLocaleTimeString("en-GB", { timeZone: "Asia/Bangkok", hour: "2-digit" }).padStart(2, '0');
@@ -254,7 +255,7 @@ export async function getLiveSamutPrakanWeather(forceRefresh = false) {
       ];
 
       // วิเคราะห์กลุ่มฝน 6 อำเภอแบบสดจริงจาก Open-Meteo Multi-Coordinate Telemetry
-      const districtRainAnalysis = DISTRICT_COORDINATES.map((dist, idx) => {
+      districtRainAnalysis = DISTRICT_COORDINATES.map((dist, idx) => {
         const dData = Array.isArray(data) ? (data[idx] || data[0]) : data;
         const dCur = dData.current || {};
         const dDaily = dData.daily || {};

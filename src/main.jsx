@@ -20,10 +20,8 @@ class ErrorBoundary extends React.Component {
 
   handleReload = () => {
     try {
-      // Clear corrupt transient states if any
       sessionStorage.clear();
-      localStorage.removeItem('prakanguard_citizen_reports');
-      localStorage.removeItem('prakanguard_points_state');
+      localStorage.clear();
     } catch (e) {}
     window.location.reload();
   };
