@@ -34,7 +34,7 @@ export default function Navbar({
   const falling = points.filter(p => p.waterTrend === 'falling' && p.isActive !== false && !p.isResolved).length;
 
   return (
-    <header className={`sticky top-0 z-40 w-full max-w-full border-b shadow-sm backdrop-blur-xl transition-colors duration-200 select-none ${
+    <header className={`relative z-40 w-full shrink-0 border-b shadow-sm backdrop-blur-xl transition-colors duration-200 select-none ${
       isDark ? 'bg-slate-950/95 border-slate-800 text-slate-100' : 'bg-white/95 border-slate-200 text-slate-800'
     }`}>
       <div className="w-full px-2.5 sm:px-4 py-2 flex items-center justify-between gap-2">
@@ -144,6 +144,21 @@ export default function Navbar({
           >
             <BookOpen className="w-3.5 h-3.5 text-blue-500 shrink-0" />
             <span>เกณฑ์ระดับน้ำ</span>
+          </button>
+
+          {/* Desktop/Tablet Feedback Button */}
+          <button 
+            type="button"
+            onClick={onOpenFeedback}
+            className={`hidden lg:inline-flex px-2.5 sm:px-3 py-1.5 rounded-xl border text-xs font-semibold items-center gap-1.5 transition-all cursor-pointer shadow-xs ${
+              isDark 
+                ? 'bg-teal-950/60 hover:bg-teal-900/60 text-teal-300 border-teal-800' 
+                : 'bg-teal-50 hover:bg-teal-100 text-teal-800 border-teal-200'
+            }`}
+            title="กล่องข้อเสนอแนะและติชมจากประชาชน"
+          >
+            <MessageSquare className="w-3.5 h-3.5 text-teal-500 shrink-0" />
+            <span>ข้อเสนอแนะ</span>
           </button>
 
           {/* Desktop/Tablet Live Updates Button */}

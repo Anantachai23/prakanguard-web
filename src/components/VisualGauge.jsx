@@ -79,7 +79,7 @@ export default function VisualGauge({ depthCm = 0, level, theme = 'light' }) {
         isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-300/80'
       }`}>
         <svg 
-          viewBox="0 0 350 192" 
+          viewBox="0 -8 350 200" 
           className="w-full h-auto select-none"
           style={{ maxHeight: '250px' }}
         >
@@ -118,7 +118,7 @@ export default function VisualGauge({ depthCm = 0, level, theme = 'light' }) {
           </defs>
 
           {/* Background Zone Bands */}
-          <rect x="0" y="0" width="350" height="130" fill={isDark ? "#f43f5e" : "#ffe4e6"} opacity={isDark ? "0.04" : "0.30"} />
+          <rect x="0" y="-8" width="350" height="138" fill={isDark ? "#f43f5e" : "#ffe4e6"} opacity={isDark ? "0.04" : "0.30"} />
           <rect x="0" y="130" width="350" height="30" fill={isDark ? "#f59e0b" : "#fef3c7"} opacity={isDark ? "0.05" : "0.40"} />
           <rect x="0" y="160" width="350" height="15" fill={isDark ? "#10b981" : "#ecfdf5"} opacity={isDark ? "0.06" : "0.50"} />
 
@@ -149,139 +149,200 @@ export default function VisualGauge({ depthCm = 0, level, theme = 'light' }) {
           <text x="270" y="186" fill={isDark ? "#94a3b8" : "#64748b"} fontSize="7.5" fontFamily="monospace" fontWeight="bold">0cm พื้นถนน</text>
 
           {/* ----------------- HUMAN SILHOUETTE (Standing 170 cm) ----------------- */}
-          {/* Ground at Y=180. Head at Y=10. */}
-          <g className={isDark ? "text-slate-300" : "text-slate-700"}>
-            
-            {/* LABEL: "คน 170 cm" อยู่บนหัวคน (Y=2 ถึง Y=8) น้ำไม่มีวันบัง! */}
+          {/* Ground at Y=180. Head top at Y=10. */}
+          <g>
+            {/* LABEL: "170 CM" อยู่บนหัวคน อ่านได้ชัดเจนตามที่ผู้ใช้สั่ง */}
             <g>
               <rect 
-                x="22" 
-                y="1" 
-                width="56" 
-                height="8" 
-                rx="4" 
+                x="28" 
+                y="-4" 
+                width="44" 
+                height="11" 
+                rx="5.5" 
                 fill={isDark ? "#0f172a" : "#ffffff"} 
                 stroke={isDark ? "#38bdf8" : "#0284c7"} 
-                strokeWidth="0.9" 
+                strokeWidth="1.2" 
+                filter="drop-shadow(0px 1px 3px rgba(0,0,0,0.25))"
               />
               <text 
                 x="50" 
-                y="7" 
+                y="4.5" 
                 textAnchor="middle" 
                 fill={isDark ? "#38bdf8" : "#0284c7"} 
-                fontSize="6" 
-                fontWeight="bold"
-                fontFamily="sans-serif"
+                fontSize="7.5" 
+                fontWeight="900"
+                fontFamily="system-ui, -apple-system, sans-serif"
+                letterSpacing="0.4px"
               >
-                คน 170 cm
+                170 CM
               </text>
+              {/* Pointer indicator to head */}
+              <polygon points="48,7 52,7 50,9.5" fill={isDark ? "#38bdf8" : "#0284c7"} />
             </g>
 
-            {/* Head & Hair (Y=10 to 32) */}
-            <ellipse cx="50" cy="21" rx="10.5" ry="11" fill="currentColor" />
-            <path d="M 39.5 19 Q 50 9 60.5 19 Q 61 14 50 10.5 Q 39 14 39.5 19 Z" fill={isDark ? "#f8fafc" : "#1e293b"} opacity="0.75" />
+            {/* Hair & Head (Top at Y=10, Chin at Y=30) */}
+            <ellipse cx="50" cy="20" rx="8" ry="9.5" fill={isDark ? "#e2e8f0" : "#334155"} />
+            {/* Modern Hair contour */}
+            <path d="M 42 18 Q 50 8 58 18 Q 57 11 50 9 Q 43 11 42 18 Z" fill={isDark ? "#94a3b8" : "#0f172a"} />
 
-            {/* Neck (Y=32 to 38) */}
-            <path d="M 46.5 32 L 46.5 39 L 53.5 39 L 53.5 32 Z" fill="currentColor" />
+            {/* Neck (Y=29.5 to 35) */}
+            <rect x="47" y="29.5" width="6" height="5.5" rx="2" fill={isDark ? "#cbd5e1" : "#475569"} />
 
-            {/* Athletic Torso & Shoulders (Y=38 to 98) */}
+            {/* Stylish Upper Body / Jacket (Y=35 to 88) */}
             <path d="
-              M 46.5 39
-              Q 50 42 53.5 39
-              L 70 44
-              Q 72 47 71 52
-              L 66 84
-              Q 66 91 67 98
-              L 33 98
-              Q 34 91 34 84
-              L 29 52
-              Q 28 47 30 44
+              M 47 35
+              Q 50 37 53 35
+              L 67 39
+              Q 70 42 69 46
+              L 65 82
+              Q 64 88 62 88
+              L 38 88
+              Q 36 88 35 82
+              L 31 46
+              Q 30 42 33 39
               Z
-            " fill="currentColor" />
+            " fill={isDark ? "#94a3b8" : "#334155"} />
+            
+            {/* Jacket Center Zipper / Seam Line */}
+            <line x1="50" y1="36" x2="50" y2="88" stroke={isDark ? "#475569" : "#64748b"} strokeWidth="1" strokeDasharray="2 1.5" />
 
-            {/* Arms */}
-            <path d="M 29 44 Q 24 58 24 72 L 24 92 Q 23 97 26 97 Q 29 97 30 92 L 31 72 Q 32 58 34 49 Z" fill="currentColor" opacity="0.95" />
-            <path d="M 70 44 Q 75 58 75 72 L 75 92 Q 76 97 73 97 Q 70 97 69 92 L 68 72 Q 67 58 65 49 Z" fill="currentColor" opacity="0.95" />
+            {/* Left Arm (Relaxed at side) */}
+            <path d="M 31 42 Q 27 58 27 75 L 27 91 Q 27 95 30 95 Q 33 95 33 91 L 34 75 Q 35 58 36 46 Z" fill={isDark ? "#cbd5e1" : "#475569"} />
 
-            {/* Legs & Shoes (Y=98 to 180) */}
+            {/* Right Arm (Relaxed at side) */}
+            <path d="M 69 42 Q 73 58 73 75 L 73 91 Q 73 95 70 95 Q 67 95 67 91 L 66 75 Q 65 58 64 46 Z" fill={isDark ? "#cbd5e1" : "#475569"} />
+
+            {/* Modern Trousers / Pants (Y=88 to 172) */}
             <path d="
-              M 33 98 L 33 135 Q 34 144 36 145 Q 34 156 35 165 L 38 172 L 31 174 Q 29 178 31 180 L 48 180 Q 49 177 47 172 L 46 165 Q 48 156 46 145 Q 47 140 48 135 L 49 104 Z
-            " fill="currentColor" />
-            <path d="
-              M 51 104 L 52 135 Q 53 140 54 145 Q 52 156 54 165 L 53 172 Q 51 177 52 180 L 69 180 Q 71 178 69 174 L 62 172 L 65 165 Q 66 156 64 145 Q 66 144 67 135 L 67 98 Z
-            " fill="currentColor" />
+              M 38 88
+              L 62 88
+              L 61 130
+              Q 60 148 59 172
+              L 52 172
+              Q 51 140 50 102
+              Q 49 140 48 172
+              L 41 172
+              Q 40 148 39 130
+              Z
+            " fill={isDark ? "#475569" : "#1e293b"} />
+
+            {/* Left Sneaker (Firmly on ground Y=180) */}
+            <path d="M 40 172 L 48 172 L 48 177 L 49 180 L 34 180 Q 32 179 34 176 L 39 173 Z" fill={isDark ? "#38bdf8" : "#0284c7"} />
+            <rect x="33" y="178" width="16" height="2" rx="1" fill="#ffffff" />
+
+            {/* Right Sneaker (Firmly on ground Y=180) */}
+            <path d="M 52 172 L 60 172 L 61 173 L 66 176 Q 68 179 66 180 L 51 180 L 52 177 Z" fill={isDark ? "#38bdf8" : "#0284c7"} />
+            <rect x="51" y="178" width="16" height="2" rx="1" fill="#ffffff" />
           </g>
 
-          {/* ----------------- MODERN CAR SILHOUETTE ----------------- */}
-          <g className={isDark ? "text-slate-400" : "text-slate-600"}>
-            {/* Label บนหลังคารถ (Y=31) น้ำไม่บัง */}
+          {/* ----------------- MODERN SLEEK CAR (Sedan / EV) ----------------- */}
+          <g>
+            {/* Label บนหลังคารถ (Y=28 ถึง Y=37) น้ำไม่บัง */}
             <g>
               <rect 
                 x="147" 
-                y="31" 
+                y="28" 
                 width="66" 
-                height="8" 
-                rx="4" 
+                height="9" 
+                rx="4.5" 
                 fill={isDark ? "#0f172a" : "#ffffff"} 
                 stroke={isDark ? "#60a5fa" : "#2563eb"} 
-                strokeWidth="0.9" 
+                strokeWidth="1" 
+                filter="drop-shadow(0px 1px 3px rgba(0,0,0,0.25))"
               />
               <text 
                 x="180" 
-                y="37" 
+                y="35" 
                 textAnchor="middle" 
                 fill={isDark ? "#60a5fa" : "#2563eb"} 
-                fontSize="6" 
+                fontSize="6.5" 
                 fontWeight="bold"
-                fontFamily="sans-serif"
+                fontFamily="system-ui, -apple-system, sans-serif"
               >
                 รถยนต์ (ล้อ 60 cm)
               </text>
             </g>
 
-            {/* Rear Wheel (Y=120 to 180) */}
-            <circle cx="132" cy="150" r="30" fill="#0f172a" stroke="#334155" strokeWidth="2.5" />
-            <circle cx="132" cy="150" r="16" fill="url(#carRimGrad)" stroke="#64748b" strokeWidth="1" />
-            <circle cx="132" cy="150" r="5" fill="#0f172a" />
+            {/* Rear Wheel (X=135, Ground Y=180, Radius 28, Diameter 56cm ~ 60cm tire) */}
+            <circle cx="135" cy="152" r="28" fill="#090d16" stroke="#334155" strokeWidth="2.5" />
+            <circle cx="135" cy="152" r="16" fill="url(#carRimGrad)" stroke="#475569" strokeWidth="1" />
+            {/* 5-Spoke Alloy Details */}
+            <line x1="135" y1="138" x2="135" y2="166" stroke="#e2e8f0" strokeWidth="2" strokeLinecap="round" />
+            <line x1="122" y1="145" x2="148" y2="159" stroke="#e2e8f0" strokeWidth="2" strokeLinecap="round" />
+            <line x1="125" y1="161" x2="145" y2="143" stroke="#e2e8f0" strokeWidth="2" strokeLinecap="round" />
+            <circle cx="135" cy="152" r="5" fill="#0f172a" />
+            {/* Red Sport Caliper */}
+            <path d="M 125 142 A 14 14 0 0 1 133 139" fill="none" stroke="#ef4444" strokeWidth="3" strokeLinecap="round" />
 
-            {/* Front Wheel (Y=120 to 180) */}
-            <circle cx="220" cy="150" r="30" fill="#0f172a" stroke="#334155" strokeWidth="2.5" />
-            <circle cx="220" cy="150" r="16" fill="url(#carRimGrad)" stroke="#64748b" strokeWidth="1" />
-            <circle cx="220" cy="150" r="5" fill="#0f172a" />
+            {/* Front Wheel (X=225, Ground Y=180, Radius 28) */}
+            <circle cx="225" cy="152" r="28" fill="#090d16" stroke="#334155" strokeWidth="2.5" />
+            <circle cx="225" cy="152" r="16" fill="url(#carRimGrad)" stroke="#475569" strokeWidth="1" />
+            {/* 5-Spoke Alloy Details */}
+            <line x1="225" y1="138" x2="225" y2="166" stroke="#e2e8f0" strokeWidth="2" strokeLinecap="round" />
+            <line x1="212" y1="145" x2="238" y2="159" stroke="#e2e8f0" strokeWidth="2" strokeLinecap="round" />
+            <line x1="215" y1="161" x2="235" y2="143" stroke="#e2e8f0" strokeWidth="2" strokeLinecap="round" />
+            <circle cx="225" cy="152" r="5" fill="#0f172a" />
+            {/* Red Sport Caliper */}
+            <path d="M 215 142 A 14 14 0 0 1 223 139" fill="none" stroke="#ef4444" strokeWidth="3" strokeLinecap="round" />
 
-            {/* Underside Clearance (15cm at Y=165) */}
-            <path d="M 92 156 L 92 165 L 102 165 C 102 143 118 128 132 128 C 146 128 162 143 162 165 L 190 165 C 190 143 206 128 220 128 C 234 128 250 143 250 165 L 260 165 L 260 152 Z" fill="#0f172a" opacity="0.5" />
+            {/* Underside Rocker Line (17 cm Clearance at Y=163) */}
+            <path d="M 98 158 L 105 158 C 105 138 120 125 135 125 C 150 125 165 138 165 158 L 195 158 C 195 138 210 125 225 125 C 240 125 255 138 255 158 L 263 158" fill="none" stroke="#0f172a" strokeWidth="3" />
 
-            {/* Aerodynamic Body Shell */}
+            {/* Sleek Aerodynamic Body Shell (Coupe / Modern Fastback Sedan) */}
             <path d="
-              M 90 152
-              L 92 130
-              Q 94 116 110 114
-              L 126 112
-              L 148 52
-              Q 152 42 168 42
-              L 202 42
-              Q 212 42 220 52
-              L 240 110
-              L 256 114
-              Q 262 116 262 126
-              L 260 154
-              L 250 154
-              C 250 134 235 121 220 121
-              C 205 121 190 134 190 154
-              L 162 154
-              C 162 134 147 121 132 121
-              C 117 121 102 134 102 154
+              M 96 156
+              L 97 126
+              Q 99 116 112 112
+              L 125 110
+              L 155 44
+              Q 160 40 178 40
+              L 196 40
+              Q 206 40 216 52
+              L 230 96
+              L 258 108
+              Q 266 112 266 122
+              L 264 154
+              L 255 154
+              C 255 132 238 122 225 122
+              C 212 122 195 132 195 154
+              L 165 154
+              C 165 132 148 122 135 122
+              C 122 122 105 132 105 154
               Z
-            " fill={isDark ? "#334155" : "#64748b"} stroke={isDark ? "#475569" : "#475569"} strokeWidth="1.2" />
+            " fill={isDark ? "#1e293b" : "#475569"} stroke={isDark ? "#38bdf8" : "#0284c7"} strokeWidth="1.2" />
 
-            {/* Windows */}
-            <path d="M 150 55 L 134 108 L 172 108 L 172 52 L 162 50 Z" fill="url(#carGlassGrad)" />
-            <path d="M 176 52 L 176 108 L 228 108 L 214 55 Q 208 50 198 50 Z" fill="url(#carGlassGrad)" />
+            {/* Window Greenhouse Area with Smooth Rake */}
+            <path d="
+              M 157 46
+              L 132 104
+              L 173 104
+              L 173 45
+              Z
+            " fill="url(#carGlassGrad)" />
+            <path d="
+              M 177 45
+              L 177 104
+              L 225 104
+              L 209 52
+              Q 202 45 194 45
+              Z
+            " fill="url(#carGlassGrad)" />
 
-            {/* Headlights & Taillights */}
-            <rect x="258" y="120" width="4" height="9" rx="2" fill="#38bdf8" />
-            <rect x="90" y="122" width="3" height="8" rx="1.5" fill="#ef4444" />
+            {/* B-Pillar */}
+            <rect x="173" y="44" width="4" height="61" fill="#090d16" />
+
+            {/* Aerodynamic Side Mirror */}
+            <ellipse cx="212" cy="98" rx="4.5" ry="2.5" fill={isDark ? "#38bdf8" : "#0284c7"} />
+
+            {/* Sleek LED Headlight Strip */}
+            <path d="M 255 116 L 265 118 L 264 124 L 253 121 Z" fill="#38bdf8" filter="drop-shadow(0 0 3px #38bdf8)" />
+
+            {/* Sleek LED Taillight Strip */}
+            <path d="M 97 120 L 107 118 L 108 123 L 97 124 Z" fill="#ef4444" filter="drop-shadow(0 0 3px #ef4444)" />
+
+            {/* Door Handle Accents */}
+            <rect x="156" y="112" width="7" height="2" rx="1" fill="#cbd5e1" opacity="0.8" />
+            <rect x="194" y="112" width="7" height="2" rx="1" fill="#cbd5e1" opacity="0.8" />
           </g>
 
           {/* ----------------- DYNAMIC WATER LAYER ----------------- */}

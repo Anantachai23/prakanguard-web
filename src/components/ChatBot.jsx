@@ -1020,14 +1020,16 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
     const startY = e.touches[0].clientY;
     const modalEl = modalRef.current;
     const startH = modalEl ? modalEl.offsetHeight : 480;
+    let hasMoved = false;
     setIsResizingModal(true);
 
     const onTouchMove = (moveEvent) => {
       if (moveEvent.touches.length !== 1) return;
-      moveEvent.preventDefault();
       const currentY = moveEvent.touches[0].clientY;
       const dy = startY - currentY; // dragging finger up increases height
-      const newH = Math.max(280, Math.min(window.innerHeight - 80, startH + dy));
+      if (Math.abs(dy) > 4) hasMoved = true;
+      moveEvent.preventDefault();
+      const newH = Math.max(260, Math.min(window.innerHeight - 75, startH + dy));
       setCustomSize(prev => ({ ...prev, height: newH }));
     };
 
@@ -1035,6 +1037,17 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
       setIsResizingModal(false);
       window.removeEventListener('touchmove', onTouchMove);
       window.removeEventListener('touchend', onTouchEnd);
+      // If simply tapped without dragging, toggle between compact (310px) and expanded (85vh)
+      if (!hasMoved) {
+        setCustomSize(prev => {
+          const curH = prev.height || startH;
+          if (curH > 380) {
+            return { ...prev, height: 310 };
+          } else {
+            return { ...prev, height: Math.min(window.innerHeight - 80, 660) };
+          }
+        });
+      }
     };
 
     window.addEventListener('touchmove', onTouchMove, { passive: false });
@@ -2087,13 +2100,39 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
             <div className="w-2.5 h-2.5 border-t-2 border-l-2 border-slate-400 dark:border-slate-500 m-1.5 rounded-tl-sm group-hover:border-blue-500 group-hover:scale-110 transition-all" />
           </div>
 
-          {/* Mobile Finger Drag Handle (ใช้นิ้วลากขึ้น-ลงเพื่อย่อ/ขยายความสูง) */}
+          {/* Mobile Ergonomic Touch Handle Bar (แตะเพื่อสลับ ย่อ/ขยาย หรือใช้นิ้วลากขึ้น-ลง) */}
           <div 
             onTouchStart={handleTouchStartResizeTop}
-            className="w-full pt-2 pb-1 flex items-center justify-center cursor-ns-resize touch-none select-none sm:hidden border-b border-transparent active:border-blue-500/30"
-            title="ใช้นิ้วลากขึ้นหรือลงเพื่อปรับขนาดความสูง"
+            onClick={() => {
+              if (customSize.height && customSize.height > 380) {
+                setCustomSize({ width: null, height: 310 });
+              } else if (customSize.height && customSize.height <= 380) {
+                setCustomSize({ width: null, height: Math.min(window.innerHeight - 80, 680) });
+              } else if (isExpanded) {
+                setIsExpanded(false);
+                setCustomSize({ width: null, height: 310 });
+              } else {
+                setIsExpanded(true);
+                setCustomSize({ width: null, height: Math.min(window.innerHeight - 80, 680) });
+              }
+            }}
+            className="w-full py-2 px-3 flex items-center justify-between cursor-ns-resize touch-none select-none sm:hidden border-b border-slate-200/60 dark:border-slate-800/80 active:bg-blue-500/10 transition-colors"
+            title="แตะเพื่อสลับย่อ/ขยาย หรือใช้นิ้วลากขึ้นลงได้อย่างอิสระ"
           >
-            <div className="w-12 h-1.5 rounded-full bg-slate-300 dark:bg-slate-600 active:bg-blue-500 transition-colors" />
+            <div className="flex items-center gap-1 text-[10px] font-bold text-slate-400">
+              <ChevronDown className="w-3.5 h-3.5" />
+              <span>ย่อจอ</span>
+            </div>
+
+            <div className="flex flex-col items-center gap-0.5">
+              <div className="w-14 h-1.5 rounded-full bg-slate-400/80 dark:bg-slate-500 active:bg-blue-500 transition-colors" />
+              <span className="text-[9px] text-slate-400 font-medium">ใช้นิ้วลากหรือแตะเพื่อปรับขนาด</span>
+            </div>
+
+            <div className="flex items-center gap-1 text-[10px] font-bold text-blue-500">
+              <span>ขยาย</span>
+              <ChevronUp className="w-3.5 h-3.5" />
+            </div>
           </div>
           
           {/* Header (Freely Draggable Handle for PC Mouse & Mobile Touch) */}
@@ -2137,20 +2176,31 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
                 <GripHorizontal className="w-4 h-4 text-blue-500" />
               </div>
 
-              {(customSize.width || customSize.height) && (
-                <button
-                  type="button"
-                  onClick={handleResetSize}
-                  className={`p-1.5 rounded-xl transition-all cursor-pointer ${
-                    isDark 
-                      ? 'bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-cyan-300 border border-slate-700' 
-                      : 'bg-white hover:bg-slate-100 text-slate-600 hover:text-blue-600 border border-slate-200 shadow-xs'
-                  }`}
-                  title="รีเซ็ตขนาดกลับสู่ค่าเริ่มต้น"
-                >
-                  <Minimize2 className="w-3.5 h-3.5" />
-                </button>
-              )}
+              {/* Dedicated Expand / Shrink Toggle Button (Mobile & Desktop) */}
+              <button
+                type="button"
+                onClick={() => {
+                  if (customSize.height && customSize.height > 380) {
+                    setCustomSize({ width: null, height: 310 });
+                  } else if (customSize.height && customSize.height <= 380) {
+                    setCustomSize({ width: null, height: Math.min(window.innerHeight - 80, 680) });
+                  } else {
+                    setIsExpanded(prev => !prev);
+                  }
+                }}
+                className={`p-1.5 rounded-xl border transition-all cursor-pointer ${
+                  isDark 
+                    ? 'bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-cyan-300 border-slate-700' 
+                    : 'bg-white hover:bg-slate-100 text-slate-600 hover:text-blue-600 border border-slate-200 shadow-xs'
+                }`}
+                title="ย่อ / ขยายขนาดหน้าต่าง"
+              >
+                {(customSize.height && customSize.height > 380) || isExpanded ? (
+                  <Minimize2 className="w-4 h-4 text-cyan-400" />
+                ) : (
+                  <Maximize2 className="w-4 h-4 text-blue-500" />
+                )}
+              </button>
 
               {position && (
                 <button

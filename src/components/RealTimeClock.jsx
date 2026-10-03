@@ -51,18 +51,18 @@ export default function RealTimeClock({ theme = 'light' }) {
 
   return (
     <div 
-      className={`inline-flex items-center gap-1.5 px-2 sm:px-2.5 py-1 rounded-xl border text-[11px] sm:text-xs font-mono font-medium shadow-2xs select-none transition-colors ${
+      className={`inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1 rounded-xl border text-[11px] sm:text-xs font-mono font-medium shadow-2xs select-none transition-colors max-w-full shrink-0 ${
         isDark 
           ? 'bg-slate-900/90 border-slate-700 text-slate-200' 
           : 'bg-slate-50 border-slate-200 text-slate-700'
       }`}
       title={`วัน${dayNameFull}ที่ ${date} ${monthNameFull} พ.ศ. ${yearBE} เวลา ${hours}:${minutes}:${seconds} น.`}
     >
-      <div className="flex items-center gap-1 text-blue-500 shrink-0">
+      <div className="hidden sm:flex items-center gap-1 text-blue-500 shrink-0">
         <Calendar className="w-3.5 h-3.5" />
       </div>
 
-      {/* Date display (Full on desktop, compact on mobile) */}
+      {/* Date display (Full on desktop, hidden/compact on mobile) */}
       <div className="flex items-center gap-1 truncate">
         {/* Full Date for XL screens */}
         <span className="hidden xl:inline font-sans font-semibold">
@@ -70,22 +70,22 @@ export default function RealTimeClock({ theme = 'light' }) {
         </span>
 
         {/* Medium Date for MD-LG screens */}
-        <span className="hidden sm:inline xl:hidden font-sans font-semibold">
+        <span className="hidden md:inline xl:hidden font-sans font-semibold">
           {dayNameShort} {date} {monthNameShort} {yearBE}
         </span>
 
-        {/* Compact Date for Mobile */}
-        <span className="inline sm:hidden font-sans font-semibold">
-          {date} {monthNameShort} {yearBEShort}
+        {/* Short Date for SM screens */}
+        <span className="hidden sm:inline md:hidden font-sans font-semibold">
+          {date} {monthNameShort}
         </span>
 
-        <span className="text-slate-400 font-sans">•</span>
+        <span className="hidden sm:inline text-slate-400 font-sans">•</span>
 
         {/* Real-time Digital Clock with Blinking Colon and Ticking Seconds */}
-        <span className="flex items-center font-bold text-blue-600 dark:text-cyan-400">
-          <Clock className="w-3 h-3 mr-0.5 inline shrink-0" />
+        <span className="flex items-center font-bold text-blue-600 dark:text-cyan-400 shrink-0">
+          <Clock className="w-3 h-3 mr-0.5 inline shrink-0 text-blue-500" />
           <span>{hours}:{minutes}</span>
-          <span className="text-[10px] text-slate-400 dark:text-slate-500">:{seconds}</span>
+          <span className="hidden sm:inline text-[10px] text-slate-400 dark:text-slate-500">:{seconds}</span>
           <span className="ml-0.5 text-[10px] font-sans">น.</span>
         </span>
       </div>

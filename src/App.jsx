@@ -1585,7 +1585,7 @@ export default function App() {
   }, []);
 
   return (
-    <div className={`h-screen w-screen flex flex-col font-prompt selection:bg-blue-600 selection:text-white overflow-hidden transition-colors duration-200 ${
+    <div className={`fixed inset-0 h-full w-full flex flex-col font-prompt selection:bg-blue-600 selection:text-white overflow-hidden overscroll-none select-none transition-colors duration-200 ${
       isDark ? 'bg-slate-950 text-slate-100' : 'bg-slate-100 text-slate-800'
     }`}>
       
@@ -2047,98 +2047,96 @@ export default function App() {
         </div>
 
         {/* MOBILE DOCKED WATER LEVEL STRIP (เกณฑ์ระดับน้ำ - อยู่ชิดด้านล่างเหนือเมนู ไม่บังแผนที่ ใช้งานง่ายด้วยนิ้วโป้ง) */}
-        <div className="sm:hidden fixed bottom-[54px] left-2 right-2 z-30 pointer-events-auto select-none">
-          <div className={`px-2.5 py-1.5 rounded-2xl border shadow-lg backdrop-blur-xl flex items-center justify-between gap-1 text-[10px] font-bold ${
+        {/* MOBILE DOCKED WATER LEVEL STRIP (จัดวางเกณฑ์ใหม่ให้เล็กกะทัดรัด ไม่รก ไม่มีคำว่าคู่มือ) */}
+        <div className="sm:hidden fixed bottom-[66px] left-1/2 -translate-x-1/2 z-30 pointer-events-auto select-none">
+          <div className={`px-2 py-1 rounded-full border shadow-md backdrop-blur-xl flex items-center gap-1.5 text-[9.5px] font-bold ${
             isDark 
-              ? 'bg-slate-950/95 border-slate-800 text-slate-200' 
-              : 'bg-white/95 border-slate-200/90 text-slate-800 shadow-slate-300/40'
+              ? 'bg-slate-950/90 border-slate-800 text-slate-300' 
+              : 'bg-white/90 border-slate-200 text-slate-700'
           }`}>
-            <span className="text-[9px] text-slate-400 shrink-0 font-medium">เกณฑ์น้ำ:</span>
-            
             {/* Green: 5-20 cm */}
             <button
               type="button"
               onClick={() => setSeverityFilter(prev => prev === '1' ? 'all' : '1')}
-              className={`px-2 py-0.5 rounded-xl border flex items-center gap-1 cursor-pointer transition-all active:scale-95 ${
+              className={`px-2 py-0.5 rounded-full flex items-center gap-1 cursor-pointer transition-all active:scale-95 ${
                 severityFilter === '1'
-                  ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400 ring-1 ring-emerald-500 font-extrabold'
-                  : 'border-transparent text-emerald-600 dark:text-emerald-400'
+                  ? 'bg-emerald-500 text-white font-extrabold shadow-xs'
+                  : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-emerald-600 dark:text-emerald-400'
               }`}
-              title="กรองดูจุดน้ำท่วมปกติ (5-20 ซม.)"
+              title="5-20 ซม."
             >
-              <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>
-              <span>ปกติ 5-20ซม.</span>
+              <span className={`w-1.5 h-1.5 rounded-full ${severityFilter === '1' ? 'bg-white' : 'bg-emerald-500'}`}></span>
+              <span>5-20ซม.</span>
             </button>
 
-            {/* Orange: 21-50 cm */}
+            {/* Amber: 21-50 cm */}
             <button
               type="button"
               onClick={() => setSeverityFilter(prev => prev === '2' ? 'all' : '2')}
-              className={`px-2 py-0.5 rounded-xl border flex items-center gap-1 cursor-pointer transition-all active:scale-95 ${
+              className={`px-2 py-0.5 rounded-full flex items-center gap-1 cursor-pointer transition-all active:scale-95 ${
                 severityFilter === '2'
-                  ? 'bg-amber-500/20 border-amber-500 text-amber-400 ring-1 ring-amber-500 font-extrabold'
-                  : 'border-transparent text-amber-600 dark:text-amber-400'
+                  ? 'bg-amber-500 text-slate-950 font-extrabold shadow-xs'
+                  : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-amber-600 dark:text-amber-400'
               }`}
-              title="กรองดูจุดน้ำท่วมปานกลาง (21-50 ซม.)"
+              title="21-50 ซม."
             >
-              <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0"></span>
-              <span>เสี่ยง 21-50ซม.</span>
+              <span className={`w-1.5 h-1.5 rounded-full ${severityFilter === '2' ? 'bg-slate-950' : 'bg-amber-500'}`}></span>
+              <span>21-50ซม.</span>
             </button>
 
             {/* Red: >50 cm */}
             <button
               type="button"
               onClick={() => setSeverityFilter(prev => prev === '3' ? 'all' : '3')}
-              className={`px-2 py-0.5 rounded-xl border flex items-center gap-1 cursor-pointer transition-all active:scale-95 ${
+              className={`px-2 py-0.5 rounded-full flex items-center gap-1 cursor-pointer transition-all active:scale-95 ${
                 severityFilter === '3'
-                  ? 'bg-rose-500/20 border-rose-500 text-rose-400 ring-1 ring-rose-500 font-extrabold'
-                  : 'border-transparent text-rose-600 dark:text-rose-400'
+                  ? 'bg-rose-500 text-white font-extrabold shadow-xs'
+                  : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-rose-600 dark:text-rose-400'
               }`}
-              title="กรองดูจุดน้ำท่วมวิกฤต (>50 ซม.)"
+              title=">50 ซม."
             >
-              <span className="w-2 h-2 rounded-full bg-rose-500 shrink-0 animate-pulse"></span>
-              <span>วิกฤต &gt;50ซม.</span>
+              <span className={`w-1.5 h-1.5 rounded-full ${severityFilter === '3' ? 'bg-white' : 'bg-rose-500 animate-pulse'}`}></span>
+              <span>&gt;50ซม.</span>
             </button>
 
-            {severityFilter !== 'all' ? (
+            {severityFilter !== 'all' && (
               <button
                 type="button"
                 onClick={() => setSeverityFilter('all')}
-                className="px-1.5 py-0.5 rounded-lg bg-blue-500 text-white text-[9px] shrink-0 font-bold cursor-pointer active:scale-95"
+                className="px-1.5 py-0.5 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-[9px] font-bold cursor-pointer active:scale-95"
               >
-                ล้าง
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={() => setIsStandardsModalOpen(true)}
-                className="text-slate-400 hover:text-blue-500 text-[9px] shrink-0 px-1 cursor-pointer"
-                title="ดูเกณฑ์มาตรฐานฉบับเต็ม"
-              >
-                คู่มือ
+                ✕
               </button>
             )}
           </div>
         </div>
 
-        {/* FLOATING POINT DETAIL CARD (CLEAN & SENIOR-FRIENDLY & COLLAPSIBLE FOR MOBILE) */}
+        {/* CLICK-OUTSIDE BACKDROP FOR EASY EXIT ON MOBILE */}
         {selectedPoint && (
-          <div className={`absolute bottom-[calc(4.25rem+env(safe-area-inset-bottom,0px))] left-2 right-2 sm:bottom-4 sm:left-auto sm:right-4 z-30 sm:w-[420px] border rounded-3xl shadow-2xl backdrop-blur-2xl smooth-sheet transition-all ${
+          <div 
+            className="fixed inset-0 z-25 bg-black/20 backdrop-blur-[1px] sm:hidden" 
+            onClick={() => setSelectedPoint(null)} 
+          />
+        )}
+
+        {/* FLOATING POINT DETAIL CARD (COMPACT & NON-INTRUSIVE & EASY TO EXIT) */}
+        {selectedPoint && (
+          <div className={`absolute bottom-[calc(4.25rem+env(safe-area-inset-bottom,0px))] left-3 right-3 sm:bottom-4 sm:left-auto sm:right-4 z-30 sm:w-[410px] max-w-md mx-auto border rounded-3xl shadow-2xl backdrop-blur-2xl smooth-sheet transition-all max-h-[42vh] sm:max-h-[78vh] flex flex-col p-3.5 sm:p-4 overflow-y-auto ${
             isDark 
               ? 'bg-slate-900/95 border-slate-700 text-slate-100' 
               : 'bg-white/95 border-slate-200 text-slate-800'
-          } ${isDetailMinimized ? 'p-3 max-h-24' : 'p-4 sm:p-5 max-h-[50vh] sm:max-h-[82vh] overflow-y-auto'}`}>
+          }`}>
 
-            
-            {isDetailMinimized ? (
-              /* MINIMIZED COMPACT 1-LINE BAR FOR MOBILE */
-              <div className="flex items-center justify-between gap-2">
-                <div 
-                  onClick={() => setIsDetailMinimized(false)}
-                  className="flex items-center gap-2 min-w-0 flex-1 cursor-pointer"
-                  title="คลิกเพื่อขยายดูเกจวัดน้ำและรายละเอียด"
-                >
-                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md border shrink-0 ${
+            {/* Header: District + Severity + Name + Close Button */}
+            <div className={`flex items-start justify-between gap-2 pb-2.5 border-b ${isDark ? 'border-slate-800' : 'border-slate-100'}`}>
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md border ${
+                    isDark ? 'bg-blue-950/80 text-blue-300 border-blue-800' : 'bg-blue-50 text-blue-700 border-blue-200'
+                  }`}>
+                    อ.{selectedPoint.district}
+                  </span>
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md border ${
                     selectedPoint.hazardType === 'hail' ? (isDark ? 'bg-cyan-950/80 text-cyan-300 border-cyan-800' : 'bg-cyan-50 text-cyan-700 border-cyan-200') :
                     getFloodLevel(selectedPoint.depthCm) === 3 ? (isDark ? 'bg-rose-950/80 text-rose-300 border-rose-800' : 'bg-rose-50 text-rose-700 border-rose-200') :
                     getFloodLevel(selectedPoint.depthCm) === 2 ? (isDark ? 'bg-amber-950/80 text-amber-300 border-amber-800' : 'bg-amber-50 text-amber-700 border-amber-200') :
@@ -2148,118 +2146,48 @@ export default function App() {
                      getFloodLevel(selectedPoint.depthCm) === 3 ? "🔴 น้ำท่วมวิกฤต (>50 ซม.)" :
                      getFloodLevel(selectedPoint.depthCm) === 2 ? "🟠 น้ำท่วมปานกลาง (21-50 ซม.)" : "🟢 น้ำท่วมปกติ (5-20 ซม.)"}
                   </span>
-                  <span className="font-bold text-xs sm:text-sm truncate text-slate-900 dark:text-white">
-                    {selectedPoint.name}
-                  </span>
-                  <span className="text-xs font-mono font-bold text-blue-500 shrink-0">
-                    {selectedPoint.hazardType === 'hail' ? '🧊 ลูกเห็บ' : `${selectedPoint.depthCm} ซม.`}
-                  </span>
                   {selectedPoint.waterTrend === 'falling' && (
-                    <span className="text-[10px] font-bold px-1.5 py-0.2 rounded-md bg-teal-100 text-teal-800 dark:bg-teal-900/60 dark:text-teal-300 shrink-0">
-                      📉 ลดลง
+                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-teal-50 text-teal-700 border border-teal-300 dark:bg-teal-950/80 dark:text-teal-300 dark:border-teal-800 flex items-center gap-1">
+                      <span>📉 น้ำลดลง</span>
+                    </span>
+                  )}
+                  {selectedPoint.waterTrend === 'rising' && (
+                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-rose-50 text-rose-700 border border-rose-300 dark:bg-rose-950/80 dark:text-rose-300 dark:border-rose-800 flex items-center gap-1">
+                      <span>📈 เฝ้าระวังน้ำขึ้น</span>
                     </span>
                   )}
                 </div>
-
-                <div className="flex items-center gap-1 shrink-0">
-                  <button
-                    type="button"
-                    onClick={() => setIsDetailMinimized(false)}
-                    className={`p-1.5 rounded-xl border transition-all cursor-pointer ${
-                      isDark ? 'bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-200' : 'bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-700'
-                    }`}
-                    title="ขยายดูรายละเอียดและเกจวัดน้ำ"
-                  >
-                    <ChevronUp className="w-4 h-4" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setSelectedPoint(null)}
-                    className={`p-1.5 rounded-xl border transition-all cursor-pointer ${
-                      isDark ? 'bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-400 hover:text-rose-400' : 'bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-500 hover:text-rose-600'
-                    }`}
-                    title="ปิด"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
+                <h3 className={`text-sm sm:text-base font-bold mt-1 leading-snug truncate ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                  {selectedPoint.name}
+                </h3>
               </div>
-            ) : (
-              <>
-                {/* Card Header with Minimize & Close */}
-                <div className={`flex items-start justify-between gap-3 pb-3 border-b ${isDark ? 'border-slate-800' : 'border-slate-200'}`}>
-                  <div>
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      <span className={`text-xs font-bold px-2.5 py-0.5 rounded-md border ${
-                        isDark ? 'bg-blue-950/80 text-blue-300 border-blue-800' : 'bg-blue-50 text-blue-700 border-blue-200'
-                      }`}>
-                        อ.{selectedPoint.district}
-                      </span>
-                      <span className={`text-xs font-bold px-2.5 py-0.5 rounded-md border ${
-                        selectedPoint.hazardType === 'hail' ? (isDark ? 'bg-cyan-950/80 text-cyan-300 border-cyan-800' : 'bg-cyan-50 text-cyan-700 border-cyan-200') :
-                        getFloodLevel(selectedPoint.depthCm) === 3 ? (isDark ? 'bg-rose-950/80 text-rose-300 border-rose-800' : 'bg-rose-50 text-rose-700 border-rose-200') :
-                        getFloodLevel(selectedPoint.depthCm) === 2 ? (isDark ? 'bg-amber-950/80 text-amber-300 border-amber-800' : 'bg-amber-50 text-amber-700 border-amber-200') :
-                        (isDark ? 'bg-emerald-950/80 text-emerald-300 border-emerald-800' : 'bg-emerald-50 text-emerald-700 border-emerald-200')
-                      }`}>
-                        {selectedPoint.hazardType === 'hail' ? `🧊 ลูกเห็บ: ${selectedPoint.hailSizeLabel || 'ลูกเห็บตก'}` :
-                         getFloodLevel(selectedPoint.depthCm) === 3 ? "🔴 น้ำท่วมวิกฤต (>50 ซม.)" :
-                         getFloodLevel(selectedPoint.depthCm) === 2 ? "🟠 น้ำท่วมปานกลาง (21-50 ซม.)" : "🟢 น้ำท่วมปกติ (5-20 ซม.)"}
-                      </span>
-                      {selectedPoint.waterTrend === 'falling' && (
-                        <span className="text-xs font-bold px-2.5 py-0.5 rounded-md border bg-teal-50 text-teal-700 border-teal-300 dark:bg-teal-950/80 dark:text-teal-300 dark:border-teal-800 flex items-center gap-1 shadow-xs">
-                          <span>📉</span>
-                          <span>{selectedPoint.trendText || 'ระดับน้ำกำลังลดลง'}</span>
-                        </span>
-                      )}
-                      {selectedPoint.waterTrend === 'rising' && (
-                        <span className="text-xs font-bold px-2.5 py-0.5 rounded-md border bg-rose-50 text-rose-700 border-rose-300 dark:bg-rose-950/80 dark:text-rose-300 dark:border-rose-800 flex items-center gap-1 shadow-xs">
-                          <span>📈</span>
-                          <span>{selectedPoint.trendText || 'เฝ้าระวังน้ำขึ้น'}</span>
-                        </span>
-                      )}
-                    </div>
-                    <h3 className={`text-base sm:text-lg font-bold mt-1.5 leading-snug ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                      {selectedPoint.name}
-                    </h3>
-                    <p className={`text-xs sm:text-sm mt-0.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{selectedPoint.subdistrict}</p>
-                  </div>
 
-                  <div className="flex items-center gap-1 shrink-0">
-                    <button
-                      type="button"
-                      onClick={() => setIsDetailMinimized(true)}
-                      className={`p-2 rounded-xl transition-all cursor-pointer ${
-                        isDark 
-                          ? 'bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white' 
-                          : 'bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-900'
-                      }`}
-                      title="ย่อหน้าต่างลง (เพื่อให้เห็นแผนที่ชัดขึ้น)"
-                    >
-                      <ChevronDown className="w-5 h-5" />
-                    </button>
-                    <button 
-                      onClick={() => setSelectedPoint(null)}
-                      className={`p-2 rounded-xl transition-all cursor-pointer ${
-                        isDark 
-                          ? 'bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white' 
-                          : 'bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800'
-                      }`}
-                      title="ปิดหน้าต่างข้อมูล"
-                    >
-                      <X className="w-5 h-5" />
-                    </button>
-                  </div>
-                </div>
+              {/* Prominent Easy-to-Tap Close Button */}
+              <button 
+                type="button"
+                onClick={() => setSelectedPoint(null)}
+                className={`p-1.5 rounded-full transition-colors cursor-pointer shrink-0 ${
+                  isDark 
+                    ? 'bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white' 
+                    : 'bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800'
+                }`}
+                title="ปิดหน้าต่างข้อมูล"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
 
-            {/* Citizen Uploaded Photo Preview (If available) */}
+            {/* Citizen Uploaded Photo Preview (Compact & Clean) */}
             {selectedPoint.photoUrl && (
-              <div className="mt-3 rounded-2xl overflow-hidden border border-slate-300 shadow-md">
+              <div className="mt-2.5 rounded-xl overflow-hidden border border-slate-300 dark:border-slate-700 shadow-sm relative">
                 <img 
                   src={selectedPoint.photoUrl} 
                   alt="รูปภาพจากประชาชนรายงาน" 
-                  className="w-full h-44 object-cover" 
+                  className="w-full h-28 object-cover cursor-pointer hover:opacity-95 transition-opacity" 
+                  onClick={() => window.open(selectedPoint.photoUrl, '_blank')}
+                  title="แตะเพื่อดูภาพขนาดเต็ม"
                 />
-                <div className={`p-2 text-[11px] text-center font-semibold ${
+                <div className={`p-1 text-[10px] text-center font-medium ${
                   isDark ? 'bg-slate-800 text-slate-300' : 'bg-slate-100 text-slate-600'
                 }`}>
                   📷 รูปภาพจากประชาชนรายงาน{selectedPoint.reportedAt ? ` • ${selectedPoint.reportedAt}` : ''}
@@ -2267,8 +2195,8 @@ export default function App() {
               </div>
             )}
 
-            {/* Visual Gauge with Standard Waterline & Vehicle Silhouettes */}
-            <div className="mt-3.5">
+            {/* Visual Gauge with Standard Waterline & Sleek Vehicle Silhouettes (Person with 170 CM Badge) */}
+            <div className="mt-2">
               <VisualGauge 
                 depthCm={selectedPoint.depthCm} 
                 level={getFloodLevel(selectedPoint.depthCm)} 
@@ -2277,43 +2205,23 @@ export default function App() {
               />
             </div>
 
-            {/* Fact-based Summary Details: มีแค่สาเหตุตามที่ผู้ใช้กำหนด */}
+            {/* Concise Cause Only (ตามที่ระบุ: มีแค่สาเหตุ ไม่รก) */}
             {selectedPoint.cause && (
-              <div className={`mt-3 p-3 rounded-2xl border text-xs sm:text-sm ${
-                isDark ? 'bg-slate-800/80 border-slate-700' : 'bg-slate-50 border-slate-200'
+              <div className={`mt-2 p-2 px-3 rounded-xl border text-xs leading-relaxed ${
+                isDark ? 'bg-slate-800/60 border-slate-700/80 text-slate-200' : 'bg-slate-50 border-slate-200 text-slate-700'
               }`}>
-                <span className={`block text-xs font-bold ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>สาเหตุ:</span>
-                <span className={`mt-0.5 block leading-relaxed font-semibold ${isDark ? 'text-slate-100' : 'text-slate-900'}`}>{selectedPoint.cause}</span>
+                <span className="font-bold text-slate-400 dark:text-slate-400 mr-1.5">สาเหตุ:</span>
+                <span>{selectedPoint.cause}</span>
               </div>
             )}
 
-            {/* Official Source & Verification Citation */}
-            <div className={`mt-2.5 p-2.5 rounded-xl border text-xs flex flex-wrap items-center justify-between gap-1 ${
-              isDark ? 'bg-slate-800/80 border-slate-700 text-slate-300' : 'bg-slate-50 border-slate-200 text-slate-700'
-            }`}>
-              <div className="flex items-center gap-1.5 min-w-0">
-                <Shield className="w-4 h-4 text-blue-500 shrink-0" />
-                <span className="break-words">ที่มา: <strong className={isDark ? 'text-slate-100' : 'text-slate-900'}>{selectedPoint.source}</strong></span>
-              </div>
-              {selectedPoint.reportedAt && (
-                <span className={`text-[10px] shrink-0 font-medium ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
-                  {selectedPoint.reportedAt}
-                </span>
-              )}
-            </div>
-
             {/* Admin Broadcast & AI Alert Direct Delete Action (Visible ONLY to Logged-in Admin) */}
             {isAdminAuthenticated && (selectedPoint.isAdminBroadcast || selectedPoint.isAiGenerated) && (
-              <div className="mt-3 p-3 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-between gap-2">
-                <div className="min-w-0">
-                  <span className="text-xs font-bold text-amber-600 dark:text-amber-400 flex items-center gap-1">
-                    <Megaphone className="w-3.5 h-3.5 shrink-0" />
-                    <span>ข้อความประกาศ</span>
-                  </span>
-                  <span className="text-[10px] text-slate-500 dark:text-slate-400 block truncate">
-                    สามารถลบประกาศนี้ออกจากแผนที่ได้
-                  </span>
-                </div>
+              <div className="mt-2.5 p-2 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-between gap-2">
+                <span className="text-xs font-bold text-amber-600 dark:text-amber-400 flex items-center gap-1">
+                  <Megaphone className="w-3.5 h-3.5 shrink-0" />
+                  <span>ประกาศฉุกเฉิน</span>
+                </span>
                 <button
                   type="button"
                   onClick={() => {
@@ -2321,42 +2229,31 @@ export default function App() {
                       handleRejectReport(selectedPoint.id);
                     }
                   }}
-                  className="px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold transition-all shadow-md shadow-rose-600/25 flex items-center gap-1 shrink-0 cursor-pointer"
+                  className="px-2.5 py-1 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold transition-all flex items-center gap-1 cursor-pointer"
                   title="ลบข้อความประกาศนี้"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
-                  <span>ลบประกาศ</span>
+                  <span>ลบ</span>
                 </button>
               </div>
             )}
 
-            {/* Senior-Friendly Action Buttons */}
-            <div className="mt-3.5 grid grid-cols-2 gap-2.5">
-              <button
-                onClick={() => setIsStandardsModalOpen(true)}
-                className={`py-3 px-3 rounded-2xl text-xs sm:text-sm font-semibold border flex items-center justify-center gap-2 transition-all cursor-pointer shadow-sm ${
-                  isDark 
-                    ? 'bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700' 
-                    : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200'
-                }`}
-              >
-                <BookOpen className="w-4 h-4 text-blue-500" />
-                <span>เกณฑ์น้ำ ปภ.</span>
-              </button>
+            {/* Quick Exit Button at Bottom of Card */}
+            <button
+              type="button"
+              onClick={() => setSelectedPoint(null)}
+              className={`w-full mt-2.5 py-2 rounded-xl border text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer ${
+                isDark 
+                  ? 'border-slate-800 hover:bg-slate-800 text-slate-400 hover:text-white' 
+                  : 'border-slate-200 hover:bg-slate-100 text-slate-500 hover:text-slate-800'
+              }`}
+            >
+              <X className="w-3.5 h-3.5" />
+              <span>ปิดหน้าต่าง</span>
+            </button>
 
-              <a 
-                href={`tel:${selectedPoint.phone.replace(/-/g, '')}`}
-                className="py-3 px-3 rounded-2xl bg-rose-600 hover:bg-rose-500 text-white text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition-all text-center cursor-pointer shadow-md shadow-rose-600/30"
-              >
-                <Phone className="w-4 h-4" />
-                <span>โทรสายด่วน</span>
-              </a>
-            </div>
-          </>
+          </div>
         )}
-
-      </div>
-    )}
 
       </main>
 

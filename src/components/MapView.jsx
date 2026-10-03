@@ -205,6 +205,11 @@ export default function MapView({
           transform: scale(1.22) !important;
           z-index: 9999 !important;
         }
+        .outside-province-mask {
+          filter: drop-shadow(0 0 24px rgba(2, 6, 23, 0.98));
+          backdrop-filter: blur(5px);
+          -webkit-backdrop-filter: blur(5px);
+        }
       `;
       document.head.appendChild(styleEl);
     }
@@ -286,11 +291,19 @@ export default function MapView({
     // Set seamless background color to avoid grey flashing when zooming
     mapContainerRef.current.style.backgroundColor = isDark ? '#0b132b' : '#e6ecf2';
 
+    // Samut Prakan Boundary Bounds: locks pan & zoom strictly to Samut Prakan
+    const SAMUT_PRAKAN_BOUNDS_RESTRICT = [
+      [13.4100, 100.3800], // Southwest
+      [13.7800, 100.9800]  // Northeast
+    ];
+
     const map = L.map(mapContainerRef.current, {
       center: [13.6000, 100.6500], // Samut Prakan Center
       zoom: 11,
-      minZoom: 9,
+      minZoom: 10,
       maxZoom: 19,
+      maxBounds: SAMUT_PRAKAN_BOUNDS_RESTRICT,
+      maxBoundsViscosity: 1.0,
       zoomControl: false,
       preferCanvas: true,
       zoomAnimation: true,
@@ -360,17 +373,17 @@ export default function MapView({
       maskLayerRef.current = null;
     }
 
-    const maskFillColor = (isDark || mapStyle === 'google-satellite') ? '#020617' : '#1e293b';
-    const maskFillOpacity = (isDark || mapStyle === 'google-satellite') ? 0.32 : 0.16;
+    const maskFillColor = '#020617';
+    const maskFillOpacity = (isDark || mapStyle === 'google-satellite') ? 0.90 : 0.84;
 
     maskLayerRef.current = L.geoJSON(SAMUT_PRAKAN_MASK_GEOJSON, {
       pane: 'provinceMaskPane',
       style: {
         fillColor: maskFillColor,
         fillOpacity: maskFillOpacity,
-        color: '#0284c7',
-        weight: 2,
-        opacity: 0.8,
+        color: '#38bdf8',
+        weight: 2.5,
+        opacity: 0.95,
         className: 'outside-province-mask'
       },
       interactive: false
@@ -548,25 +561,30 @@ export default function MapView({
 
       const marker = L.marker([point.lat, point.lng], { icon: customIcon }).addTo(map);
 
-      marker.bindPopup(buildPopupHtml(point, false), {
-        className: 'custom-leaflet-popup',
-        closeButton: true,
-        autoPan: true
-      });
+      if (!isMobile) {
+        marker.bindPopup(buildPopupHtml(point, false), {
+          className: 'custom-leaflet-popup',
+          closeButton: true,
+          autoPan: true
+        });
 
-      marker.on('popupopen', () => {
-        const btn = document.getElementById(`pg-popup-btn-${point.id}`);
-        if (btn) {
-          btn.onclick = () => {
-            onSelectPoint(point);
-            map.closePopup();
-          };
-        }
-      });
+        marker.on('popupopen', () => {
+          const btn = document.getElementById(`pg-popup-btn-${point.id}`);
+          if (btn) {
+            btn.onclick = () => {
+              onSelectPoint(point);
+              map.closePopup();
+            };
+          }
+        });
+      }
 
       marker.on('click', () => {
         lastFlyToTimeRef.current = Date.now();
         onSelectPoint(point);
+        if (isMobile && map) {
+          map.closePopup();
+        }
       });
 
       markersRef.current.push(marker);
@@ -603,25 +621,30 @@ export default function MapView({
 
       const marker = L.marker([report.lat, report.lng], { icon: customIcon }).addTo(map);
 
-      marker.bindPopup(buildPopupHtml(report, true), {
-        className: 'custom-leaflet-popup',
-        closeButton: true,
-        autoPan: true
-      });
+      if (!isMobile) {
+        marker.bindPopup(buildPopupHtml(report, true), {
+          className: 'custom-leaflet-popup',
+          closeButton: true,
+          autoPan: true
+        });
 
-      marker.on('popupopen', () => {
-        const btn = document.getElementById(`pg-popup-btn-${report.id}`);
-        if (btn) {
-          btn.onclick = () => {
-            onSelectPoint(report);
-            map.closePopup();
-          };
-        }
-      });
+        marker.on('popupopen', () => {
+          const btn = document.getElementById(`pg-popup-btn-${report.id}`);
+          if (btn) {
+            btn.onclick = () => {
+              onSelectPoint(report);
+              map.closePopup();
+            };
+          }
+        });
+      }
 
       marker.on('click', () => {
         lastFlyToTimeRef.current = Date.now();
         onSelectPoint(report);
+        if (isMobile && map) {
+          map.closePopup();
+        }
       });
 
       citizenMarkersRef.current.push(marker);

@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="th" class="scroll-smooth">
+<html lang="th" class="h-full w-full overflow-hidden select-none overscroll-none">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2300f0ff'><path d='M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z'/></svg>" />
@@ -18,9 +18,24 @@
     
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+    <style>
+      html, body, #root {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        overscroll-behavior: none;
+        -webkit-overflow-scrolling: auto;
+      }
+    </style>
   </head>
-  <body class="bg-slate-900 text-slate-100 font-prompt antialiased selection:bg-blue-600 selection:text-white">
-    <div id="root">
+  <body class="h-full w-full fixed inset-0 overflow-hidden select-none overscroll-none bg-slate-900 text-slate-100 font-prompt antialiased selection:bg-blue-600 selection:text-white">
+    <div id="root" class="h-full w-full fixed inset-0 overflow-hidden">
       <!-- Pre-rendered Updating & Initial Loading Screen (Prevents White Screen during Deployments / Asset Loading) -->
       <div id="prakanguard-splash-loader" style="position: fixed; inset: 0; z-index: 99999; display: flex; flex-direction: column; align-items: center; justify-content: center; background: radial-gradient(circle at 50% 35%, #0f2744 0%, #071224 55%, #030712 100%); color: #f8fafc; font-family: 'Prompt', -apple-system, BlinkMacSystemFont, sans-serif; padding: 24px; text-align: center; box-sizing: border-box;">
         

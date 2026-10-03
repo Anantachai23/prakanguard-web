@@ -520,11 +520,11 @@ export function sendVisitorTelemetry(district = null, customDevice = null, activ
     const deviceModel = customDevice || getDetailedDeviceInfo();
 
     // Determine district status as requested by user
-    let finalDistrict = 'ไม่ได้เปิด GPS';
-    if (!district || district === 'none' || district === 'no_gps') {
-      finalDistrict = 'ไม่ได้เปิด GPS';
-    } else if (district === 'outside' || district.includes('นอก')) {
-      finalDistrict = 'ไม่ได้อยู่ในพื้นที่จังหวัดสมุทรปราการ';
+    let finalDistrict = 'ปิด GPS';
+    if (!district || district === 'none' || district === 'no_gps' || district === 'ปิด GPS') {
+      finalDistrict = 'ปิด GPS';
+    } else if (district === 'outside' || district.includes('นอก') || district.includes('ไม่ได้อยู่')) {
+      finalDistrict = 'ไม่ได้อยู่สมุทรปราการ';
     } else {
       finalDistrict = district.startsWith('อ.') ? district : `อ.${district.replace('เมืองสมุทรปราการ', 'เมือง')}`;
     }

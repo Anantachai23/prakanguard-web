@@ -225,14 +225,6 @@
           <span id="badgeUnreadFeedback" class="px-2 py-0.5 rounded-full text-xs font-bold bg-amber-500 text-slate-900">0</span>
         </button>
 
-        <button onclick="switchTab('map')" id="nav-map" class="nav-btn w-full flex items-center justify-between px-3 py-2.5 rounded-2xl text-sm font-semibold transition text-slate-300 hover:bg-slate-800/70 hover:text-white">
-          <div class="flex items-center gap-3">
-            <i data-lucide="map" class="w-4 h-4 text-indigo-400"></i>
-            <span>แผนที่สถานการณ์สด</span>
-          </div>
-          <span class="text-[10px] text-slate-400">GIS 6 อำเภอ</span>
-        </button>
-
         <button onclick="switchTab('broadcast')" id="nav-broadcast" class="nav-btn w-full flex items-center justify-between px-3 py-2.5 rounded-2xl text-sm font-semibold transition text-slate-300 hover:bg-slate-800/70 hover:text-white">
           <div class="flex items-center gap-3">
             <i data-lucide="megaphone" class="w-4 h-4 text-purple-400"></i>
@@ -306,10 +298,6 @@
         <i data-lucide="message-square" class="w-5 h-5 text-amber-400"></i>
         <span>ข้อเสนอ</span>
         <span id="mobileBadgeFeedback" class="absolute -top-1 right-1 w-4 h-4 bg-amber-500 text-slate-900 rounded-full text-[9px] flex items-center justify-center font-bold">0</span>
-      </button>
-      <button onclick="switchTab('map')" class="flex flex-col items-center gap-1 text-[10px] text-slate-400 hover:text-white p-1">
-        <i data-lucide="map" class="w-5 h-5 text-indigo-400"></i>
-        <span>แผนที่</span>
       </button>
     </nav>
 
@@ -789,54 +777,6 @@
           <p class="text-xs text-slate-500 mt-1">ข้อคิดเห็นจากประชาชนจะถูกจัดเก็บและแสดงผลที่นี่ทั้งหมด</p>
         </div>
       </section>
-
-      <!-- ================= SECTION 5: LIVE GEOSPATIAL MAP ================= -->
-      <section id="view-map" class="hidden space-y-4">
-        <div class="bg-slate-900/90 border border-slate-800 rounded-3xl p-4 shadow-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div>
-            <h2 class="text-base font-bold text-white flex items-center gap-2">
-              <i data-lucide="map" class="w-5 h-5 text-indigo-400"></i>
-              แผนที่พิกัดน้ำท่วมและรายงานสด จังหวัดสมุทรปราการ
-            </h2>
-            <p class="text-xs text-slate-400">คลิกที่หมุดบนแผนที่เพื่อดูข้อมูลละเอียดและจัดการสถานะ</p>
-          </div>
-
-          <div class="flex items-center gap-2 flex-wrap">
-            <span class="text-xs text-slate-400 flex items-center gap-1.5 mr-1">
-              <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> 5-20 ซม.
-              <span class="w-2.5 h-2.5 rounded-full bg-amber-500 ml-1"></span> 21-50 ซม.
-              <span class="w-2.5 h-2.5 rounded-full bg-rose-500 ml-1"></span> &gt;50 ซม.
-              <span class="w-2.5 h-2.5 rounded-full bg-cyan-400 ml-1"></span> ลูกเห็บ
-            </span>
-            <!-- Tile Style Switcher (matching main website) -->
-            <div class="flex items-center gap-0.5 bg-slate-800/80 border border-slate-700 rounded-xl p-0.5 text-xs">
-              <button id="adminMapBtn_google-roadmap" onclick="switchAdminMapStyle('google-roadmap')"
-                class="px-2.5 py-1 rounded-lg font-medium transition-all cursor-pointer flex items-center gap-1 bg-blue-600 text-white"
-                title="แผนที่ทางหลวง (ภาษาไทย)">
-                🗺️ <span>ทางหลวง</span>
-              </button>
-              <button id="adminMapBtn_google-satellite" onclick="switchAdminMapStyle('google-satellite')"
-                class="px-2.5 py-1 rounded-lg font-medium transition-all cursor-pointer flex items-center gap-1 text-slate-400 hover:text-slate-100 hover:bg-slate-700"
-                title="ภาพถ่ายดาวเทียม">
-                🛰️ <span>ดาวเทียม</span>
-              </button>
-              <button id="adminMapBtn_google-terrain" onclick="switchAdminMapStyle('google-terrain')"
-                class="px-2.5 py-1 rounded-lg font-medium transition-all cursor-pointer flex items-center gap-1 text-slate-400 hover:text-slate-100 hover:bg-slate-700"
-                title="แผนที่ภูมิประเทศ">
-                ⛰️ <span>ภูมิประเทศ</span>
-              </button>
-            </div>
-            <button onclick="resetMapCenter()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-xs font-semibold rounded-xl border border-slate-700 text-slate-200 transition">
-              รวมศูนย์สมุทรปราการ
-            </button>
-          </div>
-        </div>
-
-        <div class="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl h-[560px] relative">
-          <div id="adminLeafletMap" class="w-full h-full z-10"></div>
-        </div>
-      </section>
-
 
       <!-- ================= SECTION 6: EMERGENCY BROADCAST ================= -->
       <section id="view-broadcast" class="hidden space-y-6">
@@ -2029,13 +1969,13 @@
       tbody.innerHTML = sessions.map(s => {
         const d = (s.district || '').trim();
         let districtBadge = '';
-        if (!d || d === 'ไม่ได้เปิด GPS' || d === 'none' || d === 'no_gps') {
+        if (!d || d === 'ปิด GPS' || d === 'ไม่ได้เปิด GPS' || d === 'none' || d === 'no_gps') {
           districtBadge = `<span class="px-2.5 py-1 rounded-xl text-xs font-semibold bg-slate-800 text-slate-300 border border-slate-700 flex items-center gap-1.5 w-max">
-            <span>⚠️</span> ไม่ได้เปิด GPS
+            <span>⚠️</span> ปิด GPS
           </span>`;
-        } else if (d === 'ไม่ได้อยู่ในพื้นที่จังหวัดสมุทรปราการ' || d.includes('นอก')) {
+        } else if (d === 'ไม่ได้อยู่สมุทรปราการ' || d.includes('ไม่ได้อยู่') || d.includes('นอก')) {
           districtBadge = `<span class="px-2.5 py-1 rounded-xl text-xs font-bold bg-rose-500/20 text-rose-300 border border-rose-500/40 flex items-center gap-1.5 w-max">
-            <span>🌐</span> ไม่ได้อยู่ในพื้นที่จังหวัดสมุทรปราการ
+            <span>🌐</span> ไม่ได้อยู่สมุทรปราการ
           </span>`;
         } else {
           const cleanName = d.replace(/^อ\./, '').replace('เมืองสมุทรปราการ', 'เมือง');

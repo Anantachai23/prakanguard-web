@@ -84,27 +84,12 @@ export default function MobileBottomNav({
                   <PhoneCall className="w-5 h-5 animate-pulse" />
                 </div>
                 <div>
-                  <span className="text-xs font-bold block text-slate-900 dark:text-white">สายด่วน ปภ.</span>
+                  <span className="text-xs font-bold block text-slate-900 dark:text-white">สายด่วนฉุกเฉิน</span>
                   <span className="text-[11px] text-rose-600 dark:text-rose-400 font-medium">โทรฟรี 1784</span>
                 </div>
               </button>
 
-              {/* 2. Live Updates */}
-              <button
-                type="button"
-                onClick={() => handleMenuAction(onOpenPublicUpdates)}
-                className="p-3.5 rounded-2xl bg-emerald-500/10 hover:bg-emerald-500/15 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 flex items-center gap-3 transition-all active:scale-95 text-left cursor-pointer"
-              >
-                <div className="w-10 h-10 rounded-2xl bg-emerald-500 text-white flex items-center justify-center shrink-0 shadow-md">
-                  <Activity className="w-5 h-5" />
-                </div>
-                <div>
-                  <span className="text-xs font-bold block text-slate-900 dark:text-white">อัปเดตสด</span>
-                  <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">แห้ง / เริ่มท่วม</span>
-                </div>
-              </button>
-
-              {/* 3. Water Standards Guide */}
+              {/* 2. Water Standards Guide */}
               <button
                 type="button"
                 onClick={() => handleMenuAction(onOpenStandards)}
@@ -119,22 +104,22 @@ export default function MobileBottomNav({
                 </div>
               </button>
 
-              {/* 4. Feedback */}
+              {/* 3. Feedback */}
               <button
                 type="button"
                 onClick={() => handleMenuAction(onOpenFeedback)}
-                className="p-3.5 rounded-2xl bg-cyan-500/10 hover:bg-cyan-500/15 border border-cyan-500/30 text-cyan-600 dark:text-cyan-400 flex items-center gap-3 transition-all active:scale-95 text-left cursor-pointer"
+                className="col-span-2 p-3.5 rounded-2xl bg-cyan-500/10 hover:bg-cyan-500/15 border border-cyan-500/30 text-cyan-600 dark:text-cyan-400 flex items-center gap-3 transition-all active:scale-95 text-left cursor-pointer"
               >
                 <div className="w-10 h-10 rounded-2xl bg-cyan-600 text-white flex items-center justify-center shrink-0 shadow-md">
                   <MessageSquare className="w-5 h-5" />
                 </div>
                 <div>
-                  <span className="text-xs font-bold block text-slate-900 dark:text-white">ข้อเสนอแนะ</span>
-                  <span className="text-[11px] text-cyan-600 dark:text-cyan-400 font-medium">ติชม / แนะนำ</span>
+                  <span className="text-xs font-bold block text-slate-900 dark:text-white">ข้อเสนอแนะประชาชน</span>
+                  <span className="text-[11px] text-cyan-600 dark:text-cyan-400 font-medium">ส่งความคิดเห็นและข้อเสนอแนะ</span>
                 </div>
               </button>
 
-              {/* 5. Dark / Light Theme Toggle (Full Width) */}
+              {/* 4. Dark / Light Theme Toggle (Full Width) */}
               <button
                 type="button"
                 onClick={() => handleMenuAction(onToggleTheme)}
@@ -187,18 +172,16 @@ export default function MobileBottomNav({
             <span className="text-xs font-semibold leading-none">พิกัดฉัน</span>
           </button>
 
-          {/* 2. ค้นหา */}
+          {/* 2. อัปเดตสถานการณ์สด */}
           <button
             type="button"
-            onClick={() => onToggleSearch?.()}
+            onClick={() => onOpenPublicUpdates?.()}
             className={`flex-1 flex flex-col items-center justify-center gap-1 rounded-2xl transition-all active:scale-95 cursor-pointer py-1 ${
-              isSearchOpen
-                ? (isDark ? 'text-blue-400 font-bold' : 'text-blue-600 font-bold')
-                : (isDark ? 'text-slate-300 hover:text-blue-400' : 'text-slate-600 hover:text-blue-600')
+              isDark ? 'text-slate-300 hover:text-emerald-400' : 'text-slate-600 hover:text-emerald-600'
             }`}
           >
-            <Search className="w-5 h-5" />
-            <span className="text-xs font-semibold leading-none">ค้นหา</span>
+            <Activity className="w-5 h-5 text-emerald-500" />
+            <span className="text-xs font-semibold leading-none">อัปเดต</span>
           </button>
 
           {/* 3. CENTER HERO — แจ้งน้ำท่วม */}
