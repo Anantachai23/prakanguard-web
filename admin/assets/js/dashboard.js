@@ -1180,6 +1180,7 @@ async function handleDownloadBackup() {
 export function initDashboard() {
   applyTheme(state.theme);
   renderLoginWall();
+  detectCaps().catch(() => {});
 
   // Navigation Click Handlers
   $$('.nav-item').forEach(btn => {

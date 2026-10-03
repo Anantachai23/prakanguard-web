@@ -61,19 +61,34 @@ export function currentAdmin() {
 
 export async function login(username, password) {
   const u = String(username || '').trim().toLowerCase();
+  const p = String(password || '').trim();
   let admin = null;
 
-  if (caps.rpc) {
-    const r = await rpcVerify(u, password).catch(() => ({ error: true }));
-    if (r && r.error) return { ok: false, reason: 'network' };
-    if (r && r.missing) admin = await verifyLocal(u, password);
-    else if (r && r.ok) admin = { key: r.admin_key, label: r.label, username: r.username };
-  } else {
-    admin = await verifyLocal(u, password);
+  // 1. Try Supabase database RPC first (definitive auth source)
+  try {
+    const r = await rpcVerify(u, p);
+    if (r && r.ok) {
+      admin = { key: r.admin_key, label: r.label, username: r.username };
+    }
+  } catch (err) {
+    console.warn('RPC verify attempt failed, trying local fallback:', err);
   }
+
+  // 2. If RPC not verified (e.g. offline/network issue), fallback to local PBKDF2
+  if (!admin) {
+    admin = await verifyLocal(u, p);
+  }
+
   if (!admin) return { ok: false, reason: 'invalid' };
 
-  const ip = await fetchPublicIp();
+  let ip = null;
+  try {
+    ip = await Promise.race([
+      fetchPublicIp(),
+      new Promise((resolve) => setTimeout(() => resolve(null), 1000))
+    ]);
+  } catch (e) {}
+
   const loginId = await recordAdminLogin({
     admin_key: admin.key,
     username: admin.username,
