@@ -144,8 +144,10 @@ export default function Navbar({
               }`}>
                 PrakanGuard
               </span>
-              <span className="text-[9px] px-1.5 py-0.2 rounded-full font-bold bg-blue-600 text-white tracking-wide shrink-0">
-                Official
+              <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-semibold shrink-0 ${
+                isDark ? 'bg-blue-950 text-cyan-300 border border-blue-800' : 'bg-blue-50 text-blue-700 border border-blue-200'
+              }`}>
+                สมุทรปราการ
               </span>
             </div>
 
@@ -153,11 +155,8 @@ export default function Navbar({
             <div className="w-24 xs:w-36 sm:w-48 md:w-56 lg:w-64 overflow-hidden mt-0.5">
               <AutoMarquee speedSeconds={18} gapPx={24} force={true}>
                 <div className="inline-flex items-center gap-2 text-[10px] sm:text-[11px] whitespace-nowrap">
-                  <span className={`font-bold px-1.5 py-0.5 rounded-md ${isDark ? 'bg-blue-900/70 text-cyan-300 ring-1 ring-cyan-700' : 'bg-blue-100 text-blue-700 ring-1 ring-blue-300'}`}>
-                    🆕 v4.0
-                  </span>
-                  <span className={`font-semibold ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>
-                    อัพเดทแพท 4.0 — ระบบเฝ้าระวังน้ำท่วมทางการ จ.สมุทรปราการ • อัปเดตข้อมูลสดทุก 15 วินาที • ลบจุดแห้งอัตโนมัติ • ไอคอนมาตรฐานใหม่ เขียว/เหลือง/แดง • AI Chatbot ทางการ
+                  <span className={`font-medium ${isDark ? 'text-blue-300' : 'text-blue-700'}`}>
+                    ระบบเฝ้าระวังน้ำท่วม จ.สมุทรปราการ • อัปเดตสดทุก 15 วินาที • ตัดจุดน้ำแห้งอัตโนมัติ
                   </span>
                 </div>
               </AutoMarquee>
@@ -259,7 +258,7 @@ export default function Navbar({
               )}
             </button>
 
-            {/* Official Standards Button (แสดงบน iPad และคอมพิวเตอร์) */}
+            {/* Standards Button (แสดงบน iPad และคอมพิวเตอร์) */}
             <button 
               onClick={onOpenStandards}
               className={`hidden md:inline-flex shrink-0 px-2 sm:px-2.5 py-1.5 rounded-xl border text-xs font-semibold items-center gap-1 transition-all cursor-pointer shadow-xs whitespace-nowrap ${
@@ -267,10 +266,10 @@ export default function Navbar({
                   ? 'bg-slate-900 hover:bg-slate-800 text-slate-200 border-slate-700' 
                   : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200'
               }`}
-              title="เกณฑ์วัดระดับน้ำมาตรฐาน ปภ./กรมทางหลวง"
+              title="เกณฑ์วัดระดับน้ำและผลกระทบต่อรถยนต์"
             >
               <BookOpen className="w-3.5 h-3.5 text-blue-500 shrink-0" />
-              <span>เกณฑ์ ปภ.</span>
+              <span>เกณฑ์ระดับน้ำ</span>
             </button>
 
 

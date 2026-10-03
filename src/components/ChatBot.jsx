@@ -1170,21 +1170,20 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
         `📞 แจ้งเหตุด่วน กฟน. สมุทรปราการ โทร. **1130** | แจ้งจับสัตว์มีพิษ/กู้ภัย โทร. **199** ครับ`;
     }
 
-    // E. คำถามเกี่ยวกับการอัปเดตแพทใหม่ 4.0 (Patch 4.0 Official Features)
-    const isPatchQuery = 
-      q.includes("4.0") || 
-      q.includes("แพทช์") || 
-      q.includes("แพทใหม่") || 
-      q.includes("อัพเดทใหม่") || 
-      q.includes("มีอะไรใหม่");
+    // E. ข้อมูลความสามารถของระบบ
+    const isSystemInfoQuery = 
+      q.includes("ทำอะไรได้") || 
+      q.includes("ช่วยอะไรได้") || 
+      q.includes("ระบบนี้คือ") || 
+      q.includes("เกี่ยวกับ");
 
-    if (isPatchQuery) {
-      return `🆕 **สรุปการอัปเกรดระบบ PrakanGuard Patch 4.0 (Official Version):**\n\n` +
-        `• ⏱️ **อัปเดตข้อมูลสดทุก 15 วินาที:** เชื่อมโยงข้อมูลเรดาร์ดาวเทียม เซนเซอร์ และรายงานประชาชนตลอด 24 ชม.\n` +
-        `• 🎯 **ไอคอนจุดน้ำท่วมมาตรฐานใหม่ทั้งจังหวัด:** รวมไอคอนให้สวยงามและเป็นรูปแบบเดียวกัน แตกต่างเฉพาะสีตามความรุนแรง 🟢 เขียว (5-20 ซม.) 🟡 เหลือง (21-50 ซม.) 🔴 แดง (>50 ซม.)\n` +
-        `• 🧹 **ลบจุดน้ำแห้งสนิทออกอัตโนมัติ:** จุดที่ระดับน้ำลดลงจนแห้งหรือผ่านการตรวจสอบแล้ว จะถูกนำออกจากแผนที่ทันทีเพื่อความแม่นยำสูงสุด\n` +
-        `• 📸 **ดูรูปภาพจริงจากจุดรายงานได้ทันที:** จุดที่ประชาชนรายงานและผ่านการอนุมัติจากแอดมิน จะแสดงภาพถ่ายสถานการณ์จริงในหน้าต่างรายละเอียด\n` +
-        `• 🤖 **AI Chatbot ทางการ:** อัปเกรดฐานข้อมูลครอบคลุม 6 อำเภอ สายด่วนฉุกเฉิน และเกณฑ์ความปลอดภัยเต็มรูปแบบครับ`;
+    if (isSystemInfoQuery) {
+      return `ℹ️ **ระบบ PrakanGuard ผู้ช่วยข้อมูลน้ำท่วม จ.สมุทรปราการ:**\n\n` +
+        `• ⏱️ **อัปเดตข้อมูลสดทุก 15 วินาที:** เชื่อมโยงข้อมูลเรดาร์ เซนเซอร์ และรายงานเหตุจากประชาชน\n` +
+        `• 🎯 **แผนที่ติดตามระดับน้ำ:** แสดงจุดเฝ้าระวัง 3 ระดับสี 🟢 เขียว (5-20 ซม.) 🟡 เหลือง (21-50 ซม.) 🔴 แดง (>50 ซม.)\n` +
+        `• 🧹 **ระบบตัดจุดน้ำแห้งอัตโนมัติ:** เมื่อจุดใดน้ำแห้งสนิทแล้ว จะนำออกจากแผนที่ทันที\n` +
+        `• 📸 **ดูภาพถ่ายสถานการณ์จริง:** ตรวจสอบรูปภาพจากจุดที่มีประชาชนรายงานเข้ามา\n` +
+        `• 🤖 **ผู้ช่วย AI ตอบคำถาม:** ให้ข้อมูลเส้นทาง สภาพอากาศ เบอร์โทรฉุกเฉิน และเกณฑ์สัญจรลุยน้ำครับ`;
     }
 
     // ตรวจสอบคำถามเกี่ยวกับฝน / พยากรณ์ / สภาพอากาศ
@@ -1832,21 +1831,18 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
               ? 'bg-slate-900/95 hover:bg-slate-800 text-slate-100 border-slate-700 hover:border-blue-500 shadow-blue-900/30' 
               : 'bg-white hover:bg-slate-50 text-slate-800 border-slate-200 hover:border-blue-400 shadow-blue-500/10'
           }`}
-          title="ศูนย์บริการข้อมูลเส้นทางและน้ำท่วม (ถาม-ตอบอัจฉริยะ)"
+          title="ผู้ช่วยถาม-ตอบข้อมูลน้ำท่วม"
         >
-          <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-600 via-cyan-500 to-teal-400 text-white flex items-center justify-center shadow-md shrink-0">
+          <div className="w-8 h-8 rounded-2xl bg-gradient-to-tr from-blue-600 to-cyan-500 text-white flex items-center justify-center shadow-md shrink-0">
             <MessageSquareText className="w-4 h-4" />
           </div>
           <div className="text-left">
             <div className="flex items-center gap-1.5">
               <span className={`block text-xs sm:text-sm font-bold leading-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>PrakanGuard AI</span>
-              <span className={`text-[9px] px-1.5 py-0.2 rounded font-bold ${
-                isDark ? 'bg-blue-950/80 text-cyan-300 border border-blue-800' : 'bg-blue-50 text-blue-700 border border-blue-200'
-              }`}>v4.0</span>
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
             </div>
-            <span className={`hidden sm:block text-[10px] font-medium ${isDark ? 'text-cyan-400' : 'text-blue-600'}`}>ถามตอบแม่นยำ • ข้อมูลสด 24 ชม.</span>
+            <span className={`hidden sm:block text-[10px] font-medium ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>สอบถามข้อมูลน้ำท่วม 24 ชม.</span>
           </div>
-          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse border border-white ml-0.5 shrink-0"></span>
         </button>
       )}
 
@@ -1969,20 +1965,19 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
             title="กดค้างที่แถบนี้เพื่อลากย้ายหน้าต่าง AI ChatBot ได้อย่างอิสระ"
           >
             <div className="flex items-center space-x-2.5 min-w-0 pointer-events-none">
-              <div className="w-9 h-9 rounded-2xl bg-gradient-to-tr from-blue-600 to-cyan-500 border border-blue-400/30 flex items-center justify-center text-white shadow-md shrink-0">
-                <Sparkles className="w-5 h-5 text-white" />
+              <div className="w-8 h-8 rounded-2xl bg-gradient-to-tr from-blue-600 to-cyan-500 flex items-center justify-center text-white shadow-sm shrink-0">
+                <Sparkles className="w-4 h-4 text-white" />
               </div>
               <div className="min-w-0">
                 <h4 className={`text-xs sm:text-sm font-bold flex items-center gap-1.5 truncate ${
                   isDark ? 'text-white' : 'text-slate-900'
                 }`}>
-                  <span>PrakanGuard AI ศูนย์ข้อมูลอุทกภัย</span>
-                  <span className={`text-[10px] px-1.5 py-0.2 rounded font-bold shrink-0 ${
-                    isDark ? 'bg-blue-950/80 text-cyan-300 border border-blue-800' : 'bg-blue-50 text-blue-700 border border-blue-200'
-                  }`}>v4.0 Official</span>
+                  <span>PrakanGuard AI</span>
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
+                  <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">ออนไลน์</span>
                 </h4>
                 <p className={`text-[11px] truncate ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                  ศูนย์สารสนเทศเตือนภัยน้ำท่วม 6 อำเภอ จ.สมุทรปราการ
+                  ผู้ช่วยข้อมูลน้ำท่วมและเส้นทาง จ.สมุทรปราการ
                 </p>
               </div>
             </div>
@@ -2148,95 +2143,14 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
                 ⚡️ ป้องกันไฟดูด & ตัดไฟ
               </button>
               <button 
-                onClick={() => { if (!chipsHasDraggedRef.current) handleSend("ระบบ PrakanGuard Patch 4.0 มีการอัปเกรดอะไรใหม่บ้าง?"); }}
-                className={`smooth-slider-item px-3 py-1.5 rounded-xl whitespace-nowrap transition-all cursor-pointer font-bold flex items-center gap-1 shrink-0 select-none ${
-                  isDark 
-                    ? 'bg-cyan-950/90 text-cyan-300 border border-cyan-700 hover:bg-cyan-900' 
-                    : 'bg-cyan-50 text-cyan-800 border border-cyan-300 hover:bg-cyan-100'
-                }`}
-              >
-                🆕 อัปเกรดแพท 4.0
-              </button>
-              <button 
-                onClick={() => { if (!chipsHasDraggedRef.current) handleSend("บางฉโลง (บางนา-ตราด กม.18) วันนี้ฝนจะตกไหม และตกช่วงกี่โมง?"); }}
-                className={`smooth-slider-item px-3 py-1.5 rounded-xl whitespace-nowrap transition-all cursor-pointer font-bold flex items-center gap-1 shrink-0 select-none ${
-                  isDark 
-                    ? 'bg-amber-950/90 text-amber-300 border border-amber-700 hover:bg-amber-900' 
-                    : 'bg-amber-50 text-amber-800 border border-amber-300 hover:bg-amber-100'
-                }`}
-              >
-                ⛈️ บางฉโลงวันนี้ฝนตกกี่โมง?
-              </button>
-              <button 
-                onClick={() => { if (!chipsHasDraggedRef.current) handleSend("นิคมบางปูวันนี้ฝนจะตกไหม และตกหนักกี่เปอร์เซ็นต์?"); }}
-                className={`smooth-slider-item px-3 py-1.5 rounded-xl whitespace-nowrap transition-all cursor-pointer font-bold flex items-center gap-1 shrink-0 select-none ${
-                  isDark 
-                    ? 'bg-cyan-950/90 text-cyan-300 border border-cyan-700 hover:bg-cyan-900' 
-                    : 'bg-cyan-50 text-cyan-800 border border-cyan-300 hover:bg-cyan-100'
-                }`}
-              >
-                🌦️ นิคมบางปูฝนจะตกไหม?
-              </button>
-              <button 
-                onClick={() => { if (!chipsHasDraggedRef.current) handleSend("ช่วยย่อและสรุปสั้นๆ ให้หน่อย"); }}
-                className={`smooth-slider-item px-3 py-1.5 rounded-xl whitespace-nowrap transition-all cursor-pointer font-bold flex items-center gap-1 shrink-0 select-none ${
-                  isDark 
-                    ? 'bg-gradient-to-r from-purple-900 to-indigo-900 text-purple-200 border border-purple-700 hover:from-purple-800 hover:to-indigo-800' 
-                    : 'bg-gradient-to-r from-purple-50 to-indigo-50 text-purple-700 border border-purple-300 hover:from-purple-100 hover:to-indigo-100'
-                }`}
-                title="ขอคำตอบแบบย่อสั้น กระชับ ตรงประเด็น"
-              >
-                ⚡️ ย่อ/สรุปสั้นๆ หน่อย
-              </button>
-              <button 
-                onClick={() => { if (!chipsHasDraggedRef.current) handleSend("ซอยทรัพย์บุญชัย มีโอกาสเกิดน้ำท่วมไหม?"); }}
-                className={`smooth-slider-item px-3 py-1.5 rounded-xl whitespace-nowrap transition-all cursor-pointer font-bold flex items-center gap-1 shrink-0 select-none ${
-                  isDark 
-                    ? 'bg-emerald-950/90 text-emerald-300 border border-emerald-700 hover:bg-emerald-900' 
-                    : 'bg-emerald-50 text-emerald-800 border border-emerald-300 hover:bg-emerald-100'
-                }`}
-              >
-                🏡 ซอยทรัพย์บุญชัยท่วมไหม?
-              </button>
-              <button 
-                onClick={() => { if (!chipsHasDraggedRef.current) handleSend("บางฉโลง (ม.หัวเฉียว / บางนา-ตราด กม.18) มีโอกาสเกิดน้ำท่วมไหม?"); }}
-                className={`smooth-slider-item px-3 py-1.5 rounded-xl whitespace-nowrap transition-all cursor-pointer font-bold flex items-center gap-1 shrink-0 select-none ${
-                  isDark 
-                    ? 'bg-amber-950/90 text-amber-300 border border-amber-700 hover:bg-amber-900' 
-                    : 'bg-amber-50 text-amber-800 border border-amber-300 hover:bg-amber-100'
-                }`}
-              >
-                🏫 บางฉโลง (หัวเฉียว) ท่วมไหม?
-              </button>
-              <button 
-                onClick={() => { if (!chipsHasDraggedRef.current) handleSend("ปากน้ำมีโอกาสท่วมไหม และต้องเตรียมตัวอย่างไร?"); }}
+                onClick={() => { if (!chipsHasDraggedRef.current) handleSend("วันนี้ในสมุทรปราการมีโอกาสฝนตกช่วงกี่โมง?"); }}
                 className={`smooth-slider-item px-3 py-1.5 rounded-xl whitespace-nowrap transition-all cursor-pointer font-bold flex items-center gap-1 shrink-0 select-none ${
                   isDark 
                     ? 'bg-blue-950/90 text-cyan-300 border border-blue-700 hover:bg-blue-900' 
                     : 'bg-blue-50 text-blue-700 border border-blue-300 hover:bg-blue-100'
                 }`}
               >
-                📍 ปากน้ำมีโอกาสท่วมไหม?
-              </button>
-              <button 
-                onClick={() => { if (!chipsHasDraggedRef.current) handleSend("อยากทราบว่าวัดด่านมีโอกาสท่วมอีกไหม?"); }}
-                className={`smooth-slider-item px-3 py-1.5 rounded-xl whitespace-nowrap transition-all cursor-pointer font-bold flex items-center gap-1 shrink-0 select-none ${
-                  isDark 
-                    ? 'bg-amber-950/90 text-amber-300 border border-amber-700 hover:bg-amber-900' 
-                    : 'bg-amber-50 text-amber-800 border border-amber-300 hover:bg-amber-100'
-                }`}
-              >
-                🌊 วัดด่านมีโอกาสท่วมอีกไหม?
-              </button>
-              <button 
-                onClick={() => { if (!chipsHasDraggedRef.current) handleSend("วิธีตัดไฟและป้องกันไฟดูดช่วงน้ำท่วมต้องทำอย่างไร?"); }}
-                className={`smooth-slider-item px-3 py-1.5 rounded-xl whitespace-nowrap transition-all cursor-pointer font-bold flex items-center gap-1 shrink-0 select-none ${
-                  isDark 
-                    ? 'bg-yellow-950/90 text-yellow-300 border border-yellow-700 hover:bg-yellow-900' 
-                    : 'bg-yellow-50 text-yellow-800 border border-yellow-300 hover:bg-yellow-100'
-                }`}
-              >
-                ⚡️ ป้องกันไฟดูด & ตัดไฟ
+                🌧️ เวลาฝนตกวันนี้
               </button>
               <button 
                 onClick={() => { if (!chipsHasDraggedRef.current) handleSend("ในสมุทรปราการมีจุดจอดรถที่สูงหรือลานจอดหนีน้ำท่วมที่ไหนบ้าง?"); }}
@@ -2246,127 +2160,7 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
                     : 'bg-indigo-50 text-indigo-800 border border-indigo-300 hover:bg-indigo-100'
                 }`}
               >
-                🅿️ จุดจอดรถที่สูงหนีน้ำ
-              </button>
-              <button 
-                onClick={() => { if (!chipsHasDraggedRef.current) handleSend("รถเก๋งลุยน้ำได้กี่เซนติเมตร และระดับไหนห้ามผ่านเด็ดขาด?"); }}
-                className={`smooth-slider-item px-3 py-1.5 rounded-xl whitespace-nowrap transition-all cursor-pointer font-medium flex items-center gap-1 shrink-0 select-none ${
-                  isDark 
-                    ? 'bg-slate-850 text-slate-300 border border-slate-700 hover:border-blue-400 hover:text-cyan-300' 
-                    : 'bg-white text-slate-700 border border-slate-200 hover:border-blue-400 hover:text-blue-600'
-                }`}
-              >
-                🚗 เกณฑ์รถเก๋งลุยน้ำ
-              </button>
-              <button 
-                onClick={() => { if (!chipsHasDraggedRef.current) handleSend("สัตว์มีพิษที่มักมากับน้ำท่วมมีอะไรบ้าง และวิธีป้องกันงูเข้าบ้าน?"); }}
-                className={`smooth-slider-item px-3 py-1.5 rounded-xl whitespace-nowrap transition-all cursor-pointer font-medium flex items-center gap-1 shrink-0 select-none ${
-                  isDark 
-                    ? 'bg-slate-850 text-slate-300 border border-slate-700 hover:border-blue-400 hover:text-cyan-300' 
-                    : 'bg-white text-slate-700 border border-slate-200 hover:border-blue-400 hover:text-blue-600'
-                }`}
-              >
-                🐍 สัตว์มีพิษช่วงน้ำท่วม
-              </button>
-              <button 
-                onClick={() => { if (!chipsHasDraggedRef.current) handleSend("โรคน้ำกัดเท้าและโรคไข้ฉี่หนู อาการเป็นอย่างไรและรักษายังไง?"); }}
-                className={`smooth-slider-item px-3 py-1.5 rounded-xl whitespace-nowrap transition-all cursor-pointer font-medium flex items-center gap-1 shrink-0 select-none ${
-                  isDark 
-                    ? 'bg-slate-850 text-slate-300 border border-slate-700 hover:border-blue-400 hover:text-cyan-300' 
-                    : 'bg-white text-slate-700 border border-slate-200 hover:border-blue-400 hover:text-blue-600'
-                }`}
-              >
-                💊 โรคน้ำกัดเท้า & ไข้ฉี่หนู
-              </button>
-              <button 
-                onClick={() => { if (!chipsHasDraggedRef.current) handleSend("จัดเตรียมถุงยังชีพฉุกเฉินรับมือน้ำท่วม มีสิ่งของจำเป็นอะไรบ้าง?"); }}
-                className={`smooth-slider-item px-3 py-1.5 rounded-xl whitespace-nowrap transition-all cursor-pointer font-medium flex items-center gap-1 shrink-0 select-none ${
-                  isDark 
-                    ? 'bg-slate-850 text-slate-300 border border-slate-700 hover:border-blue-400 hover:text-cyan-300' 
-                    : 'bg-white text-slate-700 border border-slate-200 hover:border-blue-400 hover:text-blue-600'
-                }`}
-              >
-                🛡️ จัดถุงยังชีพฉุกเฉิน
-              </button>
-              <button 
-                onClick={() => { if (!chipsHasDraggedRef.current) handleSend("วันนี้ฝนจะตกกี่เปอร์เซ็นต์ และคาดการณ์ตกหนักช่วงเวลาไหน?"); }}
-                className={`smooth-slider-item px-3 py-1.5 rounded-xl whitespace-nowrap transition-all cursor-pointer font-medium flex items-center gap-1 shrink-0 select-none ${
-                  isDark 
-                    ? 'bg-slate-850 text-slate-300 border border-slate-700 hover:border-blue-400 hover:text-cyan-300' 
-                    : 'bg-white text-slate-700 border border-slate-200 hover:border-blue-400 hover:text-blue-600'
-                }`}
-              >
-                🌧️ คาดการณ์ฝนตกหนักวันนี้
-              </button>
-              <button 
-                onClick={() => { if (!chipsHasDraggedRef.current) handleSend("สถานการณ์จุดเสี่ยงสำโรงและแบริ่งเป็นอย่างไร?"); }}
-                className={`smooth-slider-item px-3 py-1.5 rounded-xl whitespace-nowrap transition-all cursor-pointer font-medium flex items-center gap-1 shrink-0 select-none ${
-                  isDark 
-                    ? 'bg-slate-850 text-slate-300 border border-slate-700 hover:border-blue-400 hover:text-cyan-300' 
-                    : 'bg-white text-slate-700 border border-slate-200 hover:border-blue-400 hover:text-blue-600'
-                }`}
-              >
-                🚇 สำโรง-แบริ่ง
-              </button>
-              <button 
-                onClick={() => { if (!chipsHasDraggedRef.current) handleSend("นิคมอุตสาหกรรมบางปู เสี่ยงน้ำท่วมไหม?"); }}
-                className={`smooth-slider-item px-3 py-1.5 rounded-xl whitespace-nowrap transition-all cursor-pointer font-medium flex items-center gap-1 shrink-0 select-none ${
-                  isDark 
-                    ? 'bg-slate-850 text-slate-300 border border-slate-700 hover:border-blue-400 hover:text-cyan-300' 
-                    : 'bg-white text-slate-700 border border-slate-200 hover:border-blue-400 hover:text-blue-600'
-                }`}
-              >
-                🏭 นิคมฯ บางปู
-              </button>
-              <button 
-                onClick={() => { if (!chipsHasDraggedRef.current) handleSend("ถนนกิ่งแก้ว และอำเภอบางพลี สภาพการสัญจรเป็นอย่างไร?"); }}
-                className={`smooth-slider-item px-3 py-1.5 rounded-xl whitespace-nowrap transition-all cursor-pointer font-medium flex items-center gap-1 shrink-0 select-none ${
-                  isDark 
-                    ? 'bg-slate-850 text-slate-300 border border-slate-700 hover:border-blue-400 hover:text-cyan-300' 
-                    : 'bg-white text-slate-700 border border-slate-200 hover:border-blue-400 hover:text-blue-600'
-                }`}
-              >
-                ✈️ กิ่งแก้ว-บางพลี
-              </button>
-              <button 
-                onClick={() => { if (!chipsHasDraggedRef.current) handleSend("ท่าน้ำพระประแดง และถนนปู่เจ้าสมิงพราย มีน้ำท่วมไหม?"); }}
-                className={`smooth-slider-item px-3 py-1.5 rounded-xl whitespace-nowrap transition-all cursor-pointer font-medium flex items-center gap-1 shrink-0 select-none ${
-                  isDark 
-                    ? 'bg-slate-850 text-slate-300 border border-slate-700 hover:border-blue-400 hover:text-cyan-300' 
-                    : 'bg-white text-slate-700 border border-slate-200 hover:border-blue-400 hover:text-blue-600'
-                }`}
-              >
-                🚢 พระประแดง-ปู่เจ้า
-              </button>
-              <button 
-                onClick={() => { if (!chipsHasDraggedRef.current) handleSend("น้ำทะเลหนุนสถานีป้อมพระจุลฯ ส่งผลกระทบพื้นที่ไหนบ้าง?"); }}
-                className={`smooth-slider-item px-3 py-1.5 rounded-xl whitespace-nowrap transition-all cursor-pointer font-medium flex items-center gap-1 shrink-0 select-none ${
-                  isDark 
-                    ? 'bg-slate-850 text-slate-300 border border-slate-700 hover:border-blue-400 hover:text-cyan-300' 
-                    : 'bg-white text-slate-700 border border-slate-200 hover:border-blue-400 hover:text-blue-600'
-                }`}
-              >
-                🌊 น้ำทะเลหนุนป้อมพระจุลฯ
-              </button>
-              <button 
-                onClick={() => { if (!chipsHasDraggedRef.current) handleSend("ตลาดคลองด่าน และอำเภอบางบ่อ เสี่ยงน้ำท่วมไหม?"); }}
-                className={`smooth-slider-item px-3 py-1.5 rounded-xl whitespace-nowrap transition-all cursor-pointer font-medium flex items-center gap-1 shrink-0 select-none ${
-                  isDark 
-                    ? 'bg-slate-850 text-slate-300 border border-slate-700 hover:border-blue-400 hover:text-cyan-300' 
-                    : 'bg-white text-slate-700 border border-slate-200 hover:border-blue-400 hover:text-blue-600'
-                }`}
-              >
-                🌊 คลองด่าน-บางบ่อ
-              </button>
-              <button 
-                onClick={() => { if (!chipsHasDraggedRef.current) handleSend("ขอหมายเลขโทรศัพท์สายด่วนฉุกเฉินและหน่วยกู้ภัยในสมุทรปราการ"); }}
-                className={`smooth-slider-item px-3 py-1.5 rounded-xl whitespace-nowrap transition-all cursor-pointer font-medium flex items-center gap-1 shrink-0 select-none ${
-                  isDark 
-                    ? 'bg-rose-950/80 text-rose-300 border border-rose-800 hover:bg-rose-900/60' 
-                    : 'bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100'
-                }`}
-              >
-                📞 สายด่วน ปภ. 24 ชม.
+                🅿️ จุดจอดรถหนีน้ำ
               </button>
             </div>
 

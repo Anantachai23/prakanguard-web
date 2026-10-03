@@ -173,7 +173,7 @@ export default function PublicUpdatesModal({
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping shrink-0" title="ระบบออนไลน์ตลอด 24 ชม."></span>
               </div>
               <p className={`text-[10px] sm:text-[11px] leading-tight mt-0.5 line-clamp-1 sm:line-clamp-none ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                ระบบเฝ้าระวังอัตโนมัติ • อ้างอิงหน่วยงานทางการ • ปลดจุดน้ำแห้งทันที
+                ระบบเฝ้าระวังอัตโนมัติ • ข้อมูลสดตลอด 24 ชม. • ตัดจุดน้ำแห้งทันที
               </p>
             </div>
           </div>
@@ -202,7 +202,7 @@ export default function PublicUpdatesModal({
             </div>
             <p className={`text-[11px] flex items-center gap-1.5 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-              <span><strong>ความถี่การซิงก์:</strong> ตรวจสอบและดึงข้อมูลโทรมาตรสดจากหน่วยงานทางการอัตโนมัติทุก 30 วินาที</span>
+              <span><strong>ความถี่การซิงก์:</strong> ตรวจสอบและดึงข้อมูลสดอัตโนมัติทุก 15 วินาที</span>
             </p>
           </div>
 
@@ -214,7 +214,7 @@ export default function PublicUpdatesModal({
                 ? 'bg-blue-600 hover:bg-blue-500 text-white' 
                 : 'bg-blue-600 hover:bg-blue-700 text-white shadow-blue-500/20'
             } ${isRefreshing ? 'opacity-60 cursor-wait' : ''}`}
-            title="รีเฟรชข้อมูลล่าสุดจากหน่วยงานทางการทันที"
+            title="รีเฟรชข้อมูลสดทันที"
           >
             <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
             <span>{isRefreshing ? 'กำลังดึงข้อมูลสด...' : 'รีเฟรชข้อมูลสด'}</span>
@@ -408,7 +408,7 @@ export default function PublicUpdatesModal({
                   isDark ? 'text-indigo-300' : 'text-indigo-900'
                 }`}>
                   <ShieldCheck className="w-4 h-4 text-indigo-500 shrink-0" />
-                  <span>หน่วยงานและแหล่งข้อมูลอ้างอิงทางการที่เชื่อมต่อสด (Verified Sources)</span>
+                  <span>แหล่งข้อมูลอ้างอิงและเรดาร์สด (Verified Sources)</span>
                 </h4>
                 <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold border shrink-0 w-fit ${
                   isDark ? 'bg-indigo-950/80 text-indigo-300 border-indigo-800' : 'bg-indigo-50 text-indigo-700 border border-indigo-200'

@@ -509,11 +509,6 @@ export default function App() {
       return false;
     }
   });
-  const [showPatchBanner, setShowPatchBanner] = useState(true);
-  useEffect(() => {
-    const timer = setTimeout(() => setShowPatchBanner(false), 5000);
-    return () => clearTimeout(timer);
-  }, []);
   const [latestUpdateNotification, setLatestUpdateNotification] = useState(null);
   const [adminAlertToast, setAdminAlertToast] = useState(null);
 
@@ -614,13 +609,7 @@ export default function App() {
     window.addEventListener('touchend', handlePointerUp);
   };
 
-  // Auto-dismiss initial patch update banner after 20s
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setShowPatchBanner(false);
-    }, 20000);
-    return () => clearTimeout(timer);
-  }, []);
+
 
   // 24/7 Official Hydro-Meteorological Telemetry Sync (TMD, Navy Hydrographic Dept, DDPM)
   const [telemetrySyncStatus, setTelemetrySyncStatus] = useState({
@@ -1559,7 +1548,6 @@ export default function App() {
 
           // แสดง toast เฉพาะตอนผู้ใช้กดปุ่ม GPS เอง (ตอนเปิดเว็บไม่ต้องเด้ง เพื่อไม่ให้รก)
           if (!silent) {
-            setShowPatchBanner(false);
             setLatestUpdateNotification(`📍 คุณอยู่ที่ ${districtLabel} จ.สมุทรปราการ`);
             setTimeout(() => setLatestUpdateNotification(null), 5000);
           }
@@ -1663,23 +1651,7 @@ export default function App() {
           </div>
         )}
 
-        {/* v4.0 Patch Banner — ข้อความสั้นบรรทัดเดียว ไม่ซ้อนกับแจ้งเตือนอื่น */}
-        {showPatchBanner && !latestUpdateNotification && !(userLocation && !userDistrict) && (
-          <div className="fixed z-[90] pointer-events-auto top-[62px] sm:top-[72px] left-1/2 -translate-x-1/2 animate-in fade-in slide-in-from-top-3 duration-300">
-            <div className="flex items-center gap-2 pl-3 pr-1.5 py-1.5 rounded-full bg-slate-950/95 text-white border border-amber-400/60 shadow-xl backdrop-blur-xl whitespace-nowrap">
-              <span className="text-sm">🆕</span>
-              <span className="text-xs sm:text-sm font-bold text-amber-300">อัพเดทแพท 4.0</span>
-              <span className="text-xs sm:text-sm font-medium text-slate-100">แม่นยำสูงสุด (Official)</span>
-              <button
-                onClick={() => setShowPatchBanner(false)}
-                className="p-1 hover:bg-white/20 rounded-full text-slate-400 hover:text-white cursor-pointer shrink-0 transition-colors"
-                title="ปิด"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          </div>
-        )}
+
 
         {/* Floating Toast Notification — ขึ้นใต้ Navbar ไม่ซ้อนทับ */}
         {latestUpdateNotification && (

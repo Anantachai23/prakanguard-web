@@ -100,6 +100,39 @@ function createOfficialFloodPin({ level, depthCm, hasPhoto, isSelected, name }) 
   });
 }
 
+// Function to declutter dense/overlapping points on mobile devices
+// When multiple points exist in the same area (within ~850m on mobile), keep ONLY 1 representative point (highest severity / depth)
+function declutterNearbyPoints(pointsList, isMobileView) {
+  if (!pointsList || pointsList.length === 0) return [];
+  const thresholdKm = isMobileView ? 0.85 : 0.15;
+
+  const sorted = [...pointsList].sort((a, b) => {
+    const lvlA = resolveLevel(a);
+    const lvlB = resolveLevel(b);
+    if (lvlB !== lvlA) return lvlB - lvlA;
+    return (Number(b.depthCm) || 0) - (Number(a.depthCm) || 0);
+  });
+
+  const retained = [];
+  for (const pt of sorted) {
+    if (!pt || typeof pt.lat !== 'number' || typeof pt.lng !== 'number' || isNaN(pt.lat) || isNaN(pt.lng)) continue;
+    let isTooClose = false;
+    for (const r of retained) {
+      const dLat = (pt.lat - r.lat) * 111;
+      const dLng = (pt.lng - r.lng) * 111 * Math.cos(pt.lat * Math.PI / 180);
+      const distKm = Math.sqrt(dLat * dLat + dLng * dLng);
+      if (distKm < thresholdKm) {
+        isTooClose = true;
+        break;
+      }
+    }
+    if (!isTooClose) {
+      retained.push(pt);
+    }
+  }
+  return retained;
+}
+
 export default function MapView({ 
   points = [], 
   citizenReports = [],
@@ -118,6 +151,16 @@ export default function MapView({
   isTopPanelCollapsed = false
 }) {
   const isDark = theme === 'dark';
+  const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth < 768);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(typeof window !== 'undefined' && window.innerWidth < 768);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   const mapContainerRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const tileLayerRef = useRef(null);
@@ -430,8 +473,8 @@ export default function MapView({
     ` : '');
 
     const sourceHtml = isCitizen 
-      ? `<div style="font-size:9.5px;color:#2563eb;font-weight:700;margin-bottom:6px;">👤 รายงานโดยประชาชน (แอดมินยืนยันแล้ว)</div>`
-      : `<div style="font-size:9.5px;color:#64748b;font-weight:600;margin-bottom:6px;">🏢 จุดเฝ้าระวังทางการ จ.สมุทรปราการ</div>`;
+      ? `<div style="font-size:9.5px;color:#2563eb;font-weight:700;margin-bottom:6px;">👤 รายงานจากประชาชน (ยืนยันแล้ว)</div>`
+      : `<div style="font-size:9.5px;color:#64748b;font-weight:600;margin-bottom:6px;">📍 จุดเฝ้าระวัง จ.สมุทรปราการ</div>`;
 
     return `
       <div style="font-family:'Prompt',sans-serif;padding:6px 4px 4px 4px;min-width:210px;max-width:260px;">
@@ -457,7 +500,7 @@ export default function MapView({
     `;
   };
 
-  // 5. Render Official Vulnerability Points (UNIFIED PIN DESIGN)
+  // 5. Render Vulnerability Points (UNIFIED PIN DESIGN, AUTO-DECLUTTER ON MOBILE)
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map) return;
@@ -465,12 +508,12 @@ export default function MapView({
     markersRef.current.forEach(m => map.removeLayer(m));
     markersRef.current = [];
 
-    points.forEach(point => {
+    // Filter out dry/resolved points, then deduplicate nearby points on mobile
+    const activePoints = points.filter(p => !isPointDry(p));
+    const displayPoints = declutterNearbyPoints(activePoints, isMobile);
+
+    displayPoints.forEach(point => {
       if (!point || typeof point.lat !== 'number' || typeof point.lng !== 'number' || isNaN(point.lat) || isNaN(point.lng)) {
-        return;
-      }
-      // Strictly exclude dried up or resolved points
-      if (isPointDry(point)) {
         return;
       }
 
@@ -510,9 +553,9 @@ export default function MapView({
       markersRef.current.push(marker);
       markersByIdRef.current[point.id] = marker;
     });
-  }, [points, selectedPoint, onSelectPoint]);
+  }, [points, selectedPoint, onSelectPoint, isMobile]);
 
-  // 5b. Render Citizen Reports (EXACT SAME PIN DESIGN, STRICT DRY EXCLUSION)
+  // 5b. Render Citizen Reports (EXACT SAME PIN DESIGN, AUTO-DECLUTTER ON MOBILE)
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map) return;
@@ -520,12 +563,12 @@ export default function MapView({
     citizenMarkersRef.current.forEach(m => map.removeLayer(m));
     citizenMarkersRef.current = [];
 
-    citizenReports.forEach(report => {
+    // Filter out dry/resolved reports, then deduplicate nearby points on mobile
+    const activeReports = citizenReports.filter(r => !isPointDry(r));
+    const displayReports = declutterNearbyPoints(activeReports, isMobile);
+
+    displayReports.forEach(report => {
       if (!report || typeof report.lat !== 'number' || typeof report.lng !== 'number' || isNaN(report.lat) || isNaN(report.lng)) {
-        return;
-      }
-      // Strictly exclude dried up or resolved reports
-      if (isPointDry(report)) {
         return;
       }
 
@@ -565,7 +608,7 @@ export default function MapView({
       citizenMarkersRef.current.push(marker);
       markersByIdRef.current[report.id] = marker;
     });
-  }, [citizenReports, selectedPoint, onSelectPoint]);
+  }, [citizenReports, selectedPoint, onSelectPoint, isMobile]);
 
   // 5.5 Render Calm Radar Flood Coverage Circles
   useEffect(() => {
