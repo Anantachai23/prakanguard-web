@@ -28,6 +28,13 @@ import {
 import { INITIAL_FLOOD_POINTS } from '../data/samutPrakanPoints';
 import { FLOOD_STANDARDS } from '../data/floodStandards';
 import { getLiveSamutPrakanWeather } from '../services/weatherService';
+import { 
+  OFFICIAL_EMERGENCY_CONTACTS, 
+  DISTRICT_KNOWLEDGE, 
+  FLOOD_WATER_STANDARDS_OFFICIAL, 
+  FLOOD_SAFETY_TIPS, 
+  FAQS_OFFICIAL 
+} from '../data/chatKnowledgeBase';
 // พจนานุกรมสถานที่ในจังหวัดสมุทรปราการ พร้อมระบบจับคู่คำสะกดผิด/คำพ้องเสียง (Fuzzy Typo Dictionary) และข้อมูลคาดการณ์ฝนเฉพาะจุด
 export const LOCATION_TYPO_DICTIONARY = [
   {
@@ -1048,6 +1055,138 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
     ];
     const wantsShort = shortenKeywords.some(kw => q.includes(kw));
 
+    // A. คำถามเกี่ยวกับข้อมูลสด ณ ปัจจุบัน (Live Flood Points Telemetry)
+    const isLiveFloodQuery = 
+      q.includes("ท่วมที่ไหน") || 
+      q.includes("มีท่วม") || 
+      q.includes("ตรงไหนท่วม") || 
+      q.includes("จุดไหนท่วม") || 
+      q.includes("สถานการณ์น้ำท่วม") || 
+      q.includes("น้ำท่วมตอนนี้") ||
+      q.includes("สรุปสถานการณ์") ||
+      q.includes("ตอนนี้ท่วม") ||
+      q.includes("มีน้ำท่วมไหม") ||
+      q.includes("มีน้ำท่วมมั้ย") ||
+      q.includes("น้ำท่วมกี่จุด");
+
+    if (isLiveFloodQuery) {
+      // คัดกรองจุดที่กำลังท่วมจริง (ไม่แห้ง ไม่ถูกปิดงาน)
+      const activeFloods = points.filter(p => p && !p.isResolved && p.isActive !== false && p.depthCm > 0);
+      
+      if (activeFloods.length === 0) {
+        return `✅ **รายงานสถานการณ์น้ำท่วม จ.สมุทรปราการ (อัปเดตสดทุก 15 วินาที):**\n\n` +
+          `ขณะนี้ในระบบ **ไม่พบจุดน้ำท่วมขังวิกฤตบนผิวจราจร** ในพื้นที่ 6 อำเภอของจังหวัดสมุทรปราการครับ ทุกเส้นทางหลักสัญจรได้ตามปกติ\n\n` +
+          `• 🌡️ สภาพอากาศ: **${weather.weatherDesc || 'ปกติ'}** (อุณหภูมิ ${weather.temp}°C)\n` +
+          `• 🌧️ โอกาสเกิดฝนตกวันนี้: **${rainChance}%** (ช่วงเฝ้าระวัง: ${peakTime})\n\n` +
+          `💡 ประชาชนสามารถติดตามแผนที่สด หรือกดปุ่ม **แจ้ง** ตรงกลางเมนูด้านล่าง หากพบจุดน้ำท่วมในชุมชนของท่านครับ`;
+      }
+
+      // เรียงลำดับจุดที่ลึกที่สุด 5 อันดับแรก
+      const sortedFloods = [...activeFloods].sort((a, b) => (b.depthCm || 0) - (a.depthCm || 0)).slice(0, 5);
+      
+      const listText = sortedFloods.map((p, idx) => {
+        const levelBadge = p.level === 3 ? '🔴 วิกฤต' : (p.level === 2 ? '🟡 ปานกลาง' : '🟢 ปกติ');
+        return `• **${idx + 1}. ${p.name}** (อ.${p.district})\n` +
+          `  - ระดับน้ำ: **${p.depthCm || p.depthRange} ซม.** [${levelBadge}]\n` +
+          `  - การสัญจร: ${p.trafficStatus || 'โปรดใช้ความระมัดระวัง'}`;
+      }).join('\n\n');
+
+      return `🌊 **สรุปรายงานจุดน้ำท่วมขังบนผิวจราจรสด (ทั้งหมด ${activeFloods.length} จุด):**\n\n` +
+        `${listText}\n\n` +
+        `📊 ข้อมูลดึงจากเซนเซอร์ตรวจวัดและรายงานประชาชนที่ผ่านการอนุมัติ อัปเดตสดทุก 15 วินาที\n` +
+        `💡 แตะดูหมุดสีบนแผนที่หลักเพื่อดูพิกัดและภาพถ่ายจริงได้ทันทีครับ`;
+    }
+
+    // B. คำถามเกี่ยวกับสายด่วนและเบอร์โทรฉุกเฉิน (Official Emergency Hotlines)
+    const isEmergencyQuery = 
+      q.includes("เบอร์") || 
+      q.includes("โทร") || 
+      q.includes("สายด่วน") || 
+      q.includes("ฉุกเฉิน") || 
+      q.includes("ขอความช่วยเหลือ") || 
+      q.includes("กู้ภัย") || 
+      q.includes("ดับเพลิง") ||
+      q.includes("แจ้งไฟดับ") ||
+      q.includes("ไฟฟ้ารั่ว") ||
+      q.includes("น้ำประปา");
+
+    if (isEmergencyQuery) {
+      const contactsText = OFFICIAL_EMERGENCY_CONTACTS.map(c => 
+        `• **${c.name}**: โทร. **${c.tel}** (${c.desc})`
+      ).join('\n');
+
+      return `📞 **เบอร์โทรสายด่วนฉุกเฉินและหน่วยงานช่วยเหลือ จ.สมุทรปราการ (24 ชั่วโมง):**\n\n` +
+        `${contactsText}\n\n` +
+        `⚠️ กรณีมีผู้ป่วยติดเตียงหรือต้องการอพยพด่วน โทร. **1784** (ปภ. โทรฟรี) หรือ **1669** (กู้ชีพฉุกเฉิน) ได้ทันทีครับ`;
+    }
+
+    // C. คำถามเกี่ยวกับเกณฑ์มาตรฐานระดับน้ำและยานพาหนะ (Vehicle & Water Standards)
+    const isVehicleStandardQuery = 
+      q.includes("รถเก๋ง") || 
+      q.includes("เก๋ง") || 
+      q.includes("กระบะ") || 
+      q.includes("suv") || 
+      q.includes("มอเตอร์ไซค์") || 
+      q.includes("มอไซค์") || 
+      q.includes("รถบรรทุก") || 
+      q.includes("ลุยน้ำได้กี่") || 
+      q.includes("กี่เซน") || 
+      q.includes("กี่ซม") || 
+      q.includes("ระดับน้ำ");
+
+    if (isVehicleStandardQuery) {
+      return `🚗 **เกณฑ์มาตรฐานระดับน้ำและความปลอดภัยในการขับขี่ (ปภ. / กรมทางหลวง):**\n\n` +
+        `🟢 **ระดับ 1: ท่วมปกติ (5 - 20 ซม.)**\n` +
+        `• มอเตอร์ไซค์และรถเก๋งสัญจรผ่านได้ ขับช้าๆ ไม่เร่งเครื่อง เว้นระยะห่าง\n\n` +
+        `🟡 **ระดับ 2: ท่วมปานกลาง (21 - 50 ซม.)**\n` +
+        `• **รถเก๋งและอีโคคาร์:** เสี่ยงน้ำเข้าท่อไอเสียและห้องเครื่อง ห้ามลุยเกิน 30 ซม. เด็ดขาด!\n` +
+        `• **มอเตอร์ไซค์:** เสี่ยงเครื่องดับสูง แนะนำเลี่ยงเส้นทาง\n` +
+        `• **รถกระบะ / SUV:** ผ่านได้ด้วยความระมัดระวัง ใช้เกียร์ต่ำ L ปิดแอร์ทันที\n\n` +
+        `🔴 **ระดับ 3: ท่วมวิกฤต (มากกว่า 50 ซม.)**\n` +
+        `• **ห้ามรถยนต์และมอเตอร์ไซค์ทุกชนิดผ่านเด็ดขาด!** รถจะลอยน้ำและสูญเสียการควบคุม\n` +
+        `• สัญจรได้เฉพาะรถบรรทุกยกสูง 6 ล้อขึ้นไป หรือเรือกู้ภัย ปภ.\n\n` +
+        `💡 ข้อควรจำสำคัญ: เมื่อเจอน้ำท่วมทาง ให้ **ปิดแอร์ทันที** เพื่อป้องกันพัดลมตีน้ำเข้าเครื่องยนต์ครับ`;
+    }
+
+    // D. คำถามเกี่ยวกับความปลอดภัย ไฟฟ้า สัตว์มีพิษ โรคระบาด
+    const isSafetyQuery = 
+      q.includes("ไฟดูด") || 
+      q.includes("ตัดไฟ") || 
+      q.includes("ปลั๊กไฟ") || 
+      q.includes("สวิตช์ไฟ") || 
+      q.includes("งู") || 
+      q.includes("สัตว์มีพิษ") || 
+      q.includes("ตะขาบ") || 
+      q.includes("ฉี่หนู") || 
+      q.includes("น้ำกัดเท้า");
+
+    if (isSafetyQuery) {
+      const tipsText = FLOOD_SAFETY_TIPS.map(t => 
+        `🛡️ **${t.title}:**\n` + t.tips.map(tip => `  - ${tip}`).join('\n')
+      ).join('\n\n');
+
+      return `⚠️ **ข้อควรระวังเพื่อความปลอดภัยในชีวิตช่วงน้ำท่วม:**\n\n` +
+        `${tipsText}\n\n` +
+        `📞 แจ้งเหตุด่วน กฟน. สมุทรปราการ โทร. **1130** | แจ้งจับสัตว์มีพิษ/กู้ภัย โทร. **199** ครับ`;
+    }
+
+    // E. คำถามเกี่ยวกับการอัปเดตแพทใหม่ 4.0 (Patch 4.0 Official Features)
+    const isPatchQuery = 
+      q.includes("4.0") || 
+      q.includes("แพทช์") || 
+      q.includes("แพทใหม่") || 
+      q.includes("อัพเดทใหม่") || 
+      q.includes("มีอะไรใหม่");
+
+    if (isPatchQuery) {
+      return `🆕 **สรุปการอัปเกรดระบบ PrakanGuard Patch 4.0 (Official Version):**\n\n` +
+        `• ⏱️ **อัปเดตข้อมูลสดทุก 15 วินาที:** เชื่อมโยงข้อมูลเรดาร์ดาวเทียม เซนเซอร์ และรายงานประชาชนตลอด 24 ชม.\n` +
+        `• 🎯 **ไอคอนจุดน้ำท่วมมาตรฐานใหม่ทั้งจังหวัด:** รวมไอคอนให้สวยงามและเป็นรูปแบบเดียวกัน แตกต่างเฉพาะสีตามความรุนแรง 🟢 เขียว (5-20 ซม.) 🟡 เหลือง (21-50 ซม.) 🔴 แดง (>50 ซม.)\n` +
+        `• 🧹 **ลบจุดน้ำแห้งสนิทออกอัตโนมัติ:** จุดที่ระดับน้ำลดลงจนแห้งหรือผ่านการตรวจสอบแล้ว จะถูกนำออกจากแผนที่ทันทีเพื่อความแม่นยำสูงสุด\n` +
+        `• 📸 **ดูรูปภาพจริงจากจุดรายงานได้ทันที:** จุดที่ประชาชนรายงานและผ่านการอนุมัติจากแอดมิน จะแสดงภาพถ่ายสถานการณ์จริงในหน้าต่างรายละเอียด\n` +
+        `• 🤖 **AI Chatbot ทางการ:** อัปเกรดฐานข้อมูลครอบคลุม 6 อำเภอ สายด่วนฉุกเฉิน และเกณฑ์ความปลอดภัยเต็มรูปแบบครับ`;
+    }
+
     // ตรวจสอบคำถามเกี่ยวกับฝน / พยากรณ์ / สภาพอากาศ
     const isRainQuery = 
       q.includes("ฝน") || 
@@ -1686,7 +1825,7 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
-          className={`fixed bottom-[calc(4.25rem+env(safe-area-inset-bottom,0px))] right-2.5 sm:bottom-6 sm:right-6 z-40 px-2.5 sm:px-4 py-1.5 sm:py-3 rounded-xl sm:rounded-2xl font-semibold text-xs sm:text-sm shadow-xl items-center gap-2 border cursor-pointer transition-all hover:scale-105 active:scale-95 backdrop-blur-xl group ${
+          className={`fixed bottom-[calc(7.25rem+env(safe-area-inset-bottom,0px))] right-2.5 sm:bottom-6 sm:right-6 z-40 px-2.5 sm:px-4 py-2 sm:py-3 rounded-2xl font-semibold text-xs sm:text-sm shadow-xl items-center gap-2 border cursor-pointer transition-all hover:scale-105 active:scale-95 backdrop-blur-xl group ${
             isPointSelected ? 'hidden sm:flex' : 'flex'
           } ${
             isDark 
@@ -1695,17 +1834,17 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
           }`}
           title="ศูนย์บริการข้อมูลเส้นทางและน้ำท่วม (ถาม-ตอบอัจฉริยะ)"
         >
-          <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-gradient-to-tr from-blue-600 to-cyan-500 text-white flex items-center justify-center shadow-md shrink-0">
-            <MessageSquareText className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+          <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-600 via-cyan-500 to-teal-400 text-white flex items-center justify-center shadow-md shrink-0">
+            <MessageSquareText className="w-4 h-4" />
           </div>
           <div className="text-left">
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1.5">
               <span className={`block text-xs sm:text-sm font-bold leading-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>PrakanGuard AI</span>
-              <span className={`text-[9px] sm:text-[10px] px-1.5 py-0.2 rounded font-bold ${
-                isDark ? 'bg-emerald-950/80 text-emerald-300 border border-emerald-800' : 'bg-emerald-50 text-emerald-700 border border-emerald-300'
-              }`}>Online</span>
+              <span className={`text-[9px] px-1.5 py-0.2 rounded font-bold ${
+                isDark ? 'bg-blue-950/80 text-cyan-300 border border-blue-800' : 'bg-blue-50 text-blue-700 border border-blue-200'
+              }`}>v4.0</span>
             </div>
-            <span className={`hidden sm:block text-[10px] font-medium ${isDark ? 'text-cyan-400' : 'text-blue-600'}`}>ถามตอบแม่นยำ • พยากรณ์ฝนสด</span>
+            <span className={`hidden sm:block text-[10px] font-medium ${isDark ? 'text-cyan-400' : 'text-blue-600'}`}>ถามตอบแม่นยำ • ข้อมูลสด 24 ชม.</span>
           </div>
           <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse border border-white ml-0.5 shrink-0"></span>
         </button>
@@ -1837,13 +1976,13 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
                 <h4 className={`text-xs sm:text-sm font-bold flex items-center gap-1.5 truncate ${
                   isDark ? 'text-white' : 'text-slate-900'
                 }`}>
-                  <span>PrakanGuard AI สารสนเทศอุทกภัย</span>
+                  <span>PrakanGuard AI ศูนย์ข้อมูลอุทกภัย</span>
                   <span className={`text-[10px] px-1.5 py-0.2 rounded font-bold shrink-0 ${
-                    isDark ? 'bg-emerald-950/80 text-emerald-300 border border-emerald-800' : 'bg-emerald-50 text-emerald-700 border border-emerald-300'
-                  }`}>Online</span>
+                    isDark ? 'bg-blue-950/80 text-cyan-300 border border-blue-800' : 'bg-blue-50 text-blue-700 border border-blue-200'
+                  }`}>v4.0 Official</span>
                 </h4>
                 <p className={`text-[11px] truncate ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                  อ้างอิงประกาศและข้อมูลสาธารณะที่เป็นประโยชน์
+                  ศูนย์สารสนเทศเตือนภัยน้ำท่วม 6 อำเภอ จ.สมุทรปราการ
                 </p>
               </div>
             </div>
@@ -1966,15 +2105,57 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
               className="flex-1 flex items-center gap-1.5 overflow-x-auto smooth-slider no-scrollbar text-xs py-0.5 touch-pan-x cursor-grab active:cursor-grabbing select-none"
             >
               <button 
-                onClick={() => { if (!chipsHasDraggedRef.current) handleSend("คาดการณ์ฝนตกแต่ละสถานที่ในสมุทรปราการ มีที่ไหนตกบ้าง?"); }}
+                onClick={() => { if (!chipsHasDraggedRef.current) handleSend("ตอนนี้ในสมุทรปราการมีน้ำท่วมตรงไหนบ้าง?"); }}
                 className={`smooth-slider-item px-3 py-1.5 rounded-xl whitespace-nowrap transition-all cursor-pointer font-bold flex items-center gap-1 shrink-0 select-none ${
                   isDark 
-                    ? 'bg-gradient-to-r from-blue-900 to-cyan-900 text-cyan-200 border border-cyan-700 hover:from-blue-800 hover:to-cyan-800' 
-                    : 'bg-gradient-to-r from-blue-50 to-cyan-50 text-blue-700 border border-blue-300 hover:from-blue-100 hover:to-cyan-100'
+                    ? 'bg-blue-900/90 text-blue-200 border border-blue-700 hover:bg-blue-800' 
+                    : 'bg-blue-100 text-blue-800 border border-blue-300 hover:bg-blue-200'
                 }`}
-                title="ดูคาดการณ์ฝนตกแยกรายสถานที่และทุกอำเภอในสมุทรปราการ"
+                title="สรุปจุดน้ำท่วมขังบนผิวจราจรสดทั่วจังหวัด"
               >
-                🌧️ คาดการณ์ฝนแต่ละสถานที่
+                🌊 สรุปจุดท่วมสดตอนนี้
+              </button>
+              <button 
+                onClick={() => { if (!chipsHasDraggedRef.current) handleSend("รถเก๋งลุยน้ำได้กี่เซนติเมตร และระดับไหนห้ามผ่านเด็ดขาด?"); }}
+                className={`smooth-slider-item px-3 py-1.5 rounded-xl whitespace-nowrap transition-all cursor-pointer font-bold flex items-center gap-1 shrink-0 select-none ${
+                  isDark 
+                    ? 'bg-amber-950/90 text-amber-300 border border-amber-700 hover:bg-amber-900' 
+                    : 'bg-amber-50 text-amber-800 border border-amber-300 hover:bg-amber-100'
+                }`}
+                title="เกณฑ์ความปลอดภัยของรถยนต์แต่ละรุ่น"
+              >
+                🚗 รถเก๋ง/กระบะลุยน้ำ
+              </button>
+              <button 
+                onClick={() => { if (!chipsHasDraggedRef.current) handleSend("ขอเบอร์โทรศัพท์สายด่วนฉุกเฉินหน่วยงานช่วยเหลือในสมุทรปราการ"); }}
+                className={`smooth-slider-item px-3 py-1.5 rounded-xl whitespace-nowrap transition-all cursor-pointer font-bold flex items-center gap-1 shrink-0 select-none ${
+                  isDark 
+                    ? 'bg-rose-950/90 text-rose-300 border border-rose-700 hover:bg-rose-900' 
+                    : 'bg-rose-50 text-rose-800 border border-rose-300 hover:bg-rose-100'
+                }`}
+                title="เบอร์สายด่วน ปภ. 1784, กู้ชีพ 1669, ไฟฟ้า 1130"
+              >
+                📞 เบอร์โทรฉุกเฉิน 24 ชม.
+              </button>
+              <button 
+                onClick={() => { if (!chipsHasDraggedRef.current) handleSend("วิธีตัดไฟและป้องกันไฟดูดช่วงน้ำท่วมต้องทำอย่างไร?"); }}
+                className={`smooth-slider-item px-3 py-1.5 rounded-xl whitespace-nowrap transition-all cursor-pointer font-bold flex items-center gap-1 shrink-0 select-none ${
+                  isDark 
+                    ? 'bg-yellow-950/90 text-yellow-300 border border-yellow-700 hover:bg-yellow-900' 
+                    : 'bg-yellow-50 text-yellow-800 border border-yellow-300 hover:bg-yellow-100'
+                }`}
+              >
+                ⚡️ ป้องกันไฟดูด & ตัดไฟ
+              </button>
+              <button 
+                onClick={() => { if (!chipsHasDraggedRef.current) handleSend("ระบบ PrakanGuard Patch 4.0 มีการอัปเกรดอะไรใหม่บ้าง?"); }}
+                className={`smooth-slider-item px-3 py-1.5 rounded-xl whitespace-nowrap transition-all cursor-pointer font-bold flex items-center gap-1 shrink-0 select-none ${
+                  isDark 
+                    ? 'bg-cyan-950/90 text-cyan-300 border border-cyan-700 hover:bg-cyan-900' 
+                    : 'bg-cyan-50 text-cyan-800 border border-cyan-300 hover:bg-cyan-100'
+                }`}
+              >
+                🆕 อัปเกรดแพท 4.0
               </button>
               <button 
                 onClick={() => { if (!chipsHasDraggedRef.current) handleSend("บางฉโลง (บางนา-ตราด กม.18) วันนี้ฝนจะตกไหม และตกช่วงกี่โมง?"); }}

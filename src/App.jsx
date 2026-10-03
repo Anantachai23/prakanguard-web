@@ -739,7 +739,7 @@ export default function App() {
     };
 
     executeBackgroundSync();
-    const interval = setInterval(executeBackgroundSync, 30 * 1000); // Heartbeat ซิงก์ข้อมูลสดทุก 30 วินาที ตลอด 24 ชม.
+    const interval = setInterval(executeBackgroundSync, 15 * 1000); // ซิงก์ข้อมูลสภาพอากาศและสถานการณ์สดทุก 15 วินาที ตลอด 24 ชม.
 
     // ซิงก์ทันทีเมื่อผู้ใช้สลับกลับมาที่หน้าแท็บ หรือเมื่ออินเทอร์เน็ตกลับมาเชื่อมต่อ
     const handleVisibilityChange = () => {
@@ -1360,10 +1360,19 @@ export default function App() {
 
   const officialAdvisory = getOfficialAdvisorySummary(points);
 
-  // 1. Official Points shown on Map (filtered by district & severity)
+  // ตรวจสอบจุดที่น้ำแห้งสนิทหรือไม่ท่วมแล้ว เพื่อนำออกจากแผนที่อัตโนมัติ
+  const isPointDryOrResolved = (item) => {
+    if (!item) return true;
+    if (item.isActive === false || item.isResolved === true) return true;
+    if (item.depthCm !== undefined && item.depthCm !== null && !isNaN(Number(item.depthCm)) && Number(item.depthCm) <= 0) return true;
+    if (item.waterTrend === 'dry' || item.status === 'dry' || item.status === 'resolved' || item.isDry === true) return true;
+    return false;
+  };
+
+  // 1. Official Points shown on Map (filtered by district & severity, excludes dried-up points)
   const mapPoints = useMemo(() => {
     return points.filter(point => {
-      if (point.isActive === false || point.isResolved) return false;
+      if (isPointDryOrResolved(point)) return false;
       const matchDistrict = selectedDistrict === "ทั้งหมด" || point.district === selectedDistrict;
       let matchSeverity = true;
       if (severityFilter === "all") {
@@ -1377,10 +1386,10 @@ export default function App() {
     });
   }, [points, selectedDistrict, severityFilter]);
 
-  // 2. Citizen Reports shown on Map (filtered by district & severity, requires explicit Admin Approval)
+  // 2. Citizen Reports shown on Map (requires explicit Admin Approval, excludes dried-up points)
   const mapCitizenReports = useMemo(() => {
     return citizenReports.filter(report => {
-      if (!report || report.isApproved !== true || report.isResolved) return false;
+      if (!report || report.isApproved !== true || isPointDryOrResolved(report)) return false;
       if (report.id && (report.id.includes('test') || report.id.includes('verify') || report.id.startsWith('node-'))) return false;
       const matchDistrict = selectedDistrict === "ทั้งหมด" || report.district === selectedDistrict;
       let matchSeverity = true;
@@ -1395,23 +1404,23 @@ export default function App() {
     });
   }, [citizenReports, selectedDistrict, severityFilter]);
 
-  // 3. Search Results for Official Points (searches ALL districts and severities)
+  // 3. Search Results for Official Points (searches ALL districts and severities, excludes dry)
   const searchResultsOfficial = useMemo(() => {
     if (!searchQuery.trim()) return [];
     return points
       .filter(point => {
-        if (point.isActive === false || point.isResolved) return false;
+        if (isPointDryOrResolved(point)) return false;
         return matchesLocationSearch(point, searchQuery);
       })
       .sort((a, b) => scoreLocationSearch(b, searchQuery) - scoreLocationSearch(a, searchQuery));
   }, [points, searchQuery]);
 
-  // 4. Search Results for Citizen Reports (searches ALL districts and severities)
+  // 4. Search Results for Citizen Reports (searches ALL districts and severities, excludes dry)
   const searchResultsCitizen = useMemo(() => {
     if (!searchQuery.trim()) return [];
     return citizenReports
       .filter(report => {
-        if (!report || report.isApproved !== true || report.isResolved) return false;
+        if (!report || report.isApproved !== true || isPointDryOrResolved(report)) return false;
         if (report.id && (report.id.includes('test') || report.id.includes('verify') || report.id.startsWith('node-'))) return false;
         return matchesLocationSearch(report, searchQuery);
       })
@@ -1654,13 +1663,13 @@ export default function App() {
           </div>
         )}
 
-        {/* v3.0 Patch Banner — ข้อความสั้นบรรทัดเดียว ไม่ซ้อนกับแจ้งเตือนอื่น */}
+        {/* v4.0 Patch Banner — ข้อความสั้นบรรทัดเดียว ไม่ซ้อนกับแจ้งเตือนอื่น */}
         {showPatchBanner && !latestUpdateNotification && !(userLocation && !userDistrict) && (
           <div className="fixed z-[90] pointer-events-auto top-[62px] sm:top-[72px] left-1/2 -translate-x-1/2 animate-in fade-in slide-in-from-top-3 duration-300">
             <div className="flex items-center gap-2 pl-3 pr-1.5 py-1.5 rounded-full bg-slate-950/95 text-white border border-amber-400/60 shadow-xl backdrop-blur-xl whitespace-nowrap">
               <span className="text-sm">🆕</span>
-              <span className="text-xs sm:text-sm font-bold text-amber-300">อัพเดทแพท 3.0</span>
-              <span className="text-xs sm:text-sm font-medium text-slate-100">แม่นยำกว่าเดิม</span>
+              <span className="text-xs sm:text-sm font-bold text-amber-300">อัพเดทแพท 4.0</span>
+              <span className="text-xs sm:text-sm font-medium text-slate-100">แม่นยำสูงสุด (Official)</span>
               <button
                 onClick={() => setShowPatchBanner(false)}
                 className="p-1 hover:bg-white/20 rounded-full text-slate-400 hover:text-white cursor-pointer shrink-0 transition-colors"

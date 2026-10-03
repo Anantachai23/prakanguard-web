@@ -138,21 +138,26 @@ export default function Navbar({
           </div>
 
           <div className="flex flex-col justify-center min-w-0">
-            <span className={`text-xs sm:text-sm md:text-base font-bold tracking-tight leading-tight ${
-              isDark ? 'text-white' : 'text-slate-900'
-            }`}>
-              PrakanGuard
-            </span>
+            <div className="flex items-center gap-1.5">
+              <span className={`text-xs sm:text-sm md:text-base font-black tracking-tight leading-tight ${
+                isDark ? 'text-white' : 'text-slate-900'
+              }`}>
+                PrakanGuard
+              </span>
+              <span className="text-[9px] px-1.5 py-0.2 rounded-full font-bold bg-blue-600 text-white tracking-wide shrink-0">
+                Official
+              </span>
+            </div>
 
             {/* Responsive Animated Marquee Scrolling Left */}
             <div className="w-24 xs:w-36 sm:w-48 md:w-56 lg:w-64 overflow-hidden mt-0.5">
-              <AutoMarquee speedSeconds={20} gapPx={24} force={true}>
+              <AutoMarquee speedSeconds={18} gapPx={24} force={true}>
                 <div className="inline-flex items-center gap-2 text-[10px] sm:text-[11px] whitespace-nowrap">
-                  <span className={`font-bold px-1.5 py-0.5 rounded-md ${isDark ? 'bg-amber-900/70 text-amber-300 ring-1 ring-amber-700' : 'bg-amber-100 text-amber-700 ring-1 ring-amber-300'}`}>
-                    🆕 v3.0
+                  <span className={`font-bold px-1.5 py-0.5 rounded-md ${isDark ? 'bg-blue-900/70 text-cyan-300 ring-1 ring-cyan-700' : 'bg-blue-100 text-blue-700 ring-1 ring-blue-300'}`}>
+                    🆕 v4.0
                   </span>
                   <span className={`font-semibold ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>
-                    อัพเดทแพท 3.0 — ประชาชนสามารถดูข้อมูลอย่างแม่นยำกว่าเดิม • GPS บอกอำเภอ • พยากรณ์ฝนแม่นยำ ±15 นาที • รายงานข้ามอุปกรณ์ได้ทันที • ขอขอบพระคุณผู้ใช้งานทุกท่านที่ให้คำแนะนำ 🙏 — คณะนักเรียนผู้จัดทำ PrakanGuard
+                    อัพเดทแพท 4.0 — ระบบเฝ้าระวังน้ำท่วมทางการ จ.สมุทรปราการ • อัปเดตข้อมูลสดทุก 15 วินาที • ลบจุดแห้งอัตโนมัติ • ไอคอนมาตรฐานใหม่ เขียว/เหลือง/แดง • AI Chatbot ทางการ
                   </span>
                 </div>
               </AutoMarquee>

@@ -9,8 +9,99 @@ import {
 } from '../data/samutPrakanBoundary';
 import { getFloodLevel } from '../data/floodStandards';
 
+// Helper to determine effective level (1: 5-20cm Green, 2: 21-50cm Yellow, 3: >50cm Red)
+function resolveLevel(item) {
+  if (item && item.depthCm !== undefined && item.depthCm !== null && !isNaN(Number(item.depthCm))) {
+    return getFloodLevel(Number(item.depthCm));
+  }
+  return item?.level || 1;
+}
+
+// Check if a point is dried up or resolved
+function isPointDry(item) {
+  if (!item) return true;
+  if (item.isResolved === true || item.isActive === false) return true;
+  if (item.depthCm !== undefined && item.depthCm !== null && Number(item.depthCm) <= 0) return true;
+  if (item.waterTrend === 'dry' || item.status === 'dry' || item.status === 'resolved' || item.isDry) return true;
+  return false;
+}
+
+// Unified Official Flood Pin Icon Generator for ALL points and citizen reports
+function createOfficialFloodPin({ level, depthCm, hasPhoto, isSelected, name }) {
+  // Colors strictly conforming to standard:
+  // Level 1: Green #16a34a (5-20 cm)
+  // Level 2: Amber/Yellow #eab308 (21-50 cm)
+  // Level 3: Red #dc2626 (>50 cm)
+  let primaryColor = '#16a34a';
+  let gradientStart = '#22c55e';
+  let gradientEnd = '#15803d';
+  let levelClass = 'pg-pin-l1';
+
+  if (level === 2) {
+    primaryColor = '#eab308';
+    gradientStart = '#facc15';
+    gradientEnd = '#ca8a04';
+    levelClass = 'pg-pin-l2';
+  } else if (level === 3) {
+    primaryColor = '#dc2626';
+    gradientStart = '#ef4444';
+    gradientEnd = '#b91c1c';
+    levelClass = 'pg-pin-l3';
+  }
+
+  const depthText = (depthCm !== undefined && depthCm !== null && !isNaN(Number(depthCm)) && Number(depthCm) > 0)
+    ? `${depthCm}`
+    : '';
+
+  const isL3 = level === 3;
+  const pulseHtml = isL3 
+    ? `<div style="position:absolute;left:50%;bottom:2px;transform:translateX(-50%);width:28px;height:28px;border-radius:50%;background:rgba(220,38,38,0.35);animation:pgPinPulse 1.8s ease-out infinite;pointer-events:none;z-index:0;"></div>`
+    : '';
+
+  const photoBadgeHtml = hasPhoto
+    ? `<div style="position:absolute;top:-4px;right:-4px;width:17px;height:17px;background:#ffffff;border:1.5px solid ${primaryColor};border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;box-shadow:0 2px 4px rgba(0,0,0,0.3);z-index:10;" title="มีภาพถ่ายสถานการณ์จริง">📷</div>`
+    : '';
+
+  const selectedRingHtml = isSelected
+    ? `<div style="position:absolute;inset:-6px;border-radius:24px;border:2.5px solid #0284c7;box-shadow:0 0 12px rgba(2,132,199,0.8);animation:pgSelectedGlow 1.5s ease-in-out infinite alternate;pointer-events:none;z-index:1;"></div>`
+    : '';
+
+  const svgInnerContent = depthText
+    ? `<text x="17" y="19" font-family="'Prompt', sans-serif, system-ui" font-size="10.5" font-weight="900" fill="${primaryColor}" text-anchor="middle" dominant-baseline="central">${depthText}</text>`
+    : `<path d="M17 10C17 10 13.5 14.5 13.5 17C13.5 18.93 15.07 20.5 17 20.5C18.93 20.5 20.5 18.93 20.5 17C20.5 14.5 17 10 17 10Z" fill="${primaryColor}"/>`;
+
+  const html = `
+    <div class="pg-flood-pin-container ${levelClass} ${isSelected ? 'pg-pin-selected' : ''}" style="position:relative;width:34px;height:44px;display:flex;align-items:center;justify-content:center;cursor:pointer;transform-origin:bottom center;transition:transform 0.2s ease;">
+      ${pulseHtml}
+      ${selectedRingHtml}
+      ${photoBadgeHtml}
+      <svg width="34" height="44" viewBox="0 0 34 44" fill="none" xmlns="http://www.w3.org/2000/svg" style="position:relative;z-index:2;filter:drop-shadow(0 4px 6px rgba(0,0,0,0.38));">
+        <defs>
+          <linearGradient id="pgGrad-${level}" x1="17" y1="2" x2="17" y2="43" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="${gradientStart}" />
+            <stop offset="100%" stop-color="${gradientEnd}" />
+          </linearGradient>
+        </defs>
+        <!-- Teardrop Pin Path -->
+        <path d="M17 43C17 43 32 27 32 17C32 8.71573 25.2843 2 17 2C8.71573 2 2 8.71573 2 17C2 27 17 43 17 43Z" fill="url(#pgGrad-${level})" stroke="#ffffff" stroke-width="2.5" stroke-linejoin="round"/>
+        <!-- Inner White Disc -->
+        <circle cx="17" cy="17" r="9.5" fill="#ffffff" />
+        ${svgInnerContent}
+      </svg>
+    </div>
+  `;
+
+  return L.divIcon({
+    className: 'pg-unified-flood-marker',
+    html: html,
+    iconSize: [34, 44],
+    iconAnchor: [17, 43],
+    popupAnchor: [0, -44]
+  });
+}
+
 export default function MapView({ 
-  points, 
+  points = [], 
   citizenReports = [],
   onSelectPoint, 
   selectedPoint,
@@ -49,6 +140,33 @@ export default function MapView({
   // Map Tile Style: 'google-roadmap' | 'google-satellite' | 'google-terrain'
   const [mapStyle, setMapStyle] = useState('google-roadmap');
 
+  // Inject CSS animations for pin pulsing once
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    if (!document.getElementById('pg-pin-styles')) {
+      const styleEl = document.createElement('style');
+      styleEl.id = 'pg-pin-styles';
+      styleEl.innerHTML = `
+        @keyframes pgPinPulse {
+          0% { transform: translateX(-50%) scale(0.6); opacity: 0.9; }
+          100% { transform: translateX(-50%) scale(2.4); opacity: 0; }
+        }
+        @keyframes pgSelectedGlow {
+          0% { box-shadow: 0 0 6px rgba(2,132,199,0.5); }
+          100% { box-shadow: 0 0 16px rgba(2,132,199,0.95); }
+        }
+        .pg-flood-pin-container:hover {
+          transform: scale(1.18);
+        }
+        .pg-pin-selected {
+          transform: scale(1.22) !important;
+          z-index: 9999 !important;
+        }
+      `;
+      document.head.appendChild(styleEl);
+    }
+  }, []);
+
   // Robust Tile Config Helper with Fallbacks
   const getTileConfig = (style) => {
     if (style === 'google-satellite') {
@@ -73,7 +191,7 @@ export default function MapView({
         }
       };
     }
-    // Default: Google Roadmap (ภาษาไทย คมชัดสูง ชัดเจนในเวลากลางวัน)
+    // Default: Google Roadmap (คมชัด มาตรฐานราชการ)
     return {
       url: 'https://mt{s}.google.com/vt/lyrs=m&hl=th&x={x}&y={y}&z={z}',
       fallbackUrl: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',
@@ -167,14 +285,10 @@ export default function MapView({
   // Update map cursor when in location-picking mode
   useEffect(() => {
     if (!mapContainerRef.current) return;
-    if (isPickingLocation) {
-      mapContainerRef.current.style.cursor = 'crosshair';
-    } else {
-      mapContainerRef.current.style.cursor = '';
-    }
+    mapContainerRef.current.style.cursor = isPickingLocation ? 'crosshair' : '';
   }, [isPickingLocation]);
 
-  // 1.5 Render Outside Samut Prakan Mask (Frosted Blur & Dimming Effect for Bangkok / Gulf / Neighboring Provinces)
+  // Render Outside Samut Prakan Mask
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map) return;
@@ -192,7 +306,7 @@ export default function MapView({
       style: {
         fillColor: maskFillColor,
         fillOpacity: maskFillOpacity,
-        color: '#0284c7', // Radiant cyan boundary stroke separating Samut Prakan from outside
+        color: '#0284c7',
         weight: 3.5,
         opacity: 0.95,
         className: 'outside-province-mask'
@@ -208,16 +322,14 @@ export default function MapView({
     };
   }, [isDark, mapStyle]);
 
-  // 2. Render Exact 6-District Polygons (Google Maps Standard)
+  // Render Exact 6-District Polygons
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map) return;
 
-    // Remove existing district layers
     districtLayersRef.current.forEach(layer => map.removeLayer(layer));
     districtLayersRef.current = [];
 
-    // Add each district polygon
     SAMUT_PRAKAN_DISTRICTS_GEOJSON.features.forEach(feature => {
       const isSelected = selectedDistrict === feature.properties.districtName;
       const districtColor = feature.properties.color || '#0284c7';
@@ -225,44 +337,40 @@ export default function MapView({
       const layer = L.geoJSON(feature, {
         style: {
           color: isSelected ? '#1d4ed8' : districtColor,
-          weight: isSelected ? 4.5 : 3,
-          opacity: 0.95,
+          weight: isSelected ? 4.5 : 2.5,
+          opacity: 0.9,
           fillColor: districtColor,
-          fillOpacity: isSelected ? 0.22 : 0.08
+          fillOpacity: isSelected ? 0.20 : 0.06
         }
       }).addTo(map);
 
-      // District Label Tooltip
-      layer.bindTooltip(`📍 อำเภอ${feature.properties.districtName}`, {
+      // Clean, small district label tooltip
+      layer.bindTooltip(`อ.${feature.properties.districtName}`, {
         permanent: true,
         direction: 'center',
-        className: 'bg-white/95 text-slate-900 font-prompt text-xs border-2 border-slate-300 px-2.5 py-1 rounded-xl shadow-lg font-bold'
+        className: 'bg-white/95 text-slate-800 font-prompt text-[11px] border border-slate-300 px-2 py-0.5 rounded-lg shadow-sm font-bold'
       });
 
-      // กดบน polygon ของอำเภอ: แค่ขึ้น tooltip ชื่ออำเภอ ไม่เปลี่ยน filter
-      // (เปลี่ยน filter ได้เฉพาะผ่านปุ่มกรองอำเภอใน search panel เท่านั้น)
+      // Click on district polygon shows tooltip only, doesn't change filter
       layer.on('click', (e) => {
-        L.popup({ maxWidth: 200, className: 'district-info-popup' })
+        L.popup({ maxWidth: 220, className: 'district-info-popup' })
           .setLatLng(e.latlng)
-          .setContent(`<div style="font-family:sans-serif;text-align:center;padding:4px 2px"><b style="font-size:13px">อ.${feature.properties.districtName}</b><br/><span style="font-size:10px;color:#64748b">กดปุ่มกรองอำเภอใน<br/>แถบค้นหาเพื่อกรองจุด</span></div>`)
+          .setContent(`<div style="font-family:'Prompt',sans-serif;text-align:center;padding:4px 2px"><b style="font-size:13px;color:#0f172a">อำเภอ${feature.properties.districtName}</b><br/><span style="font-size:10px;color:#64748b">กดเลือกอำเภอในแถบค้นหาด้านบนเพื่อกรองข้อมูล</span></div>`)
           .openOn(map);
       });
-
 
       districtLayersRef.current.push(layer);
     });
   }, [selectedDistrict, onSelectDistrict]);
 
-  // 3. Pan & Zoom Smoothly when selectedDistrict changes (Skip if point flyTo just occurred)
+  // Pan & Zoom Smoothly when selectedDistrict changes
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map) return;
 
-    // If an explicit location flyTo was requested with this update, DO NOT fly to district center!
     if (flyToLocation && flyToLocation.ts && Date.now() - flyToLocation.ts < 3500) {
       return;
     }
-
     if (Date.now() - lastFlyToTimeRef.current < 2000) {
       return;
     }
@@ -273,7 +381,7 @@ export default function MapView({
     }
   }, [selectedDistrict]);
 
-  // 4. Switch Tile Layer Smoothly
+  // Switch Tile Layer Smoothly
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map) return;
@@ -285,7 +393,6 @@ export default function MapView({
     const config = getTileConfig(mapStyle);
     tileLayerRef.current = createTileLayer(config).addTo(map);
 
-    // Bring mask and district layers to front
     if (maskLayerRef.current && maskLayerRef.current.bringToFront) {
       maskLayerRef.current.bringToFront();
     }
@@ -294,7 +401,63 @@ export default function MapView({
     map.invalidateSize();
   }, [mapStyle]);
 
-  // 5. Render Vulnerability Point Markers with Smooth Leaflet Popups
+  // Helper to build unified popup HTML
+  const buildPopupHtml = (item, isCitizen) => {
+    const level = resolveLevel(item);
+    const isL3 = level === 3;
+    const isL2 = level === 2;
+    const levelBadgeName = isL3 ? '🔴 น้ำท่วมวิกฤต' : (isL2 ? '🟡 น้ำท่วมปานกลาง' : '🟢 น้ำท่วมปกติ');
+    const levelBg = isL3 ? '#fef2f2' : (isL2 ? '#fffbeb' : '#f0fdf4');
+    const levelText = isL3 ? '#991b1b' : (isL2 ? '#92400e' : '#166534');
+    const levelBorder = isL3 ? '#f87171' : (isL2 ? '#fbbf24' : '#4ade80');
+    const depthBadgeText = item.depthCm ? `${item.depthCm} ซม.` : (item.depthRange || 'เฝ้าระวัง');
+
+    const photoHtml = item.photoUrl ? `
+      <div style="margin:8px 0;border-radius:12px;overflow:hidden;border:1px solid #cbd5e1;position:relative;background:#f1f5f9;">
+        <img src="${item.photoUrl}" style="width:100%;height:120px;object-fit:cover;display:block;" alt="ภาพถ่ายสถานการณ์จริง" />
+        <span style="position:absolute;bottom:5px;right:6px;background:rgba(15,23,42,0.75);color:#ffffff;font-size:9.5px;padding:2px 7px;border-radius:9999px;font-weight:700;">📷 ภาพถ่ายจริง</span>
+      </div>
+    ` : '';
+
+    const trendHtml = item.waterTrend === 'falling' ? `
+      <div style="display:inline-flex;align-items:center;gap:4px;background:#f0fdfa;color:#0f766e;border:1px solid #99f6e4;padding:2px 7px;border-radius:6px;font-size:10px;font-weight:700;margin-bottom:6px;">
+        <span>📉</span> <span>ระดับน้ำกำลังลดลง</span>
+      </div>
+    ` : (item.waterTrend === 'rising' ? `
+      <div style="display:inline-flex;align-items:center;gap:4px;background:#fff1f2;color:#be123c;border:1px solid #fecdd3;padding:2px 7px;border-radius:6px;font-size:10px;font-weight:700;margin-bottom:6px;">
+        <span>📈</span> <span>เฝ้าระวังระดับน้ำเพิ่ม</span>
+      </div>
+    ` : '');
+
+    const sourceHtml = isCitizen 
+      ? `<div style="font-size:9.5px;color:#2563eb;font-weight:700;margin-bottom:6px;">👤 รายงานโดยประชาชน (แอดมินยืนยันแล้ว)</div>`
+      : `<div style="font-size:9.5px;color:#64748b;font-weight:600;margin-bottom:6px;">🏢 จุดเฝ้าระวังทางการ จ.สมุทรปราการ</div>`;
+
+    return `
+      <div style="font-family:'Prompt',sans-serif;padding:6px 4px 4px 4px;min-width:210px;max-width:260px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:6px;">
+          <div style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:8px;background:${levelBg};color:${levelText};border:1px solid ${levelBorder};">
+            ${levelBadgeName}
+          </div>
+          <span style="font-size:10.5px;color:#64748b;font-weight:700;">อ.${item.district}</span>
+        </div>
+        <div style="font-size:13px;font-weight:800;color:#0f172a;line-height:1.3;margin-bottom:4px;">
+          ${item.name}
+        </div>
+        <div style="font-size:12px;color:${isL3 ? '#dc2626' : (isL2 ? '#d97706' : '#16a34a')};font-weight:800;margin-bottom:4px;">
+          ระดับน้ำ: ${depthBadgeText}
+        </div>
+        ${photoHtml}
+        ${trendHtml}
+        ${sourceHtml}
+        <button id="pg-popup-btn-${item.id}" style="width:100%;padding:7px 10px;background:linear-gradient(135deg, #2563eb, #1d4ed8);color:white;border:none;border-radius:10px;font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;box-shadow:0 2px 6px rgba(37,99,235,0.25);">
+          <span>ดูรายละเอียดสถานการณ์ &rarr;</span>
+        </button>
+      </div>
+    `;
+  };
+
+  // 5. Render Official Vulnerability Points (UNIFIED PIN DESIGN)
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map) return;
@@ -306,94 +469,31 @@ export default function MapView({
       if (!point || typeof point.lat !== 'number' || typeof point.lng !== 'number' || isNaN(point.lat) || isNaN(point.lng)) {
         return;
       }
-      // 100% strictly adhere to the 3-Tier standard:
-      // Level 1: 5 - 20 cm
-      // Level 2: 21 - 50 cm
-      // Level 3: > 50 cm
-      const effectiveLevel = (point.depthCm !== undefined && point.depthCm !== null) 
-        ? getFloodLevel(point.depthCm) 
-        : (point.level || 1);
-      const isL3 = effectiveLevel === 3;
-      const isL2 = effectiveLevel === 2;
-      const isFalling = point.waterTrend === 'falling';
-      const isRising = point.waterTrend === 'rising';
-      const levelClass = isL3 ? 'beacon-level-3' : (isL2 ? 'beacon-level-2' : 'beacon-level-1');
-      const pulseClass = isL3 ? 'pulse-l3' : (isL2 ? 'pulse-l2' : 'pulse-l1');
-      const levelBadgeName = isL3 ? '🔴 น้ำท่วมวิกฤต' : (isL2 ? '🟠 น้ำท่วมปานกลาง' : '🟢 น้ำท่วมปกติ');
-      const depthBadgeText = point.depthCm ? `${point.depthCm} ซม.` : point.depthRange;
+      // Strictly exclude dried up or resolved points
+      if (isPointDry(point)) {
+        return;
+      }
 
-      const trendIcon = isFalling
-        ? `<div style="position:absolute;top:-5px;right:-5px;background:#0d9488;color:#ffffff;border-radius:9999px;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:10px;box-shadow:0 2px 5px rgba(0,0,0,0.4);border:2px solid #ffffff;z-index:10;" title="📉 น้ำกำลังลด: ${point.trendText || ''}">📉</div>`
-        : (isRising 
-          ? `<div style="position:absolute;top:-5px;right:-5px;background:#e11d48;color:#ffffff;border-radius:9999px;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:10px;box-shadow:0 2px 5px rgba(0,0,0,0.4);border:2px solid #ffffff;z-index:10;" title="📈 ระดับน้ำกำลังเพิ่ม">📈</div>`
-          : '');
-
-      // Clean, ultra-readable marker showing depth in cm or water droplet
-      const markerHtml = `
-        <div class="telemetry-pin" title="${point.name} (${depthBadgeText}) ${isFalling ? '• 📉 น้ำกำลังลด' : ''}">
-          <div class="beacon-pulse ${pulseClass}"></div>
-          <div class="beacon-core ${levelClass}" style="position:relative;">
-            <span style="font-size:10px;font-weight:800;color:#ffffff;line-height:1;font-family:'Prompt',sans-serif;">${point.depthCm || ''}</span>
-            ${trendIcon}
-          </div>
-        </div>
-      `;
-
-      const customIcon = L.divIcon({
-        className: 'custom-telemetry-marker',
-        html: markerHtml,
-        iconSize: [48, 48],
-        iconAnchor: [24, 24],
-        popupAnchor: [0, -20]
+      const level = resolveLevel(point);
+      const isSelected = selectedPoint && selectedPoint.id === point.id;
+      const customIcon = createOfficialFloodPin({
+        level,
+        depthCm: point.depthCm,
+        hasPhoto: !!point.photoUrl,
+        isSelected,
+        name: point.name
       });
 
       const marker = L.marker([point.lat, point.lng], { icon: customIcon }).addTo(map);
 
-      // Clean Daylight Micro-Popup without clutter
-      const levelBg = isL3 ? '#ffe4e6' : (isL2 ? '#fef3c7' : '#d1fae5');
-      const levelText = isL3 ? '#9f1239' : (isL2 ? '#92400e' : '#065f46');
-      const levelBorder = isL3 ? '#f43f5e' : (isL2 ? '#f59e0b' : '#10b981');
-      const levelStyle = `background:${levelBg};color:${levelText};border:1px solid ${levelBorder};`;
-
-      const trendBadgeHtml = isFalling
-        ? `<div style="display:inline-flex;align-items:center;gap:4px;background:#f0fdfa;color:#0f766e;border:1px solid #99f6e4;padding:3px 7px;border-radius:6px;font-size:10px;font-weight:700;margin-bottom:6px;">
-            <span>📉</span> <span>${point.trendText || 'ระดับน้ำกำลังลดลง'}</span>
-           </div>`
-        : (isRising
-          ? `<div style="display:inline-flex;align-items:center;gap:4px;background:#fff1f2;color:#be123c;border:1px solid #fecdd3;padding:3px 7px;border-radius:6px;font-size:10px;font-weight:700;margin-bottom:6px;">
-              <span>📈</span> <span>${point.trendText || 'เฝ้าระวังน้ำขึ้น'}</span>
-             </div>`
-          : '');
-
-      const popupContent = `
-        <div style="font-family:'Prompt',sans-serif;padding:6px 4px 4px 4px;min-width:180px;">
-          <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:6px;">
-            <div style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:6px;${levelStyle}">
-              ${levelBadgeName} (${point.depthRange})
-            </div>
-            <span style="font-size:10px;color:#64748b;font-weight:600;">อ.${point.district}</span>
-          </div>
-          <div style="font-size:12px;font-weight:700;color:#0f172a;line-height:1.3;margin-bottom:4px;">
-            ${point.name}
-          </div>
-          <div style="font-size:11px;color:${isL3 ? '#e11d48' : isL2 ? '#d97706' : '#059669'};font-weight:700;margin-bottom:4px;">
-            ระดับน้ำ: ${depthBadgeText}
-          </div>
-          ${trendBadgeHtml}
-          <button id="popup-btn-${point.id}" style="width:100%;padding:6px 10px;background:#2563eb;color:white;border:none;border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;margin-top:2px;">
-            <span>ดูรายละเอียด &rarr;</span>
-          </button>
-        </div>
-      `;
-
-      marker.bindPopup(popupContent, {
+      marker.bindPopup(buildPopupHtml(point, false), {
         className: 'custom-leaflet-popup',
         closeButton: true,
         autoPan: true
       });
 
       marker.on('popupopen', () => {
-        const btn = document.getElementById(`popup-btn-${point.id}`);
+        const btn = document.getElementById(`pg-popup-btn-${point.id}`);
         if (btn) {
           btn.onclick = () => {
             onSelectPoint(point);
@@ -410,9 +510,9 @@ export default function MapView({
       markersRef.current.push(marker);
       markersByIdRef.current[point.id] = marker;
     });
-  }, [points, onSelectPoint]);
+  }, [points, selectedPoint, onSelectPoint]);
 
-  // 5b. Render Citizen Reports (Crowdsourced Flood Hotspots)
+  // 5b. Render Citizen Reports (EXACT SAME PIN DESIGN, STRICT DRY EXCLUSION)
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map) return;
@@ -424,76 +524,31 @@ export default function MapView({
       if (!report || typeof report.lat !== 'number' || typeof report.lng !== 'number' || isNaN(report.lat) || isNaN(report.lng)) {
         return;
       }
-      const isHail = report.hazardType === 'hail';
-      const emojiMap = {
-        ankle: '🦶',
-        knee: '🦵',
-        waist: '🩳',
-        chest: '👕',
-        neck: '🧣'
-      };
-      const emoji = isHail ? (report.level === 3 ? '💥' : '🧊') : (emojiMap[report.bodyLevel] || '💧');
+      // Strictly exclude dried up or resolved reports
+      if (isPointDry(report)) {
+        return;
+      }
 
-      const citizenMarkerHtml = `
-        <div class="telemetry-pin" title="${isHail ? 'รายงานลูกเห็บตก' : 'รายงานน้ำท่วม'}: ${report.name}">
-          <div class="${isHail ? 'hail-pulse-ring' : 'citizen-pulse-ring'}" style="${isHail ? 'border-color:#06b6d4;background:rgba(6,182,212,0.2);' : ''}"></div>
-          <div class="citizen-beacon-core" style="${isHail ? 'background:linear-gradient(135deg, #06b6d4, #0284c7);box-shadow:0 0 14px rgba(6,182,212,0.6);' : ''}">
-            <span>${emoji}</span>
-          </div>
-        </div>
-      `;
-
-      const customIcon = L.divIcon({
-        className: 'custom-citizen-marker',
-        html: citizenMarkerHtml,
-        iconSize: [48, 48],
-        iconAnchor: [24, 24],
-        popupAnchor: [0, -20]
+      const level = resolveLevel(report);
+      const isSelected = selectedPoint && selectedPoint.id === report.id;
+      const customIcon = createOfficialFloodPin({
+        level,
+        depthCm: report.depthCm,
+        hasPhoto: !!report.photoUrl,
+        isSelected,
+        name: report.name
       });
 
       const marker = L.marker([report.lat, report.lng], { icon: customIcon }).addTo(map);
 
-      const photoHtml = report.photoUrl ? `
-        <div style="margin:6px 0;border-radius:10px;overflow:hidden;border:1px solid #e2e8f0;max-height:110px;">
-          <img src="${report.photoUrl}" style="width:100%;height:100px;object-fit:cover;" alt="ภาพสถานการณ์จริง" />
-        </div>
-      ` : '';
-
-      const popupContent = `
-        <div style="font-family:'Prompt',sans-serif;padding:6px 4px 4px 4px;min-width:200px;max-width:240px;">
-          <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:6px;">
-            <div style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:6px;${isHail ? 'background:#ecfeff;color:#0891b2;border:1px solid #a5f3fc;' : 'background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;'}">
-              ${isHail ? '🧊 ลูกเห็บตก' : '🌊 รายงานโดยประชาชน'}
-            </div>
-            <span style="font-size:10px;color:#64748b;font-weight:600;">อ.${report.district}</span>
-          </div>
-          <div style="font-size:12px;font-weight:700;color:#0f172a;line-height:1.3;margin-bottom:4px;">
-            ${report.name}
-          </div>
-          <div style="font-size:11px;color:${isHail ? '#0284c7' : '#2563eb'};font-weight:700;margin-bottom:4px;">
-            ${emoji} ${isHail ? (report.statusLabel || `ลูกเห็บ: ${report.hailSizeLabel}`) : `${report.statusLabel || report.bodyLevelLabel} (${report.depthRange})`}
-          </div>
-          ${photoHtml}
-          <div style="font-size:10px;color:#475569;margin-bottom:6px;line-height:1.4;">
-            ${report.trafficStatus || ''}
-          </div>
-          <div style="font-size:9px;color:#94a3b8;margin-bottom:6px;">
-            แจ้งเมื่อ: ${report.reportedAt || 'วันนี้'}
-          </div>
-          <button id="citizen-popup-btn-${report.id}" style="width:100%;padding:6px 10px;background:${isHail ? 'linear-gradient(135deg, #06b6d4, #0284c7)' : 'linear-gradient(135deg, #2563eb, #1d4ed8)'};color:white;border:none;border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;">
-            <span>ดูรายละเอียด &rarr;</span>
-          </button>
-        </div>
-      `;
-
-      marker.bindPopup(popupContent, {
+      marker.bindPopup(buildPopupHtml(report, true), {
         className: 'custom-leaflet-popup',
         closeButton: true,
         autoPan: true
       });
 
       marker.on('popupopen', () => {
-        const btn = document.getElementById(`citizen-popup-btn-${report.id}`);
+        const btn = document.getElementById(`pg-popup-btn-${report.id}`);
         if (btn) {
           btn.onclick = () => {
             onSelectPoint(report);
@@ -510,14 +565,13 @@ export default function MapView({
       citizenMarkersRef.current.push(marker);
       markersByIdRef.current[report.id] = marker;
     });
-  }, [citizenReports, onSelectPoint]);
+  }, [citizenReports, selectedPoint, onSelectPoint]);
 
-  // 5.5 Render Radar-like Flood Coverage Circles (แทนที่เส้นปะด้วยวงกลมเรดาร์โปร่งแสง ซ้อนทับจุดน้ำท่วมครอบคลุมรัศมีบริเวณที่ท่วม)
+  // 5.5 Render Calm Radar Flood Coverage Circles
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map) return;
 
-    // Clean up previous radar circle layers
     radarCircleLayersRef.current.forEach(layer => map.removeLayer(layer));
     radarCircleLayersRef.current = [];
 
@@ -530,68 +584,52 @@ export default function MapView({
       if (typeof item.lat !== 'number' || typeof item.lng !== 'number' || isNaN(item.lat) || isNaN(item.lng)) {
         return;
       }
-
-      // Filter by district if selectedDistrict is specified and not "ทั้งหมด"
-      if (selectedDistrict && selectedDistrict !== "ทั้งหมด") {
-        if (item.district !== selectedDistrict) return;
+      // Strictly skip dry or resolved points
+      if (isPointDry(item)) {
+        return;
       }
 
-      const effectiveLevel = item.level || 1;
-      const isL3 = effectiveLevel === 3;
-      const isL2 = effectiveLevel === 2;
+      // Filter by district if selected
+      if (selectedDistrict && selectedDistrict !== "ทั้งหมด" && item.district !== selectedDistrict) {
+        return;
+      }
+
+      const level = resolveLevel(item);
+      const isL3 = level === 3;
+      const isL2 = level === 2;
       const isSelected = selectedPoint && selectedPoint.id === item.id;
 
-      // รัศมีคลื่นเรดาร์จำลองตามระดับความรุนแรง: วิกฤต ~350ม., ปานกลาง ~250ม., ปกติ ~180ม.
-      const outerRadius = isL3 ? 350 : (isL2 ? 250 : 180);
-      const innerRadius = Math.round(outerRadius * 0.45);
+      // Radius: L3: 300m, L2: 220m, L1: 150m
+      const radius = isL3 ? 300 : (isL2 ? 220 : 150);
+      const color = isL3 ? '#dc2626' : (isL2 ? '#eab308' : '#16a34a');
+      const baseFillOpacity = isDark ? 0.16 : 0.12;
 
-      const color = isL3 ? '#ef4444' : (isL2 ? '#f59e0b' : '#10b981');
-      const baseFillOpacity = isDark ? 0.20 : 0.16;
-
-      // 1. Concentric Inner Radar Ring (วงกลมคลื่นเรดาร์ชั้นใน)
-      const innerCircle = L.circle([item.lat, item.lng], {
-        radius: innerRadius,
+      const circle = L.circle([item.lat, item.lng], {
+        radius: radius,
         color: color,
-        weight: 1,
-        dashArray: '3, 4',
-        opacity: isSelected ? 0.7 : 0.45,
+        weight: isSelected ? 2 : 1,
+        opacity: isSelected ? 0.85 : 0.5,
         fillColor: color,
-        fillOpacity: baseFillOpacity * 0.7,
-        interactive: false
-      }).addTo(map);
-
-      // 2. Main Outer Radar Coverage Circle (วงกลมเรดาร์ชั้นนอก สีจาง นวลตา ครอบคลุมจุดน้ำท่วม)
-      const outerCircle = L.circle([item.lat, item.lng], {
-        radius: outerRadius,
-        color: color,
-        weight: isSelected ? 2.5 : 1.5,
-        dashArray: isSelected ? 'none' : '5, 5',
-        opacity: isSelected ? 0.95 : 0.7,
-        fillColor: color,
-        fillOpacity: isSelected ? (baseFillOpacity + 0.1) : baseFillOpacity,
-        className: 'radar-flood-zone radar-pulse-active',
+        fillOpacity: isSelected ? 0.25 : baseFillOpacity,
         interactive: true
       }).addTo(map);
 
-      const depthText = item.depthCm ? `${item.depthCm} ซม.` : (item.depthRange || 'เฝ้าระวัง');
-      const trendLineText = item.waterTrend === 'falling' ? ' • 📉 น้ำกำลังลด' : '';
       const levelLabel = isL3 ? 'วิกฤต' : (isL2 ? 'ปานกลาง' : 'ปกติ');
+      const depthText = item.depthCm ? `${item.depthCm} ซม.` : (item.depthRange || 'เฝ้าระวัง');
 
-      outerCircle.bindTooltip(`📡 รัศมีน้ำท่วม ~${outerRadius}ม. • ${item.name} (${levelLabel} ${depthText}${trendLineText})`, {
+      circle.bindTooltip(`📡 รัศมีน้ำท่วม ~${radius}ม. • ${item.name} (${levelLabel} ${depthText})`, {
         sticky: true,
         direction: 'top',
-        className: 'bg-slate-900/95 text-white font-prompt text-[11px] font-bold px-2.5 py-1 rounded-xl border border-slate-700 shadow-md'
+        className: 'bg-slate-900/95 text-white font-prompt text-[11px] font-bold px-2 py-0.5 rounded-lg border border-slate-700 shadow-md'
       });
 
-      outerCircle.on('click', () => {
+      circle.on('click', () => {
         onSelectPoint(item);
         const marker = markersByIdRef.current[item.id];
-        if (marker) {
-          marker.openPopup();
-        }
+        if (marker) marker.openPopup();
       });
 
-      radarCircleLayersRef.current.push(innerCircle, outerCircle);
+      radarCircleLayersRef.current.push(circle);
     });
   }, [points, citizenReports, selectedDistrict, selectedPoint, onSelectPoint, isDark]);
 
@@ -617,13 +655,9 @@ export default function MapView({
       className: '',
       html: `
         <div style="position:relative;width:22px;height:22px;display:flex;align-items:center;justify-content:center;">
-          <!-- Outer ping ring -->
           <div style="position:absolute;width:40px;height:40px;border-radius:50%;background:rgba(37,99,235,0.25);animation:ping 1.5s cubic-bezier(0,0,0.2,1) infinite;top:-9px;left:-9px;"></div>
-          <!-- Accuracy ring (softer) -->
           <div style="position:absolute;width:28px;height:28px;border-radius:50%;background:rgba(59,130,246,0.18);border:1.5px solid rgba(37,99,235,0.4);top:-3px;left:-3px;"></div>
-          <!-- Main dot -->
           <div style="width:18px;height:18px;border-radius:50%;background:#2563eb;border:3px solid #ffffff;box-shadow:0 2px 8px rgba(37,99,235,0.7);position:relative;z-index:2;"></div>
-          <!-- Center white dot -->
           <div style="position:absolute;width:6px;height:6px;border-radius:50%;background:#fff;z-index:3;"></div>
         </div>
         <style>@keyframes ping{75%,100%{transform:scale(2);opacity:0}}</style>
@@ -636,11 +670,10 @@ export default function MapView({
     userMarker.bindTooltip("📍 ตำแหน่งปัจจุบันของคุณ", { permanent: false, direction: 'top', className: 'font-bold text-xs' });
     userMarkerRef.current = userMarker;
 
-
     map.setView([userLocation.lat, userLocation.lng], 13.5, { animate: true });
   }, [userLocation, locationAccuracy]);
 
-  // Smooth FlyTo explicit coordinates and zoom directly to point (e.g. from Search selection)
+  // Smooth FlyTo explicit coordinates
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map || !flyToLocation || typeof flyToLocation.lat !== 'number' || typeof flyToLocation.lng !== 'number' || isNaN(flyToLocation.lat) || isNaN(flyToLocation.lng)) return;
@@ -648,9 +681,7 @@ export default function MapView({
     lastFlyToTimeRef.current = Date.now();
     const targetZoom = flyToLocation.zoom || 16.5;
 
-    // Immediately stop any running transition to prevent collision
     map.stop();
-
     map.flyTo([flyToLocation.lat, flyToLocation.lng], targetZoom, {
       duration: 1.2,
       easeLinearity: 0.25
@@ -664,19 +695,17 @@ export default function MapView({
           marker.openPopup();
         }
       };
-
       map.once('moveend', openTargetPopup);
       setTimeout(openTargetPopup, 650);
       setTimeout(openTargetPopup, 1300);
     }
   }, [flyToLocation]);
 
-  // Zoom to selected point if not already handled by flyToLocation
+  // Zoom to selected point
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map || !selectedPoint || typeof selectedPoint.lat !== 'number' || typeof selectedPoint.lng !== 'number' || isNaN(selectedPoint.lat) || isNaN(selectedPoint.lng)) return;
 
-    // If flyToLocation is already active, skip duplicate flyTo
     if (flyToLocation && flyToLocation.ts && Date.now() - flyToLocation.ts < 3000) {
       return;
     }
@@ -723,84 +752,69 @@ export default function MapView({
         style={{ width: '100%', height: '100%', background: '#f8fafc' }}
       ></div>
 
-      {/* FLOATING MAP CONTROLS (TOP RIGHT - FULLY RESPONSIVE FOR ALL SCREENS) */}
-      <div className={`absolute ${isTopPanelCollapsed ? 'top-3 sm:top-4' : 'top-[140px] sm:top-4'} right-2 sm:right-4 z-20 flex flex-col items-end gap-1.5 sm:gap-2 pointer-events-auto transition-all duration-300`}>
+      {/* FLOATING MAP CONTROLS (TOP RIGHT - CLEAN, UNCLUTTERED, COMPACT) */}
+      <div className="absolute top-3 right-3 sm:top-4 sm:right-4 z-20 flex flex-col items-end gap-2 pointer-events-auto">
         
-        {/* Map Tile Switcher — emoji only on mobile, full label on sm+ */}
-        <div className={`p-0.5 sm:p-1 rounded-2xl flex items-center gap-0.5 sm:gap-1 border shadow-md text-xs sm:text-sm backdrop-blur-md transition-colors ${
+        {/* Map Tile Switcher */}
+        <div className={`p-1 rounded-2xl flex items-center gap-1 border shadow-md text-xs backdrop-blur-md transition-colors ${
           isDark ? 'bg-slate-900/95 border-slate-700 shadow-xl' : 'bg-white/95 border-slate-200 shadow-md'
         }`}>
           {[
-            { style: 'google-roadmap',    emoji: '🗺️', label: 'ทางหลวง' },
+            { style: 'google-roadmap',    emoji: '🗺️', label: 'ถนน' },
             { style: 'google-satellite',  emoji: '🛰️', label: 'ดาวเทียม' },
             { style: 'google-terrain',    emoji: '⛰️', label: 'ภูมิประเทศ' },
           ].map(({ style, emoji, label }) => (
             <button
               key={style}
               onClick={() => setMapStyle(style)}
-              className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-xl font-medium transition-all cursor-pointer flex items-center gap-1 ${
+              className={`px-2.5 py-1.5 rounded-xl font-semibold transition-all cursor-pointer flex items-center gap-1 text-xs ${
                 mapStyle === style
                   ? 'bg-blue-600 text-white shadow-sm'
                   : isDark 
                     ? 'text-slate-400 hover:text-slate-100 hover:bg-slate-800' 
                     : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
               }`}
+              title={`สลับเป็นแผนที่ ${label}`}
             >
               <span>{emoji}</span>
-              <span className="hidden sm:inline">{label}</span>
+              <span className="hidden md:inline">{label}</span>
             </button>
           ))}
         </div>
 
         {/* GPS & Reset Buttons */}
-        <div className="flex items-center gap-1 sm:gap-1.5">
+        <div className="flex items-center gap-1.5">
           <button 
             onClick={onLocateMe}
             title="ค้นหาพิกัดตำแหน่งปัจจุบันของคุณ"
-            className={`hidden sm:flex px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl shadow-md border transition-all items-center gap-1.5 text-xs sm:text-sm cursor-pointer backdrop-blur-md font-semibold ${
+            className={`px-3 py-2 rounded-xl shadow-md border transition-all flex items-center gap-1.5 text-xs cursor-pointer backdrop-blur-md font-bold ${
               isDark 
                 ? 'bg-slate-900/95 text-slate-200 hover:text-cyan-400 hover:bg-slate-800 border-slate-700 shadow-xl' 
                 : 'bg-white/95 text-slate-700 hover:text-blue-700 hover:bg-blue-50/80 border-slate-200'
             }`}
           >
-            <Navigation className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${isDark ? 'text-cyan-400' : 'text-blue-600'}`} />
-            <span>พิกัดของฉัน</span>
+            <Navigation className={`w-3.5 h-3.5 ${isDark ? 'text-cyan-400' : 'text-blue-600'}`} />
+            <span className="hidden sm:inline">พิกัดฉัน</span>
           </button>
           
           <button 
             onClick={resetView}
             title="รีเซ็ตมุมมองขอบเขตจังหวัดสมุทรปราการ"
-            className={`p-1.5 sm:p-2.5 rounded-xl shadow-md border transition-all cursor-pointer backdrop-blur-md ${
+            className={`p-2 rounded-xl shadow-md border transition-all cursor-pointer backdrop-blur-md ${
               isDark 
                 ? 'bg-slate-900/95 text-slate-200 hover:text-cyan-400 hover:bg-slate-800 border-slate-700 shadow-xl' 
                 : 'bg-white/95 text-slate-700 hover:text-blue-700 hover:bg-blue-50/80 border-slate-200'
             }`}
           >
-            <Crosshair className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            <Crosshair className="w-4 h-4" />
           </button>
         </div>
 
       </div>
 
-      {/* FLOATING MAP LEGEND & STANDARDS BUTTON (BOTTOM LEFT - FULLY RESPONSIVE) */}
-      <div className="absolute bottom-[calc(4.25rem+env(safe-area-inset-bottom,0px))] sm:bottom-4 left-2.5 sm:left-4 z-20 flex flex-col gap-1.5 max-w-[85vw] pointer-events-none">
-        
-        {/* District Active Indicator */}
-        <div className={`px-3 sm:px-3.5 py-1.5 rounded-xl border text-xs sm:text-sm flex items-center gap-2 shadow-md backdrop-blur-md font-semibold ${
-          isDark 
-            ? 'bg-slate-900/95 border-blue-900 text-blue-300 shadow-xl' 
-            : 'bg-white/95 border-blue-200 text-blue-800'
-        }`}>
-          <span className="w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse shrink-0"></span>
-          <span className="truncate">
-            {selectedDistrict === "ทั้งหมด" 
-              ? "ขอบเขต 6 อำเภอ จ.สมุทรปราการ (อิง Google Maps)" 
-              : `ขอบเขตอำเภอ${selectedDistrict} (อิง Google Maps)`}
-          </span>
-        </div>
-
-        {/* Standard Levels Legend Bar */}
-        <div className={`px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-2xl border text-xs sm:text-sm hidden sm:flex items-center gap-3.5 shadow-md backdrop-blur-md ${
+      {/* DESKTOP/IPAD FLOATING LEGEND CARD (BOTTOM LEFT - CLEAN OFFICIAL LOOK, HIDDEN ON MOBILE) */}
+      <div className="hidden sm:flex absolute bottom-4 left-4 z-20 pointer-events-auto">
+        <div className={`px-4 py-2.5 rounded-2xl border text-xs flex items-center gap-3.5 shadow-lg backdrop-blur-md ${
           isDark 
             ? 'bg-slate-900/95 border-slate-700 text-slate-300 shadow-xl' 
             : 'bg-white/95 border-slate-200 text-slate-700'
@@ -810,7 +824,7 @@ export default function MapView({
             className={`font-bold transition-colors flex items-center gap-1.5 cursor-pointer ${
               isDark ? 'text-white hover:text-cyan-400' : 'text-slate-900 hover:text-blue-600'
             }`}
-            title="คลิกเพื่อดูเกณฑ์มาตรฐาน ปภ./กรมทางหลวง แบบละเอียด"
+            title="คลิกเพื่อดูเกณฑ์มาตรฐาน ปภ./กรมทางหลวง"
           >
             <BookOpen className={`w-4 h-4 ${isDark ? 'text-cyan-400' : 'text-blue-600'}`} />
             <span>เกณฑ์ ปภ.:</span>
@@ -818,31 +832,23 @@ export default function MapView({
 
           <div className="flex items-center space-x-1.5">
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
-            <span className={`font-medium ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>น้ำท่วมปกติ (5-20 ซม.)</span>
+            <span className="font-semibold text-emerald-700 dark:text-emerald-400">ปกติ 5-20 ซม.</span>
           </div>
 
           <span className={isDark ? 'text-slate-700' : 'text-slate-300'}>•</span>
 
           <div className="flex items-center space-x-1.5">
             <span className="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
-            <span className={`font-medium ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>น้ำท่วมปานกลาง (21-50 ซม.)</span>
+            <span className="font-semibold text-amber-700 dark:text-amber-400">ปานกลาง 21-50 ซม.</span>
           </div>
 
           <span className={isDark ? 'text-slate-700' : 'text-slate-300'}>•</span>
 
           <div className="flex items-center space-x-1.5">
             <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse"></span>
-            <span className="text-rose-500 font-bold">น้ำท่วมวิกฤต (&gt;50 ซม.)</span>
-          </div>
-
-          <span className={isDark ? 'text-slate-700' : 'text-slate-300'}>•</span>
-
-          <div className="flex items-center space-x-1.5">
-            <span className="text-sm">🛣️</span>
-            <span className={`font-semibold ${isDark ? 'text-cyan-300' : 'text-blue-700'}`}>แนวถนนขังต่อเนื่อง (10 สาย)</span>
+            <span className="text-rose-600 dark:text-rose-400 font-bold">วิกฤต &gt;50 ซม.</span>
           </div>
         </div>
-
       </div>
 
     </div>
