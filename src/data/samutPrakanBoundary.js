@@ -468,9 +468,10 @@ export function isPointInSamutPrakan(lat, lng) {
 export function validateCoordinatePrecision(lat, lng, specifiedDistrict = null) {
   const numLat = Number(lat);
   const numLng = Number(lng);
+  let msg = '';
 
   if (isNaN(numLat) || isNaN(numLng)) {
-    const msg = 'กรุณากรอกพิกัดละติจูดและลองจิจูดให้ถูกต้อง (ตัวเลข)';
+    msg = 'กรุณากรอกพิกัดละติจูดและลองจิจูดให้ถูกต้อง (ตัวเลข)';
     return {
       isValid: false,
       confidence: 0,
@@ -485,7 +486,7 @@ export function validateCoordinatePrecision(lat, lng, specifiedDistrict = null) 
 
   // พิกัดพื้นฐานประเทศไทย
   if (numLat < 5 || numLat > 21 || numLng < 97 || numLng > 106) {
-    const msg = 'พิกัดอยู่นอกอาณาเขตประเทศไทย';
+    msg = 'พิกัดอยู่นอกอาณาเขตประเทศไทย';
     return {
       isValid: false,
       confidence: 0,
@@ -501,7 +502,7 @@ export function validateCoordinatePrecision(lat, lng, specifiedDistrict = null) 
   const detected = detectDistrictForCoordinates(numLat, numLng);
 
   if (!detected) {
-    const msg = `พิกัด [${numLat.toFixed(4)}, ${numLng.toFixed(4)}] อยู่นอกขอบเขต 6 อำเภอ จ.สมุทรปราการ (ขอบเขตที่รองรับ: ละติจูด 13.46 - 13.74, ลองจิจูด 100.45 - 100.93)`;
+    msg = `พิกัด [${numLat.toFixed(4)}, ${numLng.toFixed(4)}] อยู่นอกขอบเขต 6 อำเภอ จ.สมุทรปราการ (ขอบเขตที่รองรับ: ละติจูด 13.46 - 13.74, ลองจิจูด 100.45 - 100.93)`;
     return {
       isValid: false,
       confidence: 10,
@@ -515,7 +516,7 @@ export function validateCoordinatePrecision(lat, lng, specifiedDistrict = null) 
   }
 
   if (specifiedDistrict && specifiedDistrict !== "ทั้งหมด" && specifiedDistrict !== detected) {
-    const msg = `พิกัดนี้อยู่ในเขต "อ.${detected}" (ระบบตรวจพบว่าต่างจากที่คุณเลือก "อ.${specifiedDistrict}")`;
+    msg = `พิกัดนี้อยู่ในเขต "อ.${detected}" (ระบบตรวจพบว่าต่างจากที่คุณเลือก "อ.${specifiedDistrict}")`;
     return {
       isValid: true,
       confidence: 92,
@@ -528,7 +529,7 @@ export function validateCoordinatePrecision(lat, lng, specifiedDistrict = null) 
     };
   }
 
-  const msg = `พิกัดถูกต้องอยู่ในเขต อ.${detected} จ.สมุทรปราการ`;
+  msg = `พิกัดถูกต้องอยู่ในเขต อ.${detected} จ.สมุทรปราการ`;
   return {
     isValid: true,
     confidence: 100,

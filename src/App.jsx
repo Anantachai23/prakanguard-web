@@ -184,32 +184,6 @@ export default function App() {
   const [selectedPoint, setSelectedPoint] = useState(null);
   const [lightboxPhoto, setLightboxPhoto] = useState(null); // { url, title, time }
 
-  // Expose global lightbox opener for Leaflet map popup clicks
-  useEffect(() => {
-    window.__pgPhotos = window.__pgPhotos || {};
-    window.pgOpenLightbox = (url, title, time) => {
-      setLightboxPhoto({ url, title, time });
-    };
-    window.pgOpenLightboxById = (id) => {
-      if (window.__pgPhotos && window.__pgPhotos[id]) {
-        setLightboxPhoto(window.__pgPhotos[id]);
-      } else {
-        const found = pointsRef.current?.find(p => p.id === id) || citizenReports.find(c => c.id === id);
-        if (found && found.photoUrl) {
-          setLightboxPhoto({ 
-            url: found.photoUrl, 
-            title: found.name, 
-            time: found.reportedAt || found.updatedAt || found.time 
-          });
-        }
-      }
-    };
-    return () => {
-      delete window.pgOpenLightbox;
-      delete window.pgOpenLightboxById;
-    };
-  }, [citizenReports]);
-
   useEffect(() => {
     pointsRef.current = points;
     try {
@@ -477,6 +451,16 @@ export default function App() {
   const [userLocation, setUserLocation] = useState(null);
   const [locationAccuracy, setLocationAccuracy] = useState(null);
 
+  // Identify which district the user is currently located in strictly based on GeoJSON polygon boundaries
+  const userDistrict = useMemo(() => {
+    if (!userLocation || typeof userLocation.lat !== 'number' || typeof userLocation.lng !== 'number') {
+      return null;
+    }
+    // 1. Ray-casting check against exact 6-district GeoJSON polygon boundaries on map
+    const boundaryDistrict = detectDistrictForCoordinates(userLocation.lat, userLocation.lng);
+    return boundaryDistrict || null;
+  }, [userLocation]);
+
   // Modals state
   const [isOfficialModalOpen, setIsOfficialModalOpen] = useState(false);
   const [isStandardsModalOpen, setIsStandardsModalOpen] = useState(false);
@@ -511,6 +495,37 @@ export default function App() {
       return [];
     }
   });
+
+  const citizenReportsRef = useRef(citizenReports);
+  useEffect(() => {
+    citizenReportsRef.current = citizenReports;
+  }, [citizenReports]);
+
+  // Expose global lightbox opener for Leaflet map popup clicks
+  useEffect(() => {
+    window.__pgPhotos = window.__pgPhotos || {};
+    window.pgOpenLightbox = (url, title, time) => {
+      setLightboxPhoto({ url, title, time });
+    };
+    window.pgOpenLightboxById = (id) => {
+      if (window.__pgPhotos && window.__pgPhotos[id]) {
+        setLightboxPhoto(window.__pgPhotos[id]);
+      } else {
+        const found = pointsRef.current?.find(p => p.id === id) || citizenReportsRef.current?.find(c => c.id === id);
+        if (found && found.photoUrl) {
+          setLightboxPhoto({ 
+            url: found.photoUrl, 
+            title: found.name, 
+            time: found.reportedAt || found.updatedAt || found.time 
+          });
+        }
+      }
+    };
+    return () => {
+      delete window.pgOpenLightbox;
+      delete window.pgOpenLightboxById;
+    };
+  }, []);
 
   // Citizen Report & Feedback Modal States
   const [feedbackItems, setFeedbackItems] = useState(() => {
@@ -666,11 +681,6 @@ export default function App() {
     isSyncing: false,
     alertBadge: '🟢 เฝ้าระวังปกติ (24 ชม.)'
   });
-
-  const citizenReportsRef = useRef(citizenReports);
-  useEffect(() => {
-    citizenReportsRef.current = citizenReports;
-  }, [citizenReports]);
 
   // Manual Trigger to refresh official telemetry & run 24-hr lifecycle check
   const handleManualSync = async () => {
@@ -1563,16 +1573,6 @@ export default function App() {
     });
     return closest ? { point: closest, distanceKm: minDistance } : null;
   }, [userLocation, points]);
-
-  // Identify which district the user is currently located in strictly based on GeoJSON polygon boundaries
-  const userDistrict = useMemo(() => {
-    if (!userLocation || typeof userLocation.lat !== 'number' || typeof userLocation.lng !== 'number') {
-      return null;
-    }
-    // 1. Ray-casting check against exact 6-district GeoJSON polygon boundaries on map
-    const boundaryDistrict = detectDistrictForCoordinates(userLocation.lat, userLocation.lng);
-    return boundaryDistrict || null;
-  }, [userLocation]);
 
   // GPS Geolocation Handler with High Accuracy (Auto-requested on entry for mobile, iPad, and all devices)
   const handleLocateMe = (silent = false) => {
