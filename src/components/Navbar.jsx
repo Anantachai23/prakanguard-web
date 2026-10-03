@@ -193,10 +193,10 @@ export default function Navbar({
             )}
           </div>
 
-          {/* Live Real-Time Weather & Temperature Badge (อัปเดตอัตโนมัติเมื่ออุณหภูมิเปลี่ยน) */}
+          {/* Live Real-Time Weather & Temperature Badge (แสดงเฉพาะบน Tablet และ PC, ซ่อนบนมือถือตามสั่ง) */}
           {weather && weather.temp !== undefined && (
             <div 
-              className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-2xl border text-xs font-bold transition-all shadow-2xs select-none shrink-0 ${
+              className={`hidden md:inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-2xl border text-xs font-bold transition-all shadow-2xs select-none shrink-0 ${
                 isDark 
                   ? 'bg-slate-900/90 border-slate-700 text-sky-300' 
                   : 'bg-sky-50/90 border-sky-200 text-sky-800'
@@ -226,23 +226,6 @@ export default function Navbar({
         {/* Right Area: Action Buttons (Responsive & Clean) */}
         <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           
-          {/* Mobile Real-Time Temperature & Weather Badge */}
-          {weather && weather.temp !== undefined && (
-            <div 
-              className={`md:hidden inline-flex items-center gap-1 px-2 py-1 rounded-xl border text-[11px] font-bold shadow-2xs select-none shrink-0 ${
-                isDark 
-                  ? 'bg-slate-900/90 border-slate-700 text-sky-300' 
-                  : 'bg-sky-50 border-sky-200 text-sky-800'
-              }`}
-              title={`อุณหภูมิจริง: ${weather.temp}°C (${weather.weatherDesc || ''})`}
-            >
-              <span className="text-xs">
-                {weather.forecast24h?.isRainingNow ? '🌧️' : (weather.temp >= 33 ? '☀️' : '⛅')}
-              </span>
-              <span className="font-extrabold font-mono">{weather.temp}°C</span>
-            </div>
-          )}
-
           {/* Mobile Clock: Clean & Compact */}
           <div className="md:hidden shrink-0">
             <RealTimeClock theme={theme} />

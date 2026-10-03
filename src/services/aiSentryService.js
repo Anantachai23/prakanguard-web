@@ -54,6 +54,37 @@ export function getFortChulaTidePhase(date = new Date()) {
 }
 
 /**
+ * คำนวณลายเซ็นสถานะอุทกภัย (Flood Status Signature)
+ * สะท้อนการเปลี่ยนแปลงจริงของสถานการณ์น้ำท่วม: แห้งไปท่วม, ท่วมไปแห้ง, น้ำลด, หรือระดับน้ำเปลี่ยน
+ * หากสถานะคงเดิม ลายเซ็นนี้จะตรงกัน 100% ป้องกันการแจ้งเตือนซ้ำซ้อน
+ */
+export function getFloodStatusSignature(points = [], citizenReports = []) {
+  const pSig = (points || [])
+    .filter(p => p && p.id)
+    .map(p => {
+      const isDry = p.isActive === false || p.isResolved;
+      const trend = p.waterTrend || (p.statusLabel && p.statusLabel.includes('ลด') ? 'falling' : 'normal');
+      const lvl = isDry ? 0 : (p.level || 1);
+      return `${p.id}:${isDry ? '0' : '1'}:${lvl}:${trend}`;
+    })
+    .sort()
+    .join(';');
+
+  const rSig = (citizenReports || [])
+    .filter(r => r && r.id && r.isApproved)
+    .map(r => {
+      const isDry = r.isResolved || r.isActive === false || r.waterTrend === 'dry';
+      const trend = r.waterTrend || (r.statusLabel && r.statusLabel.includes('ลด') ? 'falling' : 'normal');
+      const lvl = isDry ? 0 : (r.level || 1);
+      return `${r.id}:${isDry ? '0' : '1'}:${lvl}:${trend}`;
+    })
+    .sort()
+    .join(';');
+
+  return `P[${pSig}]#R[${rSig}]`;
+}
+
+/**
  * วิเคราะห์และประเมินสถานะจุดเสี่ยงน้ำท่วมและรายงานประชาชนแบบไดนามิกตลอด 24 ชม. ทุกสถานที่ใน 6 อำเภอ
  */
 export function evaluateDynamicFloodLifecycle(points = [], citizenReports = [], weather = null) {
@@ -76,6 +107,7 @@ export function evaluateDynamicFloodLifecycle(points = [], citizenReports = [], 
 
   const newlyClearedPoints = [];
   const newlyActivatedPoints = [];
+  const newlyFallingPoints = [];
   
   // 1. ประเมินจุดติดตามทั้งหมดใน 6 อำเภอ (Official Points & Custom Added Points)
   const updatedPoints = points.map(point => {
@@ -269,6 +301,14 @@ export function evaluateDynamicFloodLifecycle(points = [], citizenReports = [], 
       } else if (reportAgeMinutes >= 20 || report.waterTrend === 'falling') {
         // น้ำกำลังลด -> แสดงสัญลักษณ์กำกับว่า "น้ำกำลังลด" (แสดงไอคอน 📉 บนแผนที่)
         const fallingDepth = Math.max(5, Math.min(report.depthCm || 15, 12));
+        if (report.waterTrend !== 'falling') {
+          newlyFallingPoints.push({
+            id: report.id,
+            name: report.name,
+            district: report.district,
+            time: nowTime
+          });
+        }
         return {
           ...report,
           waterTrend: 'falling',
@@ -358,7 +398,26 @@ export function evaluateDynamicFloodLifecycle(points = [], citizenReports = [], 
       agency: 'กรมอุตุนิยมวิทยา TMD ร่วมกับ กรมอุทกศาสตร์ กองทัพเรือ',
       points: newlyActivatedPoints
     };
+  } else if (newlyFallingPoints.length > 0) {
+    const count = newlyFallingPoints.length;
+    const timeMatch = nowTime.match(/\d{2}:\d{2}/);
+    const shortTime = timeMatch ? `${timeMatch[0]} น.` : nowTime;
+    notificationMessage = `📉 ระดับน้ำกำลังลดลง ${count} จุด คลี่คลายต่อเนื่อง (${shortTime})`;
+    
+    changelogEntry = {
+      id: 'log-fall-' + Date.now(),
+      time: nowTime,
+      timeDetailed: nowDetailed,
+      type: 'falling',
+      title: `ตรวจพบระดับน้ำกำลังลดลง (${newlyFallingPoints.length} จุด)`,
+      detail: `การระบายน้ำคลี่คลาย ระดับน้ำลดลงอย่างต่อเนื่องที่: ${newlyFallingPoints.map(p => p.name).join(', ')}`,
+      agency: 'กรมชลประทาน และเครือข่ายโทรมาตรสมุทรปราการ',
+      points: newlyFallingPoints
+    };
   }
+
+  // คำนวณลายเซ็นสถานะอุทกภัย เพื่อตรวจสอบการเปลี่ยนแปลงจริงและป้องกันการแจ้งเตือนซ้ำซ้อน
+  const statusSignature = getFloodStatusSignature(updatedPoints, updatedReports);
 
   return {
     updatedPoints,
@@ -367,7 +426,9 @@ export function evaluateDynamicFloodLifecycle(points = [], citizenReports = [], 
     corridorsCount: updatedCorridors.length,
     newlyClearedPoints,
     newlyActivatedPoints,
+    newlyFallingPoints,
     notificationMessage,
+    statusSignature,
     changelogEntry,
     tideInfo,
     syncTime: nowTime,

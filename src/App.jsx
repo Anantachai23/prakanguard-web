@@ -21,7 +21,7 @@ import { getFloodLevel, FLOOD_STANDARDS } from './data/floodStandards';
 import { detectDistrictForCoordinates } from './data/samutPrakanBoundary';
 import { getOfficialAdvisorySummary } from './services/aiPredictor';
 import { getLiveSamutPrakanWeather } from './services/weatherService';
-import { runOfficial24HourSync } from './services/aiSentryService';
+import { runOfficial24HourSync, getFloodStatusSignature } from './services/aiSentryService';
 import { 
   publishCloudReport, 
   publishCloudFeedback, 
@@ -674,6 +674,46 @@ export default function App() {
 
 
 
+  // Flood Status Signature & Deduplicated Notification Ref (เตือนเพียงครั้งเดียวต่อการเปลี่ยนสถานะ)
+  const lastFloodSignatureRef = useRef(null);
+
+  useEffect(() => {
+    try {
+      lastFloodSignatureRef.current = localStorage.getItem('prakanguard_last_flood_sig') || null;
+    } catch (e) {}
+  }, []);
+
+  // ฟังก์ชันแจ้งเตือนเฉพาะเมื่อสถานะน้ำท่วมมีการเปลี่ยนแปลงจริง (แห้งไปท่วม, ท่วมไปแห้ง, หรือลด)
+  const notifyOnFloodStateChange = (message, signature) => {
+    if (!message || !signature) return;
+
+    const storedSig = (() => {
+      try {
+        return localStorage.getItem('prakanguard_last_flood_sig');
+      } catch (e) {
+        return null;
+      }
+    })();
+
+    const lastSig = lastFloodSignatureRef.current || storedSig;
+
+    // หากสถานะยังเหมือนเดิม ไม่มีการเปลี่ยนแปลง ไม่ต้องแจ้งเตือนซ้ำ
+    if (lastSig === signature) {
+      return;
+    }
+
+    lastFloodSignatureRef.current = signature;
+    try {
+      localStorage.setItem('prakanguard_last_flood_sig', signature);
+    } catch (e) {}
+
+    setLatestUpdateNotification(message);
+    playNotificationChime();
+    setTimeout(() => {
+      setLatestUpdateNotification(prev => (prev === message ? null : prev));
+    }, 8000);
+  };
+
   // 24/7 Official Hydro-Meteorological Telemetry Sync (TMD, Navy Hydrographic Dept, DDPM)
   const [telemetrySyncStatus, setTelemetrySyncStatus] = useState({
     isActive: true,
@@ -704,12 +744,22 @@ export default function App() {
             localStorage.setItem('prakanguard_citizen_reports', JSON.stringify(lifecycleResult.updatedReports));
           } catch (e) {}
         }
-        if (lifecycleResult.notificationMessage) {
-          setLatestUpdateNotification(lifecycleResult.notificationMessage);
+        
+        const storedSig = (() => {
+          try {
+            return localStorage.getItem('prakanguard_last_flood_sig');
+          } catch (e) {
+            return null;
+          }
+        })();
+        const lastSig = lastFloodSignatureRef.current || storedSig;
+
+        if (lifecycleResult.notificationMessage && lifecycleResult.statusSignature && lastSig !== lifecycleResult.statusSignature) {
+          notifyOnFloodStateChange(lifecycleResult.notificationMessage, lifecycleResult.statusSignature);
         } else {
-          setLatestUpdateNotification(`📡 อัปเดตข้อมูลสภาพอากาศและเรดาร์สดจาก TMD / กองทัพเรือ สำเร็จ (${nowTime})`);
+          setLatestUpdateNotification(`📡 ซิงก์ข้อมูลโทรมาตร TMD / กองทัพเรือ สำเร็จ (${nowTime})`);
+          setTimeout(() => setLatestUpdateNotification(null), 5000);
         }
-        setTimeout(() => setLatestUpdateNotification(null), 7000);
 
         if (lifecycleResult.changelogEntry) {
           setChangelog(prev => {
@@ -759,9 +809,8 @@ export default function App() {
               localStorage.setItem('prakanguard_citizen_reports', JSON.stringify(lifecycleResult.updatedReports));
             } catch (e) {}
           }
-          if (lifecycleResult.notificationMessage) {
-            setLatestUpdateNotification(lifecycleResult.notificationMessage);
-            setTimeout(() => setLatestUpdateNotification(null), 9000);
+          if (lifecycleResult.notificationMessage && lifecycleResult.statusSignature) {
+            notifyOnFloodStateChange(lifecycleResult.notificationMessage, lifecycleResult.statusSignature);
           }
           if (lifecycleResult.changelogEntry) {
             setChangelog(prev => {
@@ -997,12 +1046,21 @@ export default function App() {
             localStorage.setItem('prakanguard_citizen_reports', JSON.stringify(lifecycleResult.updatedReports));
           } catch (e) {}
         }
-        if (lifecycleResult.notificationMessage) {
-          setLatestUpdateNotification(lifecycleResult.notificationMessage);
+        const storedSig = (() => {
+          try {
+            return localStorage.getItem('prakanguard_last_flood_sig');
+          } catch (e) {
+            return null;
+          }
+        })();
+        const lastSig = lastFloodSignatureRef.current || storedSig;
+
+        if (lifecycleResult.notificationMessage && lifecycleResult.statusSignature && lastSig !== lifecycleResult.statusSignature) {
+          notifyOnFloodStateChange(lifecycleResult.notificationMessage, lifecycleResult.statusSignature);
         } else {
           setLatestUpdateNotification(`🔄 ซิงก์ข้อมูลสภาพอากาศและสถานการณ์น้ำท่วมล่าสุดสำเร็จ (อัปเดตเมื่อ ${nowTime})`);
+          setTimeout(() => setLatestUpdateNotification(null), 5000);
         }
-        setTimeout(() => setLatestUpdateNotification(null), 7000);
 
         if (lifecycleResult.changelogEntry) {
           setChangelog(prev => {
@@ -1625,6 +1683,79 @@ export default function App() {
       },
       { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
     );
+  };
+
+  // Handle entering website from WelcomeModal: fly and zoom smoothly directly to user's real GPS position
+  const handleEnterWebsite = () => {
+    const isMobileScreen = typeof window !== 'undefined' && window.innerWidth < 640;
+
+    // If user's location is already known, smoothly fly directly to their coordinates
+    if (userLocation && typeof userLocation.lat === 'number' && typeof userLocation.lng === 'number') {
+      setFlyToLocation({
+        lat: userLocation.lat,
+        lng: userLocation.lng,
+        zoom: 15.5,
+        duration: 2.2,
+        easeLinearity: 0.22,
+        ts: Date.now()
+      });
+      return;
+    }
+
+    // Request user GPS location and zoom in directly
+    if (typeof navigator !== 'undefined' && navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const coords = {
+            lat: pos.coords.latitude,
+            lng: pos.coords.longitude
+          };
+          setUserLocation(coords);
+          setLocationAccuracy(pos.coords.accuracy);
+
+          // Fly smoothly and zoom to user's exact GPS location!
+          setFlyToLocation({
+            lat: coords.lat,
+            lng: coords.lng,
+            zoom: 15.5,
+            duration: 2.2,
+            easeLinearity: 0.22,
+            ts: Date.now()
+          });
+
+          const detectedDistrict = detectDistrictForCoordinates(coords.lat, coords.lng);
+          const deviceModel = getDetailedDeviceInfo();
+          if (!detectedDistrict) {
+            sendVisitorTelemetry('ไม่ได้อยู่สมุทรปราการ', deviceModel);
+          } else {
+            const cleanDistrict = detectedDistrict.replace(/^อ\./, '').replace(/^อำเภอ/, '').replace('เมืองสมุทรปราการ', 'เมือง');
+            sendVisitorTelemetry(cleanDistrict, deviceModel);
+          }
+        },
+        (err) => {
+          sendVisitorTelemetry('ปิด GPS', getDetailedDeviceInfo());
+          // Fallback if denied or unavailable: smooth zoom to Samut Prakan province overview
+          setFlyToLocation({
+            lat: 13.6000,
+            lng: 100.6500,
+            zoom: isMobileScreen ? 11.2 : 11.6,
+            duration: 2.2,
+            easeLinearity: 0.22,
+            ts: Date.now()
+          });
+        },
+        { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
+      );
+    } else {
+      setFlyToLocation({
+        lat: 13.6000,
+        lng: 100.6500,
+        zoom: isMobileScreen ? 11.2 : 11.6,
+        duration: 2.2,
+        easeLinearity: 0.22,
+        ts: Date.now()
+      });
+    }
   };
 
   return (
@@ -2574,17 +2705,7 @@ export default function App() {
         onClose={() => {
           setIsWelcomeModalOpen(false);
         }}
-        onEnterWebsite={() => {
-          const isMobileScreen = typeof window !== 'undefined' && window.innerWidth < 640;
-          setFlyToLocation({
-            lat: 13.6000,
-            lng: 100.6500,
-            zoom: isMobileScreen ? 11.2 : 11.6,
-            duration: 2.2,
-            easeLinearity: 0.22,
-            ts: Date.now()
-          });
-        }}
+        onEnterWebsite={handleEnterWebsite}
         theme={theme}
       />
 
