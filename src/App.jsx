@@ -73,6 +73,17 @@ import {
   GripHorizontal,
   Compass
 } from 'lucide-react';
+import { 
+  playClickSound, 
+  playToggleSound, 
+  playRefreshSound, 
+  playGpsSound, 
+  playReportSound, 
+  playAiChatSound, 
+  playSelectSound, 
+  playCloseSound,
+  playEmergencySound 
+} from './services/soundEffects';
 
 // Distance calculation helper (Haversine Formula)
 function getDistanceKm(lat1, lon1, lat2, lon2) {
@@ -701,6 +712,19 @@ export default function App() {
     const annInterval = setInterval(checkAnnouncements, 60000); // check every 1 min
     return () => clearInterval(annInterval);
   }, [checkAnnouncements]);
+
+  // Auto-dismiss Admin Web Announcement Banner within 10 seconds (ตามคำขอผู้ใช้ ไม่ให้บังหน้าจอ)
+  useEffect(() => {
+    if (showAnnouncementBanner && activeAnnouncement) {
+      const timer = setTimeout(() => {
+        setShowAnnouncementBanner(false);
+      }, 10000); // 10 วินาทีตามที่ผู้ใช้ระบุ
+      return () => clearTimeout(timer);
+    }
+  }, [showAnnouncementBanner, activeAnnouncement]);
+
+  // 5-Minute Auto-Refresh Countdown State (300 seconds)
+  const [refreshCountdown, setRefreshCountdown] = useState(300);
 
   // Admin Management & Live Verification Notification States
   const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
@@ -1387,7 +1411,22 @@ export default function App() {
       console.warn("Weather sync error during refresh:", e);
     }
     setIsRefreshingData(false);
+    setRefreshCountdown(300);
   };
+
+  // 5-Minute Auto-Refresh Countdown Timer (นับถอยหลัง 300 วินาที และอัปเดตจุดน้ำท่วม/ไม่ท่วมทุกๆ 5 นาที จากแหล่งข้อมูลจริง)
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setRefreshCountdown(prev => {
+        if (prev <= 1) {
+          handleRefreshData();
+          return 300;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   // Real-time Cloud Cross-Device Synchronization Handler (Crowdsource Flood/Hail Reports & Feedback)
   const handleManualSyncCloudData = async () => {
@@ -1471,7 +1510,7 @@ export default function App() {
       } catch (e) {}
       return updated;
     });
-    setSelectedPoint(broadcast);
+    // Do not set selectedPoint so the map is not blocked by a card
     setFlyToLocation({ lat: broadcast.lat, lng: broadcast.lng });
     setLastUpdatedTime(broadcast.reportedAt);
   };
@@ -2203,6 +2242,7 @@ export default function App() {
         pendingReportsCount={isAdminAuthenticated ? pendingReportsCount : 0}
         onRefreshData={handleRefreshData}
         isRefreshing={isRefreshingData}
+        refreshCountdown={refreshCountdown}
       />
 
       {/* 2. MAIN MAP CANVAS */}
@@ -2320,30 +2360,47 @@ export default function App() {
           </div>
         )}
 
-        {/* Admin Web Announcement Banner (GPS-gated: only for users with GPS ON) */}
-        {showAnnouncementBanner && userLocation && activeAnnouncement && (
-          <div className="fixed top-[58px] sm:top-[72px] left-1/2 -translate-x-1/2 z-[85] w-auto max-w-[94vw] sm:max-w-lg pointer-events-auto animate-in fade-in slide-in-from-top-2 duration-300">
-            <div className={`flex items-start gap-2.5 px-3.5 py-2.5 rounded-2xl border shadow-2xl backdrop-blur-xl ${
-              isDark ? 'bg-blue-950/97 text-blue-100 border-blue-500/60' : 'bg-blue-50/98 text-blue-900 border-blue-400/60'
+        {/* Admin Web Announcement Banner (แนวนอน เรียงลงมาต่อบรรทัดเรื่อยๆ ไม่บังหน้าจอ และหายไปภายใน 10 วิ) */}
+        {showAnnouncementBanner && activeAnnouncement && (
+          <div className="fixed top-12 sm:top-14 left-2 right-2 sm:left-1/2 sm:-translate-x-1/2 sm:w-[92vw] sm:max-w-2xl z-[95] pointer-events-auto animate-in fade-in slide-in-from-top-3 duration-300">
+            <div className={`w-full p-3 sm:px-4 sm:py-3 rounded-2xl border shadow-2xl backdrop-blur-xl flex flex-col gap-1.5 transition-all overflow-hidden ${
+              isDark ? 'bg-slate-900/98 text-slate-100 border-blue-500/50 shadow-blue-950/50' : 'bg-white/98 text-slate-900 border-blue-400/60 shadow-xl'
             }`}>
-              <div className="flex items-center justify-center w-7 h-7 rounded-xl bg-blue-600 text-white shrink-0 mt-0.5">
-                <Bell className="w-4 h-4" />
+              <div className="flex items-center justify-between gap-2 border-b pb-1.5 border-blue-200/40 dark:border-blue-900/40">
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="flex items-center justify-center w-6 h-6 rounded-lg bg-blue-600 text-white shrink-0">
+                    <Bell className="w-3.5 h-3.5 animate-pulse" />
+                  </span>
+                  <span className="text-[11px] sm:text-xs font-bold text-blue-600 dark:text-cyan-400 truncate tracking-wide">
+                    📢 ประกาศจากเจ้าหน้าที่ PrakanGuard
+                  </span>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-cyan-300 font-mono font-bold shrink-0">
+                    หายไปใน 10 วิ
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    playCloseSound();
+                    lsAnnAddDismiss(activeAnnouncement.id);
+                    setShowAnnouncementBanner(false);
+                  }}
+                  className="p-1 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-white cursor-pointer shrink-0 transition-colors active:scale-90"
+                  title="ปิดประกาศ"
+                >
+                  <X className="w-4 h-4" />
+                </button>
               </div>
-              <div className="flex-1 min-w-0">
-                <span className="text-[10px] font-bold text-blue-400 block uppercase tracking-wider mb-0.5">📢 ประกาศจากเจ้าหน้าที่ PrakanGuard</span>
-                <span className="text-[12px] sm:text-xs font-medium leading-snug break-words">{activeAnnouncement.message}</span>
+              <div className="text-xs sm:text-sm font-medium leading-relaxed whitespace-pre-line text-slate-800 dark:text-slate-100 px-0.5 break-words">
+                {activeAnnouncement.message}
               </div>
-              <button
-                type="button"
-                onClick={() => {
-                  lsAnnAddDismiss(activeAnnouncement.id);
-                  setShowAnnouncementBanner(false);
-                }}
-                className="p-1 hover:bg-blue-400/20 rounded-lg text-blue-400 hover:text-blue-200 cursor-pointer shrink-0 ml-0.5 mt-0.5"
-                title="ปิดประกาศ"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
+              {/* 10-Second Auto-dismiss Progress Bar */}
+              <div className="w-full bg-blue-100 dark:bg-blue-950/60 h-1 rounded-full overflow-hidden mt-0.5">
+                <div 
+                  className="bg-blue-500 h-full rounded-full"
+                  style={{ animation: 'pg-announcement-timer 10s linear forwards' }}
+                />
+              </div>
             </div>
           </div>
         )}
@@ -2353,8 +2410,11 @@ export default function App() {
           <div className="sm:hidden absolute top-2.5 right-14 z-20 pointer-events-auto flex items-center gap-1.5 px-2.5 py-1.5 rounded-2xl bg-blue-600/95 text-white shadow-lg border border-blue-400 text-xs font-bold animate-in fade-in">
             <span className="truncate max-w-[120px]">📍 {selectedDistrict.replace(/^อ\./, '').replace('เมืองสมุทรปราการ', 'เมือง')}</span>
             <button
-              onClick={() => setSelectedDistrict('ทั้งหมด')}
-              className="px-1.5 py-0.5 rounded-lg bg-white/20 hover:bg-white/30 text-[10px] cursor-pointer"
+              onClick={() => {
+                playSelectSound();
+                setSelectedDistrict('ทั้งหมด');
+              }}
+              className="px-1.5 py-0.5 rounded-lg bg-white/20 hover:bg-white/30 text-[10px] cursor-pointer active:scale-95 transition-transform"
               title="ล้างตัวกรองอำเภอ กลับสู่มุมมองรวม"
             >
               ✕ ดูทั้งหมด
@@ -2365,7 +2425,10 @@ export default function App() {
         {/* Toggle Button to RE-OPEN the collapsed panel (Appears docked at top-left when collapsed) */}
         {isTopPanelCollapsed && (
           <button
-            onClick={() => setIsTopPanelCollapsed(false)}
+            onClick={() => {
+              playToggleSound(true);
+              setIsTopPanelCollapsed(false);
+            }}
             className={`absolute top-2.5 sm:top-3 left-2.5 sm:left-4 z-20 pointer-events-auto flex items-center gap-1.5 px-3 py-1.5 rounded-2xl shadow-xl border text-xs font-bold backdrop-blur-xl transition-all hover:scale-105 active:scale-95 cursor-pointer ${
               isDark 
                 ? 'bg-slate-900/95 text-slate-100 border-slate-700 hover:border-blue-500' 
@@ -2541,8 +2604,11 @@ export default function App() {
 
             {/* Collapse Side Button (Icon Only with Folding Symbol) */}
             <button
-              onClick={() => setIsTopPanelCollapsed(true)}
-              className={`p-2 sm:p-2.5 rounded-2xl border shadow-md flex items-center justify-center transition-all cursor-pointer backdrop-blur-xl shrink-0 group ${
+              onClick={() => {
+                playToggleSound(false);
+                setIsTopPanelCollapsed(true);
+              }}
+              className={`p-2 sm:p-2.5 rounded-2xl border shadow-md flex items-center justify-center transition-all cursor-pointer backdrop-blur-xl shrink-0 group active:scale-95 ${
                 isDark 
                   ? 'bg-slate-900/90 hover:bg-slate-800 text-slate-300 hover:text-white border-slate-700/80 hover:border-blue-500/50' 
                   : 'bg-white/90 hover:bg-slate-50 text-slate-600 hover:text-slate-900 border-slate-200 hover:border-blue-400'
@@ -2602,6 +2668,7 @@ export default function App() {
               <select
                 value={selectedDistrict}
                 onChange={(e) => {
+                  playSelectSound();
                   const dist = e.target.value;
                   setSelectedDistrict(dist);
                   if (dist === "ทั้งหมด") {

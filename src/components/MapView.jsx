@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Crosshair, Navigation, BookOpen } from 'lucide-react';
+import { playClickSound, playToggleSound, playGpsSound } from '../services/soundEffects';
 import { 
   SAMUT_PRAKAN_DISTRICTS_GEOJSON, 
   SAMUT_PRAKAN_MASK_GEOJSON,
@@ -811,8 +812,11 @@ export default function MapView({
           ].map(({ style, emoji, label }) => (
             <button
               key={style}
-              onClick={() => setMapStyle(style)}
-              className={`px-2.5 py-1.5 rounded-xl font-semibold transition-all cursor-pointer flex items-center gap-1 text-xs ${
+              onClick={() => {
+                playToggleSound(style === 'google-satellite');
+                setMapStyle(style);
+              }}
+              className={`px-2.5 py-1.5 rounded-xl font-semibold transition-all cursor-pointer flex items-center gap-1 text-xs active:scale-95 ${
                 mapStyle === style
                   ? 'bg-blue-600 text-white shadow-sm'
                   : isDark 
@@ -830,9 +834,12 @@ export default function MapView({
         {/* GPS & Reset Buttons */}
         <div className="flex items-center gap-1.5">
           <button 
-            onClick={onLocateMe}
+            onClick={() => {
+              playGpsSound();
+              if (onLocateMe) onLocateMe();
+            }}
             title="ค้นหาพิกัดตำแหน่งปัจจุบันของคุณ"
-            className={`px-3 py-2 rounded-xl shadow-md border transition-all flex items-center gap-1.5 text-xs cursor-pointer backdrop-blur-md font-bold ${
+            className={`px-3 py-2 rounded-xl shadow-md border transition-all flex items-center gap-1.5 text-xs cursor-pointer backdrop-blur-md font-bold active:scale-95 ${
               isDark 
                 ? 'bg-slate-900/95 text-slate-200 hover:text-cyan-400 hover:bg-slate-800 border-slate-700 shadow-xl' 
                 : 'bg-white/95 text-slate-700 hover:text-blue-700 hover:bg-blue-50/80 border-slate-200'
@@ -843,9 +850,12 @@ export default function MapView({
           </button>
           
           <button 
-            onClick={resetView}
+            onClick={() => {
+              playClickSound();
+              resetView();
+            }}
             title="รีเซ็ตมุมมองขอบเขตจังหวัดสมุทรปราการ"
-            className={`p-2 rounded-xl shadow-md border transition-all cursor-pointer backdrop-blur-md ${
+            className={`p-2 rounded-xl shadow-md border transition-all cursor-pointer backdrop-blur-md active:scale-95 ${
               isDark 
                 ? 'bg-slate-900/95 text-slate-200 hover:text-cyan-400 hover:bg-slate-800 border-slate-700 shadow-xl' 
                 : 'bg-white/95 text-slate-700 hover:text-blue-700 hover:bg-blue-50/80 border-slate-200'

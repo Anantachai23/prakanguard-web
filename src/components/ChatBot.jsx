@@ -28,6 +28,7 @@ import {
 import { INITIAL_FLOOD_POINTS } from '../data/samutPrakanPoints';
 import { FLOOD_STANDARDS } from '../data/floodStandards';
 import { getLiveSamutPrakanWeather } from '../services/weatherService';
+import { playClickSound, playCloseSound, playAiChatSound, playToggleSound } from '../services/soundEffects';
 import { 
   OFFICIAL_EMERGENCY_CONTACTS, 
   DISTRICT_KNOWLEDGE, 
@@ -2107,6 +2108,7 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
               e.stopPropagation();
               return;
             }
+            playAiChatSound();
             setIsOpen(true);
           }}
           style={launcherPosition ? {
@@ -2197,8 +2199,11 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
             {/* Restore/Expand Button */}
             <button
               type="button"
-              onClick={() => setIsMinimized(false)}
-              className={`p-1.5 rounded-xl transition-all cursor-pointer ${
+              onClick={() => {
+                playToggleSound(true);
+                setIsMinimized(false);
+              }}
+              className={`p-1.5 rounded-xl transition-all cursor-pointer active:scale-95 ${
                 isDark ? 'bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
               }`}
               title="ขยายหน้าต่างขึ้น"
@@ -2209,8 +2214,12 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
             {/* Close Button */}
             <button
               type="button"
-              onClick={() => { setIsOpen(false); setIsMinimized(false); }}
-              className={`p-1.5 rounded-xl transition-all cursor-pointer ${
+              onClick={() => {
+                playCloseSound();
+                setIsOpen(false);
+                setIsMinimized(false);
+              }}
+              className={`p-1.5 rounded-xl transition-all cursor-pointer active:scale-95 ${
                 isDark ? 'bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white' : 'bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800'
               }`}
               title="ปิดแชท"
@@ -2338,8 +2347,11 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
               {/* Close Button */}
               <button
                 type="button"
-                onClick={() => setIsOpen(false)}
-                className={`p-1.5 rounded-xl transition-all cursor-pointer ${
+                onClick={() => {
+                  playCloseSound();
+                  setIsOpen(false);
+                }}
+                className={`p-1.5 rounded-xl transition-all cursor-pointer active:scale-95 ${
                   isDark 
                     ? 'bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white border border-slate-700' 
                     : 'bg-white hover:bg-slate-100 text-slate-500 hover:text-slate-800 border border-slate-200 shadow-xs'

@@ -11,6 +11,14 @@ import {
   RotateCw
 } from 'lucide-react';
 import RealTimeClock from './RealTimeClock';
+import { 
+  playClickSound, 
+  playToggleSound, 
+  playRefreshSound, 
+  playSelectSound, 
+  playReportSound, 
+  playEmergencySound 
+} from '../services/soundEffects';
 
 export default function Navbar({ 
   points = [], 
@@ -33,9 +41,17 @@ export default function Navbar({
   theme = 'light',
   onToggleTheme,
   onRefreshData,
-  isRefreshing = false
+  isRefreshing = false,
+  refreshCountdown = 300
 }) {
   const isDark = theme === 'dark';
+  const formatCountdown = (seconds) => {
+    const s = Math.max(0, Math.floor(seconds || 0));
+    const m = Math.floor(s / 60);
+    const remainder = s % 60;
+    return `${String(m).padStart(2, '0')}:${String(remainder).padStart(2, '0')}`;
+  };
+  const countdownFormatted = formatCountdown(refreshCountdown);
   // Use precomputed levelCounts synchronized 1:1 with map pins
   const minor = levelCounts ? levelCounts.minor : points.filter(p => p.level === 1 && p.isActive !== false && !p.isResolved).length;
   const moderate = levelCounts ? levelCounts.moderate : points.filter(p => p.level === 2 && p.isActive !== false && !p.isResolved).length;
@@ -123,7 +139,10 @@ export default function Navbar({
             {/* Level 1: ปกติ Filter Button */}
             <button
               type="button"
-              onClick={() => onSelectSeverityFilter && onSelectSeverityFilter(severityFilter === '1' ? 'all' : '1')}
+              onClick={() => {
+                playSelectSound();
+                if (onSelectSeverityFilter) onSelectSeverityFilter(severityFilter === '1' ? 'all' : '1');
+              }}
               className={`flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-semibold cursor-pointer transition-all active:scale-95 ${
                 severityFilter === '1'
                   ? 'bg-emerald-600 text-white shadow-xs font-bold ring-2 ring-emerald-400/40'
@@ -143,7 +162,10 @@ export default function Navbar({
             {/* Level 2: ปานกลาง Filter Button */}
             <button
               type="button"
-              onClick={() => onSelectSeverityFilter && onSelectSeverityFilter(severityFilter === '2' ? 'all' : '2')}
+              onClick={() => {
+                playSelectSound();
+                if (onSelectSeverityFilter) onSelectSeverityFilter(severityFilter === '2' ? 'all' : '2');
+              }}
               className={`flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-semibold cursor-pointer transition-all active:scale-95 ${
                 severityFilter === '2'
                   ? 'bg-amber-500 text-slate-950 shadow-xs font-bold ring-2 ring-amber-300/50'
@@ -163,7 +185,10 @@ export default function Navbar({
             {/* Level 3: วิกฤต Filter Button */}
             <button
               type="button"
-              onClick={() => onSelectSeverityFilter && onSelectSeverityFilter(severityFilter === '3' ? 'all' : '3')}
+              onClick={() => {
+                playSelectSound();
+                if (onSelectSeverityFilter) onSelectSeverityFilter(severityFilter === '3' ? 'all' : '3');
+              }}
               className={`flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-semibold cursor-pointer transition-all active:scale-95 ${
                 severityFilter === '3'
                   ? 'bg-rose-600 text-white shadow-xs font-bold ring-2 ring-rose-400/40'
@@ -184,7 +209,10 @@ export default function Navbar({
             {severityFilter !== 'all' && (
               <button
                 type="button"
-                onClick={() => onSelectSeverityFilter && onSelectSeverityFilter('all')}
+                onClick={() => {
+                  playSelectSound();
+                  if (onSelectSeverityFilter) onSelectSeverityFilter('all');
+                }}
                 className="px-2 py-0.5 rounded-lg bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 text-[10px] font-bold cursor-pointer transition-all active:scale-95"
                 title="ล้างตัวกรองและแสดงระดับน้ำทั้งหมด"
               >
@@ -234,8 +262,11 @@ export default function Navbar({
           {/* Desktop/Tablet Standards Button */}
           <button 
             type="button"
-            onClick={onOpenStandards}
-            className={`hidden md:inline-flex px-2.5 py-1.5 rounded-xl border text-xs font-semibold items-center gap-1.5 transition-all cursor-pointer shadow-xs ${
+            onClick={() => {
+              playClickSound();
+              if (onOpenStandards) onOpenStandards();
+            }}
+            className={`hidden md:inline-flex px-2.5 py-1.5 rounded-xl border text-xs font-semibold items-center gap-1.5 transition-all cursor-pointer shadow-xs active:scale-95 ${
               isDark 
                 ? 'bg-slate-900 hover:bg-slate-800 text-slate-300 border-slate-700' 
                 : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
@@ -249,8 +280,11 @@ export default function Navbar({
           {/* Desktop/Tablet Feedback Button */}
           <button 
             type="button"
-            onClick={onOpenFeedback}
-            className={`hidden md:inline-flex px-2.5 sm:px-3 py-1.5 rounded-xl border text-xs font-semibold items-center gap-1.5 transition-all cursor-pointer shadow-xs ${
+            onClick={() => {
+              playClickSound();
+              if (onOpenFeedback) onOpenFeedback();
+            }}
+            className={`hidden md:inline-flex px-2.5 sm:px-3 py-1.5 rounded-xl border text-xs font-semibold items-center gap-1.5 transition-all cursor-pointer shadow-xs active:scale-95 ${
               isDark 
                 ? 'bg-teal-950/60 hover:bg-teal-900/60 text-teal-300 border-teal-800' 
                 : 'bg-teal-50 hover:bg-teal-100 text-teal-800 border-teal-200'
@@ -264,8 +298,11 @@ export default function Navbar({
           {/* Desktop/Tablet Live Updates Button */}
           <button 
             type="button"
-            onClick={onOpenPublicUpdates}
-            className={`hidden sm:inline-flex px-2.5 sm:px-3 py-1.5 rounded-xl border text-xs font-semibold items-center gap-1.5 transition-all cursor-pointer shadow-xs ${
+            onClick={() => {
+              playClickSound();
+              if (onOpenPublicUpdates) onOpenPublicUpdates();
+            }}
+            className={`hidden sm:inline-flex px-2.5 sm:px-3 py-1.5 rounded-xl border text-xs font-semibold items-center gap-1.5 transition-all cursor-pointer shadow-xs active:scale-95 ${
               isDark 
                 ? 'bg-emerald-950/60 hover:bg-emerald-900/60 text-emerald-300 border-emerald-800' 
                 : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border-emerald-200'
@@ -279,9 +316,12 @@ export default function Navbar({
           {/* Desktop/Tablet Citizen Flood Report Button */}
           <button 
             type="button"
-            onClick={onOpenCitizenReport}
+            onClick={() => {
+              playReportSound();
+              if (onOpenCitizenReport) onOpenCitizenReport();
+            }}
             title="รายงานจุดน้ำท่วม"
-            className="hidden sm:inline-flex px-2.5 sm:px-3 py-1.5 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white text-xs font-bold items-center gap-1.5 transition-all cursor-pointer shadow-md shadow-blue-600/25"
+            className="hidden sm:inline-flex px-2.5 sm:px-3 py-1.5 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white text-xs font-bold items-center gap-1.5 transition-all cursor-pointer shadow-md shadow-blue-600/25 active:scale-95"
           >
             <Camera className="w-3.5 h-3.5 shrink-0" />
             <span>แจ้งจุดท่วม</span>
@@ -290,9 +330,12 @@ export default function Navbar({
           {/* Desktop Emergency Hotline */}
           <button 
             type="button"
-            onClick={onOpenEmergency}
+            onClick={() => {
+              playEmergencySound();
+              if (onOpenEmergency) onOpenEmergency();
+            }}
             title="สายด่วนฉุกเฉิน 1784"
-            className="hidden sm:inline-flex px-2.5 sm:px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold items-center gap-1.5 transition-all cursor-pointer shadow-md shadow-rose-600/25"
+            className="hidden sm:inline-flex px-2.5 sm:px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold items-center gap-1.5 transition-all cursor-pointer shadow-md shadow-rose-600/25 active:scale-95"
           >
             <PhoneCall className="w-3.5 h-3.5 shrink-0" />
             <span>สายด่วน 1784</span>
@@ -301,8 +344,11 @@ export default function Navbar({
           {/* Theme Switcher Button (Always accessible) */}
           <button
             type="button"
-            onClick={onToggleTheme}
-            className={`p-1.5 sm:p-2 rounded-xl border text-xs font-semibold flex items-center justify-center transition-all cursor-pointer shadow-xs ${
+            onClick={() => {
+              playToggleSound(!isDark);
+              if (onToggleTheme) onToggleTheme();
+            }}
+            className={`p-1.5 sm:p-2 rounded-xl border text-xs font-semibold flex items-center justify-center transition-all cursor-pointer shadow-xs active:scale-95 ${
               isDark 
                 ? 'bg-slate-900 hover:bg-slate-800 text-amber-300 border-slate-700 hover:border-amber-400/50' 
                 : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200 hover:border-slate-300'
@@ -317,10 +363,11 @@ export default function Navbar({
             )}
           </button>
 
-          {/* Reload / Sync Button (Every Device - Auto-refreshes every 5 min) */}
+          {/* Reload / Sync Button (Every Device - Auto-refreshes every 5 min with live countdown) */}
           <button
             type="button"
             onClick={() => {
+              playRefreshSound();
               if (onRefreshData) {
                 onRefreshData();
               } else {
@@ -332,11 +379,17 @@ export default function Navbar({
                 ? 'bg-slate-900 hover:bg-slate-800 text-sky-400 border-slate-700 hover:border-sky-500/50' 
                 : 'bg-slate-100 hover:bg-slate-200 text-sky-700 border-slate-200 hover:border-sky-300'
             }`}
-            title="รีเฟรชอัปเดตข้อมูลน้ำท่วมสด (ระบบอัปเดตอัตโนมัติทุก 5 นาที)"
+            title={`รีเฟรชอัปเดตข้อมูลน้ำท่วมสด (รีเฟรชอัตโนมัติในอีก ${countdownFormatted} นาที)`}
             aria-label="รีเฟรชอัปเดตข้อมูล"
           >
-            <RotateCw className={`w-4 h-4 text-sky-500 ${isRefreshing ? 'animate-spin text-sky-400' : 'hover:rotate-180 transition-transform duration-500'}`} />
-            <span className="hidden sm:inline">รีเฟรช</span>
+            <RotateCw className={`w-3.5 h-3.5 sm:w-4 sm:h-4 text-sky-500 shrink-0 ${isRefreshing ? 'animate-spin text-sky-400' : 'hover:rotate-180 transition-transform duration-500'}`} />
+            <div className="flex items-center gap-1 min-w-0">
+              <span className="hidden lg:inline">รีเฟรชในอีก</span>
+              <span className="hidden sm:inline lg:hidden">รีเฟรช</span>
+              <span className="font-mono font-bold text-[11px] sm:text-xs text-sky-600 dark:text-cyan-400">
+                {countdownFormatted}
+              </span>
+            </div>
           </button>
         </div>
       </div>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { playClickSound, playToggleSound } from '../services/soundEffects';
 import { 
   CloudRain, 
   ChevronDown, 
@@ -60,11 +61,9 @@ export default function RainForecast24hCard({
   const status = forecast.status || (isRainingNow ? 'ฝนตกในพื้นที่' : 'โอกาสฝนตกปานกลาง');
   const maxProb = forecast.maxProbability ?? 50;
 
-  // Clean time window text for today
-  let rainTimeToday = "ไม่มีสัญญาณฝนตกหนัก";
-  if (isRainingNow) {
-    rainTimeToday = "มีฝนตกอยู่ในพื้นที่ขณะนี้";
-  } else if (forecast.startTimeText) {
+  // Clean time window text for today (คาดการณ์ล่วงหน้า ไม่แสดงว่ากำลังตก)
+  let rainTimeToday = "ไม่มีแนวโน้มฝนตกหนัก";
+  if (forecast.startTimeText && forecast.startTimeText !== 'ไม่มีแนวโน้มฝนตกหนัก') {
     rainTimeToday = forecast.startTimeText.replace('เริ่มราว ', '').replace('เริ่มประมาณ ', '');
   } else if (maxProb >= 60) {
     rainTimeToday = "ช่วงบ่าย-เย็น (15:00 - 18:30 น.)";
@@ -73,15 +72,17 @@ export default function RainForecast24hCard({
   }
 
   // 6 Districts List (ดึงตรงจาก telemetry จริงของ Open-Meteo ไม่ใช้ข้อมูลจำลอง)
+  const defaultTimeWindow = rainTimeToday;
+  const defaultDuration = maxProb >= 50 ? "คาดการณ์ตกต่อเนื่อง ~30 - 60 นาที" : "ไม่มีสัญญาณฝนต่อเนื่อง";
   const districtList = (Array.isArray(forecast.districtRainAnalysis) && forecast.districtRainAnalysis.length > 0)
     ? forecast.districtRainAnalysis
     : [
-        { district: "เมืองสมุทรปราการ", probability: maxProb, temperature: forecast?.temp || 28, status: forecast?.status || "ปกติ", timeWindow: startTimeText },
-        { district: "บางพลี", probability: maxProb, temperature: forecast?.temp || 28, status: forecast?.status || "ปกติ", timeWindow: startTimeText },
-        { district: "พระประแดง", probability: maxProb, temperature: forecast?.temp || 28, status: forecast?.status || "ปกติ", timeWindow: startTimeText },
-        { district: "บางเสาธง", probability: maxProb, temperature: forecast?.temp || 28, status: forecast?.status || "ปกติ", timeWindow: startTimeText },
-        { district: "บางบ่อ", probability: maxProb, temperature: forecast?.temp || 28, status: forecast?.status || "ปกติ", timeWindow: startTimeText },
-        { district: "พระสมุทรเจดีย์", probability: maxProb, temperature: forecast?.temp || 28, status: forecast?.status || "ปกติ", timeWindow: startTimeText }
+        { district: "เมืองสมุทรปราการ", probability: maxProb, temperature: forecast?.temp || 28, status: forecast?.status || "ปกติ", timeWindow: defaultTimeWindow, durationText: defaultDuration },
+        { district: "บางพลี", probability: maxProb, temperature: forecast?.temp || 28, status: forecast?.status || "ปกติ", timeWindow: defaultTimeWindow, durationText: defaultDuration },
+        { district: "พระประแดง", probability: maxProb, temperature: forecast?.temp || 28, status: forecast?.status || "ปกติ", timeWindow: defaultTimeWindow, durationText: defaultDuration },
+        { district: "บางเสาธง", probability: maxProb, temperature: forecast?.temp || 28, status: forecast?.status || "ปกติ", timeWindow: defaultTimeWindow, durationText: defaultDuration },
+        { district: "บางบ่อ", probability: maxProb, temperature: forecast?.temp || 28, status: forecast?.status || "ปกติ", timeWindow: defaultTimeWindow, durationText: defaultDuration },
+        { district: "พระสมุทรเจดีย์", probability: maxProb, temperature: forecast?.temp || 28, status: forecast?.status || "ปกติ", timeWindow: defaultTimeWindow, durationText: defaultDuration }
       ];
 
   const cleanDistrictName = (dName) => {
@@ -113,8 +114,11 @@ export default function RainForecast24hCard({
         <div className="flex items-center justify-between gap-2">
           <button
             type="button"
-            onClick={() => setIsExpanded(true)}
-            className="flex items-center gap-2 min-w-0 flex-1 text-left cursor-pointer group"
+            onClick={() => {
+              playToggleSound(true);
+              setIsExpanded(true);
+            }}
+            className="flex items-center gap-2 min-w-0 flex-1 text-left cursor-pointer group active:scale-95 transition-transform"
           >
             <div className={`p-1.5 rounded-xl shrink-0 ${
               isDark ? 'bg-blue-950 text-cyan-400 border border-blue-800' : 'bg-blue-50 text-blue-600 border border-blue-200'
@@ -138,8 +142,11 @@ export default function RainForecast24hCard({
 
           <button
             type="button"
-            onClick={() => setIsExpanded(true)}
-            className={`px-2 py-1 rounded-xl text-xs font-semibold border flex items-center gap-0.5 cursor-pointer transition-all shrink-0 ${
+            onClick={() => {
+              playToggleSound(true);
+              setIsExpanded(true);
+            }}
+            className={`px-2 py-1 rounded-xl text-xs font-semibold border flex items-center gap-0.5 cursor-pointer transition-all active:scale-95 shrink-0 ${
               isDark 
                 ? 'bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-200' 
                 : 'bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-700'
@@ -194,8 +201,11 @@ export default function RainForecast24hCard({
             {collapsible && (
               <button
                 type="button"
-                onClick={() => setIsExpanded(false)}
-                className={`p-1.5 rounded-xl border transition-all cursor-pointer ${
+                onClick={() => {
+                  playToggleSound(false);
+                  setIsExpanded(false);
+                }}
+                className={`p-1.5 rounded-xl border transition-all cursor-pointer active:scale-95 ${
                   isDark 
                     ? 'bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-300' 
                     : 'bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-600'
@@ -229,27 +239,12 @@ export default function RainForecast24hCard({
           </div>
         </div>
 
-        {/* Hero Spotlight: วันนี้มีโอกาสตกกี่โมง */}
-        <div className={`mt-2 p-2.5 rounded-2xl border flex items-center justify-between gap-3 ${
-          isDark ? 'bg-slate-850/80 border-slate-800' : 'bg-slate-50 border-slate-200'
-        }`}>
-          <div className="min-w-0">
-            <span className={`text-[11px] font-semibold flex items-center gap-1.5 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
-              <Clock className="w-3.5 h-3.5 text-blue-500 shrink-0" />
-              <span>ช่วงเวลาที่มีโอกาสฝนตก:</span>
-            </span>
-            <span className={`text-xs sm:text-sm font-bold mt-0.5 block ${isDark ? 'text-cyan-300' : 'text-blue-700'}`}>
-              {rainTimeToday}
-            </span>
-          </div>
-        </div>
-
-        {/* 6 Districts Compact List */}
+        {/* 6 Districts Compact List (คาดการณ์แยก 6 อำเภอ: โอกาสเกิดฝน ช่วงเวลา และระยะเวลาตกต่อเนื่อง) */}
         <div className="mt-3">
           <span className={`text-[11px] font-bold block mb-1.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-            คาดการณ์แยก 6 อำเภอ (โอกาสฝนตก):
+            คาดการณ์โอกาสเกิดฝนและช่วงเวลาแยก 6 อำเภอ:
           </span>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {districtList.map((d, idx) => {
               const districtName = d.district.startsWith('อำเภอ') || d.district.startsWith('อ.') 
                 ? d.district 
@@ -257,31 +252,48 @@ export default function RainForecast24hCard({
               return (
                 <div
                   key={idx}
-                  className={`px-3 py-2 rounded-xl border flex items-center justify-between text-xs transition-colors ${
+                  className={`p-2.5 rounded-2xl border flex flex-col justify-between text-xs transition-colors ${
                     userDistrict && userDistrict.includes(d.district)
                       ? (isDark ? 'bg-blue-950/80 border-cyan-500/60 text-cyan-200' : 'bg-blue-50 border-blue-400 text-blue-900 font-bold')
                       : (isDark ? 'bg-slate-850/60 border-slate-800 text-slate-300' : 'bg-slate-50 border-slate-200 text-slate-700')
                   }`}
                 >
-                  <div className="flex items-center gap-2 min-w-0 pr-1">
-                    <span className="text-xs shrink-0">{d.icon || '🌦️'}</span>
-                    <span className="font-semibold truncate">
-                      {districtName}
-                    </span>
-                    {d.temperature && (
-                      <span className="text-[10px] font-mono font-medium text-slate-500 dark:text-slate-400 shrink-0">
-                        {d.temperature}°C
+                  <div className="flex items-center justify-between gap-1 mb-1.5">
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <span className="text-sm shrink-0">{d.icon || '🌦️'}</span>
+                      <span className="font-bold truncate text-slate-900 dark:text-white">
+                        {districtName}
                       </span>
-                    )}
-                  </div>
-                  <div className="shrink-0">
-                    <span className={`text-[11px] px-2 py-0.5 rounded-lg font-bold border ${
+                      {d.temperature && (
+                        <span className="text-[10px] font-mono font-medium text-slate-500 dark:text-slate-400 shrink-0">
+                          {d.temperature}°C
+                        </span>
+                      )}
+                    </div>
+                    <span className={`text-[11px] px-2 py-0.5 rounded-lg font-bold border shrink-0 ${
                       d.probability >= 60 
                         ? (isDark ? 'bg-amber-950/90 text-amber-300 border-amber-800' : 'bg-amber-100 text-amber-900 border-amber-300')
                         : (isDark ? 'bg-slate-800 text-slate-300 border-slate-700' : 'bg-slate-200 text-slate-700 border-slate-300')
                     }`}>
-                      {d.probability}%
+                      โอกาส {d.probability}%
                     </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-1 text-[11px] pt-1.5 border-t border-slate-200/60 dark:border-slate-800/80">
+                    <div className="flex items-center gap-1 text-slate-600 dark:text-slate-400">
+                      <Clock className="w-3 h-3 shrink-0 text-blue-500" />
+                      <span>ช่วงเวลา:</span>
+                      <span className="font-semibold text-slate-800 dark:text-slate-200 truncate">
+                        {d.timeWindow || 'ไม่มีแนวโน้มฝนตกหนัก'}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1 text-slate-600 dark:text-slate-400">
+                      <span className="text-xs">⏱️</span>
+                      <span>ระยะเวลา:</span>
+                      <span className="font-semibold text-slate-800 dark:text-slate-200 truncate">
+                        {d.durationText || 'ไม่มีสัญญาณฝนต่อเนื่อง'}
+                      </span>
+                    </div>
                   </div>
                 </div>
               );
@@ -293,8 +305,11 @@ export default function RainForecast24hCard({
         {onOpenRadar && (
           <div className="mt-3 pt-2.5 border-t border-slate-100 dark:border-slate-800 flex justify-end">
             <button
-              onClick={onOpenRadar}
-              className={`text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer ${
+              onClick={() => {
+                playClickSound();
+                onOpenRadar();
+              }}
+              className={`text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer active:scale-95 ${
                 isDark ? 'text-cyan-400 hover:text-cyan-300' : 'text-blue-600 hover:text-blue-700'
               }`}
             >

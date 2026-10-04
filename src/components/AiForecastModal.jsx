@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Radio, CloudRain, Clock, Thermometer, Droplets, ExternalLink, Calendar } from 'lucide-react';
 import { getLiveSamutPrakanWeather } from '../services/weatherService';
+import { playClickSound, playCloseSound } from '../services/soundEffects';
 
 export default function AiForecastModal({ isOpen, onClose, userDistrict, theme = 'light' }) {
   const [weather, setWeather] = useState(null);
@@ -54,10 +55,8 @@ export default function AiForecastModal({ isOpen, onClose, userDistrict, theme =
   const isRainingNow = weather?.forecast24h?.isRainingNow;
   const maxProb = weather?.rainProbabilityToday ?? 50;
 
-  let rainTimeToday = "ไม่มีสัญญาณฝนตกหนัก";
-  if (isRainingNow) {
-    rainTimeToday = "ขณะนี้มีฝนตกอยู่ในพื้นที่";
-  } else if (weather?.forecast24h?.startTimeText) {
+  let rainTimeToday = "ไม่มีแนวโน้มฝนตกหนัก";
+  if (weather?.forecast24h?.startTimeText && weather.forecast24h.startTimeText !== 'ไม่มีแนวโน้มฝนตกหนัก') {
     rainTimeToday = weather.forecast24h.startTimeText.replace('เริ่มราว ', '').replace('เริ่มประมาณ ', '');
   } else if (weather?.peakHour) {
     rainTimeToday = weather.peakHour;
@@ -67,15 +66,16 @@ export default function AiForecastModal({ isOpen, onClose, userDistrict, theme =
     rainTimeToday = "ช่วงเย็นถึงค่ำ (16:30 - 19:30 น.)";
   }
 
+  const defaultDuration = maxProb >= 50 ? "คาดการณ์ตกต่อเนื่อง ~30 - 60 นาที" : "ไม่มีสัญญาณฝนต่อเนื่อง";
   const districtAnalysis = (Array.isArray(weather?.forecast24h?.districtRainAnalysis) && weather.forecast24h.districtRainAnalysis.length > 0)
     ? weather.forecast24h.districtRainAnalysis
     : [
-        { district: "เมืองสมุทรปราการ", probability: maxProb, temperature: weather?.temp || 28, status: weather?.weatherDesc || "ปกติ", timeWindow: rainTimeToday },
-        { district: "บางพลี", probability: maxProb, temperature: weather?.temp || 28, status: weather?.weatherDesc || "ปกติ", timeWindow: rainTimeToday },
-        { district: "พระประแดง", probability: maxProb, temperature: weather?.temp || 28, status: weather?.weatherDesc || "ปกติ", timeWindow: rainTimeToday },
-        { district: "บางเสาธง", probability: maxProb, temperature: weather?.temp || 28, status: weather?.weatherDesc || "ปกติ", timeWindow: rainTimeToday },
-        { district: "บางบ่อ", probability: maxProb, temperature: weather?.temp || 28, status: weather?.weatherDesc || "ปกติ", timeWindow: rainTimeToday },
-        { district: "พระสมุทรเจดีย์", probability: maxProb, temperature: weather?.temp || 28, status: weather?.weatherDesc || "ปกติ", timeWindow: rainTimeToday }
+        { district: "เมืองสมุทรปราการ", probability: maxProb, temperature: weather?.temp || 28, status: weather?.weatherDesc || "ปกติ", timeWindow: rainTimeToday, durationText: defaultDuration },
+        { district: "บางพลี", probability: maxProb, temperature: weather?.temp || 28, status: weather?.weatherDesc || "ปกติ", timeWindow: rainTimeToday, durationText: defaultDuration },
+        { district: "พระประแดง", probability: maxProb, temperature: weather?.temp || 28, status: weather?.weatherDesc || "ปกติ", timeWindow: rainTimeToday, durationText: defaultDuration },
+        { district: "บางเสาธง", probability: maxProb, temperature: weather?.temp || 28, status: weather?.weatherDesc || "ปกติ", timeWindow: rainTimeToday, durationText: defaultDuration },
+        { district: "บางบ่อ", probability: maxProb, temperature: weather?.temp || 28, status: weather?.weatherDesc || "ปกติ", timeWindow: rainTimeToday, durationText: defaultDuration },
+        { district: "พระสมุทรเจดีย์", probability: maxProb, temperature: weather?.temp || 28, status: weather?.weatherDesc || "ปกติ", timeWindow: rainTimeToday, durationText: defaultDuration }
       ];
 
   const cleanDistrictName = (dName) => {
@@ -190,9 +190,9 @@ export default function AiForecastModal({ isOpen, onClose, userDistrict, theme =
             {/* 6 Districts Simple Breakdown */}
             <div>
               <h4 className={`text-xs font-bold mb-2 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
-                คาดการณ์แยกตามอำเภอ:
+                คาดการณ์โอกาสเกิดฝนและช่วงเวลาแยกตามอำเภอ:
               </h4>
-              <div className="space-y-1.5">
+              <div className="space-y-2">
                 {districtAnalysis.map((d, i) => {
                   const districtName = d.district.startsWith('อำเภอ') || d.district.startsWith('อ.') 
                     ? d.district 
@@ -200,22 +200,44 @@ export default function AiForecastModal({ isOpen, onClose, userDistrict, theme =
                   return (
                     <div 
                       key={i}
-                      className={`px-3 py-2 rounded-xl border flex items-center justify-between text-xs transition-colors ${
+                      className={`p-2.5 rounded-2xl border flex flex-col justify-between text-xs transition-colors ${
                         isDark ? 'bg-slate-850/60 border-slate-800 text-slate-300' : 'bg-slate-50 border-slate-200 text-slate-700'
                       }`}
                     >
-                      <div className="flex items-center gap-2 min-w-0 pr-2">
-                        <span className="shrink-0">🌦️</span>
-                        <span className="font-semibold truncate">{districtName}</span>
-                      </div>
-                      <div className="shrink-0">
-                        <span className={`px-2 py-0.5 rounded-md font-bold text-[11px] border ${
+                      <div className="flex items-center justify-between gap-1 mb-1.5">
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <span className="shrink-0">{d.icon || '🌦️'}</span>
+                          <span className="font-bold truncate text-slate-900 dark:text-white">{districtName}</span>
+                          {d.temperature && (
+                            <span className="text-[10px] font-mono text-slate-500 dark:text-slate-400">
+                              {d.temperature}°C
+                            </span>
+                          )}
+                        </div>
+                        <span className={`px-2 py-0.5 rounded-lg font-bold text-[11px] border shrink-0 ${
                           d.probability >= 60 
                             ? (isDark ? 'bg-amber-950/90 text-amber-300 border-amber-800' : 'bg-amber-100 text-amber-900 border-amber-300')
                             : (isDark ? 'bg-slate-800 text-slate-300 border-slate-700' : 'bg-slate-200 text-slate-700 border-slate-300')
                         }`}>
-                          {d.probability}%
+                          โอกาส {d.probability}%
                         </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 text-[11px] pt-1.5 border-t border-slate-200/60 dark:border-slate-800/80">
+                        <div className="flex items-center gap-1 text-slate-600 dark:text-slate-400">
+                          <Clock className="w-3 h-3 text-blue-500 shrink-0" />
+                          <span>ช่วงเวลา:</span>
+                          <span className="font-semibold text-slate-800 dark:text-slate-200 truncate">
+                            {d.timeWindow || 'ไม่มีแนวโน้มฝนตกหนัก'}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1 text-slate-600 dark:text-slate-400">
+                          <span className="text-xs">⏱️</span>
+                          <span>ระยะเวลา:</span>
+                          <span className="font-semibold text-slate-800 dark:text-slate-200 truncate">
+                            {d.durationText || 'ไม่มีสัญญาณฝนต่อเนื่อง'}
+                          </span>
+                        </div>
                       </div>
                     </div>
                   );
@@ -231,7 +253,8 @@ export default function AiForecastModal({ isOpen, onClose, userDistrict, theme =
                 href="https://weather.bangkok.go.th/radar"
                 target="_blank"
                 rel="noopener noreferrer"
-                className={`font-semibold flex items-center gap-1.5 transition-colors ${
+                onClick={() => playClickSound()}
+                className={`font-semibold flex items-center gap-1.5 transition-colors active:scale-95 ${
                   isDark ? 'text-cyan-400 hover:text-cyan-300' : 'text-blue-600 hover:text-blue-700'
                 }`}
               >
@@ -241,8 +264,11 @@ export default function AiForecastModal({ isOpen, onClose, userDistrict, theme =
               </a>
 
               <button
-                onClick={onClose}
-                className={`px-4 py-1.5 rounded-xl font-medium transition-all cursor-pointer ${
+                onClick={() => {
+                  playCloseSound();
+                  onClose();
+                }}
+                className={`px-4 py-1.5 rounded-xl font-medium transition-all cursor-pointer active:scale-95 ${
                   isDark ? 'bg-slate-800 hover:bg-slate-700 text-slate-200' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
                 }`}
               >

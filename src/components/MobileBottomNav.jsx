@@ -1,5 +1,12 @@
 import React, { useState } from 'react';
 import { 
+  playClickSound, 
+  playToggleSound, 
+  playReportSound, 
+  playEmergencySound, 
+  playCloseSound 
+} from '../services/soundEffects';
+import { 
   Navigation, 
   CloudRain, 
   Camera, 
@@ -32,7 +39,8 @@ export default function MobileBottomNav({
   const isDark = theme === 'dark';
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  const handleMenuAction = (actionFn) => {
+  const handleMenuAction = (actionFn, soundFn) => {
+    if (typeof soundFn === 'function') soundFn();
     setIsMenuOpen(false);
     if (typeof actionFn === 'function') actionFn();
   };
@@ -43,7 +51,10 @@ export default function MobileBottomNav({
       {isMenuOpen && (
         <div 
           className="sm:hidden fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm animate-in fade-in duration-200"
-          onClick={() => setIsMenuOpen(false)}
+          onClick={() => {
+            playCloseSound();
+            setIsMenuOpen(false);
+          }}
         >
           <div 
             className={`absolute bottom-0 left-0 right-0 rounded-t-3xl border-t p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom,0px))] shadow-2xl transition-all transform animate-in slide-in-from-bottom duration-300 ${
@@ -63,8 +74,11 @@ export default function MobileBottomNav({
               </div>
               <button
                 type="button"
-                onClick={() => setIsMenuOpen(false)}
-                className="p-1.5 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 bg-slate-100 dark:bg-slate-800"
+                onClick={() => {
+                  playCloseSound();
+                  setIsMenuOpen(false);
+                }}
+                className="p-1.5 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 bg-slate-100 dark:bg-slate-800 active:scale-90 transition-transform"
                 aria-label="ปิดเมนู"
               >
                 <X className="w-4 h-4" />
@@ -77,7 +91,7 @@ export default function MobileBottomNav({
               {/* 1. Emergency Hotline 1784 */}
               <button
                 type="button"
-                onClick={() => handleMenuAction(onOpenEmergency)}
+                onClick={() => handleMenuAction(onOpenEmergency, playEmergencySound)}
                 className="p-3.5 rounded-2xl bg-rose-500/10 hover:bg-rose-500/15 border border-rose-500/30 text-rose-600 dark:text-rose-400 flex items-center gap-3 transition-all active:scale-95 text-left cursor-pointer"
               >
                 <div className="w-10 h-10 rounded-2xl bg-rose-500 text-white flex items-center justify-center shrink-0 shadow-md">
@@ -92,7 +106,7 @@ export default function MobileBottomNav({
               {/* 2. Water Standards Guide */}
               <button
                 type="button"
-                onClick={() => handleMenuAction(onOpenStandards)}
+                onClick={() => handleMenuAction(onOpenStandards, playClickSound)}
                 className="p-3.5 rounded-2xl bg-blue-500/10 hover:bg-blue-500/15 border border-blue-500/30 text-blue-600 dark:text-blue-400 flex items-center gap-3 transition-all active:scale-95 text-left cursor-pointer"
               >
                 <div className="w-10 h-10 rounded-2xl bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-md">
@@ -107,7 +121,7 @@ export default function MobileBottomNav({
               {/* 3. Dark / Light Theme Toggle (Full Width) */}
               <button
                 type="button"
-                onClick={() => handleMenuAction(onToggleTheme)}
+                onClick={() => handleMenuAction(onToggleTheme, () => playToggleSound(!isDark))}
                 className="col-span-2 p-3 rounded-2xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800/80 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 flex items-center justify-between transition-all active:scale-98 cursor-pointer"
               >
                 <div className="flex items-center gap-3">
@@ -143,7 +157,10 @@ export default function MobileBottomNav({
           {/* 1. ข้อเสนอแนะประชาชน */}
           <button
             type="button"
-            onClick={onOpenFeedback}
+            onClick={() => {
+              playClickSound();
+              if (onOpenFeedback) onOpenFeedback();
+            }}
             className={`flex-1 flex flex-col items-center justify-center gap-1 rounded-2xl transition-all active:scale-95 cursor-pointer py-1 ${
               isDark ? 'text-slate-200 hover:text-cyan-400' : 'text-slate-800 hover:text-teal-700'
             }`}
@@ -156,7 +173,10 @@ export default function MobileBottomNav({
           {/* 2. อัปเดตสถานการณ์สด */}
           <button
             type="button"
-            onClick={() => onOpenPublicUpdates?.()}
+            onClick={() => {
+              playClickSound();
+              onOpenPublicUpdates?.();
+            }}
             className={`flex-1 flex flex-col items-center justify-center gap-1 rounded-2xl transition-all active:scale-95 cursor-pointer py-1 ${
               isDark ? 'text-slate-200 hover:text-emerald-400' : 'text-slate-800 hover:text-emerald-700'
             }`}
@@ -169,7 +189,10 @@ export default function MobileBottomNav({
           <div className="flex-1 flex items-center justify-center" style={{ marginTop: '-20px' }}>
             <button
               type="button"
-              onClick={onOpenCitizenReport}
+              onClick={() => {
+                playReportSound();
+                if (onOpenCitizenReport) onOpenCitizenReport();
+              }}
               className="flex flex-col items-center justify-center w-[60px] h-[60px] rounded-3xl bg-gradient-to-tr from-blue-600 via-cyan-500 to-teal-500 text-white shadow-xl shadow-blue-500/40 border-[3.5px] active:scale-90 transition-transform cursor-pointer"
               style={{ borderColor: isDark ? '#020617' : '#ffffff' }}
               title="แตะเพื่อแจ้งจุดน้ำท่วม"
@@ -182,7 +205,10 @@ export default function MobileBottomNav({
           {/* 4. ฝนวันนี้ */}
           <button
             type="button"
-            onClick={onOpenAiForecast}
+            onClick={() => {
+              playToggleSound();
+              if (onOpenAiForecast) onOpenAiForecast();
+            }}
             className={`flex-1 flex flex-col items-center justify-center gap-1 rounded-2xl transition-all active:scale-95 cursor-pointer py-1 ${
               isDark ? 'text-slate-200 hover:text-cyan-400' : 'text-slate-800 hover:text-blue-700'
             }`}
@@ -194,7 +220,10 @@ export default function MobileBottomNav({
           {/* 5. เมนู */}
           <button
             type="button"
-            onClick={() => setIsMenuOpen(true)}
+            onClick={() => {
+              playToggleSound();
+              setIsMenuOpen(true);
+            }}
             className={`flex-1 flex flex-col items-center justify-center gap-1 rounded-2xl transition-all active:scale-95 cursor-pointer py-1 ${
               isMenuOpen
                 ? (isDark ? 'text-amber-400 font-bold' : 'text-amber-700 font-bold')
