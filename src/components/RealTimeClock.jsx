@@ -62,24 +62,19 @@ export default function RealTimeClock({ theme = 'light' }) {
         <Calendar className="w-3.5 h-3.5" />
       </div>
 
-      {/* Date display (Full on desktop, hidden/compact on mobile) */}
-      <div className="flex items-center gap-1 truncate">
-        {/* Full Date for XL screens */}
-        <span className="hidden xl:inline font-sans font-semibold">
+      {/* Date display (Only on wide screens >= 1280px to guarantee zero navbar overflow) */}
+      <div className="flex items-center gap-1 shrink-0">
+        {/* Full Date for 2XL screens */}
+        <span className="hidden 2xl:inline font-sans font-semibold">
           {dayNameFull}ที่ {date} {monthNameFull} {yearBE}
         </span>
 
-        {/* Medium Date for MD-LG screens */}
-        <span className="hidden md:inline xl:hidden font-sans font-semibold">
-          {dayNameShort} {date} {monthNameShort} {yearBE}
+        {/* Medium Date for XL screens */}
+        <span className="hidden xl:inline 2xl:hidden font-sans font-semibold">
+          {dayNameShort} {date} {monthNameShort}
         </span>
 
-        {/* Short Date for SM screens */}
-        <span className="hidden sm:inline md:hidden font-sans font-semibold">
-          {date} {monthNameShort}
-        </span>
-
-        <span className="hidden sm:inline text-slate-400 font-sans">•</span>
+        <span className="hidden xl:inline text-slate-400 font-sans">•</span>
 
         {/* Real-time Digital Clock with Blinking Colon and Ticking Seconds */}
         <span className="flex items-center font-bold text-blue-600 dark:text-cyan-400 shrink-0">

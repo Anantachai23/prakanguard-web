@@ -202,10 +202,10 @@ export default function Navbar({
             )}
           </div>
 
-          {/* Live Real-Time Weather & Temperature Badge */}
+          {/* Live Real-Time Weather & Temperature Badge (Shown on wide screens >= 1280px) */}
           {weather && weather.temp !== undefined && (
             <div 
-              className={`hidden lg:inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-2xl border text-xs font-bold transition-all shadow-2xs select-none shrink-0 ${
+              className={`hidden xl:inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-2xl border text-xs font-bold transition-all shadow-2xs select-none shrink-0 ${
                 isDark 
                   ? 'bg-slate-900/90 border-slate-700 text-sky-300' 
                   : 'bg-sky-50/90 border-sky-200 text-sky-800'
@@ -219,7 +219,7 @@ export default function Navbar({
                 {weather.temp}°C
               </span>
               {weather.weatherDesc && (
-                <span className="hidden xl:inline text-[11px] font-medium opacity-85 max-w-[90px] truncate">
+                <span className="hidden 2xl:inline text-[11px] font-medium opacity-85 max-w-[90px] truncate">
                   {weather.weatherDesc}
                 </span>
               )}
@@ -240,14 +240,14 @@ export default function Navbar({
             <RealTimeClock theme={theme} />
           </div>
 
-          {/* Desktop/Tablet Live Updates Button */}
+          {/* Desktop Live Updates Button (Wide screens >= 1280px) */}
           <button 
             type="button"
             onClick={() => {
               playModalOpenSound();
               if (onOpenPublicUpdates) onOpenPublicUpdates();
             }}
-            className={`hidden lg:inline-flex px-2.5 py-1.5 rounded-xl border text-xs font-semibold items-center gap-1.5 transition-all cursor-pointer shadow-xs active:scale-95 ${
+            className={`hidden xl:inline-flex px-2.5 py-1.5 rounded-xl border text-xs font-semibold items-center gap-1.5 transition-all cursor-pointer shadow-xs active:scale-95 ${
               isDark 
                 ? 'bg-emerald-950/60 hover:bg-emerald-900/60 text-emerald-300 border-emerald-800' 
                 : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border-emerald-200'

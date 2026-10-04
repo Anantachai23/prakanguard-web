@@ -513,6 +513,7 @@ export default function MapView({
       const districtColor = feature.properties.color || '#0284c7';
 
       const layer = L.geoJSON(feature, {
+        interactive: false,
         style: {
           color: isSelected ? '#1d4ed8' : districtColor,
           weight: isSelected ? 4.5 : 2.5,
@@ -627,12 +628,11 @@ export default function MapView({
     let lastSelectTime = 0;
     window.__pgSelectPointById = (id, e) => {
       const now = Date.now();
-      if (now - lastSelectTime < 250) return; // Prevent duplicate rapid touch+click
+      if (now - lastSelectTime < 200) return; // Prevent duplicate rapid touch+click
       lastSelectTime = now;
 
-      if (e) {
-        if (e.stopPropagation) e.stopPropagation();
-        if (e.preventDefault && e.cancelable) e.preventDefault();
+      if (e && e.stopPropagation) {
+        e.stopPropagation();
       }
 
       const all = [...points, ...citizenReports];
@@ -641,6 +641,10 @@ export default function MapView({
         lastFlyToTimeRef.current = Date.now();
         playPinClickSound();
         onSelectPoint(found, { fromMapPin: true });
+        const marker = markersByIdRef.current[String(id)];
+        if (marker && mapInstanceRef.current) {
+          marker.openPopup();
+        }
       }
     };
     return () => {
@@ -716,35 +720,26 @@ export default function MapView({
         bubblingMouseEvents: false
       }).addTo(map);
 
-      // Bind custom popup for desktop overview
-      if (!isMobile) {
-        marker.bindPopup(buildPopupHtml(point, point.isCitizen), {
-          className: 'custom-leaflet-popup',
-          closeButton: true,
-          autoPan: true,
-          autoPanPadding: [20, 80],
-          maxWidth: 320
-        });
-      }
+      // Bind custom popup for all devices (desktop, tablet, mobile)
+      marker.bindPopup(buildPopupHtml(point, point.isCitizen), {
+        className: 'custom-leaflet-popup',
+        closeButton: true,
+        autoPan: true,
+        autoPanPadding: [20, 80],
+        maxWidth: 320
+      });
 
       // Unified direct select handler
       const triggerMarkerSelection = (e) => {
-        if (e) {
-          if (e.originalEvent) {
-            L.DomEvent.stopPropagation(e.originalEvent);
-          } else if (e.stopPropagation) {
-            e.stopPropagation();
-          }
+        if (e && e.originalEvent) {
+          L.DomEvent.stopPropagation(e.originalEvent);
         }
-        if (window.__pgSelectPointById) {
-          window.__pgSelectPointById(point.id, e);
-        } else {
-          lastFlyToTimeRef.current = Date.now();
-          playPinClickSound();
-          if (onSelectPoint) {
-            onSelectPoint(point, { fromMapPin: true });
-          }
+        lastFlyToTimeRef.current = Date.now();
+        playPinClickSound();
+        if (onSelectPoint) {
+          onSelectPoint(point, { fromMapPin: true });
         }
+        marker.openPopup();
       };
 
       marker.on('click', triggerMarkerSelection);
@@ -837,7 +832,7 @@ export default function MapView({
           onSelectPoint(item, { fromMapPin: true });
         }
         const marker = markersByIdRef.current[item.id];
-        if (marker && !isMobile) marker.openPopup();
+        if (marker) marker.openPopup();
       });
 
       radarCircleLayersRef.current.push(circle);
@@ -908,11 +903,9 @@ export default function MapView({
 
     // If selected directly from map pin or circle, KEEP MAP STEADY! Do not fly away!
     if (selectedPoint._fromMapPin) {
-      if (!isMobile) {
-        const marker = markersByIdRef.current[selectedPoint.id];
-        if (marker && map.hasLayer(marker)) {
-          setTimeout(() => marker.openPopup(), 100);
-        }
+      const marker = markersByIdRef.current[selectedPoint.id];
+      if (marker && map.hasLayer(marker)) {
+        setTimeout(() => marker.openPopup(), 100);
       }
       return;
     }
@@ -921,11 +914,9 @@ export default function MapView({
       return;
     }
     if (Date.now() - lastFlyToTimeRef.current < 2000) {
-      if (!isMobile) {
-        const marker = markersByIdRef.current[selectedPoint.id];
-        if (marker && map.hasLayer(marker)) {
-          setTimeout(() => marker.openPopup(), 300);
-        }
+      const marker = markersByIdRef.current[selectedPoint.id];
+      if (marker && map.hasLayer(marker)) {
+        setTimeout(() => marker.openPopup(), 300);
       }
       return;
     }
@@ -937,17 +928,15 @@ export default function MapView({
       easeLinearity: 0.25
     });
 
-    if (!isMobile) {
-      const openPopupOnSelected = () => {
-        const marker = markersByIdRef.current[selectedPoint.id];
-        if (marker && map.hasLayer(marker)) {
-          marker.openPopup();
-        }
-      };
-      map.once('moveend', openPopupOnSelected);
-      setTimeout(openPopupOnSelected, 600);
-      setTimeout(openPopupOnSelected, 1200);
-    }
+    const openPopupOnSelected = () => {
+      const marker = markersByIdRef.current[selectedPoint.id];
+      if (marker && map.hasLayer(marker)) {
+        marker.openPopup();
+      }
+    };
+    map.once('moveend', openPopupOnSelected);
+    setTimeout(openPopupOnSelected, 600);
+    setTimeout(openPopupOnSelected, 1200);
   }, [selectedPoint]);
 
   const resetView = () => {
