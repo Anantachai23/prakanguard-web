@@ -97,12 +97,12 @@ export default function WelcomeModal({
         }`}>
           <div className="flex items-center space-x-3 sm:space-x-3.5">
             <div className="relative">
-              <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-tr from-blue-600 via-cyan-500 to-teal-400 p-[1.5px] shadow-lg shadow-cyan-500/20 flex items-center justify-center">
-                <div className={`w-full h-full rounded-[14px] flex items-center justify-center ${
-                  isDark ? 'bg-slate-900' : 'bg-white'
-                }`}>
-                  <Shield className="w-5 h-5 sm:w-6 sm:h-6 text-blue-500" />
-                </div>
+              <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-full p-[1.5px] bg-gradient-to-tr from-blue-600 via-cyan-400 to-teal-300 shadow-lg shadow-cyan-500/20 flex items-center justify-center shrink-0">
+                <img 
+                  src="/logo.png" 
+                  alt="PrakanGuard Mascot" 
+                  className="w-full h-full rounded-full object-cover" 
+                />
               </div>
               <span className="absolute -top-1 -right-1 flex h-3 w-3">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>

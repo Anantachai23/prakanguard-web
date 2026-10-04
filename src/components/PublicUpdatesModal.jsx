@@ -156,10 +156,8 @@ export default function PublicUpdatesModal({
           isDark ? 'border-slate-800 bg-slate-950/40' : 'border-slate-100 bg-slate-50/50'
         }`}>
           <div className="flex items-center space-x-2 min-w-0">
-            <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 border ${
-              isDark ? 'bg-blue-950 text-cyan-400 border-blue-800' : 'bg-blue-50 text-blue-600 border-blue-200'
-            }`}>
-              <Activity className="w-4 h-4 text-blue-500 animate-pulse" />
+            <div className="w-8 h-8 rounded-full overflow-hidden shrink-0 border border-blue-400/50 shadow-sm">
+              <img src="/logo.png" alt="PrakanGuard" className="w-full h-full object-cover" />
             </div>
             <div className="min-w-0">
               <h3 className={`text-sm sm:text-base font-bold leading-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>

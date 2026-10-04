@@ -6,7 +6,7 @@ import {
   $, $$, h, icon, toast, confirmDialog, openModal, 
   dateTime, timeOnly, hm, duration, timeAgo, startOfBangkokDay, nf,
   normPage, normDistrict, levelInfo, classifyDevice, deviceLabel, shortId, downloadFile,
-  playApprovalChime, showApprovalSuccessDialog
+  playApprovalChime, playNavClickSound, playRefreshSound, playThemeSound, playWarningSound, showApprovalSuccessDialog
 } from './core.js';
 import { 
   detectCaps, caps, fetchReports, fetchFeedback, fetchTrash, 
@@ -62,8 +62,9 @@ export function applyTheme(theme) {
 }
 
 /* ------------------------------------------------------------- Tab Switching */
-export function switchTab(tabId) {
+export function switchTab(tabId, playSound = false) {
   state.currentTab = tabId;
+  if (playSound) playNavClickSound();
   $$('.nav-item').forEach(el => {
     el.classList.toggle('active', el.dataset.tab === tabId);
   });
@@ -634,6 +635,7 @@ async function handleApproveSingle(id) {
 async function handleUnapproveSingle(id) {
   const ok = await setReportsApproval([id], false);
   if (ok) {
+    playWarningSound();
     toast('ถอนการอนุมัติรายงานเรียบร้อยแล้ว', 'info');
     await refreshAllData();
   }
@@ -665,6 +667,7 @@ async function handleDeleteReportsSingle(report) {
     icon: 'trash'
   });
   if (!confirmed) return;
+  playWarningSound();
 
   const admin = currentAdmin();
   const deletedCount = await deleteToTrash('report', [report.id], admin ? admin.label : 'Admin');
@@ -689,6 +692,7 @@ async function handleDeleteReportsSelected() {
     icon: 'trash'
   });
   if (!confirmed) return;
+  playWarningSound();
 
   const admin = currentAdmin();
   const deletedCount = await deleteToTrash('report', ids, admin ? admin.label : 'Admin');
@@ -872,6 +876,7 @@ async function handleDeleteFeedbackSingle(f) {
     icon: 'trash'
   });
   if (!confirmed) return;
+  playWarningSound();
 
   const admin = currentAdmin();
   const deletedCount = await deleteToTrash('feedback', [f.id], admin ? admin.label : 'Admin');
@@ -894,6 +899,7 @@ async function handleDeleteFeedbackSelected() {
     icon: 'trash'
   });
   if (!confirmed) return;
+  playWarningSound();
 
   const admin = currentAdmin();
   const deletedCount = await deleteToTrash('feedback', ids, admin ? admin.label : 'Admin');
@@ -925,6 +931,7 @@ function renderAnnouncements() {
           h('button', {
             class: `btn btn-sm ${a.is_active ? 'btn-secondary' : 'btn-success'}`,
             onclick: async () => {
+              playNavClickSound();
               await setAnnouncementActive(a.id, !a.is_active);
               toast('อัปเดตสถานะประกาศแล้ว', 'success');
               await refreshAllData();
@@ -942,6 +949,7 @@ function renderAnnouncements() {
                 icon: 'trash'
               });
               if (ok) {
+                playWarningSound();
                 await deleteAnnouncement(a.id);
                 toast('ลบประกาศเรียบร้อยแล้ว', 'success');
                 await refreshAllData();
@@ -988,6 +996,7 @@ async function handleCreateAnnouncement(e) {
   });
 
   if (res) {
+    playApprovalChime();
     toast('สร้างประกาศหน้าเว็บสำเร็จแล้ว', 'success');
     if (msgIn) msgIn.value = '';
     await refreshAllData();
@@ -1078,6 +1087,7 @@ function updateTrashSelectionUI() {
 async function handleRestoreSingle(item) {
   const count = await restoreFromTrash([item]);
   if (count > 0) {
+    playRefreshSound();
     toast('กู้คืนข้อมูลกลับสู่ระบบเรียบร้อยแล้ว', 'success');
     await refreshAllData();
   }
@@ -1087,6 +1097,7 @@ async function handleRestoreSelected() {
   const selectedItems = state.trash.filter(t => state.selectedTrash.has(t.id));
   if (selectedItems.length === 0) return;
   const count = await restoreFromTrash(selectedItems);
+  playRefreshSound();
   toast(`กู้คืนสำเร็จ ${count} รายการ`, 'success');
   state.selectedTrash.clear();
   await refreshAllData();
@@ -1102,6 +1113,7 @@ async function handlePurgeSingle(item) {
     icon: 'trash'
   });
   if (!ok) return;
+  playWarningSound();
 
   await purgeTrash([item.id]);
   toast('ลบข้อมูลถาวรเรียบร้อยแล้ว', 'success');
@@ -1121,6 +1133,7 @@ async function handlePurgeSelected() {
     icon: 'trash'
   });
   if (!ok) return;
+  playWarningSound();
 
   await purgeTrash(ids);
   toast(`ลบถาวรสำเร็จ ${ids.length} รายการ`, 'success');
@@ -1220,21 +1233,42 @@ export function initDashboard() {
   $$('.nav-item').forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.preventDefault();
-      switchTab(btn.dataset.tab);
+      switchTab(btn.dataset.tab, true);
     });
   });
+
+  // Global tactile click feedback for all buttons, inputs, checkboxes, and filters
+  document.addEventListener('click', (e) => {
+    const el = e.target.closest('button, .btn, .icon-btn, .login-btn, .nav-item, .chip, .reports-filter-btn, .trash-filter-btn, input[type="checkbox"], input[type="radio"], select');
+    if (!el) return;
+    
+    // Skip if element triggers a dedicated sound effect
+    if (el.id === 'btn-theme-toggle' || el.id === 'btn-global-refresh') return;
+    if (el.classList.contains('btn-success') || el.closest('.btn-success')) return;
+    if (el.classList.contains('btn-danger') || el.closest('.btn-danger')) return;
+    if (el.classList.contains('nav-item')) return;
+    
+    playNavClickSound();
+  }, { passive: true });
 
   // Login Form
   $('#login-form')?.addEventListener('submit', handleLoginSubmit);
 
   // Logout Buttons
-  $('#btn-logout')?.addEventListener('click', handleLogout);
+  $('#btn-logout')?.addEventListener('click', () => {
+    playWarningSound();
+    handleLogout();
+  });
 
   // Global Refresh Button
-  $('#btn-global-refresh')?.addEventListener('click', () => refreshAllData(true));
+  $('#btn-global-refresh')?.addEventListener('click', () => {
+    playRefreshSound();
+    refreshAllData(true);
+  });
 
   // Theme Toggle Button
   $('#btn-theme-toggle')?.addEventListener('click', () => {
+    playThemeSound();
     applyTheme(state.theme === 'dark' ? 'light' : 'dark');
   });
 

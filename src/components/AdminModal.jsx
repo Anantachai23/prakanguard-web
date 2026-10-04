@@ -930,8 +930,8 @@ export default function AdminModal({
           isDark ? 'bg-slate-950/90 border-slate-800' : 'bg-slate-50 border-slate-200'
         }`}>
           <div className="flex items-center space-x-3 min-w-0">
-            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-amber-500 text-slate-950 flex items-center justify-center shadow-md shrink-0 font-bold">
-              <ShieldAlert className="w-5 h-5 text-slate-950" />
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full p-[1.5px] bg-gradient-to-tr from-amber-500 to-amber-300 shadow-md shrink-0 flex items-center justify-center">
+              <img src="/logo.png" alt="PrakanGuard Admin" className="w-full h-full rounded-full object-cover" />
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
@@ -1006,10 +1006,8 @@ export default function AdminModal({
             <div className="w-full max-w-sm space-y-5">
               
               <div className="text-center space-y-1.5">
-                <div className={`w-16 h-16 mx-auto rounded-3xl flex items-center justify-center shadow-xl border ${
-                  isDark ? 'bg-amber-950/60 border-amber-700/60 text-amber-400' : 'bg-amber-50 border-amber-300 text-amber-600'
-                }`}>
-                  <Lock className="w-8 h-8" />
+                <div className="w-16 h-16 mx-auto rounded-full p-1 bg-gradient-to-tr from-amber-500 via-yellow-400 to-amber-300 shadow-xl border border-amber-400/50 flex items-center justify-center">
+                  <img src="/logo.png" alt="PrakanGuard Admin" className="w-full h-full rounded-full object-cover" />
                 </div>
                 <h4 className={`text-lg font-bold mt-2 ${isDark ? 'text-white' : 'text-slate-900'}`}>
                   เข้าสู่ระบบแอดมิน (Admin Portal)

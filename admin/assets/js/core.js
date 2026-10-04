@@ -208,6 +208,94 @@ export function playApprovalChime() {
   }
 }
 
+/** เสียงคลิกปุ่ม / สลับแท็บ / ฟิลเตอร์ (Soft UI Pop) */
+export function playNavClickSound() {
+  try {
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx();
+    if (ctx.state === 'suspended') ctx.resume();
+    const now = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(750, now);
+    osc.frequency.exponentialRampToValueAtTime(380, now + 0.05);
+    gain.gain.setValueAtTime(0.14, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.055);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.055);
+  } catch (_) {}
+}
+
+/** เสียงรีเฟรชข้อมูล (Whoosh Sweep) */
+export function playRefreshSound() {
+  try {
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx();
+    if (ctx.state === 'suspended') ctx.resume();
+    const now = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(320, now);
+    osc.frequency.exponentialRampToValueAtTime(920, now + 0.12);
+    gain.gain.setValueAtTime(0.18, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.14);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.14);
+  } catch (_) {}
+}
+
+/** เสียงเปลี่ยนธีม (Mechanical Click) */
+export function playThemeSound() {
+  try {
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx();
+    if (ctx.state === 'suspended') ctx.resume();
+    const now = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(540, now);
+    osc.frequency.linearRampToValueAtTime(720, now + 0.06);
+    gain.gain.setValueAtTime(0.2, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.075);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.075);
+  } catch (_) {}
+}
+
+/** เสียงแจ้งเตือน/ลบ/ถอนอนุมัติ (Alert Tone) */
+export function playWarningSound() {
+  try {
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx();
+    if (ctx.state === 'suspended') ctx.resume();
+    const now = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(420, now);
+    osc.frequency.linearRampToValueAtTime(260, now + 0.14);
+    gain.gain.setValueAtTime(0.22, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.16);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.16);
+  } catch (_) {}
+}
+
 /** ป็อบอัพเด้งสวยงามเมื่อกดอนุมัติจุดน้ำท่วม */
 export function showApprovalSuccessDialog({ title = 'อนุมัติรายงานขึ้นแผนที่สำเร็จ!', reportName = '', district = '', count = 1 }) {
   const overlay = h('div', { 
@@ -246,34 +334,47 @@ export function showApprovalSuccessDialog({ title = 'อนุมัติรา
       animation: 'pgApprovalBounceIn 0.42s cubic-bezier(0.16, 1, 0.3, 1) forwards'
     }
   },
-    // Animated Check Halo
+    // Mascot logo & Animated Check Halo
     h('div', { 
       style: {
-        width: '76px',
-        height: '76px',
+        position: 'relative',
+        width: '82px',
+        height: '82px',
         margin: '0 auto 16px',
-        borderRadius: '50%',
-        background: 'radial-gradient(circle, rgba(34, 197, 94, 0.25) 0%, rgba(34, 197, 94, 0.05) 70%)',
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'center',
-        border: '2px solid rgba(34, 197, 94, 0.6)',
-        boxShadow: '0 0 24px rgba(34, 197, 94, 0.4)'
+        justifyContent: 'center'
       } 
     },
+      h('img', {
+        src: './assets/img/logo.png',
+        alt: 'PrakanGuard Logo',
+        style: {
+          width: '78px',
+          height: '78px',
+          borderRadius: '50%',
+          objectFit: 'cover',
+          border: '2.5px solid #22c55e',
+          boxShadow: '0 0 26px rgba(34, 197, 94, 0.45)'
+        }
+      }),
       h('div', {
         style: {
-          width: '52px',
-          height: '52px',
+          position: 'absolute',
+          bottom: '-2px',
+          right: '-2px',
+          width: '30px',
+          height: '30px',
           borderRadius: '50%',
           background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           color: '#ffffff',
-          fontSize: '26px',
+          fontSize: '16px',
           fontWeight: '900',
-          boxShadow: '0 8px 16px rgba(22, 163, 74, 0.5)'
+          boxShadow: '0 4px 12px rgba(22, 163, 74, 0.6)',
+          border: '2px solid #0f172a'
         }
       }, '✓')
     ),

@@ -53,10 +53,8 @@ export default function FloodStandardsModal({ isOpen, onClose, theme = 'light' }
         {/* Header */}
         <div className={`flex items-center justify-between px-4 py-2.5 border-b shrink-0 ${isDark ? 'border-slate-800' : 'border-slate-100'}`}>
           <div className="flex items-center gap-2 min-w-0">
-            <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 border ${
-              isDark ? 'bg-blue-950 text-cyan-400 border-blue-800' : 'bg-blue-50 text-blue-600 border-blue-200'
-            }`}>
-              <ShieldAlert className="w-4 h-4" />
+            <div className="w-8 h-8 rounded-full overflow-hidden shrink-0 border border-blue-400/50 shadow-sm">
+              <img src="/logo.png" alt="PrakanGuard" className="w-full h-full object-cover" />
             </div>
             <div>
               <h3 className={`text-sm sm:text-base font-bold leading-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>

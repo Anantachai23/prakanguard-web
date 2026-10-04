@@ -78,18 +78,13 @@ export default function Navbar({
         
         {/* Brand Area (Left) */}
         <div className="flex items-center space-x-2 sm:space-x-2.5 shrink-0 min-w-0">
-          {/* Hydro Telemetry Shield Crest */}
-          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-2xl bg-gradient-to-tr from-blue-600 via-cyan-500 to-teal-400 p-[1.5px] shadow-md shadow-blue-500/20 shrink-0">
-            <div className={`w-full h-full rounded-[14px] flex items-center justify-center relative overflow-hidden ${
-              isDark ? 'bg-slate-950' : 'bg-white'
-            }`}>
-              <div className="absolute inset-0 bg-gradient-to-t from-cyan-500/10 to-transparent"></div>
-              <svg className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 relative z-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" fill="currentColor" fillOpacity="0.25" />
-                <path d="M8 13.5c1-.6 2.2-.6 3.2 0s2.2.6 3.2 0" stroke={isDark ? "#38bdf8" : "#0284c7"} strokeWidth="1.8" />
-                <path d="M7 17c1.3-.7 2.8-.7 4.1 0s2.8.7 4.1 0" stroke={isDark ? "#38bdf8" : "#0284c7"} strokeWidth="1.8" />
-              </svg>
-            </div>
+          {/* PrakanGuard Official Mascot Emblem */}
+          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full p-[1.5px] bg-gradient-to-tr from-blue-600 via-cyan-400 to-teal-300 shadow-md shadow-blue-500/20 shrink-0 flex items-center justify-center">
+            <img 
+              src="/logo.png" 
+              alt="PrakanGuard Logo" 
+              className="w-full h-full rounded-full object-cover" 
+            />
           </div>
 
           <div className="flex flex-col justify-center min-w-0">
