@@ -157,7 +157,7 @@ export default function AiForecastModal({ isOpen, onClose, userDistrict, theme =
                   <span>ตำแหน่งปัจจุบันของคุณ:</span>
                 </span>
                 <span className="text-sm sm:text-base font-extrabold mt-0.5 block leading-tight">
-                  {isAllDistricts ? 'ภาพรวม' : 'ตำแหน่งของท่าน '}{displayDistrictLabel} มีโอกาสฝนตก <span className="text-blue-600 dark:text-cyan-400 font-black">{userDistrictProb}%</span>
+                  {isAllDistricts ? 'ภาพรวมพื้นที่สมุทรปราการ' : 'ตำแหน่งของท่าน '}{displayDistrictLabel}
                 </span>
               </div>
               <span className={`text-[11px] px-2.5 py-1 rounded-full font-bold shrink-0 ${
@@ -181,11 +181,11 @@ export default function AiForecastModal({ isOpen, onClose, userDistrict, theme =
                 <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${
                   isRainingNow
                     ? 'bg-rose-500 text-white'
-                    : maxProb >= 60
+                    : (userDistrictProb || maxProb) >= 60
                     ? 'bg-amber-500 text-white'
                     : 'bg-blue-600 text-white'
                 }`}>
-                  โอกาส {maxProb}%
+                  โอกาส {userDistrictProb || maxProb}%
                 </span>
               </div>
               <div className={`text-lg sm:text-xl font-black ${isDark ? 'text-cyan-300' : 'text-blue-700'}`}>

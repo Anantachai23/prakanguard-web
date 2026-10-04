@@ -61,7 +61,13 @@ import {
   playDangerSound, 
   playSelectSound, 
   playRefreshSound, 
-  playGpsSound 
+  playGpsSound,
+  playAdminTabSound,
+  playAdminApproveSound,
+  playAdminRejectSound,
+  playAdminResolveSound,
+  playAdminGpsSound,
+  playAdminTerminalSound
 } from '../services/soundEffects';
 
 // Default Hardened Admin Credentials
@@ -790,14 +796,14 @@ export default function AdminModal({
       onApproveReport(reportId);
     }
     setEditingReportId(null);
-    playSuccessSound();
+    playAdminApproveSound();
     showNotice(`✅ ยืนยันอนุมัติจุด "${report?.name || 'รายงาน'}" ขึ้นแสดงบนแผนที่สาธารณะเรียบร้อยแล้ว`);
   };
 
   const handleReject = (reportId) => {
     const report = citizenReports.find(r => r.id === reportId);
     if (window.confirm(`ยืนยันการลบรายงาน "${report?.name || 'จุดนี้'}" ไปยัง "ลบล่าสุด" (ถังขยะ)?`)) {
-      playDangerSound();
+      playAdminRejectSound();
       if (report) {
         setDeletedReports(prev => {
           const updated = [{ ...report, deletedAt: new Date().toISOString() }, ...prev.filter(x => x.id !== reportId)];
@@ -817,14 +823,14 @@ export default function AdminModal({
     if (onResolveReport) {
       onResolveReport(reportId);
     }
-    playSuccessSound();
+    playAdminResolveSound();
     showNotice(`💧 อัปเดตสถานะจุด "${report?.name || 'รายงาน'}" เป็นระบายแห้งปกติแล้ว`);
   };
 
   const handleUpdateApprovedDepth = (reportId, depthCm) => {
     if (onUpdateReport) {
       onUpdateReport(reportId, { depthCm });
-      playClickSound();
+      playAdminTerminalSound();
       showNotice(`✏️ อัปเดตระดับน้ำเป็น ${depthCm} ซม. เรียบร้อย`);
     }
   };
@@ -837,7 +843,7 @@ export default function AdminModal({
       if (onApproveReport) onApproveReport(id);
     });
     setSelectedPendingIds(new Set());
-    playSuccessSound();
+    playAdminApproveSound();
     showNotice(`✅ อนุมัติรายงาน ${count} รายการขึ้นแสดงบนแผนที่เรียบร้อยแล้ว`);
   };
 
@@ -846,7 +852,7 @@ export default function AdminModal({
     const count = selectedPendingIds.size;
     if (!window.confirm(`ยืนยันการย้ายรายงานที่เลือกทั้งหมด ${count} รายการไปยัง "ลบล่าสุด" (ถังขยะ)?`)) return;
     
-    playDangerSound();
+    playAdminRejectSound();
     const itemsToDelete = citizenReports.filter(r => selectedPendingIds.has(r.id));
     if (itemsToDelete.length > 0) {
       setDeletedReports(prev => {
@@ -1659,7 +1665,7 @@ export default function AdminModal({
               >
                 <button
                   type="button"
-                  onClick={() => { playTabSound(); setActiveTab('pending'); }}
+                  onClick={() => { playAdminTabSound(); setActiveTab('pending'); }}
                   className={`px-3 py-2 rounded-t-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 border-b-2 whitespace-nowrap shrink-0 ${
                     activeTab === 'pending'
                       ? (isDark ? 'border-amber-400 text-amber-300 bg-slate-800' : 'border-amber-500 text-amber-700 bg-white')
@@ -1676,7 +1682,7 @@ export default function AdminModal({
 
                 <button
                   type="button"
-                  onClick={() => { playTabSound(); setActiveTab('approved'); }}
+                  onClick={() => { playAdminTabSound(); setActiveTab('approved'); }}
                   className={`px-3 py-2 rounded-t-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 border-b-2 whitespace-nowrap shrink-0 ${
                     activeTab === 'approved'
                       ? (isDark ? 'border-emerald-400 text-emerald-300 bg-slate-800' : 'border-emerald-500 text-emerald-700 bg-white')
@@ -1688,7 +1694,7 @@ export default function AdminModal({
 
                 <button
                   type="button"
-                  onClick={() => { playTabSound(); setActiveTab('locations'); }}
+                  onClick={() => { playAdminTabSound(); setActiveTab('locations'); }}
                   className={`px-3 py-2 rounded-t-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 border-b-2 whitespace-nowrap shrink-0 ${
                     activeTab === 'locations'
                       ? (isDark ? 'border-cyan-400 text-cyan-300 bg-slate-800' : 'border-blue-600 text-blue-700 bg-white')
@@ -1701,7 +1707,7 @@ export default function AdminModal({
 
                 <button
                   type="button"
-                  onClick={() => { playTabSound(); setActiveTab('feedback'); }}
+                  onClick={() => { playAdminTabSound(); setActiveTab('feedback'); }}
                   className={`px-3 py-2 rounded-t-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 border-b-2 whitespace-nowrap shrink-0 ${
                     activeTab === 'feedback'
                       ? (isDark ? 'border-teal-400 text-teal-300 bg-slate-800' : 'border-teal-500 text-teal-700 bg-white')
@@ -1719,7 +1725,7 @@ export default function AdminModal({
 
                 <button
                   type="button"
-                  onClick={() => { playTabSound(); setActiveTab('broadcast'); }}
+                  onClick={() => { playAdminTabSound(); setActiveTab('broadcast'); }}
                   className={`px-3 py-2 rounded-t-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 border-b-2 whitespace-nowrap shrink-0 ${
                     activeTab === 'broadcast'
                       ? (isDark ? 'border-amber-400 text-amber-300 bg-slate-800' : 'border-amber-500 text-amber-700 bg-white')
@@ -1732,7 +1738,7 @@ export default function AdminModal({
 
                 <button
                   type="button"
-                  onClick={() => { playTabSound(); setActiveTab('history'); }}
+                  onClick={() => { playAdminTabSound(); setActiveTab('history'); }}
                   className={`px-3 py-2 rounded-t-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 border-b-2 whitespace-nowrap shrink-0 ${
                     activeTab === 'history'
                       ? (isDark ? 'border-amber-400 text-amber-300 bg-slate-800' : 'border-amber-500 text-amber-700 bg-white')
@@ -1745,7 +1751,7 @@ export default function AdminModal({
 
                 <button
                   type="button"
-                  onClick={() => { playTabSound(); setActiveTab('trash'); }}
+                  onClick={() => { playAdminTabSound(); setActiveTab('trash'); }}
                   className={`px-3 py-2 rounded-t-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 border-b-2 whitespace-nowrap shrink-0 ${
                     activeTab === 'trash'
                       ? (isDark ? 'border-rose-400 text-rose-300 bg-slate-800' : 'border-rose-500 text-rose-700 bg-white')
@@ -1763,7 +1769,7 @@ export default function AdminModal({
 
                 <button
                   type="button"
-                  onClick={() => { playTabSound(); setActiveTab('security'); }}
+                  onClick={() => { playAdminTabSound(); setActiveTab('security'); }}
                   className={`px-3 py-2 rounded-t-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 border-b-2 whitespace-nowrap ml-auto shrink-0 ${
                     activeTab === 'security'
                       ? (isDark ? 'border-amber-400 text-amber-300 bg-slate-800' : 'border-amber-500 text-amber-700 bg-white')
@@ -2038,7 +2044,7 @@ export default function AdminModal({
                                 <button
                                   type="button"
                                   onClick={() => {
-                                    playGpsSound();
+                                    playAdminGpsSound();
                                     onFlyToCoords(report.lat, report.lng, 17, report.id);
                                     handleModalClose();
                                   }}
@@ -2275,7 +2281,7 @@ export default function AdminModal({
                             <button
                               type="button"
                               onClick={() => {
-                                playGpsSound();
+                                playAdminGpsSound();
                                 onFlyToCoords(report.lat, report.lng, 17, report.id);
                                 handleModalClose();
                               }}

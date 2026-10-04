@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Crosshair, Navigation, BookOpen } from 'lucide-react';
-import { playClickSound, playToggleSound, playGpsSound } from '../services/soundEffects';
+import { playClickSound, playPinClickSound, playToggleSound, playGpsSound } from '../services/soundEffects';
 import { 
   SAMUT_PRAKAN_DISTRICTS_GEOJSON, 
   SAMUT_PRAKAN_MASK_GEOJSON,
@@ -192,9 +192,16 @@ export default function MapView({
   onMapLocationPicked,
   flyToLocation,
   theme = 'light',
-  isTopPanelCollapsed = false
+  isTopPanelCollapsed = false,
+  refreshCountdown = 300
 }) {
   const isDark = theme === 'dark';
+  const formatCountdown = (seconds) => {
+    const s = Math.max(0, Math.floor(seconds || 0));
+    const m = Math.floor(s / 60);
+    const remainder = s % 60;
+    return `${String(m).padStart(2, '0')}:${String(remainder).padStart(2, '0')}`;
+  };
   const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth < 768);
 
   useEffect(() => {
@@ -647,10 +654,15 @@ export default function MapView({
         });
       }
 
-      marker.on('click', () => {
+      marker.on('click', (e) => {
+        if (e && e.originalEvent) {
+          L.DomEvent.stopPropagation(e);
+        }
         lastFlyToTimeRef.current = Date.now();
-        playClickSound();
-        onSelectPoint(point);
+        playPinClickSound();
+        if (onSelectPoint) {
+          onSelectPoint(point, { fromMapPin: true });
+        }
       });
 
       markersRef.current.push(marker);
@@ -718,10 +730,16 @@ export default function MapView({
         className: 'bg-slate-900/95 text-white font-prompt text-[11px] font-bold px-2 py-0.5 rounded-lg border border-slate-700 shadow-md'
       });
 
-      circle.on('click', () => {
-        onSelectPoint(item);
+      circle.on('click', (e) => {
+        if (e && e.originalEvent) {
+          L.DomEvent.stopPropagation(e);
+        }
+        playPinClickSound();
+        if (onSelectPoint) {
+          onSelectPoint(item, { fromMapPin: true });
+        }
         const marker = markersByIdRef.current[item.id];
-        if (marker) marker.openPopup();
+        if (marker && !isMobile) marker.openPopup();
       });
 
       radarCircleLayersRef.current.push(circle);
@@ -801,6 +819,16 @@ export default function MapView({
     const map = mapInstanceRef.current;
     if (!map || !selectedPoint || typeof selectedPoint.lat !== 'number' || typeof selectedPoint.lng !== 'number' || isNaN(selectedPoint.lat) || isNaN(selectedPoint.lng)) return;
 
+    if (selectedPoint._fromMapPin) {
+      if (!isMobile) {
+        const marker = markersByIdRef.current[selectedPoint.id];
+        if (marker && map.hasLayer(marker)) {
+          setTimeout(() => marker.openPopup(), 150);
+        }
+      }
+      return;
+    }
+
     if (flyToLocation && flyToLocation.ts && Date.now() - flyToLocation.ts < 3000) {
       return;
     }
@@ -850,6 +878,21 @@ export default function MapView({
         className="absolute inset-0 w-full h-full z-0"
         style={{ width: '100%', height: '100%', background: '#f8fafc' }}
       ></div>
+
+      {/* 5-MIN AUTO-REFRESH READ-ONLY BADGE (TOP CENTER OF MAP - STRICTLY NON-CLICKABLE AS REQUESTED) */}
+      <div className="absolute top-2.5 sm:top-3 left-1/2 -translate-x-1/2 z-20 pointer-events-none select-none max-w-[90vw]">
+        <div className={`px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-full border shadow-md backdrop-blur-md flex items-center gap-1.5 sm:gap-2 text-[10.5px] sm:text-xs font-semibold transition-colors ${
+          isDark 
+            ? 'bg-slate-900/90 border-slate-700/80 text-slate-200 shadow-black/40' 
+            : 'bg-white/95 border-slate-200 text-slate-700 shadow-slate-300/50'
+        }`}>
+          <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse shrink-0"></span>
+          <span>รีเฟรชอัตโนมัติใน</span>
+          <span className="font-mono font-extrabold text-cyan-600 dark:text-cyan-400">
+            {formatCountdown(refreshCountdown)}
+          </span>
+        </div>
+      </div>
 
       {/* FLOATING MAP CONTROLS (TOP RIGHT - CLEAN, UNCLUTTERED, COMPACT) */}
       <div className="absolute top-3 right-3 sm:top-4 sm:right-4 z-20 flex flex-col items-end gap-2 pointer-events-auto">

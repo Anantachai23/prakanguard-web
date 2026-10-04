@@ -16,31 +16,31 @@ export default function VisualGauge({ depthCm = 0, level, theme = 'light' }) {
   const waterHeight = safeDepth;
 
   let levelTheme = {
-    badge: isDark ? "bg-emerald-950/80 text-emerald-300 border-emerald-800" : "bg-emerald-50 text-emerald-800 border-emerald-300",
+    badge: isDark ? "bg-emerald-950 text-emerald-300 border-emerald-700" : "bg-emerald-50 text-emerald-800 border-emerald-300",
     waterFill: "url(#waterGradEmerald)",
     tag: "🟢 ระดับ 1: น้ำท่วมปกติ (5 - 20 cm) • รถทุกชนิดผ่านได้",
-    tagStyle: isDark ? "bg-emerald-950/80 text-emerald-300 border-emerald-800" : "bg-emerald-100 text-emerald-800 border-emerald-300"
+    tagStyle: isDark ? "bg-emerald-950 text-emerald-300 border-emerald-700" : "bg-emerald-100 text-emerald-800 border-emerald-300"
   };
 
   if (activeLevel === 2) {
     levelTheme = {
-      badge: isDark ? "bg-amber-950/80 text-amber-300 border-amber-800" : "bg-amber-50 text-amber-800 border-amber-300",
+      badge: isDark ? "bg-amber-950 text-amber-300 border-amber-700" : "bg-amber-50 text-amber-800 border-amber-300",
       waterFill: "url(#waterGradAmber)",
       tag: "🟠 ระดับ 2: น้ำท่วมปานกลาง (21 - 50 cm) • รถเล็กควรเลี่ยง",
-      tagStyle: isDark ? "bg-amber-950/80 text-amber-300 border-amber-800" : "bg-amber-100 text-amber-800 border-amber-300"
+      tagStyle: isDark ? "bg-amber-950 text-amber-300 border-amber-700" : "bg-amber-100 text-amber-800 border-amber-300"
     };
   } else if (activeLevel === 3) {
     levelTheme = {
-      badge: isDark ? "bg-rose-950/80 text-rose-300 border-rose-800" : "bg-rose-50 text-rose-800 border-rose-300",
+      badge: isDark ? "bg-rose-950 text-rose-300 border-rose-700" : "bg-rose-50 text-rose-800 border-rose-300",
       waterFill: "url(#waterGradRose)",
       tag: "🔴 ระดับ 3: น้ำท่วมวิกฤต (มากกว่า 50 cm) • ห้ามรถเล็กผ่านเด็ดขาด",
-      tagStyle: isDark ? "bg-rose-950/80 text-rose-300 border-rose-800" : "bg-rose-100 text-rose-800 border-rose-300"
+      tagStyle: isDark ? "bg-rose-950 text-rose-300 border-rose-700" : "bg-rose-100 text-rose-800 border-rose-300"
     };
   }
 
   return (
     <div className={`border rounded-2xl p-3 sm:p-4 shadow-sm transition-colors ${
-      isDark ? 'bg-slate-850/95 border-slate-700/80' : 'bg-slate-50/95 border-slate-200'
+      isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'
     }`}>
       
       {/* Top Header: Level & Current Depth */}

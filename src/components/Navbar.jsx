@@ -262,25 +262,6 @@ export default function Navbar({
             <RealTimeClock theme={theme} />
           </div>
 
-          {/* Refresh Countdown Button & Status (Mobile & Desktop) */}
-          <button
-            type="button"
-            onClick={() => {
-              playRefreshSound();
-              if (onRefreshData) onRefreshData();
-            }}
-            disabled={isRefreshing}
-            className={`inline-flex items-center gap-1.5 px-2 sm:px-2.5 py-1.5 rounded-xl border text-xs font-semibold transition-all cursor-pointer shadow-xs active:scale-95 shrink-0 ${
-              isDark 
-                ? 'bg-slate-900 hover:bg-slate-800 text-cyan-300 border-slate-700 hover:border-cyan-500/50' 
-                : 'bg-cyan-50 hover:bg-cyan-100 text-cyan-800 border-cyan-200 hover:border-cyan-300'
-            }`}
-            title="รีเฟรชข้อมูลอัตโนมัติทุก 5 นาที หรือคลิกเพื่อรีเฟรชทันที"
-          >
-            <RotateCw className={`w-3.5 h-3.5 text-cyan-500 shrink-0 ${isRefreshing ? 'animate-spin' : ''}`} />
-            <span className="hidden sm:inline text-[11px] font-bold">รีเฟรชใน</span>
-            <span className="font-mono font-extrabold text-[11px] sm:text-xs text-cyan-600 dark:text-cyan-400">{countdownFormatted}</span>
-          </button>
 
           {/* Desktop/Tablet Standards Button */}
           <button 

@@ -237,7 +237,7 @@ export default function RainForecast24hCard({
               <span>ตำแหน่งปัจจุบันของคุณ:</span>
             </span>
             <span className="text-xs sm:text-sm font-extrabold mt-0.5 block leading-tight">
-              {isAllDistricts ? 'ภาพรวม' : 'ตำแหน่งของท่าน '}{displayDistrictLabel} มีโอกาสฝนตก <span className="text-blue-600 dark:text-cyan-400 font-black">{userDistrictProb}%</span>
+              {isAllDistricts ? 'ภาพรวมพื้นที่สมุทรปราการ' : 'ตำแหน่งของท่าน '}{displayDistrictLabel}
             </span>
           </div>
           <div className="text-right shrink-0">
