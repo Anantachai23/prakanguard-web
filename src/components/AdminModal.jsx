@@ -52,6 +52,17 @@ import { OFFICIAL_LOCATION_CATALOG, formatPointForTracking, parseAndValidateExte
 import { validateCoordinatePrecision, detectDistrictForCoordinates } from '../data/samutPrakanBoundary';
 import { getFloodLevel } from '../data/floodStandards';
 import { getDetailedDeviceInfo } from '../services/cloudSyncService';
+import { 
+  playClickSound, 
+  playTabSound, 
+  playModalOpenSound, 
+  playCloseSound, 
+  playSuccessSound, 
+  playDangerSound, 
+  playSelectSound, 
+  playRefreshSound, 
+  playGpsSound 
+} from '../services/soundEffects';
 
 // Default Hardened Admin Credentials
 const DEFAULT_ADMIN_CREDENTIALS = {
@@ -245,16 +256,180 @@ export default function AdminModal({
     }
   });
 
+  // Unique Admin Session Identifier (Persisted across tab lifetime)
+  const [currentAdminSessionId] = useState(() => {
+    try {
+      let sid = sessionStorage.getItem('prakanguard_current_admin_session_id');
+      if (!sid) {
+        sid = 'as-' + Date.now().toString(36) + Math.random().toString(36).substring(2, 6);
+        sessionStorage.setItem('prakanguard_current_admin_session_id', sid);
+      }
+      return sid;
+    } catch (_) {
+      return 'as-' + Date.now().toString(36);
+    }
+  });
+
+  // Ping admin presence (Online / Offline) to Supabase and update local state
+  const pingAdminPresence = (isLeaving = false) => {
+    if (!isAuthenticated) return;
+    try {
+      const nowIso = new Date().toISOString();
+      const dev = typeof getDetailedDeviceInfo === 'function' ? getDetailedDeviceInfo() : 'PC / Browser';
+      const loginTime = sessionStorage.getItem('prakanguard_admin_login_time') || nowIso;
+
+      fetch('https://cnjufleeibbgmpvuvrpg.supabase.co/rest/v1/admin_sessions', {
+        method: 'POST',
+        headers: {
+          'apikey': 'sb_publishable_cwxpTPIFXkyWVgXksZASAQ_76DreEAw',
+          'Authorization': 'Bearer sb_publishable_cwxpTPIFXkyWVgXksZASAQ_76DreEAw',
+          'Content-Type': 'application/json',
+          'Prefer': 'resolution=merge-duplicates'
+        },
+        body: JSON.stringify({
+          id: currentAdminSessionId,
+          admin_key: 'admin_prakanguard',
+          username: credentials.username || 'admin_prakanguard',
+          admin_label: credentials.role || 'Super Admin',
+          device: dev,
+          logged_in_at: loginTime,
+          last_seen: nowIso,
+          logged_out_at: isLeaving ? nowIso : null
+        })
+      }).catch(() => {});
+
+      // Immediately synchronize local adminLoginHistory state
+      setAdminLoginHistory(prev => {
+        const existingIdx = prev.findIndex(x => x.id === currentAdminSessionId);
+        if (existingIdx >= 0) {
+          const updated = [...prev];
+          updated[existingIdx] = {
+            ...updated[existingIdx],
+            last_seen: nowIso,
+            logged_out_at: isLeaving ? nowIso : null
+          };
+          return updated;
+        } else {
+          const newEntry = {
+            id: currentAdminSessionId,
+            username: credentials.username || 'admin_prakanguard',
+            admin_label: credentials.role || 'Super Admin',
+            device: dev,
+            timestamp: loginTime,
+            last_seen: nowIso,
+            logged_out_at: isLeaving ? nowIso : null,
+            status: 'เข้าสู่ระบบสำเร็จ',
+            formattedTime: new Date(loginTime).toLocaleString('th-TH', { 
+              year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' 
+            }) + ' น.'
+          };
+          return [newEntry, ...prev].slice(0, 50);
+        }
+      });
+    } catch (_) {}
+  };
+
+  // Check if an admin session is currently Online (active on admin page)
+  const isSessionOnline = (sess) => {
+    if (!sess) return false;
+    // Current tab / session:
+    if (sess.id === currentAdminSessionId) {
+      return isOpen && isAuthenticated && (typeof document !== 'undefined' ? document.visibilityState === 'visible' : true);
+    }
+    // If explicitly marked as logged out or left:
+    if (sess.logged_out_at) return false;
+    // Check last_seen timestamp (must be within last 35 seconds):
+    const lastActive = sess.last_seen || sess.timestamp;
+    if (!lastActive) return false;
+    const timeDiff = Date.now() - new Date(lastActive).getTime();
+    return !isNaN(timeDiff) && timeDiff < 35000;
+  };
+
+  // Active online admins count
+  const onlineAdminsCount = useMemo(() => {
+    const onlineSet = new Set();
+    adminLoginHistory.forEach(sess => {
+      if (isSessionOnline(sess)) {
+        onlineSet.add(sess.username || sess.id);
+      }
+    });
+    if (isOpen && isAuthenticated && (typeof document !== 'undefined' ? document.visibilityState === 'visible' : true)) {
+      onlineSet.add(credentials.username || 'current_admin');
+    }
+    return onlineSet.size;
+  }, [adminLoginHistory, isOpen, isAuthenticated, currentAdminSessionId, credentials.username]);
+
+  // Presence Heartbeat Effect: Sets online when active, offline when leaving
+  useEffect(() => {
+    if (!isAuthenticated || !isOpen) return;
+
+    if (!sessionStorage.getItem('prakanguard_admin_login_time')) {
+      sessionStorage.setItem('prakanguard_admin_login_time', new Date().toISOString());
+    }
+
+    // Ping Online immediately upon entering admin page
+    pingAdminPresence(false);
+
+    // Heartbeat every 10 seconds while active
+    const heartbeatTimer = setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        pingAdminPresence(false);
+      }
+    }, 10000);
+
+    // Handle switching tabs / minimizing window
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        // Admin left or minimized tab -> Set status OFFLINE immediately
+        pingAdminPresence(true);
+      } else {
+        // Admin returned to admin page -> Set status ONLINE immediately
+        pingAdminPresence(false);
+        fetchCloudAdminSessions();
+      }
+    };
+
+    const handleWindowFocus = () => {
+      if (isOpen && isAuthenticated) {
+        pingAdminPresence(false);
+      }
+    };
+
+    const handlePageHide = () => {
+      pingAdminPresence(true);
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleWindowFocus);
+    window.addEventListener('pagehide', handlePageHide);
+    window.addEventListener('beforeunload', handlePageHide);
+
+    return () => {
+      clearInterval(heartbeatTimer);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleWindowFocus);
+      window.removeEventListener('pagehide', handlePageHide);
+      window.removeEventListener('beforeunload', handlePageHide);
+      // When closing modal / unmounting -> Set status OFFLINE
+      pingAdminPresence(true);
+    };
+  }, [isAuthenticated, isOpen]);
+
   const recordAdminLogin = (username) => {
     try {
       const dev = typeof getDetailedDeviceInfo === 'function' ? getDetailedDeviceInfo() : 'PC / Browser';
       const now = new Date();
+      sessionStorage.setItem('prakanguard_admin_login_time', now.toISOString());
+
       const newEntry = {
-        id: 'adm-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4),
+        id: currentAdminSessionId,
         username: username,
+        admin_label: credentials.role || 'Super Admin',
         device: dev,
         status: 'เข้าสู่ระบบสำเร็จ',
         timestamp: now.toISOString(),
+        last_seen: now.toISOString(),
+        logged_out_at: null,
         formattedTime: now.toLocaleString('th-TH', { 
           year: 'numeric', 
           month: 'short', 
@@ -266,7 +441,7 @@ export default function AdminModal({
       };
 
       setAdminLoginHistory(prev => {
-        const updated = [newEntry, ...prev.filter(x => x.id !== newEntry.id)].slice(0, 100);
+        const updated = [newEntry, ...prev.filter(x => x.id !== newEntry.id)].slice(0, 50);
         try { localStorage.setItem('prakanguard_admin_login_history', JSON.stringify(updated)); } catch (_) {}
         return updated;
       });
@@ -281,10 +456,14 @@ export default function AdminModal({
           'Prefer': 'resolution=merge-duplicates'
         },
         body: JSON.stringify({
-          session_id: newEntry.id,
-          admin_username: newEntry.username,
-          device: newEntry.device,
-          logged_in_at: newEntry.timestamp
+          id: currentAdminSessionId,
+          admin_key: 'admin_prakanguard',
+          username: username,
+          admin_label: credentials.role || 'Super Admin',
+          device: dev,
+          logged_in_at: now.toISOString(),
+          last_seen: now.toISOString(),
+          logged_out_at: null
         })
       }).catch(() => {});
     } catch (_) {}
@@ -292,7 +471,7 @@ export default function AdminModal({
 
   const fetchCloudAdminSessions = async () => {
     try {
-      const res = await fetch(`https://cnjufleeibbgmpvuvrpg.supabase.co/rest/v1/admin_sessions?order=logged_in_at.desc&limit=100`, {
+      const res = await fetch(`https://cnjufleeibbgmpvuvrpg.supabase.co/rest/v1/admin_sessions?order=last_seen.desc.nullslast&limit=50`, {
         headers: {
           'apikey': 'sb_publishable_cwxpTPIFXkyWVgXksZASAQ_76DreEAw',
           'Authorization': 'Bearer sb_publishable_cwxpTPIFXkyWVgXksZASAQ_76DreEAw'
@@ -302,26 +481,20 @@ export default function AdminModal({
         const rows = await res.json();
         if (Array.isArray(rows) && rows.length > 0) {
           const formatted = rows.map(r => ({
-            id: r.id || r.session_id,
-            username: r.admin_username || r.username || 'Admin',
+            id: r.id,
+            username: r.username || r.admin_username || 'Admin',
+            admin_label: r.admin_label || 'Super Admin',
             device: r.device || 'PC / Device',
             status: 'เข้าสู่ระบบสำเร็จ',
             timestamp: r.logged_in_at || new Date().toISOString(),
-            formattedTime: new Date(r.logged_in_at).toLocaleString('th-TH', {
+            last_seen: r.last_seen || r.logged_in_at,
+            logged_out_at: r.logged_out_at,
+            formattedTime: new Date(r.logged_in_at || r.last_seen).toLocaleString('th-TH', {
               year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
             }) + ' น.'
           }));
-          setAdminLoginHistory(prev => {
-            const combined = [...prev];
-            formatted.forEach(f => {
-              if (!combined.some(c => c.id === f.id || (c.timestamp === f.timestamp && c.username === f.username))) {
-                combined.push(f);
-              }
-            });
-            combined.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-            try { localStorage.setItem('prakanguard_admin_login_history', JSON.stringify(combined.slice(0, 100))); } catch (_) {}
-            return combined.slice(0, 100);
-          });
+          setAdminLoginHistory(formatted);
+          try { localStorage.setItem('prakanguard_admin_login_history', JSON.stringify(formatted)); } catch (_) {}
         }
       }
     } catch (_) {}
@@ -333,9 +506,10 @@ export default function AdminModal({
     fetchCloudAdminSessions();
     const timer = setInterval(() => {
       fetchLiveVisitors();
-    }, 10000);
+      fetchCloudAdminSessions();
+    }, 8000);
     return () => clearInterval(timer);
-  }, [isAuthenticated]);
+  }, [isAuthenticated, isOpen]);
 
   // Local Feedback Items State (Fallback / Live synced)
   const [localFeedback, setLocalFeedback] = useState(() => {
@@ -516,12 +690,21 @@ export default function AdminModal({
   };
 
   const handleLogout = () => {
+    playDangerSound();
+    pingAdminPresence(true);
     setIsAuthenticated(false);
     if (onAuthChange) onAuthChange(false);
     try {
       sessionStorage.removeItem('prakanguard_admin_auth');
+      sessionStorage.removeItem('prakanguard_admin_login_time');
     } catch (e) {}
     showNotice('ออกจากระบบ ADMIN เรียบร้อยแล้ว');
+  };
+
+  const handleModalClose = () => {
+    playCloseSound();
+    pingAdminPresence(true);
+    if (onClose) onClose();
   };
 
   // Credibility evaluator helper
@@ -607,13 +790,14 @@ export default function AdminModal({
       onApproveReport(reportId);
     }
     setEditingReportId(null);
-    playApprovalChime();
+    playSuccessSound();
     showNotice(`✅ ยืนยันอนุมัติจุด "${report?.name || 'รายงาน'}" ขึ้นแสดงบนแผนที่สาธารณะเรียบร้อยแล้ว`);
   };
 
   const handleReject = (reportId) => {
     const report = citizenReports.find(r => r.id === reportId);
     if (window.confirm(`ยืนยันการลบรายงาน "${report?.name || 'จุดนี้'}" ไปยัง "ลบล่าสุด" (ถังขยะ)?`)) {
+      playDangerSound();
       if (report) {
         setDeletedReports(prev => {
           const updated = [{ ...report, deletedAt: new Date().toISOString() }, ...prev.filter(x => x.id !== reportId)];
@@ -633,12 +817,14 @@ export default function AdminModal({
     if (onResolveReport) {
       onResolveReport(reportId);
     }
+    playSuccessSound();
     showNotice(`💧 อัปเดตสถานะจุด "${report?.name || 'รายงาน'}" เป็นระบายแห้งปกติแล้ว`);
   };
 
   const handleUpdateApprovedDepth = (reportId, depthCm) => {
     if (onUpdateReport) {
       onUpdateReport(reportId, { depthCm });
+      playClickSound();
       showNotice(`✏️ อัปเดตระดับน้ำเป็น ${depthCm} ซม. เรียบร้อย`);
     }
   };
@@ -651,7 +837,7 @@ export default function AdminModal({
       if (onApproveReport) onApproveReport(id);
     });
     setSelectedPendingIds(new Set());
-    playApprovalChime();
+    playSuccessSound();
     showNotice(`✅ อนุมัติรายงาน ${count} รายการขึ้นแสดงบนแผนที่เรียบร้อยแล้ว`);
   };
 
@@ -660,6 +846,7 @@ export default function AdminModal({
     const count = selectedPendingIds.size;
     if (!window.confirm(`ยืนยันการย้ายรายงานที่เลือกทั้งหมด ${count} รายการไปยัง "ลบล่าสุด" (ถังขยะ)?`)) return;
     
+    playDangerSound();
     const itemsToDelete = citizenReports.filter(r => selectedPendingIds.has(r.id));
     if (itemsToDelete.length > 0) {
       setDeletedReports(prev => {
@@ -681,6 +868,7 @@ export default function AdminModal({
     if (selectedApprovedIds.size === 0) return;
     const count = selectedApprovedIds.size;
     if (!window.confirm(`ยืนยันการยกเลิกอนุมัติรายงานที่เลือกทั้งหมด ${count} รายการ? (นำออกจากแผนที่และย้ายกลับรอยืนยัน)`)) return;
+    playDangerSound();
     selectedApprovedIds.forEach(id => {
       if (onUpdateReport) onUpdateReport(id, { isApproved: false });
     });
@@ -692,6 +880,7 @@ export default function AdminModal({
     if (selectedApprovedIds.size === 0) return;
     const count = selectedApprovedIds.size;
     if (!window.confirm(`ยืนยันการลบรายงานที่เลือก ${count} รายการไปยัง "ลบล่าสุด" (ถังขยะ)?`)) return;
+    playDangerSound();
     const itemsToDelete = citizenReports.filter(r => selectedApprovedIds.has(r.id));
     if (itemsToDelete.length > 0) {
       setDeletedReports(prev => {
@@ -721,6 +910,7 @@ export default function AdminModal({
       return updated;
     });
     setSelectedFeedbackIds(new Set());
+    playSuccessSound();
     showNotice(`✓ ทำเครื่องหมายอ่านแล้ว ${count} ข้อเสนอแนะ`);
   };
 
@@ -728,6 +918,7 @@ export default function AdminModal({
     if (selectedFeedbackIds.size === 0) return;
     const count = selectedFeedbackIds.size;
     if (!window.confirm(`ยืนยันการลบข้อเสนอแนะที่เลือก ${count} รายการไปยัง "ลบล่าสุด" (ถังขยะ)?`)) return;
+    playDangerSound();
     const itemsToDelete = activeFeedbackList.filter(f => selectedFeedbackIds.has(f.id));
     if (itemsToDelete.length > 0) {
       setDeletedFeedback(prev => {
@@ -1234,12 +1425,23 @@ export default function AdminModal({
                   {isAuthenticated ? 'ONLINE • สูงสุด' : 'LOCKED'}
                 </span>
                 {isAuthenticated && (
-                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold border shrink-0 flex items-center gap-1.5 ${
-                    isDark ? 'bg-cyan-950/80 text-cyan-300 border-cyan-700' : 'bg-cyan-50 text-cyan-800 border-cyan-300'
-                  }`} title="จำนวนผู้ใช้งานที่กำลังเปิดเว็บอยู่ในขณะนี้ (อิงจากเซสชันสด)">
-                    <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse"></span>
-                    <span>สด: {liveVisitors.length} คน</span>
-                  </span>
+                  <>
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold border shrink-0 flex items-center gap-1.5 ${
+                      isDark ? 'bg-cyan-950/80 text-cyan-300 border-cyan-700' : 'bg-cyan-50 text-cyan-800 border-cyan-300'
+                    }`} title="จำนวนผู้ใช้งานที่กำลังเปิดเว็บอยู่ในขณะนี้ (อิงจากเซสชันสด)">
+                      <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse"></span>
+                      <span>สด: {liveVisitors.length} คน</span>
+                    </span>
+
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold border shrink-0 flex items-center gap-1.5 ${
+                      onlineAdminsCount > 0
+                        ? (isDark ? 'bg-emerald-950/80 text-emerald-300 border-emerald-700' : 'bg-emerald-50 text-emerald-800 border-emerald-300')
+                        : (isDark ? 'bg-slate-900 text-slate-400 border-slate-700' : 'bg-slate-100 text-slate-600 border-slate-300')
+                    }`} title="จำนวนแอดมินที่กำลังออนไลน์เปิดหน้าแดชบอร์ดอยู่ในขณะนี้">
+                      <span className={`w-1.5 h-1.5 rounded-full ${onlineAdminsCount > 0 ? 'bg-emerald-400 animate-pulse' : 'bg-slate-400'}`}></span>
+                      <span>แอดมินออนไลน์: {onlineAdminsCount} ท่าน</span>
+                    </span>
+                  </>
                 )}
               </div>
               <p className={`text-[11px] truncate ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
@@ -1256,6 +1458,7 @@ export default function AdminModal({
                 <button
                   type="button"
                   onClick={() => {
+                    playRefreshSound();
                     handleManualSyncNow();
                     fetchLiveVisitors();
                     fetchCloudAdminSessions();
@@ -1285,7 +1488,7 @@ export default function AdminModal({
             )}
             <button 
               type="button"
-              onClick={onClose} 
+              onClick={handleModalClose} 
               className={`p-1.5 rounded-xl transition-all cursor-pointer ${
                 isDark ? 'bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white' : 'bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800'
               }`}
@@ -1456,7 +1659,7 @@ export default function AdminModal({
               >
                 <button
                   type="button"
-                  onClick={() => setActiveTab('pending')}
+                  onClick={() => { playTabSound(); setActiveTab('pending'); }}
                   className={`px-3 py-2 rounded-t-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 border-b-2 whitespace-nowrap shrink-0 ${
                     activeTab === 'pending'
                       ? (isDark ? 'border-amber-400 text-amber-300 bg-slate-800' : 'border-amber-500 text-amber-700 bg-white')
@@ -1473,7 +1676,7 @@ export default function AdminModal({
 
                 <button
                   type="button"
-                  onClick={() => setActiveTab('approved')}
+                  onClick={() => { playTabSound(); setActiveTab('approved'); }}
                   className={`px-3 py-2 rounded-t-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 border-b-2 whitespace-nowrap shrink-0 ${
                     activeTab === 'approved'
                       ? (isDark ? 'border-emerald-400 text-emerald-300 bg-slate-800' : 'border-emerald-500 text-emerald-700 bg-white')
@@ -1485,7 +1688,7 @@ export default function AdminModal({
 
                 <button
                   type="button"
-                  onClick={() => setActiveTab('locations')}
+                  onClick={() => { playTabSound(); setActiveTab('locations'); }}
                   className={`px-3 py-2 rounded-t-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 border-b-2 whitespace-nowrap shrink-0 ${
                     activeTab === 'locations'
                       ? (isDark ? 'border-cyan-400 text-cyan-300 bg-slate-800' : 'border-blue-600 text-blue-700 bg-white')
@@ -1498,7 +1701,7 @@ export default function AdminModal({
 
                 <button
                   type="button"
-                  onClick={() => setActiveTab('feedback')}
+                  onClick={() => { playTabSound(); setActiveTab('feedback'); }}
                   className={`px-3 py-2 rounded-t-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 border-b-2 whitespace-nowrap shrink-0 ${
                     activeTab === 'feedback'
                       ? (isDark ? 'border-teal-400 text-teal-300 bg-slate-800' : 'border-teal-500 text-teal-700 bg-white')
@@ -1516,7 +1719,7 @@ export default function AdminModal({
 
                 <button
                   type="button"
-                  onClick={() => setActiveTab('broadcast')}
+                  onClick={() => { playTabSound(); setActiveTab('broadcast'); }}
                   className={`px-3 py-2 rounded-t-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 border-b-2 whitespace-nowrap shrink-0 ${
                     activeTab === 'broadcast'
                       ? (isDark ? 'border-amber-400 text-amber-300 bg-slate-800' : 'border-amber-500 text-amber-700 bg-white')
@@ -1529,7 +1732,7 @@ export default function AdminModal({
 
                 <button
                   type="button"
-                  onClick={() => setActiveTab('history')}
+                  onClick={() => { playTabSound(); setActiveTab('history'); }}
                   className={`px-3 py-2 rounded-t-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 border-b-2 whitespace-nowrap shrink-0 ${
                     activeTab === 'history'
                       ? (isDark ? 'border-amber-400 text-amber-300 bg-slate-800' : 'border-amber-500 text-amber-700 bg-white')
@@ -1542,7 +1745,7 @@ export default function AdminModal({
 
                 <button
                   type="button"
-                  onClick={() => setActiveTab('trash')}
+                  onClick={() => { playTabSound(); setActiveTab('trash'); }}
                   className={`px-3 py-2 rounded-t-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 border-b-2 whitespace-nowrap shrink-0 ${
                     activeTab === 'trash'
                       ? (isDark ? 'border-rose-400 text-rose-300 bg-slate-800' : 'border-rose-500 text-rose-700 bg-white')
@@ -1560,7 +1763,7 @@ export default function AdminModal({
 
                 <button
                   type="button"
-                  onClick={() => setActiveTab('security')}
+                  onClick={() => { playTabSound(); setActiveTab('security'); }}
                   className={`px-3 py-2 rounded-t-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 border-b-2 whitespace-nowrap ml-auto shrink-0 ${
                     activeTab === 'security'
                       ? (isDark ? 'border-amber-400 text-amber-300 bg-slate-800' : 'border-amber-500 text-amber-700 bg-white')
@@ -1679,6 +1882,7 @@ export default function AdminModal({
                               if (el) el.indeterminate = selectedPendingIds.size > 0 && selectedPendingIds.size < filteredPendingReports.length;
                             }}
                             onChange={(e) => {
+                              playSelectSound();
                               if (e.target.checked) {
                                 setSelectedPendingIds(new Set(filteredPendingReports.map(r => r.id)));
                               } else {
@@ -1773,9 +1977,15 @@ export default function AdminModal({
                                 {report.name}
                               </h4>
                               
-                              <p className="text-xs text-slate-500 dark:text-slate-400">
-                                อ.{report.district} {report.subdistrict ? `• ${report.subdistrict}` : ''} • พิกัด: <span className="font-mono">{report.lat.toFixed(4)}, {report.lng.toFixed(4)}</span>
-                              </p>
+                              <div className="mt-1 flex items-center gap-2 flex-wrap text-xs">
+                                <span className="text-slate-600 dark:text-slate-300 font-medium">
+                                  อ.{report.district} {report.subdistrict ? `• ต.${report.subdistrict}` : ''}
+                                </span>
+                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-blue-500/10 dark:bg-blue-950/60 border border-blue-500/30 text-blue-700 dark:text-cyan-300 font-mono font-bold text-[11px] shadow-2xs">
+                                  <MapPin className="w-3.5 h-3.5 text-rose-500 shrink-0" />
+                                  <span>พิกัดที่แน่นอน: {Number(report.lat).toFixed(5)}, {Number(report.lng).toFixed(5)}</span>
+                                </span>
+                              </div>
 
                               {report.cause && (
                                 <p className="text-xs text-slate-700 dark:text-slate-300 bg-black/5 dark:bg-black/30 p-2.5 rounded-xl border border-black/5 dark:border-white/5">
@@ -1823,20 +2033,33 @@ export default function AdminModal({
 
                           {/* Action Buttons */}
                           <div className="mt-3.5 pt-3 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between gap-2 flex-wrap">
-                            <div className="flex items-center gap-1.5">
+                            <div className="flex items-center gap-2 flex-wrap">
                               {onFlyToCoords && (
                                 <button
                                   type="button"
                                   onClick={() => {
-                                    onFlyToCoords(report.lat, report.lng);
-                                    onClose();
+                                    playGpsSound();
+                                    onFlyToCoords(report.lat, report.lng, 17, report.id);
+                                    handleModalClose();
                                   }}
-                                  className="px-2.5 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 text-xs font-semibold hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-1 cursor-pointer"
+                                  className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm active:scale-95 transition-all cursor-pointer"
+                                  title={`คลิกเพื่อดูตำแหน่งที่แน่นอน (${Number(report.lat).toFixed(5)}, ${Number(report.lng).toFixed(5)}) บนแผนที่`}
                                 >
-                                  <Compass className="w-3.5 h-3.5 text-blue-500" />
-                                  <span>ส่องพิกัดบนแผนที่</span>
+                                  <Compass className="w-3.5 h-3.5" />
+                                  <span>ดูตำแหน่งที่แน่นอนบนแผนที่</span>
+                                  <span className="font-mono text-[11px] opacity-90">({Number(report.lat).toFixed(4)}, {Number(report.lng).toFixed(4)})</span>
                                 </button>
                               )}
+                              <a
+                                href={`https://www.google.com/maps?q=${report.lat},${report.lng}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="px-2.5 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1 cursor-pointer transition-colors"
+                                title="เปิดใน Google Maps"
+                              >
+                                <ExternalLink className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+                                <span>Google Maps</span>
+                              </a>
                             </div>
 
                             <div className="flex items-center gap-2">
@@ -1928,6 +2151,7 @@ export default function AdminModal({
                               if (el) el.indeterminate = selectedApprovedIds.size > 0 && selectedApprovedIds.size < filteredApprovedReports.length;
                             }}
                             onChange={(e) => {
+                              playSelectSound();
                               if (e.target.checked) {
                                 setSelectedApprovedIds(new Set(filteredApprovedReports.map(r => r.id)));
                               } else {
@@ -2011,7 +2235,17 @@ export default function AdminModal({
                             {report.name}
                           </h4>
                           
-                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                          <div className="mt-1 flex items-center gap-2 flex-wrap text-xs">
+                            <span className="text-slate-600 dark:text-slate-300 font-medium">
+                              อ.{report.district} {report.subdistrict ? `• ต.${report.subdistrict}` : ''}
+                            </span>
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-emerald-500/10 dark:bg-emerald-950/60 border border-emerald-500/30 text-emerald-700 dark:text-emerald-300 font-mono font-bold text-[11px] shadow-2xs">
+                              <MapPin className="w-3.5 h-3.5 text-rose-500 shrink-0" />
+                              <span>พิกัดที่แน่นอน: {Number(report.lat).toFixed(5)}, {Number(report.lng).toFixed(5)}</span>
+                            </span>
+                          </div>
+
+                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                             ระดับ: {report.bodyLevelLabel ? `${report.bodyLevelLabel} • ` : ''}{report.depthCm !== undefined && report.depthCm !== null ? report.depthCm : 0} ซม. ({report.depthRange || 'ท่วมผิวจราจร'}) {report.cause ? `• ${report.cause}` : ''}
                           </p>
 
@@ -2036,20 +2270,33 @@ export default function AdminModal({
                         </div>
                       </div>
 
-                        <div className="flex items-center gap-2 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-800">
+                        <div className="flex items-center gap-2 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-800 flex-wrap">
                           {onFlyToCoords && (
                             <button
                               type="button"
                               onClick={() => {
-                                onFlyToCoords(report.lat, report.lng);
-                                onClose();
+                                playGpsSound();
+                                onFlyToCoords(report.lat, report.lng, 17, report.id);
+                                handleModalClose();
                               }}
-                              className="p-1.5 rounded-xl border border-slate-700 text-slate-300 hover:text-white hover:bg-slate-800 cursor-pointer"
-                              title="ส่องจุดบนแผนที่"
+                              className="px-2.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm active:scale-95 transition-all cursor-pointer"
+                              title={`คลิกเพื่อดูตำแหน่งที่แน่นอน (${Number(report.lat).toFixed(5)}, ${Number(report.lng).toFixed(5)}) บนแผนที่`}
                             >
-                              <Compass className="w-4 h-4 text-blue-400" />
+                              <Compass className="w-3.5 h-3.5" />
+                              <span>ดูพิกัดบนแผนที่</span>
+                              <span className="font-mono text-[10px] opacity-90">({Number(report.lat).toFixed(4)}, {Number(report.lng).toFixed(4)})</span>
                             </button>
                           )}
+
+                          <a
+                            href={`https://www.google.com/maps?q=${report.lat},${report.lng}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="p-1.5 rounded-xl border border-slate-700 text-slate-300 hover:text-white hover:bg-slate-800 cursor-pointer flex items-center gap-1"
+                            title="เปิดใน Google Maps"
+                          >
+                            <ExternalLink className="w-4 h-4 text-cyan-400" />
+                          </a>
 
                           <button
                             type="button"
@@ -2751,6 +2998,7 @@ export default function AdminModal({
                             if (el) el.indeterminate = selectedFeedbackIds.size > 0 && selectedFeedbackIds.size < filteredFeedbackList.length;
                           }}
                           onChange={(e) => {
+                            playSelectSound();
                             if (e.target.checked) {
                               setSelectedFeedbackIds(new Set(filteredFeedbackList.map(f => f.id)));
                             } else {
@@ -3125,8 +3373,11 @@ export default function AdminModal({
                         </div>
                         <button
                           type="button"
-                          onClick={fetchCloudAdminSessions}
-                          className="px-2.5 py-1 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs flex items-center gap-1 shrink-0 cursor-pointer"
+                          onClick={() => {
+                            playRefreshSound();
+                            fetchCloudAdminSessions();
+                          }}
+                          className="px-2.5 py-1 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs flex items-center gap-1 shrink-0 cursor-pointer shadow-xs active:scale-95"
                         >
                           <RefreshCw className="w-3 h-3" />
                           <span>รีเฟรชประวัติ</span>
@@ -3139,36 +3390,70 @@ export default function AdminModal({
                         </div>
                       ) : (
                         <div className="space-y-2">
-                          {adminLoginHistory.map((sess, idx) => (
-                            <div 
-                              key={sess.id || idx}
-                              className={`p-3 rounded-2xl border text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2 ${
-                                isDark ? 'bg-slate-850/90 border-slate-750' : 'bg-white border-slate-200 shadow-xs'
-                              }`}
-                            >
-                              <div className="flex items-center gap-3 min-w-0">
-                                <div className="w-8 h-8 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center font-bold shrink-0">
-                                  <Users className="w-4 h-4" />
+                          {adminLoginHistory.map((sess, idx) => {
+                            const isOnline = isSessionOnline(sess);
+                            const isCurrentMe = sess.id === currentAdminSessionId;
+
+                            return (
+                              <div 
+                                key={sess.id || idx}
+                                className={`p-3 sm:p-3.5 rounded-2xl border text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 transition-all ${
+                                  isOnline
+                                    ? (isDark ? 'bg-emerald-950/20 border-emerald-800/60 shadow-xs ring-1 ring-emerald-500/20' : 'bg-emerald-50/60 border-emerald-300 shadow-xs ring-1 ring-emerald-400/20')
+                                    : (isDark ? 'bg-slate-850/80 border-slate-750 opacity-85' : 'bg-white border-slate-200 shadow-xs opacity-85')
+                                }`}
+                              >
+                                <div className="flex items-center gap-3 min-w-0">
+                                  <div className={`w-9 h-9 rounded-2xl flex items-center justify-center font-bold shrink-0 relative ${
+                                    isOnline
+                                      ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
+                                      : 'bg-slate-700/20 text-slate-400 border border-slate-700/40'
+                                  }`}>
+                                    <Users className="w-4 h-4" />
+                                    {isOnline && (
+                                      <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-slate-900 animate-pulse"></span>
+                                    )}
+                                  </div>
+                                  <div className="min-w-0">
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                      <span className="font-bold text-slate-900 dark:text-white truncate">
+                                        👤 {sess.username || 'admin'}
+                                      </span>
+                                      {isCurrentMe && (
+                                        <span className="text-[9px] px-1.5 py-0.2 rounded-md bg-blue-500/20 text-blue-400 font-bold border border-blue-500/30">
+                                          อุปกรณ์นี้ (คุณ)
+                                        </span>
+                                      )}
+                                      {/* Real-time Online / Offline Status Badge */}
+                                      {isOnline ? (
+                                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 font-bold flex items-center gap-1.5 shrink-0 shadow-2xs">
+                                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                                          <span>online</span>
+                                        </span>
+                                      ) : (
+                                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-500/15 text-slate-400 border border-slate-600/30 font-medium flex items-center gap-1.5 shrink-0">
+                                          <span className="w-1.5 h-1.5 rounded-full bg-slate-500"></span>
+                                          <span>offline</span>
+                                        </span>
+                                      )}
+                                    </div>
+                                    <div className="text-[11px] text-slate-400 flex items-center gap-2 mt-0.5 truncate">
+                                      <span>💻 {sess.device || 'PC / Device'}</span>
+                                      {!isOnline && sess.last_seen && (
+                                        <span className="text-slate-500 text-[10px] hidden sm:inline">
+                                          • ใช้งานล่าสุด: {new Date(sess.last_seen).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })} น.
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
                                 </div>
-                                <div className="min-w-0">
-                                  <div className="flex items-center gap-2">
-                                    <span className="font-bold text-slate-900 dark:text-white truncate">
-                                      👤 {sess.username || 'admin'}
-                                    </span>
-                                    <span className="text-[10px] px-1.5 py-0.2 rounded-md bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 font-bold shrink-0">
-                                      {sess.status || 'เข้าสู่ระบบสำเร็จ'}
-                                    </span>
-                                  </div>
-                                  <div className="text-[11px] text-slate-400 flex items-center gap-2 mt-0.5 truncate">
-                                    <span>💻 {sess.device || 'PC / Device'}</span>
-                                  </div>
+                                <div className="text-[11px] text-slate-400 font-mono text-left sm:text-right shrink-0">
+                                  <div className="text-[10px] text-slate-500">เวลาที่บันทึก</div>
+                                  <div>{sess.formattedTime || sess.timestamp}</div>
                                 </div>
                               </div>
-                              <div className="text-[11px] text-slate-400 font-mono text-left sm:text-right shrink-0">
-                                {sess.formattedTime || sess.timestamp}
-                              </div>
-                            </div>
-                          ))}
+                            );
+                          })}
                         </div>
                       )}
                     </>

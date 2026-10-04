@@ -428,11 +428,28 @@ export function detectDistrictForCoordinates(lat, lng) {
     }
   }
 
-  // 2. ถ้าอยู่ใกล้เคียงขอบเขต (Border tolerance) ภายในกรอบพิกัดสมุทรปราการ
-  const minLat = SAMUT_PRAKAN_BOUNDS[0][0] - 0.02;
-  const maxLat = SAMUT_PRAKAN_BOUNDS[1][0] + 0.02;
-  const minLng = SAMUT_PRAKAN_BOUNDS[0][1] - 0.02;
-  const maxLng = SAMUT_PRAKAN_BOUNDS[1][1] + 0.02;
+  // 1.5 ตรวจสอบโพลีกอนภาพรวมขอบเขตจังหวัดสมุทรปราการ
+  if (isPointInPolygonCoords(numLat, numLng, SAMUT_PRAKAN_OUTER_BOUNDARY)) {
+    // หาอำเภอที่ใกล้ที่สุดเฉพาะเมื่ออยู่ภายในเขตจังหวัดจริง
+    let closestDistrict = "เมืองสมุทรปราการ";
+    let minDistance = Infinity;
+    for (const [distName, meta] of Object.entries(DISTRICT_METADATA)) {
+      if (distName === "ทั้งหมด" || !meta.center) continue;
+      const [cLat, cLng] = meta.center;
+      const d = Math.hypot(numLat - cLat, numLng - cLng);
+      if (d < minDistance) {
+        minDistance = d;
+        closestDistrict = distName;
+      }
+    }
+    return closestDistrict;
+  }
+
+  // 2. ขอบเขตต้องอยู่ภายในกรอบพิกัดสมุทรปราการเท่านั้น (ไม่รับกรุงเทพฯ, นนทบุรี หรือพื้นที่ภายนอก)
+  const minLat = 13.4600;
+  const maxLat = 13.7320;
+  const minLng = 100.4600;
+  const maxLng = 100.9300;
 
   if (numLat >= minLat && numLat <= maxLat && numLng >= minLng && numLng <= maxLng) {
     let closestDistrict = null;
@@ -446,8 +463,8 @@ export function detectDistrictForCoordinates(lat, lng) {
         closestDistrict = distName;
       }
     }
-    // ถ้าใกล้ศูนย์กลางอำเภอใดไม่เกิน ~20 กม.
-    if (minDistance < 0.22) {
+    // เผื่อความคลาดเคลื่อนเฉพาะแนวตะเข็บรอยต่อไม่เกิน ~800 ม. (0.008 องศา)
+    if (minDistance < 0.008) {
       return closestDistrict;
     }
   }

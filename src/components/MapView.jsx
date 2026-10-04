@@ -6,7 +6,8 @@ import { playClickSound, playToggleSound, playGpsSound } from '../services/sound
 import { 
   SAMUT_PRAKAN_DISTRICTS_GEOJSON, 
   SAMUT_PRAKAN_MASK_GEOJSON,
-  DISTRICT_METADATA 
+  DISTRICT_METADATA,
+  isPointInSamutPrakan
 } from '../data/samutPrakanBoundary';
 import { getFloodLevel } from '../data/floodStandards';
 
@@ -121,8 +122,8 @@ export function deduplicateAndDeclutterPoints(citizenList = [], officialList = [
     }))
   ];
 
-  // Filter out dry/resolved
-  const activeOnly = combined.filter(pt => !isPointDry(pt));
+  // Filter out dry/resolved and strictly enforce Samut Prakan boundary
+  const activeOnly = combined.filter(pt => !isPointDry(pt) && isPointInSamutPrakan(pt.lat, pt.lng));
 
   // Sort: photo first, active first, higher severity first
   activeOnly.sort((a, b) => {
@@ -614,6 +615,9 @@ export default function MapView({
       if (!point || typeof point.lat !== 'number' || typeof point.lng !== 'number' || isNaN(point.lat) || isNaN(point.lng)) {
         return;
       }
+      if (!isPointInSamutPrakan(point.lat, point.lng)) {
+        return;
+      }
 
       const level = resolveLevel(point);
       const isSelected = selectedPoint && (
@@ -632,17 +636,20 @@ export default function MapView({
 
       const marker = L.marker([point.lat, point.lng], { icon: customIcon }).addTo(map);
 
-      // Bind popup bubble on both mobile and desktop with responsive width & auto-pan
-      marker.bindPopup(buildPopupHtml(point, point.isCitizen), {
-        className: 'custom-leaflet-popup',
-        closeButton: true,
-        autoPan: true,
-        autoPanPadding: [20, 80],
-        maxWidth: isMobile ? 260 : 300
-      });
+      // On desktop: bind popup bubble. On mobile: mobile bottom detail sheet is the dedicated viewer
+      if (!isMobile) {
+        marker.bindPopup(buildPopupHtml(point, point.isCitizen), {
+          className: 'custom-leaflet-popup',
+          closeButton: true,
+          autoPan: true,
+          autoPanPadding: [20, 80],
+          maxWidth: 300
+        });
+      }
 
       marker.on('click', () => {
         lastFlyToTimeRef.current = Date.now();
+        playClickSound();
         onSelectPoint(point);
       });
 
@@ -666,6 +673,10 @@ export default function MapView({
 
     allActiveItems.forEach(item => {
       if (typeof item.lat !== 'number' || typeof item.lng !== 'number' || isNaN(item.lat) || isNaN(item.lng)) {
+        return;
+      }
+      // Strictly skip points outside Samut Prakan
+      if (!isPointInSamutPrakan(item.lat, item.lng)) {
         return;
       }
       // Strictly skip dry or resolved points

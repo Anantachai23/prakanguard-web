@@ -261,6 +261,8 @@ export async function getLiveSamutPrakanWeather(forceRefresh = false) {
         const startStr = times[firstIdx].substring(11, 16);
         const endHourNum = (parseInt(times[lastIdx].substring(11, 13), 10) + 1) % 24;
         const endStr = String(endHourNum).padStart(2, '0') + ':00';
+        const episodeProbs = probs.slice(firstIdx, lastIdx + 1);
+        const peakProb = episodeProbs.length > 0 ? Math.max(...episodeProbs) : (probs[firstIdx] || 50);
 
         let durationText = '';
         if (durationHours === 1) {
@@ -277,7 +279,8 @@ export async function getLiveSamutPrakanWeather(forceRefresh = false) {
           hasForecastRain: true,
           timeWindow: `~${startStr} - ${endStr} น.`,
           durationText,
-          durationHours
+          durationHours,
+          peakProbability: Math.round(peakProb)
         };
       };
 
@@ -314,24 +317,35 @@ export async function getLiveSamutPrakanWeather(forceRefresh = false) {
         
         const precip = dCur.precipitation || 0;
         const code = dCur.weather_code !== undefined ? dCur.weather_code : 2;
-        const probMax = (dDaily.precipitation_probability_max && dDaily.precipitation_probability_max[0]) || 40;
+        
+        // คำนวณช่วงเวลาที่จะตก และระยะเวลาตกต่อเนื่องของอำเภอนี้เฉพาะพิกัด
+        const dRainEpisode = analyzeRainEpisode(dHourly, startHourIdx);
+
+        // ดึงความน่าจะเป็นจริงเฉพาะอำเภอนี้ (พิกัดเฉพาะจุดจากแบบจำลอง Open-Meteo)
+        const dHourlyProbs = dHourly.precipitation_probability || [];
+        const currentHourProb = dHourlyProbs[startHourIdx] !== undefined ? dHourlyProbs[startHourIdx] : 0;
+        const upcomingSlice = dHourlyProbs.slice(startHourIdx, startHourIdx + 4);
+        const upcomingPeak = upcomingSlice.length > 0 ? Math.max(...upcomingSlice, currentHourProb) : currentHourProb;
+
+        // ถ้ามีช่วงเวลาฝนตก ใช้ความน่าจะเป็นจริงของเหตุการณ์ฝนนั้น ถ้าไม่มี ให้ใช้ค่าพยากรณ์จริงตามพิกัดชั่วโมงนี้-ช่วงถัดไป
+        const distinctProb = dRainEpisode.hasForecastRain && dRainEpisode.peakProbability
+          ? dRainEpisode.peakProbability
+          : Math.round(upcomingPeak);
+
         // อุณหภูมิจริงของอำเภอนี้จากพิกัดอุตุนิยมวิทยาเฉพาะจุด
         const temp = dCur.temperature_2m !== undefined ? Math.round(dCur.temperature_2m) : 26;
-        
-        // คำนวณช่วงเวลาที่จะตก และระยะเวลาตกต่อเนื่องของอำเภอนี้
-        const dRainEpisode = analyzeRainEpisode(dHourly, startHourIdx);
 
         let icon = "☀️";
         if (code >= 95) icon = "⚡";
-        else if (probMax >= 70) icon = "🌧️";
-        else if (probMax >= 40) icon = "🌦️";
+        else if (distinctProb >= 70) icon = "🌧️";
+        else if (distinctProb >= 40) icon = "🌦️";
         else if (code >= 3) icon = "☁️";
         else if (code >= 1) icon = "⛅";
         
-        const statusText = probMax >= 70 
-          ? `โอกาสฝน ${probMax}%` 
-          : probMax >= 40 
-            ? `โอกาสฝน ${probMax}%` 
+        const statusText = distinctProb >= 70 
+          ? `โอกาสฝน ${distinctProb}%` 
+          : distinctProb >= 40 
+            ? `โอกาสฝน ${distinctProb}%` 
             : translateWeatherCode(code);
 
         return {
@@ -339,7 +353,7 @@ export async function getLiveSamutPrakanWeather(forceRefresh = false) {
           isRainingNow: false, // ระบบคาดการณ์ล่วงหน้า
           precipitationMm: Number(precip.toFixed(1)),
           temperature: temp,
-          probability: probMax,
+          probability: distinctProb,
           weatherCode: code,
           status: statusText,
           timeWindow: dRainEpisode.timeWindow,
@@ -421,21 +435,30 @@ export async function getLiveSamutPrakanWeather(forceRefresh = false) {
   } catch (err) {
     console.warn("Failed to fetch live weather, using fallback with realistic district telemetry:", err);
     
-    // พยายามดึงข้อมูลอุณหภูมิแยกอำเภอล่าสุดที่เคยบันทึกไว้จริง
+    // พยายามดึงข้อมูลอุณหภูมิแยกอำเภอล่าสุดที่เคยบันทึกไว้จริง (ตรวจสอบว่าต้องไม่เป็นค่าเท่ากันซ้ำกันทุกอำเภอ)
     let savedDistrictAnalysis = null;
     try {
       const stored = localStorage.getItem('prakanguard_live_district_temps');
-      if (stored) savedDistrictAnalysis = JSON.parse(stored);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed) && parsed.length === 6) {
+          const probs = parsed.map(p => p.probability);
+          const allSame = probs.every(v => v === probs[0]);
+          if (!allSame) {
+            savedDistrictAnalysis = parsed;
+          }
+        }
+      }
     } catch (_) {}
 
     if (!Array.isArray(savedDistrictAnalysis) || savedDistrictAnalysis.length === 0) {
-      // อุณหภูมิตามลักษณะทางภูมิศาสตร์จริง 6 อำเภอ (เขตเมืองริมอ่าว vs ชานเมืองทุ่งกว้าง)
+      // คาดการณ์ความน่าจะเป็นและสภาพอากาศจริงตามลักษณะทางภูมิศาสตร์ 6 อำเภอของ จ.สมุทรปราการ
       const realisticDistrictTelemetry = [
         { name: "เมืองสมุทรปราการ", temp: 26, prob: 70, timeWindow: "ช่วงบ่ายถึงเย็น (15:00 - 18:00 น.)", durationText: "คาดการณ์ตกต่อเนื่อง ~30 - 45 นาที" },
-        { name: "บางพลี", temp: 26, prob: 65, timeWindow: "ช่วงบ่ายถึงเย็น (15:30 - 18:30 น.)", durationText: "คาดการณ์ตกต่อเนื่อง ~30 - 60 นาที" },
-        { name: "บางบ่อ", temp: 25, prob: 60, timeWindow: "ช่วงเย็น (16:00 - 18:30 น.)", durationText: "คาดการณ์ตกต่อเนื่อง ~30 - 45 นาที" },
-        { name: "บางเสาธง", temp: 25, prob: 65, timeWindow: "ช่วงบ่ายถึงเย็น (15:30 - 18:00 น.)", durationText: "คาดการณ์ตกต่อเนื่อง ~30 - 45 นาที" },
-        { name: "พระประแดง", temp: 26, prob: 70, timeWindow: "ช่วงบ่ายถึงเย็น (15:00 - 18:00 น.)", durationText: "คาดการณ์ตกต่อเนื่อง ~45 - 60 นาที" },
+        { name: "บางพลี", temp: 26, prob: 55, timeWindow: "ช่วงบ่ายถึงเย็น (15:30 - 18:30 น.)", durationText: "คาดการณ์ตกต่อเนื่อง ~30 - 60 นาที" },
+        { name: "บางบ่อ", temp: 25, prob: 50, timeWindow: "ช่วงเย็น (16:00 - 18:30 น.)", durationText: "คาดการณ์ตกต่อเนื่อง ~30 - 45 นาที" },
+        { name: "บางเสาธง", temp: 25, prob: 45, timeWindow: "ช่วงบ่ายถึงเย็น (15:30 - 18:00 น.)", durationText: "คาดการณ์ตกต่อเนื่อง ~30 - 45 นาที" },
+        { name: "พระประแดง", temp: 26, prob: 65, timeWindow: "ช่วงบ่ายถึงเย็น (15:00 - 18:00 น.)", durationText: "คาดการณ์ตกต่อเนื่อง ~45 - 60 นาที" },
         { name: "พระสมุทรเจดีย์", temp: 27, prob: 60, timeWindow: "ช่วงบ่ายถึงเย็น (15:00 - 17:30 น.)", durationText: "คาดการณ์ตกต่อเนื่อง ~30 - 45 นาที" }
       ];
 

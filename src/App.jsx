@@ -19,7 +19,7 @@ import ChatBot from './components/ChatBot';
 import { INITIAL_FLOOD_POINTS, INITIAL_CITIZEN_REPORTS, DISTRICTS, matchesLocationSearch, scoreLocationSearch, POPULAR_SEARCH_SUGGESTIONS, findCorridorForPoint, MAJOR_FLOOD_CORRIDORS } from './data/samutPrakanPoints';
 import { SAMUT_PRAKAN_DISTRICTS_DATA } from './data/samutPrakanDistricts';
 import { getFloodLevel, FLOOD_STANDARDS } from './data/floodStandards';
-import { detectDistrictForCoordinates } from './data/samutPrakanBoundary';
+import { detectDistrictForCoordinates, isPointInSamutPrakan } from './data/samutPrakanBoundary';
 import { getOfficialAdvisorySummary } from './services/aiPredictor';
 import { getLiveSamutPrakanWeather } from './services/weatherService';
 import { runOfficial24HourSync, getFloodStatusSignature } from './services/aiSentryService';
@@ -569,7 +569,8 @@ export default function App() {
         typeof r.lat === 'number' &&
         !isNaN(r.lat) &&
         typeof r.lng === 'number' &&
-        !isNaN(r.lng)
+        !isNaN(r.lng) &&
+        isPointInSamutPrakan(r.lat, r.lng)
       );
       try {
         localStorage.setItem('prakanguard_citizen_reports', JSON.stringify(cleaned));
@@ -1905,8 +1906,8 @@ export default function App() {
     }
   };
 
-  const handleFlyToCoords = (lat, lng) => {
-    setFlyToLocation({ lat, lng });
+  const handleFlyToCoords = (lat, lng, zoom = 16.5, pointId = null) => {
+    setFlyToLocation({ lat, lng, zoom, pointId, ts: Date.now() });
   };
 
   const officialAdvisory = getOfficialAdvisorySummary(points);
@@ -1941,7 +1942,7 @@ export default function App() {
   // 2. Citizen Reports shown on Map (requires explicit Admin Approval, excludes dried-up points)
   const mapCitizenReports = useMemo(() => {
     return citizenReports.filter(report => {
-      if (!report || report.isApproved !== true || isPointDryOrResolved(report)) return false;
+      if (!report || report.isApproved !== true || isPointDryOrResolved(report) || !isPointInSamutPrakan(report.lat, report.lng)) return false;
       if (report.id && (report.id.includes('test') || report.id.includes('verify') || report.id.startsWith('node-'))) return false;
       const matchDistrict = selectedDistrict === "ทั้งหมด" || report.district === selectedDistrict;
       let matchSeverity = true;
@@ -2890,21 +2891,17 @@ export default function App() {
           </div>
         )}
 
-        {/* CLICK-OUTSIDE BACKDROP FOR EASY EXIT ON MOBILE */}
+        {/* FLOATING POINT DETAIL CARD (LOCKED, COMPACT, SMOOTH SCROLL, NO JITTER) */}
         {selectedPoint && (
           <div 
-            className="fixed inset-0 z-[55] bg-black/35 backdrop-blur-[2px] sm:hidden" 
-            onClick={() => setSelectedPoint(null)} 
-          />
-        )}
-
-        {/* FLOATING POINT DETAIL CARD (COMPACT & NON-INTRUSIVE & EASY TO EXIT) */}
-        {selectedPoint && (
-          <div className={`fixed bottom-[calc(4.25rem+env(safe-area-inset-bottom,0px)+8px)] left-2.5 right-2.5 sm:bottom-6 sm:left-auto sm:right-6 z-[60] sm:w-[380px] max-w-md mx-auto border rounded-3xl shadow-2xl backdrop-blur-2xl smooth-sheet transition-all max-h-[72vh] sm:max-h-[82vh] flex flex-col p-3.5 sm:p-4 overflow-y-auto ${
-            isDark 
-              ? 'bg-slate-900/98 border-slate-700 text-slate-100 shadow-black/80' 
-              : 'bg-white/98 border-slate-200 text-slate-800 shadow-slate-300/80'
-          }`}>
+            className={`fixed bottom-[calc(4.15rem+env(safe-area-inset-bottom,0px))] left-2.5 right-2.5 sm:bottom-6 sm:left-auto sm:right-6 z-[60] sm:w-[375px] max-w-md mx-auto border rounded-3xl shadow-2xl backdrop-blur-2xl transition-all max-h-[50vh] sm:max-h-[75vh] flex flex-col p-3 sm:p-4 overflow-y-auto overscroll-contain touch-pan-y ${
+              isDark 
+                ? 'bg-slate-900/98 border-slate-700 text-slate-100 shadow-black/80' 
+                : 'bg-white/98 border-slate-200 text-slate-800 shadow-slate-300/80'
+            }`}
+          >
+            {/* Mobile Sheet Handle */}
+            <div className="w-8 h-1 bg-slate-300 dark:bg-slate-700 rounded-full mx-auto mb-2 shrink-0 sm:hidden" />
 
             {/* Header: District + Severity + Name + Close Button */}
             <div className={`flex items-start justify-between gap-2 pb-2.5 border-b ${isDark ? 'border-slate-800' : 'border-slate-100'}`}>
@@ -3066,7 +3063,7 @@ export default function App() {
                 }`}
               >
                 <BookOpen className="w-3.5 h-3.5 text-blue-500" />
-                <span>เกณฑ์มาตรฐาน ปภ.</span>
+                <span>เกณฑ์ระดับน้ำ</span>
               </button>
 
               <a 

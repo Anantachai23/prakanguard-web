@@ -38,7 +38,7 @@ export default function PrivacyPolicyModal({
       }}
     >
       <div 
-        className={`w-full max-w-2xl max-h-[92vh] border rounded-3xl shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-200 ${
+        className={`w-full max-w-lg sm:max-w-2xl max-h-[75vh] sm:max-h-[88vh] border rounded-3xl shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-200 ${
           isDark 
             ? 'bg-slate-900 border-slate-700/80 text-slate-100 shadow-cyan-950/40' 
             : 'bg-white border-slate-200 text-slate-800 shadow-blue-900/20'
@@ -47,17 +47,22 @@ export default function PrivacyPolicyModal({
         {/* Accent Top Bar */}
         <div className="h-1.5 w-full bg-gradient-to-r from-blue-600 via-cyan-400 to-teal-400 shrink-0"></div>
 
-        {/* Header */}
-        <div className={`p-4 sm:p-5 border-b flex items-center justify-between gap-3 shrink-0 ${
+        {/* Header with Official Logo */}
+        <div className={`p-3.5 sm:p-5 border-b flex items-center justify-between gap-3 shrink-0 ${
           isDark ? 'bg-slate-950/60 border-slate-800' : 'bg-slate-50 border-slate-200'
         }`}>
-          <div className="flex items-center space-x-3 min-w-0">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 to-cyan-500 text-white flex items-center justify-center shrink-0 shadow-md shadow-blue-500/20">
-              <ShieldCheck className="w-5 h-5" />
+          <div className="flex items-center space-x-2.5 sm:space-x-3 min-w-0">
+            {/* Logo Emblem */}
+            <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-2xl p-[1.5px] bg-gradient-to-tr from-blue-600 via-cyan-400 to-teal-300 shadow-md shadow-blue-500/20 shrink-0 flex items-center justify-center overflow-hidden">
+              <img 
+                src="/logo.png" 
+                alt="PrakanGuard Logo" 
+                className="w-full h-full rounded-2xl object-cover" 
+              />
             </div>
             <div className="min-w-0">
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className={`text-[10px] sm:text-[11px] font-extrabold px-2 py-0.5 rounded-full border shrink-0 ${
+              <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                <span className={`text-[9px] sm:text-[11px] font-extrabold px-2 py-0.5 rounded-full border shrink-0 ${
                   isDark 
                     ? 'bg-blue-950 text-cyan-300 border-blue-800' 
                     : 'bg-blue-50 text-blue-700 border-blue-200'
@@ -69,7 +74,7 @@ export default function PrivacyPolicyModal({
                   <span>PrakanGuard</span>
                 </span>
               </div>
-              <h2 className={`text-base sm:text-lg font-black mt-0.5 tracking-tight truncate ${
+              <h2 className={`text-sm sm:text-base font-black mt-0.5 tracking-tight truncate ${
                 isDark ? 'text-white' : 'text-slate-900'
               }`}>
                 นโยบายข้อกำหนด & ความเป็นส่วนตัว
