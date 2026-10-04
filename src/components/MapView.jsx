@@ -617,6 +617,8 @@ export default function MapView({
         name: point.name
       });
 
+      const marker = L.marker([point.lat, point.lng], { icon: customIcon }).addTo(map);
+
       // Bind popup bubble on both mobile and desktop with responsive width & auto-pan
       marker.bindPopup(buildPopupHtml(point, point.isCitizen), {
         className: 'custom-leaflet-popup',
