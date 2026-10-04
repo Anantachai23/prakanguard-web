@@ -263,6 +263,9 @@
         // 2. Map Diffing: Add new flood points & remove resolved points
         if (Array.isArray(data.floodPoints)) {
           applyMapDiffing(data.floodPoints);
+          try {
+            window.dispatchEvent(new CustomEvent('prakanguard:official-flood-points', { detail: { floodPoints: data.floodPoints } }));
+          } catch (_) {}
         }
 
         // 3. Weather Data Updates

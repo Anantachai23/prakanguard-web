@@ -23,6 +23,13 @@ import { getOfficialAdvisorySummary } from './services/aiPredictor';
 import { getLiveSamutPrakanWeather } from './services/weatherService';
 import { runOfficial24HourSync, getFloodStatusSignature } from './services/aiSentryService';
 import { 
+  loadDailyUpdatesFromStorage, 
+  mergeDailyUpdateEvent, 
+  getBangkokDateKey, 
+  getMsUntilBangkokMidnight, 
+  formatBangkokTime 
+} from './services/dailyUpdatesService';
+import { 
   publishCloudReport, 
   publishCloudFeedback, 
   publishAdminAction,
@@ -103,7 +110,11 @@ function playNotificationChime() {
 export default function App() {
   const [points, setPoints] = useState(() => {
     try {
-      const saved = localStorage.getItem('prakanguard_points_state_v5');
+      // Clear legacy stale cache (20 cm)
+      localStorage.removeItem('prakanguard_points_state_v5');
+      localStorage.removeItem('prakanguard_points_state_v6');
+      
+      const saved = localStorage.getItem('prakanguard_points_state_v7');
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
@@ -123,9 +134,9 @@ export default function App() {
                   roadSegment: initPoint.roadSegment,
                   waterTrend: initPoint.waterTrend || item.waterTrend,
                   trendText: initPoint.trendText || item.trendText,
-                  depthCm: initPoint.waterTrend === 'falling' ? initPoint.depthCm : (item.depthCm !== undefined ? item.depthCm : initPoint.depthCm),
-                  trafficStatus: initPoint.waterTrend === 'falling' ? initPoint.trafficStatus : (item.trafficStatus || initPoint.trafficStatus),
-                  statusLabel: initPoint.waterTrend === 'falling' ? initPoint.statusLabel : (item.statusLabel || initPoint.statusLabel),
+                  depthCm: initPoint.depthCm,
+                  trafficStatus: initPoint.trafficStatus || item.trafficStatus,
+                  statusLabel: initPoint.statusLabel || item.statusLabel,
                   aliases: item.aliases || initPoint.aliases, 
                   keywords: item.keywords || initPoint.keywords 
                 }
@@ -149,7 +160,7 @@ export default function App() {
                 ...ip,
                 district: detectedDist || ip.district,
                 level: lvl,
-                depthRange: lvl === 3 ? '> 50 ซม.' : lvl === 2 ? '21 - 50 ซม.' : '5 - 20 ซม.'
+                depthRange: lvl === 3 ? '> 50 ซม.' : lvl === 2 ? '21 - 50 ซม.' : (ip.depthCm > 0 ? '5 - 20 ซม.' : '0 ซม. (แห้งปกติ)')
               });
             }
           });
@@ -165,10 +176,13 @@ export default function App() {
         ...p,
         district: detectedDist || p.district,
         level: lvl,
-        depthRange: lvl === 3 ? '> 50 ซม.' : lvl === 2 ? '21 - 50 ซม.' : '5 - 20 ซม.'
+        depthRange: lvl === 3 ? '> 50 ซม.' : lvl === 2 ? '21 - 50 ซม.' : (p.depthCm > 0 ? '5 - 20 ซม.' : '0 ซม. (แห้งปกติ)')
       };
     });
   });
+
+  // Daily Flood Status Updates (อัปเดตสถานการณ์น้ำรายวัน: เที่ยงคืนลบออกทั้งหมด, อัปเดตตามจุดจริง 1 เวลาต่อ 1 ครั้ง)
+  const [dailyUpdates, setDailyUpdates] = useState(() => loadDailyUpdatesFromStorage());
 
   const [changelog, setChangelog] = useState(() => {
     try {
@@ -187,9 +201,67 @@ export default function App() {
   useEffect(() => {
     pointsRef.current = points;
     try {
-      localStorage.setItem('prakanguard_points_state_v5', JSON.stringify(points));
+      localStorage.setItem('prakanguard_points_state_v7', JSON.stringify(points));
     } catch (e) {}
   }, [points]);
+
+  // Autonomous Midnight Reset Engine for "อัปเดตสถานการณ์น้ำ" (00:00:00 น. ของทุกวัน ลบออกทั้งหมดอัตโนมัติ 100%)
+  useEffect(() => {
+    const checkMidnight = () => {
+      const todayKey = getBangkokDateKey();
+      const storedDate = localStorage.getItem('prakanguard_daily_updates_date');
+      if (storedDate && storedDate !== todayKey) {
+        setDailyUpdates([]);
+        try {
+          localStorage.setItem('prakanguard_daily_updates_date', todayKey);
+          localStorage.setItem('prakanguard_daily_updates_feed', '[]');
+        } catch (_) {}
+      }
+    };
+
+    const interval = setInterval(checkMidnight, 15000);
+
+    const msUntilMidnight = getMsUntilBangkokMidnight();
+    const midnightTimer = setTimeout(() => {
+      setDailyUpdates([]);
+      try {
+        const newKey = getBangkokDateKey();
+        localStorage.setItem('prakanguard_daily_updates_date', newKey);
+        localStorage.setItem('prakanguard_daily_updates_feed', '[]');
+      } catch (_) {}
+    }, msUntilMidnight);
+
+    // Listen to live official flood points from sync engine (Traffy Fondue)
+    const handleOfficialFloodPoints = (e) => {
+      const incoming = e.detail?.floodPoints;
+      if (Array.isArray(incoming) && incoming.length > 0) {
+        incoming.forEach(p => {
+          setDailyUpdates(prev => mergeDailyUpdateEvent(prev, {
+            id: `upd_traffy_${p.ticket_id || p.id}`,
+            locationKey: String(p.ticket_id || p.id),
+            locationName: p.description || p.address || 'จุดน้ำท่วมขัง (Traffy Fondue)',
+            district: p.district || 'สมุทรปราการ',
+            subdistrict: p.address || '',
+            statusType: 'rising',
+            statusLabel: 'เริ่มท่วมแล้ว',
+            depthCm: p.depthCm || 20,
+            itemTime: formatBangkokTime(),
+            source: 'Traffy Fondue Open API (ข้อมูลจริง)',
+            lat: p.lat,
+            lng: p.lng,
+            rawPoint: p
+          }));
+        });
+      }
+    };
+    window.addEventListener('prakanguard:official-flood-points', handleOfficialFloodPoints);
+
+    return () => {
+      clearInterval(interval);
+      clearTimeout(midnightTimer);
+      window.removeEventListener('prakanguard:official-flood-points', handleOfficialFloodPoints);
+    };
+  }, []);
 
   // Global Website Theme: 'light' | 'dark' (Persisted in localStorage)
   const [theme, setTheme] = useState(() => {
@@ -838,6 +910,64 @@ export default function App() {
             return updated;
           });
         }
+
+        // บันทึกลงในอัปเดตสถานการณ์น้ำรายวัน (เฉพาะจุดที่เปลี่ยนจริง 1 เวลาต่อ 1 ครั้ง)
+        if (lifecycleResult.newlyClearedPoints && lifecycleResult.newlyClearedPoints.length > 0) {
+          lifecycleResult.newlyClearedPoints.forEach(p => {
+            setDailyUpdates(prev => mergeDailyUpdateEvent(prev, {
+              id: `upd_clear_${p.id}_${Date.now()}`,
+              locationKey: p.id,
+              locationName: p.name,
+              district: p.district,
+              statusType: 'dry',
+              statusLabel: 'แห้งแล้ว',
+              depthCm: 0,
+              itemTime: formatBangkokTime(),
+              source: p.agency || 'โทรมาตรทางการ',
+              lat: p.lat,
+              lng: p.lng,
+              rawPoint: p
+            }));
+          });
+        }
+
+        if (lifecycleResult.newlyActivatedPoints && lifecycleResult.newlyActivatedPoints.length > 0) {
+          lifecycleResult.newlyActivatedPoints.forEach(p => {
+            setDailyUpdates(prev => mergeDailyUpdateEvent(prev, {
+              id: `upd_act_${p.id}_${Date.now()}`,
+              locationKey: p.id,
+              locationName: p.name,
+              district: p.district,
+              statusType: 'rising',
+              statusLabel: 'เริ่มท่วมแล้ว',
+              depthCm: p.depthCm || 15,
+              itemTime: formatBangkokTime(),
+              source: p.agency || 'โทรมาตรทางการ',
+              lat: p.lat,
+              lng: p.lng,
+              rawPoint: p
+            }));
+          });
+        }
+
+        if (lifecycleResult.newlyFallingPoints && lifecycleResult.newlyFallingPoints.length > 0) {
+          lifecycleResult.newlyFallingPoints.forEach(p => {
+            setDailyUpdates(prev => mergeDailyUpdateEvent(prev, {
+              id: `upd_fall_${p.id}_${Date.now()}`,
+              locationKey: p.id,
+              locationName: p.name,
+              district: p.district,
+              statusType: 'receding',
+              statusLabel: 'น้ำลดแล้ว',
+              depthCm: p.depthCm || 12,
+              itemTime: formatBangkokTime(),
+              source: 'กรมชลประทาน & โทรมาตร',
+              lat: p.lat,
+              lng: p.lng,
+              rawPoint: p
+            }));
+          });
+        }
       }
 
       setTelemetrySyncStatus({
@@ -912,6 +1042,64 @@ export default function App() {
                   localStorage.setItem('prakanguard_24h_changelog', JSON.stringify(updated));
                 } catch (e) {}
                 return updated;
+              });
+            }
+
+            // บันทึกลงในอัปเดตสถานการณ์น้ำรายวัน (เฉพาะจุดที่เปลี่ยนจริง 1 เวลาต่อ 1 ครั้ง)
+            if (lifecycleResult.newlyClearedPoints && lifecycleResult.newlyClearedPoints.length > 0) {
+              lifecycleResult.newlyClearedPoints.forEach(p => {
+                setDailyUpdates(prev => mergeDailyUpdateEvent(prev, {
+                  id: `upd_clear_${p.id}_${Date.now()}`,
+                  locationKey: p.id,
+                  locationName: p.name,
+                  district: p.district,
+                  statusType: 'dry',
+                  statusLabel: 'แห้งแล้ว',
+                  depthCm: 0,
+                  itemTime: formatBangkokTime(),
+                  source: p.agency || 'โทรมาตรทางการ',
+                  lat: p.lat,
+                  lng: p.lng,
+                  rawPoint: p
+                }));
+              });
+            }
+
+            if (lifecycleResult.newlyActivatedPoints && lifecycleResult.newlyActivatedPoints.length > 0) {
+              lifecycleResult.newlyActivatedPoints.forEach(p => {
+                setDailyUpdates(prev => mergeDailyUpdateEvent(prev, {
+                  id: `upd_act_${p.id}_${Date.now()}`,
+                  locationKey: p.id,
+                  locationName: p.name,
+                  district: p.district,
+                  statusType: 'rising',
+                  statusLabel: 'เริ่มท่วมแล้ว',
+                  depthCm: p.depthCm || 15,
+                  itemTime: formatBangkokTime(),
+                  source: p.agency || 'โทรมาตรทางการ',
+                  lat: p.lat,
+                  lng: p.lng,
+                  rawPoint: p
+                }));
+              });
+            }
+
+            if (lifecycleResult.newlyFallingPoints && lifecycleResult.newlyFallingPoints.length > 0) {
+              lifecycleResult.newlyFallingPoints.forEach(p => {
+                setDailyUpdates(prev => mergeDailyUpdateEvent(prev, {
+                  id: `upd_fall_${p.id}_${Date.now()}`,
+                  locationKey: p.id,
+                  locationName: p.name,
+                  district: p.district,
+                  statusType: 'receding',
+                  statusLabel: 'น้ำลดแล้ว',
+                  depthCm: p.depthCm || 12,
+                  itemTime: formatBangkokTime(),
+                  source: 'กรมชลประทาน & โทรมาตร',
+                  lat: p.lat,
+                  lng: p.lng,
+                  rawPoint: p
+                }));
               });
             }
 
@@ -1434,6 +1622,27 @@ export default function App() {
     if (approvedPoint) {
       setSelectedPoint(approvedPoint);
       setFlyToLocation({ lat: approvedPoint.lat, lng: approvedPoint.lng });
+      
+      // บันทึกการแจ้งเตือนลงในอัปเดตสถานการณ์น้ำรายวัน (1 เวลาต่อการแจ้งเตือน 1 ครั้ง)
+      const newEvent = {
+        id: `upd_citizen_${approvedPoint.id}_${Date.now()}`,
+        locationKey: approvedPoint.id,
+        locationName: approvedPoint.name || approvedPoint.locationName || 'รายงานจากประชาชน',
+        district: approvedPoint.district,
+        subdistrict: approvedPoint.subdistrict,
+        locationSub: `${approvedPoint.district || 'สมุทรปราการ'} ${approvedPoint.subdistrict ? '• ' + approvedPoint.subdistrict : ''}`,
+        statusType: 'rising',
+        statusLabel: 'เริ่มท่วมแล้ว',
+        depthCm: approvedPoint.depthCm || 15,
+        itemTime: timeStr,
+        timestamp: Date.now(),
+        source: 'รายงานประชาชน (แอดมินอนุมัติ)',
+        lat: approvedPoint.lat,
+        lng: approvedPoint.lng,
+        rawPoint: approvedPoint
+      };
+      setDailyUpdates(prev => mergeDailyUpdateEvent(prev, newEvent));
+
       if (shouldBroadcast) {
         publishAdminAction({ type: 'approve', id });
       }
@@ -1466,10 +1675,12 @@ export default function App() {
   // Admin Actions: Resolve Report (Water Drained)
   const handleResolveReport = (id, shouldBroadcast = true) => {
     const timeStr = new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) + ' น.';
+    let resolvedItem = null;
     setCitizenReports(prev => {
       const updated = prev.map(r => {
         if (r.id === id) {
-          return { ...r, isResolved: true, isActive: false, depthCm: 0, statusLabel: 'สัญจรปกติ (น้ำแห้งแล้ว)', resolvedAt: timeStr, statusChangedAt: timeStr };
+          resolvedItem = { ...r, isResolved: true, isActive: false, depthCm: 0, statusLabel: 'สัญจรปกติ (น้ำแห้งแล้ว)', resolvedAt: timeStr, statusChangedAt: timeStr };
+          return resolvedItem;
         }
         return r;
       });
@@ -1478,6 +1689,33 @@ export default function App() {
       } catch (e) {}
       return updated;
     });
+
+    if (!resolvedItem) {
+      const p = points.find(pt => pt.id === id);
+      if (p) resolvedItem = p;
+    }
+
+    if (resolvedItem) {
+      const newEvent = {
+        id: `upd_res_${id}_${Date.now()}`,
+        locationKey: id,
+        locationName: resolvedItem.name || 'จุดเสี่ยง',
+        district: resolvedItem.district,
+        subdistrict: resolvedItem.subdistrict,
+        locationSub: `${resolvedItem.district || 'สมุทรปราการ'} ${resolvedItem.subdistrict ? '• ' + resolvedItem.subdistrict : ''}`,
+        statusType: 'dry',
+        statusLabel: 'แห้งแล้ว',
+        depthCm: 0,
+        itemTime: timeStr,
+        timestamp: Date.now(),
+        source: 'แอดมินยืนยันน้ำแห้ง',
+        lat: resolvedItem.lat,
+        lng: resolvedItem.lng,
+        rawPoint: resolvedItem
+      };
+      setDailyUpdates(prev => mergeDailyUpdateEvent(prev, newEvent));
+    }
+
     setLastUpdatedTime(timeStr);
     if (selectedPoint && selectedPoint.id === id) {
       setSelectedPoint(null);
@@ -1493,7 +1731,7 @@ export default function App() {
       const filtered = prev.filter(p => p.id !== newPoint.id);
       const updated = [newPoint, ...filtered];
       try {
-        localStorage.setItem('prakanguard_points_state_v5', JSON.stringify(updated));
+        localStorage.setItem('prakanguard_points_state_v7', JSON.stringify(updated));
       } catch (e) {}
       return updated;
     });
@@ -1520,7 +1758,7 @@ export default function App() {
         return merged;
       });
       try {
-        localStorage.setItem('prakanguard_points_state_v5', JSON.stringify(updated));
+        localStorage.setItem('prakanguard_points_state_v7', JSON.stringify(updated));
       } catch (e) {}
       return updated;
     });
@@ -1537,7 +1775,7 @@ export default function App() {
     setPoints(prev => {
       const updated = prev.filter(p => p.id !== pointId);
       try {
-        localStorage.setItem('prakanguard_points_state_v5', JSON.stringify(updated));
+        localStorage.setItem('prakanguard_points_state_v7', JSON.stringify(updated));
       } catch (e) {}
       return updated;
     });
@@ -1557,7 +1795,7 @@ export default function App() {
       const newItems = pointsToImport.filter(p => !existingIds.has(p.id) && !existingNames.has(p.name));
       const updated = [...newItems, ...prev];
       try {
-        localStorage.setItem('prakanguard_points_state_v5', JSON.stringify(updated));
+        localStorage.setItem('prakanguard_points_state_v7', JSON.stringify(updated));
       } catch (e) {}
       return updated;
     });
@@ -1575,12 +1813,12 @@ export default function App() {
       return {
         ...p,
         level: lvl,
-        depthRange: lvl === 3 ? '> 50 ซม.' : lvl === 2 ? '21 - 50 ซม.' : '5 - 20 ซม.'
+        depthRange: lvl === 3 ? '> 50 ซม.' : lvl === 2 ? '21 - 50 ซม.' : (p.depthCm > 0 ? '5 - 20 ซม.' : '0 ซม. (แห้งปกติ)')
       };
     });
     setPoints(defaultPoints);
     try {
-      localStorage.setItem('prakanguard_points_state_v5', JSON.stringify(defaultPoints));
+      localStorage.setItem('prakanguard_points_state_v7', JSON.stringify(defaultPoints));
     } catch (e) {}
   };
 
@@ -2799,6 +3037,7 @@ export default function App() {
       <PublicUpdatesModal 
         isOpen={isPublicUpdatesModalOpen}
         onClose={() => setIsPublicUpdatesModalOpen(false)}
+        dailyUpdates={dailyUpdates}
         points={points}
         citizenReports={citizenReports}
         changelog={changelog}

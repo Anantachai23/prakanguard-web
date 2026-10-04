@@ -115,9 +115,11 @@ export function evaluateDynamicFloodLifecycle(points = [], citizenReports = [], 
 
     const originalStatusLabel = point.originalStatusLabel || point.statusLabel || 'จุดเฝ้าระวังผิวจราจร';
     const originalTrafficStatus = point.originalTrafficStatus || point.trafficStatus || 'สัญจรชะลอความเร็ว';
-    const originalLevel = point.originalLevel !== undefined ? point.originalLevel : (point.level || 1);
-    const originalDepthCm = point.originalDepthCm !== undefined ? point.originalDepthCm : (point.depthCm || 15);
-    const originalDepthRange = point.originalDepthRange || point.depthRange || '10 - 20 ซม.';
+    const originalLevel = point.originalLevel !== undefined ? point.originalLevel : (point.level !== undefined ? point.level : 0);
+    const originalDepthCm = point.originalDepthCm !== undefined 
+      ? Number(point.originalDepthCm) 
+      : (point.depthCm !== undefined && point.depthCm !== null ? Number(point.depthCm) : 0);
+    const originalDepthRange = point.originalDepthRange || point.depthRange || (originalDepthCm > 0 ? `${originalDepthCm} ซม.` : '0 ซม. (แห้งปกติ)');
 
     const isTidalSpot = (point.cause && point.cause.includes('น้ำทะเลหนุน')) || 
                         (point.name && (
@@ -142,7 +144,7 @@ export function evaluateDynamicFloodLifecycle(points = [], citizenReports = [], 
                             point.district === 'บางพลี' ||
                             point.district === 'บางเสาธง';
 
-    let shouldBeActive = true;
+    let shouldBeActive = point.isActive !== false && !point.isResolved && originalDepthCm > 0;
     let clearanceReason = '';
     let calculatedDepthCm = originalDepthCm;
     let spotAgency = isTidalSpot 
@@ -154,6 +156,14 @@ export function evaluateDynamicFloodLifecycle(points = [], citizenReports = [], 
     const isDistrictRaining = distWeather ? distWeather.isRainingNow : false;
     const isCurrentlyFloodingIncident = point.isFlooding || originalLevel >= 2;
 
+    // หากจุดนี้แห้งเป็นปกติอยู่แล้ว และไม่มีฝนตกหนักหรือน้ำหนุน ให้คงสถานะแห้งไว้
+    if (point.isResolved === true || point.isActive === false || originalDepthCm === 0) {
+      if (!isHeavyRainWeather && !isDistrictRaining && (!isTidalSpot || !tideInfo.isHighTide)) {
+        shouldBeActive = false;
+        calculatedDepthCm = 0;
+      }
+    }
+
     // คำนวณความลึกและสถานะตามหลักวิทยาศาสตร์อุทกวิทยา:
     if (isTidalSpot) {
       if (!tideInfo.isHighTide) {
@@ -163,8 +173,8 @@ export function evaluateDynamicFloodLifecycle(points = [], citizenReports = [], 
       } else {
         // ช่วงน้ำหนุน: คำนวณความสูงน้ำท่วมตามระดับน้ำทะเลหนุนจริง
         const overflowFactor = Math.max(0.6, (tideInfo.waterLevelM - 1.50) / 0.45);
-        calculatedDepthCm = Math.min(85, Math.round(originalDepthCm * overflowFactor));
-        if (calculatedDepthCm < 5) calculatedDepthCm = 15;
+        calculatedDepthCm = Math.min(85, Math.round(Math.max(originalDepthCm, 20) * overflowFactor));
+        shouldBeActive = true;
       }
     } else if (isRainDependent) {
       if (isDryWeather && !isDistrictRaining) {
@@ -173,7 +183,7 @@ export function evaluateDynamicFloodLifecycle(points = [], citizenReports = [], 
         calculatedDepthCm = 0;
       } else if (isHeavyRainWeather || isDistrictRaining) {
         // ช่วงฝนตกหนัก น้ำท่วมขังเพิ่มขึ้น
-        calculatedDepthCm = Math.min(65, Math.round(originalDepthCm * 1.3));
+        calculatedDepthCm = Math.min(65, Math.round(Math.max(originalDepthCm, 10) * 1.3));
         shouldBeActive = true;
       } else if (isCurrentlyFloodingIncident) {
         shouldBeActive = true;
