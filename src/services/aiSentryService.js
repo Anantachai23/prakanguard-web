@@ -167,17 +167,17 @@ export function evaluateDynamicFloodLifecycle(points = [], citizenReports = [], 
         if (calculatedDepthCm < 5) calculatedDepthCm = 15;
       }
     } else if (isRainDependent) {
-      if (isCurrentlyFloodingIncident) {
-        // จุดที่มีน้ำท่วมขังระดับ 2 ขึ้นไป หรือมีรายงานสดกำลังท่วม ให้คงสถานะท่วมไว้ตามจริง
-        shouldBeActive = true;
-        calculatedDepthCm = originalDepthCm;
-      } else if (isDryWeather && !isDistrictRaining) {
+      if (isDryWeather && !isDistrictRaining) {
         shouldBeActive = false;
         clearanceReason = 'กลุ่มฝนสลายตัวและเครื่องสูบน้ำผลักดันน้ำแห้งสนิท สัญจรได้ปกติ';
         calculatedDepthCm = 0;
       } else if (isHeavyRainWeather || isDistrictRaining) {
         // ช่วงฝนตกหนัก น้ำท่วมขังเพิ่มขึ้น
         calculatedDepthCm = Math.min(65, Math.round(originalDepthCm * 1.3));
+        shouldBeActive = true;
+      } else if (isCurrentlyFloodingIncident) {
+        shouldBeActive = true;
+        calculatedDepthCm = originalDepthCm;
       }
     }
 

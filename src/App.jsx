@@ -103,7 +103,7 @@ function playNotificationChime() {
 export default function App() {
   const [points, setPoints] = useState(() => {
     try {
-      const saved = localStorage.getItem('prakanguard_points_state_v4');
+      const saved = localStorage.getItem('prakanguard_points_state_v5');
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
@@ -187,7 +187,7 @@ export default function App() {
   useEffect(() => {
     pointsRef.current = points;
     try {
-      localStorage.setItem('prakanguard_points_state_v4', JSON.stringify(points));
+      localStorage.setItem('prakanguard_points_state_v5', JSON.stringify(points));
     } catch (e) {}
   }, [points]);
 
@@ -1485,7 +1485,7 @@ export default function App() {
       const filtered = prev.filter(p => p.id !== newPoint.id);
       const updated = [newPoint, ...filtered];
       try {
-        localStorage.setItem('prakanguard_points_state_v4', JSON.stringify(updated));
+        localStorage.setItem('prakanguard_points_state_v5', JSON.stringify(updated));
       } catch (e) {}
       return updated;
     });
@@ -1512,7 +1512,7 @@ export default function App() {
         return merged;
       });
       try {
-        localStorage.setItem('prakanguard_points_state_v4', JSON.stringify(updated));
+        localStorage.setItem('prakanguard_points_state_v5', JSON.stringify(updated));
       } catch (e) {}
       return updated;
     });
@@ -1529,7 +1529,7 @@ export default function App() {
     setPoints(prev => {
       const updated = prev.filter(p => p.id !== pointId);
       try {
-        localStorage.setItem('prakanguard_points_state_v4', JSON.stringify(updated));
+        localStorage.setItem('prakanguard_points_state_v5', JSON.stringify(updated));
       } catch (e) {}
       return updated;
     });
@@ -1549,7 +1549,7 @@ export default function App() {
       const newItems = pointsToImport.filter(p => !existingIds.has(p.id) && !existingNames.has(p.name));
       const updated = [...newItems, ...prev];
       try {
-        localStorage.setItem('prakanguard_points_state_v4', JSON.stringify(updated));
+        localStorage.setItem('prakanguard_points_state_v5', JSON.stringify(updated));
       } catch (e) {}
       return updated;
     });
@@ -1572,7 +1572,7 @@ export default function App() {
     });
     setPoints(defaultPoints);
     try {
-      localStorage.setItem('prakanguard_points_state_v4', JSON.stringify(defaultPoints));
+      localStorage.setItem('prakanguard_points_state_v5', JSON.stringify(defaultPoints));
     } catch (e) {}
   };
 
