@@ -15,47 +15,76 @@ import { SAMUT_PRAKAN_DISTRICTS_DATA } from '../data/samutPrakanDistricts';
 import { detectDistrictForCoordinates } from '../data/samutPrakanBoundary';
 import { getDetailedDeviceInfo } from '../services/cloudSyncService';
 
-// 3 ระดับน้ำกระชับชัดเจน ตรงตามเกณฑ์มาตรฐาน (ปกติ, ปานกลาง, วิกฤต)
-export const WATER_LEVEL_OPTIONS = [
+// ระดับน้ำตามส่วนของร่างกาย (อวัยวะ) ตามความต้องการของผู้ใช้งาน
+export const BODY_WATER_LEVELS = [
   {
-    id: 'level1',
+    id: 'ankle',
+    part: 'ข้อเท้า',
+    icon: '🦶',
+    label: 'ระดับข้อเท้า / ตาตุ่ม',
+    defaultCm: 10,
+    range: '5 - 15 ซม.',
     level: 1,
-    label: 'ปกติ',
-    title: 'ระดับ 1: ปกติ',
-    range: '5 - 20 ซม.',
-    depthCm: 15,
     color: 'emerald',
     badgeClass: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30',
     selectedClass: 'ring-2 ring-emerald-500 bg-emerald-500/10 border-emerald-500',
-    desc: 'น้ำท่วมเสมอข้อเท้า ผิวถนนเปียกขัง รถทุกชนิดสัญจรได้'
+    desc: 'น้ำท่วมเสมอตาตุ่ม/ข้อเท้า ผิวถนนเปียกขัง รถทุกชนิดสัญจรได้'
   },
   {
-    id: 'level2',
+    id: 'shin',
+    part: 'ครึ่งหน้าแข้ง',
+    icon: '🦵',
+    label: 'ระดับครึ่งหน้าแข้ง',
+    defaultCm: 25,
+    range: '16 - 30 ซม.',
     level: 2,
-    label: 'ปานกลาง',
-    title: 'ระดับ 2: ปานกลาง',
-    range: '21 - 50 ซม.',
-    depthCm: 35,
     color: 'amber',
     badgeClass: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30',
     selectedClass: 'ring-2 ring-amber-500 bg-amber-500/10 border-amber-500',
-    desc: 'น้ำท่วมเสมอหน้าแข้งถึงครึ่งล้อ รถเก๋งและรถเล็กควรเลี่ยง'
+    desc: 'น้ำท่วมเสมอหน้าแข้ง ปริ่มท่อไอเสีย รถเก๋งและมอเตอร์ไซค์ควรชะลอ'
   },
   {
-    id: 'level3',
+    id: 'knee',
+    part: 'หัวเข่า',
+    icon: '🦿',
+    label: 'ระดับหัวเข่า',
+    defaultCm: 45,
+    range: '31 - 50 ซม.',
+    level: 2,
+    color: 'amber',
+    badgeClass: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30',
+    selectedClass: 'ring-2 ring-amber-500 bg-amber-500/10 border-amber-500',
+    desc: 'น้ำท่วมเสมอหัวเข่า ครึ่งล้อรถเก๋ง รถเล็กควรหลีกเลี่ยงเส้นทาง'
+  },
+  {
+    id: 'thigh',
+    part: 'ต้นขา / สะโพก',
+    icon: '👖',
+    label: 'ระดับต้นขา / สะโพก',
+    defaultCm: 65,
+    range: '51 - 75 ซม.',
     level: 3,
-    label: 'วิกฤต',
-    title: 'ระดับ 3: วิกฤต',
-    range: '> 50 ซม.',
-    depthCm: 65,
     color: 'rose',
     badgeClass: 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/30',
     selectedClass: 'ring-2 ring-rose-500 bg-rose-500/10 border-rose-500',
-    desc: 'น้ำท่วมมิดล้อรถเก๋ง เข้าห้องโดยสาร ห้ามรถเล็กผ่านเด็ดขาด'
+    desc: 'น้ำท่วมมิดล้อรถเก๋ง น้ำเข้าห้องโดยสาร ห้ามรถเล็กผ่านเด็ดขาด'
+  },
+  {
+    id: 'waist',
+    part: 'ระดับเอวขึ้นไป / อก',
+    icon: '🩱',
+    label: 'ระดับเอวขึ้นไป / อก',
+    defaultCm: 85,
+    range: '> 75 ซม.',
+    level: 3,
+    color: 'rose',
+    badgeClass: 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/30',
+    selectedClass: 'ring-2 ring-rose-500 bg-rose-500/10 border-rose-500',
+    desc: 'วิกฤต น้ำท่วมสูงมาก กระแสน้ำเชี่ยว ห้ามยานพาหนะทุกชนิดสัญจร'
   }
 ];
 
-export const BODY_WATER_LEVELS = WATER_LEVEL_OPTIONS;
+export const WATER_LEVEL_OPTIONS = BODY_WATER_LEVELS;
 
 export default function CitizenReportModal({ 
   isOpen, 
@@ -73,7 +102,8 @@ export default function CitizenReportModal({
   const [subdistrict, setSubdistrict] = useState(SAMUT_PRAKAN_DISTRICTS_DATA[0].subdistricts[0].name);
   const [customCoords, setCustomCoords] = useState(null);
   const [notes, setNotes] = useState('');
-  const [selectedLevelId, setSelectedLevelId] = useState('level2');
+  const [selectedBodyPartId, setSelectedBodyPartId] = useState('shin');
+  const [customCm, setCustomCm] = useState('25');
   const [photoPreview, setPhotoPreview] = useState(null);
   const [photoFile, setPhotoFile] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -191,7 +221,9 @@ export default function CitizenReportModal({
 
     setIsSubmitting(true);
 
-    const levelObj = WATER_LEVEL_OPTIONS.find(l => l.id === selectedLevelId) || WATER_LEVEL_OPTIONS[1];
+    const bodyPartObj = BODY_WATER_LEVELS.find(l => l.id === selectedBodyPartId) || BODY_WATER_LEVELS[1];
+    const parsedCm = Math.max(1, Math.round(parseFloat(customCm) || bodyPartObj.defaultCm));
+    const computedLevel = parsedCm > 50 ? 3 : (parsedCm >= 21 ? 2 : 1);
     const subdistrictObj = availableSubdistricts.find(s => s.name === subdistrict) || {
       lat: currentDistrictObj.center.lat,
       lng: currentDistrictObj.center.lng
@@ -213,13 +245,17 @@ export default function CitizenReportModal({
       district: district,
       subdistrict: subdistrict,
       notes: notes.trim(),
-      level: levelObj.level,
-      severity: levelObj.level,
-      bodyLevelLabel: levelObj.label,
-      levelLabel: levelObj.label,
-      waterLevel: levelObj.label,
-      depthCm: levelObj.depthCm,
-      depthRange: levelObj.range,
+      level: computedLevel,
+      severity: computedLevel,
+      bodyPart: bodyPartObj.part,
+      bodyPartId: bodyPartObj.id,
+      bodyLevelLabel: bodyPartObj.label,
+      body_level_label: bodyPartObj.label,
+      levelLabel: `${bodyPartObj.part} (~${parsedCm} ซม.)`,
+      waterLevel: `${bodyPartObj.part} (~${parsedCm} ซม.)`,
+      depthCm: parsedCm,
+      depth_cm: parsedCm,
+      depthRange: `${parsedCm} ซม.`,
       lat: finalLat,
       lng: finalLng,
       photoUrl: photoPreview || null,
@@ -415,36 +451,46 @@ export default function CitizenReportModal({
               />
             </div>
 
-            {/* 3. เลือกระดับน้ำ */}
-            <div>
-              <label className={`block text-xs font-bold mb-2 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
-                เลือกระดับน้ำ <span className="text-rose-500">*</span>
-              </label>
-              <div className="space-y-2">
-                {WATER_LEVEL_OPTIONS.map((lvl) => {
-                  const isSelected = selectedLevelId === lvl.id;
+            {/* 3. เลือกระดับน้ำตามส่วนของร่างกาย & ระบุความลึกเป็น cm */}
+            <div className="space-y-2.5">
+              <div className="flex items-center justify-between">
+                <label className={`block text-xs font-bold ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
+                  ระดับน้ำอยู่ตรงไหนของร่างกาย <span className="text-rose-500">*</span>
+                </label>
+                <span className="text-[11px] text-slate-400">
+                  เทียบกับอวัยวะ
+                </span>
+              </div>
+
+              {/* รายการอวัยวะ 5 ระดับ */}
+              <div className="grid grid-cols-1 gap-2">
+                {BODY_WATER_LEVELS.map((lvl) => {
+                  const isSelected = selectedBodyPartId === lvl.id;
                   return (
                     <div
                       key={lvl.id}
-                      onClick={() => setSelectedLevelId(lvl.id)}
-                      className={`p-3 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-3 ${
+                      onClick={() => {
+                        setSelectedBodyPartId(lvl.id);
+                        setCustomCm(String(lvl.defaultCm));
+                      }}
+                      className={`p-2.5 sm:p-3 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-3 ${
                         isSelected 
                           ? lvl.selectedClass 
                           : (isDark ? 'bg-slate-850/60 border-slate-800 hover:border-slate-700' : 'bg-slate-50 border-slate-200 hover:border-slate-300')
                       }`}
                     >
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${
-                          isSelected 
-                            ? (lvl.color === 'emerald' ? 'border-emerald-500 bg-emerald-500' : lvl.color === 'amber' ? 'border-amber-500 bg-amber-500' : 'border-rose-500 bg-rose-500')
-                            : (isDark ? 'border-slate-600' : 'border-slate-400')
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div className={`w-8 h-8 rounded-xl flex items-center justify-center text-lg shrink-0 ${
+                          isSelected
+                            ? (lvl.color === 'emerald' ? 'bg-emerald-500/20 text-emerald-500 ring-2 ring-emerald-500/40' : lvl.color === 'amber' ? 'bg-amber-500/20 text-amber-500 ring-2 ring-amber-500/40' : 'bg-rose-500/20 text-rose-500 ring-2 ring-rose-500/40')
+                            : (isDark ? 'bg-slate-800' : 'bg-slate-200/70')
                         }`}>
-                          {isSelected && <span className="w-1.5 h-1.5 rounded-full bg-white"></span>}
+                          {lvl.icon}
                         </div>
                         <div className="min-w-0">
                           <div className="flex items-center gap-2">
                             <span className={`text-xs sm:text-sm font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                              {lvl.title}
+                              {lvl.label}
                             </span>
                             <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${lvl.badgeClass}`}>
                               {lvl.range}
@@ -455,9 +501,83 @@ export default function CitizenReportModal({
                           </p>
                         </div>
                       </div>
+
+                      <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                        isSelected 
+                          ? (lvl.color === 'emerald' ? 'border-emerald-500 bg-emerald-500' : lvl.color === 'amber' ? 'border-amber-500 bg-amber-500' : 'border-rose-500 bg-rose-500')
+                          : (isDark ? 'border-slate-600' : 'border-slate-400')
+                      }`}>
+                        {isSelected && <span className="w-1.5 h-1.5 rounded-full bg-white"></span>}
+                      </div>
                     </div>
                   );
                 })}
+              </div>
+
+              {/* ช่องให้เขียนระบุระดับน้ำคร่าวๆ หน่วย cm */}
+              <div className={`p-3 rounded-2xl border ${
+                isDark ? 'bg-slate-800/80 border-slate-700' : 'bg-blue-50/70 border-blue-200'
+              }`}>
+                <div className="flex items-center justify-between gap-2 mb-1.5">
+                  <label className={`text-xs font-bold flex items-center gap-1.5 ${
+                    isDark ? 'text-cyan-300' : 'text-blue-900'
+                  }`}>
+                    <span>📏</span>
+                    <span>ระบุระดับน้ำคร่าวๆ (หน่วย cm)</span>
+                    <span className="text-rose-500">*</span>
+                  </label>
+                  <span className="text-[11px] text-slate-500 dark:text-slate-400 font-mono">
+                    (เซนติเมตร)
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <div className="relative flex-1">
+                    <input
+                      type="number"
+                      min="1"
+                      max="250"
+                      value={customCm}
+                      onChange={(e) => setCustomCm(e.target.value)}
+                      placeholder="เช่น 15, 25, 40"
+                      className={`w-full px-3.5 py-2 rounded-xl text-sm font-bold border outline-none focus:ring-2 focus:ring-blue-500 ${
+                        isDark 
+                          ? 'bg-slate-900 border-slate-700 text-white placeholder-slate-500' 
+                          : 'bg-white border-slate-300 text-slate-900 placeholder-slate-400'
+                      }`}
+                      required
+                    />
+                    <span className="absolute right-3 top-2 text-xs font-bold text-slate-400">
+                      cm
+                    </span>
+                  </div>
+
+                  {/* Preset quick buttons */}
+                  <div className="flex items-center gap-1 shrink-0">
+                    {[10, 25, 45, 65, 85].map(preset => (
+                      <button
+                        key={preset}
+                        type="button"
+                        onClick={() => {
+                          setCustomCm(String(preset));
+                          const matching = BODY_WATER_LEVELS.find(b => preset >= b.defaultCm - 10 && preset <= b.defaultCm + 10);
+                          if (matching) setSelectedBodyPartId(matching.id);
+                        }}
+                        className={`px-2 py-1.5 rounded-lg text-[10px] font-bold border transition-colors cursor-pointer ${
+                          customCm === String(preset)
+                            ? 'bg-blue-600 text-white border-blue-500'
+                            : (isDark ? 'bg-slate-900 text-slate-300 border-slate-700 hover:border-slate-500' : 'bg-white text-slate-700 border-slate-200 hover:border-slate-400')
+                        }`}
+                      >
+                        {preset}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1.5 leading-snug">
+                  💡 ระบบใส่ค่าแนะนำให้อัตโนมัติตามอวัยวะที่เลือก ท่านสามารถพิมพ์แก้ไขตัวเลขตามความลึกจริงได้ทันที
+                </p>
               </div>
             </div>
 

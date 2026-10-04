@@ -142,12 +142,12 @@ export default function AdminVerificationPrompt({
                 <span className="font-bold text-sm text-blue-600 dark:text-cyan-400 block">
                   {currentReport.hazardType === 'hail' 
                     ? `🧊 ${currentReport.hailSizeLabel || 'ลูกเห็บตก'}` 
-                    : `ระดับ${currentReport.bodyLevelLabel}`}
+                    : (currentReport.bodyLevelLabel ? `${currentReport.bodyLevelLabel}` : `ระดับ ${currentReport.levelLabel || 'เฝ้าระวัง'}`)}
                 </span>
                 <span className="text-[10px] text-slate-500 block">
                   {currentReport.hazardType === 'hail' 
                     ? 'พายุลูกเห็บ/ลมกระโชกแรง' 
-                    : `(ประมาณ ${currentReport.depthRange})`}
+                    : `ความลึกประมาณ ${currentReport.depthCm ? `${currentReport.depthCm} ซม.` : (currentReport.depthRange || 'เฝ้าระวัง')}`}
                 </span>
               </div>
 

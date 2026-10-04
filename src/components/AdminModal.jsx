@@ -1541,7 +1541,7 @@ export default function AdminModal({
                           </h4>
                           
                           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                            ระดับ: {report.depthCm || 20} ซม. ({report.depthRange || 'ท่วมผิวจราจร'}) {report.cause ? `• ${report.cause}` : ''}
+                            ระดับ: {report.bodyLevelLabel ? `${report.bodyLevelLabel} • ` : ''}{report.depthCm !== undefined && report.depthCm !== null ? report.depthCm : 0} ซม. ({report.depthRange || 'ท่วมผิวจราจร'}) {report.cause ? `• ${report.cause}` : ''}
                           </p>
 
                           {/* Inline depth adjuster */}

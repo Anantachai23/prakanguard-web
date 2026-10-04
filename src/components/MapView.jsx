@@ -10,15 +10,15 @@ import {
 import { getFloodLevel } from '../data/floodStandards';
 
 // Helper to determine effective level (1: 5-20cm Green, 2: 21-50cm Yellow, 3: >50cm Red)
-function resolveLevel(item) {
+export function resolveLevel(item) {
   if (item && item.depthCm !== undefined && item.depthCm !== null && !isNaN(Number(item.depthCm))) {
     return getFloodLevel(Number(item.depthCm));
   }
-  return item?.level || 1;
+  return Number(item?.level) || 1;
 }
 
 // Check if a point is dried up or resolved
-function isPointDry(item) {
+export function isPointDry(item) {
   if (!item) return true;
   if (item.isResolved === true || item.isActive === false) return true;
   if (item.depthCm !== undefined && item.depthCm !== null && Number(item.depthCm) <= 0) return true;
@@ -70,8 +70,9 @@ function createOfficialFloodPin({ level, depthCm, hasPhoto, isSelected, isFallin
     ? `<div style="position:absolute;inset:-6px;border-radius:24px;border:2.5px solid #0284c7;box-shadow:0 0 12px rgba(2,132,199,0.8);animation:pgSelectedGlow 1.5s ease-in-out infinite alternate;pointer-events:none;z-index:1;"></div>`
     : '';
 
+  const fontSize = depthText.length >= 3 ? '8' : (depthText.length === 2 ? '9.5' : '11');
   const svgInnerContent = depthText
-    ? `<text x="17" y="19" font-family="'Prompt', sans-serif, system-ui" font-size="10.5" font-weight="900" fill="${primaryColor}" text-anchor="middle" dominant-baseline="central">${depthText}</text>`
+    ? `<text x="17" y="17.2" font-family="'Prompt', -apple-system, sans-serif" font-size="${fontSize}" font-weight="900" fill="${primaryColor}" text-anchor="middle" dominant-baseline="central">${depthText}</text>`
     : `<path d="M17 10C17 10 13.5 14.5 13.5 17C13.5 18.93 15.07 20.5 17 20.5C18.93 20.5 20.5 18.93 20.5 17C20.5 14.5 17 10 17 10Z" fill="${primaryColor}"/>`;
 
   const html = `
@@ -107,7 +108,7 @@ function createOfficialFloodPin({ level, depthCm, hasPhoto, isSelected, isFallin
 
 // Function to merge duplicate points & declutter dense points
 // Eliminates duplicate pins at the same location (e.g. Hua Chiew / Manthana) and retains the one with photos
-function deduplicateAndDeclutterPoints(citizenList = [], officialList = [], isMobileView = false) {
+export function deduplicateAndDeclutterPoints(citizenList = [], officialList = [], isMobileView = false) {
   const thresholdKm = isMobileView ? 0.35 : 0.08; // ~350m on mobile, ~80m on desktop
 
   // Normalize and combine: citizen reports come first so user reports & photos take precedence

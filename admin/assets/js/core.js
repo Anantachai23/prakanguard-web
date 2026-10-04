@@ -548,10 +548,10 @@ export const LEVELS = {
   3: { level: 3, label: 'วิกฤต', range: 'มากกว่า 50 ซม.', tone: 'crit' }
 };
 export function levelInfo(r) {
-  let lv = Number(r.level);
+  const d = Number(r.depth_cm ?? r.depthCm);
+  let lv = isFinite(d) && d > 0 ? (d > 50 ? 3 : d >= 21 ? 2 : 1) : Number(r.level);
   if (![1, 2, 3].includes(lv)) {
-    const d = Number(r.depth_cm ?? r.depthCm);
-    lv = !isFinite(d) || d <= 20 ? 1 : d <= 50 ? 2 : 3;
+    lv = 1;
   }
   return LEVELS[lv];
 }

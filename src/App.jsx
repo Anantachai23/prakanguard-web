@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import Navbar from './components/Navbar';
-import MapView from './components/MapView';
+import MapView, { resolveLevel, deduplicateAndDeclutterPoints } from './components/MapView';
 import VisualGauge from './components/VisualGauge';
 import AiForecastModal from './components/AiForecastModal';
 import FloodStandardsModal from './components/FloodStandardsModal';
@@ -1071,11 +1071,15 @@ export default function App() {
         // Trigger alert toast for admin (strictly visible ONLY if logged in as Admin)
         if (!incomingReport.isApproved && isAdminAuthenticated) {
           const isHail = incomingReport.hazardType === 'hail';
-          const resolvedLevel = incomingReport.bodyLevelLabel || (incomingReport.level === 3 || incomingReport.severity === 3 ? 'วิกฤต' : incomingReport.level === 2 || incomingReport.severity === 2 ? 'ปานกลาง' : 'ปกติ');
+          const depthText = incomingReport.depthCm ? `${incomingReport.depthCm} ซม.` : (incomingReport.depthRange || '');
+          const bodyPart = incomingReport.bodyLevelLabel || incomingReport.bodyPart || '';
+          const resolvedLevel = isHail 
+            ? `🧊 ${incomingReport.hailSizeLabel || 'ลูกเห็บตก'}` 
+            : `${bodyPart ? `${bodyPart} ` : ''}${depthText ? `(${depthText})` : ''}`.trim() || 'รอตรวจสอบ';
           setAdminAlertToast({
             id: incomingReport.id,
             name: incomingReport.name,
-            levelLabel: isHail ? `🧊 ${incomingReport.hailSizeLabel || 'ลูกเห็บตก'}` : `ระดับ${resolvedLevel}`,
+            levelLabel: resolvedLevel,
             district: incomingReport.district,
             time: incomingReport.reportedAt || 'เมื่อสักครู่'
           });
@@ -1302,11 +1306,15 @@ export default function App() {
     // Notify the admin owner immediately (if admin is viewing)
     if (isAdminAuthenticated) {
       const isHail = reportToSave.hazardType === 'hail';
-      const resolvedLevel = reportToSave.bodyLevelLabel || (reportToSave.level === 3 || reportToSave.severity === 3 ? 'วิกฤต' : reportToSave.level === 2 || reportToSave.severity === 2 ? 'ปานกลาง' : 'ปกติ');
+      const depthText = reportToSave.depthCm ? `${reportToSave.depthCm} ซม.` : (reportToSave.depthRange || '');
+      const bodyPart = reportToSave.bodyLevelLabel || reportToSave.bodyPart || '';
+      const resolvedLevel = isHail 
+        ? `🧊 ${reportToSave.hailSizeLabel || 'ลูกเห็บตก'}` 
+        : `${bodyPart ? `${bodyPart} ` : ''}${depthText ? `(${depthText})` : ''}`.trim() || 'รอตรวจสอบ';
       setAdminAlertToast({
         id: reportToSave.id,
         name: reportToSave.name,
-        levelLabel: isHail ? `🧊 ${reportToSave.hailSizeLabel || 'ลูกเห็บตก'}` : `ระดับ${resolvedLevel}`,
+        levelLabel: resolvedLevel,
         district: reportToSave.district,
         time: reportToSave.reportedAt
       });
@@ -1629,12 +1637,13 @@ export default function App() {
       if (isPointDryOrResolved(point)) return false;
       const matchDistrict = selectedDistrict === "ทั้งหมด" || point.district === selectedDistrict;
       let matchSeverity = true;
+      const effLevel = resolveLevel(point);
       if (severityFilter === "all") {
         matchSeverity = true;
       } else if (severityFilter === "falling") {
         matchSeverity = point.waterTrend === 'falling';
       } else {
-        matchSeverity = point.level !== undefined && point.level !== null && point.level.toString() === severityFilter;
+        matchSeverity = effLevel.toString() === severityFilter;
       }
       return matchDistrict && matchSeverity;
     });
@@ -1647,16 +1656,42 @@ export default function App() {
       if (report.id && (report.id.includes('test') || report.id.includes('verify') || report.id.startsWith('node-'))) return false;
       const matchDistrict = selectedDistrict === "ทั้งหมด" || report.district === selectedDistrict;
       let matchSeverity = true;
+      const effLevel = resolveLevel(report);
       if (severityFilter === "all") {
         matchSeverity = true;
       } else if (severityFilter === "falling") {
         matchSeverity = report.waterTrend === 'falling';
       } else {
-        matchSeverity = report.level !== undefined && report.level !== null && report.level.toString() === severityFilter;
+        matchSeverity = effLevel.toString() === severityFilter;
       }
       return matchDistrict && matchSeverity;
     });
   }, [citizenReports, selectedDistrict, severityFilter]);
+
+  // 2.5 Synchronized Severity Counts (100% matched to pins displayed on the map)
+  const levelCounts = useMemo(() => {
+    const activeOfficial = points.filter(p => !isPointDryOrResolved(p) && (selectedDistrict === "ทั้งหมด" || p.district === selectedDistrict));
+    const activeCitizen = citizenReports.filter(r => r.isApproved === true && !isPointDryOrResolved(r) && (selectedDistrict === "ทั้งหมด" || r.district === selectedDistrict));
+
+    const isMobileView = typeof window !== 'undefined' && window.innerWidth < 640;
+    const allDisplayPins = deduplicateAndDeclutterPoints(activeCitizen, activeOfficial, isMobileView);
+
+    let minor = 0;
+    let moderate = 0;
+    let severe = 0;
+    let falling = 0;
+
+    allDisplayPins.forEach(p => {
+      const lvl = resolveLevel(p);
+      if (lvl === 3) severe++;
+      else if (lvl === 2) moderate++;
+      else minor++;
+
+      if (p.waterTrend === 'falling') falling++;
+    });
+
+    return { minor, moderate, severe, falling };
+  }, [points, citizenReports, selectedDistrict]);
 
   // 3. Search Results for Official Points (searches ALL districts and severities, excludes dry)
   const searchResultsOfficial = useMemo(() => {
@@ -1900,6 +1935,8 @@ export default function App() {
       {/* 1. TOP NAVBAR (Theme Switchable & AutoMarquee) */}
       <Navbar 
         points={points} 
+        citizenReports={citizenReports}
+        levelCounts={levelCounts}
         weather={weather}
         severityFilter={severityFilter}
         onSelectSeverityFilter={setSeverityFilter}

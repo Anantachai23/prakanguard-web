@@ -13,7 +13,9 @@ import {
 import RealTimeClock from './RealTimeClock';
 
 export default function Navbar({ 
-  points, 
+  points = [], 
+  citizenReports = [],
+  levelCounts = null,
   weather,
   severityFilter = 'all',
   onSelectSeverityFilter,
@@ -32,10 +34,11 @@ export default function Navbar({
   onToggleTheme
 }) {
   const isDark = theme === 'dark';
-  const minor = points.filter(p => p.level === 1 && p.isActive !== false && !p.isResolved).length;
-  const moderate = points.filter(p => p.level === 2 && p.isActive !== false && !p.isResolved).length;
-  const severe = points.filter(p => p.level === 3 && p.isActive !== false && !p.isResolved).length;
-  const falling = points.filter(p => p.waterTrend === 'falling' && p.isActive !== false && !p.isResolved).length;
+  // Use precomputed levelCounts synchronized 1:1 with map pins
+  const minor = levelCounts ? levelCounts.minor : points.filter(p => p.level === 1 && p.isActive !== false && !p.isResolved).length;
+  const moderate = levelCounts ? levelCounts.moderate : points.filter(p => p.level === 2 && p.isActive !== false && !p.isResolved).length;
+  const severe = levelCounts ? levelCounts.severe : points.filter(p => p.level === 3 && p.isActive !== false && !p.isResolved).length;
+  const falling = levelCounts ? levelCounts.falling : points.filter(p => p.waterTrend === 'falling' && p.isActive !== false && !p.isResolved).length;
 
   const navScrollRef = useRef(null);
   const isDraggingRef = useRef(false);

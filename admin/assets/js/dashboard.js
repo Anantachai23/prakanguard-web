@@ -519,7 +519,7 @@ function renderReports() {
       // Level (3 standards: ปกติ, ปานกลาง, วิกฤต)
       h('td', {},
         h('span', { class: `badge badge-${lv.tone}` },
-          `${lv.label} (${lv.range})`
+          `${r.body_level_label || r.bodyLevelLabel || lv.label} (${(r.depth_cm || r.depthCm) ? (r.depth_cm || r.depthCm) + ' ซม.' : lv.range})`
         )
       ),
       // Location Name & Details
