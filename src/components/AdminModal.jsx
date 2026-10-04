@@ -44,12 +44,13 @@ import {
   ChevronRight,
   Filter,
   AlertCircle,
-  ThumbsUp
+  ThumbsUp,
+  XCircle
 } from 'lucide-react';
 import { BODY_WATER_LEVELS } from './CitizenReportModal';
 import { DISTRICTS } from '../data/samutPrakanPoints';
 import { OFFICIAL_LOCATION_CATALOG, formatPointForTracking, parseAndValidateExternalData } from '../data/officialLocationCatalog';
-import { validateCoordinatePrecision, detectDistrictForCoordinates } from '../data/samutPrakanBoundary';
+import { validateCoordinatePrecision, detectDistrictForCoordinates, isPointInSamutPrakan } from '../data/samutPrakanBoundary';
 import { getFloodLevel } from '../data/floodStandards';
 import { getDetailedDeviceInfo } from '../services/cloudSyncService';
 import { 
@@ -575,6 +576,17 @@ export default function AdminModal({
   const [editingApprovedId, setEditingApprovedId] = useState(null);
   const [editingApprovedDepth, setEditingApprovedDepth] = useState(20);
 
+  // Confirmation Modal Dialog State (สำหรับยืนยันถอนอนุมัติ, ไม่อนุมัติ, หรือลบรายงาน)
+  const [confirmModal, setConfirmModal] = useState({
+    isOpen: false,
+    title: '',
+    message: '',
+    details: '',
+    confirmText: 'ยืนยัน',
+    confirmColor: 'rose',
+    onConfirm: null
+  });
+
   // Locations Subtabs: 'list' | 'add' | 'catalog' | 'import_data'
   const [locationsSubTab, setLocationsSubTab] = useState('list');
   const [newLocationName, setNewLocationName] = useState('');
@@ -790,6 +802,10 @@ export default function AdminModal({
   // Admin Actions for Pending Reports
   const handleApproveWithDepth = (reportId) => {
     const report = citizenReports.find(r => r.id === reportId);
+    if (report && !isPointInSamutPrakan(report.lat, report.lng)) {
+      alert("ไม่สามารถอนุมัติได้เนื่องจากพิกัดของรายงานนี้อยู่นอกพื้นที่ 6 อำเภอของจังหวัดสมุทรปราการ");
+      return;
+    }
     if (editingReportId === reportId && onUpdateReport) {
       onUpdateReport(reportId, { depthCm: editingReportDepth });
     }
@@ -803,20 +819,28 @@ export default function AdminModal({
 
   const handleReject = (reportId) => {
     const report = citizenReports.find(r => r.id === reportId);
-    if (window.confirm(`ยืนยันการลบรายงาน "${report?.name || 'จุดนี้'}" ไปยัง "ลบล่าสุด" (ถังขยะ)?`)) {
-      playAdminRejectSound();
-      if (report) {
-        setDeletedReports(prev => {
-          const updated = [{ ...report, deletedAt: new Date().toISOString() }, ...prev.filter(x => x.id !== reportId)];
-          try { localStorage.setItem('pg_admin_deleted_reports', JSON.stringify(updated)); } catch (e) {}
-          return updated;
-        });
+    setConfirmModal({
+      isOpen: true,
+      title: 'ยืนยันไม่อนุมัติรายงาน',
+      message: 'คุณต้องการไม่อนุมัติรายงานนี้หรือไม่? รายงานจะไม่ถูกนำขึ้นแผนที่และจะถูกย้ายไปยัง "ลบล่าสุด"',
+      details: `📍 ${report?.name || 'รายงาน'} (${report?.district ? 'อ.' + report.district : ''})`,
+      confirmText: 'ยืนยันไม่อนุมัติ',
+      confirmColor: 'rose',
+      onConfirm: () => {
+        playAdminRejectSound();
+        if (report) {
+          setDeletedReports(prev => {
+            const updated = [{ ...report, deletedAt: new Date().toISOString() }, ...prev.filter(x => x.id !== reportId)];
+            try { localStorage.setItem('pg_admin_deleted_reports', JSON.stringify(updated)); } catch (e) {}
+            return updated;
+          });
+        }
+        if (onRejectReport) {
+          onRejectReport(reportId);
+        }
+        showNotice(`🚫 ไม่อนุมัติรายงาน "${report?.name || ''}" เรียบร้อย (ย้ายไปยังลบล่าสุด)`, 'info');
       }
-      if (onRejectReport) {
-        onRejectReport(reportId);
-      }
-      showNotice(`🗑️ ย้ายรายงานไปยัง "ลบล่าสุด" เรียบร้อย (สามารถกู้คืนหรือลบถาวรได้)`, 'info');
-    }
+    });
   };
 
   const handleResolve = (reportId) => {
@@ -851,49 +875,71 @@ export default function AdminModal({
   const handleBulkRejectPending = () => {
     if (selectedPendingIds.size === 0) return;
     const count = selectedPendingIds.size;
-    if (!window.confirm(`ยืนยันการย้ายรายงานที่เลือกทั้งหมด ${count} รายการไปยัง "ลบล่าสุด" (ถังขยะ)?`)) return;
-    
-    playAdminRejectSound();
-    const itemsToDelete = citizenReports.filter(r => selectedPendingIds.has(r.id));
-    if (itemsToDelete.length > 0) {
-      setDeletedReports(prev => {
-        const timestamped = itemsToDelete.map(it => ({ ...it, deletedAt: new Date().toISOString() }));
-        const updated = [...timestamped, ...prev.filter(x => !selectedPendingIds.has(x.id))];
-        try { localStorage.setItem('pg_admin_deleted_reports', JSON.stringify(updated)); } catch (e) {}
-        return updated;
-      });
-    }
-    selectedPendingIds.forEach(id => {
-      if (onRejectReport) onRejectReport(id);
+    setConfirmModal({
+      isOpen: true,
+      title: `ยืนยันไม่อนุมัติรายงาน (${count} รายการ)`,
+      message: `คุณต้องการไม่อนุมัติรายงานที่เลือกทั้งหมด ${count} รายการหรือไม่? รายงานทั้งหมดจะไม่ถูกนำขึ้นแผนที่`,
+      confirmText: `ยืนยันไม่อนุมัติ ${count} รายการ`,
+      confirmColor: 'rose',
+      onConfirm: () => {
+        playAdminRejectSound();
+        const itemsToDelete = citizenReports.filter(r => selectedPendingIds.has(r.id));
+        if (itemsToDelete.length > 0) {
+          setDeletedReports(prev => {
+            const timestamped = itemsToDelete.map(it => ({ ...it, deletedAt: new Date().toISOString() }));
+            const updated = [...timestamped, ...prev.filter(x => !selectedPendingIds.has(x.id))];
+            try { localStorage.setItem('pg_admin_deleted_reports', JSON.stringify(updated)); } catch (e) {}
+            return updated;
+          });
+        }
+        selectedPendingIds.forEach(id => {
+          if (onRejectReport) onRejectReport(id);
+        });
+        setSelectedPendingIds(new Set());
+        showNotice(`🚫 ไม่อนุมัติรายงาน ${count} รายการเรียบร้อยแล้ว (ย้ายไปยังลบล่าสุด)`, 'info');
+      }
     });
-    setSelectedPendingIds(new Set());
-    showNotice(`🗑️ ย้ายรายงาน ${count} รายการไปยัง "ลบล่าสุด" เรียบร้อย`, 'info');
   };
 
   // Single Action: Revoke Approved Report with Confirmation Dialog
   const handleSingleRevokeApproved = (report) => {
     if (!report) return;
-    if (!window.confirm(`คุณแน่ใจหรือไม่ว่าต้องการ "ถอนการอนุมัติ" รายงานนี้?\n\n📍 ${report.name || 'รายงาน'}\n\nระบบจะนำจุดนี้ออกจากแผนที่สาธารณะและย้ายกลับไปเป็นสถานะ "รอการตรวจสอบ"`)) {
-      return;
-    }
-    playAdminRejectSound();
-    if (onUpdateReport) {
-      onUpdateReport(report.id, { isApproved: false });
-    }
-    showNotice(`🚫 ถอนการอนุมัติ "${report.name}" เรียบร้อยแล้ว (ย้ายกลับไปรอยืนยัน)`);
+    setConfirmModal({
+      isOpen: true,
+      title: 'ยืนยันการถอนอนุมัติรายงาน',
+      message: 'คุณต้องการถอนอนุมัติรายงานนี้ออกจากแผนที่สาธารณะหรือไม่?',
+      details: `📍 ${report.name || 'รายงาน'} (${report.district ? 'อ.' + report.district : ''}) — จุดนี้จะถูกนำออกจากแผนที่ทันที และเปลี่ยนสถานะกลับเป็น "รอการตรวจสอบ"`,
+      confirmText: 'ยืนยันถอนอนุมัติ',
+      confirmColor: 'amber',
+      onConfirm: () => {
+        playAdminRejectSound();
+        if (onUpdateReport) {
+          onUpdateReport(report.id, { isApproved: false });
+        }
+        showNotice(`🚫 ถอนการอนุมัติ "${report.name}" เรียบร้อยแล้ว (นำออกจากแผนที่และย้ายกลับไปรอยืนยัน)`);
+      }
+    });
   };
 
   // Bulk Actions: Approved Reports
   const handleBulkRevokeApproved = () => {
     if (selectedApprovedIds.size === 0) return;
     const count = selectedApprovedIds.size;
-    if (!window.confirm(`คุณแน่ใจหรือไม่ว่าต้องการ "ถอนการอนุมัติ" รายงานที่เลือกทั้งหมด ${count} รายการ?\n\nระบบจะนำจุดเหล่านี้ออกจากแผนที่สาธารณะและย้ายกลับไปเป็นสถานะ "รอการตรวจสอบ"`)) return;
-    playAdminRejectSound();
-    selectedApprovedIds.forEach(id => {
-      if (onUpdateReport) onUpdateReport(id, { isApproved: false });
+    setConfirmModal({
+      isOpen: true,
+      title: `ยืนยันถอนการอนุมัติ (${count} รายการ)`,
+      message: `คุณต้องการถอนการอนุมัติรายงานที่เลือกทั้งหมด ${count} รายการหรือไม่? จุดเหล่านี้จะถูกนำออกจากแผนที่สาธารณะทันที`,
+      confirmText: `ยืนยันถอน ${count} รายการ`,
+      confirmColor: 'amber',
+      onConfirm: () => {
+        playAdminRejectSound();
+        selectedApprovedIds.forEach(id => {
+          if (onUpdateReport) onUpdateReport(id, { isApproved: false });
+        });
+        setSelectedApprovedIds(new Set());
+        showNotice(`🚫 ถอนการอนุมัติ ${count} รายการเรียบร้อยแล้ว (นำออกจากแผนที่สาธารณะ)`);
+      }
     });
-    setSelectedApprovedIds(new Set());
-    showNotice(`🚫 ถอนการอนุมัติ ${count} รายการเรียบร้อยแล้ว`);
   };
 
   const handleBulkDeleteApproved = () => {
@@ -1931,9 +1977,10 @@ export default function AdminModal({
                               type="button"
                               onClick={handleBulkRejectPending}
                               className="px-2.5 py-1 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs flex items-center gap-1 shadow-xs cursor-pointer active:scale-95"
+                              title="ไม่อนุมัติรายงานที่เลือกทั้งหมด"
                             >
-                              <Trash2 className="w-3.5 h-3.5" />
-                              <span>ลบที่เลือก</span>
+                              <XCircle className="w-3.5 h-3.5" />
+                              <span>ไม่อนุมัติที่เลือก</span>
                             </button>
                           </div>
                         )}
@@ -2086,9 +2133,11 @@ export default function AdminModal({
                               <button
                                 type="button"
                                 onClick={() => handleReject(report.id)}
-                                className="px-3 py-1.5 rounded-xl bg-rose-50 dark:bg-rose-950/60 hover:bg-rose-100 dark:hover:bg-rose-900/60 text-rose-600 dark:text-rose-300 text-xs font-bold transition-colors cursor-pointer border border-rose-200 dark:border-rose-800"
+                                className="px-3.5 py-1.5 rounded-xl bg-rose-50 dark:bg-rose-950/70 hover:bg-rose-100 dark:hover:bg-rose-900/70 text-rose-600 dark:text-rose-300 text-xs font-bold transition-all cursor-pointer border border-rose-300 dark:border-rose-800 flex items-center gap-1.5 shadow-xs active:scale-95"
+                                title="ไม่อนุมัติรายงานนี้ (ไม่นำขึ้นแผนที่และย้ายไปยังถังขยะ)"
                               >
-                                ✕ ปฏิเสธ / ลบ
+                                <XCircle className="w-3.5 h-3.5 text-rose-500" />
+                                <span>ไม่อนุมัติ</span>
                               </button>
                               <button
                                 type="button"
@@ -4002,6 +4051,77 @@ export default function AdminModal({
               >
                 <X className="w-5 h-5" />
               </button>
+            </div>
+          </div>
+        )}
+
+        {/* Custom Confirmation Popup Dialog (สำหรับยืนยันถอนอนุมัติ, ไม่อนุมัติ, ลบ) */}
+        {confirmModal.isOpen && (
+          <div 
+            onClick={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+            className="fixed inset-0 z-[70] bg-slate-950/75 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in"
+          >
+            <div 
+              className={`w-full max-w-md rounded-3xl border shadow-2xl p-5 flex flex-col gap-3.5 smooth-pop ${
+                isDark 
+                  ? 'bg-slate-900 border-slate-700 text-slate-100 shadow-2xl shadow-black/90' 
+                  : 'bg-white border-slate-200 text-slate-900 shadow-2xl shadow-slate-400/40'
+              }`}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-start gap-3">
+                <div className={`p-2.5 rounded-2xl shrink-0 ${
+                  confirmModal.confirmColor === 'rose' 
+                    ? 'bg-rose-100 text-rose-600 dark:bg-rose-950/80 dark:text-rose-400' 
+                    : 'bg-amber-100 text-amber-600 dark:bg-amber-950/80 dark:text-amber-400'
+                }`}>
+                  <AlertTriangle className="w-5 h-5" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-bold text-base leading-snug">
+                    {confirmModal.title}
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
+                    {confirmModal.message}
+                  </p>
+                  {confirmModal.details && (
+                    <div className={`mt-2.5 p-2.5 rounded-xl border text-xs font-semibold leading-relaxed ${
+                      isDark ? 'bg-slate-800/80 border-slate-700 text-cyan-300' : 'bg-slate-50 border-slate-200 text-slate-800'
+                    }`}>
+                      {confirmModal.details}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-2.5 mt-2 pt-3 border-t border-slate-100 dark:border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+                  className={`px-4 py-2 rounded-xl border text-xs font-bold transition-colors cursor-pointer active:scale-95 ${
+                    isDark 
+                      ? 'border-slate-700 hover:bg-slate-800 text-slate-300' 
+                      : 'border-slate-200 hover:bg-slate-100 text-slate-700'
+                  }`}
+                >
+                  ยกเลิก
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const fn = confirmModal.onConfirm;
+                    setConfirmModal(prev => ({ ...prev, isOpen: false }));
+                    if (typeof fn === 'function') fn();
+                  }}
+                  className={`px-4 py-2 rounded-xl text-white text-xs font-bold transition-all shadow-md cursor-pointer active:scale-95 flex items-center gap-1.5 ${
+                    confirmModal.confirmColor === 'rose'
+                      ? 'bg-rose-600 hover:bg-rose-500 shadow-rose-600/30'
+                      : 'bg-amber-600 hover:bg-amber-500 shadow-amber-600/30'
+                  }`}
+                >
+                  <span>{confirmModal.confirmText || 'ยืนยัน'}</span>
+                </button>
+              </div>
             </div>
           </div>
         )}

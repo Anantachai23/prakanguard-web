@@ -1,6 +1,8 @@
 // บริการ Cloud Real-time Sync ข้ามอุปกรณ์สำหรับ Prakanguard
 // รองรับการส่งและรับรายงานน้ำท่วม/ลูกเห็บ และข้อเสนอแนะจากมือถือหรืออุปกรณ์อื่นเข้ามาที่แอดมิน 100%
 // Multi-Channel Architecture: Supabase Cloud Database (Primary) + Direct Local Admin API (PNA) + Cloud Pub/Sub Fallback
+import { isPointInSamutPrakan } from '../data/samutPrakanBoundary';
+
 
 const SUPABASE_URL = 'https://cnjufleeibbgmpvuvrpg.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_cwxpTPIFXkyWVgXksZASAQ_76DreEAw';
@@ -119,8 +121,7 @@ export function isValidReport(r) {
     !isNaN(r.lat) &&
     typeof r.lng === 'number' &&
     !isNaN(r.lng) &&
-    r.lat >= 13.0 && r.lat <= 14.5 &&
-    r.lng >= 100.0 && r.lng <= 101.5
+    isPointInSamutPrakan(r.lat, r.lng)
   );
 }
 

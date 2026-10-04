@@ -12,7 +12,7 @@ import {
   Trash2
 } from 'lucide-react';
 import { SAMUT_PRAKAN_DISTRICTS_DATA } from '../data/samutPrakanDistricts';
-import { detectDistrictForCoordinates } from '../data/samutPrakanBoundary';
+import { detectDistrictForCoordinates, isPointInSamutPrakan } from '../data/samutPrakanBoundary';
 import { getDetailedDeviceInfo } from '../services/cloudSyncService';
 
 // ระดับน้ำตามส่วนของร่างกาย (อวัยวะ) ตามความต้องการของผู้ใช้งาน
@@ -231,6 +231,12 @@ export default function CitizenReportModal({
 
     const finalLat = customCoords ? customCoords.lat : subdistrictObj.lat;
     const finalLng = customCoords ? customCoords.lng : subdistrictObj.lng;
+
+    if (!isPointInSamutPrakan(finalLat, finalLng)) {
+      alert("พิกัดที่ระบุอยู่นอกพื้นที่ 6 อำเภอของจังหวัดสมุทรปราการ ระบบรองรับเฉพาะพื้นที่ จ.สมุทรปราการ เท่านั้น");
+      setIsSubmitting(false);
+      return;
+    }
 
     let reporterDistrict = 'ปิด GPS';
     if (userLocation && typeof userLocation.lat === 'number' && typeof userLocation.lng === 'number') {

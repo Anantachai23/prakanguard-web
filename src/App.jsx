@@ -83,7 +83,8 @@ import {
   playAiChatSound, 
   playSelectSound, 
   playCloseSound,
-  playEmergencySound 
+  playEmergencySound,
+  playModalOpenSound
 } from './services/soundEffects';
 
 // Distance calculation helper (Haversine Formula)
@@ -165,7 +166,7 @@ export default function App() {
 
           // Ensure any initial points that weren't in saved list are preserved
           INITIAL_FLOOD_POINTS.forEach(ip => {
-            if (!parsedIds.has(ip.id)) {
+            if (!parsedIds.has(ip.id) && isPointInSamutPrakan(ip.lat, ip.lng)) {
               const lvl = getFloodLevel(ip.depthCm);
               const detectedDist = detectDistrictForCoordinates(ip.lat, ip.lng);
               list.push({
@@ -177,20 +178,29 @@ export default function App() {
             }
           });
 
-          return list;
+          // Strictly purge any point outside Samut Prakan boundary
+          const cleanedList = list.filter(p => p && typeof p.lat === 'number' && typeof p.lng === 'number' && isPointInSamutPrakan(p.lat, p.lng));
+          try {
+            localStorage.setItem('prakanguard_points_state_v7', JSON.stringify(cleanedList));
+          } catch (e) {}
+
+          return cleanedList;
         }
       }
     } catch (e) {}
-    return INITIAL_FLOOD_POINTS.map(p => {
-      const lvl = getFloodLevel(p.depthCm);
-      const detectedDist = detectDistrictForCoordinates(p.lat, p.lng);
-      return {
-        ...p,
-        district: detectedDist || p.district,
-        level: lvl,
-        depthRange: lvl === 3 ? '> 50 ซม.' : lvl === 2 ? '21 - 50 ซม.' : (p.depthCm > 0 ? '5 - 20 ซม.' : '0 ซม. (แห้งปกติ)')
-      };
-    });
+    const defaultPoints = INITIAL_FLOOD_POINTS
+      .filter(p => isPointInSamutPrakan(p.lat, p.lng))
+      .map(p => {
+        const lvl = getFloodLevel(p.depthCm);
+        const detectedDist = detectDistrictForCoordinates(p.lat, p.lng);
+        return {
+          ...p,
+          district: detectedDist || p.district,
+          level: lvl,
+          depthRange: lvl === 3 ? '> 50 ซม.' : lvl === 2 ? '21 - 50 ซม.' : (p.depthCm > 0 ? '5 - 20 ซม.' : '0 ซม. (แห้งปกติ)')
+        };
+      });
+    return defaultPoints;
   });
 
   // Daily Flood Status Updates (อัปเดตสถานการณ์น้ำรายวัน: เที่ยงคืนลบออกทั้งหมด, อัปเดตตามจุดจริง 1 เวลาต่อ 1 ครั้ง)
@@ -1239,7 +1249,7 @@ export default function App() {
             let changed = false;
 
             cloudReports.forEach(cr => {
-              if (!isValidReport(cr)) return;
+              if (!isValidReport(cr) || !isPointInSamutPrakan(cr.lat, cr.lng)) return;
               const existing = prevMap.get(cr.id);
               if (!existing) {
                 // รายการใหม่
@@ -1290,7 +1300,7 @@ export default function App() {
     // 3. Real-time Live EventSource Listener across all devices
     const unsubscribe = subscribeToCloudEvents({
       onNewReport: (incomingReport) => {
-        if (!isValidReport(incomingReport)) return;
+        if (!isValidReport(incomingReport) || !isPointInSamutPrakan(incomingReport.lat, incomingReport.lng)) return;
         setCitizenReports(prev => {
           if (prev.some(r => r.id === incomingReport.id)) return prev;
           const updated = [incomingReport, ...prev];
@@ -1457,7 +1467,7 @@ export default function App() {
         setCitizenReports(prev => {
           const map = new Map(prev.map(r => [r.id, r]));
           reports.forEach(cr => {
-            if (isValidReport(cr)) {
+            if (isValidReport(cr) && isPointInSamutPrakan(cr.lat, cr.lng)) {
               if (!map.has(cr.id)) newReportsCount++;
               const existing = map.get(cr.id);
               // preserve admin approval/resolution status if already acted upon locally
@@ -1915,6 +1925,10 @@ export default function App() {
   };
 
   const handleMapLocationPicked = (coords) => {
+    if (!coords || !isPointInSamutPrakan(coords.lat, coords.lng)) {
+      alert("พิกัดที่เลือกอยู่นอกเขตจังหวัดสมุทรปราการ กรุณาแตะเลือกจุดที่อยู่ภายใน 6 อำเภอของจังหวัดสมุทรปราการเท่านั้น");
+      return;
+    }
     setPickedCoords(coords);
     setIsPickingLocationOnMap(false);
     if (pickSource === 'admin') {
@@ -1951,6 +1965,8 @@ export default function App() {
   // 1. Official Points shown on Map (filtered by district & severity, excludes dried-up points)
   const mapPoints = useMemo(() => {
     return points.filter(point => {
+      if (!point || typeof point.lat !== 'number' || typeof point.lng !== 'number') return false;
+      if (!isPointInSamutPrakan(point.lat, point.lng)) return false;
       if (isPointDryOrResolved(point)) return false;
       const matchDistrict = selectedDistrict === "ทั้งหมด" || point.district === selectedDistrict;
       let matchSeverity = true;
@@ -1987,8 +2003,8 @@ export default function App() {
 
   // 2.5 Synchronized Severity Counts (100% matched to pins displayed on the map)
   const levelCounts = useMemo(() => {
-    const activeOfficial = points.filter(p => !isPointDryOrResolved(p) && (selectedDistrict === "ทั้งหมด" || p.district === selectedDistrict));
-    const activeCitizen = citizenReports.filter(r => r.isApproved === true && !isPointDryOrResolved(r) && (selectedDistrict === "ทั้งหมด" || r.district === selectedDistrict));
+    const activeOfficial = points.filter(p => !isPointDryOrResolved(p) && isPointInSamutPrakan(p.lat, p.lng) && (selectedDistrict === "ทั้งหมด" || p.district === selectedDistrict));
+    const activeCitizen = citizenReports.filter(r => r.isApproved === true && !isPointDryOrResolved(r) && isPointInSamutPrakan(r.lat, r.lng) && (selectedDistrict === "ทั้งหมด" || r.district === selectedDistrict));
 
     const isMobileView = typeof window !== 'undefined' && window.innerWidth < 640;
     const allDisplayPins = deduplicateAndDeclutterPoints(activeCitizen, activeOfficial, isMobileView);
@@ -2747,11 +2763,12 @@ export default function App() {
         </div>
 
         {/* DESKTOP/IPAD FLOATING LEGEND CARD (BOTTOM LEFT - เฉพาะคอมและไอแพด สามารถกดดูรายละเอียดเกณฑ์ได้) */}
-        <div className="hidden sm:flex absolute bottom-4 left-4 z-30 pointer-events-auto">
+        <div className="hidden sm:flex absolute bottom-4 left-4 z-40 pointer-events-auto select-none">
           <button 
             type="button"
-            onClick={() => {
-              playModalOpenSound();
+            onClick={(e) => {
+              e.stopPropagation();
+              try { playModalOpenSound(); } catch (_) {}
               setIsStandardsModalOpen(true);
             }}
             className={`px-3.5 py-2 rounded-2xl border text-xs flex items-center gap-3 shadow-lg backdrop-blur-md cursor-pointer transition-all hover:scale-[1.02] active:scale-95 group ${
@@ -2785,11 +2802,18 @@ export default function App() {
               <span className="text-rose-600 dark:text-rose-400 font-bold">วิกฤต &gt;50 ซม.</span>
             </div>
 
-            <span className={`ml-1 text-[11px] font-bold px-2 py-0.5 rounded-lg border flex items-center gap-1 transition-colors ${
-              isDark 
-                ? 'bg-blue-950/80 text-cyan-300 border-blue-800 group-hover:bg-blue-900' 
-                : 'bg-blue-50 text-blue-700 border-blue-200 group-hover:bg-blue-100'
-            }`}>
+            <span 
+              onClick={(e) => {
+                e.stopPropagation();
+                try { playModalOpenSound(); } catch (_) {}
+                setIsStandardsModalOpen(true);
+              }}
+              className={`ml-1 text-[11px] font-bold px-2 py-0.5 rounded-lg border flex items-center gap-1 transition-colors cursor-pointer ${
+                isDark 
+                  ? 'bg-blue-950/80 text-cyan-300 border-blue-800 group-hover:bg-blue-900' 
+                  : 'bg-blue-50 text-blue-700 border-blue-200 group-hover:bg-blue-100'
+              }`}
+            >
               ดูรายละเอียด ↗
             </span>
           </button>
@@ -3146,7 +3170,7 @@ export default function App() {
               <button
                 type="button"
                 onClick={() => {
-                  playModalOpenSound();
+                  try { playModalOpenSound(); } catch (_) {}
                   setIsStandardsModalOpen(true);
                 }}
                 className={`py-2.5 px-3 rounded-2xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-xs active:scale-95 ${
