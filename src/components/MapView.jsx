@@ -102,8 +102,6 @@ function createOfficialFloodPin({ level, depthCm, hasPhoto, isSelected, isFallin
   const html = `
     <div class="pg-flood-pin-container ${levelClass} ${isSelected ? 'pg-pin-selected' : ''}" 
          data-point-id="${id || ''}"
-         onclick="if(window.__pgSelectPointById)window.__pgSelectPointById('${id || ''}', event)"
-         ontouchend="if(window.__pgSelectPointById)window.__pgSelectPointById('${id || ''}', event)"
          style="position:relative;width:34px;height:44px;display:flex;align-items:center;justify-content:center;cursor:pointer;transform-origin:bottom center;touch-action:manipulation;">
       ${pulseHtml}
       ${selectedRingHtml}
@@ -279,11 +277,16 @@ export default function MapView({
           0% { box-shadow: 0 0 6px rgba(2,132,199,0.5); }
           100% { box-shadow: 0 0 16px rgba(2,132,199,0.95); }
         }
+        .pg-unified-flood-marker {
+          cursor: pointer !important;
+          pointer-events: auto !important;
+        }
         .pg-flood-pin-container {
           position: relative;
           touch-action: manipulation;
           -webkit-tap-highlight-color: transparent;
           cursor: pointer;
+          pointer-events: auto;
         }
         /* Expanded touch hitbox (64x74px) for effortless mobile & desktop clicking */
         .pg-flood-pin-container::before {
@@ -667,28 +670,35 @@ export default function MapView({
         bubblingMouseEvents: false
       }).addTo(map);
 
-      // Unified direct select handler: opens full centered modal immediately
-      const triggerMarkerSelection = (e) => {
+      // Direct select handler: guaranteed responsive on mobile touch and desktop click
+      let lastMarkerTap = 0;
+      const handleMarkerSelect = (e) => {
+        const now = Date.now();
+        if (now - lastMarkerTap < 250) return;
+        lastMarkerTap = now;
+
         if (e) {
-          if (e.originalEvent) {
-            L.DomEvent.stopPropagation(e);
-            L.DomEvent.preventDefault(e);
+          if (e.originalEvent && e.originalEvent.stopPropagation) {
+            e.originalEvent.stopPropagation();
           } else if (e.stopPropagation) {
             e.stopPropagation();
           }
         }
-        if (window.__pgSelectPointById) {
-          window.__pgSelectPointById(point.id, e);
-        } else {
-          lastFlyToTimeRef.current = Date.now();
-          playPinClickSound();
-          if (onSelectPoint) {
-            onSelectPoint(point, { fromMapPin: true });
-          }
+        lastFlyToTimeRef.current = Date.now();
+        playPinClickSound();
+        if (onSelectPoint) {
+          onSelectPoint(point, { fromMapPin: true });
         }
       };
 
-      marker.on('click', triggerMarkerSelection);
+      marker.on('click', handleMarkerSelect);
+
+      const markerEl = marker.getElement();
+      if (markerEl) {
+        markerEl.style.cursor = 'pointer';
+        markerEl.style.pointerEvents = 'auto';
+        markerEl.onclick = handleMarkerSelect;
+      }
 
       markersRef.current.push(marker);
       markersByIdRef.current[point.id] = marker;
@@ -766,8 +776,6 @@ export default function MapView({
         if (onSelectPoint) {
           onSelectPoint(item, { fromMapPin: true });
         }
-        const marker = markersByIdRef.current[item.id];
-        if (marker) marker.openPopup();
       });
 
       radarCircleLayersRef.current.push(circle);
