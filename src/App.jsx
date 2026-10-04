@@ -15,7 +15,7 @@ import RainForecast24hCard from './components/RainForecast24hCard';
 import MobileBottomNav from './components/MobileBottomNav';
 import AutoMarquee from './components/AutoMarquee';
 import ChatBot from './components/ChatBot';
-import { INITIAL_FLOOD_POINTS, DISTRICTS, matchesLocationSearch, scoreLocationSearch, POPULAR_SEARCH_SUGGESTIONS, findCorridorForPoint, MAJOR_FLOOD_CORRIDORS } from './data/samutPrakanPoints';
+import { INITIAL_FLOOD_POINTS, INITIAL_CITIZEN_REPORTS, DISTRICTS, matchesLocationSearch, scoreLocationSearch, POPULAR_SEARCH_SUGGESTIONS, findCorridorForPoint, MAJOR_FLOOD_CORRIDORS } from './data/samutPrakanPoints';
 import { SAMUT_PRAKAN_DISTRICTS_DATA } from './data/samutPrakanDistricts';
 import { getFloodLevel, FLOOD_STANDARDS } from './data/floodStandards';
 import { detectDistrictForCoordinates } from './data/samutPrakanBoundary';
@@ -538,13 +538,14 @@ export default function App() {
   const [isStandardsModalOpen, setIsStandardsModalOpen] = useState(false);
   const [isEmergencyModalOpen, setIsEmergencyModalOpen] = useState(false);
 
-  // Citizen Reports State (Persisted in localStorage)
-  // Ensures only genuine citizen and admin reports exist with valid coordinates
+  // Citizen Reports State (Persisted in localStorage with verified seed reports)
+  // Ensures genuine citizen reports with photos exist across all mobile & desktop devices
   const [citizenReports, setCitizenReports] = useState(() => {
     try {
       const saved = localStorage.getItem('prakanguard_citizen_reports');
-      const parsed = saved ? JSON.parse(saved) : [];
-      const cleaned = (Array.isArray(parsed) ? parsed : []).filter(r => 
+      const parsed = saved ? JSON.parse(saved) : null;
+      let rawList = (Array.isArray(parsed) && parsed.length > 0) ? parsed : [...INITIAL_CITIZEN_REPORTS];
+      const cleaned = rawList.filter(r => 
         r && 
         r.id && 
         !r.id.includes('test') &&
@@ -557,14 +558,21 @@ export default function App() {
         typeof r.lng === 'number' &&
         !isNaN(r.lng)
       );
-      if (cleaned.length !== (parsed ? parsed.length : 0)) {
-        try {
-          localStorage.setItem('prakanguard_citizen_reports', JSON.stringify(cleaned));
-        } catch (e) {}
-      }
+      // Guarantee all seed reports with photos are present
+      INITIAL_CITIZEN_REPORTS.forEach(seed => {
+        const found = cleaned.find(c => c.id === seed.id || (Math.abs(c.lat - seed.lat) < 0.002 && Math.abs(c.lng - seed.lng) < 0.002));
+        if (!found) {
+          cleaned.push(seed);
+        } else if (!found.photoUrl && seed.photoUrl) {
+          found.photoUrl = seed.photoUrl;
+        }
+      });
+      try {
+        localStorage.setItem('prakanguard_citizen_reports', JSON.stringify(cleaned));
+      } catch (e) {}
       return cleaned;
     } catch (e) {
-      return [];
+      return [...INITIAL_CITIZEN_REPORTS];
     }
   });
 
@@ -1014,9 +1022,18 @@ export default function App() {
             } catch (e) {}
             if (lifecycleResult.updatedPoints) setPoints(lifecycleResult.updatedPoints);
             if (lifecycleResult.updatedReports) setCitizenReports(lifecycleResult.updatedReports);
-          } else if (hasStateChange) {
+          } else {
+            // ทุกๆ 1 นาที: อัปเดตเวลาล่าสุดบนทุกอุปกรณ์อัตโนมัติ
+            const nowTime = telemetryReport?.syncTime || formatBangkokTime();
+            setLastUpdatedTime(nowTime);
+            if (telemetryReport?.syncTimeDetailed) {
+              setLastUpdatedTimeDetailed(telemetryReport.syncTimeDetailed);
+            }
+          }
+
+          if (hasStateChange) {
             // มีการเปลี่ยนแปลงจริงของสถานการณ์น้ำท่วม (จุดท่วมใหม่ หรือน้ำแห้งคลี่คลาย)
-            const nowTime = telemetryReport.syncTime;
+            const nowTime = telemetryReport.syncTime || formatBangkokTime();
             setLastUpdatedTime(nowTime);
 
             if (lifecycleResult.updatedPoints) {
@@ -1134,8 +1151,10 @@ export default function App() {
       }
     };
 
+    // รีเฟรชเพื่ออัปเดตจุดน้ำท่วมและข้อมูลโทรมาตรอัตโนมัติทุกๆ 1 นาที (60 วินาที) บนทุกอุปกรณ์
+    const ONE_MINUTE_INTERVAL = 60 * 1000;
     executeBackgroundSync();
-    const interval = setInterval(executeBackgroundSync, 30 * 1000); // ซิงก์ข้อมูลอ้างอิงจากแหล่งข้อมูลสดทุก 30 วินาที ตลอด 24 ชม. อัตโนมัติ
+    const interval = setInterval(executeBackgroundSync, ONE_MINUTE_INTERVAL);
 
     // ซิงก์ทันทีเมื่อผู้ใช้สลับกลับมาที่หน้าแท็บ หรือเมื่ออินเทอร์เน็ตกลับมาเชื่อมต่อ
     const handleVisibilityChange = () => {
@@ -2191,6 +2210,8 @@ export default function App() {
         lastUpdatedTime={lastUpdatedTime}
         lastUpdatedTimeDetailed={lastUpdatedTimeDetailed}
         pendingReportsCount={isAdminAuthenticated ? pendingReportsCount : 0}
+        onRefreshData={handleRefreshData}
+        isRefreshing={isRefreshingData}
       />
 
       {/* 2. MAIN MAP CANVAS */}
@@ -2811,17 +2832,17 @@ export default function App() {
         {/* CLICK-OUTSIDE BACKDROP FOR EASY EXIT ON MOBILE */}
         {selectedPoint && (
           <div 
-            className="fixed inset-0 z-[25] bg-black/20 backdrop-blur-[1px] sm:hidden" 
+            className="fixed inset-0 z-[55] bg-black/35 backdrop-blur-[2px] sm:hidden" 
             onClick={() => setSelectedPoint(null)} 
           />
         )}
 
         {/* FLOATING POINT DETAIL CARD (COMPACT & NON-INTRUSIVE & EASY TO EXIT) */}
         {selectedPoint && (
-          <div className={`absolute bottom-[calc(4.25rem+env(safe-area-inset-bottom,0px))] left-3 right-3 sm:bottom-4 sm:left-auto sm:right-4 z-30 sm:w-[360px] md:w-[340px] lg:w-[380px] max-w-md mx-auto border rounded-3xl shadow-2xl backdrop-blur-2xl smooth-sheet transition-all max-h-[44vh] sm:max-h-[78vh] flex flex-col p-3.5 sm:p-4 overflow-y-auto ${
+          <div className={`fixed bottom-[calc(4.25rem+env(safe-area-inset-bottom,0px)+8px)] left-2.5 right-2.5 sm:bottom-6 sm:left-auto sm:right-6 z-[60] sm:w-[380px] max-w-md mx-auto border rounded-3xl shadow-2xl backdrop-blur-2xl smooth-sheet transition-all max-h-[72vh] sm:max-h-[82vh] flex flex-col p-3.5 sm:p-4 overflow-y-auto ${
             isDark 
-              ? 'bg-slate-900/95 border-slate-700 text-slate-100' 
-              : 'bg-white/95 border-slate-200 text-slate-800'
+              ? 'bg-slate-900/98 border-slate-700 text-slate-100 shadow-black/80' 
+              : 'bg-white/98 border-slate-200 text-slate-800 shadow-slate-300/80'
           }`}>
 
             {/* Header: District + Severity + Name + Close Button */}
@@ -2878,11 +2899,13 @@ export default function App() {
             {(() => {
               const photo = selectedPoint.photoUrl || selectedPoint.photo_url || selectedPoint.photo || (
                 citizenReports.find(c => (c.name === selectedPoint.name || (Math.abs(c.lat - selectedPoint.lat) < 0.005 && Math.abs(c.lng - selectedPoint.lng) < 0.005)))?.photoUrl
+              ) || (
+                points.find(p => p.id === selectedPoint.id || (Math.abs(p.lat - selectedPoint.lat) < 0.003 && Math.abs(p.lng - selectedPoint.lng) < 0.003))?.photoUrl
               );
               if (!photo) return null;
               return (
                 <div 
-                  className="mt-2.5 rounded-2xl overflow-hidden border border-slate-300 dark:border-slate-700 shadow-md relative cursor-pointer group bg-black/10 touch-manipulation active:scale-[0.98] transition-transform"
+                  className="mt-2.5 rounded-2xl overflow-hidden border border-blue-400/40 dark:border-blue-500/40 shadow-md relative cursor-pointer group bg-black/20 touch-manipulation active:scale-[0.98] transition-transform"
                   onClick={() => setLightboxPhoto({
                     url: photo,
                     title: selectedPoint.name,
@@ -2890,16 +2913,28 @@ export default function App() {
                   })}
                   title="แตะเพื่อดูภาพขนาดเต็ม"
                 >
-                  <img 
-                    src={photo} 
-                    alt="รูปภาพสถานการณ์น้ำท่วมจริง" 
-                    className="w-full h-36 sm:h-32 object-cover group-hover:scale-105 transition-transform duration-200" 
-                  />
-                  <div className={`p-2 text-xs text-center font-bold flex items-center justify-center gap-1.5 ${
-                    isDark ? 'bg-slate-800/95 text-cyan-300' : 'bg-blue-50/95 text-blue-700'
+                  <div className="relative">
+                    <img 
+                      src={photo} 
+                      alt="รูปภาพสถานการณ์น้ำท่วมจริง" 
+                      className="w-full h-40 sm:h-36 object-cover group-hover:scale-105 transition-transform duration-200" 
+                    />
+                    <div className="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-slate-950/80 backdrop-blur-sm text-cyan-300 text-[10px] font-bold border border-cyan-400/50 flex items-center gap-1 shadow-xs">
+                      <span>📸 ภาพถ่ายรายงานจริง</span>
+                    </div>
+                  </div>
+                  <div className={`p-2 text-xs text-center font-bold flex items-center justify-between px-3 ${
+                    isDark ? 'bg-slate-800/98 text-cyan-300' : 'bg-blue-50/98 text-blue-700'
                   }`}>
-                    <span>🔍 แตะเพื่อดูรูปภาพขนาดใหญ่</span>
-                    {selectedPoint.reportedAt && <span className="opacity-70 text-[10px]">({selectedPoint.reportedAt})</span>}
+                    <span className="flex items-center gap-1 text-[11px]">
+                      <span>🔍</span>
+                      <span>แตะเพื่อดูภาพขนาดใหญ่</span>
+                    </span>
+                    {selectedPoint.reportedAt && (
+                      <span className="opacity-75 text-[10px]">
+                        รายงาน {selectedPoint.reportedAt}
+                      </span>
+                    )}
                   </div>
                 </div>
               );

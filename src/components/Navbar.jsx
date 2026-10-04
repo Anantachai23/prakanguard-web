@@ -31,7 +31,9 @@ export default function Navbar({
   lastUpdatedTimeDetailed,
   pendingReportsCount = 0,
   theme = 'light',
-  onToggleTheme
+  onToggleTheme,
+  onRefreshData,
+  isRefreshing = false
 }) {
   const isDark = theme === 'dark';
   // Use precomputed levelCounts synchronized 1:1 with map pins
@@ -315,19 +317,25 @@ export default function Navbar({
             )}
           </button>
 
-          {/* Reload Web Page Button (Every Device) */}
+          {/* Reload / Sync Button (Every Device - Auto-refreshes every 1 min) */}
           <button
             type="button"
-            onClick={() => window.location.reload()}
+            onClick={() => {
+              if (onRefreshData) {
+                onRefreshData();
+              } else {
+                window.location.reload();
+              }
+            }}
             className={`p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl border text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer shadow-xs active:scale-95 ${
               isDark 
                 ? 'bg-slate-900 hover:bg-slate-800 text-sky-400 border-slate-700 hover:border-sky-500/50' 
                 : 'bg-slate-100 hover:bg-slate-200 text-sky-700 border-slate-200 hover:border-sky-300'
             }`}
-            title="รีเฟรชหน้าเว็บ (Reload)"
-            aria-label="รีเฟรชหน้าเว็บ"
+            title="รีเฟรชอัปเดตข้อมูลน้ำท่วมสด (ระบบอัปเดตอัตโนมัติทุก 1 นาที)"
+            aria-label="รีเฟรชอัปเดตข้อมูล"
           >
-            <RotateCw className="w-4 h-4 text-sky-500 hover:rotate-180 transition-transform duration-500" />
+            <RotateCw className={`w-4 h-4 text-sky-500 ${isRefreshing ? 'animate-spin text-sky-400' : 'hover:rotate-180 transition-transform duration-500'}`} />
             <span className="hidden sm:inline">รีเฟรช</span>
           </button>
         </div>
