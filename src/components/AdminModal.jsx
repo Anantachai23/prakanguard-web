@@ -103,7 +103,8 @@ export default function AdminModal({
   theme = 'light',
   isAdminAuthenticated = false,
   onAuthChange,
-  onSyncCloudData
+  onSyncCloudData,
+  onOpenPrivacyPolicy
 }) {
   if (!isOpen) return null;
   const isDark = theme === 'dark';
@@ -869,17 +870,30 @@ export default function AdminModal({
     showNotice(`🗑️ ย้ายรายงาน ${count} รายการไปยัง "ลบล่าสุด" เรียบร้อย`, 'info');
   };
 
+  // Single Action: Revoke Approved Report with Confirmation Dialog
+  const handleSingleRevokeApproved = (report) => {
+    if (!report) return;
+    if (!window.confirm(`คุณแน่ใจหรือไม่ว่าต้องการ "ถอนการอนุมัติ" รายงานนี้?\n\n📍 ${report.name || 'รายงาน'}\n\nระบบจะนำจุดนี้ออกจากแผนที่สาธารณะและย้ายกลับไปเป็นสถานะ "รอการตรวจสอบ"`)) {
+      return;
+    }
+    playAdminRejectSound();
+    if (onUpdateReport) {
+      onUpdateReport(report.id, { isApproved: false });
+    }
+    showNotice(`🚫 ถอนการอนุมัติ "${report.name}" เรียบร้อยแล้ว (ย้ายกลับไปรอยืนยัน)`);
+  };
+
   // Bulk Actions: Approved Reports
   const handleBulkRevokeApproved = () => {
     if (selectedApprovedIds.size === 0) return;
     const count = selectedApprovedIds.size;
-    if (!window.confirm(`ยืนยันการยกเลิกอนุมัติรายงานที่เลือกทั้งหมด ${count} รายการ? (นำออกจากแผนที่และย้ายกลับรอยืนยัน)`)) return;
-    playDangerSound();
+    if (!window.confirm(`คุณแน่ใจหรือไม่ว่าต้องการ "ถอนการอนุมัติ" รายงานที่เลือกทั้งหมด ${count} รายการ?\n\nระบบจะนำจุดเหล่านี้ออกจากแผนที่สาธารณะและย้ายกลับไปเป็นสถานะ "รอการตรวจสอบ"`)) return;
+    playAdminRejectSound();
     selectedApprovedIds.forEach(id => {
       if (onUpdateReport) onUpdateReport(id, { isApproved: false });
     });
     setSelectedApprovedIds(new Set());
-    showNotice(`🚫 ยกเลิกอนุมัติ ${count} รายการเรียบร้อยแล้ว`);
+    showNotice(`🚫 ถอนการอนุมัติ ${count} รายการเรียบร้อยแล้ว`);
   };
 
   const handleBulkDeleteApproved = () => {
@@ -2306,8 +2320,18 @@ export default function AdminModal({
 
                           <button
                             type="button"
+                            onClick={() => handleSingleRevokeApproved(report)}
+                            className="px-2.5 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:hover:bg-amber-900/60 dark:text-amber-300 text-xs font-bold cursor-pointer transition-all border border-amber-300 dark:border-amber-800 flex items-center gap-1 active:scale-95 shadow-xs"
+                            title="ถอนการอนุมัติและย้ายกลับไปสถานะรอการตรวจสอบ"
+                          >
+                            <RotateCcw className="w-3.5 h-3.5" />
+                            <span>ถอนอนุมัติ</span>
+                          </button>
+
+                          <button
+                            type="button"
                             onClick={() => handleResolve(report.id)}
-                            className="px-3 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 dark:bg-blue-950 dark:hover:bg-blue-900 dark:text-cyan-300 text-xs font-bold cursor-pointer transition-colors border border-blue-200 dark:border-blue-800"
+                            className="px-3 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 dark:bg-blue-950 dark:hover:bg-blue-900 dark:text-cyan-300 text-xs font-bold cursor-pointer transition-colors border border-blue-200 dark:border-blue-800 flex items-center gap-1 active:scale-95 shadow-xs"
                             title="ทำเครื่องหมายว่าน้ำแห้งแล้ว"
                           >
                             <span>💧 น้ำแห้งแล้ว / ปิดจุด</span>
@@ -3909,6 +3933,58 @@ export default function AdminModal({
               )}
 
             </div>
+          </div>
+        )}
+
+        {/* Admin Modal Bottom Action Bar (ล่างซ้าย: นโยบายข้อกำหนดส่วนตัว + ออกจากระบบ) */}
+        {isAuthenticated && (
+          <div className={`p-3 sm:px-6 border-t flex items-center justify-between gap-3 shrink-0 ${
+            isDark ? 'bg-slate-900 border-slate-800' : 'bg-slate-50 border-slate-200'
+          }`}>
+            {/* Bottom Left: Privacy Policy & Logout */}
+            <div className="flex items-center gap-2 flex-wrap">
+              {onOpenPrivacyPolicy && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    playAdminTabSound();
+                    onOpenPrivacyPolicy();
+                  }}
+                  className={`px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer border active:scale-95 shadow-xs ${
+                    isDark 
+                      ? 'bg-slate-800 hover:bg-slate-700 text-cyan-300 border-slate-700' 
+                      : 'bg-white hover:bg-slate-100 text-blue-700 border-slate-300'
+                  }`}
+                  title="เปิดดูนโยบายข้อกำหนดส่วนตัว"
+                >
+                  <FileText className="w-3.5 h-3.5 text-cyan-500" />
+                  <span>นโยบายข้อกำหนดส่วนตัว</span>
+                </button>
+              )}
+
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="px-3 py-2 rounded-xl text-xs font-bold text-rose-600 dark:text-rose-400 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/60 dark:hover:bg-rose-900/60 border border-rose-200 dark:border-rose-900 flex items-center gap-1.5 transition-all cursor-pointer active:scale-95 shadow-xs"
+                title="ออกจากระบบ ADMIN"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                <span>ออกจากระบบ</span>
+              </button>
+            </div>
+
+            {/* Bottom Right: Close Modal Button */}
+            <button
+              type="button"
+              onClick={handleModalClose}
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer border active:scale-95 shadow-xs ${
+                isDark 
+                  ? 'bg-slate-800 hover:bg-slate-700 text-slate-300 border-slate-700' 
+                  : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-300'
+              }`}
+            >
+              ปิดหน้าต่าง
+            </button>
           </div>
         )}
 

@@ -49,14 +49,11 @@ export default function PublicUpdatesModal({
   return (
     <div 
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
-      className="fixed inset-0 z-50 bg-slate-950/65 backdrop-blur-xs flex items-end sm:items-center justify-center p-2.5 sm:p-4 smooth-backdrop"
+      className="fixed inset-0 z-50 bg-slate-950/65 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 smooth-backdrop"
     >
-      <div className={`w-full sm:max-w-md border rounded-3xl shadow-2xl flex flex-col max-h-[62vh] sm:max-h-[72vh] mb-1 sm:mb-0 overflow-hidden smooth-pop transition-colors ${
+      <div className={`w-full max-w-md border rounded-3xl shadow-2xl flex flex-col max-h-[65vh] sm:max-h-[75vh] overflow-hidden smooth-pop transition-colors ${
         isDark ? 'bg-slate-900 border-slate-700 text-slate-100' : 'bg-white border-slate-200 text-slate-900'
       }`}>
-        
-        {/* Pull handle on mobile */}
-        <div className="w-10 h-1 bg-slate-400/30 rounded-full mx-auto my-1.5 shrink-0 sm:hidden" />
 
         {/* Accent Bar */}
         <div className="h-1.5 w-full bg-gradient-to-r from-emerald-500 via-amber-500 to-rose-500 shrink-0"></div>

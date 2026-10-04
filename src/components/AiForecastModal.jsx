@@ -106,8 +106,8 @@ export default function AiForecastModal({ isOpen, onClose, userDistrict, theme =
   const displayDistrictLabel = isAllDistricts ? 'ทุกอำเภอ (จ.สมุทรปราการ)' : `อ.${currentDistrict}`;
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-3.5 sm:p-4 smooth-backdrop">
-      <div className={`w-full max-w-lg border rounded-3xl shadow-2xl p-5 sm:p-6 relative max-h-[90vh] overflow-y-auto smooth-pop transition-colors ${
+    <div className="fixed inset-0 z-50 bg-slate-950/65 backdrop-blur-xs flex items-center justify-center p-3.5 sm:p-4 smooth-backdrop">
+      <div className={`w-full max-w-lg border rounded-3xl shadow-2xl p-4 sm:p-6 relative max-h-[75vh] sm:max-h-[85vh] overflow-y-auto smooth-pop transition-colors ${
         isDark ? 'bg-slate-900 border-slate-700 text-slate-100' : 'bg-white border-slate-200 text-slate-800'
       }`}>
         

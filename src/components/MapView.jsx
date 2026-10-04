@@ -29,7 +29,7 @@ export function isPointDry(item) {
 }
 
 // Unified Official Flood Pin Icon Generator for ALL points and citizen reports
-function createOfficialFloodPin({ level, depthCm, hasPhoto, isSelected, isFalling, name }) {
+function createOfficialFloodPin({ level, depthCm, hasPhoto, isSelected, isFalling, name, id }) {
   // Colors strictly conforming to standard:
   // Level 1: Green #16a34a (5-20 cm)
   // Level 2: Amber/Yellow #eab308 (21-50 cm)
@@ -61,7 +61,7 @@ function createOfficialFloodPin({ level, depthCm, hasPhoto, isSelected, isFallin
     : '';
 
   const fallingBadgeHtml = isFalling
-    ? `<div style="position:absolute;top:-4px;left:-4px;width:17px;height:17px;background:#0d9488;border:1.5px solid #ffffff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;color:#ffffff;box-shadow:0 2px 4px rgba(0,0,0,0.3);z-index:10;" title="น้ำกำลังลด">📉</div>`
+    ? `<div style="position:absolute;top:-4px;left:-4px;width:17px;height:17px;background:#0d9488;border:1.5px solid #ffffff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;color:#ffffff;box-shadow:0 2px 4px rgba(0,0,0,0.3);z-index:10;pointer-events:none;" title="น้ำกำลังลด">📉</div>`
     : '';
 
   const selectedRingHtml = isSelected
@@ -74,11 +74,15 @@ function createOfficialFloodPin({ level, depthCm, hasPhoto, isSelected, isFallin
     : `<path d="M17 10C17 10 13.5 14.5 13.5 17C13.5 18.93 15.07 20.5 17 20.5C18.93 20.5 20.5 18.93 20.5 17C20.5 14.5 17 10 17 10Z" fill="${primaryColor}"/>`;
 
   const html = `
-    <div class="pg-flood-pin-container ${levelClass} ${isSelected ? 'pg-pin-selected' : ''}" style="position:relative;width:34px;height:44px;display:flex;align-items:center;justify-content:center;cursor:pointer;transform-origin:bottom center;transition:transform 0.2s ease;">
+    <div class="pg-flood-pin-container ${levelClass} ${isSelected ? 'pg-pin-selected' : ''}" 
+         data-point-id="${id || ''}"
+         onclick="if(window.__pgSelectPointById)window.__pgSelectPointById('${id || ''}', event)"
+         ontouchend="if(window.__pgSelectPointById)window.__pgSelectPointById('${id || ''}', event)"
+         style="position:relative;width:34px;height:44px;display:flex;align-items:center;justify-content:center;cursor:pointer;transform-origin:bottom center;transition:transform 0.18s ease;touch-action:manipulation;">
       ${pulseHtml}
       ${selectedRingHtml}
       ${fallingBadgeHtml}
-      <svg width="34" height="44" viewBox="0 0 34 44" fill="none" xmlns="http://www.w3.org/2000/svg" style="position:relative;z-index:2;filter:drop-shadow(0 4px 6px rgba(0,0,0,0.38));">
+      <svg width="34" height="44" viewBox="0 0 34 44" fill="none" xmlns="http://www.w3.org/2000/svg" style="position:relative;z-index:2;filter:drop-shadow(0 4px 6px rgba(0,0,0,0.38));pointer-events:none;">
         <defs>
           <linearGradient id="pgGrad-${level}" x1="17" y1="2" x2="17" y2="43" gradientUnits="userSpaceOnUse">
             <stop offset="0%" stop-color="${gradientStart}" />
@@ -249,8 +253,33 @@ export default function MapView({
           0% { box-shadow: 0 0 6px rgba(2,132,199,0.5); }
           100% { box-shadow: 0 0 16px rgba(2,132,199,0.95); }
         }
-        .pg-flood-pin-container:hover {
-          transform: scale(1.18);
+        .pg-flood-pin-container {
+          position: relative;
+          touch-action: manipulation;
+          -webkit-tap-highlight-color: transparent;
+          cursor: pointer;
+        }
+        /* Expanded invisible touch hitbox (66x76px) for effortless mobile tapping */
+        .pg-flood-pin-container::before {
+          content: '';
+          position: absolute;
+          top: -16px;
+          bottom: -16px;
+          left: -16px;
+          right: -16px;
+          border-radius: 50%;
+          z-index: 10;
+          cursor: pointer;
+          pointer-events: auto;
+          background: transparent;
+        }
+        @media (hover: hover) {
+          .pg-flood-pin-container:hover {
+            transform: scale(1.15);
+          }
+        }
+        .pg-flood-pin-container:active {
+          transform: scale(0.92) !important;
         }
         .pg-pin-selected {
           transform: scale(1.22) !important;
@@ -567,13 +596,25 @@ export default function MapView({
     `;
   };
 
-  // Expose global point selection for Leaflet popup buttons
+  // Expose global point selection for pin taps & external triggers
   useEffect(() => {
-    window.__pgSelectPointById = (id) => {
+    let lastSelectTime = 0;
+    window.__pgSelectPointById = (id, e) => {
+      const now = Date.now();
+      if (now - lastSelectTime < 250) return; // Prevent duplicate rapid touch+click
+      lastSelectTime = now;
+
+      if (e) {
+        if (e.stopPropagation) e.stopPropagation();
+        if (e.preventDefault && e.cancelable) e.preventDefault();
+      }
+
       const all = [...points, ...citizenReports];
       const found = all.find(p => String(p.id) === String(id));
       if (found && onSelectPoint) {
-        onSelectPoint(found);
+        lastFlyToTimeRef.current = Date.now();
+        playPinClickSound();
+        onSelectPoint(found, { fromMapPin: true });
       }
     };
     return () => {
@@ -638,32 +679,49 @@ export default function MapView({
         hasPhoto: false,
         isFalling: point.waterTrend === 'falling',
         isSelected,
-        name: point.name
+        name: point.name,
+        id: point.id
       });
 
-      const marker = L.marker([point.lat, point.lng], { icon: customIcon }).addTo(map);
+      const marker = L.marker([point.lat, point.lng], { 
+        icon: customIcon,
+        riseOnHover: true,
+        bubblingMouseEvents: false
+      }).addTo(map);
 
-      // On desktop: bind popup bubble. On mobile: mobile bottom detail sheet is the dedicated viewer
-      if (!isMobile) {
-        marker.bindPopup(buildPopupHtml(point, point.isCitizen), {
-          className: 'custom-leaflet-popup',
-          closeButton: true,
-          autoPan: true,
-          autoPanPadding: [20, 80],
-          maxWidth: 300
-        });
+      // Unified direct select handler: opens full centered modal immediately without panning map away
+      const triggerMarkerSelection = (e) => {
+        if (e) {
+          if (e.originalEvent) {
+            L.DomEvent.stopPropagation(e);
+            L.DomEvent.preventDefault(e);
+          } else if (e.stopPropagation) {
+            e.stopPropagation();
+          }
+        }
+        if (window.__pgSelectPointById) {
+          window.__pgSelectPointById(point.id, e);
+        } else {
+          lastFlyToTimeRef.current = Date.now();
+          playPinClickSound();
+          if (onSelectPoint) {
+            onSelectPoint(point, { fromMapPin: true });
+          }
+        }
+      };
+
+      marker.on('click', triggerMarkerSelection);
+
+      // Also attach directly to the DOM element for guaranteed mobile tap responsiveness
+      const markerEl = marker.getElement();
+      if (markerEl) {
+        markerEl.style.touchAction = 'manipulation';
+        markerEl.style.cursor = 'pointer';
+        markerEl.onclick = triggerMarkerSelection;
+        markerEl.ontouchend = (e) => {
+          triggerMarkerSelection(e);
+        };
       }
-
-      marker.on('click', (e) => {
-        if (e && e.originalEvent) {
-          L.DomEvent.stopPropagation(e);
-        }
-        lastFlyToTimeRef.current = Date.now();
-        playPinClickSound();
-        if (onSelectPoint) {
-          onSelectPoint(point, { fromMapPin: true });
-        }
-      });
 
       markersRef.current.push(marker);
       markersByIdRef.current[point.id] = marker;
@@ -800,32 +858,16 @@ export default function MapView({
       easeLinearity: flyToLocation.easeLinearity || 0.25
     });
 
-    const targetId = flyToLocation.pointId || selectedPoint?.id;
-    if (targetId && !isMobile) {
-      const openTargetPopup = () => {
-        const marker = markersByIdRef.current[targetId];
-        if (marker && map.hasLayer(marker)) {
-          marker.openPopup();
-        }
-      };
-      map.once('moveend', openTargetPopup);
-      setTimeout(openTargetPopup, 650);
-      setTimeout(openTargetPopup, 1300);
-    }
-  }, [flyToLocation, isMobile]);
+    // Center map on explicitly selected external search / list items
+  }, [flyToLocation]);
 
-  // Zoom to selected point
+  // Zoom to selected point (from search list or external card, NOT when tapped from map pin)
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map || !selectedPoint || typeof selectedPoint.lat !== 'number' || typeof selectedPoint.lng !== 'number' || isNaN(selectedPoint.lat) || isNaN(selectedPoint.lng)) return;
 
+    // If selected directly from map pin or circle, KEEP MAP STEADY! Do not fly away!
     if (selectedPoint._fromMapPin) {
-      if (!isMobile) {
-        const marker = markersByIdRef.current[selectedPoint.id];
-        if (marker && map.hasLayer(marker)) {
-          setTimeout(() => marker.openPopup(), 150);
-        }
-      }
       return;
     }
 
@@ -833,12 +875,6 @@ export default function MapView({
       return;
     }
     if (Date.now() - lastFlyToTimeRef.current < 2000) {
-      if (!isMobile) {
-        const marker = markersByIdRef.current[selectedPoint.id];
-        if (marker && map.hasLayer(marker)) {
-          setTimeout(() => marker.openPopup(), 400);
-        }
-      }
       return;
     }
 
@@ -848,19 +884,7 @@ export default function MapView({
       duration: 1.2,
       easeLinearity: 0.25
     });
-
-    if (!isMobile) {
-      const openPopupOnSelected = () => {
-        const marker = markersByIdRef.current[selectedPoint.id];
-        if (marker && map.hasLayer(marker)) {
-          marker.openPopup();
-        }
-      };
-      map.once('moveend', openPopupOnSelected);
-      setTimeout(openPopupOnSelected, 650);
-      setTimeout(openPopupOnSelected, 1300);
-    }
-  }, [selectedPoint, isMobile]);
+  }, [selectedPoint]);
 
   const resetView = () => {
     if (mapInstanceRef.current) {
