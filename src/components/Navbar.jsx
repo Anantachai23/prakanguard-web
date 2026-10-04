@@ -1,21 +1,13 @@
-import React, { useRef } from 'react';
+import React from 'react';
 import { 
   PhoneCall, 
-  Radio, 
-  BookOpen, 
-  Activity, 
   Sun, 
   Moon, 
-  Camera, 
-  MessageSquare,
-  RotateCw,
-  ShieldCheck
+  Camera 
 } from 'lucide-react';
 import RealTimeClock from './RealTimeClock';
 import { 
-  playClickSound, 
   playToggleSound, 
-  playRefreshSound, 
   playSelectSound, 
   playReportSound, 
   playEmergencySound,
@@ -48,57 +40,18 @@ export default function Navbar({
   refreshCountdown = 300
 }) {
   const isDark = theme === 'dark';
-  const formatCountdown = (seconds) => {
-    const s = Math.max(0, Math.floor(seconds || 0));
-    const m = Math.floor(s / 60);
-    const remainder = s % 60;
-    return `${String(m).padStart(2, '0')}:${String(remainder).padStart(2, '0')}`;
-  };
-  const countdownFormatted = formatCountdown(refreshCountdown);
+
   // Use precomputed levelCounts synchronized 1:1 with map pins
   const minor = levelCounts ? levelCounts.minor : points.filter(p => p.level === 1 && p.isActive !== false && !p.isResolved).length;
   const moderate = levelCounts ? levelCounts.moderate : points.filter(p => p.level === 2 && p.isActive !== false && !p.isResolved).length;
   const severe = levelCounts ? levelCounts.severe : points.filter(p => p.level === 3 && p.isActive !== false && !p.isResolved).length;
   const falling = levelCounts ? levelCounts.falling : points.filter(p => p.waterTrend === 'falling' && p.isActive !== false && !p.isResolved).length;
 
-  const navScrollRef = useRef(null);
-  const isDraggingRef = useRef(false);
-  const startXRef = useRef(0);
-  const scrollLeftRef = useRef(0);
-
-  const handleMouseDown = (e) => {
-    if (e.button !== 0 || e.target.closest('button, a, input, select')) return;
-    isDraggingRef.current = true;
-    startXRef.current = e.pageX - (navScrollRef.current?.offsetLeft || 0);
-    scrollLeftRef.current = navScrollRef.current?.scrollLeft || 0;
-  };
-
-  const handleMouseMove = (e) => {
-    if (!isDraggingRef.current || !navScrollRef.current) return;
-    e.preventDefault();
-    const x = e.pageX - (navScrollRef.current?.offsetLeft || 0);
-    const walk = (x - startXRef.current) * 1.5;
-    navScrollRef.current.scrollLeft = scrollLeftRef.current - walk;
-  };
-
-  const handleMouseUp = () => {
-    isDraggingRef.current = false;
-  };
-
   return (
-    <header className={`relative z-40 w-full shrink-0 border-b shadow-sm backdrop-blur-xl transition-colors duration-200 select-none overflow-hidden ${
+    <header className={`sticky top-0 z-[1001] w-full border-b backdrop-blur-md transition-colors select-none ${
       isDark ? 'bg-slate-950/95 border-slate-800 text-slate-100' : 'bg-white/95 border-slate-200 text-slate-800'
     }`}>
-      <div 
-        ref={navScrollRef}
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseUp}
-        className="w-full overflow-x-auto no-scrollbar scroll-smooth touch-pan-x"
-        style={{ WebkitOverflowScrolling: 'touch' }}
-      >
-        <div className="min-w-full w-max px-2.5 sm:px-4 py-2 flex items-center justify-between gap-2 sm:gap-3">
+      <div className="w-full max-w-full px-2.5 sm:px-4 py-2 flex items-center justify-between gap-1.5 sm:gap-2 overflow-hidden">
         
         {/* Brand Area (Left) */}
         <div className="flex items-center space-x-2 sm:space-x-2.5 shrink-0 min-w-0">
@@ -113,7 +66,7 @@ export default function Navbar({
 
           <div className="flex flex-col justify-center min-w-0">
             <div className="flex items-center gap-1.5">
-              <span className={`text-sm sm:text-base font-black tracking-tight leading-tight ${
+              <span className={`text-sm sm:text-base font-black tracking-tight leading-tight shrink-0 ${
                 isDark ? 'text-white' : 'text-slate-900'
               }`}>
                 PrakanGuard
@@ -124,7 +77,7 @@ export default function Navbar({
                 สมุทรปราการ
               </span>
             </div>
-            <span className={`hidden lg:block text-[11px] font-medium leading-none mt-0.5 ${
+            <span className={`hidden xl:block text-[11px] font-medium leading-none mt-0.5 truncate ${
               isDark ? 'text-slate-400' : 'text-slate-500'
             }`}>
               ระบบเฝ้าระวังน้ำท่วมและเส้นทางสัญจร อัปเดตสด 24 ชม.
@@ -133,10 +86,10 @@ export default function Navbar({
         </div>
 
         {/* Center Area: Level Filter Buttons & Live Temperature & Clock (PC & Tablet) */}
-        <div className="hidden md:flex items-center gap-2 sm:gap-2.5 shrink-0">
+        <div className="hidden md:flex items-center gap-2 shrink-0">
           
-          {/* Level Filter Buttons (PC & Tablet): เลือกดูเฉพาะระดับน้ำแต่ละระดับ */}
-          <div className={`flex items-center gap-1 p-1 rounded-2xl border backdrop-blur-md shadow-2xs select-none ${
+          {/* Level Filter Buttons: เลือกดูเฉพาะระดับน้ำแต่ละระดับ */}
+          <div className={`flex items-center gap-1 p-0.5 sm:p-1 rounded-2xl border backdrop-blur-md shadow-2xs select-none ${
             isDark ? 'bg-slate-900/90 border-slate-800' : 'bg-slate-100/90 border-slate-200/80'
           }`}>
             {/* Level 1: ปกติ Filter Button */}
@@ -146,7 +99,7 @@ export default function Navbar({
                 playSelectSound();
                 if (onSelectSeverityFilter) onSelectSeverityFilter(severityFilter === '1' ? 'all' : '1');
               }}
-              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-semibold cursor-pointer transition-all active:scale-95 ${
+              className={`flex items-center gap-1 px-2 py-1 rounded-xl text-xs font-semibold cursor-pointer transition-all active:scale-95 ${
                 severityFilter === '1'
                   ? 'bg-emerald-600 text-white shadow-xs font-bold ring-2 ring-emerald-400/40'
                   : isDark 
@@ -169,7 +122,7 @@ export default function Navbar({
                 playSelectSound();
                 if (onSelectSeverityFilter) onSelectSeverityFilter(severityFilter === '2' ? 'all' : '2');
               }}
-              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-semibold cursor-pointer transition-all active:scale-95 ${
+              className={`flex items-center gap-1 px-2 py-1 rounded-xl text-xs font-semibold cursor-pointer transition-all active:scale-95 ${
                 severityFilter === '2'
                   ? 'bg-amber-500 text-slate-950 shadow-xs font-bold ring-2 ring-amber-300/50'
                   : isDark 
@@ -192,7 +145,7 @@ export default function Navbar({
                 playSelectSound();
                 if (onSelectSeverityFilter) onSelectSeverityFilter(severityFilter === '3' ? 'all' : '3');
               }}
-              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-semibold cursor-pointer transition-all active:scale-95 ${
+              className={`flex items-center gap-1 px-2 py-1 rounded-xl text-xs font-semibold cursor-pointer transition-all active:scale-95 ${
                 severityFilter === '3'
                   ? 'bg-rose-600 text-white shadow-xs font-bold ring-2 ring-rose-400/40'
                   : isDark 
@@ -216,7 +169,7 @@ export default function Navbar({
                   playSelectSound();
                   if (onSelectSeverityFilter) onSelectSeverityFilter(severityFilter === 'falling' ? 'all' : 'falling');
                 }}
-                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-semibold cursor-pointer transition-all active:scale-95 ${
+                className={`flex items-center gap-1 px-2 py-1 rounded-xl text-xs font-semibold cursor-pointer transition-all active:scale-95 ${
                   severityFilter === 'falling'
                     ? 'bg-teal-600 text-white shadow-xs font-bold ring-2 ring-teal-400/40'
                     : isDark 
@@ -249,15 +202,15 @@ export default function Navbar({
             )}
           </div>
 
-          {/* Live Real-Time Weather & Temperature Badge (แสดงเฉพาะบน Tablet และ PC, ซ่อนบนมือถือตามสั่ง) */}
+          {/* Live Real-Time Weather & Temperature Badge */}
           {weather && weather.temp !== undefined && (
             <div 
-              className={`hidden md:inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-2xl border text-xs font-bold transition-all shadow-2xs select-none shrink-0 ${
+              className={`hidden lg:inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-2xl border text-xs font-bold transition-all shadow-2xs select-none shrink-0 ${
                 isDark 
                   ? 'bg-slate-900/90 border-slate-700 text-sky-300' 
                   : 'bg-sky-50/90 border-sky-200 text-sky-800'
               }`}
-              title={`สภาพอากาศจริง จ.สมุทรปราการ: ${weather.weatherDesc || 'มีเมฆบางส่วน'} • อุณหภูมิจริง ${weather.temp}°C (รู้สึกเหมือน ${weather.feelsLike || weather.temp}°C) • เปลี่ยนอัตโนมัติสด 24 ชม.`}
+              title={`สภาพอากาศจริง จ.สมุทรปราการ: ${weather.weatherDesc || 'มีเมฆบางส่วน'} • อุณหภูมิจริง ${weather.temp}°C (รู้สึกเหมือน ${weather.feelsLike || weather.temp}°C)`}
             >
               <span className="text-sm shrink-0">
                 {weather.forecast24h?.isRainingNow ? '🌧️' : (weather.temp >= 33 ? '☀️' : (weather.temp <= 26 ? '🌦️' : '⛅'))}
@@ -273,7 +226,7 @@ export default function Navbar({
             </div>
           )}
 
-          {/* Clock */}
+          {/* Clock for Tablet/PC */}
           <div className="shrink-0">
             <RealTimeClock theme={theme} />
           </div>
@@ -287,61 +240,6 @@ export default function Navbar({
             <RealTimeClock theme={theme} />
           </div>
 
-
-          {/* Desktop/Tablet Standards Button */}
-          <button 
-            type="button"
-            onClick={() => {
-              playModalOpenSound();
-              if (onOpenStandards) onOpenStandards();
-            }}
-            className={`hidden md:inline-flex px-2.5 py-1.5 rounded-xl border text-xs font-semibold items-center gap-1.5 transition-all cursor-pointer shadow-xs active:scale-95 ${
-              isDark 
-                ? 'bg-slate-900 hover:bg-slate-800 text-slate-300 border-slate-700' 
-                : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
-            }`}
-            title="เกณฑ์วัดระดับน้ำและผลกระทบต่อยานพาหนะ"
-          >
-            <BookOpen className="w-3.5 h-3.5 text-blue-500 shrink-0" />
-            <span>เกณฑ์ระดับน้ำ</span>
-          </button>
-
-          {/* Desktop/Tablet Feedback Button */}
-          <button 
-            type="button"
-            onClick={() => {
-              playModalOpenSound();
-              if (onOpenFeedback) onOpenFeedback();
-            }}
-            className={`hidden md:inline-flex px-2.5 sm:px-3 py-1.5 rounded-xl border text-xs font-semibold items-center gap-1.5 transition-all cursor-pointer shadow-xs active:scale-95 ${
-              isDark 
-                ? 'bg-teal-950/60 hover:bg-teal-900/60 text-teal-300 border-teal-800' 
-                : 'bg-teal-50 hover:bg-teal-100 text-teal-800 border-teal-200'
-            }`}
-            title="กล่องข้อเสนอแนะและติชมจากประชาชน"
-          >
-            <MessageSquare className="w-3.5 h-3.5 text-teal-500 shrink-0" />
-            <span>ข้อเสนอแนะ</span>
-          </button>
-
-          {/* Desktop/Tablet Privacy Policy Button */}
-          <button 
-            type="button"
-            onClick={() => {
-              playModalOpenSound();
-              if (onOpenPrivacyPolicy) onOpenPrivacyPolicy();
-            }}
-            className={`hidden lg:inline-flex px-2.5 sm:px-3 py-1.5 rounded-xl border text-xs font-semibold items-center gap-1.5 transition-all cursor-pointer shadow-xs active:scale-95 ${
-              isDark 
-                ? 'bg-sky-950/60 hover:bg-sky-900/60 text-sky-300 border-sky-800' 
-                : 'bg-sky-50 hover:bg-sky-100 text-sky-800 border-sky-200'
-            }`}
-            title="นโยบายความเป็นส่วนตัวและแหล่งข้อมูลอ้างอิง (จัดทำโดยกลุ่มนักเรียน)"
-          >
-            <ShieldCheck className="w-3.5 h-3.5 text-sky-500 shrink-0" />
-            <span>นโยบาย & ข้อกำหนด</span>
-          </button>
-
           {/* Desktop/Tablet Live Updates Button */}
           <button 
             type="button"
@@ -349,7 +247,7 @@ export default function Navbar({
               playModalOpenSound();
               if (onOpenPublicUpdates) onOpenPublicUpdates();
             }}
-            className={`hidden sm:inline-flex px-2.5 sm:px-3 py-1.5 rounded-xl border text-xs font-semibold items-center gap-1.5 transition-all cursor-pointer shadow-xs active:scale-95 ${
+            className={`hidden lg:inline-flex px-2.5 py-1.5 rounded-xl border text-xs font-semibold items-center gap-1.5 transition-all cursor-pointer shadow-xs active:scale-95 ${
               isDark 
                 ? 'bg-emerald-950/60 hover:bg-emerald-900/60 text-emerald-300 border-emerald-800' 
                 : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border-emerald-200'
@@ -360,7 +258,7 @@ export default function Navbar({
             <span>อัปเดต</span>
           </button>
 
-          {/* Desktop/Tablet Citizen Flood Report Button */}
+          {/* Citizen Flood Report Button */}
           <button 
             type="button"
             onClick={() => {
@@ -374,7 +272,7 @@ export default function Navbar({
             <span>แจ้งจุดท่วม</span>
           </button>
 
-          {/* Desktop Emergency Hotline */}
+          {/* Emergency Hotline */}
           <button 
             type="button"
             onClick={() => {
@@ -382,10 +280,11 @@ export default function Navbar({
               if (onOpenEmergency) onOpenEmergency();
             }}
             title="สายด่วนฉุกเฉิน 1784"
-            className="hidden sm:inline-flex px-2.5 sm:px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold items-center gap-1.5 transition-all cursor-pointer shadow-md shadow-rose-600/25 active:scale-95"
+            className="hidden sm:inline-flex px-2 sm:px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold items-center gap-1.5 transition-all cursor-pointer shadow-md shadow-rose-600/25 active:scale-95"
           >
             <PhoneCall className="w-3.5 h-3.5 shrink-0" />
-            <span>สายด่วน 1784</span>
+            <span className="hidden md:inline">สายด่วน</span>
+            <span>1784</span>
           </button>
 
           {/* Theme Switcher Button (Always accessible) */}
@@ -411,7 +310,6 @@ export default function Navbar({
           </button>
         </div>
       </div>
-    </div>
-  </header>
+    </header>
   );
 }

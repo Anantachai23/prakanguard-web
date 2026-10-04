@@ -2120,7 +2120,7 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
             touchAction: 'none'
           } : undefined}
           className={`fixed bottom-[calc(7.25rem+env(safe-area-inset-bottom,0px))] right-2.5 sm:bottom-6 sm:right-6 z-40 px-2.5 sm:px-4 py-2 sm:py-3 rounded-2xl font-semibold text-xs sm:text-sm shadow-xl items-center gap-2 border cursor-grab active:cursor-grabbing transition-shadow select-none backdrop-blur-xl group ${
-            isPointSelected ? 'hidden sm:flex' : 'flex'
+            isPointSelected ? 'hidden' : 'flex'
           } ${
             isDark 
               ? 'bg-slate-900/95 hover:bg-slate-800 text-slate-100 border-slate-700 hover:border-blue-500 shadow-blue-900/30' 
