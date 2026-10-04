@@ -830,6 +830,10 @@ table.data-table .cell-mono {
   font-weight: 700;
   color: var(--text-main);
   margin-bottom: 8px;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
+  line-height: 1.35;
 }
 
 .dialog-msg {
@@ -837,6 +841,9 @@ table.data-table .cell-mono {
   color: var(--text-secondary);
   line-height: 1.5;
   margin-bottom: 16px;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
 }
 
 .dialog-details {
@@ -898,11 +905,17 @@ table.data-table .cell-mono {
   font-size: 16px;
   font-weight: 700;
   color: var(--text-main);
+  word-break: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
 }
 
 .modal-sub {
   font-size: 12px;
   color: var(--text-muted);
+  word-break: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
 }
 
 .modal-body {
@@ -1142,6 +1155,31 @@ svg.ico {
   100% {
     opacity: 1;
     transform: translateY(0) scale(1);
+  }
+}
+
+/* Mobile Dialog & Modal Centering / Responsive scaling */
+@media (max-width: 640px) {
+  .overlay {
+    padding: 12px;
+  }
+  .dialog {
+    max-width: 92vw;
+    padding: 20px 16px;
+    max-height: 85vh;
+  }
+  .modal {
+    max-width: 94vw !important;
+    max-height: 85vh;
+  }
+  .modal-head {
+    padding: 14px 16px;
+  }
+  .modal-body {
+    padding: 16px;
+  }
+  .modal-foot {
+    padding: 12px 16px;
   }
 }
 

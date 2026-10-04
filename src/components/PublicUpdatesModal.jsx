@@ -51,7 +51,7 @@ export default function PublicUpdatesModal({
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
       className="fixed inset-0 z-50 bg-slate-950/65 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 smooth-backdrop"
     >
-      <div className={`w-full max-w-md border rounded-3xl shadow-2xl flex flex-col max-h-[65vh] sm:max-h-[75vh] overflow-hidden smooth-pop transition-colors ${
+      <div className={`w-full max-w-[92vw] sm:max-w-md border rounded-3xl shadow-2xl flex flex-col max-h-[80vh] sm:max-h-[82vh] overflow-hidden smooth-pop transition-colors ${
         isDark ? 'bg-slate-900 border-slate-700 text-slate-100' : 'bg-white border-slate-200 text-slate-900'
       }`}>
 
@@ -68,14 +68,14 @@ export default function PublicUpdatesModal({
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-1.5">
-                <h3 className={`text-sm sm:text-base font-bold leading-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                <h3 className={`text-sm sm:text-base font-bold leading-tight break-words ${isDark ? 'text-white' : 'text-slate-900'}`}>
                   อัปเดตสถานการณ์น้ำ
                 </h3>
-                <span className="px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-blue-500/15 text-blue-500 border border-blue-500/30">
+                <span className="px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-blue-500/15 text-blue-500 border border-blue-500/30 shrink-0">
                   รายวัน
                 </span>
               </div>
-              <p className={`text-[10px] sm:text-xs text-slate-400 truncate mt-0.5`}>
+              <p className={`text-[10px] sm:text-xs text-slate-400 break-words whitespace-normal leading-tight mt-0.5`}>
                 รีเซ็ตเที่ยงคืน (00:00 น.) อัตโนมัติ • อัปเดตตามจุดจริง
               </p>
             </div>
@@ -173,7 +173,7 @@ export default function PublicUpdatesModal({
                       </span>
                       <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
                         {item.locationSub && (
-                          <span className={`text-[10px] truncate ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                          <span className={`text-[10px] break-words whitespace-normal leading-tight ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
                             {item.locationSub}
                           </span>
                         )}

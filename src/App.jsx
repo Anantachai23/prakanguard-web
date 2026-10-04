@@ -2917,11 +2917,11 @@ export default function App() {
         {/* MOBILE MAP SYMBOLS GUIDE MODAL (บอกความหมายของ 📷 รูปประชาชนถ่ายรูปรายงาน และ 📉 น้ำกำลังลด) */}
         {isMobileGuideOpen && (
           <div 
-            className="sm:hidden fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-end justify-center p-3 pb-[105px] animate-in fade-in"
+            className="sm:hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 animate-in fade-in"
             onClick={() => setIsMobileGuideOpen(false)}
           >
             <div 
-              className={`w-full max-w-sm rounded-3xl border p-4 shadow-2xl backdrop-blur-2xl animate-in slide-in-from-bottom-3 ${
+              className={`w-full max-w-[92vw] sm:max-w-sm max-h-[80vh] overflow-y-auto rounded-3xl border p-4 shadow-2xl backdrop-blur-2xl animate-in zoom-in-95 ${
                 isDark 
                   ? 'bg-slate-900/98 border-slate-700 text-slate-100 shadow-black/80' 
                   : 'bg-white/98 border-slate-200 text-slate-800 shadow-slate-300/80'
@@ -2998,7 +2998,7 @@ export default function App() {
             className="fixed inset-0 z-[100] bg-slate-950/65 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 smooth-backdrop animate-in fade-in duration-200 pointer-events-auto"
           >
             <div 
-              className={`w-full max-w-md border-2 rounded-3xl shadow-2xl relative max-h-[78vh] sm:max-h-[82vh] flex flex-col p-4 sm:p-5 overflow-y-auto overscroll-contain smooth-pop transition-all ${
+              className={`w-full max-w-[92vw] sm:max-w-md border-2 rounded-3xl shadow-2xl relative max-h-[80vh] sm:max-h-[82vh] flex flex-col p-3.5 sm:p-5 overflow-y-auto overscroll-contain smooth-pop transition-all ${
                 isDark 
                   ? 'bg-slate-900 border-slate-700 text-slate-100 shadow-2xl shadow-black/80' 
                   : 'bg-white border-slate-200 text-slate-900 shadow-2xl shadow-slate-900/30'
@@ -3144,12 +3144,12 @@ export default function App() {
               )}
 
               {/* Source info (Clean reference line as requested) */}
-              <div className={`p-2.5 rounded-2xl border text-[11.5px] flex items-center justify-between shadow-xs ${
+              <div className={`p-2.5 rounded-2xl border text-[11.5px] flex items-center justify-between gap-2 shadow-xs ${
                 isDark ? 'bg-slate-800 border-slate-700 text-slate-300' : 'bg-white border-slate-200 text-slate-800'
               }`}>
-                <div className="flex items-center gap-1.5 truncate">
-                  <Shield className="w-3.5 h-3.5 text-blue-500 shrink-0" />
-                  <span className="truncate">
+                <div className="flex items-start gap-1.5 min-w-0 flex-1">
+                  <Shield className="w-3.5 h-3.5 text-blue-500 shrink-0 mt-0.5" />
+                  <span className="break-words whitespace-normal leading-tight">
                     อ้างอิง: <strong className={isDark ? 'text-slate-100' : 'text-slate-900'}>
                       {selectedPoint.isCitizen || (selectedPoint.source && selectedPoint.source.includes('ประชาชน')) 
                         ? 'รายงานจากประชาชนในพื้นที่' 
@@ -3179,8 +3179,8 @@ export default function App() {
                     : 'bg-white hover:bg-slate-100 text-slate-800 border-slate-200'
                 }`}
               >
-                <BookOpen className="w-3.5 h-3.5 text-blue-500" />
-                <span>เกณฑ์ระดับน้ำ</span>
+                <BookOpen className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+                <span className="truncate">เกณฑ์ระดับน้ำ</span>
               </button>
 
               <a 
@@ -3188,8 +3188,8 @@ export default function App() {
                 onClick={() => playClickSound()}
                 className="py-2.5 px-3 rounded-2xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-all text-center cursor-pointer shadow-md shadow-rose-600/30 active:scale-95"
               >
-                <Phone className="w-3.5 h-3.5" />
-                <span>โทรศูนย์ {selectedPoint.district ? selectedPoint.district.replace(/^อ\./, '') : 'สมุทรปราการ'}</span>
+                <Phone className="w-3.5 h-3.5 shrink-0" />
+                <span className="break-words whitespace-normal leading-tight text-center">โทรศูนย์ {selectedPoint.district ? selectedPoint.district.replace(/^อ\./, '') : 'สมุทรปราการ'}</span>
               </a>
             </div>
 

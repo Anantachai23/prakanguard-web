@@ -1455,7 +1455,7 @@ export default function AdminModal({
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-md flex items-center justify-center p-2.5 sm:p-4 smooth-backdrop">
-      <div className={`w-full max-w-4xl border rounded-3xl shadow-2xl flex flex-col max-h-[94vh] overflow-hidden smooth-pop transition-all ${
+      <div className={`w-full max-w-[94vw] sm:max-w-4xl border rounded-3xl shadow-2xl flex flex-col max-h-[85vh] sm:max-h-[94vh] overflow-hidden smooth-pop transition-all ${
         isDark ? 'bg-slate-900 border-slate-700/80 text-slate-100 shadow-slate-950/90' : 'bg-white border-slate-200 text-slate-800 shadow-xl'
       }`}>
         
@@ -4059,10 +4059,10 @@ export default function AdminModal({
         {confirmModal.isOpen && (
           <div 
             onClick={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
-            className="fixed inset-0 z-[70] bg-slate-950/75 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in"
+            className="fixed inset-0 z-[70] bg-slate-950/75 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 animate-in fade-in"
           >
             <div 
-              className={`w-full max-w-md rounded-3xl border shadow-2xl p-5 flex flex-col gap-3.5 smooth-pop ${
+              className={`w-full max-w-[92vw] sm:max-w-md rounded-3xl border shadow-2xl p-4 sm:p-5 flex flex-col gap-3.5 smooth-pop ${
                 isDark 
                   ? 'bg-slate-900 border-slate-700 text-slate-100 shadow-2xl shadow-black/90' 
                   : 'bg-white border-slate-200 text-slate-900 shadow-2xl shadow-slate-400/40'
@@ -4078,14 +4078,14 @@ export default function AdminModal({
                   <AlertTriangle className="w-5 h-5" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-bold text-base leading-snug">
+                  <h3 className="font-bold text-base leading-snug break-words whitespace-normal">
                     {confirmModal.title}
                   </h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed break-words whitespace-normal">
                     {confirmModal.message}
                   </p>
                   {confirmModal.details && (
-                    <div className={`mt-2.5 p-2.5 rounded-xl border text-xs font-semibold leading-relaxed ${
+                    <div className={`mt-2.5 p-2.5 rounded-xl border text-xs font-semibold leading-relaxed break-words whitespace-normal ${
                       isDark ? 'bg-slate-800/80 border-slate-700 text-cyan-300' : 'bg-slate-50 border-slate-200 text-slate-800'
                     }`}>
                       {confirmModal.details}

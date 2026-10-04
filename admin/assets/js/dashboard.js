@@ -576,11 +576,20 @@ function renderReports() {
       h('td', {},
         h('div', { style: { display: 'flex', gap: '6px' } },
           !isApproved
-            ? h('button', {
-                class: 'btn btn-success btn-sm',
-                onclick: () => handleApproveSingle(r.id),
-                html: `${icon('check', 14)} อนุมัติ`
-              })
+            ? [
+                h('button', {
+                  class: 'btn btn-success btn-sm',
+                  onclick: () => handleApproveSingle(r.id),
+                  html: `${icon('check', 14)} อนุมัติ`
+                }),
+                h('button', {
+                  class: 'btn btn-secondary btn-sm',
+                  style: { color: 'var(--danger, #ef4444)' },
+                  title: 'ไม่อนุมัติรายงานนี้ (ย้ายไปถังขยะ)',
+                  onclick: () => handleRejectSingle(r),
+                  html: `${icon('x', 14)} ไม่อนุมัติ`
+                })
+              ]
             : h('button', {
                 class: 'btn btn-secondary btn-sm',
                 onclick: () => handleUnapproveSingle(r.id),
@@ -638,11 +647,44 @@ async function handleApproveSingle(id) {
 }
 
 async function handleUnapproveSingle(id) {
+  const reportItem = (state.reports || []).find(r => r.id === id);
+  const confirmed = await confirmDialog({
+    title: 'ยืนยันการถอนอนุมัติรายงาน',
+    message: `คุณต้องการถอนการอนุมัติรายงาน "${reportItem?.name || 'จุดน้ำท่วม'}" หรือไม่? รายงานจะถูกนำออกจากแผนที่สาธารณะทันที`,
+    confirmText: 'ยืนยันถอนอนุมัติ',
+    cancelText: 'ยกเลิก',
+    tone: 'danger',
+    icon: 'alert'
+  });
+  if (!confirmed) return;
+
   const ok = await setReportsApproval([id], false);
   if (ok) {
     playWarningSound();
     toast('ถอนการอนุมัติรายงานเรียบร้อยแล้ว', 'info');
     await refreshAllData();
+  }
+}
+
+async function handleRejectSingle(report) {
+  const confirmed = await confirmDialog({
+    title: 'ยืนยันการไม่อนุมัติรายงาน',
+    message: `คุณต้องการไม่อนุมัติรายงาน "${report?.name || 'จุดน้ำท่วม'}" หรือไม่? ข้อมูลจะถูกย้ายไปเก็บที่ "ลบล่าสุด"`,
+    confirmText: 'ยืนยันไม่อนุมัติ',
+    cancelText: 'ยกเลิก',
+    tone: 'danger',
+    icon: 'alert'
+  });
+  if (!confirmed) return;
+  playWarningSound();
+
+  const admin = currentAdmin();
+  const deletedCount = await deleteToTrash('report', [report.id], admin ? admin.label : 'Admin');
+  if (deletedCount > 0) {
+    toast(`ไม่อนุมัติรายงาน "${report.name || ''}" เรียบร้อยแล้ว (ย้ายไปถังขยะ)`, 'info');
+    await refreshAllData();
+  } else {
+    toast('ไม่สามารถดำเนินการได้', 'error');
   }
 }
 

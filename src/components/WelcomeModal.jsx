@@ -70,7 +70,7 @@ export default function WelcomeModal({
     >
       {/* Welcome Card Container with Smooth Slide-Up Exit Animation */}
       <div 
-        className={`w-full max-w-lg sm:max-w-xl border rounded-3xl shadow-2xl overflow-hidden flex flex-col relative transition-all duration-800 ${
+        className={`w-full max-w-[92vw] sm:max-w-xl max-h-[82vh] sm:max-h-[88vh] border rounded-3xl shadow-2xl overflow-hidden flex flex-col relative transition-all duration-800 ${
           isDark 
             ? 'bg-slate-900/95 border-slate-700/80 text-slate-100 shadow-cyan-950/40' 
             : 'bg-white/95 border-slate-200/90 text-slate-800 shadow-blue-900/20'
@@ -95,8 +95,8 @@ export default function WelcomeModal({
         <div className={`p-4 sm:p-6 pb-2 sm:pb-3 flex items-start justify-between gap-3 shrink-0 ${
           isDark ? 'bg-slate-950/40' : 'bg-slate-50/60'
         }`}>
-          <div className="flex items-center space-x-3 sm:space-x-3.5">
-            <div className="relative">
+          <div className="flex items-center space-x-3 sm:space-x-3.5 min-w-0">
+            <div className="relative shrink-0">
               <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-full p-[1.5px] bg-gradient-to-tr from-blue-600 via-cyan-400 to-teal-300 shadow-lg shadow-cyan-500/20 flex items-center justify-center shrink-0">
                 <img 
                   src="/logo.png" 
@@ -110,8 +110,8 @@ export default function WelcomeModal({
               </span>
             </div>
 
-            <div>
-              <div className="flex items-center gap-1.5">
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-1.5 flex-wrap">
                 <span className={`text-[10.5px] sm:text-[11px] font-extrabold px-2.5 py-0.5 rounded-full uppercase tracking-wider border ${
                   isDark 
                     ? 'bg-blue-950/80 text-cyan-300 border-blue-800/80' 
@@ -124,7 +124,7 @@ export default function WelcomeModal({
                   <span>PrakanGuard</span>
                 </span>
               </div>
-              <h2 className={`text-base sm:text-lg font-black mt-0.5 leading-snug tracking-tight ${
+              <h2 className={`text-base sm:text-lg font-black mt-0.5 leading-snug tracking-tight break-words whitespace-normal ${
                 isDark ? 'text-white' : 'text-slate-900'
               }`}>
                 ระบบสารสนเทศและเฝ้าระวังอุทกภัย จ.สมุทรปราการ

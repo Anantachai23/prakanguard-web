@@ -106,24 +106,24 @@ export default function AiForecastModal({ isOpen, onClose, userDistrict, theme =
   const displayDistrictLabel = isAllDistricts ? 'ทุกอำเภอ (จ.สมุทรปราการ)' : `อ.${currentDistrict}`;
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/65 backdrop-blur-xs flex items-center justify-center p-3.5 sm:p-4 smooth-backdrop">
-      <div className={`w-full max-w-lg border rounded-3xl shadow-2xl p-4 sm:p-6 relative max-h-[75vh] sm:max-h-[85vh] overflow-y-auto smooth-pop transition-colors ${
+    <div className="fixed inset-0 z-50 bg-slate-950/65 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 smooth-backdrop">
+      <div className={`w-full max-w-[92vw] sm:max-w-lg border rounded-3xl shadow-2xl p-3.5 sm:p-6 relative max-h-[80vh] sm:max-h-[85vh] overflow-y-auto smooth-pop transition-colors ${
         isDark ? 'bg-slate-900 border-slate-700 text-slate-100' : 'bg-white border-slate-200 text-slate-800'
       }`}>
         
         {/* Header */}
         <div className={`flex items-center justify-between pb-3.5 border-b ${isDark ? 'border-slate-800' : 'border-slate-200'}`}>
-          <div className="flex items-center space-x-2.5">
+          <div className="flex items-center space-x-2.5 min-w-0">
             <div className={`p-2.5 rounded-2xl shrink-0 ${
               isDark ? 'bg-blue-950 text-cyan-400 border border-blue-800' : 'bg-blue-50 text-blue-600 border border-blue-200'
             }`}>
               <CloudRain className="w-5 h-5 sm:w-6 sm:h-6 animate-pulse" />
             </div>
-            <div>
-              <h3 className={`text-base sm:text-lg font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>
+            <div className="min-w-0">
+              <h3 className={`text-base sm:text-lg font-bold break-words leading-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>
                 คาดการณ์ฝนตก
               </h3>
-              <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+              <p className={`text-xs break-words whitespace-normal leading-tight mt-0.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
                 {todayTitle} • จ.สมุทรปราการ
               </p>
             </div>
@@ -188,10 +188,10 @@ export default function AiForecastModal({ isOpen, onClose, userDistrict, theme =
                   โอกาส {userDistrictProb || maxProb}%
                 </span>
               </div>
-              <div className={`text-lg sm:text-xl font-black ${isDark ? 'text-cyan-300' : 'text-blue-700'}`}>
+              <div className={`text-lg sm:text-xl font-black break-words leading-snug ${isDark ? 'text-cyan-300' : 'text-blue-700'}`}>
                 {rainTimeToday}
               </div>
-              <div className={`text-xs mt-1 font-medium ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+              <div className={`text-xs mt-1 font-medium break-words leading-relaxed ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
                 {weather?.weatherDesc || 'มีเมฆเป็นส่วนมาก'} • อุณหภูมิ {weather?.temp || 32}°C
               </div>
             </div>
@@ -216,7 +216,7 @@ export default function AiForecastModal({ isOpen, onClose, userDistrict, theme =
                       <div className="flex items-center justify-between gap-1 mb-1.5">
                         <div className="flex items-center gap-1.5 min-w-0">
                           <span className="shrink-0">{d.icon || '🌦️'}</span>
-                          <span className="font-bold truncate text-slate-900 dark:text-white">{districtName}</span>
+                          <span className="font-bold break-words text-slate-900 dark:text-white">{districtName}</span>
                           {d.temperature && (
                             <span className="text-[10px] font-mono text-slate-500 dark:text-slate-400">
                               {d.temperature}°C

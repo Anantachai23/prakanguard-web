@@ -296,7 +296,7 @@ export default function CitizenReportModal({
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-950/65 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 smooth-backdrop">
-      <div className={`w-full max-w-md rounded-3xl border shadow-2xl overflow-hidden flex flex-col max-h-[72vh] sm:max-h-[82vh] smooth-pop transition-colors ${
+      <div className={`w-full max-w-[92vw] sm:max-w-md rounded-3xl border shadow-2xl overflow-hidden flex flex-col max-h-[80vh] sm:max-h-[85vh] smooth-pop transition-colors ${
         isDark ? 'bg-slate-900 border-slate-700 text-slate-100' : 'bg-white border-slate-200 text-slate-900'
       }`}>
         
@@ -307,17 +307,17 @@ export default function CitizenReportModal({
         <div className={`p-4 sm:p-5 pb-3 border-b flex items-center justify-between shrink-0 ${
           isDark ? 'border-slate-800 bg-slate-950/40' : 'border-slate-100 bg-slate-50/50'
         }`}>
-          <div className="flex items-center space-x-2.5">
+          <div className="flex items-center space-x-2.5 min-w-0">
             <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shadow-sm shrink-0 border ${
               isDark ? 'bg-blue-950 text-cyan-400 border-blue-800' : 'bg-blue-50 text-blue-600 border-blue-200'
             }`}>
               <Camera className="w-5 h-5" />
             </div>
-            <div>
-              <h3 className={`text-base sm:text-lg font-bold leading-snug ${isDark ? 'text-white' : 'text-slate-900'}`}>
+            <div className="min-w-0">
+              <h3 className={`text-base sm:text-lg font-bold leading-snug break-words ${isDark ? 'text-white' : 'text-slate-900'}`}>
                 แจ้งจุดน้ำท่วม
               </h3>
-              <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+              <p className={`text-xs break-words whitespace-normal leading-tight mt-0.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
                 ส่งข้อมูลเตือนภัยเพื่อนร่วมทางใน จ.สมุทรปราการ
               </p>
             </div>
@@ -374,9 +374,9 @@ export default function CitizenReportModal({
                 <div className={`p-2.5 rounded-2xl border text-xs flex items-center justify-between gap-2 animate-in fade-in ${
                   isDark ? 'bg-blue-950/80 border-blue-800 text-cyan-300' : 'bg-blue-50 border-blue-200 text-blue-900'
                 }`}>
-                  <div className="flex items-center gap-2 min-w-0">
+                  <div className="flex items-center gap-2 min-w-0 flex-1">
                     <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-                    <span className="truncate">
+                    <span className="break-words whitespace-normal leading-tight text-[11px] text-emerald-800 dark:text-emerald-300">
                       ปักหมุดแล้ว: <strong>อ.{district}</strong> ต.{subdistrict} [{customCoords.lat.toFixed(4)}, {customCoords.lng.toFixed(4)}]
                     </span>
                   </div>
@@ -502,7 +502,7 @@ export default function CitizenReportModal({
                               {lvl.range}
                             </span>
                           </div>
-                          <p className={`text-[11px] truncate mt-0.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                          <p className={`text-[11px] break-words whitespace-normal leading-relaxed mt-0.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
                             {lvl.desc}
                           </p>
                         </div>

@@ -20,7 +20,7 @@ export default function EmergencyModal({ isOpen, onClose, theme = 'light' }) {
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
       className="fixed inset-0 z-50 bg-slate-950/65 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 smooth-backdrop"
     >
-      <div className={`w-full max-w-md border rounded-3xl p-4 shadow-2xl relative max-h-[62vh] sm:max-h-[72vh] flex flex-col overflow-hidden smooth-pop transition-colors ${
+      <div className={`w-full max-w-[92vw] sm:max-w-md border rounded-3xl p-3.5 sm:p-4 shadow-2xl relative max-h-[80vh] sm:max-h-[82vh] flex flex-col overflow-hidden smooth-pop transition-colors ${
         isDark ? 'bg-slate-900 border-slate-700 text-slate-100' : 'bg-white border-slate-200 text-slate-800'
       }`}>
         
@@ -33,10 +33,10 @@ export default function EmergencyModal({ isOpen, onClose, theme = 'light' }) {
               <PhoneForwarded className="w-4 h-4 sm:w-5 sm:h-5 animate-pulse" />
             </div>
             <div className="min-w-0">
-              <h3 className={`text-sm sm:text-base font-bold leading-tight truncate ${isDark ? 'text-white' : 'text-slate-900'}`}>
+              <h3 className={`text-sm sm:text-base font-bold leading-tight break-words ${isDark ? 'text-white' : 'text-slate-900'}`}>
                 สายด่วนฉุกเฉิน 24 ชม.
               </h3>
-              <p className={`text-[10px] sm:text-xs text-slate-400 truncate`}>
+              <p className={`text-[10px] sm:text-xs text-slate-400 break-words whitespace-normal leading-tight mt-0.5`}>
                 จ.สมุทรปราการ (แผนเผชิญเหตุน้ำท่วม)
               </p>
             </div>
@@ -77,7 +77,7 @@ export default function EmergencyModal({ isOpen, onClose, theme = 'light' }) {
                     {item.badge}
                   </span>
                 </div>
-                <span className={`text-[10px] block leading-snug truncate ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                <span className={`text-[10px] block leading-snug break-words whitespace-normal mt-0.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
                   {item.desc}
                 </span>
               </div>

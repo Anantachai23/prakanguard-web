@@ -38,7 +38,7 @@ export default function PrivacyPolicyModal({
       }}
     >
       <div 
-        className={`w-full max-w-lg sm:max-w-2xl max-h-[75vh] sm:max-h-[88vh] border rounded-3xl shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-200 ${
+        className={`w-full max-w-[92vw] sm:max-w-2xl max-h-[80vh] sm:max-h-[88vh] border rounded-3xl shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-200 ${
           isDark 
             ? 'bg-slate-900 border-slate-700/80 text-slate-100 shadow-cyan-950/40' 
             : 'bg-white border-slate-200 text-slate-800 shadow-blue-900/20'
@@ -74,7 +74,7 @@ export default function PrivacyPolicyModal({
                   <span>PrakanGuard</span>
                 </span>
               </div>
-              <h2 className={`text-sm sm:text-base font-black mt-0.5 tracking-tight truncate ${
+              <h2 className={`text-sm sm:text-base font-black mt-0.5 tracking-tight break-words whitespace-normal leading-tight ${
                 isDark ? 'text-white' : 'text-slate-900'
               }`}>
                 นโยบายข้อกำหนด & ความเป็นส่วนตัว

@@ -100,7 +100,7 @@ export default function FeedbackModal({ isOpen, onClose, theme = 'light', onFeed
       onClick={(e) => { if (e.target === e.currentTarget) handleResetAndClose(); }}
       className="fixed inset-0 z-50 bg-slate-950/65 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 smooth-backdrop"
     >
-      <div className={`w-full max-w-md border rounded-3xl shadow-2xl flex flex-col max-h-[68vh] sm:max-h-[78vh] overflow-hidden smooth-pop transition-colors ${
+      <div className={`w-full max-w-[92vw] sm:max-w-md border rounded-3xl shadow-2xl flex flex-col max-h-[80vh] sm:max-h-[82vh] overflow-hidden smooth-pop transition-colors ${
         isDark ? 'bg-slate-900 border-slate-700 text-slate-100' : 'bg-white border-slate-200 text-slate-800'
       }`}>
         
@@ -117,11 +117,11 @@ export default function FeedbackModal({ isOpen, onClose, theme = 'light', onFeed
             }`}>
               <MessageSquare className="w-4 h-4" />
             </div>
-            <div>
-              <h2 className={`text-base sm:text-lg font-bold leading-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>
+            <div className="min-w-0">
+              <h2 className={`text-base sm:text-lg font-bold leading-tight break-words ${isDark ? 'text-white' : 'text-slate-900'}`}>
                 ข้อเสนอแนะ
               </h2>
-              <p className={`text-[11px] sm:text-xs mt-0.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+              <p className={`text-[11px] sm:text-xs mt-0.5 break-words whitespace-normal leading-tight ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
                 ร่วมแสดงความคิดเห็นหรือข้อเสนอแนะเพื่อร่วมพัฒนาเว็บไซต์รายงานน้ำท่วม
               </p>
             </div>

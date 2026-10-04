@@ -43,7 +43,7 @@ export default function FloodStandardsModal({ isOpen, onClose, theme = 'light' }
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
       className="fixed inset-0 z-[9999] bg-slate-950/75 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 smooth-backdrop animate-in fade-in duration-200"
     >
-      <div className={`w-full max-w-md flex flex-col rounded-3xl shadow-2xl overflow-hidden max-h-[65vh] sm:max-h-[75vh] smooth-pop transition-colors ${
+      <div className={`w-full max-w-[92vw] sm:max-w-md flex flex-col rounded-3xl shadow-2xl overflow-hidden max-h-[80vh] sm:max-h-[82vh] smooth-pop transition-colors ${
         isDark ? 'bg-slate-900 border border-slate-700 text-slate-100' : 'bg-white border border-slate-200 text-slate-900'
       }`}>
 
@@ -53,11 +53,11 @@ export default function FloodStandardsModal({ isOpen, onClose, theme = 'light' }
             <div className="w-8 h-8 rounded-full overflow-hidden shrink-0 border border-blue-400/50 shadow-sm">
               <img src="/logo.png" alt="PrakanGuard" className="w-full h-full object-cover" />
             </div>
-            <div>
-              <h3 className={`text-sm sm:text-base font-bold leading-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>
+            <div className="min-w-0">
+              <h3 className={`text-sm sm:text-base font-bold leading-tight break-words ${isDark ? 'text-white' : 'text-slate-900'}`}>
                 เกณฑ์ระดับน้ำท่วม
               </h3>
-              <p className={`text-[10px] sm:text-xs text-slate-400`}>
+              <p className={`text-[10px] sm:text-xs text-slate-400 break-words whitespace-normal leading-tight mt-0.5`}>
                 คำแนะนำความปลอดภัยต่อยานพาหนะ
               </p>
             </div>
@@ -161,7 +161,7 @@ export default function FloodStandardsModal({ isOpen, onClose, theme = 'light' }
                     <span className={`text-xs font-bold block ${isDark ? 'text-white' : 'text-slate-900'}`}>
                       {data.label}
                     </span>
-                    <span className={`text-[11px] block mt-0.5 leading-snug ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+                    <span className={`text-[11px] block mt-0.5 leading-snug break-words whitespace-normal ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
                       {data.desc}
                     </span>
                   </div>
