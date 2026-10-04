@@ -249,6 +249,7 @@ export default function MapView({
   const citizenMarkersRef = useRef([]);
   const radarCircleLayersRef = useRef([]);
   const markersByIdRef = useRef({});
+  const radarCirclesByIdRef = useRef({});
   const lastFlyToTimeRef = useRef(0);
   const temporaryPickMarkerRef = useRef(null);
   const userMarkerRef = useRef(null);
@@ -304,11 +305,11 @@ export default function MapView({
         }
         @media (hover: hover) {
           .pg-flood-pin-container:hover {
-            transform: scale(1.15);
+            filter: drop-shadow(0 6px 12px rgba(0,0,0,0.5)) brightness(1.1);
           }
         }
         .pg-flood-pin-container:active {
-          transform: scale(0.92) !important;
+          filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4)) brightness(0.95);
         }
         .pg-pin-selected {
           filter: drop-shadow(0 0 8px rgba(2, 132, 225, 0.95)) !important;
@@ -602,15 +603,23 @@ export default function MapView({
     };
   }, [points, citizenReports, onSelectPoint]);
 
-  // Synchronize pin selection styling smoothly without remounting markers
+  // Synchronize pin and radar circle selection styling smoothly without remounting
   useEffect(() => {
+    const baseFillOpacity = isDark ? 0.16 : 0.12;
+
     if (!selectedPoint) {
       Object.values(markersByIdRef.current).forEach(m => {
         const el = m?.getElement && m.getElement();
         if (el) el.querySelector('.pg-flood-pin-container')?.classList.remove('pg-pin-selected');
       });
+      Object.values(radarCirclesByIdRef.current).forEach(c => {
+        if (c && c.setStyle) {
+          c.setStyle({ weight: 1.2, opacity: 0.5, fillOpacity: baseFillOpacity });
+        }
+      });
       return;
     }
+
     Object.entries(markersByIdRef.current).forEach(([id, m]) => {
       const el = m?.getElement && m.getElement();
       if (el) {
@@ -624,9 +633,20 @@ export default function MapView({
         }
       }
     });
-  }, [selectedPoint]);
 
-  // 5. Render Unified Vulnerability & Citizen Points (Auto-deduplicated, mobile-optimized)
+    Object.entries(radarCirclesByIdRef.current).forEach(([id, c]) => {
+      if (c && c.setStyle) {
+        const isSelected = String(id) === String(selectedPoint.id);
+        c.setStyle({
+          weight: isSelected ? 2.5 : 1.2,
+          opacity: isSelected ? 0.9 : 0.5,
+          fillOpacity: isSelected ? 0.25 : baseFillOpacity
+        });
+      }
+    });
+  }, [selectedPoint, isDark]);
+
+  // 5. Render Unified Vulnerability & Citizen Points + 100% Concentric Radar Circles
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map) return;
@@ -637,6 +657,10 @@ export default function MapView({
     citizenMarkersRef.current = [];
     markersByIdRef.current = {};
 
+    radarCircleLayersRef.current.forEach(layer => map.removeLayer(layer));
+    radarCircleLayersRef.current = [];
+    radarCirclesByIdRef.current = {};
+
     const displayPoints = deduplicateAndDeclutterPoints(citizenReports, points, isMobile);
 
     displayPoints.forEach(point => {
@@ -644,6 +668,14 @@ export default function MapView({
         return;
       }
       if (!isPointInSamutPrakan(point.lat, point.lng)) {
+        return;
+      }
+      if (isPointDry(point)) {
+        return;
+      }
+
+      // Filter by district if selected
+      if (selectedDistrict && selectedDistrict !== "ทั้งหมด" && point.district && point.district !== selectedDistrict) {
         return;
       }
 
@@ -654,6 +686,36 @@ export default function MapView({
       );
 
       const isFalling = isWaterReceding(point);
+      const isL3 = level === 3;
+      const isL2 = level === 2;
+
+      // 1. Concentric Radar Flood Coverage Circle (100% dead-centered on the pin coordinate)
+      const radius = isL3 ? 300 : (isL2 ? 220 : 150);
+      const circleColor = isFalling ? '#0d9488' : (isL3 ? '#dc2626' : (isL2 ? '#eab308' : '#16a34a'));
+      const baseFillOpacity = isDark ? 0.16 : 0.12;
+
+      const circle = L.circle([point.lat, point.lng], {
+        radius: radius,
+        color: circleColor,
+        weight: isSelected ? 2.5 : 1.2,
+        opacity: isSelected ? 0.9 : 0.5,
+        fillColor: circleColor,
+        fillOpacity: isSelected ? 0.25 : baseFillOpacity,
+        dashArray: isFalling ? '5, 5' : undefined,
+        interactive: true,
+        bubblingMouseEvents: false
+      }).addTo(map);
+
+      const levelLabel = isL3 ? 'วิกฤต' : (isL2 ? 'ปานกลาง' : 'ปกติ');
+      const depthText = point.depthCm ? `${point.depthCm} ซม.` : (point.depthRange || 'เฝ้าระวัง');
+
+      circle.bindTooltip(`📡 รัศมีน้ำท่วม ~${radius}ม. • ${point.name} (${levelLabel} ${depthText})`, {
+        sticky: true,
+        direction: 'top',
+        className: 'bg-slate-900/95 text-white font-prompt text-[11px] font-bold px-2 py-0.5 rounded-lg border border-slate-700 shadow-md'
+      });
+
+      // 2. Official Pin Marker
       const customIcon = createOfficialFloodPin({
         level,
         depthCm: point.depthCm,
@@ -691,96 +753,39 @@ export default function MapView({
         }
       };
 
+      // Click on circle selects point
+      circle.on('click', handleMarkerSelect);
+
+      // Marker Leaflet event
       marker.on('click', handleMarkerSelect);
 
+      // Direct DOM manipulation on marker element
       const markerEl = marker.getElement();
       if (markerEl) {
+        L.DomEvent.disableClickPropagation(markerEl);
+        L.DomEvent.disableScrollPropagation(markerEl);
+
         markerEl.style.cursor = 'pointer';
         markerEl.style.pointerEvents = 'auto';
+
+        // CRITICAL: Stop mousedown, pointerdown, touchstart, mouseup, pointerup from reaching Leaflet map
+        // This guarantees that mouse clicks NEVER trigger Leaflet map dragging/panning
+        // Fixes "เวลาคลิกเม้าแล้วหมุดมันเลื่อนออกแล้วมันก็ไม่ขึ้นข้อมูลด้วย"
+        markerEl.addEventListener('mousedown', (e) => e.stopPropagation());
+        markerEl.addEventListener('pointerdown', (e) => e.stopPropagation());
+        markerEl.addEventListener('touchstart', (e) => e.stopPropagation(), { passive: true });
+        markerEl.addEventListener('mouseup', (e) => e.stopPropagation());
+        markerEl.addEventListener('pointerup', (e) => e.stopPropagation());
+        markerEl.addEventListener('click', handleMarkerSelect);
         markerEl.onclick = handleMarkerSelect;
       }
 
       markersRef.current.push(marker);
       markersByIdRef.current[point.id] = marker;
-    });
-  }, [points, citizenReports, onSelectPoint, isMobile]);
-
-  // 5.5 Render Calm Radar Flood Coverage Circles
-  useEffect(() => {
-    const map = mapInstanceRef.current;
-    if (!map) return;
-
-    radarCircleLayersRef.current.forEach(layer => map.removeLayer(layer));
-    radarCircleLayersRef.current = [];
-
-    const allActiveItems = [
-      ...points.map(p => ({ ...p, isCitizen: false })),
-      ...citizenReports.map(c => ({ ...c, isCitizen: true }))
-    ];
-
-    allActiveItems.forEach(item => {
-      if (typeof item.lat !== 'number' || typeof item.lng !== 'number' || isNaN(item.lat) || isNaN(item.lng)) {
-        return;
-      }
-      // Strictly skip points outside Samut Prakan
-      if (!isPointInSamutPrakan(item.lat, item.lng)) {
-        return;
-      }
-      // Strictly skip dry or resolved points
-      if (isPointDry(item)) {
-        return;
-      }
-
-      // Filter by district if selected
-      if (selectedDistrict && selectedDistrict !== "ทั้งหมด" && item.district !== selectedDistrict) {
-        return;
-      }
-
-      const level = resolveLevel(item);
-      const isL3 = level === 3;
-      const isL2 = level === 2;
-      const isSelected = selectedPoint && selectedPoint.id === item.id;
-      const isReceding = isWaterReceding(item);
-
-      // Radius: L3: 300m, L2: 220m, L1: 150m
-      const radius = isL3 ? 300 : (isL2 ? 220 : 150);
-      const color = isReceding ? '#0d9488' : (isL3 ? '#dc2626' : (isL2 ? '#eab308' : '#16a34a'));
-      const baseFillOpacity = isDark ? 0.16 : 0.12;
-
-      const circle = L.circle([item.lat, item.lng], {
-        radius: radius,
-        color: color,
-        weight: isSelected ? 2.5 : 1.2,
-        opacity: isSelected ? 0.9 : 0.5,
-        fillColor: color,
-        fillOpacity: isSelected ? 0.25 : baseFillOpacity,
-        dashArray: isReceding ? '5, 5' : undefined,
-        interactive: true,
-        bubblingMouseEvents: false
-      }).addTo(map);
-
-      const levelLabel = isL3 ? 'วิกฤต' : (isL2 ? 'ปานกลาง' : 'ปกติ');
-      const depthText = item.depthCm ? `${item.depthCm} ซม.` : (item.depthRange || 'เฝ้าระวัง');
-
-      circle.bindTooltip(`📡 รัศมีน้ำท่วม ~${radius}ม. • ${item.name} (${levelLabel} ${depthText})`, {
-        sticky: true,
-        direction: 'top',
-        className: 'bg-slate-900/95 text-white font-prompt text-[11px] font-bold px-2 py-0.5 rounded-lg border border-slate-700 shadow-md'
-      });
-
-      circle.on('click', (e) => {
-        if (e && e.originalEvent) {
-          L.DomEvent.stopPropagation(e.originalEvent);
-        }
-        playPinClickSound();
-        if (onSelectPoint) {
-          onSelectPoint(item, { fromMapPin: true });
-        }
-      });
-
       radarCircleLayersRef.current.push(circle);
+      radarCirclesByIdRef.current[point.id] = circle;
     });
-  }, [points, citizenReports, selectedDistrict, selectedPoint, onSelectPoint, isDark]);
+  }, [points, citizenReports, selectedDistrict, onSelectPoint, isMobile, isDark]);
 
   // 6. User GPS Location Marker
   useEffect(() => {
@@ -846,10 +851,6 @@ export default function MapView({
 
     // If selected directly from map pin or circle, KEEP MAP STEADY! Do not fly away!
     if (selectedPoint._fromMapPin) {
-      const marker = markersByIdRef.current[selectedPoint.id];
-      if (marker && map.hasLayer(marker)) {
-        setTimeout(() => marker.openPopup(), 100);
-      }
       return;
     }
 
