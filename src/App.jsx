@@ -2746,6 +2746,55 @@ export default function App() {
 
         </div>
 
+        {/* DESKTOP/IPAD FLOATING LEGEND CARD (BOTTOM LEFT - เฉพาะคอมและไอแพด สามารถกดดูรายละเอียดเกณฑ์ได้) */}
+        <div className="hidden sm:flex absolute bottom-4 left-4 z-30 pointer-events-auto">
+          <button 
+            type="button"
+            onClick={() => {
+              playModalOpenSound();
+              setIsStandardsModalOpen(true);
+            }}
+            className={`px-3.5 py-2 rounded-2xl border text-xs flex items-center gap-3 shadow-lg backdrop-blur-md cursor-pointer transition-all hover:scale-[1.02] active:scale-95 group ${
+              isDark 
+                ? 'bg-slate-900/95 border-slate-700 hover:border-cyan-500/60 text-slate-300 shadow-xl' 
+                : 'bg-white/95 border-slate-200 hover:border-blue-400 text-slate-700'
+            }`}
+            title="คลิกเพื่อดูรายละเอียดเกณฑ์วัดระดับน้ำและผลกระทบฉบับเต็ม"
+          >
+            <div className="flex items-center gap-1.5 font-bold">
+              <BookOpen className={`w-4 h-4 transition-transform group-hover:scale-110 ${isDark ? 'text-cyan-400' : 'text-blue-600'}`} />
+              <span className={isDark ? 'text-white' : 'text-slate-900'}>เกณฑ์ระดับน้ำ:</span>
+            </div>
+
+            <div className="flex items-center space-x-1.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+              <span className="font-semibold text-emerald-700 dark:text-emerald-400">ปกติ 5-20 ซม.</span>
+            </div>
+
+            <span className={isDark ? 'text-slate-700' : 'text-slate-300'}>•</span>
+
+            <div className="flex items-center space-x-1.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+              <span className="font-semibold text-amber-700 dark:text-amber-400">ปานกลาง 21-50 ซม.</span>
+            </div>
+
+            <span className={isDark ? 'text-slate-700' : 'text-slate-300'}>•</span>
+
+            <div className="flex items-center space-x-1.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse"></span>
+              <span className="text-rose-600 dark:text-rose-400 font-bold">วิกฤต &gt;50 ซม.</span>
+            </div>
+
+            <span className={`ml-1 text-[11px] font-bold px-2 py-0.5 rounded-lg border flex items-center gap-1 transition-colors ${
+              isDark 
+                ? 'bg-blue-950/80 text-cyan-300 border-blue-800 group-hover:bg-blue-900' 
+                : 'bg-blue-50 text-blue-700 border-blue-200 group-hover:bg-blue-100'
+            }`}>
+              ดูรายละเอียด ↗
+            </span>
+          </button>
+        </div>
+
         {/* MOBILE DOCKED WATER LEVEL STRIP & MAP SYMBOL GUIDE (เกณฑ์ระดับน้ำและไกด์สัญลักษณ์ 📷 และ 📉) */}
         <div className="sm:hidden fixed bottom-[66px] left-1/2 -translate-x-1/2 z-30 pointer-events-auto select-none max-w-[96vw]">
           <div className={`px-2.5 py-1 rounded-full border shadow-lg backdrop-blur-xl flex items-center gap-1.5 text-[9.5px] font-bold ${
@@ -2913,16 +2962,22 @@ export default function App() {
           </div>
         )}
 
-        {/* FLOATING POINT DETAIL CARD (MATCHING SCREENSHOT media_1791123966122.png) */}
+        {/* FLOATING POINT DETAIL MODAL (CENTERED POPUP DIALOG) */}
         {selectedPoint && (
           <div 
-            className="fixed inset-x-3 bottom-[calc(4.5rem+env(safe-area-inset-bottom,0px))] sm:inset-x-auto sm:bottom-6 sm:right-6 sm:w-[410px] max-w-[calc(100vw-24px)] z-[85] pointer-events-auto animate-in slide-in-from-bottom-3 duration-200"
+            onClick={(e) => {
+              if (e.target === e.currentTarget) {
+                playCloseSound();
+                setSelectedPoint(null);
+              }
+            }}
+            className="fixed inset-0 z-[100] bg-slate-950/65 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 smooth-backdrop animate-in fade-in duration-200 pointer-events-auto"
           >
             <div 
-              className={`w-full border-2 rounded-3xl shadow-2xl relative max-h-[78vh] sm:max-h-[82vh] flex flex-col p-4 sm:p-5 overflow-y-auto overscroll-contain transition-all ${
+              className={`w-full max-w-md border-2 rounded-3xl shadow-2xl relative max-h-[78vh] sm:max-h-[82vh] flex flex-col p-4 sm:p-5 overflow-y-auto overscroll-contain smooth-pop transition-all ${
                 isDark 
-                  ? 'bg-slate-900/98 border-slate-700 text-slate-100 shadow-2xl shadow-black/80' 
-                  : 'bg-white/98 border-slate-200 text-slate-900 shadow-2xl shadow-slate-900/30'
+                  ? 'bg-slate-900 border-slate-700 text-slate-100 shadow-2xl shadow-black/80' 
+                  : 'bg-white border-slate-200 text-slate-900 shadow-2xl shadow-slate-900/30'
               }`}
             >
               {/* Header: District Badge + Severity Badge + Easy-to-Tap Close Button */}
@@ -2982,7 +3037,7 @@ export default function App() {
                   <p className={`text-xs mt-0.5 font-medium ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
                     {selectedPoint.district ? `อ.${selectedPoint.district.replace(/^อ\./, '')}` : ''}
                     {selectedPoint.subdistrict ? ` • ${selectedPoint.subdistrict.startsWith('ต.') ? selectedPoint.subdistrict : `ต.${selectedPoint.subdistrict}`}` : ''}
-                    {(selectedPoint.roadSegment && !/^[0-9.,\s-]+$/.test(selectedPoint.roadSegment.trim())) ? ` • ${selectedPoint.roadSegment}` : ''}
+                    {(typeof selectedPoint.roadSegment === 'string' && selectedPoint.roadSegment.trim() && !/^[0-9.,\s-]+$/.test(selectedPoint.roadSegment.trim())) ? ` • ${selectedPoint.roadSegment}` : ''}
                   </p>
                 )}
               </div>

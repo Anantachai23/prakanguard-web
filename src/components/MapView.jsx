@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { Crosshair, Navigation, BookOpen } from 'lucide-react';
+import { Crosshair, Navigation } from 'lucide-react';
 import { playClickSound, playPinClickSound, playToggleSound, playGpsSound } from '../services/soundEffects';
 import { 
   SAMUT_PRAKAN_DISTRICTS_GEOJSON, 
@@ -574,55 +574,6 @@ export default function MapView({
     map.invalidateSize();
   }, [mapStyle]);
 
-  // Helper to build unified popup HTML
-  const buildPopupHtml = (item, isCitizen) => {
-    const level = resolveLevel(item);
-    const isL3 = level === 3;
-    const isL2 = level === 2;
-    const levelBadgeName = isL3 ? '🔴 น้ำท่วมวิกฤต' : (isL2 ? '🟡 น้ำท่วมปานกลาง' : '🟢 น้ำท่วมปกติ');
-    const levelBg = isL3 ? '#fef2f2' : (isL2 ? '#fffbeb' : '#f0fdf4');
-    const levelText = isL3 ? '#991b1b' : (isL2 ? '#92400e' : '#166534');
-    const levelBorder = isL3 ? '#f87171' : (isL2 ? '#fbbf24' : '#4ade80');
-    const depthBadgeText = item.depthCm ? `${item.depthCm} ซม.` : (item.depthRange || 'เฝ้าระวัง');
-
-    const trendHtml = item.waterTrend === 'falling' ? `
-      <div style="display:inline-flex;align-items:center;gap:4px;background:#f0fdfa;color:#0f766e;border:1px solid #99f6e4;padding:2px 7px;border-radius:6px;font-size:10px;font-weight:700;margin-bottom:6px;">
-        <span>📉</span> <span>ระดับน้ำกำลังลดลง</span>
-      </div>
-    ` : (item.waterTrend === 'rising' ? `
-      <div style="display:inline-flex;align-items:center;gap:4px;background:#fff1f2;color:#be123c;border:1px solid #fecdd3;padding:2px 7px;border-radius:6px;font-size:10px;font-weight:700;margin-bottom:6px;">
-        <span>📈</span> <span>เฝ้าระวังระดับน้ำเพิ่ม</span>
-      </div>
-    ` : '');
-
-    const sourceHtml = isCitizen 
-      ? `<div style="font-size:9.5px;color:#2563eb;font-weight:700;margin-bottom:4px;">👤 รายงานจากประชาชน (ยืนยันแล้ว)</div>`
-      : `<div style="font-size:9.5px;color:#64748b;font-weight:600;margin-bottom:4px;">📍 จุดเฝ้าระวัง จ.สมุทรปราการ</div>`;
-
-    return `
-      <div style="font-family:'Prompt',sans-serif;padding:6px 4px 4px 4px;min-width:210px;max-width:260px;">
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:6px;">
-          <div style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:8px;background:${levelBg};color:${levelText};border:1px solid ${levelBorder};">
-            ${levelBadgeName}
-          </div>
-          <span style="font-size:10.5px;color:#64748b;font-weight:700;">${(item.district || '').replace(/^อ\./, '')}</span>
-        </div>
-        <div style="font-size:13px;font-weight:800;color:#0f172a;line-height:1.3;margin-bottom:4px;">
-          ${item.name}
-        </div>
-        <div style="font-size:12px;color:${isL3 ? '#dc2626' : (isL2 ? '#d97706' : '#16a34a')};font-weight:800;margin-bottom:4px;">
-          ระดับน้ำ: ${depthBadgeText}
-        </div>
-        ${item.trafficStatus ? `<div style="font-size:10.5px;color:#475569;margin-bottom:4px;">🚗 ${item.trafficStatus}</div>` : ''}
-        ${trendHtml}
-        ${sourceHtml}
-        <button onclick="if(window.__pgSelectPointById)window.__pgSelectPointById('${item.id}')" style="width:100%;margin-top:6px;padding:6px 10px;background:#2563eb;color:#ffffff;border:none;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;">
-          <span>ดูรายละเอียดฉบับเต็ม &rarr;</span>
-        </button>
-      </div>
-    `;
-  };
-
   // Expose global point selection for pin taps & external triggers
   useEffect(() => {
     let lastSelectTime = 0;
@@ -641,10 +592,6 @@ export default function MapView({
         lastFlyToTimeRef.current = Date.now();
         playPinClickSound();
         onSelectPoint(found, { fromMapPin: true });
-        const marker = markersByIdRef.current[String(id)];
-        if (marker && mapInstanceRef.current) {
-          marker.openPopup();
-        }
       }
     };
     return () => {
@@ -720,40 +667,28 @@ export default function MapView({
         bubblingMouseEvents: false
       }).addTo(map);
 
-      // Bind custom popup for all devices (desktop, tablet, mobile)
-      marker.bindPopup(buildPopupHtml(point, point.isCitizen), {
-        className: 'custom-leaflet-popup',
-        closeButton: true,
-        autoPan: true,
-        autoPanPadding: [20, 80],
-        maxWidth: 320
-      });
-
-      // Unified direct select handler
+      // Unified direct select handler: opens full centered modal immediately
       const triggerMarkerSelection = (e) => {
-        if (e && e.originalEvent) {
-          L.DomEvent.stopPropagation(e.originalEvent);
+        if (e) {
+          if (e.originalEvent) {
+            L.DomEvent.stopPropagation(e);
+            L.DomEvent.preventDefault(e);
+          } else if (e.stopPropagation) {
+            e.stopPropagation();
+          }
         }
-        lastFlyToTimeRef.current = Date.now();
-        playPinClickSound();
-        if (onSelectPoint) {
-          onSelectPoint(point, { fromMapPin: true });
+        if (window.__pgSelectPointById) {
+          window.__pgSelectPointById(point.id, e);
+        } else {
+          lastFlyToTimeRef.current = Date.now();
+          playPinClickSound();
+          if (onSelectPoint) {
+            onSelectPoint(point, { fromMapPin: true });
+          }
         }
-        marker.openPopup();
       };
 
       marker.on('click', triggerMarkerSelection);
-
-      // Attach directly to DOM element for guaranteed responsiveness on mobile and touch devices
-      const markerEl = marker.getElement();
-      if (markerEl) {
-        markerEl.style.touchAction = 'manipulation';
-        markerEl.style.cursor = 'pointer';
-        markerEl.onclick = triggerMarkerSelection;
-        markerEl.ontouchend = (e) => {
-          triggerMarkerSelection(e);
-        };
-      }
 
       markersRef.current.push(marker);
       markersByIdRef.current[point.id] = marker;
@@ -1039,55 +974,7 @@ export default function MapView({
 
       </div>
 
-      {/* DESKTOP/IPAD FLOATING LEGEND CARD (BOTTOM LEFT - เฉพาะคอมและไอแพด สามารถกดดูรายละเอียดเกณฑ์ได้) */}
-      <div className="hidden md:flex absolute bottom-4 left-4 z-20 pointer-events-auto">
-        <div 
-          onClick={() => {
-            playModalOpenSound();
-            if (onOpenStandards) onOpenStandards();
-          }}
-          role="button"
-          tabIndex={0}
-          className={`px-3.5 py-2 rounded-2xl border text-xs flex items-center gap-3 shadow-lg backdrop-blur-md cursor-pointer transition-all hover:scale-[1.02] active:scale-95 group ${
-            isDark 
-              ? 'bg-slate-900/95 border-slate-700 hover:border-cyan-500/60 text-slate-300 shadow-xl' 
-              : 'bg-white/95 border-slate-200 hover:border-blue-400 text-slate-700'
-          }`}
-          title="คลิกเพื่อดูรายละเอียดเกณฑ์วัดระดับน้ำและผลกระทบฉบับเต็ม"
-        >
-          <div className="flex items-center gap-1.5 font-bold">
-            <BookOpen className={`w-4 h-4 transition-transform group-hover:scale-110 ${isDark ? 'text-cyan-400' : 'text-blue-600'}`} />
-            <span className={isDark ? 'text-white' : 'text-slate-900'}>เกณฑ์ระดับน้ำ:</span>
-          </div>
 
-          <div className="flex items-center space-x-1.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
-            <span className="font-semibold text-emerald-700 dark:text-emerald-400">ปกติ 5-20 ซม.</span>
-          </div>
-
-          <span className={isDark ? 'text-slate-700' : 'text-slate-300'}>•</span>
-
-          <div className="flex items-center space-x-1.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
-            <span className="font-semibold text-amber-700 dark:text-amber-400">ปานกลาง 21-50 ซม.</span>
-          </div>
-
-          <span className={isDark ? 'text-slate-700' : 'text-slate-300'}>•</span>
-
-          <div className="flex items-center space-x-1.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse"></span>
-            <span className="text-rose-600 dark:text-rose-400 font-bold">วิกฤต &gt;50 ซม.</span>
-          </div>
-
-          <span className={`ml-1 text-[11px] font-bold px-2 py-0.5 rounded-lg border flex items-center gap-1 transition-colors ${
-            isDark 
-              ? 'bg-blue-950/80 text-cyan-300 border-blue-800 group-hover:bg-blue-900' 
-              : 'bg-blue-50 text-blue-700 border-blue-200 group-hover:bg-blue-100'
-          }`}>
-            ดูรายละเอียด ↗
-          </span>
-        </div>
-      </div>
 
     </div>
   );
