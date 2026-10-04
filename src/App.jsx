@@ -1272,10 +1272,18 @@ export default function App() {
     setLastUpdatedTime(broadcast.reportedAt);
   };
 
-  // Handle New Citizen Report Submission (Hold in pending queue for admin review)
+  // Handle New Citizen Report Submission (Directly published on map 24/7)
   const handleAddCitizenReport = (newReport) => {
+    const reportToSave = {
+      ...newReport,
+      isApproved: true, // แสดงบนแผนที่จริงได้ตลอด 24 ชม. ทันทีที่รายงานด้วยตนเอง
+      isResolved: false,
+      isActive: true,
+      statusChangedAt: newReport.reportedAt || (new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) + ' น.')
+    };
+
     setCitizenReports(prev => {
-      const updated = [newReport, ...prev.filter(r => r.id !== newReport.id)];
+      const updated = [reportToSave, ...prev.filter(r => r.id !== reportToSave.id)];
       try {
         localStorage.setItem('prakanguard_citizen_reports', JSON.stringify(updated));
       } catch (e) {
@@ -1284,24 +1292,29 @@ export default function App() {
       return updated;
     });
 
-    // Notify Cloud Pub/Sub immediately so Admin on any device receives it!
-    publishCloudReport(newReport);
+    // Notify Cloud Supabase immediately
+    publishCloudReport(reportToSave);
     playNotificationChime();
 
-    // Notify the admin owner immediately (only if logged in as Admin)
+    // Auto focus and fly to the reported point on map so user sees their pin immediately!
+    setSelectedPoint(reportToSave);
+    setFlyToLocation({ lat: reportToSave.lat, lng: reportToSave.lng, zoom: 16.5 });
+    setLastUpdatedTime(reportToSave.reportedAt);
+
+    // Notify the admin owner immediately (if admin is viewing)
     if (isAdminAuthenticated) {
-      const isHail = newReport.hazardType === 'hail';
-      const resolvedLevel = newReport.bodyLevelLabel || (newReport.level === 3 || newReport.severity === 3 ? 'วิกฤต' : newReport.level === 2 || newReport.severity === 2 ? 'ปานกลาง' : 'ปกติ');
+      const isHail = reportToSave.hazardType === 'hail';
+      const resolvedLevel = reportToSave.bodyLevelLabel || (reportToSave.level === 3 || reportToSave.severity === 3 ? 'วิกฤต' : reportToSave.level === 2 || reportToSave.severity === 2 ? 'ปานกลาง' : 'ปกติ');
       setAdminAlertToast({
-        id: newReport.id,
-        name: newReport.name,
-        levelLabel: isHail ? `🧊 ${newReport.hailSizeLabel || 'ลูกเห็บตก'}` : `ระดับ${resolvedLevel}`,
-        district: newReport.district,
-        time: newReport.reportedAt
+        id: reportToSave.id,
+        name: reportToSave.name,
+        levelLabel: isHail ? `🧊 ${reportToSave.hailSizeLabel || 'ลูกเห็บตก'}` : `ระดับ${resolvedLevel}`,
+        district: reportToSave.district,
+        time: reportToSave.reportedAt
       });
     }
 
-    setLatestUpdateNotification(`📍 บันทึกรายงานจุดน้ำท่วม "${newReport.name}" เรียบร้อยแล้ว ขอบคุณที่ร่วมแจ้งข้อมูลครับ`);
+    setLatestUpdateNotification(`📍 บันทึกและปักหมุดจุดน้ำท่วม "${reportToSave.name}" ขึ้นบนแผนที่เรียบร้อยแล้ว ขอบคุณที่ร่วมแจ้งข้อมูลครับ`);
     setTimeout(() => setLatestUpdateNotification(null), 7000);
   };
 
