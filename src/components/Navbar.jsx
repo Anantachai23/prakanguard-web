@@ -3,7 +3,9 @@ import {
   PhoneCall, 
   Sun, 
   Moon, 
-  Camera 
+  Camera,
+  MessageSquare,
+  ShieldCheck 
 } from 'lucide-react';
 import RealTimeClock from './RealTimeClock';
 import { 
@@ -202,10 +204,10 @@ export default function Navbar({
             )}
           </div>
 
-          {/* Live Real-Time Weather & Temperature Badge (Shown on wide screens >= 1280px) */}
+          {/* Live Real-Time Weather & Temperature Badge (แสดงแค่ตัวเลขอุณหภูมิตามที่สั่ง) */}
           {weather && weather.temp !== undefined && (
             <div 
-              className={`hidden xl:inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-2xl border text-xs font-bold transition-all shadow-2xs select-none shrink-0 ${
+              className={`hidden md:inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-2xl border text-xs font-bold transition-all shadow-2xs select-none shrink-0 ${
                 isDark 
                   ? 'bg-slate-900/90 border-slate-700 text-sky-300' 
                   : 'bg-sky-50/90 border-sky-200 text-sky-800'
@@ -218,11 +220,6 @@ export default function Navbar({
               <span className="font-extrabold font-mono tracking-tight text-xs">
                 {weather.temp}°C
               </span>
-              {weather.weatherDesc && (
-                <span className="hidden 2xl:inline text-[11px] font-medium opacity-85 max-w-[90px] truncate">
-                  {weather.weatherDesc}
-                </span>
-              )}
             </div>
           )}
 
@@ -233,29 +230,49 @@ export default function Navbar({
         </div>
 
         {/* Right Area: Action Buttons (Responsive & Clean) */}
-        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+        <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
           
           {/* Mobile Clock: Clean & Compact */}
           <div className="md:hidden shrink-0">
             <RealTimeClock theme={theme} />
           </div>
 
-          {/* Desktop Live Updates Button (Wide screens >= 1280px) */}
+          {/* Desktop/iPad Feedback Button */}
           <button 
             type="button"
             onClick={() => {
               playModalOpenSound();
-              if (onOpenPublicUpdates) onOpenPublicUpdates();
+              if (onOpenFeedback) onOpenFeedback();
             }}
-            className={`hidden xl:inline-flex px-2.5 py-1.5 rounded-xl border text-xs font-semibold items-center gap-1.5 transition-all cursor-pointer shadow-xs active:scale-95 ${
+            className={`hidden md:inline-flex px-2 sm:px-2.5 py-1.5 rounded-xl border text-xs font-semibold items-center gap-1 sm:gap-1.5 transition-all cursor-pointer shadow-xs active:scale-95 ${
               isDark 
-                ? 'bg-emerald-950/60 hover:bg-emerald-900/60 text-emerald-300 border-emerald-800' 
-                : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border-emerald-200'
+                ? 'bg-teal-950/60 hover:bg-teal-900/60 text-teal-300 border-teal-800' 
+                : 'bg-teal-50 hover:bg-teal-100 text-teal-800 border-teal-200'
             }`}
-            title="อัปเดตสถานการณ์น้ำล่าสุดตลอด 24 ชม."
+            title="กล่องข้อเสนอแนะและติชมจากประชาชน"
           >
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
-            <span>อัปเดต</span>
+            <MessageSquare className="w-3.5 h-3.5 text-teal-500 shrink-0" />
+            <span className="hidden xl:inline">ข้อเสนอแนะ</span>
+            <span className="xl:hidden">ข้อเสนอ</span>
+          </button>
+
+          {/* Desktop/iPad Privacy Policy Button */}
+          <button 
+            type="button"
+            onClick={() => {
+              playModalOpenSound();
+              if (onOpenPrivacyPolicy) onOpenPrivacyPolicy();
+            }}
+            className={`hidden md:inline-flex px-2 sm:px-2.5 py-1.5 rounded-xl border text-xs font-semibold items-center gap-1 sm:gap-1.5 transition-all cursor-pointer shadow-xs active:scale-95 ${
+              isDark 
+                ? 'bg-sky-950/60 hover:bg-sky-900/60 text-sky-300 border-sky-800' 
+                : 'bg-sky-50 hover:bg-sky-100 text-sky-800 border-sky-200'
+            }`}
+            title="นโยบายความเป็นส่วนตัวและแหล่งข้อมูลอ้างอิง"
+          >
+            <ShieldCheck className="w-3.5 h-3.5 text-sky-500 shrink-0" />
+            <span className="hidden xl:inline">นโยบาย & ข้อกำหนด</span>
+            <span className="xl:hidden">นโยบาย</span>
           </button>
 
           {/* Citizen Flood Report Button */}

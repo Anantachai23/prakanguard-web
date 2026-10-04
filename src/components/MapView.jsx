@@ -1039,23 +1039,26 @@ export default function MapView({
 
       </div>
 
-      {/* DESKTOP/IPAD FLOATING LEGEND CARD (BOTTOM LEFT - CLEAN OFFICIAL LOOK, HIDDEN ON MOBILE) */}
-      <div className="hidden sm:flex absolute bottom-4 left-4 z-20 pointer-events-auto">
-        <div className={`px-4 py-2.5 rounded-2xl border text-xs flex items-center gap-3.5 shadow-lg backdrop-blur-md ${
-          isDark 
-            ? 'bg-slate-900/95 border-slate-700 text-slate-300 shadow-xl' 
-            : 'bg-white/95 border-slate-200 text-slate-700'
-        }`}>
-          <button
-            onClick={onOpenStandards}
-            className={`font-bold transition-colors flex items-center gap-1.5 cursor-pointer ${
-              isDark ? 'text-white hover:text-cyan-400' : 'text-slate-900 hover:text-blue-600'
-            }`}
-            title="คลิกเพื่อดูเกณฑ์ระดับน้ำมาตรฐาน"
-          >
-            <BookOpen className={`w-4 h-4 ${isDark ? 'text-cyan-400' : 'text-blue-600'}`} />
-            <span>เกณฑ์ระดับน้ำ:</span>
-          </button>
+      {/* DESKTOP/IPAD FLOATING LEGEND CARD (BOTTOM LEFT - เฉพาะคอมและไอแพด สามารถกดดูรายละเอียดเกณฑ์ได้) */}
+      <div className="hidden md:flex absolute bottom-4 left-4 z-20 pointer-events-auto">
+        <div 
+          onClick={() => {
+            playModalOpenSound();
+            if (onOpenStandards) onOpenStandards();
+          }}
+          role="button"
+          tabIndex={0}
+          className={`px-3.5 py-2 rounded-2xl border text-xs flex items-center gap-3 shadow-lg backdrop-blur-md cursor-pointer transition-all hover:scale-[1.02] active:scale-95 group ${
+            isDark 
+              ? 'bg-slate-900/95 border-slate-700 hover:border-cyan-500/60 text-slate-300 shadow-xl' 
+              : 'bg-white/95 border-slate-200 hover:border-blue-400 text-slate-700'
+          }`}
+          title="คลิกเพื่อดูรายละเอียดเกณฑ์วัดระดับน้ำและผลกระทบฉบับเต็ม"
+        >
+          <div className="flex items-center gap-1.5 font-bold">
+            <BookOpen className={`w-4 h-4 transition-transform group-hover:scale-110 ${isDark ? 'text-cyan-400' : 'text-blue-600'}`} />
+            <span className={isDark ? 'text-white' : 'text-slate-900'}>เกณฑ์ระดับน้ำ:</span>
+          </div>
 
           <div className="flex items-center space-x-1.5">
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
@@ -1075,6 +1078,14 @@ export default function MapView({
             <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse"></span>
             <span className="text-rose-600 dark:text-rose-400 font-bold">วิกฤต &gt;50 ซม.</span>
           </div>
+
+          <span className={`ml-1 text-[11px] font-bold px-2 py-0.5 rounded-lg border flex items-center gap-1 transition-colors ${
+            isDark 
+              ? 'bg-blue-950/80 text-cyan-300 border-blue-800 group-hover:bg-blue-900' 
+              : 'bg-blue-50 text-blue-700 border-blue-200 group-hover:bg-blue-100'
+          }`}>
+            ดูรายละเอียด ↗
+          </span>
         </div>
       </div>
 
