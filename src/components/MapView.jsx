@@ -358,6 +358,13 @@ export default function MapView({
     tileLayerRef.current = createTileLayer(config).addTo(map);
     mapInstanceRef.current = map;
 
+    // Expose map reference for external background sync engines
+    if (typeof window !== 'undefined') {
+      window.leafletMap = map;
+      window.__leaflet_map = map;
+      window.__pgMap = map;
+    }
+
     // Handle Map Clicks for Picking Citizen Location
     map.on('click', (e) => {
       if (isPickingLocationRef.current && onMapLocationPickedRef.current) {
@@ -385,6 +392,11 @@ export default function MapView({
       clearTimeout(timer2);
       map.remove();
       mapInstanceRef.current = null;
+      if (typeof window !== 'undefined') {
+        if (window.leafletMap === map) window.leafletMap = null;
+        if (window.__leaflet_map === map) window.__leaflet_map = null;
+        if (window.__pgMap === map) window.__pgMap = null;
+      }
     };
   }, []);
 

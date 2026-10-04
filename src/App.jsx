@@ -1272,13 +1272,14 @@ export default function App() {
     setLastUpdatedTime(broadcast.reportedAt);
   };
 
-  // Handle New Citizen Report Submission (Directly published on map 24/7)
+  // Handle New Citizen Report Submission (Requires Admin Approval before showing on public map)
   const handleAddCitizenReport = (newReport) => {
     const reportToSave = {
       ...newReport,
-      isApproved: true, // แสดงบนแผนที่จริงได้ตลอด 24 ชม. ทันทีที่รายงานด้วยตนเอง
+      isApproved: false, // ต้องรอแอดมินตรวจสอบและกดอนุมัติเท่านั้นถึงจะขึ้นบนแผนที่จริง เพื่อป้องกันข้อมูลเท็จ
       isResolved: false,
       isActive: true,
+      status: 'pending',
       statusChangedAt: newReport.reportedAt || (new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) + ' น.')
     };
 
@@ -1296,11 +1297,6 @@ export default function App() {
     publishCloudReport(reportToSave);
     playNotificationChime();
 
-    // Auto focus and fly to the reported point on map so user sees their pin immediately!
-    setSelectedPoint(reportToSave);
-    setFlyToLocation({ lat: reportToSave.lat, lng: reportToSave.lng, zoom: 16.5 });
-    setLastUpdatedTime(reportToSave.reportedAt);
-
     // Notify the admin owner immediately (if admin is viewing)
     if (isAdminAuthenticated) {
       const isHail = reportToSave.hazardType === 'hail';
@@ -1314,7 +1310,7 @@ export default function App() {
       });
     }
 
-    setLatestUpdateNotification(`📍 บันทึกและปักหมุดจุดน้ำท่วม "${reportToSave.name}" ขึ้นบนแผนที่เรียบร้อยแล้ว ขอบคุณที่ร่วมแจ้งข้อมูลครับ`);
+    setLatestUpdateNotification(`📍 ส่งรายงานจุดน้ำท่วม "${reportToSave.name}" เรียบร้อยแล้ว (รอแอดมินตรวจสอบและอนุมัติก่อนขึ้นแผนที่สาธารณะ) ขอบคุณครับ`);
     setTimeout(() => setLatestUpdateNotification(null), 7000);
   };
 
