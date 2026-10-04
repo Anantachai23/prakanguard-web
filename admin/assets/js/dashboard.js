@@ -5,7 +5,8 @@ import { DISTRICTS, ONLINE_WINDOW_MS, LIVE_REFRESH_MS, CHART_REFRESH_MS } from '
 import { 
   $, $$, h, icon, toast, confirmDialog, openModal, 
   dateTime, timeOnly, hm, duration, timeAgo, startOfBangkokDay, nf,
-  normPage, normDistrict, levelInfo, classifyDevice, deviceLabel, shortId, downloadFile
+  normPage, normDistrict, levelInfo, classifyDevice, deviceLabel, shortId, downloadFile,
+  playApprovalChime, showApprovalSuccessDialog
 } from './core.js';
 import { 
   detectCaps, caps, fetchReports, fetchFeedback, fetchTrash, 
@@ -534,8 +535,13 @@ function renderReports() {
           h('span', { class: `badge ${repDistBadgeClass}` }, repDistText)
         )
       ),
-      // Date Time
-      h('td', { class: 'cell-mono' }, r.reported_at || dateTime(r.timestamp || r.created_at)),
+      // Date Time (Bangkok Official Time)
+      h('td', { class: 'cell-mono' }, (() => {
+        if (r.timestamp) return dateTime(r.timestamp);
+        if (r.created_at) return dateTime(r.created_at);
+        if (r.reported_at || r.reportedAt) return r.reported_at || r.reportedAt;
+        return '—';
+      })()),
       // Status (รออนุมัติ / อนุมัติแล้ว)
       h('td', {},
         h('span', { class: `badge ${isApproved ? 'badge-ok' : 'badge-warn'}` },
@@ -608,8 +614,16 @@ function updateReportsSelectionUI() {
 }
 
 async function handleApproveSingle(id) {
+  const reportItem = state.reports.find(r => r.id === id);
   const ok = await setReportsApproval([id], true);
   if (ok) {
+    playApprovalChime();
+    showApprovalSuccessDialog({
+      title: 'อนุมัติรายงานน้ำท่วมสำเร็จ!',
+      reportName: reportItem?.name || 'จุดน้ำท่วม',
+      district: reportItem?.district || '',
+      count: 1
+    });
     toast('อนุมัติรายงานขึ้นบนเว็บหลักเรียบร้อยแล้ว', 'success');
     await refreshAllData();
   } else {
@@ -629,9 +643,16 @@ async function handleApproveSelected() {
   const ids = Array.from(state.selectedReports);
   if (ids.length === 0) return;
   const ok = await setReportsApproval(ids, true);
-  toast(`อนุมัติสำเร็จ ${ok} รายการ`, 'success');
-  state.selectedReports.clear();
-  await refreshAllData();
+  if (ok) {
+    playApprovalChime();
+    showApprovalSuccessDialog({
+      title: 'อนุมัติรายงานกลุ่มสำเร็จ!',
+      count: ok
+    });
+    toast(`อนุมัติสำเร็จ ${ok} รายการ`, 'success');
+    state.selectedReports.clear();
+    await refreshAllData();
+  }
 }
 
 async function handleDeleteReportsSingle(report) {

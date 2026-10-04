@@ -156,6 +156,191 @@ export function openModal({ title, subtitle = '', body, footer = null, width = 7
   return { close, card };
 }
 
+/** เสียงเอฟเฟกต์กระดิ่งเมื่อกดอนุมัติรายงานสำเร็จ (Web Audio API 100% Offline ไม่ต้องพึ่งไฟล์ภายนอก) */
+export function playApprovalChime() {
+  try {
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx();
+    if (ctx.state === 'suspended') ctx.resume();
+    const now = ctx.currentTime;
+
+    // Note 1: 587.33 Hz (D5)
+    const osc1 = ctx.createOscillator();
+    const gain1 = ctx.createGain();
+    osc1.type = 'sine';
+    osc1.frequency.setValueAtTime(587.33, now);
+    gain1.gain.setValueAtTime(0, now);
+    gain1.gain.linearRampToValueAtTime(0.25, now + 0.02);
+    gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+    osc1.connect(gain1);
+    gain1.connect(ctx.destination);
+    osc1.start(now);
+    osc1.stop(now + 0.35);
+
+    // Note 2: 880.00 Hz (A5)
+    const osc2 = ctx.createOscillator();
+    const gain2 = ctx.createGain();
+    osc2.type = 'sine';
+    osc2.frequency.setValueAtTime(880.00, now + 0.08);
+    gain2.gain.setValueAtTime(0, now + 0.08);
+    gain2.gain.linearRampToValueAtTime(0.3, now + 0.11);
+    gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
+    osc2.connect(gain2);
+    gain2.connect(ctx.destination);
+    osc2.start(now + 0.08);
+    osc2.stop(now + 0.45);
+
+    // Note 3: 1174.66 Hz (D6) - Joyful high chime!
+    const osc3 = ctx.createOscillator();
+    const gain3 = ctx.createGain();
+    osc3.type = 'triangle';
+    osc3.frequency.setValueAtTime(1174.66, now + 0.16);
+    gain3.gain.setValueAtTime(0, now + 0.16);
+    gain3.gain.linearRampToValueAtTime(0.35, now + 0.20);
+    gain3.gain.exponentialRampToValueAtTime(0.0001, now + 0.85);
+    osc3.connect(gain3);
+    gain3.connect(ctx.destination);
+    osc3.start(now + 0.16);
+    osc3.stop(now + 0.85);
+  } catch (e) {
+    console.warn('Audio playback error', e);
+  }
+}
+
+/** ป็อบอัพเด้งสวยงามเมื่อกดอนุมัติจุดน้ำท่วม */
+export function showApprovalSuccessDialog({ title = 'อนุมัติรายงานขึ้นแผนที่สำเร็จ!', reportName = '', district = '', count = 1 }) {
+  const overlay = h('div', { 
+    class: 'overlay', 
+    role: 'dialog', 
+    'aria-modal': 'true',
+    style: {
+      backdropFilter: 'blur(8px)',
+      backgroundColor: 'rgba(15, 23, 42, 0.72)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: 100000
+    }
+  });
+
+  const closeDialog = () => {
+    overlay.classList.remove('show');
+    overlay.style.opacity = '0';
+    overlay.style.transition = 'opacity 0.25s ease-out';
+    setTimeout(() => overlay.remove(), 260);
+  };
+
+  const card = h('div', { 
+    class: 'approval-popup-card',
+    style: {
+      background: 'linear-gradient(145deg, #0f172a 0%, #1e293b 100%)',
+      border: '1.5px solid rgba(34, 197, 94, 0.45)',
+      borderRadius: '24px',
+      padding: '28px 24px',
+      maxWidth: '430px',
+      width: '90%',
+      textAlign: 'center',
+      boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.65), 0 0 35px rgba(34, 197, 94, 0.22)',
+      color: '#f8fafc',
+      animation: 'pgApprovalBounceIn 0.42s cubic-bezier(0.16, 1, 0.3, 1) forwards'
+    }
+  },
+    // Animated Check Halo
+    h('div', { 
+      style: {
+        width: '76px',
+        height: '76px',
+        margin: '0 auto 16px',
+        borderRadius: '50%',
+        background: 'radial-gradient(circle, rgba(34, 197, 94, 0.25) 0%, rgba(34, 197, 94, 0.05) 70%)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        border: '2px solid rgba(34, 197, 94, 0.6)',
+        boxShadow: '0 0 24px rgba(34, 197, 94, 0.4)'
+      } 
+    },
+      h('div', {
+        style: {
+          width: '52px',
+          height: '52px',
+          borderRadius: '50%',
+          background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: '#ffffff',
+          fontSize: '26px',
+          fontWeight: '900',
+          boxShadow: '0 8px 16px rgba(22, 163, 74, 0.5)'
+        }
+      }, '✓')
+    ),
+    // Title
+    h('h3', { 
+      style: {
+        fontSize: '20px',
+        fontWeight: '800',
+        color: '#ffffff',
+        margin: '0 0 6px',
+        letterSpacing: '-0.01em'
+      } 
+    }, title),
+    // Subtitle
+    h('p', { 
+      style: {
+        fontSize: '13px',
+        color: '#94a3b8',
+        margin: '0 0 16px',
+        lineHeight: '1.5'
+      } 
+    }, count > 1 ? `อนุมัติข้อมูลจำนวน ${count} รายการขึ้นบนแผนที่ประชาชนเรียบร้อยแล้ว` : 'ข้อมูลได้รับการยืนยันและอัปเดตขึ้นบนแผนที่สาธารณะทันทีเรียบร้อย'),
+    // Report Detail Card
+    reportName ? h('div', {
+      style: {
+        background: 'rgba(34, 197, 94, 0.08)',
+        border: '1px solid rgba(34, 197, 94, 0.25)',
+        borderRadius: '14px',
+        padding: '12px 14px',
+        marginBottom: '20px',
+        textAlign: 'left'
+      }
+    },
+      h('div', { style: { fontSize: '11px', color: '#4ade80', fontWeight: '700', marginBottom: '2px' } }, '📍 จุดที่อนุมัติขึ้นแผนที่สาธารณะ:'),
+      h('div', { style: { fontSize: '14px', fontWeight: '700', color: '#f1f5f9' } }, reportName),
+      district ? h('div', { style: { fontSize: '12px', color: '#94a3b8', marginTop: '2px' } }, `อ.${district}`) : null
+    ) : null,
+    // Action Button
+    h('button', {
+      class: 'btn btn-success',
+      style: {
+        width: '100%',
+        padding: '12px',
+        fontSize: '14px',
+        fontWeight: '700',
+        borderRadius: '14px',
+        cursor: 'pointer',
+        background: 'linear-gradient(135deg, #22c55e 0%, #15803d 100%)',
+        border: 'none',
+        color: '#ffffff',
+        boxShadow: '0 8px 20px -4px rgba(34, 197, 94, 0.5)'
+      },
+      onclick: closeDialog
+    }, 'ตกลง')
+  );
+
+  overlay.appendChild(card);
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) closeDialog();
+  });
+  document.body.appendChild(overlay);
+  requestAnimationFrame(() => overlay.classList.add('show'));
+
+  // Auto close after 4.5s
+  setTimeout(closeDialog, 4500);
+}
+
 /* ------------------------------------------------------------ Formatters */
 const TZ = 'Asia/Bangkok';
 const fmtDT = new Intl.DateTimeFormat('th-TH', { timeZone: TZ, day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false });
@@ -163,7 +348,20 @@ const fmtTime = new Intl.DateTimeFormat('th-TH', { timeZone: TZ, hour: '2-digit'
 const fmtDate = new Intl.DateTimeFormat('th-TH', { timeZone: TZ, day: 'numeric', month: 'long', year: 'numeric', weekday: 'long' });
 const fmtHM = new Intl.DateTimeFormat('th-TH', { timeZone: TZ, hour: '2-digit', minute: '2-digit', hour12: false });
 
-export const dateTime = (v) => (v ? fmtDT.format(new Date(v)) + ' น.' : '—');
+export const dateTime = (v) => {
+  if (!v) return '—';
+  try {
+    if (typeof v === 'string' && (v.includes('เวลา') || v.includes('น.'))) return v;
+    let d;
+    if (typeof v === 'number') {
+      d = new Date(v < 1e11 ? v * 1000 : v);
+    } else {
+      d = new Date(v);
+    }
+    if (!isNaN(d.getTime())) return fmtDT.format(d) + ' น.';
+  } catch (_) {}
+  return String(v);
+};
 export const timeOnly = (v) => (v ? fmtTime.format(new Date(v)) : '—');
 export const longDate = (v) => fmtDate.format(new Date(v));
 export const hm = (v) => fmtHM.format(new Date(v));

@@ -899,9 +899,11 @@ export default function App() {
               } catch (e) {}
             }
 
-            if (lifecycleResult.notificationMessage && lifecycleResult.statusSignature) {
-              notifyOnFloodStateChange(lifecycleResult.notificationMessage, lifecycleResult.statusSignature);
-            }
+            // ทำงานอย่างเงียบๆ: อัปเดตเฉพาะจุดบนแผนที่ (จุดท่วมเพิ่ม/จุดแห้งลด) โดยไม่เด้งป็อบอัพรบกวนหน้าจอ
+            lastFloodSignatureRef.current = lifecycleResult.statusSignature;
+            try {
+              localStorage.setItem('prakanguard_last_flood_sig', lifecycleResult.statusSignature);
+            } catch (e) {}
 
             if (lifecycleResult.changelogEntry) {
               setChangelog(prev => {

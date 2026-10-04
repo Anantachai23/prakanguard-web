@@ -413,6 +413,52 @@ export default function AdminModal({
     };
   };
 
+  // Play approval audio chime
+  const playApprovalChime = () => {
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      if (ctx.state === 'suspended') ctx.resume();
+      const now = ctx.currentTime;
+      const osc1 = ctx.createOscillator();
+      const gain1 = ctx.createGain();
+      osc1.type = 'sine';
+      osc1.frequency.setValueAtTime(587.33, now);
+      gain1.gain.setValueAtTime(0, now);
+      gain1.gain.linearRampToValueAtTime(0.25, now + 0.02);
+      gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+      osc1.connect(gain1);
+      gain1.connect(ctx.destination);
+      osc1.start(now);
+      osc1.stop(now + 0.35);
+
+      const osc2 = ctx.createOscillator();
+      const gain2 = ctx.createGain();
+      osc2.type = 'sine';
+      osc2.frequency.setValueAtTime(880.00, now + 0.08);
+      gain2.gain.setValueAtTime(0, now + 0.08);
+      gain2.gain.linearRampToValueAtTime(0.3, now + 0.11);
+      gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
+      osc2.connect(gain2);
+      gain2.connect(ctx.destination);
+      osc2.start(now + 0.08);
+      osc2.stop(now + 0.45);
+
+      const osc3 = ctx.createOscillator();
+      const gain3 = ctx.createGain();
+      osc3.type = 'triangle';
+      osc3.frequency.setValueAtTime(1174.66, now + 0.16);
+      gain3.gain.setValueAtTime(0, now + 0.16);
+      gain3.gain.linearRampToValueAtTime(0.35, now + 0.20);
+      gain3.gain.exponentialRampToValueAtTime(0.0001, now + 0.85);
+      osc3.connect(gain3);
+      gain3.connect(ctx.destination);
+      osc3.start(now + 0.16);
+      osc3.stop(now + 0.85);
+    } catch (_) {}
+  };
+
   // Admin Actions for Pending Reports
   const handleApproveWithDepth = (reportId) => {
     const report = citizenReports.find(r => r.id === reportId);
@@ -423,7 +469,8 @@ export default function AdminModal({
       onApproveReport(reportId);
     }
     setEditingReportId(null);
-    showNotice(`✅ ยืนยันอนุมัติจุด "${report?.name || 'รายงาน'}" ขึ้นแสดงบนแผนที่เรียบร้อย`);
+    playApprovalChime();
+    showNotice(`✅ ยืนยันอนุมัติจุด "${report?.name || 'รายงาน'}" ขึ้นแสดงบนแผนที่สาธารณะเรียบร้อยแล้ว`);
   };
 
   const handleReject = (reportId) => {
