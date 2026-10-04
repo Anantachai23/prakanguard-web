@@ -26,12 +26,12 @@ export default function PublicUpdatesModal({
   if (!isOpen) return null;
   const isDark = theme === 'dark';
 
-  // Sort order: เริ่มท่วมแล้ว (แดง) -> น้ำลดแล้ว (เหลือง) -> แห้งแล้ว (เขียว)
+  // เรียงลำดับเวลาจากล่างขึ้นบน: รายงานที่ใหม่กว่าจะดันขึ้นมาอยู่บนสุดเสมอ และเวลาด้านล่างต้องไม่มากกว่าด้านบน
   const items = [...(dailyUpdates || [])].sort((a, b) => {
-    const order = { rising: 1, receding: 2, dry: 3 };
-    const diff = (order[a.statusType] || 2) - (order[b.statusType] || 2);
-    if (diff !== 0) return diff;
-    return (b.timestamp || 0) - (a.timestamp || 0);
+    const timeA = Number(a.timestamp) || 0;
+    const timeB = Number(b.timestamp) || 0;
+    if (timeB !== timeA) return timeB - timeA;
+    return String(b.itemTime || '').localeCompare(String(a.itemTime || ''));
   });
 
   const dryCount = items.filter(i => i.statusType === 'dry').length;

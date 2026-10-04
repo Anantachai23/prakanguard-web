@@ -2243,7 +2243,7 @@ export default function AdminModal({
                               </span>
                             ) : (
                               <span className="text-[10px] px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 font-bold">
-                                รายงานประชาชน
+                                ประชาชนในพื้นที่แจ้งน้ำท่วม
                               </span>
                             )}
                             <span className="text-[10px] font-bold text-slate-400">

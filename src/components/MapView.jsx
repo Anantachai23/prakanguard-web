@@ -28,6 +28,25 @@ export function isPointDry(item) {
   return false;
 }
 
+// Helper to check if water is receding / falling from any data source field
+export function isWaterReceding(item) {
+  if (!item) return false;
+  if (item.waterTrend === 'falling' || item.water_trend === 'falling' || item.status === 'falling' || item.trend === 'falling') {
+    return true;
+  }
+  const statusLabel = String(item.statusLabel || '');
+  if (statusLabel.includes('ลด') || statusLabel.includes('ระบาย')) return true;
+  const notes = String(item.notes || '');
+  if (notes.includes('น้ำลด') || notes.includes('ระดับลด') || notes.includes('ลดลง') || notes.includes('แห้งลง')) return true;
+  const waterSituation = String(item.waterSituation || '');
+  if (waterSituation.includes('ลด') || waterSituation.includes('ระบาย')) return true;
+  const trendText = String(item.trendText || '');
+  if (trendText.includes('ลด') || trendText.includes('ระบาย')) return true;
+  const trafficStatus = String(item.trafficStatus || '');
+  if (trafficStatus.includes('น้ำลด') || trafficStatus.includes('ลดลง')) return true;
+  return false;
+}
+
 // Unified Official Flood Pin Icon Generator for ALL points and citizen reports
 function createOfficialFloodPin({ level, depthCm, hasPhoto, isSelected, isFalling, name, id }) {
   // Colors strictly conforming to standard:
@@ -60,8 +79,15 @@ function createOfficialFloodPin({ level, depthCm, hasPhoto, isSelected, isFallin
     ? `<div style="position:absolute;left:50%;bottom:2px;transform:translateX(-50%);width:28px;height:28px;border-radius:50%;background:rgba(220,38,38,0.35);animation:pgPinPulse 1.8s ease-out infinite;pointer-events:none;z-index:0;"></div>`
     : '';
 
+  // สัญลักษณ์น้ำลดที่เห็นได้ชัดเจนบนแผนที่ตามที่ระบุ
   const fallingBadgeHtml = isFalling
-    ? `<div style="position:absolute;top:-4px;left:-4px;width:17px;height:17px;background:#0d9488;border:1.5px solid #ffffff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;color:#ffffff;box-shadow:0 2px 4px rgba(0,0,0,0.3);z-index:10;pointer-events:none;" title="น้ำกำลังลด">📉</div>`
+    ? `
+      <div class="pg-pin-falling-tag" style="position:absolute;top:-20px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg, #0d9488 0%, #059669 100%);color:#ffffff;font-size:9.5px;font-weight:900;font-family:'Prompt',-apple-system,sans-serif;padding:1px 6px;border-radius:12px;border:1.5px solid #ffffff;box-shadow:0 2px 6px rgba(0,0,0,0.4);white-space:nowrap;display:flex;align-items:center;gap:2px;pointer-events:none;z-index:30;">
+        <span style="font-size:10px;line-height:1;">📉</span>
+        <span>น้ำลด</span>
+      </div>
+      <div style="position:absolute;bottom:0px;right:-5px;width:17px;height:17px;background:#0d9488;border:1.5px solid #ffffff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:900;color:#ffffff;box-shadow:0 2px 4px rgba(0,0,0,0.3);z-index:15;pointer-events:none;" title="น้ำกำลังลด">💧↓</div>
+    `
     : '';
 
   const selectedRingHtml = isSelected
@@ -76,9 +102,7 @@ function createOfficialFloodPin({ level, depthCm, hasPhoto, isSelected, isFallin
   const html = `
     <div class="pg-flood-pin-container ${levelClass} ${isSelected ? 'pg-pin-selected' : ''}" 
          data-point-id="${id || ''}"
-         onclick="if(window.__pgSelectPointById)window.__pgSelectPointById('${id || ''}', event)"
-         ontouchend="if(window.__pgSelectPointById)window.__pgSelectPointById('${id || ''}', event)"
-         style="position:relative;width:34px;height:44px;display:flex;align-items:center;justify-content:center;cursor:pointer;transform-origin:bottom center;transition:transform 0.18s ease;touch-action:manipulation;">
+         style="position:relative;width:34px;height:44px;display:flex;align-items:center;justify-content:center;cursor:pointer;transform-origin:bottom center;">
       ${pulseHtml}
       ${selectedRingHtml}
       ${fallingBadgeHtml}
@@ -259,30 +283,16 @@ export default function MapView({
           -webkit-tap-highlight-color: transparent;
           cursor: pointer;
         }
-        /* Expanded invisible touch hitbox (66x76px) for effortless mobile tapping */
-        .pg-flood-pin-container::before {
-          content: '';
-          position: absolute;
-          top: -16px;
-          bottom: -16px;
-          left: -16px;
-          right: -16px;
-          border-radius: 50%;
-          z-index: 10;
-          cursor: pointer;
-          pointer-events: auto;
-          background: transparent;
-        }
         @media (hover: hover) {
           .pg-flood-pin-container:hover {
-            transform: scale(1.15);
+            transform: scale(1.1);
           }
         }
         .pg-flood-pin-container:active {
-          transform: scale(0.92) !important;
+          opacity: 0.85;
         }
         .pg-pin-selected {
-          transform: scale(1.22) !important;
+          filter: drop-shadow(0 0 8px rgba(2, 132, 225, 0.95)) !important;
           z-index: 9999 !important;
         }
         .outside-province-mask {
@@ -673,11 +683,12 @@ export default function MapView({
         (selectedPoint.name === point.name && Math.abs(selectedPoint.lat - point.lat) < 0.005)
       );
 
+      const isFalling = isWaterReceding(point);
       const customIcon = createOfficialFloodPin({
         level,
         depthCm: point.depthCm,
         hasPhoto: false,
-        isFalling: point.waterTrend === 'falling',
+        isFalling,
         isSelected,
         name: point.name,
         id: point.id
@@ -689,39 +700,18 @@ export default function MapView({
         bubblingMouseEvents: false
       }).addTo(map);
 
-      // Unified direct select handler: opens full centered modal immediately without panning map away
-      const triggerMarkerSelection = (e) => {
-        if (e) {
-          if (e.originalEvent) {
-            L.DomEvent.stopPropagation(e);
-            L.DomEvent.preventDefault(e);
-          } else if (e.stopPropagation) {
-            e.stopPropagation();
-          }
+      // Leaflet native click event: Suppressed automatically by Leaflet during pinch-to-zoom or drag-pan gestures!
+      // This ensures mobile zooming NEVER accidentally triggers marker selection.
+      marker.on('click', (e) => {
+        if (e && e.originalEvent) {
+          L.DomEvent.stopPropagation(e);
         }
-        if (window.__pgSelectPointById) {
-          window.__pgSelectPointById(point.id, e);
-        } else {
-          lastFlyToTimeRef.current = Date.now();
-          playPinClickSound();
-          if (onSelectPoint) {
-            onSelectPoint(point, { fromMapPin: true });
-          }
+        lastFlyToTimeRef.current = Date.now();
+        playPinClickSound();
+        if (onSelectPoint) {
+          onSelectPoint(point, { fromMapPin: true });
         }
-      };
-
-      marker.on('click', triggerMarkerSelection);
-
-      // Also attach directly to the DOM element for guaranteed mobile tap responsiveness
-      const markerEl = marker.getElement();
-      if (markerEl) {
-        markerEl.style.touchAction = 'manipulation';
-        markerEl.style.cursor = 'pointer';
-        markerEl.onclick = triggerMarkerSelection;
-        markerEl.ontouchend = (e) => {
-          triggerMarkerSelection(e);
-        };
-      }
+      });
 
       markersRef.current.push(marker);
       markersByIdRef.current[point.id] = marker;
@@ -763,42 +753,24 @@ export default function MapView({
       const isL3 = level === 3;
       const isL2 = level === 2;
       const isSelected = selectedPoint && selectedPoint.id === item.id;
+      const isReceding = isWaterReceding(item);
 
       // Radius: L3: 300m, L2: 220m, L1: 150m
       const radius = isL3 ? 300 : (isL2 ? 220 : 150);
-      const color = isL3 ? '#dc2626' : (isL2 ? '#eab308' : '#16a34a');
+      const color = isReceding ? '#0d9488' : (isL3 ? '#dc2626' : (isL2 ? '#eab308' : '#16a34a'));
       const baseFillOpacity = isDark ? 0.16 : 0.12;
 
+      // interactive: false strictly ensures the circle NEVER intercepts mobile zoom gestures or accidental finger touches
       const circle = L.circle([item.lat, item.lng], {
         radius: radius,
         color: color,
         weight: isSelected ? 2 : 1,
-        opacity: isSelected ? 0.85 : 0.5,
+        opacity: isSelected ? 0.85 : 0.45,
         fillColor: color,
-        fillOpacity: isSelected ? 0.25 : baseFillOpacity,
-        interactive: true
+        fillOpacity: isSelected ? 0.22 : baseFillOpacity,
+        dashArray: isReceding ? '5, 5' : undefined,
+        interactive: false
       }).addTo(map);
-
-      const levelLabel = isL3 ? 'วิกฤต' : (isL2 ? 'ปานกลาง' : 'ปกติ');
-      const depthText = item.depthCm ? `${item.depthCm} ซม.` : (item.depthRange || 'เฝ้าระวัง');
-
-      circle.bindTooltip(`📡 รัศมีน้ำท่วม ~${radius}ม. • ${item.name} (${levelLabel} ${depthText})`, {
-        sticky: true,
-        direction: 'top',
-        className: 'bg-slate-900/95 text-white font-prompt text-[11px] font-bold px-2 py-0.5 rounded-lg border border-slate-700 shadow-md'
-      });
-
-      circle.on('click', (e) => {
-        if (e && e.originalEvent) {
-          L.DomEvent.stopPropagation(e);
-        }
-        playPinClickSound();
-        if (onSelectPoint) {
-          onSelectPoint(item, { fromMapPin: true });
-        }
-        const marker = markersByIdRef.current[item.id];
-        if (marker && !isMobile) marker.openPopup();
-      });
 
       radarCircleLayersRef.current.push(circle);
     });

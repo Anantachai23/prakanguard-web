@@ -208,6 +208,31 @@ export default function Navbar({
               }`}>{severe}</span>
             </button>
 
+            {/* Falling: น้ำลด Filter Button */}
+            {falling > 0 && (
+              <button
+                type="button"
+                onClick={() => {
+                  playSelectSound();
+                  if (onSelectSeverityFilter) onSelectSeverityFilter(severityFilter === 'falling' ? 'all' : 'falling');
+                }}
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-semibold cursor-pointer transition-all active:scale-95 ${
+                  severityFilter === 'falling'
+                    ? 'bg-teal-600 text-white shadow-xs font-bold ring-2 ring-teal-400/40'
+                    : isDark 
+                      ? 'hover:bg-slate-800 text-teal-400' 
+                      : 'hover:bg-white text-teal-700'
+                }`}
+                title="คลิกเพื่อกรองแสดงเฉพาะจุดที่น้ำกำลังลด"
+              >
+                <span>📉</span>
+                <span>น้ำลด</span>
+                <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+                  severityFilter === 'falling' ? 'bg-white/20 text-white' : (isDark ? 'bg-teal-950/80 text-teal-300' : 'bg-teal-100 text-teal-800')
+                }`}>{falling}</span>
+              </button>
+            )}
+
             {/* Clear Filter Button */}
             {severityFilter !== 'all' && (
               <button

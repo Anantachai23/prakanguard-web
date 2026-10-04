@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import Navbar from './components/Navbar';
-import MapView, { resolveLevel, deduplicateAndDeclutterPoints } from './components/MapView';
+import MapView, { resolveLevel, deduplicateAndDeclutterPoints, isWaterReceding } from './components/MapView';
 import VisualGauge from './components/VisualGauge';
 import AiForecastModal from './components/AiForecastModal';
 import FloodStandardsModal from './components/FloodStandardsModal';
@@ -726,8 +726,15 @@ export default function App() {
     }
   }, [showAnnouncementBanner, activeAnnouncement]);
 
-  // 5-Minute Auto-Refresh Countdown State (300 seconds)
-  const [refreshCountdown, setRefreshCountdown] = useState(300);
+  // 5-Minute Auto-Refresh Countdown State (Synchronized to global wall-clock epoch)
+  // Ensures countdown continues seamlessly across F5, mobile reloads, and synchronizes all devices simultaneously
+  const getGlobalRefreshCountdown = () => {
+    const nowSec = Math.floor(Date.now() / 1000);
+    const rem = 300 - (nowSec % 300);
+    return rem === 0 ? 300 : rem;
+  };
+  const [refreshCountdown, setRefreshCountdown] = useState(() => getGlobalRefreshCountdown());
+  const lastRefreshCycleRef = useRef(Math.floor(Date.now() / (300 * 1000)));
 
   // Admin Management & Live Verification Notification States
   const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
@@ -1414,20 +1421,28 @@ export default function App() {
       console.warn("Weather sync error during refresh:", e);
     }
     setIsRefreshingData(false);
-    setRefreshCountdown(300);
   };
 
-  // 5-Minute Auto-Refresh Countdown Timer (นับถอยหลัง 300 วินาที และอัปเดตจุดน้ำท่วม/ไม่ท่วมทุกๆ 5 นาที จากแหล่งข้อมูลจริง)
+  // 5-Minute Global Auto-Refresh Timer (Synchronized to wall-clock 5-min intervals)
+  // Persists across F5 and mobile pull-to-refresh without resetting to 5:00, keeping all devices in sync
   useEffect(() => {
-    const timer = setInterval(() => {
-      setRefreshCountdown(prev => {
-        if (prev <= 1) {
-          handleRefreshData();
-          return 300;
-        }
-        return prev - 1;
-      });
-    }, 1000);
+    const updateCountdown = () => {
+      const nowMs = Date.now();
+      const currentCycle = Math.floor(nowMs / (300 * 1000));
+      const nowSec = Math.floor(nowMs / 1000);
+      const remaining = 300 - (nowSec % 300);
+
+      setRefreshCountdown(remaining === 0 ? 300 : remaining);
+
+      // When the 5-minute cycle boundary is crossed globally, auto-refresh simultaneously
+      if (currentCycle > lastRefreshCycleRef.current) {
+        lastRefreshCycleRef.current = currentCycle;
+        handleRefreshData();
+      }
+    };
+
+    updateCountdown();
+    const timer = setInterval(updateCountdown, 1000);
     return () => clearInterval(timer);
   }, []);
 
@@ -1640,6 +1655,7 @@ export default function App() {
   };
 
   // Admin Actions: Approve Report & Publish to Map
+  // ข้อกำหนด: ไม่ต้องซูมเข้าไปในจุดที่อนุมัติ, ให้ขึ้นในอัปเดตแทน และขึ้นว่า "ประชาชนในพื้นที่แจ้งน้ำท่วม" (ไม่ขึ้นว่าแอดมินอนุมัติ)
   const handleApproveReport = (id, shouldBroadcast = true) => {
     const timeStr = new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) + ' น.';
     let approvedPoint = null;
@@ -1648,7 +1664,15 @@ export default function App() {
       const updated = prev.map(r => {
         if (r.id === id) {
           found = true;
-          approvedPoint = { ...r, isApproved: true, isResolved: false, isActive: true, approvedAt: timeStr, statusChangedAt: timeStr };
+          approvedPoint = { 
+            ...r, 
+            isApproved: true, 
+            isResolved: false, 
+            isActive: true, 
+            approvedAt: timeStr, 
+            statusChangedAt: timeStr,
+            source: 'ประชาชนในพื้นที่แจ้งน้ำท่วม'
+          };
           return approvedPoint;
         }
         return r;
@@ -1657,10 +1681,16 @@ export default function App() {
         fetchRecentCloudReports().then(cloudReports => {
           const remote = (cloudReports || []).find(c => c.id === id);
           if (remote) {
-            const fresh = { ...remote, isApproved: true, isResolved: false, isActive: true, approvedAt: timeStr, statusChangedAt: timeStr };
+            const fresh = { 
+              ...remote, 
+              isApproved: true, 
+              isResolved: false, 
+              isActive: true, 
+              approvedAt: timeStr, 
+              statusChangedAt: timeStr,
+              source: 'ประชาชนในพื้นที่แจ้งน้ำท่วม'
+            };
             setCitizenReports(curr => [fresh, ...curr.filter(x => x.id !== id)]);
-            setSelectedPoint(fresh);
-            setFlyToLocation({ lat: fresh.lat, lng: fresh.lng });
           }
         });
       }
@@ -1672,14 +1702,11 @@ export default function App() {
     setAdminAlertToast(null);
     setLastUpdatedTime(timeStr);
     if (approvedPoint) {
-      setSelectedPoint(approvedPoint);
-      setFlyToLocation({ lat: approvedPoint.lat, lng: approvedPoint.lng });
-      
-      // บันทึกการแจ้งเตือนลงในอัปเดตสถานการณ์น้ำรายวัน (1 เวลาต่อการแจ้งเตือน 1 ครั้ง)
+      // บันทึกการแจ้งเตือนลงในอัปเดตสถานการณ์น้ำรายวัน (ไม่ซูมแผนที่ เพื่อให้แผนที่อยู่นิ่ง)
       const newEvent = {
         id: `upd_citizen_${approvedPoint.id}_${Date.now()}`,
         locationKey: approvedPoint.id,
-        locationName: approvedPoint.name || approvedPoint.locationName || 'รายงานจากประชาชน',
+        locationName: approvedPoint.name || approvedPoint.locationName || 'ประชาชนในพื้นที่แจ้งน้ำท่วม',
         district: approvedPoint.district,
         subdistrict: approvedPoint.subdistrict,
         locationSub: `${approvedPoint.district || 'สมุทรปราการ'} ${approvedPoint.subdistrict ? '• ' + approvedPoint.subdistrict : ''}`,
@@ -1688,7 +1715,7 @@ export default function App() {
         depthCm: approvedPoint.depthCm || 15,
         itemTime: timeStr,
         timestamp: Date.now(),
-        source: 'รายงานประชาชน (แอดมินอนุมัติ)',
+        source: 'ประชาชนในพื้นที่แจ้งน้ำท่วม',
         lat: approvedPoint.lat,
         lng: approvedPoint.lng,
         rawPoint: approvedPoint
@@ -1931,7 +1958,7 @@ export default function App() {
       if (severityFilter === "all") {
         matchSeverity = true;
       } else if (severityFilter === "falling") {
-        matchSeverity = point.waterTrend === 'falling';
+        matchSeverity = isWaterReceding(point);
       } else {
         matchSeverity = effLevel.toString() === severityFilter;
       }
@@ -1950,7 +1977,7 @@ export default function App() {
       if (severityFilter === "all") {
         matchSeverity = true;
       } else if (severityFilter === "falling") {
-        matchSeverity = report.waterTrend === 'falling';
+        matchSeverity = isWaterReceding(report);
       } else {
         matchSeverity = effLevel.toString() === severityFilter;
       }
@@ -1977,7 +2004,7 @@ export default function App() {
       else if (lvl === 2) moderate++;
       else minor++;
 
-      if (p.waterTrend === 'falling') falling++;
+      if (isWaterReceding(p)) falling++;
     });
 
     return { minor, moderate, severe, falling };
@@ -2016,21 +2043,14 @@ export default function App() {
     const fromMapPin = !!options?.fromMapPin;
     const pointWithMeta = fromMapPin ? { ...location, _fromMapPin: true } : location;
 
-    // Ensure district filter does not hide this point on the map
-    if (selectedDistrict !== "ทั้งหมด" && location.district && selectedDistrict !== location.district) {
-      setSelectedDistrict("ทั้งหมด");
-    }
-
-    // Ensure severity filter does not hide this point on the map
-    if (severityFilter !== "all" && location.level && location.level.toString() !== severityFilter) {
-      setSeverityFilter("all");
-    }
-
-    setSelectedPoint(pointWithMeta);
-    setIsDetailMinimized(false);
-
-    // If selected directly from a map pin, DO NOT fly/zoom away (prevents pin running away!)
+    // Only change filters and trigger camera flyTo when selected from SEARCH or list (NOT from map pin tap!)
     if (!fromMapPin) {
+      if (selectedDistrict !== "ทั้งหมด" && location.district && selectedDistrict !== location.district) {
+        setSelectedDistrict("ทั้งหมด");
+      }
+      if (severityFilter !== "all" && location.level && location.level.toString() !== severityFilter) {
+        setSeverityFilter("all");
+      }
       setFlyToLocation({
         lat: location.lat,
         lng: location.lng,
@@ -2039,6 +2059,9 @@ export default function App() {
         ts: Date.now()
       });
     }
+
+    setSelectedPoint(pointWithMeta);
+    setIsDetailMinimized(false);
 
     setIsSearchFocused(false);
     setSearchQuery("");
@@ -2646,27 +2669,6 @@ export default function App() {
             />
           </div>
 
-          {/* Nearest Spot to GPS (Appears when GPS active) */}
-          {nearestPointInfo && (
-            <div 
-              onClick={() => handleSelectLocation(nearestPointInfo.point)}
-              className={`pointer-events-auto text-[11px] sm:text-xs px-3 py-1.5 rounded-2xl border shadow-xs flex items-center justify-between gap-2 cursor-pointer transition-all backdrop-blur-md ${
-                isDark 
-                  ? 'bg-blue-950/70 hover:bg-blue-900/70 border-blue-800/80 text-blue-200' 
-                  : 'bg-blue-50/90 hover:bg-blue-100/90 border-blue-200 text-blue-900'
-              }`}
-            >
-              <div className="flex items-center gap-1.5 min-w-0 truncate">
-                <Navigation2 className="w-3.5 h-3.5 text-blue-500 shrink-0" />
-                <span className="truncate">
-                  จุดเสี่ยงใกล้คุณ: <strong>{nearestPointInfo.point.name}</strong> (~{nearestPointInfo.distanceKm} กม.)
-                </span>
-              </div>
-              <span className="text-[10px] text-blue-500 font-bold shrink-0 underline">
-                ดูข้อมูล
-              </span>
-            </div>
-          )}
 
           {/* District Dropdown Selector (แถบเลือกอำเภอแบบกดแถบลงมาตามรูปที่ 2 พร้อมระบุตำแหน่ง) */}
           <div className="pointer-events-auto flex items-center gap-1.5 w-full max-w-full">
@@ -2796,6 +2798,21 @@ export default function App() {
               <span>&gt;50ซม.</span>
             </button>
 
+            {/* Teal: Receding Water (น้ำลด) */}
+            <button
+              type="button"
+              onClick={() => setSeverityFilter(prev => prev === 'falling' ? 'all' : 'falling')}
+              className={`px-2 py-0.5 rounded-full flex items-center gap-1 cursor-pointer transition-all active:scale-95 ${
+                severityFilter === 'falling'
+                  ? 'bg-teal-600 text-white font-extrabold shadow-xs'
+                  : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-teal-600 dark:text-teal-400'
+              }`}
+              title="น้ำกำลังลด"
+            >
+              <span>📉</span>
+              <span>น้ำลด</span>
+            </button>
+
             {severityFilter !== 'all' && (
               <button
                 type="button"
@@ -2896,22 +2913,16 @@ export default function App() {
           </div>
         )}
 
-        {/* FLOATING POINT DETAIL MODAL (CENTERED POPUP AS SHOWN IN SCREENSHOT media_1791122925932.png) */}
+        {/* FLOATING POINT DETAIL CARD (MATCHING SCREENSHOT media_1791123966122.png) */}
         {selectedPoint && (
           <div 
-            onClick={(e) => {
-              if (e.target === e.currentTarget) {
-                playCloseSound();
-                setSelectedPoint(null);
-              }
-            }}
-            className="fixed inset-0 z-[100] bg-slate-950/65 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 smooth-backdrop animate-in fade-in duration-200"
+            className="fixed inset-x-3 bottom-[calc(4.5rem+env(safe-area-inset-bottom,0px))] sm:inset-x-auto sm:bottom-6 sm:right-6 sm:w-[410px] max-w-[calc(100vw-24px)] z-[85] pointer-events-auto animate-in slide-in-from-bottom-3 duration-200"
           >
             <div 
-              className={`w-full max-w-md border-2 rounded-3xl shadow-2xl relative max-h-[78vh] sm:max-h-[82vh] flex flex-col p-4 sm:p-5 overflow-y-auto overscroll-contain smooth-pop transition-all ${
+              className={`w-full border-2 rounded-3xl shadow-2xl relative max-h-[78vh] sm:max-h-[82vh] flex flex-col p-4 sm:p-5 overflow-y-auto overscroll-contain transition-all ${
                 isDark 
-                  ? 'bg-slate-900 border-slate-700 text-slate-100 shadow-2xl shadow-black' 
-                  : 'bg-white border-slate-200 text-slate-900 shadow-2xl shadow-slate-400/50'
+                  ? 'bg-slate-900/98 border-slate-700 text-slate-100 shadow-2xl shadow-black/80' 
+                  : 'bg-white/98 border-slate-200 text-slate-900 shadow-2xl shadow-slate-900/30'
               }`}
             >
               {/* Header: District Badge + Severity Badge + Easy-to-Tap Close Button */}
@@ -2932,12 +2943,12 @@ export default function App() {
                      getFloodLevel(selectedPoint.depthCm) === 3 ? "🔴 น้ำท่วมวิกฤต (>50 ซม.)" :
                      getFloodLevel(selectedPoint.depthCm) === 2 ? "🟠 น้ำท่วมปานกลาง (21-50 ซม.)" : "🟢 น้ำท่วมปกติ (5-20 ซม.)"}
                   </span>
-                  {selectedPoint.waterTrend === 'falling' && (
+                  {isWaterReceding(selectedPoint) && (
                     <span className="text-[11px] font-bold px-2 py-0.5 rounded-xl bg-teal-50 text-teal-800 border border-teal-300 dark:bg-teal-950 dark:text-teal-300 dark:border-teal-700 flex items-center gap-1">
                       <span>📉 น้ำลดลง</span>
                     </span>
                   )}
-                  {selectedPoint.waterTrend === 'rising' && (
+                  {selectedPoint.waterTrend === 'rising' && !isWaterReceding(selectedPoint) && (
                     <span className="text-[11px] font-bold px-2 py-0.5 rounded-xl bg-rose-50 text-rose-800 border border-rose-300 dark:bg-rose-950 dark:text-rose-300 dark:border-rose-700 flex items-center gap-1">
                       <span>📈 เฝ้าระวังน้ำขึ้น</span>
                     </span>
@@ -3009,9 +3020,9 @@ export default function App() {
                       <span>🔍</span>
                       <span>แตะเพื่อดูภาพขนาดใหญ่</span>
                     </span>
-                    {selectedPoint.reportedAt && (
+                    {(selectedPoint.reportedAt || selectedPoint.time) && (
                       <span className="opacity-75 text-[10px]">
-                        รายงาน {selectedPoint.reportedAt}
+                        รายงาน {selectedPoint.reportedAt || selectedPoint.time}
                       </span>
                     )}
                   </div>
@@ -3053,17 +3064,23 @@ export default function App() {
                 </div>
               )}
 
-              {/* Source info (Solid Opaque White/Slate Pill matching screenshot) */}
+              {/* Source info (Clean reference line as requested) */}
               <div className={`p-2.5 rounded-2xl border text-[11.5px] flex items-center justify-between shadow-xs ${
                 isDark ? 'bg-slate-800 border-slate-700 text-slate-300' : 'bg-white border-slate-200 text-slate-800'
               }`}>
                 <div className="flex items-center gap-1.5 truncate">
                   <Shield className="w-3.5 h-3.5 text-blue-500 shrink-0" />
-                  <span className="truncate">อ้างอิง: <strong className={isDark ? 'text-slate-100' : 'text-slate-900'}>{selectedPoint.source || (selectedPoint.isCitizen ? 'รายงานประชาชน' : 'Traffy Fondue Open API')}</strong></span>
+                  <span className="truncate">
+                    อ้างอิง: <strong className={isDark ? 'text-slate-100' : 'text-slate-900'}>
+                      {selectedPoint.isCitizen || (selectedPoint.source && selectedPoint.source.includes('ประชาชน')) 
+                        ? 'รายงานจากประชาชนในพื้นที่' 
+                        : (selectedPoint.source || 'Traffy Fondue Open API')}
+                    </strong>
+                  </span>
                 </div>
-                {selectedPoint.reportedAt && (
+                {(selectedPoint.reportedAt || selectedPoint.time) && (
                   <span className="text-[10px] text-slate-400 shrink-0">
-                    {selectedPoint.reportedAt}
+                    {selectedPoint.reportedAt || selectedPoint.time}
                   </span>
                 )}
               </div>

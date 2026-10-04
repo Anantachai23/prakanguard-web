@@ -267,7 +267,7 @@ export default function CitizenReportModal({
       reporterDistrict: reporterDistrict,
       reporter_device: reporterDevice,
       reporter_district: reporterDistrict,
-      source: `รายงานจากประชาชน [อุปกรณ์: ${reporterDevice} | พิกัดผู้แจ้ง: ${reporterDistrict}]`
+      source: 'รายงานจากประชาชนในพื้นที่'
     };
 
     if (onSubmitReport) {
