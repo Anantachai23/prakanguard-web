@@ -72,18 +72,20 @@ export default function RainForecast24hCard({
     rainTimeToday = "ช่วงเย็น-ค่ำ (16:30 - 19:30 น.)";
   }
 
-  // 6 Districts Simple List
-  const districtList = forecast.districtRainAnalysis || [
-    { district: "เมืองสมุทรปราการ", probability: 70, timeWindow: "15:00 - 17:30 น." },
-    { district: "บางพลี", probability: 65, timeWindow: "15:30 - 18:00 น." },
-    { district: "พระประแดง", probability: 60, timeWindow: "16:00 - 18:00 น." },
-    { district: "บางเสาธง", probability: 55, timeWindow: "16:00 - 18:30 น." },
-    { district: "บางบ่อ", probability: 50, timeWindow: "16:30 - 18:30 น." },
-    { district: "พระสมุทรเจดีย์", probability: 45, timeWindow: "17:00 - 19:00 น." }
-  ];
+  // 6 Districts List (ดึงตรงจาก telemetry จริงของ Open-Meteo ไม่ใช้ข้อมูลจำลอง)
+  const districtList = (Array.isArray(forecast.districtRainAnalysis) && forecast.districtRainAnalysis.length > 0)
+    ? forecast.districtRainAnalysis
+    : [
+        { district: "เมืองสมุทรปราการ", probability: maxProb, temperature: forecast?.temp || 28, status: forecast?.status || "ปกติ", timeWindow: startTimeText },
+        { district: "บางพลี", probability: maxProb, temperature: forecast?.temp || 28, status: forecast?.status || "ปกติ", timeWindow: startTimeText },
+        { district: "พระประแดง", probability: maxProb, temperature: forecast?.temp || 28, status: forecast?.status || "ปกติ", timeWindow: startTimeText },
+        { district: "บางเสาธง", probability: maxProb, temperature: forecast?.temp || 28, status: forecast?.status || "ปกติ", timeWindow: startTimeText },
+        { district: "บางบ่อ", probability: maxProb, temperature: forecast?.temp || 28, status: forecast?.status || "ปกติ", timeWindow: startTimeText },
+        { district: "พระสมุทรเจดีย์", probability: maxProb, temperature: forecast?.temp || 28, status: forecast?.status || "ปกติ", timeWindow: startTimeText }
+      ];
 
   const cleanDistrictName = (dName) => {
-    if (!dName) return 'เมืองสมุทรปราการ';
+    if (!dName || dName === 'ทั้งหมด') return null;
     let s = dName.replace(/^(อ\.|อำเภอ)/, '').trim();
     if (s.includes('เมือง')) return 'เมืองสมุทรปราการ';
     if (s.includes('บางพลี')) return 'บางพลี';
@@ -91,12 +93,14 @@ export default function RainForecast24hCard({
     if (s.includes('บางเสาธง')) return 'บางเสาธง';
     if (s.includes('บางบ่อ')) return 'บางบ่อ';
     if (s.includes('พระสมุทรเจดีย์')) return 'พระสมุทรเจดีย์';
-    return s || 'เมืองสมุทรปราการ';
+    return s || null;
   };
 
   const currentDistrict = cleanDistrictName(userDistrict);
-  const matchedDistrict = districtList.find(d => d.district.includes(currentDistrict) || currentDistrict.includes(d.district)) || districtList[0];
+  const isAllDistricts = !currentDistrict;
+  const matchedDistrict = isAllDistricts ? null : (districtList.find(d => d.district.includes(currentDistrict) || currentDistrict.includes(d.district)) || districtList[0]);
   const userDistrictProb = matchedDistrict ? matchedDistrict.probability : maxProb;
+  const displayDistrictLabel = isAllDistricts ? 'ทุกอำเภอ (จ.สมุทรปราการ)' : `อ.${currentDistrict}`;
 
   // Collapsed Minimal Pill
   if (collapsible && !isExpanded) {
@@ -119,7 +123,7 @@ export default function RainForecast24hCard({
             </div>
             <div className="min-w-0 truncate">
               <span className="font-bold text-xs truncate block text-slate-900 dark:text-white">
-                ตำแหน่งของท่านอยู่อำเภอ{currentDistrict} มีโอกาสฝนตก <span className="text-blue-600 dark:text-cyan-400 font-extrabold">{userDistrictProb}%</span>
+                {isAllDistricts ? 'ภาพรวม' : 'ตำแหน่งของท่าน '}{displayDistrictLabel} มีโอกาสฝนตก <span className="text-blue-600 dark:text-cyan-400 font-extrabold">{userDistrictProb}%</span>
                 {(matchedDistrict?.temperature || forecast?.temp) && (
                   <span className="ml-1.5 px-1.5 py-0.5 rounded-md bg-sky-100 dark:bg-sky-950 text-sky-700 dark:text-sky-300 font-mono text-[10px] font-bold">
                     🌡️ {matchedDistrict?.temperature || forecast?.temp}°C
@@ -214,7 +218,7 @@ export default function RainForecast24hCard({
               <span>ตำแหน่งปัจจุบันของคุณ:</span>
             </span>
             <span className="text-xs sm:text-sm font-extrabold mt-0.5 block leading-tight">
-              ตำแหน่งของท่านอยู่อำเภอ{currentDistrict} มีโอกาสฝนตก <span className="text-blue-600 dark:text-cyan-400 font-black">{userDistrictProb}%</span>
+              {isAllDistricts ? 'ภาพรวม' : 'ตำแหน่งของท่าน '}{displayDistrictLabel} มีโอกาสฝนตก <span className="text-blue-600 dark:text-cyan-400 font-black">{userDistrictProb}%</span>
             </span>
           </div>
           <div className="text-right shrink-0">

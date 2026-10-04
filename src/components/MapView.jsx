@@ -58,10 +58,6 @@ function createOfficialFloodPin({ level, depthCm, hasPhoto, isSelected, isFallin
     ? `<div style="position:absolute;left:50%;bottom:2px;transform:translateX(-50%);width:28px;height:28px;border-radius:50%;background:rgba(220,38,38,0.35);animation:pgPinPulse 1.8s ease-out infinite;pointer-events:none;z-index:0;"></div>`
     : '';
 
-  const photoBadgeHtml = hasPhoto
-    ? `<div style="position:absolute;top:-4px;right:-4px;width:17px;height:17px;background:#ffffff;border:1.5px solid ${primaryColor};border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;box-shadow:0 2px 4px rgba(0,0,0,0.3);z-index:10;" title="มีภาพถ่ายสถานการณ์จริง">📷</div>`
-    : '';
-
   const fallingBadgeHtml = isFalling
     ? `<div style="position:absolute;top:-4px;left:-4px;width:17px;height:17px;background:#0d9488;border:1.5px solid #ffffff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;color:#ffffff;box-shadow:0 2px 4px rgba(0,0,0,0.3);z-index:10;" title="น้ำกำลังลด">📉</div>`
     : '';
@@ -79,7 +75,6 @@ function createOfficialFloodPin({ level, depthCm, hasPhoto, isSelected, isFallin
     <div class="pg-flood-pin-container ${levelClass} ${isSelected ? 'pg-pin-selected' : ''}" style="position:relative;width:34px;height:44px;display:flex;align-items:center;justify-content:center;cursor:pointer;transform-origin:bottom center;transition:transform 0.2s ease;">
       ${pulseHtml}
       ${selectedRingHtml}
-      ${photoBadgeHtml}
       ${fallingBadgeHtml}
       <svg width="34" height="44" viewBox="0 0 34 44" fill="none" xmlns="http://www.w3.org/2000/svg" style="position:relative;z-index:2;filter:drop-shadow(0 4px 6px rgba(0,0,0,0.38));">
         <defs>
@@ -516,16 +511,6 @@ export default function MapView({
 
   // Helper to build unified popup HTML
   const buildPopupHtml = (item, isCitizen) => {
-    const photo = item.photoUrl || item.photo_url || item.photo;
-    if (item && photo && typeof window !== 'undefined') {
-      window.__pgPhotos = window.__pgPhotos || {};
-      window.__pgPhotos[item.id] = {
-        url: photo,
-        title: item.name,
-        time: item.reportedAt || item.updatedAt || item.time || ''
-      };
-    }
-
     const level = resolveLevel(item);
     const isL3 = level === 3;
     const isL2 = level === 2;
@@ -534,19 +519,6 @@ export default function MapView({
     const levelText = isL3 ? '#991b1b' : (isL2 ? '#92400e' : '#166534');
     const levelBorder = isL3 ? '#f87171' : (isL2 ? '#fbbf24' : '#4ade80');
     const depthBadgeText = item.depthCm ? `${item.depthCm} ซม.` : (item.depthRange || 'เฝ้าระวัง');
-
-    const photoHtml = photo ? `
-      <div 
-        onclick="if(window.pgOpenLightboxById){window.pgOpenLightboxById('${item.id}');}else if(window.pgOpenLightbox){window.pgOpenLightbox('${photo}','${(item.name||'').replace(/'/g, "\\'")}','${item.reportedAt||''}');}"
-        style="margin:8px 0;border-radius:12px;overflow:hidden;border:1.5px solid #0284c7;position:relative;background:#0f172a;cursor:pointer;box-shadow:0 3px 10px rgba(0,0,0,0.2);"
-        title="แตะเพื่อดูภาพขนาดใหญ่"
-      >
-        <img src="${photo}" style="width:100%;height:130px;object-fit:cover;display:block;" alt="รูปภาพสถานการณ์น้ำท่วมจริง" />
-        <div style="position:absolute;bottom:6px;right:6px;background:rgba(15,23,42,0.88);color:#38bdf8;font-size:10px;padding:3px 9px;border-radius:9999px;font-weight:700;display:flex;align-items:center;gap:4px;border:1px solid rgba(56,189,248,0.6);box-shadow:0 2px 4px rgba(0,0,0,0.3);">
-          <span>🔍</span> <span>แตะเพื่อดูภาพใหญ่</span>
-        </div>
-      </div>
-    ` : '';
 
     const trendHtml = item.waterTrend === 'falling' ? `
       <div style="display:inline-flex;align-items:center;gap:4px;background:#f0fdfa;color:#0f766e;border:1px solid #99f6e4;padding:2px 7px;border-radius:6px;font-size:10px;font-weight:700;margin-bottom:6px;">
@@ -576,7 +548,6 @@ export default function MapView({
         <div style="font-size:12px;color:${isL3 ? '#dc2626' : (isL2 ? '#d97706' : '#16a34a')};font-weight:800;margin-bottom:4px;">
           ระดับน้ำ: ${depthBadgeText}
         </div>
-        ${photoHtml}
         ${trendHtml}
         ${sourceHtml}
       </div>
@@ -611,7 +582,7 @@ export default function MapView({
       const customIcon = createOfficialFloodPin({
         level,
         depthCm: point.depthCm,
-        hasPhoto: !!pointPhoto,
+        hasPhoto: false,
         isFalling: point.waterTrend === 'falling',
         isSelected,
         name: point.name

@@ -538,18 +538,18 @@ export default function App() {
   const [isStandardsModalOpen, setIsStandardsModalOpen] = useState(false);
   const [isEmergencyModalOpen, setIsEmergencyModalOpen] = useState(false);
 
-  // Citizen Reports State (Persisted in localStorage with verified seed reports)
-  // Ensures genuine citizen reports with photos exist across all mobile & desktop devices
+  // Citizen Reports State (บันทึกเฉพาะรายงานจริงจากประชาชนเท่านั้น ไม่สร้างข้อมูลจำลอง)
   const [citizenReports, setCitizenReports] = useState(() => {
     try {
       const saved = localStorage.getItem('prakanguard_citizen_reports');
       const parsed = saved ? JSON.parse(saved) : null;
-      let rawList = (Array.isArray(parsed) && parsed.length > 0) ? parsed : [...INITIAL_CITIZEN_REPORTS];
+      let rawList = (Array.isArray(parsed) && parsed.length > 0) ? parsed : [];
       const cleaned = rawList.filter(r => 
         r && 
         r.id && 
         !r.id.includes('test') &&
         !r.id.includes('verify') &&
+        !r.id.includes('seed') &&
         !r.id.startsWith('node-') &&
         !r.isAiGenerated && 
         !r.id?.startsWith('ai-alert-') &&
@@ -558,21 +558,12 @@ export default function App() {
         typeof r.lng === 'number' &&
         !isNaN(r.lng)
       );
-      // Guarantee all seed reports with photos are present
-      INITIAL_CITIZEN_REPORTS.forEach(seed => {
-        const found = cleaned.find(c => c.id === seed.id || (Math.abs(c.lat - seed.lat) < 0.002 && Math.abs(c.lng - seed.lng) < 0.002));
-        if (!found) {
-          cleaned.push(seed);
-        } else if (!found.photoUrl && seed.photoUrl) {
-          found.photoUrl = seed.photoUrl;
-        }
-      });
       try {
         localStorage.setItem('prakanguard_citizen_reports', JSON.stringify(cleaned));
       } catch (e) {}
       return cleaned;
     } catch (e) {
-      return [...INITIAL_CITIZEN_REPORTS];
+      return [];
     }
   });
 
@@ -1151,10 +1142,10 @@ export default function App() {
       }
     };
 
-    // รีเฟรชเพื่ออัปเดตจุดน้ำท่วมและข้อมูลโทรมาตรอัตโนมัติทุกๆ 1 นาที (60 วินาที) บนทุกอุปกรณ์
-    const ONE_MINUTE_INTERVAL = 60 * 1000;
+    // รีเฟรชเพื่ออัปเดตจุดน้ำท่วมและข้อมูลโทรมาตรอัตโนมัติทุกๆ 5 นาที (300 วินาที) บนทุกอุปกรณ์
+    const FIVE_MINUTES_INTERVAL = 5 * 60 * 1000;
     executeBackgroundSync();
-    const interval = setInterval(executeBackgroundSync, ONE_MINUTE_INTERVAL);
+    const interval = setInterval(executeBackgroundSync, FIVE_MINUTES_INTERVAL);
 
     // ซิงก์ทันทีเมื่อผู้ใช้สลับกลับมาที่หน้าแท็บ หรือเมื่ออินเทอร์เน็ตกลับมาเชื่อมต่อ
     const handleVisibilityChange = () => {
@@ -2895,50 +2886,7 @@ export default function App() {
               </button>
             </div>
 
-            {/* Citizen Uploaded Photo Preview (Tap to open full lightbox) */}
-            {(() => {
-              const photo = selectedPoint.photoUrl || selectedPoint.photo_url || selectedPoint.photo || (
-                citizenReports.find(c => (c.name === selectedPoint.name || (Math.abs(c.lat - selectedPoint.lat) < 0.005 && Math.abs(c.lng - selectedPoint.lng) < 0.005)))?.photoUrl
-              ) || (
-                points.find(p => p.id === selectedPoint.id || (Math.abs(p.lat - selectedPoint.lat) < 0.003 && Math.abs(p.lng - selectedPoint.lng) < 0.003))?.photoUrl
-              );
-              if (!photo) return null;
-              return (
-                <div 
-                  className="mt-2.5 rounded-2xl overflow-hidden border border-blue-400/40 dark:border-blue-500/40 shadow-md relative cursor-pointer group bg-black/20 touch-manipulation active:scale-[0.98] transition-transform"
-                  onClick={() => setLightboxPhoto({
-                    url: photo,
-                    title: selectedPoint.name,
-                    time: selectedPoint.reportedAt || selectedPoint.time
-                  })}
-                  title="แตะเพื่อดูภาพขนาดเต็ม"
-                >
-                  <div className="relative">
-                    <img 
-                      src={photo} 
-                      alt="รูปภาพสถานการณ์น้ำท่วมจริง" 
-                      className="w-full h-40 sm:h-36 object-cover group-hover:scale-105 transition-transform duration-200" 
-                    />
-                    <div className="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-slate-950/80 backdrop-blur-sm text-cyan-300 text-[10px] font-bold border border-cyan-400/50 flex items-center gap-1 shadow-xs">
-                      <span>📸 ภาพถ่ายรายงานจริง</span>
-                    </div>
-                  </div>
-                  <div className={`p-2 text-xs text-center font-bold flex items-center justify-between px-3 ${
-                    isDark ? 'bg-slate-800/98 text-cyan-300' : 'bg-blue-50/98 text-blue-700'
-                  }`}>
-                    <span className="flex items-center gap-1 text-[11px]">
-                      <span>🔍</span>
-                      <span>แตะเพื่อดูภาพขนาดใหญ่</span>
-                    </span>
-                    {selectedPoint.reportedAt && (
-                      <span className="opacity-75 text-[10px]">
-                        รายงาน {selectedPoint.reportedAt}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              );
-            })()}
+            {/* Real Depth & Traffic Information Details */}
 
             {/* Visual Gauge with Standard Waterline & Sleek Vehicle Silhouettes (Person with 170 CM Badge) */}
             <div className="mt-2">

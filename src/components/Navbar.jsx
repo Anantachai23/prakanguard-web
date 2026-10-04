@@ -317,7 +317,7 @@ export default function Navbar({
             )}
           </button>
 
-          {/* Reload / Sync Button (Every Device - Auto-refreshes every 1 min) */}
+          {/* Reload / Sync Button (Every Device - Auto-refreshes every 5 min) */}
           <button
             type="button"
             onClick={() => {
@@ -332,7 +332,7 @@ export default function Navbar({
                 ? 'bg-slate-900 hover:bg-slate-800 text-sky-400 border-slate-700 hover:border-sky-500/50' 
                 : 'bg-slate-100 hover:bg-slate-200 text-sky-700 border-slate-200 hover:border-sky-300'
             }`}
-            title="รีเฟรชอัปเดตข้อมูลน้ำท่วมสด (ระบบอัปเดตอัตโนมัติทุก 1 นาที)"
+            title="รีเฟรชอัปเดตข้อมูลน้ำท่วมสด (ระบบอัปเดตอัตโนมัติทุก 5 นาที)"
             aria-label="รีเฟรชอัปเดตข้อมูล"
           >
             <RotateCw className={`w-4 h-4 text-sky-500 ${isRefreshing ? 'animate-spin text-sky-400' : 'hover:rotate-180 transition-transform duration-500'}`} />

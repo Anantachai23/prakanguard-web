@@ -67,17 +67,19 @@ export default function AiForecastModal({ isOpen, onClose, userDistrict, theme =
     rainTimeToday = "ช่วงเย็นถึงค่ำ (16:30 - 19:30 น.)";
   }
 
-  const districtAnalysis = weather?.forecast24h?.districtRainAnalysis || [
-    { district: "เมืองสมุทรปราการ", probability: 70, timeWindow: "15:00 - 17:30 น." },
-    { district: "บางพลี", probability: 65, timeWindow: "15:30 - 18:00 น." },
-    { district: "พระประแดง", probability: 60, timeWindow: "16:00 - 18:00 น." },
-    { district: "บางเสาธง", probability: 55, timeWindow: "16:00 - 18:30 น." },
-    { district: "บางบ่อ", probability: 50, timeWindow: "16:30 - 18:30 น." },
-    { district: "พระสมุทรเจดีย์", probability: 45, timeWindow: "17:00 - 19:00 น." }
-  ];
+  const districtAnalysis = (Array.isArray(weather?.forecast24h?.districtRainAnalysis) && weather.forecast24h.districtRainAnalysis.length > 0)
+    ? weather.forecast24h.districtRainAnalysis
+    : [
+        { district: "เมืองสมุทรปราการ", probability: maxProb, temperature: weather?.temp || 28, status: weather?.weatherDesc || "ปกติ", timeWindow: rainTimeToday },
+        { district: "บางพลี", probability: maxProb, temperature: weather?.temp || 28, status: weather?.weatherDesc || "ปกติ", timeWindow: rainTimeToday },
+        { district: "พระประแดง", probability: maxProb, temperature: weather?.temp || 28, status: weather?.weatherDesc || "ปกติ", timeWindow: rainTimeToday },
+        { district: "บางเสาธง", probability: maxProb, temperature: weather?.temp || 28, status: weather?.weatherDesc || "ปกติ", timeWindow: rainTimeToday },
+        { district: "บางบ่อ", probability: maxProb, temperature: weather?.temp || 28, status: weather?.weatherDesc || "ปกติ", timeWindow: rainTimeToday },
+        { district: "พระสมุทรเจดีย์", probability: maxProb, temperature: weather?.temp || 28, status: weather?.weatherDesc || "ปกติ", timeWindow: rainTimeToday }
+      ];
 
   const cleanDistrictName = (dName) => {
-    if (!dName) return 'เมืองสมุทรปราการ';
+    if (!dName || dName === 'ทั้งหมด') return null;
     let s = dName.replace(/^(อ\.|อำเภอ)/, '').trim();
     if (s.includes('เมือง')) return 'เมืองสมุทรปราการ';
     if (s.includes('บางพลี')) return 'บางพลี';
@@ -85,12 +87,14 @@ export default function AiForecastModal({ isOpen, onClose, userDistrict, theme =
     if (s.includes('บางเสาธง')) return 'บางเสาธง';
     if (s.includes('บางบ่อ')) return 'บางบ่อ';
     if (s.includes('พระสมุทรเจดีย์')) return 'พระสมุทรเจดีย์';
-    return s || 'เมืองสมุทรปราการ';
+    return s || null;
   };
 
   const currentDistrict = cleanDistrictName(userDistrict);
-  const matchedDistrict = districtAnalysis.find(d => d.district.includes(currentDistrict) || currentDistrict.includes(d.district)) || districtAnalysis[0];
+  const isAllDistricts = !currentDistrict;
+  const matchedDistrict = isAllDistricts ? null : (districtAnalysis.find(d => d.district.includes(currentDistrict) || currentDistrict.includes(d.district)) || districtAnalysis[0]);
   const userDistrictProb = matchedDistrict ? matchedDistrict.probability : maxProb;
+  const displayDistrictLabel = isAllDistricts ? 'ทุกอำเภอ (จ.สมุทรปราการ)' : `อ.${currentDistrict}`;
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-3.5 sm:p-4 smooth-backdrop">
@@ -144,7 +148,7 @@ export default function AiForecastModal({ isOpen, onClose, userDistrict, theme =
                   <span>ตำแหน่งปัจจุบันของคุณ:</span>
                 </span>
                 <span className="text-sm sm:text-base font-extrabold mt-0.5 block leading-tight">
-                  ตำแหน่งของท่านอยู่อำเภอ{currentDistrict} มีโอกาสฝนตก <span className="text-blue-600 dark:text-cyan-400 font-black">{userDistrictProb}%</span>
+                  {isAllDistricts ? 'ภาพรวม' : 'ตำแหน่งของท่าน '}{displayDistrictLabel} มีโอกาสฝนตก <span className="text-blue-600 dark:text-cyan-400 font-black">{userDistrictProb}%</span>
                 </span>
               </div>
               <span className={`text-[11px] px-2.5 py-1 rounded-full font-bold shrink-0 ${

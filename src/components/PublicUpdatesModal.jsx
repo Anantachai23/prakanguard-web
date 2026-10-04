@@ -155,12 +155,6 @@ export default function PublicUpdatesModal({
                 badgeBg = 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30';
               }
 
-              const itemPhoto = item.photoUrl || item.rawPoint?.photoUrl || item.rawPoint?.photo || (
-                citizenReports?.find(c => c.id === item.locationKey || c.name === item.locationName || (item.rawPoint && Math.abs(c.lat - item.rawPoint.lat) < 0.003 && Math.abs(c.lng - item.rawPoint.lng) < 0.003))?.photoUrl
-              ) || (
-                points?.find(p => p.id === item.locationKey || p.name === item.locationName || (item.rawPoint && Math.abs(p.lat - item.rawPoint.lat) < 0.003 && Math.abs(p.lng - item.rawPoint.lng) < 0.003))?.photoUrl
-              );
-
               return (
                 <div
                   key={item.id}
@@ -200,31 +194,6 @@ export default function PublicUpdatesModal({
                       </div>
                     </div>
                   </div>
-
-                  {/* Citizen Photo Thumbnail (Tap to open full lightbox) */}
-                  {itemPhoto && (
-                    <div 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (typeof window !== 'undefined' && window.pgOpenLightbox) {
-                          window.pgOpenLightbox(itemPhoto, item.locationName, item.itemTime);
-                        } else {
-                          handleItemClick(item);
-                        }
-                      }}
-                      className="w-11 h-11 rounded-xl overflow-hidden border-1.5 border-blue-400/60 shadow-sm shrink-0 relative group cursor-pointer active:scale-95 transition-transform bg-slate-900"
-                      title="แตะเพื่อดูรูปภาพรายงานสถานการณ์จริง"
-                    >
-                      <img 
-                        src={itemPhoto} 
-                        alt={item.locationName} 
-                        className="w-full h-full object-cover group-hover:scale-110 transition-transform" 
-                      />
-                      <span className="absolute bottom-0 right-0 bg-black/75 text-[8px] text-white px-1 rounded-tl font-bold">
-                        📷
-                      </span>
-                    </div>
-                  )}
 
                   {/* Status Badge & Single Exact Event Time */}
                   <div className="shrink-0 flex flex-col items-end justify-center gap-1 text-right">
