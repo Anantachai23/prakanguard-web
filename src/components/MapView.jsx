@@ -105,16 +105,38 @@ function createOfficialFloodPin({ level, depthCm, hasPhoto, isSelected, isFallin
   });
 }
 
-// Function to declutter dense/overlapping points on mobile devices
-// When multiple points exist in the same area (within ~850m on mobile), keep ONLY 1 representative point (highest severity / depth)
-function declutterNearbyPoints(pointsList, isMobileView) {
-  if (!pointsList || pointsList.length === 0) return [];
-  const thresholdKm = isMobileView ? 0.85 : 0.15;
+// Function to merge duplicate points & declutter dense points
+// Eliminates duplicate pins at the same location (e.g. Hua Chiew / Manthana) and retains the one with photos
+function deduplicateAndDeclutterPoints(citizenList = [], officialList = [], isMobileView = false) {
+  const thresholdKm = isMobileView ? 0.35 : 0.08; // ~350m on mobile, ~80m on desktop
 
-  const sorted = [...pointsList].sort((a, b) => {
-    // Retain points with photo first so citizen & official photos are never dropped
-    if (a.photoUrl && !b.photoUrl) return -1;
-    if (!a.photoUrl && b.photoUrl) return 1;
+  // Normalize and combine: citizen reports come first so user reports & photos take precedence
+  const combined = [
+    ...citizenList.map(r => ({
+      ...r,
+      isCitizen: true,
+      photoUrl: r.photoUrl || r.photo_url || r.photo || null
+    })),
+    ...officialList.map(p => ({
+      ...p,
+      isCitizen: false,
+      photoUrl: p.photoUrl || p.photo_url || p.photo || null
+    }))
+  ];
+
+  // Filter out dry/resolved
+  const activeOnly = combined.filter(pt => !isPointDry(pt));
+
+  // Sort: photo first, active first, higher severity first
+  activeOnly.sort((a, b) => {
+    const aPhoto = !!(a.photoUrl || a.photo_url || a.photo);
+    const bPhoto = !!(b.photoUrl || b.photo_url || b.photo);
+    if (aPhoto && !bPhoto) return -1;
+    if (!aPhoto && bPhoto) return 1;
+
+    if (a.isCitizen && !b.isCitizen) return -1;
+    if (!a.isCitizen && b.isCitizen) return 1;
+
     const lvlA = resolveLevel(a);
     const lvlB = resolveLevel(b);
     if (lvlB !== lvlA) return lvlB - lvlA;
@@ -122,27 +144,38 @@ function declutterNearbyPoints(pointsList, isMobileView) {
   });
 
   const retained = [];
-  for (const pt of sorted) {
+  for (const pt of activeOnly) {
     if (!pt || typeof pt.lat !== 'number' || typeof pt.lng !== 'number' || isNaN(pt.lat) || isNaN(pt.lng)) continue;
-    // Always keep points with photos so they are visible on mobile and desktop
-    if (pt.photoUrl) {
-      retained.push(pt);
-      continue;
-    }
-    let isTooClose = false;
+
+    let isDuplicate = false;
     for (const r of retained) {
       const dLat = (pt.lat - r.lat) * 111;
       const dLng = (pt.lng - r.lng) * 111 * Math.cos(pt.lat * Math.PI / 180);
       const distKm = Math.sqrt(dLat * dLat + dLng * dLng);
-      if (distKm < thresholdKm) {
-        isTooClose = true;
+
+      const sameName = pt.name && r.name && (
+        pt.name.trim().toLowerCase() === r.name.trim().toLowerCase() ||
+        (pt.name.includes('มัณฑนา') && r.name.includes('มัณฑนา')) ||
+        (pt.name.includes('หัวเฉียว') && r.name.includes('หัวเฉียว'))
+      );
+
+      // Same location or matching name within 1.2km
+      if (distKm < thresholdKm || (sameName && distKm < 1.2)) {
+        isDuplicate = true;
+        // Merge photo from pt to r if r doesn't have one
+        const ptPhoto = pt.photoUrl || pt.photo_url || pt.photo;
+        if (!(r.photoUrl || r.photo_url || r.photo) && ptPhoto) {
+          r.photoUrl = ptPhoto;
+        }
         break;
       }
     }
-    if (!isTooClose) {
+
+    if (!isDuplicate) {
       retained.push(pt);
     }
   }
+
   return retained;
 }
 
@@ -470,10 +503,11 @@ export default function MapView({
 
   // Helper to build unified popup HTML
   const buildPopupHtml = (item, isCitizen) => {
-    if (item && item.photoUrl && typeof window !== 'undefined') {
+    const photo = item.photoUrl || item.photo_url || item.photo;
+    if (item && photo && typeof window !== 'undefined') {
       window.__pgPhotos = window.__pgPhotos || {};
       window.__pgPhotos[item.id] = {
-        url: item.photoUrl,
+        url: photo,
         title: item.name,
         time: item.reportedAt || item.updatedAt || item.time || ''
       };
@@ -488,13 +522,13 @@ export default function MapView({
     const levelBorder = isL3 ? '#f87171' : (isL2 ? '#fbbf24' : '#4ade80');
     const depthBadgeText = item.depthCm ? `${item.depthCm} ซม.` : (item.depthRange || 'เฝ้าระวัง');
 
-    const photoHtml = item.photoUrl ? `
+    const photoHtml = photo ? `
       <div 
-        onclick="if(window.pgOpenLightboxById){window.pgOpenLightboxById('${item.id}');}"
+        onclick="if(window.pgOpenLightboxById){window.pgOpenLightboxById('${item.id}');}else if(window.pgOpenLightbox){window.pgOpenLightbox('${photo}','${(item.name||'').replace(/'/g, "\\'")}','${item.reportedAt||''}');}"
         style="margin:8px 0;border-radius:12px;overflow:hidden;border:1.5px solid #0284c7;position:relative;background:#0f172a;cursor:pointer;box-shadow:0 3px 10px rgba(0,0,0,0.2);"
         title="แตะเพื่อดูภาพขนาดใหญ่"
       >
-        <img src="${item.photoUrl}" style="width:100%;height:130px;object-fit:cover;display:block;" alt="รูปภาพสถานการณ์น้ำท่วมจริง" />
+        <img src="${photo}" style="width:100%;height:130px;object-fit:cover;display:block;" alt="รูปภาพสถานการณ์น้ำท่วมจริง" />
         <div style="position:absolute;bottom:6px;right:6px;background:rgba(15,23,42,0.88);color:#38bdf8;font-size:10px;padding:3px 9px;border-radius:9999px;font-weight:700;display:flex;align-items:center;gap:4px;border:1px solid rgba(56,189,248,0.6);box-shadow:0 2px 4px rgba(0,0,0,0.3);">
           <span>🔍</span> <span>แตะเพื่อดูภาพใหญ่</span>
         </div>
@@ -536,29 +570,35 @@ export default function MapView({
     `;
   };
 
-  // 5. Render Vulnerability Points (UNIFIED PIN DESIGN, AUTO-DECLUTTER ON MOBILE)
+  // 5. Render Unified Vulnerability & Citizen Points (Auto-deduplicated, mobile-optimized)
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map) return;
 
     markersRef.current.forEach(m => map.removeLayer(m));
     markersRef.current = [];
+    citizenMarkersRef.current.forEach(m => map.removeLayer(m));
+    citizenMarkersRef.current = [];
+    markersByIdRef.current = {};
 
-    // Filter out dry/resolved points, then deduplicate nearby points on mobile
-    const activePoints = points.filter(p => !isPointDry(p));
-    const displayPoints = declutterNearbyPoints(activePoints, isMobile);
+    const displayPoints = deduplicateAndDeclutterPoints(citizenReports, points, isMobile);
 
     displayPoints.forEach(point => {
       if (!point || typeof point.lat !== 'number' || typeof point.lng !== 'number' || isNaN(point.lat) || isNaN(point.lng)) {
         return;
       }
 
+      const pointPhoto = point.photoUrl || point.photo_url || point.photo;
       const level = resolveLevel(point);
-      const isSelected = selectedPoint && selectedPoint.id === point.id;
+      const isSelected = selectedPoint && (
+        selectedPoint.id === point.id || 
+        (selectedPoint.name === point.name && Math.abs(selectedPoint.lat - point.lat) < 0.005)
+      );
+
       const customIcon = createOfficialFloodPin({
         level,
         depthCm: point.depthCm,
-        hasPhoto: !!point.photoUrl,
+        hasPhoto: !!pointPhoto,
         isFalling: point.waterTrend === 'falling',
         isSelected,
         name: point.name
@@ -566,11 +606,15 @@ export default function MapView({
 
       const marker = L.marker([point.lat, point.lng], { icon: customIcon }).addTo(map);
 
-      marker.bindPopup(buildPopupHtml(point, false), {
-        className: 'custom-leaflet-popup',
-        closeButton: true,
-        autoPan: true
-      });
+      // On desktop: bind popup bubble.
+      // On mobile: do NOT bind popup bubble so it doesn't clash with or get hidden behind the bottom detail card!
+      if (!isMobile) {
+        marker.bindPopup(buildPopupHtml(point, point.isCitizen), {
+          className: 'custom-leaflet-popup',
+          closeButton: true,
+          autoPan: true
+        });
+      }
 
       marker.on('click', () => {
         lastFlyToTimeRef.current = Date.now();
@@ -580,53 +624,7 @@ export default function MapView({
       markersRef.current.push(marker);
       markersByIdRef.current[point.id] = marker;
     });
-  }, [points, selectedPoint, onSelectPoint, isMobile]);
-
-  // 5b. Render Citizen Reports (EXACT SAME PIN DESIGN, AUTO-DECLUTTER ON MOBILE)
-  useEffect(() => {
-    const map = mapInstanceRef.current;
-    if (!map) return;
-
-    citizenMarkersRef.current.forEach(m => map.removeLayer(m));
-    citizenMarkersRef.current = [];
-
-    // Filter out dry/resolved reports, then deduplicate nearby points on mobile
-    const activeReports = citizenReports.filter(r => !isPointDry(r));
-    const displayReports = declutterNearbyPoints(activeReports, isMobile);
-
-    displayReports.forEach(report => {
-      if (!report || typeof report.lat !== 'number' || typeof report.lng !== 'number' || isNaN(report.lat) || isNaN(report.lng)) {
-        return;
-      }
-
-      const level = resolveLevel(report);
-      const isSelected = selectedPoint && selectedPoint.id === report.id;
-      const customIcon = createOfficialFloodPin({
-        level,
-        depthCm: report.depthCm,
-        hasPhoto: !!report.photoUrl,
-        isFalling: report.waterTrend === 'falling',
-        isSelected,
-        name: report.name
-      });
-
-      const marker = L.marker([report.lat, report.lng], { icon: customIcon }).addTo(map);
-
-      marker.bindPopup(buildPopupHtml(report, true), {
-        className: 'custom-leaflet-popup',
-        closeButton: true,
-        autoPan: true
-      });
-
-      marker.on('click', () => {
-        lastFlyToTimeRef.current = Date.now();
-        onSelectPoint(report);
-      });
-
-      citizenMarkersRef.current.push(marker);
-      markersByIdRef.current[report.id] = marker;
-    });
-  }, [citizenReports, selectedPoint, onSelectPoint, isMobile]);
+  }, [points, citizenReports, selectedPoint, onSelectPoint, isMobile]);
 
   // 5.5 Render Calm Radar Flood Coverage Circles
   useEffect(() => {
@@ -749,7 +747,7 @@ export default function MapView({
     });
 
     const targetId = flyToLocation.pointId || selectedPoint?.id;
-    if (targetId) {
+    if (targetId && !isMobile) {
       const openTargetPopup = () => {
         const marker = markersByIdRef.current[targetId];
         if (marker && map.hasLayer(marker)) {
@@ -760,7 +758,7 @@ export default function MapView({
       setTimeout(openTargetPopup, 650);
       setTimeout(openTargetPopup, 1300);
     }
-  }, [flyToLocation]);
+  }, [flyToLocation, isMobile]);
 
   // Zoom to selected point
   useEffect(() => {
@@ -771,9 +769,11 @@ export default function MapView({
       return;
     }
     if (Date.now() - lastFlyToTimeRef.current < 2000) {
-      const marker = markersByIdRef.current[selectedPoint.id];
-      if (marker && map.hasLayer(marker)) {
-        setTimeout(() => marker.openPopup(), 400);
+      if (!isMobile) {
+        const marker = markersByIdRef.current[selectedPoint.id];
+        if (marker && map.hasLayer(marker)) {
+          setTimeout(() => marker.openPopup(), 400);
+        }
       }
       return;
     }
@@ -785,16 +785,18 @@ export default function MapView({
       easeLinearity: 0.25
     });
 
-    const openPopupOnSelected = () => {
-      const marker = markersByIdRef.current[selectedPoint.id];
-      if (marker && map.hasLayer(marker)) {
-        marker.openPopup();
-      }
-    };
-    map.once('moveend', openPopupOnSelected);
-    setTimeout(openPopupOnSelected, 650);
-    setTimeout(openPopupOnSelected, 1300);
-  }, [selectedPoint]);
+    if (!isMobile) {
+      const openPopupOnSelected = () => {
+        const marker = markersByIdRef.current[selectedPoint.id];
+        if (marker && map.hasLayer(marker)) {
+          marker.openPopup();
+        }
+      };
+      map.once('moveend', openPopupOnSelected);
+      setTimeout(openPopupOnSelected, 650);
+      setTimeout(openPopupOnSelected, 1300);
+    }
+  }, [selectedPoint, isMobile]);
 
   const resetView = () => {
     if (mapInstanceRef.current) {

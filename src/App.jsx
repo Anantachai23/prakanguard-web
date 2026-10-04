@@ -512,9 +512,10 @@ export default function App() {
         setLightboxPhoto(window.__pgPhotos[id]);
       } else {
         const found = pointsRef.current?.find(p => p.id === id) || citizenReportsRef.current?.find(c => c.id === id);
-        if (found && found.photoUrl) {
+        const photo = found ? (found.photoUrl || found.photo_url || found.photo) : null;
+        if (found && photo) {
           setLightboxPhoto({ 
-            url: found.photoUrl, 
+            url: photo, 
             title: found.name, 
             time: found.reportedAt || found.updatedAt || found.time 
           });
@@ -2588,29 +2589,35 @@ export default function App() {
             </div>
 
             {/* Citizen Uploaded Photo Preview (Tap to open full lightbox) */}
-            {selectedPoint.photoUrl && (
-              <div 
-                className="mt-2.5 rounded-2xl overflow-hidden border border-slate-300 dark:border-slate-700 shadow-sm relative cursor-pointer group bg-black/10"
-                onClick={() => setLightboxPhoto({
-                  url: selectedPoint.photoUrl,
-                  title: selectedPoint.name,
-                  time: selectedPoint.reportedAt || selectedPoint.time
-                })}
-                title="แตะเพื่อดูภาพขนาดเต็ม"
-              >
-                <img 
-                  src={selectedPoint.photoUrl} 
-                  alt="รูปภาพจากประชาชนรายงาน" 
-                  className="w-full h-32 object-cover group-hover:scale-105 transition-transform duration-200" 
-                />
-                <div className={`p-1.5 text-[11px] text-center font-bold flex items-center justify-center gap-1.5 ${
-                  isDark ? 'bg-slate-800/90 text-cyan-300' : 'bg-slate-100/90 text-blue-700'
-                }`}>
-                  <span>🔍 แตะเพื่อดูรูปภาพขนาดใหญ่</span>
-                  {selectedPoint.reportedAt && <span className="opacity-70 text-[10px]">({selectedPoint.reportedAt})</span>}
+            {(() => {
+              const photo = selectedPoint.photoUrl || selectedPoint.photo_url || selectedPoint.photo || (
+                citizenReports.find(c => (c.name === selectedPoint.name || (Math.abs(c.lat - selectedPoint.lat) < 0.005 && Math.abs(c.lng - selectedPoint.lng) < 0.005)))?.photoUrl
+              );
+              if (!photo) return null;
+              return (
+                <div 
+                  className="mt-2.5 rounded-2xl overflow-hidden border border-slate-300 dark:border-slate-700 shadow-md relative cursor-pointer group bg-black/10 touch-manipulation active:scale-[0.98] transition-transform"
+                  onClick={() => setLightboxPhoto({
+                    url: photo,
+                    title: selectedPoint.name,
+                    time: selectedPoint.reportedAt || selectedPoint.time
+                  })}
+                  title="แตะเพื่อดูภาพขนาดเต็ม"
+                >
+                  <img 
+                    src={photo} 
+                    alt="รูปภาพสถานการณ์น้ำท่วมจริง" 
+                    className="w-full h-36 sm:h-32 object-cover group-hover:scale-105 transition-transform duration-200" 
+                  />
+                  <div className={`p-2 text-xs text-center font-bold flex items-center justify-center gap-1.5 ${
+                    isDark ? 'bg-slate-800/95 text-cyan-300' : 'bg-blue-50/95 text-blue-700'
+                  }`}>
+                    <span>🔍 แตะเพื่อดูรูปภาพขนาดใหญ่</span>
+                    {selectedPoint.reportedAt && <span className="opacity-70 text-[10px]">({selectedPoint.reportedAt})</span>}
+                  </div>
                 </div>
-              </div>
-            )}
+              );
+            })()}
 
             {/* Visual Gauge with Standard Waterline & Sleek Vehicle Silhouettes (Person with 170 CM Badge) */}
             <div className="mt-2">
