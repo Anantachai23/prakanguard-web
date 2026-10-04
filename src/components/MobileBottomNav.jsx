@@ -19,7 +19,8 @@ import {
   BookOpen, 
   Sun, 
   Moon,
-  Sparkles
+  Sparkles,
+  ShieldCheck
 } from 'lucide-react';
 
 export default function MobileBottomNav({
@@ -30,6 +31,7 @@ export default function MobileBottomNav({
   onOpenFeedback,
   onOpenEmergency,
   onOpenStandards,
+  onOpenPrivacyPolicy,
   onToggleTheme,
   hasGps = false,
   theme = 'light',
@@ -118,7 +120,31 @@ export default function MobileBottomNav({
                 </div>
               </button>
 
-              {/* 3. Dark / Light Theme Toggle (Full Width) */}
+              {/* 3. Privacy Policy & Terms (กลุ่มนักเรียน & แหล่งข้อมูล) */}
+              <button
+                type="button"
+                onClick={() => handleMenuAction(onOpenPrivacyPolicy, playClickSound)}
+                className="col-span-2 p-3.5 rounded-2xl bg-teal-500/10 hover:bg-teal-500/15 border border-teal-500/30 text-teal-600 dark:text-teal-400 flex items-center justify-between transition-all active:scale-98 text-left cursor-pointer"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-teal-500 to-cyan-500 text-white flex items-center justify-center shrink-0 shadow-md">
+                    <ShieldCheck className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <span className="text-xs font-bold block text-slate-900 dark:text-white">
+                      นโยบายข้อกำหนดส่วนตัว
+                    </span>
+                    <span className="text-[11px] text-teal-600 dark:text-teal-400 font-medium">
+                      กลุ่มนักเรียน • แหล่งข้อมูลอ้างอิง • ความเป็นส่วนตัว
+                    </span>
+                  </div>
+                </div>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-teal-500/20 text-teal-700 dark:text-teal-300">
+                  เปิดดู &rarr;
+                </span>
+              </button>
+
+              {/* 4. Dark / Light Theme Toggle (Full Width) */}
               <button
                 type="button"
                 onClick={() => handleMenuAction(onToggleTheme, () => playToggleSound(!isDark))}

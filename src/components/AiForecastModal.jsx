@@ -67,16 +67,25 @@ export default function AiForecastModal({ isOpen, onClose, userDistrict, theme =
   }
 
   const defaultDuration = maxProb >= 50 ? "คาดการณ์ตกต่อเนื่อง ~30 - 60 นาที" : "ไม่มีสัญญาณฝนต่อเนื่อง";
+  const storedDistrictTemps = (() => {
+    try {
+      const s = localStorage.getItem('prakanguard_live_district_temps');
+      return s ? JSON.parse(s) : null;
+    } catch (_) { return null; }
+  })();
+
   const districtAnalysis = (Array.isArray(weather?.forecast24h?.districtRainAnalysis) && weather.forecast24h.districtRainAnalysis.length > 0)
     ? weather.forecast24h.districtRainAnalysis
-    : [
-        { district: "เมืองสมุทรปราการ", probability: maxProb, temperature: weather?.temp || 28, status: weather?.weatherDesc || "ปกติ", timeWindow: rainTimeToday, durationText: defaultDuration },
-        { district: "บางพลี", probability: maxProb, temperature: weather?.temp || 28, status: weather?.weatherDesc || "ปกติ", timeWindow: rainTimeToday, durationText: defaultDuration },
-        { district: "พระประแดง", probability: maxProb, temperature: weather?.temp || 28, status: weather?.weatherDesc || "ปกติ", timeWindow: rainTimeToday, durationText: defaultDuration },
-        { district: "บางเสาธง", probability: maxProb, temperature: weather?.temp || 28, status: weather?.weatherDesc || "ปกติ", timeWindow: rainTimeToday, durationText: defaultDuration },
-        { district: "บางบ่อ", probability: maxProb, temperature: weather?.temp || 28, status: weather?.weatherDesc || "ปกติ", timeWindow: rainTimeToday, durationText: defaultDuration },
-        { district: "พระสมุทรเจดีย์", probability: maxProb, temperature: weather?.temp || 28, status: weather?.weatherDesc || "ปกติ", timeWindow: rainTimeToday, durationText: defaultDuration }
-      ];
+    : (Array.isArray(storedDistrictTemps) && storedDistrictTemps.length > 0)
+      ? storedDistrictTemps
+      : [
+          { district: "เมืองสมุทรปราการ", probability: maxProb, temperature: 26, status: weather?.weatherDesc || "ปกติ", timeWindow: rainTimeToday, durationText: defaultDuration },
+          { district: "บางพลี", probability: maxProb, temperature: 26, status: weather?.weatherDesc || "ปกติ", timeWindow: rainTimeToday, durationText: defaultDuration },
+          { district: "พระประแดง", probability: maxProb, temperature: 26, status: weather?.weatherDesc || "ปกติ", timeWindow: rainTimeToday, durationText: defaultDuration },
+          { district: "บางเสาธง", probability: maxProb, temperature: 25, status: weather?.weatherDesc || "ปกติ", timeWindow: rainTimeToday, durationText: defaultDuration },
+          { district: "บางบ่อ", probability: maxProb, temperature: 25, status: weather?.weatherDesc || "ปกติ", timeWindow: rainTimeToday, durationText: defaultDuration },
+          { district: "พระสมุทรเจดีย์", probability: maxProb, temperature: 27, status: weather?.weatherDesc || "ปกติ", timeWindow: rainTimeToday, durationText: defaultDuration }
+        ];
 
   const cleanDistrictName = (dName) => {
     if (!dName || dName === 'ทั้งหมด') return null;
@@ -223,18 +232,18 @@ export default function AiForecastModal({ isOpen, onClose, userDistrict, theme =
                         </span>
                       </div>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 text-[11px] pt-1.5 border-t border-slate-200/60 dark:border-slate-800/80">
-                        <div className="flex items-center gap-1 text-slate-600 dark:text-slate-400">
-                          <Clock className="w-3 h-3 text-blue-500 shrink-0" />
-                          <span>ช่วงเวลา:</span>
-                          <span className="font-semibold text-slate-800 dark:text-slate-200 truncate">
+                      <div className="flex flex-col gap-1.5 text-[11px] pt-1.5 border-t border-slate-200/60 dark:border-slate-800/80">
+                        <div className="flex items-start gap-1.5 text-slate-600 dark:text-slate-400">
+                          <Clock className="w-3.5 h-3.5 text-blue-500 shrink-0 mt-0.5" />
+                          <span className="shrink-0 font-medium">ช่วงเวลา:</span>
+                          <span className="font-semibold text-slate-800 dark:text-slate-200 break-words leading-tight">
                             {d.timeWindow || 'ไม่มีแนวโน้มฝนตกหนัก'}
                           </span>
                         </div>
-                        <div className="flex items-center gap-1 text-slate-600 dark:text-slate-400">
-                          <span className="text-xs">⏱️</span>
-                          <span>ระยะเวลา:</span>
-                          <span className="font-semibold text-slate-800 dark:text-slate-200 truncate">
+                        <div className="flex items-start gap-1.5 text-slate-600 dark:text-slate-400">
+                          <span className="text-xs shrink-0 mt-0.5">⏱️</span>
+                          <span className="shrink-0 font-medium">ระยะเวลา:</span>
+                          <span className="font-semibold text-slate-800 dark:text-slate-200 break-words leading-tight">
                             {d.durationText || 'ไม่มีสัญญาณฝนต่อเนื่อง'}
                           </span>
                         </div>

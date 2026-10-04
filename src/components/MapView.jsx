@@ -549,11 +549,53 @@ export default function MapView({
         <div style="font-size:12px;color:${isL3 ? '#dc2626' : (isL2 ? '#d97706' : '#16a34a')};font-weight:800;margin-bottom:4px;">
           ระดับน้ำ: ${depthBadgeText}
         </div>
+        ${item.trafficStatus ? `<div style="font-size:10.5px;color:#475569;margin-bottom:4px;">🚗 ${item.trafficStatus}</div>` : ''}
         ${trendHtml}
         ${sourceHtml}
+        <button onclick="if(window.__pgSelectPointById)window.__pgSelectPointById('${item.id}')" style="width:100%;margin-top:6px;padding:6px 10px;background:#2563eb;color:#ffffff;border:none;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;">
+          <span>ดูรายละเอียดฉบับเต็ม &rarr;</span>
+        </button>
       </div>
     `;
   };
+
+  // Expose global point selection for Leaflet popup buttons
+  useEffect(() => {
+    window.__pgSelectPointById = (id) => {
+      const all = [...points, ...citizenReports];
+      const found = all.find(p => String(p.id) === String(id));
+      if (found && onSelectPoint) {
+        onSelectPoint(found);
+      }
+    };
+    return () => {
+      delete window.__pgSelectPointById;
+    };
+  }, [points, citizenReports, onSelectPoint]);
+
+  // Synchronize pin selection styling smoothly without remounting markers
+  useEffect(() => {
+    if (!selectedPoint) {
+      Object.values(markersByIdRef.current).forEach(m => {
+        const el = m?.getElement && m.getElement();
+        if (el) el.querySelector('.pg-flood-pin-container')?.classList.remove('pg-pin-selected');
+      });
+      return;
+    }
+    Object.entries(markersByIdRef.current).forEach(([id, m]) => {
+      const el = m?.getElement && m.getElement();
+      if (el) {
+        const container = el.querySelector('.pg-flood-pin-container');
+        if (container) {
+          if (String(id) === String(selectedPoint.id)) {
+            container.classList.add('pg-pin-selected');
+          } else {
+            container.classList.remove('pg-pin-selected');
+          }
+        }
+      }
+    });
+  }, [selectedPoint]);
 
   // 5. Render Unified Vulnerability & Citizen Points (Auto-deduplicated, mobile-optimized)
   useEffect(() => {
@@ -573,7 +615,6 @@ export default function MapView({
         return;
       }
 
-      const pointPhoto = point.photoUrl || point.photo_url || point.photo;
       const level = resolveLevel(point);
       const isSelected = selectedPoint && (
         selectedPoint.id === point.id || 
@@ -608,7 +649,7 @@ export default function MapView({
       markersRef.current.push(marker);
       markersByIdRef.current[point.id] = marker;
     });
-  }, [points, citizenReports, selectedPoint, onSelectPoint, isMobile]);
+  }, [points, citizenReports, onSelectPoint, isMobile]);
 
   // 5.5 Render Calm Radar Flood Coverage Circles
   useEffect(() => {

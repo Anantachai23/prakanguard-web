@@ -374,10 +374,10 @@ export async function endAdminSession(id, { keepalive = false } = {}) {
 }
 export async function fetchAdminSessions() {
   if (caps.sessions) {
-    const r = await rest('admin_sessions?select=*&logged_out_at=is.null&order=logged_in_at.desc&limit=100');
+    const r = await rest('admin_sessions?select=*&order=logged_in_at.desc&limit=200');
     return r.ok && Array.isArray(r.data) ? r.data : [];
   }
-  return lsSessRead().filter((s) => !s.logged_out_at);
+  return lsSessRead();
 }
 
 /* =================================================================== IP */

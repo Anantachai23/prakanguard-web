@@ -63,6 +63,10 @@
         <button type="submit" id="btn-login-submit" class="login-btn" style="margin-top: 10px;">
           เข้าสู่ระบบ Admin
         </button>
+
+        <div style="margin-top: 14px; padding: 10px 14px; background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.35); border-radius: 12px; font-size: 11px; line-height: 1.5; color: #fca5a5; text-align: left;">
+          ⚠️ <strong>ประกาศสงวนสิทธิ์:</strong> สงวนสิทธิ์ลิขสิทธิ์และการเข้าใช้งานศูนย์ควบคุมระบบของเว็บเฉพาะผู้ร่วมพัฒนาเว็บไซต์และคณะทำงานที่ได้รับอนุญาตเท่านั้น ไม่อนุญาตให้บุคคลภายนอกเข้าถึง ทำซ้ำ หรือดัดแปลงระบบโดยไม่ได้รับอนุญาต
+        </div>
       </form>
     </div>
   </div>
@@ -143,6 +147,10 @@
 
     <!-- MAIN BODY -->
     <main class="app-main">
+      <div style="background: linear-gradient(90deg, rgba(30,58,138,0.35), rgba(15,23,42,0.85)); border-bottom: 1px solid rgba(59,130,246,0.25); padding: 7px 20px; font-size: 11px; color: #93c5fd; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;">
+        <span>🛡️ <strong>สงวนสิทธิ์ลิขสิทธิ์:</strong> การเข้าใช้งานศูนย์ควบคุมระบบของเว็บเฉพาะผู้ร่วมพัฒนาเว็บไซต์และคณะทำงานที่ได้รับอนุญาตเท่านั้น</span>
+        <span style="opacity: 0.8; font-size: 10px;">PrakanGuard Security</span>
+      </div>
       <header class="app-header">
         <div class="header-left">
           <div class="header-title-group">
@@ -338,7 +346,7 @@
               <table class="data-table">
                 <thead>
                   <tr>
-                    <th style="width: 38px;">#</th>
+                    <th style="width: 38px;"><input type="checkbox" id="th-reports-select-all" title="เลือกทั้งหมด"></th>
                     <th>ระดับน้ำ (3 เกณฑ์)</th>
                     <th>จุดสังเกต / อำเภอ</th>
                     <th>ข้อมูลผู้แจ้ง & อุปกรณ์ (GPS)</th>
@@ -415,7 +423,7 @@
               <table class="data-table">
                 <thead>
                   <tr>
-                    <th style="width: 38px;">#</th>
+                    <th style="width: 38px;"><input type="checkbox" id="th-feedback-select-all" title="เลือกทั้งหมด"></th>
                     <th>ข้อความข้อเสนอแนะ</th>
                     <th>ผู้ส่ง</th>
                     <th>ช่องทางติดต่อ</th>
@@ -531,7 +539,7 @@
               <table class="data-table">
                 <thead>
                   <tr>
-                    <th style="width: 38px;">#</th>
+                    <th style="width: 38px;"><input type="checkbox" id="th-trash-select-all" title="เลือกทั้งหมด"></th>
                     <th>ประเภท</th>
                     <th>รายละเอียดข้อความ / จุดน้ำท่วม</th>
                     <th>ผู้แจ้ง / พื้นที่</th>

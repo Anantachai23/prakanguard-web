@@ -13,6 +13,7 @@ import AdminVerificationPrompt from './components/AdminVerificationPrompt';
 import PublicUpdatesModal from './components/PublicUpdatesModal';
 import RainForecast24hCard from './components/RainForecast24hCard';
 import MobileBottomNav from './components/MobileBottomNav';
+import PrivacyPolicyModal from './components/PrivacyPolicyModal';
 import AutoMarquee from './components/AutoMarquee';
 import ChatBot from './components/ChatBot';
 import { INITIAL_FLOOD_POINTS, INITIAL_CITIZEN_REPORTS, DISTRICTS, matchesLocationSearch, scoreLocationSearch, POPULAR_SEARCH_SUGGESTIONS, findCorridorForPoint, MAJOR_FLOOD_CORRIDORS } from './data/samutPrakanPoints';
@@ -520,7 +521,7 @@ export default function App() {
     };
 
     syncContinuousWeather();
-    const interval = setInterval(syncContinuousWeather, 30000); // อัปเดตสภาพอากาศสดทุก 30 วินาที
+    const interval = setInterval(syncContinuousWeather, 5 * 60 * 1000); // อัปเดตสภาพอากาศสดทุก 5 นาที (300 วินาที)
     return () => {
       isMounted = false;
       clearInterval(interval);
@@ -548,6 +549,7 @@ export default function App() {
   const [isOfficialModalOpen, setIsOfficialModalOpen] = useState(false);
   const [isStandardsModalOpen, setIsStandardsModalOpen] = useState(false);
   const [isEmergencyModalOpen, setIsEmergencyModalOpen] = useState(false);
+  const [isPrivacyPolicyModalOpen, setIsPrivacyPolicyModalOpen] = useState(false);
 
   // Citizen Reports State (บันทึกเฉพาะรายงานจริงจากประชาชนเท่านั้น ไม่สร้างข้อมูลจำลอง)
   const [citizenReports, setCitizenReports] = useState(() => {
@@ -2237,6 +2239,7 @@ export default function App() {
         onOpenFeedback={() => setIsFeedbackModalOpen(true)}
         onOpenAdmin={() => setIsAdminModalOpen(true)}
         onOpenPublicUpdates={() => setIsPublicUpdatesModalOpen(true)}
+        onOpenPrivacyPolicy={() => setIsPrivacyPolicyModalOpen(true)}
         lastUpdatedTime={lastUpdatedTime}
         lastUpdatedTimeDetailed={lastUpdatedTimeDetailed}
         pendingReportsCount={isAdminAuthenticated ? pendingReportsCount : 0}
@@ -2936,6 +2939,11 @@ export default function App() {
                 <h3 className={`text-sm sm:text-base font-bold mt-1 leading-snug line-clamp-2 break-words ${isDark ? 'text-white' : 'text-slate-900'}`}>
                   {selectedPoint.name}
                 </h3>
+                {selectedPoint.subdistrict && (
+                  <p className={`text-xs mt-0.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                    ต.{selectedPoint.subdistrict} {selectedPoint.roadSegment ? `• ${selectedPoint.roadSegment}` : ''}
+                  </p>
+                )}
               </div>
 
               {/* Prominent Easy-to-Tap Close Button */}
@@ -2953,10 +2961,51 @@ export default function App() {
               </button>
             </div>
 
-            {/* Real Depth & Traffic Information Details */}
+            {/* Citizen Uploaded Photo Preview (If available) */}
+            {(() => {
+              const photo = selectedPoint.photoUrl || selectedPoint.photo_url || selectedPoint.photo || (
+                citizenReports.find(c => c.name === selectedPoint.name || (Math.abs(c.lat - selectedPoint.lat) < 0.003 && Math.abs(c.lng - selectedPoint.lng) < 0.003))?.photoUrl
+              );
+              if (!photo) return null;
+              return (
+                <div 
+                  className="mt-2.5 rounded-2xl overflow-hidden border border-blue-400/40 dark:border-blue-500/40 shadow-md relative cursor-pointer group bg-black/20 touch-manipulation active:scale-[0.98] transition-transform"
+                  onClick={() => setLightboxPhoto({
+                    url: photo,
+                    title: selectedPoint.name,
+                    time: selectedPoint.reportedAt || selectedPoint.time
+                  })}
+                  title="แตะเพื่อดูภาพขนาดเต็ม"
+                >
+                  <div className="relative">
+                    <img 
+                      src={photo} 
+                      alt="รูปภาพสถานการณ์น้ำท่วม" 
+                      className="w-full h-36 sm:h-32 object-cover group-hover:scale-105 transition-transform duration-200" 
+                    />
+                    <div className="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-slate-950/80 backdrop-blur-sm text-cyan-300 text-[10px] font-bold border border-cyan-400/50 flex items-center gap-1 shadow-xs">
+                      <span>📸 ภาพถ่ายรายงาน</span>
+                    </div>
+                  </div>
+                  <div className={`p-2 text-xs text-center font-bold flex items-center justify-between px-3 ${
+                    isDark ? 'bg-slate-800/98 text-cyan-300' : 'bg-blue-50/98 text-blue-700'
+                  }`}>
+                    <span className="flex items-center gap-1 text-[11px]">
+                      <span>🔍</span>
+                      <span>แตะเพื่อดูภาพขนาดใหญ่</span>
+                    </span>
+                    {selectedPoint.reportedAt && (
+                      <span className="opacity-75 text-[10px]">
+                        รายงาน {selectedPoint.reportedAt}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              );
+            })()}
 
-            {/* Visual Gauge with Standard Waterline & Sleek Vehicle Silhouettes (Person with 170 CM Badge) */}
-            <div className="mt-2">
+            {/* Visual Gauge with Standard Waterline & Sleek Vehicle Silhouettes */}
+            <div className="mt-2.5">
               <VisualGauge 
                 depthCm={selectedPoint.depthCm} 
                 level={getFloodLevel(selectedPoint.depthCm)} 
@@ -2965,15 +3014,69 @@ export default function App() {
               />
             </div>
 
-            {/* Concise Cause Only (ตามที่ระบุ: มีแค่สาเหตุ ไม่รก) */}
-            {selectedPoint.cause && (
-              <div className={`mt-2 p-2 px-3 rounded-xl border text-xs leading-relaxed ${
-                isDark ? 'bg-slate-800/60 border-slate-700/80 text-slate-200' : 'bg-slate-50 border-slate-200 text-slate-700'
+            {/* Fact-based Summary Details with Citations */}
+            <div className="space-y-2 mt-2.5 text-xs sm:text-sm">
+              {selectedPoint.cause && (
+                <div className={`p-2.5 rounded-2xl border ${
+                  isDark ? 'bg-slate-800/80 border-slate-700' : 'bg-slate-50 border-slate-200'
+                }`}>
+                  <span className={`block text-xs font-semibold ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>สาเหตุสำคัญ:</span>
+                  <span className={`mt-0.5 block leading-relaxed font-medium ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>
+                    {selectedPoint.cause}
+                  </span>
+                </div>
+              )}
+
+              {(selectedPoint.officialGuidance || selectedPoint.trafficStatus) && (
+                <div className={`p-2.5 rounded-2xl border ${
+                  isDark ? 'bg-slate-800/80 border-slate-700' : 'bg-slate-50 border-slate-200'
+                }`}>
+                  <span className={`block text-xs font-semibold ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>คำแนะนำการสัญจร:</span>
+                  <span className={`mt-0.5 block leading-relaxed font-medium ${isDark ? 'text-cyan-400' : 'text-blue-700'}`}>
+                    {selectedPoint.officialGuidance || selectedPoint.trafficStatus}
+                  </span>
+                </div>
+              )}
+
+              {/* Source info */}
+              <div className={`p-2 rounded-xl border text-[11px] flex items-center justify-between ${
+                isDark ? 'bg-slate-800/60 border-slate-700 text-slate-400' : 'bg-slate-50 border-slate-200 text-slate-500'
               }`}>
-                <span className="font-bold text-slate-400 dark:text-slate-400 mr-1.5">สาเหตุ:</span>
-                <span>{selectedPoint.cause}</span>
+                <div className="flex items-center gap-1.5 truncate">
+                  <Shield className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+                  <span className="truncate">อ้างอิง: <strong className={isDark ? 'text-slate-200' : 'text-slate-800'}>{selectedPoint.source || (selectedPoint.isCitizen ? 'รายงานประชาชน' : 'ศูนย์ข้อมูลอุทกภัย')}</strong></span>
+                </div>
+                {selectedPoint.reportedAt && (
+                  <span className="text-[10px] text-slate-400 shrink-0">
+                    {selectedPoint.reportedAt}
+                  </span>
+                )}
               </div>
-            )}
+            </div>
+
+            {/* Quick Action Buttons: Standards Guide & Direct Helpline */}
+            <div className="grid grid-cols-2 gap-2 mt-2.5 pt-2.5 border-t border-slate-200/60 dark:border-slate-800/80">
+              <button
+                type="button"
+                onClick={() => setIsStandardsModalOpen(true)}
+                className={`py-2 px-2.5 rounded-2xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-95 ${
+                  isDark 
+                    ? 'bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700' 
+                    : 'bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-200'
+                }`}
+              >
+                <BookOpen className="w-3.5 h-3.5 text-blue-500" />
+                <span>เกณฑ์มาตรฐาน ปภ.</span>
+              </button>
+
+              <a 
+                href={`tel:${selectedPoint.phone ? selectedPoint.phone.replace(/-/g, '') : '1784'}`}
+                className="py-2 px-2.5 rounded-2xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-all text-center cursor-pointer shadow-md shadow-rose-600/30 active:scale-95"
+              >
+                <Phone className="w-3.5 h-3.5" />
+                <span>โทรศูนย์ {selectedPoint.district ? selectedPoint.district.replace(/^อ\./, '') : 'ฉุกเฉิน'}</span>
+              </a>
+            </div>
 
             {/* Admin Broadcast & AI Alert Direct Delete Action (Visible ONLY to Logged-in Admin) */}
             {isAdminAuthenticated && (selectedPoint.isAdminBroadcast || selectedPoint.isAiGenerated) && (
@@ -3002,7 +3105,7 @@ export default function App() {
             <button
               type="button"
               onClick={() => setSelectedPoint(null)}
-              className={`w-full mt-2.5 py-2 rounded-xl border text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer ${
+              className={`w-full mt-2 py-2 rounded-xl border text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer ${
                 isDark 
                   ? 'border-slate-800 hover:bg-slate-800 text-slate-400 hover:text-white' 
                   : 'border-slate-200 hover:bg-slate-100 text-slate-500 hover:text-slate-800'
@@ -3223,6 +3326,12 @@ export default function App() {
         theme={theme}
       />
 
+      <PrivacyPolicyModal 
+        isOpen={isPrivacyPolicyModalOpen} 
+        onClose={() => setIsPrivacyPolicyModalOpen(false)} 
+        theme={theme} 
+      />
+
       {/* 4. MOBILE BOTTOM ACTION BAR (สำหรับมือถือ ใช้งานสะดวกด้วยนิ้วโป้ง ไม่ซับซ้อน) */}
       <MobileBottomNav
         onLocateMe={handleLocateMe}
@@ -3232,6 +3341,7 @@ export default function App() {
         onOpenFeedback={() => setIsFeedbackModalOpen(true)}
         onOpenEmergency={() => setIsEmergencyModalOpen(true)}
         onOpenStandards={() => setIsStandardsModalOpen(true)}
+        onOpenPrivacyPolicy={() => setIsPrivacyPolicyModalOpen(true)}
         onOpenAdmin={() => setIsAdminModalOpen(true)}
         onToggleTheme={toggleTheme}
         hasGps={!!userLocation}

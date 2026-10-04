@@ -612,6 +612,11 @@ function updateReportsSelectionUI() {
       bar.style.display = 'none';
     }
   }
+  const thCheck = $('#th-reports-select-all');
+  if (thCheck) {
+    thCheck.checked = state.reports.length > 0 && count === state.reports.length;
+    thCheck.indeterminate = count > 0 && count < state.reports.length;
+  }
 }
 
 async function handleApproveSingle(id) {
@@ -848,6 +853,11 @@ function updateFeedbackSelectionUI() {
       bar.style.display = 'none';
     }
   }
+  const thCheck = $('#th-feedback-select-all');
+  if (thCheck) {
+    thCheck.checked = state.feedback.length > 0 && count === state.feedback.length;
+    thCheck.indeterminate = count > 0 && count < state.feedback.length;
+  }
 }
 
 function showFeedbackModal(f) {
@@ -1082,6 +1092,11 @@ function updateTrashSelectionUI() {
       bar.style.display = 'none';
     }
   }
+  const thCheck = $('#th-trash-select-all');
+  if (thCheck) {
+    thCheck.checked = state.trash.length > 0 && count === state.trash.length;
+    thCheck.indeterminate = count > 0 && count < state.trash.length;
+  }
 }
 
 async function handleRestoreSingle(item) {
@@ -1264,6 +1279,7 @@ export function initDashboard() {
   $('#btn-global-refresh')?.addEventListener('click', () => {
     playRefreshSound();
     refreshAllData(true);
+    toast('🔄 รีเฟรชข้อมูลเรียบร้อยแล้ว', 'success');
   });
 
   // Theme Toggle Button
@@ -1292,10 +1308,28 @@ export function initDashboard() {
     renderReports();
   });
 
+  $('#th-reports-select-all')?.addEventListener('change', (e) => {
+    const isChecked = e.target.checked;
+    if (isChecked) {
+      state.reports.forEach(r => state.selectedReports.add(r.id));
+    } else {
+      state.selectedReports.clear();
+    }
+    renderReports();
+  });
   $('#btn-reports-approve-selected')?.addEventListener('click', handleApproveSelected);
   $('#btn-reports-delete-selected')?.addEventListener('click', handleDeleteReportsSelected);
 
   // Feedback Search & Actions
+  $('#th-feedback-select-all')?.addEventListener('change', (e) => {
+    const isChecked = e.target.checked;
+    if (isChecked) {
+      state.feedback.forEach(f => state.selectedFeedback.add(f.id));
+    } else {
+      state.selectedFeedback.clear();
+    }
+    renderFeedback();
+  });
   $('#feedback-search-input')?.addEventListener('input', (e) => {
     state.feedbackSearch = e.target.value.trim();
     renderFeedback();
@@ -1313,6 +1347,15 @@ export function initDashboard() {
   });
 
   // Trash
+  $('#th-trash-select-all')?.addEventListener('change', (e) => {
+    const isChecked = e.target.checked;
+    if (isChecked) {
+      state.trash.forEach(t => state.selectedTrash.add(t.id));
+    } else {
+      state.selectedTrash.clear();
+    }
+    renderTrash();
+  });
   $$('.trash-filter-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       $$('.trash-filter-btn').forEach(b => b.classList.remove('active'));

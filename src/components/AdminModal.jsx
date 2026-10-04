@@ -51,6 +51,7 @@ import { DISTRICTS } from '../data/samutPrakanPoints';
 import { OFFICIAL_LOCATION_CATALOG, formatPointForTracking, parseAndValidateExternalData } from '../data/officialLocationCatalog';
 import { validateCoordinatePrecision, detectDistrictForCoordinates } from '../data/samutPrakanBoundary';
 import { getFloodLevel } from '../data/floodStandards';
+import { getDetailedDeviceInfo } from '../services/cloudSyncService';
 
 // Default Hardened Admin Credentials
 const DEFAULT_ADMIN_CREDENTIALS = {
@@ -180,11 +181,15 @@ export default function AdminModal({
     }, 4500);
   };
 
-  // Manual Cloud Sync State
+  // Manual Cloud Sync State & Refresh Toast
   const [isManualSyncing, setIsManualSyncing] = useState(false);
+  const [showRefreshToast, setShowRefreshToast] = useState(false);
+  
   const handleManualSyncNow = async () => {
+    setIsManualSyncing(true);
+    setShowRefreshToast(true);
+    setTimeout(() => setShowRefreshToast(false), 2500);
     if (onSyncCloudData) {
-      setIsManualSyncing(true);
       try {
         const res = await onSyncCloudData();
         if (res) {
@@ -197,8 +202,140 @@ export default function AdminModal({
       } finally {
         setIsManualSyncing(false);
       }
+    } else {
+      setTimeout(() => setIsManualSyncing(false), 400);
     }
   };
+
+  // Live Visitors Tracking (Strictly active within last 30s)
+  const [liveVisitors, setLiveVisitors] = useState([]);
+  const fetchLiveVisitors = async () => {
+    try {
+      const since = new Date(Date.now() - 30 * 1000).toISOString();
+      const res = await fetch(`https://cnjufleeibbgmpvuvrpg.supabase.co/rest/v1/visitors?last_ping=gte.${since}&order=last_ping.desc`, {
+        headers: {
+          'apikey': 'sb_publishable_cwxpTPIFXkyWVgXksZASAQ_76DreEAw',
+          'Authorization': 'Bearer sb_publishable_cwxpTPIFXkyWVgXksZASAQ_76DreEAw'
+        }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          const now = Date.now();
+          const active = data.filter(v => (now - new Date(v.last_ping).getTime()) <= 30000);
+          setLiveVisitors(active);
+        }
+      }
+    } catch (_) {}
+  };
+
+  // Multi-Select States for Bulk Actions (Select All)
+  const [selectedPendingIds, setSelectedPendingIds] = useState(new Set());
+  const [selectedApprovedIds, setSelectedApprovedIds] = useState(new Set());
+  const [selectedFeedbackIds, setSelectedFeedbackIds] = useState(new Set());
+  const [selectedTrashIds, setSelectedTrashIds] = useState(new Set());
+
+  // History SubTab ('reports' | 'logins') & Admin Login History
+  const [historySubTab, setHistorySubTab] = useState('reports');
+  const [adminLoginHistory, setAdminLoginHistory] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('prakanguard_admin_login_history') || '[]');
+    } catch (_) {
+      return [];
+    }
+  });
+
+  const recordAdminLogin = (username) => {
+    try {
+      const dev = typeof getDetailedDeviceInfo === 'function' ? getDetailedDeviceInfo() : 'PC / Browser';
+      const now = new Date();
+      const newEntry = {
+        id: 'adm-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4),
+        username: username,
+        device: dev,
+        status: 'เข้าสู่ระบบสำเร็จ',
+        timestamp: now.toISOString(),
+        formattedTime: now.toLocaleString('th-TH', { 
+          year: 'numeric', 
+          month: 'short', 
+          day: 'numeric', 
+          hour: '2-digit', 
+          minute: '2-digit', 
+          second: '2-digit' 
+        }) + ' น.'
+      };
+
+      setAdminLoginHistory(prev => {
+        const updated = [newEntry, ...prev.filter(x => x.id !== newEntry.id)].slice(0, 100);
+        try { localStorage.setItem('prakanguard_admin_login_history', JSON.stringify(updated)); } catch (_) {}
+        return updated;
+      });
+
+      // Persist to Cloud so all devices sync login history
+      fetch('https://cnjufleeibbgmpvuvrpg.supabase.co/rest/v1/admin_sessions', {
+        method: 'POST',
+        headers: {
+          'apikey': 'sb_publishable_cwxpTPIFXkyWVgXksZASAQ_76DreEAw',
+          'Authorization': 'Bearer sb_publishable_cwxpTPIFXkyWVgXksZASAQ_76DreEAw',
+          'Content-Type': 'application/json',
+          'Prefer': 'resolution=merge-duplicates'
+        },
+        body: JSON.stringify({
+          session_id: newEntry.id,
+          admin_username: newEntry.username,
+          device: newEntry.device,
+          logged_in_at: newEntry.timestamp
+        })
+      }).catch(() => {});
+    } catch (_) {}
+  };
+
+  const fetchCloudAdminSessions = async () => {
+    try {
+      const res = await fetch(`https://cnjufleeibbgmpvuvrpg.supabase.co/rest/v1/admin_sessions?order=logged_in_at.desc&limit=100`, {
+        headers: {
+          'apikey': 'sb_publishable_cwxpTPIFXkyWVgXksZASAQ_76DreEAw',
+          'Authorization': 'Bearer sb_publishable_cwxpTPIFXkyWVgXksZASAQ_76DreEAw'
+        }
+      });
+      if (res.ok) {
+        const rows = await res.json();
+        if (Array.isArray(rows) && rows.length > 0) {
+          const formatted = rows.map(r => ({
+            id: r.id || r.session_id,
+            username: r.admin_username || r.username || 'Admin',
+            device: r.device || 'PC / Device',
+            status: 'เข้าสู่ระบบสำเร็จ',
+            timestamp: r.logged_in_at || new Date().toISOString(),
+            formattedTime: new Date(r.logged_in_at).toLocaleString('th-TH', {
+              year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+            }) + ' น.'
+          }));
+          setAdminLoginHistory(prev => {
+            const combined = [...prev];
+            formatted.forEach(f => {
+              if (!combined.some(c => c.id === f.id || (c.timestamp === f.timestamp && c.username === f.username))) {
+                combined.push(f);
+              }
+            });
+            combined.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+            try { localStorage.setItem('prakanguard_admin_login_history', JSON.stringify(combined.slice(0, 100))); } catch (_) {}
+            return combined.slice(0, 100);
+          });
+        }
+      }
+    } catch (_) {}
+  };
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    fetchLiveVisitors();
+    fetchCloudAdminSessions();
+    const timer = setInterval(() => {
+      fetchLiveVisitors();
+    }, 10000);
+    return () => clearInterval(timer);
+  }, [isAuthenticated]);
 
   // Local Feedback Items State (Fallback / Live synced)
   const [localFeedback, setLocalFeedback] = useState(() => {
@@ -361,6 +498,7 @@ export default function AdminModal({
       try {
         sessionStorage.setItem('prakanguard_admin_auth', 'true');
       } catch (e) {}
+      recordAdminLogin(u);
       setLoginError('');
       setFailedAttempts(0);
       setInputPassword('');
@@ -503,6 +641,148 @@ export default function AdminModal({
       onUpdateReport(reportId, { depthCm });
       showNotice(`✏️ อัปเดตระดับน้ำเป็น ${depthCm} ซม. เรียบร้อย`);
     }
+  };
+
+  // Bulk Actions: Pending Reports
+  const handleBulkApprovePending = () => {
+    if (selectedPendingIds.size === 0) return;
+    const count = selectedPendingIds.size;
+    selectedPendingIds.forEach(id => {
+      if (onApproveReport) onApproveReport(id);
+    });
+    setSelectedPendingIds(new Set());
+    playApprovalChime();
+    showNotice(`✅ อนุมัติรายงาน ${count} รายการขึ้นแสดงบนแผนที่เรียบร้อยแล้ว`);
+  };
+
+  const handleBulkRejectPending = () => {
+    if (selectedPendingIds.size === 0) return;
+    const count = selectedPendingIds.size;
+    if (!window.confirm(`ยืนยันการย้ายรายงานที่เลือกทั้งหมด ${count} รายการไปยัง "ลบล่าสุด" (ถังขยะ)?`)) return;
+    
+    const itemsToDelete = citizenReports.filter(r => selectedPendingIds.has(r.id));
+    if (itemsToDelete.length > 0) {
+      setDeletedReports(prev => {
+        const timestamped = itemsToDelete.map(it => ({ ...it, deletedAt: new Date().toISOString() }));
+        const updated = [...timestamped, ...prev.filter(x => !selectedPendingIds.has(x.id))];
+        try { localStorage.setItem('pg_admin_deleted_reports', JSON.stringify(updated)); } catch (e) {}
+        return updated;
+      });
+    }
+    selectedPendingIds.forEach(id => {
+      if (onRejectReport) onRejectReport(id);
+    });
+    setSelectedPendingIds(new Set());
+    showNotice(`🗑️ ย้ายรายงาน ${count} รายการไปยัง "ลบล่าสุด" เรียบร้อย`, 'info');
+  };
+
+  // Bulk Actions: Approved Reports
+  const handleBulkRevokeApproved = () => {
+    if (selectedApprovedIds.size === 0) return;
+    const count = selectedApprovedIds.size;
+    if (!window.confirm(`ยืนยันการยกเลิกอนุมัติรายงานที่เลือกทั้งหมด ${count} รายการ? (นำออกจากแผนที่และย้ายกลับรอยืนยัน)`)) return;
+    selectedApprovedIds.forEach(id => {
+      if (onUpdateReport) onUpdateReport(id, { isApproved: false });
+    });
+    setSelectedApprovedIds(new Set());
+    showNotice(`🚫 ยกเลิกอนุมัติ ${count} รายการเรียบร้อยแล้ว`);
+  };
+
+  const handleBulkDeleteApproved = () => {
+    if (selectedApprovedIds.size === 0) return;
+    const count = selectedApprovedIds.size;
+    if (!window.confirm(`ยืนยันการลบรายงานที่เลือก ${count} รายการไปยัง "ลบล่าสุด" (ถังขยะ)?`)) return;
+    const itemsToDelete = citizenReports.filter(r => selectedApprovedIds.has(r.id));
+    if (itemsToDelete.length > 0) {
+      setDeletedReports(prev => {
+        const timestamped = itemsToDelete.map(it => ({ ...it, deletedAt: new Date().toISOString() }));
+        const updated = [...timestamped, ...prev.filter(x => !selectedApprovedIds.has(x.id))];
+        try { localStorage.setItem('pg_admin_deleted_reports', JSON.stringify(updated)); } catch (e) {}
+        return updated;
+      });
+    }
+    selectedApprovedIds.forEach(id => {
+      if (onRejectReport) onRejectReport(id);
+    });
+    setSelectedApprovedIds(new Set());
+    showNotice(`🗑️ ย้ายรายงาน ${count} รายการไปยัง "ลบล่าสุด" เรียบร้อย`, 'info');
+  };
+
+  // Bulk Actions: Feedback
+  const handleBulkMarkFeedbackRead = () => {
+    if (selectedFeedbackIds.size === 0) return;
+    const count = selectedFeedbackIds.size;
+    selectedFeedbackIds.forEach(id => {
+      if (onToggleFeedbackRead) onToggleFeedbackRead(id, true);
+    });
+    setLocalFeedback(prev => {
+      const updated = prev.map(f => selectedFeedbackIds.has(f.id) ? { ...f, isRead: true } : f);
+      try { localStorage.setItem('prakanguard_feedback_items', JSON.stringify(updated)); } catch (e) {}
+      return updated;
+    });
+    setSelectedFeedbackIds(new Set());
+    showNotice(`✓ ทำเครื่องหมายอ่านแล้ว ${count} ข้อเสนอแนะ`);
+  };
+
+  const handleBulkDeleteFeedback = () => {
+    if (selectedFeedbackIds.size === 0) return;
+    const count = selectedFeedbackIds.size;
+    if (!window.confirm(`ยืนยันการลบข้อเสนอแนะที่เลือก ${count} รายการไปยัง "ลบล่าสุด" (ถังขยะ)?`)) return;
+    const itemsToDelete = activeFeedbackList.filter(f => selectedFeedbackIds.has(f.id));
+    if (itemsToDelete.length > 0) {
+      setDeletedFeedback(prev => {
+        const timestamped = itemsToDelete.map(it => ({ ...it, deletedAt: new Date().toISOString() }));
+        const updated = [...timestamped, ...prev.filter(x => !selectedFeedbackIds.has(x.id))];
+        try { localStorage.setItem('pg_admin_deleted_feedback', JSON.stringify(updated)); } catch (e) {}
+        return updated;
+      });
+    }
+    selectedFeedbackIds.forEach(id => {
+      if (onDeleteFeedback) onDeleteFeedback(id);
+    });
+    setLocalFeedback(prev => {
+      const updated = prev.filter(f => !selectedFeedbackIds.has(f.id));
+      try { localStorage.setItem('prakanguard_feedback_items', JSON.stringify(updated)); } catch (e) {}
+      return updated;
+    });
+    setSelectedFeedbackIds(new Set());
+    showNotice(`🗑️ ย้ายข้อเสนอแนะ ${count} รายการไปยัง "ลบล่าสุด" เรียบร้อย`, 'info');
+  };
+
+  // Bulk Actions: Trash
+  const handleBulkRestoreTrash = () => {
+    if (selectedTrashIds.size === 0) return;
+    const count = selectedTrashIds.size;
+    const repToRestore = deletedReports.filter(r => selectedTrashIds.has(r.id));
+    const fbToRestore = deletedFeedback.filter(f => selectedTrashIds.has(f.id));
+    repToRestore.forEach(r => {
+      if (onAddPoint) onAddPoint(r);
+    });
+    fbToRestore.forEach(fb => {
+      setLocalFeedback(prev => [fb, ...prev.filter(x => x.id !== fb.id)]);
+    });
+    setDeletedReports(prev => prev.filter(r => !selectedTrashIds.has(r.id)));
+    setDeletedFeedback(prev => prev.filter(f => !selectedTrashIds.has(f.id)));
+    setSelectedTrashIds(new Set());
+    showNotice(`✅ กู้คืนข้อมูลสำเร็จ ${count} รายการ`);
+  };
+
+  const handleBulkPermanentDeleteTrash = () => {
+    if (selectedTrashIds.size === 0) return;
+    const count = selectedTrashIds.size;
+    if (!window.confirm(`ยืนยันลบถาวร ${count} รายการ? ไม่สามารถกู้คืนได้อีก`)) return;
+    setDeletedReports(prev => {
+      const updated = prev.filter(r => !selectedTrashIds.has(r.id));
+      try { localStorage.setItem('pg_admin_deleted_reports', JSON.stringify(updated)); } catch (e) {}
+      return updated;
+    });
+    setDeletedFeedback(prev => {
+      const updated = prev.filter(f => !selectedTrashIds.has(f.id));
+      try { localStorage.setItem('pg_admin_deleted_feedback', JSON.stringify(updated)); } catch (e) {}
+      return updated;
+    });
+    setSelectedTrashIds(new Set());
+    showNotice(`🔥 ลบถาวรสำเร็จ ${count} รายการ`, 'info');
   };
 
   // Feedback Handlers
@@ -925,6 +1205,14 @@ export default function AdminModal({
         {/* Accent Bar */}
         <div className="h-1.5 w-full bg-gradient-to-r from-amber-500 via-rose-500 to-indigo-600 shrink-0"></div>
 
+        {/* Refresh Toast Popup */}
+        {showRefreshToast && (
+          <div className="fixed top-5 left-1/2 -translate-x-1/2 z-[100] px-4 py-2 rounded-2xl bg-emerald-600 text-white font-bold text-xs shadow-2xl backdrop-blur-md flex items-center gap-2 border border-emerald-400/40 animate-in fade-in zoom-in-95 duration-200">
+            <CheckCircle2 className="w-4 h-4 text-emerald-200 animate-pulse shrink-0" />
+            <span>🔄 รีเฟรชข้อมูลเรียบร้อยแล้ว</span>
+          </div>
+        )}
+
         {/* Modal Header */}
         <div className={`px-4 sm:px-6 py-3.5 border-b flex items-center justify-between shrink-0 ${
           isDark ? 'bg-slate-950/90 border-slate-800' : 'bg-slate-50 border-slate-200'
@@ -945,6 +1233,14 @@ export default function AdminModal({
                 }`}>
                   {isAuthenticated ? 'ONLINE • สูงสุด' : 'LOCKED'}
                 </span>
+                {isAuthenticated && (
+                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold border shrink-0 flex items-center gap-1.5 ${
+                    isDark ? 'bg-cyan-950/80 text-cyan-300 border-cyan-700' : 'bg-cyan-50 text-cyan-800 border-cyan-300'
+                  }`} title="จำนวนผู้ใช้งานที่กำลังเปิดเว็บอยู่ในขณะนี้ (อิงจากเซสชันสด)">
+                    <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse"></span>
+                    <span>สด: {liveVisitors.length} คน</span>
+                  </span>
+                )}
               </div>
               <p className={`text-[11px] truncate ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
                 {isAuthenticated 
@@ -956,15 +1252,36 @@ export default function AdminModal({
 
           <div className="flex items-center gap-2 shrink-0">
             {isAuthenticated && (
-              <button
-                type="button"
-                onClick={handleLogout}
-                className="px-2.5 py-1.5 rounded-xl text-xs font-semibold text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/50 flex items-center gap-1 transition-colors cursor-pointer border border-transparent hover:border-rose-300 dark:hover:border-rose-900"
-                title="ออกจากระบบ ADMIN"
-              >
-                <LogOut className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">ออกจากระบบ</span>
-              </button>
+              <>
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleManualSyncNow();
+                    fetchLiveVisitors();
+                    fetchCloudAdminSessions();
+                  }}
+                  disabled={isManualSyncing}
+                  className={`px-2.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer border active:scale-95 ${
+                    isDark 
+                      ? 'bg-slate-800 hover:bg-slate-700 text-amber-300 border-slate-700' 
+                      : 'bg-white hover:bg-slate-100 text-amber-700 border-slate-200 shadow-xs'
+                  }`}
+                  title="รีเฟรชข้อมูลทั้งหมดทันที"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${isManualSyncing ? 'animate-spin' : ''}`} />
+                  <span className="hidden sm:inline">รีเฟรช</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="px-2.5 py-1.5 rounded-xl text-xs font-semibold text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/50 flex items-center gap-1 transition-colors cursor-pointer border border-transparent hover:border-rose-300 dark:hover:border-rose-900"
+                  title="ออกจากระบบ ADMIN"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">ออกจากระบบ</span>
+                </button>
+              </>
             )}
             <button 
               type="button"
@@ -976,6 +1293,19 @@ export default function AdminModal({
               <X className="w-5 h-5" />
             </button>
           </div>
+        </div>
+
+        {/* Legal Disclaimer Notice Banner */}
+        <div className={`px-4 py-1.5 text-[10.5px] border-b flex items-center justify-between gap-2 shrink-0 ${
+          isDark ? 'bg-slate-950/40 border-slate-800/80 text-amber-400/90' : 'bg-amber-50/70 border-amber-200 text-amber-800'
+        }`}>
+          <div className="flex items-center gap-1.5 min-w-0 truncate">
+            <ShieldAlert className="w-3.5 h-3.5 shrink-0 text-amber-500" />
+            <span className="truncate">
+              <strong>สงวนสิทธิ์ลิขสิทธิ์:</strong> การเข้าใช้งานศูนย์ควบคุมระบบของเว็บเฉพาะผู้ร่วมพัฒนาเว็บไซต์และคณะทำงานที่ได้รับอนุญาตเท่านั้น
+            </span>
+          </div>
+          <span className="text-[9.5px] font-mono opacity-70 hidden sm:inline shrink-0">PrakanGuard Security</span>
         </div>
 
         {/* Internal Admin Notification Banner (Inside Modal Only) */}
@@ -1015,6 +1345,14 @@ export default function AdminModal({
                 <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
                   ข้อมูลรายงานประชาชนและข้อเสนอแนะจะแสดงต่อเมื่อเข้าสู่ระบบเท่านั้น
                 </p>
+              </div>
+
+              {/* Legal Disclaimer Notice Card */}
+              <div className="p-3 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-700 dark:text-amber-300 text-[11px] leading-relaxed flex items-start gap-2 text-left">
+                <ShieldAlert className="w-4 h-4 shrink-0 text-amber-500 mt-0.5" />
+                <span>
+                  <strong>ประกาศข้อกำหนดสิทธิ์:</strong> สงวนสิทธิ์ลิขสิทธิ์และการเข้าใช้งานศูนย์ควบคุมระบบของเว็บเฉพาะผู้ร่วมพัฒนาเว็บไซต์และคณะทำงานที่ได้รับอนุญาตเท่านั้น ไม่อนุญาตให้บุคคลภายนอกเข้าถึง ทำซ้ำ หรือดัดแปลงระบบโดยไม่ได้รับอนุญาต
+                </span>
               </div>
 
               {loginError && (
@@ -1328,19 +1666,85 @@ export default function AdminModal({
                       </p>
                     </div>
                   ) : (
-                    filteredPendingReports.map(report => {
-                      const cred = evaluateCredibility(report);
-                      const isHail = report.hazardType === 'hail';
+                    <>
+                      {/* Select All & Bulk Actions for Pending */}
+                      <div className={`p-2.5 px-3.5 rounded-2xl border flex items-center justify-between gap-2 flex-wrap ${
+                        isDark ? 'bg-slate-800/80 border-slate-700' : 'bg-slate-100 border-slate-200'
+                      }`}>
+                        <label className="flex items-center gap-2 text-xs font-bold cursor-pointer select-none">
+                          <input 
+                            type="checkbox"
+                            checked={selectedPendingIds.size > 0 && selectedPendingIds.size === filteredPendingReports.length}
+                            ref={el => {
+                              if (el) el.indeterminate = selectedPendingIds.size > 0 && selectedPendingIds.size < filteredPendingReports.length;
+                            }}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setSelectedPendingIds(new Set(filteredPendingReports.map(r => r.id)));
+                              } else {
+                                setSelectedPendingIds(new Set());
+                              }
+                            }}
+                            className="w-4 h-4 rounded text-amber-500 cursor-pointer"
+                          />
+                          <span>เลือกทั้งหมด ({filteredPendingReports.length} รายการ)</span>
+                        </label>
 
-                      return (
-                        <div 
-                          key={report.id}
-                          className={`p-4 rounded-2xl border transition-all ${
-                            isDark ? 'bg-slate-850 border-slate-700/80 shadow-md' : 'bg-white border-slate-200 shadow-sm'
-                          }`}
-                        >
-                          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
-                            <div className="space-y-1.5 flex-1 min-w-0">
+                        {selectedPendingIds.size > 0 && (
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-[11px] font-bold text-amber-500">
+                              เลือก {selectedPendingIds.size} รายการ:
+                            </span>
+                            <button
+                              type="button"
+                              onClick={handleBulkApprovePending}
+                              className="px-2.5 py-1 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-1 shadow-xs cursor-pointer active:scale-95"
+                            >
+                              <Check className="w-3.5 h-3.5" />
+                              <span>อนุมัติทั้งหมดที่เลือก</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={handleBulkRejectPending}
+                              className="px-2.5 py-1 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs flex items-center gap-1 shadow-xs cursor-pointer active:scale-95"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                              <span>ลบที่เลือก</span>
+                            </button>
+                          </div>
+                        )}
+                      </div>
+
+                      {filteredPendingReports.map(report => {
+                        const cred = evaluateCredibility(report);
+                        const isHail = report.hazardType === 'hail';
+
+                        return (
+                          <div 
+                            key={report.id}
+                            className={`p-4 rounded-2xl border transition-all ${
+                              selectedPendingIds.has(report.id)
+                                ? (isDark ? 'bg-amber-950/20 border-amber-500/60 shadow-md ring-1 ring-amber-500/30' : 'bg-amber-50/70 border-amber-300 shadow-sm ring-1 ring-amber-300')
+                                : (isDark ? 'bg-slate-850 border-slate-700/80 shadow-md' : 'bg-white border-slate-200 shadow-sm')
+                            }`}
+                          >
+                            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                              <div className="flex items-start gap-3 flex-1 min-w-0">
+                                <input 
+                                  type="checkbox"
+                                  checked={selectedPendingIds.has(report.id)}
+                                  onChange={(e) => {
+                                    setSelectedPendingIds(prev => {
+                                      const next = new Set(prev);
+                                      if (e.target.checked) next.add(report.id);
+                                      else next.delete(report.id);
+                                      return next;
+                                    });
+                                  }}
+                                  className="w-4 h-4 rounded text-amber-500 cursor-pointer mt-1 shrink-0"
+                                  title="เลือกรายการนี้"
+                                />
+                                <div className="space-y-1.5 flex-1 min-w-0">
                               <div className="flex items-center gap-2 flex-wrap">
                                 <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold border ${isDark ? cred.darkBadgeClass : cred.badgeClass}`}>
                                   ความน่าเชื่อถือ: {cred.score}% ({cred.label})
@@ -1400,6 +1804,7 @@ export default function AdminModal({
                                   </button>
                                 ))}
                               </div>
+                              </div>
                             </div>
 
                             {/* Photo Evidence Thumbnail */}
@@ -1454,8 +1859,9 @@ export default function AdminModal({
                           </div>
                         </div>
                       );
-                    })
-                  )}
+                    })}
+                  </>
+                )}
                 </div>
               )}
 
@@ -1509,19 +1915,84 @@ export default function AdminModal({
                       ยังไม่มีจุดรายงานที่กำลังแสดงบนแผนที่
                     </div>
                   ) : (
-                    filteredApprovedReports.map(report => (
-                      <div 
-                        key={report.id}
-                        className={`p-3.5 rounded-2xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
-                          isDark ? 'bg-slate-850/90 border-slate-750' : 'bg-white border-slate-200 shadow-sm'
-                        }`}
-                      >
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
-                            <span className="text-[11px] text-slate-400 font-mono">
-                              อัปเดตเมื่อ: {report.approvedAt || report.reportedAt}
+                    <>
+                      {/* Select All & Bulk Actions for Approved */}
+                      <div className={`p-2.5 px-3.5 rounded-2xl border flex items-center justify-between gap-2 flex-wrap ${
+                        isDark ? 'bg-slate-800/80 border-slate-700' : 'bg-slate-100 border-slate-200'
+                      }`}>
+                        <label className="flex items-center gap-2 text-xs font-bold cursor-pointer select-none">
+                          <input 
+                            type="checkbox"
+                            checked={selectedApprovedIds.size > 0 && selectedApprovedIds.size === filteredApprovedReports.length}
+                            ref={el => {
+                              if (el) el.indeterminate = selectedApprovedIds.size > 0 && selectedApprovedIds.size < filteredApprovedReports.length;
+                            }}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setSelectedApprovedIds(new Set(filteredApprovedReports.map(r => r.id)));
+                              } else {
+                                setSelectedApprovedIds(new Set());
+                              }
+                            }}
+                            className="w-4 h-4 rounded text-emerald-500 cursor-pointer"
+                          />
+                          <span>เลือกทั้งหมด ({filteredApprovedReports.length} รายการ)</span>
+                        </label>
+
+                        {selectedApprovedIds.size > 0 && (
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-[11px] font-bold text-emerald-500">
+                              เลือก {selectedApprovedIds.size} รายการ:
                             </span>
+                            <button
+                              type="button"
+                              onClick={handleBulkRevokeApproved}
+                              className="px-2.5 py-1 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs flex items-center gap-1 shadow-xs cursor-pointer active:scale-95"
+                            >
+                              <span>🚫 ยกเลิกอนุมัติที่เลือก</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={handleBulkDeleteApproved}
+                              className="px-2.5 py-1 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs flex items-center gap-1 shadow-xs cursor-pointer active:scale-95"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                              <span>ลบที่เลือก</span>
+                            </button>
+                          </div>
+                        )}
+                      </div>
+
+                      {filteredApprovedReports.map(report => (
+                        <div 
+                          key={report.id}
+                          className={`p-3.5 rounded-2xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
+                            selectedApprovedIds.has(report.id)
+                              ? (isDark ? 'bg-emerald-950/20 border-emerald-500/60 shadow-md ring-1 ring-emerald-500/30' : 'bg-emerald-50/70 border-emerald-300 shadow-sm ring-1 ring-emerald-300')
+                              : (isDark ? 'bg-slate-850/90 border-slate-750' : 'bg-white border-slate-200 shadow-sm')
+                          }`}
+                        >
+                          <div className="flex items-start gap-3 min-w-0 flex-1">
+                            <input 
+                              type="checkbox"
+                              checked={selectedApprovedIds.has(report.id)}
+                              onChange={(e) => {
+                                setSelectedApprovedIds(prev => {
+                                  const next = new Set(prev);
+                                  if (e.target.checked) next.add(report.id);
+                                  else next.delete(report.id);
+                                  return next;
+                                });
+                              }}
+                              className="w-4 h-4 rounded text-emerald-500 cursor-pointer mt-1 shrink-0"
+                              title="เลือกรายการนี้"
+                            />
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
+                                <span className="text-[11px] text-slate-400 font-mono">
+                                  อัปเดตเมื่อ: {report.approvedAt || report.reportedAt}
+                                </span>
                             {report.isAdminBroadcast ? (
                               <span className="text-[10px] px-1.5 py-0.2 rounded bg-blue-500/20 text-blue-400 border border-blue-500/30 font-bold">
                                 ประกาศแอดมิน
@@ -1563,6 +2034,7 @@ export default function AdminModal({
                             ))}
                           </div>
                         </div>
+                      </div>
 
                         <div className="flex items-center gap-2 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-800">
                           {onFlyToCoords && (
@@ -1598,7 +2070,8 @@ export default function AdminModal({
                           </button>
                         </div>
                       </div>
-                    ))
+                    ))}
+                    </>
                   )}
                 </div>
               )}
@@ -2265,6 +2738,56 @@ export default function AdminModal({
                     </div>
                   </div>
 
+                  {/* Select All & Bulk Actions for Feedback */}
+                  {filteredFeedbackList.length > 0 && (
+                    <div className={`p-2.5 px-3.5 rounded-2xl border flex items-center justify-between gap-2 flex-wrap ${
+                      isDark ? 'bg-slate-800/80 border-slate-700' : 'bg-slate-100 border-slate-200'
+                    }`}>
+                      <label className="flex items-center gap-2 text-xs font-bold cursor-pointer select-none">
+                        <input 
+                          type="checkbox"
+                          checked={selectedFeedbackIds.size > 0 && selectedFeedbackIds.size === filteredFeedbackList.length}
+                          ref={el => {
+                            if (el) el.indeterminate = selectedFeedbackIds.size > 0 && selectedFeedbackIds.size < filteredFeedbackList.length;
+                          }}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedFeedbackIds(new Set(filteredFeedbackList.map(f => f.id)));
+                            } else {
+                              setSelectedFeedbackIds(new Set());
+                            }
+                          }}
+                          className="w-4 h-4 rounded text-teal-500 cursor-pointer"
+                        />
+                        <span>เลือกทั้งหมด ({filteredFeedbackList.length} รายการ)</span>
+                      </label>
+
+                      {selectedFeedbackIds.size > 0 && (
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-[11px] font-bold text-teal-400">
+                            เลือก {selectedFeedbackIds.size} รายการ:
+                          </span>
+                          <button
+                            type="button"
+                            onClick={handleBulkMarkFeedbackRead}
+                            className="px-2.5 py-1 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-bold text-xs flex items-center gap-1 shadow-xs cursor-pointer active:scale-95"
+                          >
+                            <CheckCheck className="w-3.5 h-3.5" />
+                            <span>ทำเครื่องหมายอ่านแล้ว</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleBulkDeleteFeedback}
+                            className="px-2.5 py-1 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs flex items-center gap-1 shadow-xs cursor-pointer active:scale-95"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                            <span>ลบที่เลือก</span>
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   {/* Feedback Cards List */}
                   <div className="space-y-3 max-h-[56vh] overflow-y-auto pr-1">
                     {filteredFeedbackList.length === 0 ? (
@@ -2282,7 +2805,9 @@ export default function AdminModal({
                         <div
                           key={item.id}
                           className={`p-4 rounded-2xl border transition-all ${
-                            !item.isRead
+                            selectedFeedbackIds.has(item.id)
+                              ? (isDark ? 'bg-teal-950/40 border-teal-500/80 shadow-md ring-1 ring-teal-500/30' : 'bg-teal-50/80 border-teal-400 shadow-sm ring-1 ring-teal-300')
+                              : !item.isRead
                               ? (isDark ? 'bg-teal-950/25 border-teal-500/60 shadow-sm' : 'bg-teal-50/50 border-teal-400/80 shadow-xs')
                               : (isDark ? 'bg-slate-850/90 border-slate-750' : 'bg-white border-slate-200 shadow-2xs')
                           }`}
@@ -2290,6 +2815,20 @@ export default function AdminModal({
                           {/* Card Top */}
                           <div className="flex items-center justify-between gap-2 flex-wrap pb-2 border-b border-dashed border-slate-200 dark:border-slate-800">
                             <div className="flex items-center gap-2 flex-wrap">
+                              <input 
+                                type="checkbox"
+                                checked={selectedFeedbackIds.has(item.id)}
+                                onChange={(e) => {
+                                  setSelectedFeedbackIds(prev => {
+                                    const next = new Set(prev);
+                                    if (e.target.checked) next.add(item.id);
+                                    else next.delete(item.id);
+                                    return next;
+                                  });
+                                }}
+                                className="w-4 h-4 rounded text-teal-500 cursor-pointer shrink-0"
+                                title="เลือกรายการนี้"
+                              />
                               <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md border ${
                                 isDark ? 'bg-slate-800 text-teal-300 border-teal-800' : 'bg-teal-50 text-teal-800 border-teal-200'
                               }`}>
@@ -2488,59 +3027,151 @@ export default function AdminModal({
 
               {/* TAB 6: AUDIT HISTORY */}
               {activeTab === 'history' && (
-                <div className="space-y-3 max-w-2xl mx-auto">
-                  <div className={`p-3.5 rounded-2xl border text-xs leading-relaxed ${
-                    isDark ? 'bg-slate-850 border-slate-700 text-slate-300' : 'bg-slate-50 border-slate-200 text-slate-700'
-                  }`}>
-                    <strong className="block text-slate-900 dark:text-white mb-1">
-                      🕒 ประวัติการบันทึกและอนุมัติข้อมูล ({historyReports.length} รายการ)
-                    </strong>
-                    แสดงประวัติการยืนยันและการระบายแห้งของรายงานทั้งหมด
+                <div className="space-y-3.5 max-w-2xl mx-auto">
+                  {/* History Subtab Switcher */}
+                  <div className="flex items-center gap-2 p-1 rounded-2xl bg-slate-800/60 border border-slate-700/60">
+                    <button
+                      type="button"
+                      onClick={() => setHistorySubTab('reports')}
+                      className={`flex-1 py-1.5 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                        historySubTab === 'reports'
+                          ? 'bg-blue-600 text-white shadow-sm'
+                          : 'text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      <History className="w-3.5 h-3.5" />
+                      <span>จุดรายงาน & น้ำท่วม ({historyReports.length})</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setHistorySubTab('logins')}
+                      className={`flex-1 py-1.5 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                        historySubTab === 'logins'
+                          ? 'bg-blue-600 text-white shadow-sm'
+                          : 'text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      <Users className="w-3.5 h-3.5" />
+                      <span>ประวัติเข้าสู่ระบบแอดมิน ({adminLoginHistory.length})</span>
+                    </button>
                   </div>
 
-                  {historyReports.length === 0 ? (
-                    <div className="p-8 text-center text-slate-400 text-xs">
-                      ยังไม่มีประวัติการจัดการในระบบ
-                    </div>
-                  ) : (
-                    historyReports.map(item => (
-                      <div 
-                        key={item.id}
-                        className={`p-3 rounded-2xl border text-xs flex items-center justify-between gap-3 ${
-                          isDark ? 'bg-slate-850/80 border-slate-800' : 'bg-white border-slate-200'
-                        }`}
-                      >
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-2 mb-0.5">
-                            <span className={`text-[10px] px-1.5 py-0.2 rounded font-bold ${
-                              item.isResolved 
-                                ? 'bg-emerald-500/20 text-emerald-400' 
-                                : 'bg-blue-500/20 text-blue-400'
-                            }`}>
-                              {item.isResolved ? 'ระบายแห้งแล้ว' : 'อนุมัติแล้ว'}
-                            </span>
-                            <span className="text-[11px] text-slate-400 font-mono">
-                              {item.resolvedAt || item.approvedAt || item.reportedAt}
-                            </span>
-                          </div>
-                          <div className="font-bold text-slate-900 dark:text-white truncate">
-                            {item.name}
-                          </div>
-                          <div className="text-[11px] text-slate-400">
-                            อ.{item.district} • {item.depthRange || `${item.depthCm} ซม.`}
-                          </div>
-                        </div>
-
-                        {item.photoUrl && (
-                          <div 
-                            onClick={() => setSelectedPhotoModal(item.photoUrl)}
-                            className="w-10 h-10 rounded-xl overflow-hidden shrink-0 cursor-pointer border border-white/10"
-                          >
-                            <img src={item.photoUrl} alt="รูป" className="w-full h-full object-cover" />
-                          </div>
-                        )}
+                  {historySubTab === 'reports' ? (
+                    <>
+                      <div className={`p-3.5 rounded-2xl border text-xs leading-relaxed ${
+                        isDark ? 'bg-slate-850 border-slate-700 text-slate-300' : 'bg-slate-50 border-slate-200 text-slate-700'
+                      }`}>
+                        <strong className="block text-slate-900 dark:text-white mb-1">
+                          🕒 ประวัติการบันทึกและอนุมัติข้อมูล ({historyReports.length} รายการ)
+                        </strong>
+                        แสดงประวัติการยืนยันและการระบายแห้งของรายงานทั้งหมด
                       </div>
-                    ))
+
+                      {historyReports.length === 0 ? (
+                        <div className="p-8 text-center text-slate-400 text-xs">
+                          ยังไม่มีประวัติการจัดการในระบบ
+                        </div>
+                      ) : (
+                        historyReports.map(item => (
+                          <div 
+                            key={item.id}
+                            className={`p-3 rounded-2xl border text-xs flex items-center justify-between gap-3 ${
+                              isDark ? 'bg-slate-850/80 border-slate-800' : 'bg-white border-slate-200'
+                            }`}
+                          >
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2 mb-0.5">
+                                <span className={`text-[10px] px-1.5 py-0.2 rounded font-bold ${
+                                  item.isResolved 
+                                    ? 'bg-emerald-500/20 text-emerald-400' 
+                                    : 'bg-blue-500/20 text-blue-400'
+                                }`}>
+                                  {item.isResolved ? 'ระบายแห้งแล้ว' : 'อนุมัติแล้ว'}
+                                </span>
+                                <span className="text-[11px] text-slate-400 font-mono">
+                                  {item.resolvedAt || item.approvedAt || item.reportedAt}
+                                </span>
+                              </div>
+                              <div className="font-bold text-slate-900 dark:text-white truncate">
+                                {item.name}
+                              </div>
+                              <div className="text-[11px] text-slate-400">
+                                อ.{item.district} • {item.depthRange || `${item.depthCm} ซม.`}
+                              </div>
+                            </div>
+
+                            {item.photoUrl && (
+                              <div 
+                                onClick={() => setSelectedPhotoModal(item.photoUrl)}
+                                className="w-10 h-10 rounded-xl overflow-hidden shrink-0 cursor-pointer border border-white/10"
+                              >
+                                <img src={item.photoUrl} alt="รูป" className="w-full h-full object-cover" />
+                              </div>
+                            )}
+                          </div>
+                        ))
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      <div className={`p-3.5 rounded-2xl border text-xs leading-relaxed flex items-center justify-between gap-2 ${
+                        isDark ? 'bg-slate-850 border-slate-700 text-slate-300' : 'bg-slate-50 border-slate-200 text-slate-700'
+                      }`}>
+                        <div>
+                          <strong className="block text-slate-900 dark:text-white mb-0.5">
+                            👥 รวมประวัติการเข้าสู่ระบบแอดมินทุกบัญชีและทุกอุปกรณ์
+                          </strong>
+                          <span>บันทึกบัญชีที่ล็อกอิน อุปกรณ์ และเวลาที่เข้าใช้งาน ทั้งผ่านหน้าเว็บและแดชบอร์ด</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={fetchCloudAdminSessions}
+                          className="px-2.5 py-1 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs flex items-center gap-1 shrink-0 cursor-pointer"
+                        >
+                          <RefreshCw className="w-3 h-3" />
+                          <span>รีเฟรชประวัติ</span>
+                        </button>
+                      </div>
+
+                      {adminLoginHistory.length === 0 ? (
+                        <div className="p-8 text-center text-slate-400 text-xs">
+                          ยังไม่มีประวัติการเข้าสู่ระบบแอดมิน
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          {adminLoginHistory.map((sess, idx) => (
+                            <div 
+                              key={sess.id || idx}
+                              className={`p-3 rounded-2xl border text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2 ${
+                                isDark ? 'bg-slate-850/90 border-slate-750' : 'bg-white border-slate-200 shadow-xs'
+                              }`}
+                            >
+                              <div className="flex items-center gap-3 min-w-0">
+                                <div className="w-8 h-8 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center font-bold shrink-0">
+                                  <Users className="w-4 h-4" />
+                                </div>
+                                <div className="min-w-0">
+                                  <div className="flex items-center gap-2">
+                                    <span className="font-bold text-slate-900 dark:text-white truncate">
+                                      👤 {sess.username || 'admin'}
+                                    </span>
+                                    <span className="text-[10px] px-1.5 py-0.2 rounded-md bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 font-bold shrink-0">
+                                      {sess.status || 'เข้าสู่ระบบสำเร็จ'}
+                                    </span>
+                                  </div>
+                                  <div className="text-[11px] text-slate-400 flex items-center gap-2 mt-0.5 truncate">
+                                    <span>💻 {sess.device || 'PC / Device'}</span>
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="text-[11px] text-slate-400 font-mono text-left sm:text-right shrink-0">
+                                {sess.formattedTime || sess.timestamp}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
               )}
@@ -2671,14 +3302,78 @@ export default function AdminModal({
 
                     return (
                       <div className="space-y-3">
+                        {/* Select All & Bulk Actions for Trash */}
+                        <div className={`p-2.5 px-3.5 rounded-2xl border flex items-center justify-between gap-2 flex-wrap ${
+                          isDark ? 'bg-slate-800/80 border-slate-700' : 'bg-slate-100 border-slate-200'
+                        }`}>
+                          <label className="flex items-center gap-2 text-xs font-bold cursor-pointer select-none">
+                            <input 
+                              type="checkbox"
+                              checked={selectedTrashIds.size > 0 && selectedTrashIds.size === totalItems}
+                              ref={el => {
+                                if (el) el.indeterminate = selectedTrashIds.size > 0 && selectedTrashIds.size < totalItems;
+                              }}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setSelectedTrashIds(new Set([...filteredReports, ...filteredFeedback].map(it => it.id)));
+                                } else {
+                                  setSelectedTrashIds(new Set());
+                                }
+                              }}
+                              className="w-4 h-4 rounded text-rose-500 cursor-pointer"
+                            />
+                            <span>เลือกทั้งหมด ({totalItems} รายการ)</span>
+                          </label>
+
+                          {selectedTrashIds.size > 0 && (
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="text-[11px] font-bold text-rose-400">
+                                เลือก {selectedTrashIds.size} รายการ:
+                              </span>
+                              <button
+                                type="button"
+                                onClick={handleBulkRestoreTrash}
+                                className="px-2.5 py-1 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-1 shadow-xs cursor-pointer active:scale-95"
+                              >
+                                <RotateCcw className="w-3.5 h-3.5" />
+                                <span>กู้คืนที่เลือก</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={handleBulkPermanentDeleteTrash}
+                                className="px-2.5 py-1 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs flex items-center gap-1 shadow-xs cursor-pointer active:scale-95"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                                <span>ลบถาวรที่เลือก</span>
+                              </button>
+                            </div>
+                          )}
+                        </div>
+
                         {/* Reports Section */}
                         {filteredReports.map(item => (
                           <div
                             key={`trash-rep-${item.id}`}
                             className={`p-3.5 rounded-2xl border flex flex-col sm:flex-row items-start justify-between gap-3 ${
-                              isDark ? 'bg-slate-850 border-slate-700/80' : 'bg-white border-slate-200 shadow-sm'
+                              selectedTrashIds.has(item.id)
+                                ? (isDark ? 'bg-rose-950/30 border-rose-500/80 ring-1 ring-rose-500/30 shadow-md' : 'bg-rose-50/80 border-rose-300 ring-1 ring-rose-300 shadow-sm')
+                                : (isDark ? 'bg-slate-850 border-slate-700/80' : 'bg-white border-slate-200 shadow-sm')
                             }`}
                           >
+                            <input 
+                              type="checkbox"
+                              checked={selectedTrashIds.has(item.id)}
+                              onChange={(e) => {
+                                setSelectedTrashIds(prev => {
+                                  const next = new Set(prev);
+                                  if (e.target.checked) next.add(item.id);
+                                  else next.delete(item.id);
+                                  return next;
+                                });
+                              }}
+                              className="w-4 h-4 rounded text-rose-500 cursor-pointer mt-1 shrink-0"
+                              title="เลือกรายการนี้"
+                            />
                             <div className="flex-1 space-y-1.5 min-w-0">
                               <div className="flex flex-wrap items-center gap-2">
                                 <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-rose-500/15 text-rose-500 border border-rose-500/20">
@@ -2754,9 +3449,25 @@ export default function AdminModal({
                           <div
                             key={`trash-fb-${item.id}`}
                             className={`p-3.5 rounded-2xl border flex flex-col sm:flex-row items-start justify-between gap-3 ${
-                              isDark ? 'bg-slate-850 border-slate-700/80' : 'bg-white border-slate-200 shadow-sm'
+                              selectedTrashIds.has(item.id)
+                                ? (isDark ? 'bg-rose-950/30 border-rose-500/80 ring-1 ring-rose-500/30 shadow-md' : 'bg-rose-50/80 border-rose-300 ring-1 ring-rose-300 shadow-sm')
+                                : (isDark ? 'bg-slate-850 border-slate-700/80' : 'bg-white border-slate-200 shadow-sm')
                             }`}
                           >
+                            <input 
+                              type="checkbox"
+                              checked={selectedTrashIds.has(item.id)}
+                              onChange={(e) => {
+                                setSelectedTrashIds(prev => {
+                                  const next = new Set(prev);
+                                  if (e.target.checked) next.add(item.id);
+                                  else next.delete(item.id);
+                                  return next;
+                                });
+                              }}
+                              className="w-4 h-4 rounded text-rose-500 cursor-pointer mt-1 shrink-0"
+                              title="เลือกรายการนี้"
+                            />
                             <div className="flex-1 space-y-1.5 min-w-0">
                               <div className="flex flex-wrap items-center gap-2">
                                 <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-teal-500/15 text-teal-500 border border-teal-500/20">

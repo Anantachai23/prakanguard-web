@@ -8,7 +8,8 @@ import {
   Moon, 
   Camera, 
   MessageSquare,
-  RotateCw
+  RotateCw,
+  ShieldCheck
 } from 'lucide-react';
 import RealTimeClock from './RealTimeClock';
 import { 
@@ -35,6 +36,7 @@ export default function Navbar({
   onOpenFeedback,
   onOpenAdmin,
   onOpenPublicUpdates,
+  onOpenPrivacyPolicy,
   lastUpdatedTime,
   lastUpdatedTimeDetailed,
   pendingReportsCount = 0,
@@ -295,6 +297,24 @@ export default function Navbar({
             <span>ข้อเสนอแนะ</span>
           </button>
 
+          {/* Desktop/Tablet Privacy Policy Button */}
+          <button 
+            type="button"
+            onClick={() => {
+              playClickSound();
+              if (onOpenPrivacyPolicy) onOpenPrivacyPolicy();
+            }}
+            className={`hidden lg:inline-flex px-2.5 sm:px-3 py-1.5 rounded-xl border text-xs font-semibold items-center gap-1.5 transition-all cursor-pointer shadow-xs active:scale-95 ${
+              isDark 
+                ? 'bg-sky-950/60 hover:bg-sky-900/60 text-sky-300 border-sky-800' 
+                : 'bg-sky-50 hover:bg-sky-100 text-sky-800 border-sky-200'
+            }`}
+            title="นโยบายความเป็นส่วนตัวและแหล่งข้อมูลอ้างอิง (จัดทำโดยกลุ่มนักเรียน)"
+          >
+            <ShieldCheck className="w-3.5 h-3.5 text-sky-500 shrink-0" />
+            <span>นโยบาย & ข้อกำหนด</span>
+          </button>
+
           {/* Desktop/Tablet Live Updates Button */}
           <button 
             type="button"
@@ -361,35 +381,6 @@ export default function Navbar({
             ) : (
               <Moon className="w-4 h-4 text-slate-700" />
             )}
-          </button>
-
-          {/* Reload / Sync Button (Every Device - Auto-refreshes every 5 min with live countdown) */}
-          <button
-            type="button"
-            onClick={() => {
-              playRefreshSound();
-              if (onRefreshData) {
-                onRefreshData();
-              } else {
-                window.location.reload();
-              }
-            }}
-            className={`p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl border text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer shadow-xs active:scale-95 ${
-              isDark 
-                ? 'bg-slate-900 hover:bg-slate-800 text-sky-400 border-slate-700 hover:border-sky-500/50' 
-                : 'bg-slate-100 hover:bg-slate-200 text-sky-700 border-slate-200 hover:border-sky-300'
-            }`}
-            title={`รีเฟรชอัปเดตข้อมูลน้ำท่วมสด (รีเฟรชอัตโนมัติในอีก ${countdownFormatted} นาที)`}
-            aria-label="รีเฟรชอัปเดตข้อมูล"
-          >
-            <RotateCw className={`w-3.5 h-3.5 sm:w-4 sm:h-4 text-sky-500 shrink-0 ${isRefreshing ? 'animate-spin text-sky-400' : 'hover:rotate-180 transition-transform duration-500'}`} />
-            <div className="flex items-center gap-1 min-w-0">
-              <span className="hidden lg:inline">รีเฟรชในอีก</span>
-              <span className="hidden sm:inline lg:hidden">รีเฟรช</span>
-              <span className="font-mono font-bold text-[11px] sm:text-xs text-sky-600 dark:text-cyan-400">
-                {countdownFormatted}
-              </span>
-            </div>
           </button>
         </div>
       </div>
