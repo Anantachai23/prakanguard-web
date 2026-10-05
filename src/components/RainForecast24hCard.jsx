@@ -24,7 +24,7 @@ export default function RainForecast24hCard({
   // Default to compact pill on mobile so it never blocks the map
   const [isExpanded, setIsExpanded] = useState(() => {
     if (defaultExpanded !== undefined) return defaultExpanded;
-    if (typeof window !== 'undefined' && window.innerWidth < 640) return false;
+    if (typeof window !== 'undefined' && window.innerWidth < 1024) return false;
     return true;
   });
 

@@ -2506,7 +2506,7 @@ export default function App() {
 
         {/* Active District Mobile Indicator with Quick Reset (กดครั้งเดียวกลับดูทั้งจังหวัด ไม่สับสน) */}
         {selectedDistrict !== 'ทั้งหมด' && isTopPanelCollapsed && (
-          <div className="sm:hidden absolute top-2.5 right-14 z-20 pointer-events-auto flex items-center gap-1.5 px-2.5 py-1.5 rounded-2xl bg-blue-600/95 text-white shadow-lg border border-blue-400 text-xs font-bold animate-in fade-in">
+          <div className="md:hidden absolute top-2.5 right-14 z-20 pointer-events-auto flex items-center gap-1.5 px-2.5 py-1.5 rounded-2xl bg-blue-600/95 text-white shadow-lg border border-blue-400 text-xs font-bold animate-in fade-in">
             <span className="truncate max-w-[120px]">📍 {selectedDistrict.replace(/^อ\./, '').replace('เมืองสมุทรปราการ', 'เมือง')}</span>
             <button
               onClick={() => {
@@ -2528,7 +2528,7 @@ export default function App() {
               playToggleSound(true);
               setIsTopPanelCollapsed(false);
             }}
-            className={`absolute top-2.5 sm:top-3 left-2.5 sm:left-4 z-20 pointer-events-auto flex items-center gap-1.5 px-3 py-1.5 rounded-2xl shadow-xl border text-xs font-bold backdrop-blur-xl transition-all hover:scale-105 active:scale-95 cursor-pointer ${
+            className={`absolute top-2.5 md:top-3.5 left-2.5 md:left-4 z-20 pointer-events-auto flex items-center gap-1.5 px-3 py-1.5 rounded-2xl shadow-xl border text-xs font-bold backdrop-blur-xl transition-all hover:scale-105 active:scale-95 cursor-pointer ${
               isDark 
                 ? 'bg-slate-900/95 text-slate-100 border-slate-700 hover:border-blue-500' 
                 : 'bg-white/95 text-slate-800 border-slate-200 hover:border-blue-500'
@@ -2543,7 +2543,7 @@ export default function App() {
         )}
 
         {/* FLOATING TOP BAR: SEARCH, TICKER & DISTRICT PILLS */}
-        <div className={`absolute top-2.5 sm:top-3 left-2.5 sm:left-4 right-2.5 sm:right-auto z-20 flex flex-col gap-2 w-auto sm:w-[350px] md:w-[340px] lg:w-[380px] xl:w-[420px] pointer-events-none transition-all duration-300 ease-in-out ${
+        <div className={`absolute top-2.5 md:top-3.5 left-2.5 md:left-4 right-2.5 md:right-auto z-20 flex flex-col gap-2 w-auto md:w-[320px] lg:w-[380px] xl:w-[420px] pointer-events-none transition-all duration-300 ease-in-out ${
           isTopPanelCollapsed ? '-translate-x-[120%] opacity-0 pointer-events-none' : 'translate-x-0 opacity-100'
         }`}>
           
@@ -2720,7 +2720,7 @@ export default function App() {
           </div>
 
           {/* 24-HOUR RAIN FORECAST & LIVE METEOROLOGICAL TELEMETRY CARD (ซ่อนบนมือถือตามสั่ง ให้เหลือแค่ด้านล่าง/เปิดดูได้บนจอใหญ่) */}
-          <div className="pointer-events-auto w-full hidden sm:block">
+          <div className="pointer-events-auto w-full hidden md:block">
             <RainForecast24hCard
               forecast={weather?.forecast24h}
               userDistrict={userDistrict}
@@ -2728,7 +2728,7 @@ export default function App() {
               onOpenRadar={() => setIsOfficialModalOpen(true)}
               theme={theme}
               collapsible={true}
-              defaultExpanded={typeof window !== 'undefined' ? window.innerWidth >= 768 : false}
+              defaultExpanded={typeof window !== 'undefined' ? window.innerWidth >= 1024 : false}
               onManualSync={handleManualSync}
               isSyncing={telemetrySyncStatus?.isSyncing}
               onOpenPublicUpdates={() => setIsPublicUpdatesModalOpen(true)}
@@ -2814,7 +2814,7 @@ export default function App() {
         </div>
 
         {/* DESKTOP/IPAD FLOATING LEGEND CARD (BOTTOM LEFT - เฉพาะคอมและไอแพด สามารถกดดูรายละเอียดเกณฑ์ได้) */}
-        <div className="hidden sm:flex absolute bottom-4 left-4 z-40 pointer-events-auto select-none">
+        <div className="hidden md:flex absolute bottom-4 left-4 z-40 pointer-events-auto select-none">
           <button 
             type="button"
             onClick={(e) => {
@@ -2871,7 +2871,7 @@ export default function App() {
         </div>
 
         {/* MOBILE DOCKED WATER LEVEL STRIP & MAP SYMBOL GUIDE (เกณฑ์ระดับน้ำและไกด์สัญลักษณ์ 📷 และ 📉) */}
-        <div className="sm:hidden fixed bottom-[66px] left-1/2 -translate-x-1/2 z-30 pointer-events-auto select-none max-w-[96vw]">
+        <div className="md:hidden fixed bottom-[66px] left-1/2 -translate-x-1/2 z-30 pointer-events-auto select-none max-w-[96vw]">
           <div className={`px-2.5 py-1 rounded-full border shadow-lg backdrop-blur-xl flex items-center gap-1.5 text-[9.5px] font-bold ${
             isDark 
               ? 'bg-slate-950/95 border-slate-800 text-slate-300 shadow-black/50' 
@@ -2968,7 +2968,7 @@ export default function App() {
         {/* MOBILE MAP SYMBOLS GUIDE MODAL (บอกความหมายของ 📷 รูปประชาชนถ่ายรูปรายงาน และ 📉 น้ำกำลังลด) */}
         {isMobileGuideOpen && (
           <div 
-            className="sm:hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center pt-16 pb-20 p-3 animate-in fade-in"
+            className="md:hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center pt-16 pb-20 p-3 animate-in fade-in"
             onClick={() => setIsMobileGuideOpen(false)}
           >
             <div 

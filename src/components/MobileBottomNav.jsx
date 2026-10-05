@@ -57,7 +57,7 @@ export default function MobileBottomNav({
       {/* ===== BOTTOM SHEET QUICK MENU (เมื่อกดปุ่ม "เมนู") ===== */}
       {isMenuOpen && (
         <div 
-          className="sm:hidden fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm animate-in fade-in duration-200"
+          className="md:hidden fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm animate-in fade-in duration-200"
           onClick={() => {
             playCloseSound();
             setIsMenuOpen(false);
@@ -184,7 +184,7 @@ export default function MobileBottomNav({
       {/* ===== MAIN 5-BUTTON BAR (HIGHER LEGIBILITY, CRISP FONTS) ===== */}
       <nav
         aria-label="เมนูหลักสำหรับมือถือ"
-        className={`sm:hidden fixed bottom-0 left-0 right-0 z-40 border-t backdrop-blur-2xl transition-all duration-200 select-none pb-[calc(env(safe-area-inset-bottom,0px)+2px)] ${
+        className={`md:hidden fixed bottom-0 left-0 right-0 z-40 border-t backdrop-blur-2xl transition-all duration-200 select-none pb-[calc(env(safe-area-inset-bottom,0px)+2px)] ${
           isDark
             ? 'bg-slate-950/95 border-slate-800 text-slate-200 shadow-[0_-8px_25px_rgba(0,0,0,0.6)]'
             : 'bg-white border-slate-300 text-slate-900 shadow-[0_-6px_20px_rgba(15,23,42,0.12)]'

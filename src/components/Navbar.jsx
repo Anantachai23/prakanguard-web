@@ -1,13 +1,19 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { 
   PhoneCall, 
   Sun, 
   Moon, 
   Camera,
-  MessageSquare,
-  ShieldCheck,
+  MessageSquare, 
+  ShieldCheck, 
   Activity,
-  Bell
+  Bell,
+  MoreVertical,
+  BookOpen,
+  CloudRain,
+  Shield,
+  Lock,
+  ChevronDown
 } from 'lucide-react';
 import RealTimeClock from './RealTimeClock';
 import { 
@@ -15,7 +21,9 @@ import {
   playSelectSound, 
   playReportSound, 
   playEmergencySound,
-  playModalOpenSound
+  playModalOpenSound,
+  playCloseSound,
+  playTabSound
 } from '../services/soundEffects';
 
 export default function Navbar({ 
@@ -46,6 +54,25 @@ export default function Navbar({
   refreshCountdown = 300
 }) {
   const isDark = theme === 'dark';
+  const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
+  const moreMenuRef = useRef(null);
+
+  // Close tablet dropdown menu when clicking outside
+  useEffect(() => {
+    function handleClickOutside(e) {
+      if (moreMenuRef.current && !moreMenuRef.current.contains(e.target)) {
+        setIsMoreMenuOpen(false);
+      }
+    }
+    if (isMoreMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('touchstart', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
+  }, [isMoreMenuOpen]);
 
   // Use precomputed levelCounts synchronized 1:1 with map pins
   const minor = levelCounts ? levelCounts.minor : points.filter(p => p.level === 1 && p.isActive !== false && !p.isResolved).length;
@@ -57,11 +84,13 @@ export default function Navbar({
     <header className={`sticky top-0 z-[1001] w-full border-b backdrop-blur-md transition-colors select-none ${
       isDark ? 'bg-slate-950/95 border-slate-800 text-slate-100' : 'bg-white/95 border-slate-200 text-slate-800'
     }`}>
-      <div className="w-full max-w-full px-2 sm:px-4 py-1.5 sm:py-2 flex items-center justify-between gap-1 sm:gap-2 overflow-hidden">
+      <div className="w-full max-w-full px-2.5 sm:px-4 py-1.5 sm:py-2 flex items-center justify-between gap-1.5 sm:gap-2.5 overflow-visible relative">
         
-        {/* Brand Area (Left) */}
+        {/* ========================================================= */}
+        {/* 1. BRAND AREA (LEFT) — Responsive across all devices      */}
+        {/* ========================================================= */}
         <div className="flex items-center space-x-1.5 sm:space-x-2.5 shrink-0 min-w-0">
-          {/* PrakanGuard Official Mascot Emblem */}
+          {/* PrakanGuard Mascot Emblem */}
           <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-full p-[1px] sm:p-[1.5px] bg-gradient-to-tr from-blue-600 via-cyan-400 to-teal-300 shadow-md shadow-blue-500/20 shrink-0 flex items-center justify-center">
             <img 
               src="/logo.png" 
@@ -83,6 +112,7 @@ export default function Navbar({
                 สมุทรปราการ
               </span>
             </div>
+            {/* Extended Brand Subtitle on Wide Desktop */}
             <span className={`hidden xl:block text-[11px] font-medium leading-none mt-0.5 truncate ${
               isDark ? 'text-slate-400' : 'text-slate-500'
             }`}>
@@ -91,14 +121,16 @@ export default function Navbar({
           </div>
         </div>
 
-        {/* Center Area: Level Filter Buttons & Live Temperature & Clock (PC & Tablet) */}
+        {/* ========================================================= */}
+        {/* 2. CENTER AREA: STATS FILTER BAR & WEATHER (Tablet & PC)  */}
+        {/* ========================================================= */}
         <div className="hidden md:flex items-center gap-2 shrink-0">
           
-          {/* Level Filter Buttons: เลือกดูเฉพาะระดับน้ำแต่ละระดับ */}
+          {/* Level Filter Buttons Bar */}
           <div className={`flex items-center gap-1 p-0.5 sm:p-1 rounded-2xl border backdrop-blur-md shadow-2xs select-none ${
             isDark ? 'bg-slate-900/90 border-slate-800' : 'bg-slate-100/90 border-slate-200/80'
           }`}>
-            {/* Level 1: ปกติ Filter Button */}
+            {/* Level 1: ปกติ */}
             <button
               type="button"
               onClick={() => {
@@ -115,13 +147,14 @@ export default function Navbar({
               title="คลิกเพื่อกรองแสดงเฉพาะจุดน้ำท่วมปกติ (5-20 ซม.)"
             >
               <span className={`w-2 h-2 rounded-full ${severityFilter === '1' ? 'bg-white' : 'bg-emerald-500'}`}></span>
-              <span>ปกติ</span>
+              <span className="hidden lg:inline">ปกติ 5-20ซม.</span>
+              <span className="lg:hidden">5-20ซม.</span>
               <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
                 severityFilter === '1' ? 'bg-white/20 text-white' : (isDark ? 'bg-emerald-950/80 text-emerald-300' : 'bg-emerald-100 text-emerald-800')
               }`}>{minor}</span>
             </button>
 
-            {/* Level 2: ปานกลาง Filter Button */}
+            {/* Level 2: ปานกลาง */}
             <button
               type="button"
               onClick={() => {
@@ -138,13 +171,14 @@ export default function Navbar({
               title="คลิกเพื่อกรองแสดงเฉพาะจุดน้ำท่วมปานกลาง (21-50 ซม.)"
             >
               <span className={`w-2 h-2 rounded-full ${severityFilter === '2' ? 'bg-slate-950' : 'bg-amber-500'}`}></span>
-              <span>ปานกลาง</span>
+              <span className="hidden lg:inline">ปานกลาง 21-50ซม.</span>
+              <span className="lg:hidden">21-50ซม.</span>
               <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
                 severityFilter === '2' ? 'bg-black/15 text-slate-950' : (isDark ? 'bg-amber-950/80 text-amber-300' : 'bg-amber-100 text-amber-800')
               }`}>{moderate}</span>
             </button>
 
-            {/* Level 3: วิกฤต Filter Button */}
+            {/* Level 3: วิกฤต */}
             <button
               type="button"
               onClick={() => {
@@ -161,13 +195,14 @@ export default function Navbar({
               title="คลิกเพื่อกรองแสดงเฉพาะจุดน้ำท่วมวิกฤต (>50 ซม.)"
             >
               <span className={`w-2 h-2 rounded-full ${severityFilter === '3' ? 'bg-white' : 'bg-rose-500 animate-pulse'}`}></span>
-              <span>วิกฤต</span>
+              <span className="hidden lg:inline">วิกฤต &gt;50ซม.</span>
+              <span className="lg:hidden">&gt;50ซม.</span>
               <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
                 severityFilter === '3' ? 'bg-white/20 text-white' : (isDark ? 'bg-rose-950/80 text-rose-300' : 'bg-rose-100 text-rose-800')
               }`}>{severe}</span>
             </button>
 
-            {/* Falling: น้ำลด Filter Button */}
+            {/* Falling: น้ำลด */}
             {falling > 0 && (
               <button
                 type="button"
@@ -185,7 +220,7 @@ export default function Navbar({
                 title="คลิกเพื่อกรองแสดงเฉพาะจุดที่น้ำกำลังลด"
               >
                 <span>📉</span>
-                <span>น้ำลด</span>
+                <span className="hidden lg:inline">น้ำลด</span>
                 <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
                   severityFilter === 'falling' ? 'bg-white/20 text-white' : (isDark ? 'bg-teal-950/80 text-teal-300' : 'bg-teal-100 text-teal-800')
                 }`}>{falling}</span>
@@ -203,20 +238,20 @@ export default function Navbar({
                 className="px-2 py-0.5 rounded-lg bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 text-[10px] font-bold cursor-pointer transition-all active:scale-95"
                 title="ล้างตัวกรองและแสดงระดับน้ำทั้งหมด"
               >
-                แสดงทั้งหมด ✕
+                ✕ ทั้งหมด
               </button>
             )}
           </div>
 
-          {/* Live Real-Time Weather & Temperature Badge (แสดงแค่ตัวเลขอุณหภูมิตามที่สั่ง) */}
+          {/* Live Weather & Temperature */}
           {weather && weather.temp !== undefined && (
             <div 
-              className={`hidden md:inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-2xl border text-xs font-bold transition-all shadow-2xs select-none shrink-0 ${
+              className={`hidden lg:inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-2xl border text-xs font-bold transition-all shadow-2xs select-none shrink-0 ${
                 isDark 
                   ? 'bg-slate-900/90 border-slate-700 text-sky-300' 
                   : 'bg-sky-50/90 border-sky-200 text-sky-800'
               }`}
-              title={`สภาพอากาศจริง จ.สมุทรปราการ: ${weather.weatherDesc || 'มีเมฆบางส่วน'} • อุณหภูมิจริง ${weather.temp}°C (รู้สึกเหมือน ${weather.feelsLike || weather.temp}°C)`}
+              title={`สภาพอากาศจริง จ.สมุทรปราการ: ${weather.weatherDesc || 'มีเมฆบางส่วน'} • ${weather.temp}°C`}
             >
               <span className="text-sm shrink-0">
                 {weather.forecast24h?.isRainingNow ? '🌧️' : (weather.temp >= 33 ? '☀️' : (weather.temp <= 26 ? '🌦️' : '⛅'))}
@@ -227,166 +262,380 @@ export default function Navbar({
             </div>
           )}
 
-          {/* Clock for Tablet/PC */}
-          <div className="shrink-0">
+          {/* Clock for Desktop */}
+          <div className="hidden lg:block shrink-0">
             <RealTimeClock theme={theme} />
           </div>
         </div>
 
-        {/* Right Area: Action Buttons (Responsive & Clean) */}
+        {/* ========================================================= */}
+        {/* 3. RIGHT AREA: RESPONSIVE ACTIONS ACCORDING TO DEVICE     */}
+        {/* ========================================================= */}
         <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
           
-          {/* Mobile Clock: Clean & Compact */}
-          <div className="md:hidden shrink-0">
+          {/* --- MOBILE (Screen < 768px): Minimal, Fast, 0 Map Blocking --- */}
+          <div className="flex md:hidden items-center gap-1.5 shrink-0">
             <RealTimeClock theme={theme} />
+
+            {/* Mobile Announcement Button on Navbar */}
+            {hasAnnouncement && (
+              <button 
+                type="button"
+                onClick={() => {
+                  playModalOpenSound();
+                  if (onOpenAnnouncement) onOpenAnnouncement();
+                }}
+                className={`px-2 py-1 rounded-xl border text-[11px] font-bold flex items-center gap-1 transition-all cursor-pointer shadow-xs active:scale-95 shrink-0 ${
+                  isDark 
+                    ? 'bg-amber-950/80 hover:bg-amber-900/90 text-amber-300 border-amber-700/80 shadow-amber-950/40' 
+                    : 'bg-amber-500 hover:bg-amber-600 text-white border-amber-400 shadow-amber-500/20'
+                }`}
+                title="ดูประกาศล่าสุดจากเจ้าหน้าที่แอดมิน"
+              >
+                <Bell className="w-3.5 h-3.5 animate-pulse shrink-0" />
+                <span>ประกาศ</span>
+              </button>
+            )}
+
+            {/* Theme Switcher Button */}
+            <button
+              type="button"
+              onClick={() => {
+                playToggleSound(!isDark);
+                if (onToggleTheme) onToggleTheme();
+              }}
+              className={`p-1.5 rounded-xl border text-xs font-semibold flex items-center justify-center transition-all cursor-pointer shadow-xs active:scale-95 ${
+                isDark 
+                  ? 'bg-slate-900 hover:bg-slate-800 text-amber-300 border-slate-700' 
+                  : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200'
+              }`}
+              title={isDark ? "เปลี่ยนเป็นธีมสว่าง" : "เปลี่ยนเป็นธีมมืด"}
+            >
+              {isDark ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-slate-700" />}
+            </button>
           </div>
 
-          {/* Mobile Admin Announcement Button */}
-          {hasAnnouncement && (
+          {/* --- TABLET (768px - 1023px): Primary 1-Tap + More Menu Dropdown --- */}
+          <div className="hidden md:flex lg:hidden items-center gap-1.5 shrink-0">
+            <RealTimeClock theme={theme} />
+
+            {/* Public Updates Button */}
             <button 
               type="button"
               onClick={() => {
                 playModalOpenSound();
-                if (onOpenAnnouncement) onOpenAnnouncement();
+                if (onOpenPublicUpdates) onOpenPublicUpdates();
               }}
-              className={`sm:hidden px-2 py-1 rounded-xl border text-[11px] font-bold flex items-center gap-1 transition-all cursor-pointer shadow-xs active:scale-95 shrink-0 ${
+              className={`px-2.5 py-1.5 rounded-xl border text-xs font-bold items-center gap-1.5 transition-all cursor-pointer shadow-xs active:scale-95 ${
                 isDark 
-                  ? 'bg-amber-950/80 hover:bg-amber-900/90 text-amber-300 border-amber-700/80 shadow-amber-950/40' 
-                  : 'bg-amber-500 hover:bg-amber-600 text-white border-amber-400 shadow-amber-500/20'
+                  ? 'bg-blue-950/70 hover:bg-blue-900/80 text-cyan-300 border-blue-700/80 shadow-blue-950/40' 
+                  : 'bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200 shadow-blue-500/10'
               }`}
-              title="ดูประกาศล่าสุดจากเจ้าหน้าที่แอดมิน"
+              title="อัปเดตสถานการณ์น้ำท่วมสดรายวัน"
             >
-              <Bell className="w-3.5 h-3.5 animate-pulse shrink-0" />
-              <span>ประกาศ</span>
+              <Activity className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+              <span>อัปเดต</span>
             </button>
-          )}
 
-          {/* Desktop/iPad Public Updates Button (อัปเดตสถานการณ์สดรายวัน) */}
-          <button 
-            type="button"
-            onClick={() => {
-              playModalOpenSound();
-              if (onOpenPublicUpdates) onOpenPublicUpdates();
-            }}
-            className={`hidden sm:inline-flex px-2 sm:px-2.5 py-1.5 rounded-xl border text-xs font-bold items-center gap-1 sm:gap-1.5 transition-all cursor-pointer shadow-xs active:scale-95 ${
-              isDark 
-                ? 'bg-blue-950/70 hover:bg-blue-900/80 text-cyan-300 border-blue-700/80 shadow-blue-950/40' 
-                : 'bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200 shadow-blue-500/10'
-            }`}
-            title="อัปเดตสถานการณ์น้ำท่วมสดรายวัน"
-          >
-            <Activity className="w-3.5 h-3.5 text-blue-500 shrink-0" />
-            <span>อัปเดต</span>
-          </button>
+            {/* Citizen Flood Report Button */}
+            <button 
+              type="button"
+              onClick={() => {
+                playReportSound();
+                if (onOpenCitizenReport) onOpenCitizenReport();
+              }}
+              title="รายงานจุดน้ำท่วม"
+              className="px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-md shadow-blue-600/25 active:scale-95"
+            >
+              <Camera className="w-3.5 h-3.5 shrink-0" />
+              <span>แจ้งท่วม</span>
+            </button>
 
-          {/* Desktop/iPad Admin Announcement Button (ปุ่มดูประกาศทางการจากแอดมิน) */}
-          {hasAnnouncement && (
+            {/* Emergency Hotline 1784 */}
+            <button 
+              type="button"
+              onClick={() => {
+                playEmergencySound();
+                if (onOpenEmergency) onOpenEmergency();
+              }}
+              title="สายด่วนฉุกเฉิน 1784"
+              className="px-2.5 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold flex items-center gap-1 transition-all cursor-pointer shadow-md shadow-rose-600/25 active:scale-95"
+            >
+              <PhoneCall className="w-3.5 h-3.5 shrink-0" />
+              <span>1784</span>
+            </button>
+
+            {/* TABLET MORE ACTIONS DROPDOWN (จัดเก็บเมนูเสริมเรียบร้อย ไม่ล้นจอ) */}
+            <div className="relative" ref={moreMenuRef}>
+              <button
+                type="button"
+                onClick={() => {
+                  playTabSound();
+                  setIsMoreMenuOpen(prev => !prev);
+                }}
+                className={`px-2.5 py-1.5 rounded-xl border text-xs font-bold flex items-center gap-1 transition-all cursor-pointer shadow-xs active:scale-95 ${
+                  isMoreMenuOpen
+                    ? 'bg-blue-600 text-white border-blue-500 shadow-md'
+                    : isDark 
+                      ? 'bg-slate-900 hover:bg-slate-800 text-slate-200 border-slate-700' 
+                      : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200'
+                }`}
+                title="เมนูเพิ่มเติม"
+              >
+                <MoreVertical className="w-3.5 h-3.5" />
+                <span>เพิ่มเติม</span>
+              </button>
+
+              {/* Dropdown Menu Popup for Tablet */}
+              {isMoreMenuOpen && (
+                <div className={`absolute right-0 top-full mt-2 w-56 rounded-2xl border shadow-2xl p-1.5 z-50 backdrop-blur-2xl animate-in zoom-in-95 duration-150 ${
+                  isDark ? 'bg-slate-900/98 border-slate-700 text-slate-100 shadow-black/80' : 'bg-white/98 border-slate-200 text-slate-900 shadow-slate-400/40'
+                }`}>
+                  {hasAnnouncement && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        playModalOpenSound();
+                        setIsMoreMenuOpen(false);
+                        if (onOpenAnnouncement) onOpenAnnouncement();
+                      }}
+                      className={`w-full p-2 rounded-xl text-xs font-bold text-left flex items-center gap-2 transition-colors cursor-pointer ${
+                        isDark ? 'hover:bg-amber-950/60 text-amber-300' : 'hover:bg-amber-50 text-amber-800'
+                      }`}
+                    >
+                      <Bell className="w-4 h-4 text-amber-500 animate-pulse shrink-0" />
+                      <span>📢 ประกาศแอดมิน</span>
+                    </button>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      playModalOpenSound();
+                      setIsMoreMenuOpen(false);
+                      if (onOpenFeedback) onOpenFeedback();
+                    }}
+                    className={`w-full p-2 rounded-xl text-xs font-semibold text-left flex items-center gap-2 transition-colors cursor-pointer ${
+                      isDark ? 'hover:bg-slate-800 text-slate-200' : 'hover:bg-slate-100 text-slate-800'
+                    }`}
+                  >
+                    <MessageSquare className="w-4 h-4 text-teal-500 shrink-0" />
+                    <span>กล่องข้อเสนอแนะประชาชน</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      playModalOpenSound();
+                      setIsMoreMenuOpen(false);
+                      if (onOpenStandards) onOpenStandards();
+                    }}
+                    className={`w-full p-2 rounded-xl text-xs font-semibold text-left flex items-center gap-2 transition-colors cursor-pointer ${
+                      isDark ? 'hover:bg-slate-800 text-slate-200' : 'hover:bg-slate-100 text-slate-800'
+                    }`}
+                  >
+                    <BookOpen className="w-4 h-4 text-blue-500 shrink-0" />
+                    <span>เกณฑ์วัดระดับน้ำ & ยานพาหนะ</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      playModalOpenSound();
+                      setIsMoreMenuOpen(false);
+                      if (onOpenAiForecast) onOpenAiForecast();
+                    }}
+                    className={`w-full p-2 rounded-xl text-xs font-semibold text-left flex items-center gap-2 transition-colors cursor-pointer ${
+                      isDark ? 'hover:bg-slate-800 text-slate-200' : 'hover:bg-slate-100 text-slate-800'
+                    }`}
+                  >
+                    <CloudRain className="w-4 h-4 text-cyan-500 shrink-0" />
+                    <span>คาดการณ์ฝนตก AI 24 ชม.</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      playModalOpenSound();
+                      setIsMoreMenuOpen(false);
+                      if (onOpenPrivacyPolicy) onOpenPrivacyPolicy();
+                    }}
+                    className={`w-full p-2 rounded-xl text-xs font-semibold text-left flex items-center gap-2 transition-colors cursor-pointer ${
+                      isDark ? 'hover:bg-slate-800 text-slate-200' : 'hover:bg-slate-100 text-slate-800'
+                    }`}
+                  >
+                    <ShieldCheck className="w-4 h-4 text-sky-500 shrink-0" />
+                    <span>นโยบาย & ข้อมูลอ้างอิง</span>
+                  </button>
+
+                  <div className="h-[1px] bg-slate-200 dark:bg-slate-800 my-1"></div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      playModalOpenSound();
+                      setIsMoreMenuOpen(false);
+                      if (onOpenAdmin) onOpenAdmin();
+                    }}
+                    className={`w-full p-2 rounded-xl text-xs font-semibold text-left flex items-center gap-2 transition-colors cursor-pointer ${
+                      isDark ? 'hover:bg-indigo-950/60 text-indigo-300' : 'hover:bg-indigo-50 text-indigo-800'
+                    }`}
+                  >
+                    <Lock className="w-4 h-4 text-indigo-500 shrink-0" />
+                    <span>สำหรับเจ้าหน้าที่ / แอดมิน</span>
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Theme Toggle Button */}
+            <button
+              type="button"
+              onClick={() => {
+                playToggleSound(!isDark);
+                if (onToggleTheme) onToggleTheme();
+              }}
+              className={`p-1.5 sm:p-2 rounded-xl border text-xs font-semibold flex items-center justify-center transition-all cursor-pointer shadow-xs active:scale-95 ${
+                isDark 
+                  ? 'bg-slate-900 hover:bg-slate-800 text-amber-300 border-slate-700' 
+                  : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200'
+              }`}
+              title={isDark ? "เปลี่ยนเป็นธีมสว่าง" : "เปลี่ยนเป็นธีมมืด"}
+            >
+              {isDark ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-slate-700" />}
+            </button>
+          </div>
+
+          {/* --- DESKTOP (Screen >= 1024px): Spacious Full Command Center Bar --- */}
+          <div className="hidden lg:flex items-center gap-1.5 shrink-0">
+            {/* Desktop Public Updates Button */}
             <button 
               type="button"
               onClick={() => {
                 playModalOpenSound();
-                if (onOpenAnnouncement) onOpenAnnouncement();
+                if (onOpenPublicUpdates) onOpenPublicUpdates();
               }}
-              className={`hidden sm:inline-flex px-2 sm:px-2.5 py-1.5 rounded-xl border text-xs font-bold items-center gap-1 sm:gap-1.5 transition-all cursor-pointer shadow-xs active:scale-95 ${
+              className={`px-2.5 py-1.5 rounded-xl border text-xs font-bold items-center gap-1.5 transition-all cursor-pointer shadow-xs active:scale-95 ${
                 isDark 
-                  ? 'bg-amber-950/70 hover:bg-amber-900/80 text-amber-300 border-amber-700/80 shadow-amber-950/40' 
-                  : 'bg-amber-50 hover:bg-amber-100 text-amber-800 border-amber-200 shadow-amber-500/10'
+                  ? 'bg-blue-950/70 hover:bg-blue-900/80 text-cyan-300 border-blue-700/80 shadow-blue-950/40' 
+                  : 'bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200 shadow-blue-500/10'
               }`}
-              title="ดูประกาศล่าสุดจากเจ้าหน้าที่แอดมิน"
+              title="อัปเดตสถานการณ์น้ำท่วมสดรายวัน"
             >
-              <Bell className="w-3.5 h-3.5 text-amber-500 shrink-0 animate-pulse" />
-              <span>ประกาศแอดมิน</span>
+              <Activity className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+              <span>อัปเดต</span>
             </button>
-          )}
 
-          {/* Desktop/iPad Feedback Button */}
-          <button 
-            type="button"
-            onClick={() => {
-              playModalOpenSound();
-              if (onOpenFeedback) onOpenFeedback();
-            }}
-            className={`hidden md:inline-flex px-2 sm:px-2.5 py-1.5 rounded-xl border text-xs font-semibold items-center gap-1 sm:gap-1.5 transition-all cursor-pointer shadow-xs active:scale-95 ${
-              isDark 
-                ? 'bg-teal-950/60 hover:bg-teal-900/60 text-teal-300 border-teal-800' 
-                : 'bg-teal-50 hover:bg-teal-100 text-teal-800 border-teal-200'
-            }`}
-            title="กล่องข้อเสนอแนะและติชมจากประชาชน"
-          >
-            <MessageSquare className="w-3.5 h-3.5 text-teal-500 shrink-0" />
-            <span className="hidden xl:inline">ข้อเสนอแนะ</span>
-            <span className="xl:hidden">ข้อเสนอ</span>
-          </button>
-
-          {/* Desktop/iPad Privacy Policy Button */}
-          <button 
-            type="button"
-            onClick={() => {
-              playModalOpenSound();
-              if (onOpenPrivacyPolicy) onOpenPrivacyPolicy();
-            }}
-            className={`hidden md:inline-flex px-2 sm:px-2.5 py-1.5 rounded-xl border text-xs font-semibold items-center gap-1 sm:gap-1.5 transition-all cursor-pointer shadow-xs active:scale-95 ${
-              isDark 
-                ? 'bg-sky-950/60 hover:bg-sky-900/60 text-sky-300 border-sky-800' 
-                : 'bg-sky-50 hover:bg-sky-100 text-sky-800 border-sky-200'
-            }`}
-            title="นโยบายความเป็นส่วนตัวและแหล่งข้อมูลอ้างอิง"
-          >
-            <ShieldCheck className="w-3.5 h-3.5 text-sky-500 shrink-0" />
-            <span className="hidden xl:inline">นโยบาย & ข้อกำหนด</span>
-            <span className="xl:hidden">นโยบาย</span>
-          </button>
-
-          {/* Citizen Flood Report Button */}
-          <button 
-            type="button"
-            onClick={() => {
-              playReportSound();
-              if (onOpenCitizenReport) onOpenCitizenReport();
-            }}
-            title="รายงานจุดน้ำท่วม"
-            className="hidden sm:inline-flex px-2.5 sm:px-3 py-1.5 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white text-xs font-bold items-center gap-1.5 transition-all cursor-pointer shadow-md shadow-blue-600/25 active:scale-95"
-          >
-            <Camera className="w-3.5 h-3.5 shrink-0" />
-            <span>แจ้งจุดท่วม</span>
-          </button>
-
-          {/* Emergency Hotline */}
-          <button 
-            type="button"
-            onClick={() => {
-              playEmergencySound();
-              if (onOpenEmergency) onOpenEmergency();
-            }}
-            title="สายด่วนฉุกเฉิน 1784"
-            className="hidden sm:inline-flex px-2 sm:px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold items-center gap-1.5 transition-all cursor-pointer shadow-md shadow-rose-600/25 active:scale-95"
-          >
-            <PhoneCall className="w-3.5 h-3.5 shrink-0" />
-            <span className="hidden md:inline">สายด่วน</span>
-            <span>1784</span>
-          </button>
-
-          {/* Theme Switcher Button (Always accessible) */}
-          <button
-            type="button"
-            onClick={() => {
-              playToggleSound(!isDark);
-              if (onToggleTheme) onToggleTheme();
-            }}
-            className={`p-1.5 sm:p-2 rounded-xl border text-xs font-semibold flex items-center justify-center transition-all cursor-pointer shadow-xs active:scale-95 ${
-              isDark 
-                ? 'bg-slate-900 hover:bg-slate-800 text-amber-300 border-slate-700 hover:border-amber-400/50' 
-                : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200 hover:border-slate-300'
-            }`}
-            title={isDark ? "เปลี่ยนเป็นธีมสว่าง" : "เปลี่ยนเป็นธีมมืด"}
-            aria-label="เปลี่ยนธีมสี"
-          >
-            {isDark ? (
-              <Sun className="w-4 h-4 text-amber-400" />
-            ) : (
-              <Moon className="w-4 h-4 text-slate-700" />
+            {/* Official Announcement Button (if present) */}
+            {hasAnnouncement && (
+              <button 
+                type="button"
+                onClick={() => {
+                  playModalOpenSound();
+                  if (onOpenAnnouncement) onOpenAnnouncement();
+                }}
+                className={`px-2.5 py-1.5 rounded-xl border text-xs font-bold items-center gap-1.5 transition-all cursor-pointer shadow-xs active:scale-95 ${
+                  isDark 
+                    ? 'bg-amber-950/70 hover:bg-amber-900/80 text-amber-300 border-amber-700/80 shadow-amber-950/40' 
+                    : 'bg-amber-50 hover:bg-amber-100 text-amber-800 border-amber-200 shadow-amber-500/10'
+                }`}
+                title="ดูประกาศล่าสุดจากเจ้าหน้าที่แอดมิน"
+              >
+                <Bell className="w-3.5 h-3.5 text-amber-500 shrink-0 animate-pulse" />
+                <span>ประกาศแอดมิน</span>
+              </button>
             )}
-          </button>
+
+            {/* Desktop Feedback Button */}
+            <button 
+              type="button"
+              onClick={() => {
+                playModalOpenSound();
+                if (onOpenFeedback) onOpenFeedback();
+              }}
+              className={`px-2.5 py-1.5 rounded-xl border text-xs font-semibold items-center gap-1.5 transition-all cursor-pointer shadow-xs active:scale-95 ${
+                isDark 
+                  ? 'bg-teal-950/60 hover:bg-teal-900/60 text-teal-300 border-teal-800' 
+                  : 'bg-teal-50 hover:bg-teal-100 text-teal-800 border-teal-200'
+              }`}
+              title="กล่องข้อเสนอแนะและติชมจากประชาชน"
+            >
+              <MessageSquare className="w-3.5 h-3.5 text-teal-500 shrink-0" />
+              <span className="hidden xl:inline">ข้อเสนอแนะ</span>
+              <span className="xl:hidden">ข้อเสนอ</span>
+            </button>
+
+            {/* Desktop Privacy Policy Button */}
+            <button 
+              type="button"
+              onClick={() => {
+                playModalOpenSound();
+                if (onOpenPrivacyPolicy) onOpenPrivacyPolicy();
+              }}
+              className={`px-2.5 py-1.5 rounded-xl border text-xs font-semibold items-center gap-1.5 transition-all cursor-pointer shadow-xs active:scale-95 ${
+                isDark 
+                  ? 'bg-sky-950/60 hover:bg-sky-900/60 text-sky-300 border-sky-800' 
+                  : 'bg-sky-50 hover:bg-sky-100 text-sky-800 border-sky-200'
+              }`}
+              title="นโยบายความเป็นส่วนตัวและแหล่งข้อมูลอ้างอิง"
+            >
+              <ShieldCheck className="w-3.5 h-3.5 text-sky-500 shrink-0" />
+              <span className="hidden xl:inline">นโยบาย & ข้อมูล</span>
+              <span className="xl:hidden">นโยบาย</span>
+            </button>
+
+            {/* Citizen Flood Report Primary Highlight Button */}
+            <button 
+              type="button"
+              onClick={() => {
+                playReportSound();
+                if (onOpenCitizenReport) onOpenCitizenReport();
+              }}
+              title="รายงานจุดน้ำท่วม"
+              className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-md shadow-blue-600/25 active:scale-95"
+            >
+              <Camera className="w-3.5 h-3.5 shrink-0" />
+              <span>แจ้งจุดท่วม</span>
+            </button>
+
+            {/* Emergency Hotline 1784 */}
+            <button 
+              type="button"
+              onClick={() => {
+                playEmergencySound();
+                if (onOpenEmergency) onOpenEmergency();
+              }}
+              title="สายด่วนฉุกเฉิน 1784"
+              className="px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-md shadow-rose-600/25 active:scale-95"
+            >
+              <PhoneCall className="w-3.5 h-3.5 shrink-0" />
+              <span className="hidden xl:inline">สายด่วน</span>
+              <span>1784</span>
+            </button>
+
+            {/* Theme Switcher Button */}
+            <button
+              type="button"
+              onClick={() => {
+                playToggleSound(!isDark);
+                if (onToggleTheme) onToggleTheme();
+              }}
+              className={`p-2 rounded-xl border text-xs font-semibold flex items-center justify-center transition-all cursor-pointer shadow-xs active:scale-95 ${
+                isDark 
+                  ? 'bg-slate-900 hover:bg-slate-800 text-amber-300 border-slate-700 hover:border-amber-400/50' 
+                  : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200 hover:border-slate-300'
+              }`}
+              title={isDark ? "เปลี่ยนเป็นธีมสว่าง" : "เปลี่ยนเป็นธีมมืด"}
+              aria-label="เปลี่ยนธีมสี"
+            >
+              {isDark ? (
+                <Sun className="w-4 h-4 text-amber-400" />
+              ) : (
+                <Moon className="w-4 h-4 text-slate-700" />
+              )}
+            </button>
+          </div>
+
         </div>
       </div>
     </header>
