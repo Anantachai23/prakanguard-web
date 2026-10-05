@@ -1454,7 +1454,7 @@ export default function AdminModal({
   }, [activeFeedbackList]);
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-md flex items-center justify-center pt-16 pb-20 sm:p-4 smooth-backdrop">
+    <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-md flex items-start justify-center pt-[13vh] pb-24 sm:items-center sm:pt-4 sm:pb-4 smooth-backdrop">
       <div className={`w-[84vw] max-w-[320px] sm:max-w-4xl border rounded-2xl sm:rounded-3xl shadow-2xl flex flex-col max-h-[52vh] sm:max-h-[94vh] overflow-hidden smooth-pop transition-all ${
         isDark ? 'bg-slate-900 border-slate-700/80 text-slate-100 shadow-slate-950/90' : 'bg-white border-slate-200 text-slate-800 shadow-xl'
       }`}>

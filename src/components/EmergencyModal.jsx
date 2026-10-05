@@ -18,9 +18,9 @@ export default function EmergencyModal({ isOpen, onClose, theme = 'light' }) {
   return (
     <div 
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
-      className="fixed inset-0 z-50 bg-slate-950/65 backdrop-blur-xs flex items-center justify-center pt-16 pb-20 sm:p-4 smooth-backdrop"
+      className="fixed inset-0 z-50 bg-slate-950/65 backdrop-blur-xs flex items-start justify-center pt-[13vh] pb-24 sm:items-center sm:pt-4 sm:pb-4 smooth-backdrop"
     >
-      <div className={`w-[80vw] max-w-[295px] sm:max-w-md border rounded-2xl sm:rounded-3xl p-2 sm:p-4 shadow-2xl relative max-h-[48vh] sm:max-h-[82vh] flex flex-col overflow-hidden smooth-pop transition-colors ${
+      <div className={`w-[82vw] max-w-[295px] sm:max-w-md border rounded-2xl sm:rounded-3xl p-2 sm:p-4 shadow-2xl relative max-h-[50vh] sm:max-h-[82vh] flex flex-col overflow-hidden smooth-pop transition-colors ${
         isDark ? 'bg-slate-900 border-slate-700 text-slate-100' : 'bg-white border-slate-200 text-slate-800'
       }`}>
         

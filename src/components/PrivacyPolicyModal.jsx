@@ -32,13 +32,13 @@ export default function PrivacyPolicyModal({
 
   return (
     <div 
-      className="fixed inset-0 z-50 flex items-center justify-center pt-16 pb-20 sm:p-5 overflow-hidden select-none bg-slate-950/75 backdrop-blur-md animate-in fade-in duration-200"
+      className="fixed inset-0 z-50 flex items-start justify-center pt-[13vh] pb-24 sm:items-center sm:pt-4 sm:pb-4 overflow-hidden select-none bg-slate-950/75 backdrop-blur-md animate-in fade-in duration-200"
       onClick={(e) => {
         if (e.target === e.currentTarget) handleClose();
       }}
     >
       <div 
-        className={`w-[80vw] max-w-[295px] sm:max-w-2xl max-h-[48vh] sm:max-h-[88vh] border rounded-2xl sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-200 ${
+        className={`w-[82vw] max-w-[295px] sm:max-w-2xl max-h-[50vh] sm:max-h-[88vh] border rounded-2xl sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-200 ${
           isDark 
             ? 'bg-slate-900 border-slate-700/80 text-slate-100 shadow-cyan-950/40' 
             : 'bg-white border-slate-200 text-slate-800 shadow-blue-900/20'

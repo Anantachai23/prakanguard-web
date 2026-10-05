@@ -270,6 +270,8 @@ export default function MapView({
   isPickingLocationRef.current = isPickingLocation;
   const onMapLocationPickedRef = useRef(onMapLocationPicked);
   onMapLocationPickedRef.current = onMapLocationPicked;
+  const onSelectPointRef = useRef(onSelectPoint);
+  onSelectPointRef.current = onSelectPoint;
 
   // Map Tile Style: 'google-roadmap' | 'google-satellite' | 'google-terrain'
   const [mapStyle, setMapStyle] = useState('google-roadmap');
@@ -292,13 +294,13 @@ export default function MapView({
         .pg-unified-flood-marker {
           cursor: pointer !important;
           pointer-events: auto !important;
-          touch-action: none !important;
+          touch-action: manipulation !important;
           user-select: none !important;
           -webkit-user-select: none !important;
         }
         .pg-flood-pin-container {
           position: relative;
-          touch-action: none !important;
+          touch-action: manipulation !important;
           -webkit-tap-highlight-color: transparent;
           cursor: pointer !important;
           pointer-events: auto !important;
@@ -317,7 +319,7 @@ export default function MapView({
           z-index: 10;
           cursor: pointer !important;
           pointer-events: auto !important;
-          touch-action: none !important;
+          touch-action: manipulation !important;
           background: transparent;
         }
         @media (hover: hover) {
@@ -798,8 +800,11 @@ export default function MapView({
         }
         lastFlyToTimeRef.current = Date.now();
         playPinClickSound();
-        if (onSelectPoint) {
-          onSelectPoint(point, { fromMapPin: true });
+        if (onSelectPointRef.current) {
+          // Pass effective photo attached so photo badge & preview always display
+          const effPhoto = point.photoUrl || directPhoto || matchedCitizenPhoto;
+          const pointPayload = effPhoto ? { ...point, photoUrl: effPhoto } : point;
+          onSelectPointRef.current(pointPayload, { fromMapPin: true });
         }
       };
 
@@ -808,23 +813,62 @@ export default function MapView({
       circle.on('touchend', handleMarkerSelect);
 
       marker.on('click', handleMarkerSelect);
+      marker.on('touchend', handleMarkerSelect);
 
       // Direct DOM event hooks on marker icon for instant touch / click response
-      const markerEl = marker.getElement();
-      if (markerEl) {
-        markerEl.style.cursor = 'pointer';
-        markerEl.style.pointerEvents = 'auto';
-        markerEl.style.touchAction = 'none';
+      const setupMarkerDomEvents = (el) => {
+        if (!el || el._pgClickBound) return;
+        el._pgClickBound = true;
+        el.style.cursor = 'pointer';
+        el.style.pointerEvents = 'auto';
+        el.style.touchAction = 'manipulation';
 
-        markerEl.addEventListener('click', (e) => {
+        // 1. STOP map drag when touching or clicking on pin (Prevents pin jitter / map sliding)
+        const stopDragToMap = (e) => {
+          if (e && e.stopPropagation) e.stopPropagation();
+        };
+        el.addEventListener('mousedown', stopDragToMap);
+        el.addEventListener('touchstart', stopDragToMap, { passive: true });
+        el.addEventListener('pointerdown', stopDragToMap);
+
+        // 2. Track pointer to reliably detect tap/click on both desktop and mobile
+        let pDownX = 0;
+        let pDownY = 0;
+        let pDownTime = 0;
+
+        el.addEventListener('pointerdown', (e) => {
+          pDownX = e.clientX;
+          pDownY = e.clientY;
+          pDownTime = Date.now();
+        });
+
+        el.addEventListener('pointerup', (e) => {
+          const elapsed = Date.now() - pDownTime;
+          const dist = Math.hypot(e.clientX - pDownX, e.clientY - pDownY);
+          if (elapsed < 650 && dist < 16) {
+            if (e && e.stopPropagation) e.stopPropagation();
+            handleMarkerSelect(e);
+          }
+        });
+
+        el.addEventListener('click', (e) => {
           if (e && e.stopPropagation) e.stopPropagation();
           handleMarkerSelect(e);
         }, { capture: true });
 
-        markerEl.addEventListener('touchend', (e) => {
+        el.addEventListener('touchend', (e) => {
           if (e && e.stopPropagation) e.stopPropagation();
           handleMarkerSelect(e);
         }, { capture: true, passive: true });
+      };
+
+      marker.on('add', () => {
+        setupMarkerDomEvents(marker.getElement());
+      });
+
+      const markerEl = marker.getElement();
+      if (markerEl) {
+        setupMarkerDomEvents(markerEl);
       }
 
       markersRef.current.push(marker);
@@ -832,7 +876,7 @@ export default function MapView({
       radarCircleLayersRef.current.push(circle);
       radarCirclesByIdRef.current[point.id] = circle;
     });
-  }, [points, citizenReports, selectedDistrict, onSelectPoint, isMobile, isDark]);
+  }, [points, citizenReports, selectedDistrict, isMobile, isDark]);
 
   // 6. User GPS Location Marker
   useEffect(() => {

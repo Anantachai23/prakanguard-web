@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import Navbar from './components/Navbar';
 import MapView, { resolveLevel, deduplicateAndDeclutterPoints, isWaterReceding } from './components/MapView';
 import VisualGauge from './components/VisualGauge';
@@ -2101,7 +2101,7 @@ export default function App() {
   }, [citizenReports, searchQuery]);
 
   // Unified Handler: Select location & zoom smoothly into that point on the map
-  const handleSelectLocation = (location, options = {}) => {
+  const handleSelectLocation = useCallback((location, options = {}) => {
     if (!location) {
       setSelectedPoint(null);
       return;
@@ -2135,7 +2135,7 @@ export default function App() {
     if (searchInputRef.current) {
       searchInputRef.current.blur();
     }
-  };
+  }, [selectedDistrict, severityFilter]);
 
   // Dedicated selection handler for popular search suggestion items
   const handleSelectPopularSuggestion = (item) => {
@@ -3082,10 +3082,10 @@ export default function App() {
                 setSelectedPoint(null);
               }
             }}
-            className="fixed inset-0 z-[100] bg-slate-950/65 backdrop-blur-xs flex items-center justify-center pt-16 pb-20 sm:p-4 smooth-backdrop animate-in fade-in duration-200 pointer-events-auto"
+            className="fixed inset-0 z-[100] bg-slate-950/65 backdrop-blur-xs flex items-start justify-center pt-[13vh] pb-24 sm:items-center sm:pt-4 sm:pb-4 smooth-backdrop animate-in fade-in duration-200 pointer-events-auto"
           >
             <div 
-              className={`w-[80vw] max-w-[295px] sm:max-w-md border-2 rounded-2xl sm:rounded-3xl shadow-2xl relative max-h-[48vh] sm:max-h-[82vh] flex flex-col p-2 sm:p-5 overflow-y-auto overscroll-contain smooth-pop transition-all ${
+              className={`w-[82vw] max-w-[295px] sm:max-w-md border-2 rounded-2xl sm:rounded-3xl shadow-2xl relative max-h-[50vh] sm:max-h-[82vh] flex flex-col p-2 sm:p-5 overflow-y-auto overscroll-contain smooth-pop transition-all ${
                 isDark 
                   ? 'bg-slate-900 border-slate-700 text-slate-100 shadow-2xl shadow-black/80' 
                   : 'bg-white border-slate-200 text-slate-900 shadow-2xl shadow-slate-900/30'
@@ -3414,9 +3414,9 @@ export default function App() {
       {isAnnouncementModalOpen && latestAnnouncement && (
         <div 
           onClick={(e) => { if (e.target === e.currentTarget) { playCloseSound(); setIsAnnouncementModalOpen(false); } }}
-          className="fixed inset-0 z-[105] bg-slate-950/65 backdrop-blur-xs flex items-center justify-center pt-16 pb-20 sm:p-4 smooth-backdrop pointer-events-auto"
+          className="fixed inset-0 z-[105] bg-slate-950/65 backdrop-blur-xs flex items-start justify-center pt-[13vh] pb-24 sm:items-center sm:pt-4 sm:pb-4 smooth-backdrop pointer-events-auto"
         >
-          <div className={`w-[80vw] max-w-[295px] sm:max-w-md border-2 rounded-2xl sm:rounded-3xl shadow-2xl p-2.5 sm:p-5 flex flex-col max-h-[48vh] sm:max-h-[80vh] overflow-hidden smooth-pop transition-all ${
+          <div className={`w-[82vw] max-w-[295px] sm:max-w-md border-2 rounded-2xl sm:rounded-3xl shadow-2xl p-2.5 sm:p-5 flex flex-col max-h-[50vh] sm:max-h-[80vh] overflow-hidden smooth-pop transition-all ${
             isDark 
               ? 'bg-slate-900 border-amber-500/50 text-slate-100 shadow-2xl shadow-black/80' 
               : 'bg-white border-amber-400 text-slate-900 shadow-2xl shadow-slate-900/30'
