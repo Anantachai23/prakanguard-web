@@ -55,6 +55,7 @@ import {
   Search, 
   MapPin, 
   Navigation2,
+  Navigation,
   Camera,
   ShieldAlert,
   CheckCircle2,
@@ -222,6 +223,7 @@ export default function App() {
   const [selectedDistrict, setSelectedDistrict] = useState("ทั้งหมด");
   const [severityFilter, setSeverityFilter] = useState("all");
   const [selectedPoint, setSelectedPoint] = useState(null);
+  const [desktopSidebarTab, setDesktopSidebarTab] = useState('points'); // 'points' | 'weather'
   const [lightboxPhoto, setLightboxPhoto] = useState(null); // { url, title, time }
 
   useEffect(() => {
@@ -2027,6 +2029,17 @@ export default function App() {
     return false;
   };
 
+  // Unified Severity Matching Helper (Seamlessly supports '1'/'minor', '2'/'moderate', '3'/'severe', 'falling')
+  const matchesSeverityFilter = useCallback((item, filter) => {
+    if (!filter || filter === 'all') return true;
+    if (filter === 'falling') return isWaterReceding(item);
+    const lvl = resolveLevel(item);
+    if (filter === '1' || filter === 'minor') return lvl === 1;
+    if (filter === '2' || filter === 'moderate') return lvl === 2;
+    if (filter === '3' || filter === 'severe') return lvl === 3;
+    return true;
+  }, []);
+
   // 1. Official Points shown on Map (filtered by district & severity, excludes dried-up points)
   const mapPoints = useMemo(() => {
     return points.filter(point => {
@@ -2034,18 +2047,10 @@ export default function App() {
       if (!isPointInSamutPrakan(point.lat, point.lng)) return false;
       if (isPointDryOrResolved(point)) return false;
       const matchDistrict = selectedDistrict === "ทั้งหมด" || point.district === selectedDistrict;
-      let matchSeverity = true;
-      const effLevel = resolveLevel(point);
-      if (severityFilter === "all") {
-        matchSeverity = true;
-      } else if (severityFilter === "falling") {
-        matchSeverity = isWaterReceding(point);
-      } else {
-        matchSeverity = effLevel.toString() === severityFilter;
-      }
+      const matchSeverity = matchesSeverityFilter(point, severityFilter);
       return matchDistrict && matchSeverity;
     });
-  }, [points, selectedDistrict, severityFilter]);
+  }, [points, selectedDistrict, severityFilter, matchesSeverityFilter]);
 
   // 2. Citizen Reports shown on Map (requires explicit Admin Approval, excludes dried-up points)
   const mapCitizenReports = useMemo(() => {
@@ -2053,18 +2058,10 @@ export default function App() {
       if (!report || report.isApproved !== true || isPointDryOrResolved(report) || !isPointInSamutPrakan(report.lat, report.lng)) return false;
       if (report.id && (report.id.includes('test') || report.id.includes('verify') || report.id.startsWith('node-'))) return false;
       const matchDistrict = selectedDistrict === "ทั้งหมด" || report.district === selectedDistrict;
-      let matchSeverity = true;
-      const effLevel = resolveLevel(report);
-      if (severityFilter === "all") {
-        matchSeverity = true;
-      } else if (severityFilter === "falling") {
-        matchSeverity = isWaterReceding(report);
-      } else {
-        matchSeverity = effLevel.toString() === severityFilter;
-      }
+      const matchSeverity = matchesSeverityFilter(report, severityFilter);
       return matchDistrict && matchSeverity;
     });
-  }, [citizenReports, selectedDistrict, severityFilter]);
+  }, [citizenReports, selectedDistrict, severityFilter, matchesSeverityFilter]);
 
   // 2.5 Synchronized Severity Counts (100% matched to pins displayed on the map)
   const levelCounts = useMemo(() => {
@@ -2652,73 +2649,245 @@ export default function App() {
               )}
             </div>
 
-            {/* 3. 24-Hour Rain Forecast & Live Meteorological Telemetry Card */}
-            <div className="w-full">
-              <RainForecast24hCard
-                forecast={weather?.forecast24h}
-                userDistrict={userDistrict}
-                userLocation={userLocation}
-                onOpenRadar={() => setIsOfficialModalOpen(true)}
-                theme={theme}
-                collapsible={true}
-                defaultExpanded={true}
-                onManualSync={handleManualSync}
-                isSyncing={telemetrySyncStatus?.isSyncing}
-                onOpenPublicUpdates={() => setIsPublicUpdatesModalOpen(true)}
-                lastUpdatedTime={lastUpdatedTime}
-              />
+            {/* 3. Desktop & Tablet GIS Sidebar Tab Switcher */}
+            <div className="grid grid-cols-2 gap-1 p-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-xs">
+              <button
+                type="button"
+                onClick={() => {
+                  playTabSound();
+                  setDesktopSidebarTab('points');
+                }}
+                className={`py-1.5 px-2 rounded-md font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                  desktopSidebarTab === 'points'
+                    ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-cyan-300 shadow-xs'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                }`}
+              >
+                <MapPin className="w-3.5 h-3.5 text-blue-500" />
+                <span className="truncate">จุดเฝ้าระวัง ({displayPoints.length})</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  playTabSound();
+                  setDesktopSidebarTab('weather');
+                }}
+                className={`py-1.5 px-2 rounded-md font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                  desktopSidebarTab === 'weather'
+                    ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-cyan-300 shadow-xs'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                }`}
+              >
+                <CloudRain className="w-3.5 h-3.5 text-cyan-500" />
+                <span className="truncate">พยากรณ์ & เส้นทาง</span>
+              </button>
             </div>
 
-            {/* 4. Major Flood Corridors Quick Shortcuts */}
-            <div className={`p-2.5 rounded-lg border ${isDark ? 'bg-slate-850/60 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-bold flex items-center gap-1.5 text-slate-800 dark:text-slate-200">
-                  <span>🛣️</span> เส้นทางสัญจรเสี่ยงสำคัญ
-                </span>
-                <span className="text-[10px] text-slate-400">คลิกเพื่อซูม</span>
-              </div>
-              <div className="grid grid-cols-2 gap-1.5">
-                {MAJOR_FLOOD_CORRIDORS.slice(0, 6).map((corridor) => (
+            {/* TAB 1: POINTS LIST (จุดเฝ้าระวัง) */}
+            {desktopSidebarTab === 'points' && (
+              <div className="space-y-2">
+                {/* Severity Quick Filters for Points */}
+                <div className="grid grid-cols-4 gap-1 text-[11px]">
                   <button
-                    key={corridor.id}
+                    type="button"
                     onClick={() => {
                       playSelectSound();
-                      if (corridor.coordinates && corridor.coordinates[0]) {
-                        setFlyToLocation({
-                          lat: corridor.coordinates[0][0],
-                          lng: corridor.coordinates[0][1],
-                          zoom: 14,
-                          duration: 1.8,
-                          ts: Date.now()
-                        });
-                      }
+                      setSeverityFilter('all');
                     }}
-                    className={`p-1.5 rounded-md text-left border text-[11px] font-medium transition-all cursor-pointer shadow-xs truncate active:scale-95 ${
-                      isDark ? 'bg-slate-800 hover:bg-slate-750 border-slate-700 text-slate-200 hover:text-cyan-300' : 'bg-white hover:bg-slate-100 border-slate-200 text-slate-800 hover:text-blue-600'
+                    className={`py-1 px-1 rounded-md text-center font-bold border transition-all cursor-pointer ${
+                      severityFilter === 'all'
+                        ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
+                        : isDark ? 'bg-slate-800/80 border-slate-700 text-slate-300' : 'bg-slate-100 border-slate-200 text-slate-700'
                     }`}
-                    title={corridor.name}
                   >
-                    📍 {corridor.shortName || corridor.name}
+                    ทั้งหมด
                   </button>
-                ))}
-              </div>
-            </div>
 
-            {/* 5. Telemetry Summary Counters */}
-            <div className="grid grid-cols-2 gap-2 text-xs">
-              <div className={`p-2.5 rounded-lg border ${isDark ? 'bg-slate-850/60 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
-                <span className="text-[10px] text-slate-500 dark:text-slate-400 block font-medium">จุดเฝ้าระวังทั้งหมด</span>
-                <span className="text-base font-bold text-blue-600 dark:text-cyan-400 font-mono mt-0.5 block">
-                  {points.length + citizenReports.length} จุด
-                </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      playSelectSound();
+                      setSeverityFilter(severityFilter === '3' || severityFilter === 'severe' ? 'all' : '3');
+                    }}
+                    className={`py-1 px-1 rounded-md text-center font-bold border transition-all cursor-pointer ${
+                      severityFilter === '3' || severityFilter === 'severe'
+                        ? 'bg-rose-600 text-white border-rose-600 shadow-xs'
+                        : isDark ? 'bg-slate-800/80 border-slate-700 text-rose-400' : 'bg-rose-50 border-rose-200 text-rose-700'
+                    }`}
+                  >
+                    วิกฤต ({severe})
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      playSelectSound();
+                      setSeverityFilter(severityFilter === '2' || severityFilter === 'moderate' ? 'all' : '2');
+                    }}
+                    className={`py-1 px-1 rounded-md text-center font-bold border transition-all cursor-pointer ${
+                      severityFilter === '2' || severityFilter === 'moderate'
+                        ? 'bg-amber-500 text-white border-amber-500 shadow-xs'
+                        : isDark ? 'bg-slate-800/80 border-slate-700 text-amber-400' : 'bg-amber-50 border-amber-200 text-amber-800'
+                    }`}
+                  >
+                    กลาง ({moderate})
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      playSelectSound();
+                      setSeverityFilter(severityFilter === '1' || severityFilter === 'minor' ? 'all' : '1');
+                    }}
+                    className={`py-1 px-1 rounded-md text-center font-bold border transition-all cursor-pointer ${
+                      severityFilter === '1' || severityFilter === 'minor'
+                        ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
+                        : isDark ? 'bg-slate-800/80 border-slate-700 text-emerald-400' : 'bg-emerald-50 border-emerald-200 text-emerald-800'
+                    }`}
+                  >
+                    ปกติ ({minor})
+                  </button>
+                </div>
+
+                {/* Scrollable Points List */}
+                <div className="space-y-1.5 max-h-[52vh] overflow-y-auto pr-0.5 custom-scrollbar-thin">
+                  {displayPoints.length === 0 ? (
+                    <div className="py-8 text-center text-xs text-slate-400">
+                      ไม่พบจุดเฝ้าระวังตามเงื่อนไขที่เลือก
+                    </div>
+                  ) : (
+                    displayPoints.map((pt) => {
+                      const lvl = resolveLevel(pt);
+                      const isReceding = isWaterReceding(pt);
+                      const hasPtPhoto = Boolean(pt.photoUrl || pt.photo_url || pt.photo || pt.image || pt.imageUrl);
+                      const isSelected = selectedPoint?.id === pt.id;
+                      return (
+                        <button
+                          key={pt.id}
+                          type="button"
+                          onClick={() => handleSelectLocation(pt)}
+                          className={`w-full p-2.5 rounded-lg border text-left transition-all cursor-pointer flex items-center justify-between gap-2 select-none active:scale-[0.98] ${
+                            isSelected
+                              ? 'border-blue-500 bg-blue-50/80 dark:bg-blue-950/50 ring-1 ring-blue-500'
+                              : isDark 
+                                ? 'bg-slate-850/60 hover:bg-slate-800/80 border-slate-800 text-slate-200' 
+                                : 'bg-white hover:bg-slate-50 border-slate-200 text-slate-800 shadow-2xs'
+                          }`}
+                        >
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-1.5 mb-1">
+                              <span className={`w-2 h-2 rounded-full shrink-0 ${
+                                lvl === 3 ? 'bg-rose-500 ring-2 ring-rose-500/20' :
+                                lvl === 2 ? 'bg-amber-500 ring-2 ring-amber-500/20' : 'bg-emerald-500'
+                              }`} />
+                              <h4 className="font-bold text-xs truncate leading-snug">{pt.name}</h4>
+                              {hasPtPhoto && (
+                                <span className="text-[9px] px-1 py-0.2 rounded font-semibold bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-cyan-300 shrink-0">
+                                  📷
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-1.5 text-[10.5px] text-slate-500 dark:text-slate-400">
+                              <span className="truncate">อ.{pt.district?.replace(/^อ\./, '')}</span>
+                              <span>•</span>
+                              <span className={`font-medium ${
+                                isReceding ? 'text-teal-600 dark:text-teal-400 font-semibold' :
+                                pt.waterTrend === 'rising' ? 'text-rose-600 dark:text-rose-400 font-semibold' : ''
+                              }`}>
+                                {isReceding ? '📉 น้ำลด' : pt.waterTrend === 'rising' ? '📈 น้ำขึ้น' : 'ทรงตัว'}
+                              </span>
+                              <span>•</span>
+                              <span className="truncate">{lvl === 3 ? 'รถเล็กห้ามผ่าน' : lvl === 2 ? 'รถเล็กควรเลี่ยง' : 'ผ่านได้'}</span>
+                            </div>
+                          </div>
+
+                          <div className="text-right shrink-0">
+                            <span className={`text-[11px] font-black font-mono px-2 py-0.5 rounded-md border inline-block ${
+                              lvl === 3 ? 'bg-rose-50 dark:bg-rose-950 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800' :
+                              lvl === 2 ? 'bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800' :
+                              'bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800'
+                            }`}>
+                              {pt.depthCm ? `${pt.depthCm} cm` : (pt.depthRange || `${lvl === 3 ? '>50' : lvl === 2 ? '21-50' : '5-20'} cm`)}
+                            </span>
+                          </div>
+                        </button>
+                      );
+                    })
+                  )}
+                </div>
               </div>
-              <div className={`p-2.5 rounded-lg border ${isDark ? 'bg-slate-850/60 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
-                <span className="text-[10px] text-slate-500 dark:text-slate-400 block font-medium">รายงานประชาชน</span>
-                <span className="text-base font-bold text-teal-600 dark:text-teal-400 font-mono mt-0.5 block">
-                  {citizenReports.length} รายการ
-                </span>
+            )}
+
+            {/* TAB 2: WEATHER & CORRIDORS (พยากรณ์ฝน & เส้นทางสัญจร) */}
+            {desktopSidebarTab === 'weather' && (
+              <div className="space-y-3">
+                {/* 24-Hour Rain Forecast Card */}
+                <RainForecast24hCard
+                  forecast={weather?.forecast24h}
+                  userDistrict={userDistrict}
+                  userLocation={userLocation}
+                  onOpenRadar={() => setIsOfficialModalOpen(true)}
+                  theme={theme}
+                  collapsible={true}
+                  defaultExpanded={true}
+                  onManualSync={handleManualSync}
+                  isSyncing={telemetrySyncStatus?.isSyncing}
+                  onOpenPublicUpdates={() => setIsPublicUpdatesModalOpen(true)}
+                  lastUpdatedTime={lastUpdatedTime}
+                />
+
+                {/* Major Flood Corridors */}
+                <div className={`p-2.5 rounded-lg border ${isDark ? 'bg-slate-850/60 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-bold flex items-center gap-1.5 text-slate-800 dark:text-slate-200">
+                      <span>🛣️</span> เส้นทางสัญจรเสี่ยงสำคัญ
+                    </span>
+                    <span className="text-[10px] text-slate-400">คลิกเพื่อซูม</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {MAJOR_FLOOD_CORRIDORS.slice(0, 6).map((corridor) => (
+                      <button
+                        key={corridor.id}
+                        onClick={() => {
+                          playSelectSound();
+                          if (corridor.coordinates && corridor.coordinates[0]) {
+                            setFlyToLocation({
+                              lat: corridor.coordinates[0][0],
+                              lng: corridor.coordinates[0][1],
+                              zoom: 14,
+                              duration: 1.8,
+                              ts: Date.now()
+                            });
+                          }
+                        }}
+                        className={`p-1.5 rounded-md text-left border text-[11px] font-medium transition-all cursor-pointer shadow-xs truncate active:scale-95 ${
+                          isDark ? 'bg-slate-800 hover:bg-slate-750 border-slate-700 text-slate-200 hover:text-cyan-300' : 'bg-white hover:bg-slate-100 border-slate-200 text-slate-800 hover:text-blue-600'
+                        }`}
+                        title={corridor.name}
+                      >
+                        📍 {corridor.shortName || corridor.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Telemetry Summary Counters */}
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div className={`p-2.5 rounded-lg border ${isDark ? 'bg-slate-850/60 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+                    <span className="text-[10px] text-slate-500 dark:text-slate-400 block font-medium">จุดเฝ้าระวังทั้งหมด</span>
+                    <span className="text-base font-bold text-blue-600 dark:text-cyan-400 font-mono mt-0.5 block">
+                      {points.length + citizenReports.length} จุด
+                    </span>
+                  </div>
+                  <div className={`p-2.5 rounded-lg border ${isDark ? 'bg-slate-850/60 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+                    <span className="text-[10px] text-slate-500 dark:text-slate-400 block font-medium">รายงานประชาชน</span>
+                    <span className="text-base font-bold text-teal-600 dark:text-teal-400 font-mono mt-0.5 block">
+                      {citizenReports.length} รายการ
+                    </span>
+                  </div>
+                </div>
               </div>
-            </div>
+            )}
           </div>
 
           {/* Sidebar Footer */}
@@ -3002,10 +3171,10 @@ export default function App() {
                 setSelectedPoint(null);
               }
             }}
-            className="fixed inset-0 z-[100] bg-slate-950/65 backdrop-blur-xs flex items-start justify-center pt-[7vh] pb-20 sm:items-center sm:pt-4 sm:pb-4 smooth-backdrop animate-in fade-in duration-200 pointer-events-auto"
+            className="fixed inset-0 z-[100] bg-slate-950/65 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 smooth-backdrop animate-in fade-in duration-200 pointer-events-auto overflow-hidden"
           >
             <div 
-              className={`w-[92vw] max-w-[390px] sm:max-w-md border rounded-lg shadow-xl relative max-h-[72vh] sm:max-h-[85vh] flex flex-col p-3.5 sm:p-5 overflow-y-auto overscroll-contain transition-all ${
+              className={`w-full max-w-[420px] sm:max-w-md border rounded-xl shadow-2xl relative max-h-[82vh] sm:max-h-[86vh] flex flex-col p-3.5 sm:p-5 overflow-y-auto overscroll-contain transition-all custom-scrollbar-thin ${
                 isDark 
                   ? 'bg-slate-900 border-slate-800 text-slate-100 shadow-2xl shadow-black/80' 
                   : 'bg-white border-slate-200 text-slate-900 shadow-2xl shadow-slate-900/30'
@@ -3076,6 +3245,11 @@ export default function App() {
                     {(typeof selectedPoint.roadSegment === 'string' && selectedPoint.roadSegment.trim() && !/^[0-9.,\s-]+$/.test(selectedPoint.roadSegment.trim())) ? ` • ${selectedPoint.roadSegment}` : ''}
                   </p>
                 )}
+                {typeof selectedPoint.lat === 'number' && typeof selectedPoint.lng === 'number' && (
+                  <div className="text-[10px] font-mono text-slate-400 dark:text-slate-500 mt-0.5">
+                    📍 พิกัด: {selectedPoint.lat.toFixed(5)}, {selectedPoint.lng.toFixed(5)}
+                  </div>
+                )}
               </div>
 
             {/* Citizen Uploaded Photo Preview (If available) */}
@@ -3125,6 +3299,63 @@ export default function App() {
               />
             </div>
 
+            {/* Vehicle Passability Guidance Matrix */}
+            {(() => {
+              const standard = FLOOD_STANDARDS.find(s => s.level === getFloodLevel(selectedPoint.depthCm)) || FLOOD_STANDARDS[0];
+              const vi = standard.vehicleImpact || {};
+              return (
+                <div className={`mt-2.5 p-2.5 rounded-lg border ${isDark ? 'bg-slate-850/70 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[11px] font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                      <span>🚗</span> คำแนะนำความปลอดภัยต่อยานพาหนะ
+                    </span>
+                    <span className="text-[10px] text-slate-400">อิง ปภ./กรมทางหลวง</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-1.5 text-xs">
+                    {/* รถเก๋ง */}
+                    <div className={`p-1.5 rounded-md border flex items-center justify-between gap-1 ${
+                      vi.sedan?.status === 'danger' ? (isDark ? 'bg-rose-950/60 border-rose-800 text-rose-300' : 'bg-rose-50 border-rose-200 text-rose-800') :
+                      vi.sedan?.status === 'warning' ? (isDark ? 'bg-amber-950/60 border-amber-800 text-amber-300' : 'bg-amber-50 border-amber-200 text-amber-800') :
+                      (isDark ? 'bg-emerald-950/60 border-emerald-800 text-emerald-300' : 'bg-emerald-50 border-emerald-200 text-emerald-800')
+                    }`}>
+                      <span className="text-[11px] font-semibold truncate">🚗 รถเก๋ง/เล็ก</span>
+                      <span className="text-[10px] font-bold shrink-0">{vi.sedan?.status === 'danger' ? 'ห้ามผ่าน' : vi.sedan?.status === 'warning' ? 'ควรเลี่ยง' : 'ผ่านได้'}</span>
+                    </div>
+
+                    {/* มอเตอร์ไซค์ */}
+                    <div className={`p-1.5 rounded-md border flex items-center justify-between gap-1 ${
+                      vi.motorcycle?.status === 'danger' ? (isDark ? 'bg-rose-950/60 border-rose-800 text-rose-300' : 'bg-rose-50 border-rose-200 text-rose-800') :
+                      vi.motorcycle?.status === 'warning' ? (isDark ? 'bg-amber-950/60 border-amber-800 text-amber-300' : 'bg-amber-50 border-amber-200 text-amber-800') :
+                      (isDark ? 'bg-emerald-950/60 border-emerald-800 text-emerald-300' : 'bg-emerald-50 border-emerald-200 text-emerald-800')
+                    }`}>
+                      <span className="text-[11px] font-semibold truncate">🛵 มอเตอร์ไซค์</span>
+                      <span className="text-[10px] font-bold shrink-0">{vi.motorcycle?.status === 'danger' ? 'ห้ามผ่าน' : vi.motorcycle?.status === 'warning' ? 'ควรเลี่ยง' : 'ผ่านได้'}</span>
+                    </div>
+
+                    {/* รถกระบะ/SUV */}
+                    <div className={`p-1.5 rounded-md border flex items-center justify-between gap-1 ${
+                      vi.suv?.status === 'danger' ? (isDark ? 'bg-rose-950/60 border-rose-800 text-rose-300' : 'bg-rose-50 border-rose-200 text-rose-800') :
+                      vi.suv?.status === 'warning' ? (isDark ? 'bg-amber-950/60 border-amber-800 text-amber-300' : 'bg-amber-50 border-amber-200 text-amber-800') :
+                      (isDark ? 'bg-emerald-950/60 border-emerald-800 text-emerald-300' : 'bg-emerald-50 border-emerald-200 text-emerald-800')
+                    }`}>
+                      <span className="text-[11px] font-semibold truncate">🚙 กระบะ/SUV</span>
+                      <span className="text-[10px] font-bold shrink-0">{vi.suv?.status === 'danger' ? 'ห้ามผ่าน' : vi.suv?.status === 'warning' ? 'ระวังคลื่น' : 'ผ่านได้'}</span>
+                    </div>
+
+                    {/* รถบรรทุก */}
+                    <div className={`p-1.5 rounded-md border flex items-center justify-between gap-1 ${
+                      vi.truck?.status === 'danger' ? (isDark ? 'bg-rose-950/60 border-rose-800 text-rose-300' : 'bg-rose-50 border-rose-200 text-rose-800') :
+                      vi.truck?.status === 'warning' ? (isDark ? 'bg-amber-950/60 border-amber-800 text-amber-300' : 'bg-amber-50 border-amber-200 text-amber-800') :
+                      (isDark ? 'bg-emerald-950/60 border-emerald-800 text-emerald-300' : 'bg-emerald-50 border-emerald-200 text-emerald-800')
+                    }`}>
+                      <span className="text-[11px] font-semibold truncate">🚛 รถบรรทุก</span>
+                      <span className="text-[10px] font-bold shrink-0">{vi.truck?.status === 'danger' ? 'ห้ามผ่าน' : vi.truck?.status === 'warning' ? 'ระวังสูง' : 'ผ่านได้'}</span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+
             {/* Fact-based Summary Details with Citations */}
             <div className="space-y-1.5 sm:space-y-2 mt-2 sm:mt-2.5 text-xs sm:text-sm">
               {selectedPoint.cause && (
@@ -3171,32 +3402,49 @@ export default function App() {
               </div>
             </div>
 
-            {/* Quick Action Buttons: Standards Guide & Direct Helpline */}
-            <div className="grid grid-cols-2 gap-2 mt-2.5 sm:mt-3 pt-2.5 sm:pt-2.5 border-t border-slate-200 dark:border-slate-800">
-              <button
-                type="button"
-                onClick={() => {
-                  try { playModalOpenSound(); } catch (_) {}
-                  setIsStandardsModalOpen(true);
-                }}
-                className={`py-2 px-2.5 rounded-md border text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-xs active:scale-95 ${
-                  isDark 
-                    ? 'bg-slate-850 hover:bg-slate-800 text-slate-200 border-slate-800' 
-                    : 'bg-white hover:bg-slate-100 text-slate-800 border-slate-200'
-                }`}
-              >
-                <BookOpen className="w-3.5 h-3.5 text-blue-500 shrink-0" />
-                <span className="truncate">เกณฑ์ระดับน้ำ</span>
-              </button>
+            {/* Quick Action Buttons: Direct Navigation & Standards & Helpline */}
+            <div className="mt-2.5 sm:mt-3 pt-2.5 sm:pt-2.5 border-t border-slate-200 dark:border-slate-800 space-y-2">
+              {/* Row 1: Google Maps Navigation Link */}
+              {typeof selectedPoint.lat === 'number' && typeof selectedPoint.lng === 'number' && (
+                <a 
+                  href={`https://www.google.com/maps/dir/?api=1&destination=${selectedPoint.lat},${selectedPoint.lng}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full py-2 px-3 rounded-md bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition-all text-center cursor-pointer shadow-xs active:scale-95"
+                  title="เปิดแผนที่นำทางไปยังจุดนี้ด้วย Google Maps"
+                >
+                  <Navigation className="w-3.5 h-3.5 shrink-0" />
+                  <span>นำทางด้วย Google Maps</span>
+                </a>
+              )}
 
-              <a 
-                href={`tel:${selectedPoint.phone ? selectedPoint.phone.replace(/-/g, '') : '1784'}`}
-                onClick={() => playClickSound()}
-                className="py-2 px-2.5 rounded-md bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition-all text-center cursor-pointer border border-rose-700/60 shadow-xs active:scale-95"
-              >
-                <Phone className="w-3.5 h-3.5 shrink-0" />
-                <span className="break-words whitespace-normal leading-tight text-center">โทรศูนย์ {selectedPoint.district ? selectedPoint.district.replace(/^อ\./, '') : 'สมุทรปราการ'}</span>
-              </a>
+              {/* Row 2: Standards Guide + Phone Hotline */}
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    try { playModalOpenSound(); } catch (_) {}
+                    setIsStandardsModalOpen(true);
+                  }}
+                  className={`py-2 px-2 rounded-md border text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-xs active:scale-95 ${
+                    isDark 
+                      ? 'bg-slate-850 hover:bg-slate-800 text-slate-200 border-slate-800' 
+                      : 'bg-white hover:bg-slate-100 text-slate-800 border-slate-200'
+                  }`}
+                >
+                  <BookOpen className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+                  <span className="truncate">เกณฑ์ระดับน้ำ</span>
+                </button>
+
+                <a 
+                  href={`tel:${selectedPoint.phone ? selectedPoint.phone.replace(/-/g, '') : '1784'}`}
+                  onClick={() => playClickSound()}
+                  className="py-2 px-2 rounded-md bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition-all text-center cursor-pointer border border-rose-700/60 shadow-xs active:scale-95"
+                >
+                  <Phone className="w-3.5 h-3.5 shrink-0" />
+                  <span className="truncate">โทร {selectedPoint.district ? `อ.${selectedPoint.district.replace(/^อ\./, '')}` : '1784'}</span>
+                </a>
+              </div>
             </div>
 
             {/* Admin Broadcast & AI Alert Direct Delete Action (Visible ONLY to Logged-in Admin) */}
@@ -3323,12 +3571,16 @@ export default function App() {
               {/* ปกติ */}
               <button
                 type="button"
-                onClick={() => setSeverityFilter(severityFilter === 'falling' ? 'all' : 'falling')}
+                onClick={() => {
+                  try { playSelectSound(); } catch (_) {}
+                  setSeverityFilter(severityFilter === 'falling' ? 'all' : 'falling');
+                }}
                 className={`py-1 px-1 rounded-lg border text-center transition-all cursor-pointer ${
                   severityFilter === 'falling'
                     ? 'bg-emerald-500 text-white border-emerald-500 shadow-xs'
                     : isDark ? 'bg-slate-850 border-slate-800 hover:bg-slate-800 text-slate-300' : 'bg-slate-50 border-slate-200 hover:bg-slate-100 text-slate-700'
                 }`}
+                title="กรองเฉพาะจุดที่ระดับน้ำเริ่มลดลง"
               >
                 <div className="text-[10px] font-medium leading-none text-slate-400 dark:text-slate-500">ปกติ/ลด</div>
                 <div className="text-xs font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">{falling}</div>
@@ -3337,12 +3589,16 @@ export default function App() {
               {/* เฝ้าระวัง */}
               <button
                 type="button"
-                onClick={() => setSeverityFilter(severityFilter === 'minor' ? 'all' : 'minor')}
+                onClick={() => {
+                  try { playSelectSound(); } catch (_) {}
+                  setSeverityFilter((severityFilter === '1' || severityFilter === 'minor') ? 'all' : '1');
+                }}
                 className={`py-1 px-1 rounded-lg border text-center transition-all cursor-pointer ${
-                  severityFilter === 'minor'
+                  (severityFilter === '1' || severityFilter === 'minor')
                     ? 'bg-amber-500 text-white border-amber-500 shadow-xs'
                     : isDark ? 'bg-slate-850 border-slate-800 hover:bg-slate-800 text-slate-300' : 'bg-slate-50 border-slate-200 hover:bg-slate-100 text-slate-700'
                 }`}
+                title="ระดับ 1: เฝ้าระวัง ผิวจราจร (<15 ซม.)"
               >
                 <div className="text-[10px] font-medium leading-none text-slate-400 dark:text-slate-500">เฝ้าระวัง</div>
                 <div className="text-xs font-bold text-amber-600 dark:text-amber-400 mt-0.5">{minor}</div>
@@ -3351,12 +3607,16 @@ export default function App() {
               {/* ปานกลาง */}
               <button
                 type="button"
-                onClick={() => setSeverityFilter(severityFilter === 'moderate' ? 'all' : 'moderate')}
+                onClick={() => {
+                  try { playSelectSound(); } catch (_) {}
+                  setSeverityFilter((severityFilter === '2' || severityFilter === 'moderate') ? 'all' : '2');
+                }}
                 className={`py-1 px-1 rounded-lg border text-center transition-all cursor-pointer ${
-                  severityFilter === 'moderate'
+                  (severityFilter === '2' || severityFilter === 'moderate')
                     ? 'bg-orange-500 text-white border-orange-500 shadow-xs'
                     : isDark ? 'bg-slate-850 border-slate-800 hover:bg-slate-800 text-slate-300' : 'bg-slate-50 border-slate-200 hover:bg-slate-100 text-slate-700'
                 }`}
+                title="ระดับ 2: ปานกลาง (15-30 ซม.)"
               >
                 <div className="text-[10px] font-medium leading-none text-slate-400 dark:text-slate-500">ปานกลาง</div>
                 <div className="text-xs font-bold text-orange-600 dark:text-orange-400 mt-0.5">{moderate}</div>
@@ -3365,12 +3625,16 @@ export default function App() {
               {/* วิกฤต */}
               <button
                 type="button"
-                onClick={() => setSeverityFilter(severityFilter === 'severe' ? 'all' : 'severe')}
+                onClick={() => {
+                  try { playSelectSound(); } catch (_) {}
+                  setSeverityFilter((severityFilter === '3' || severityFilter === 'severe') ? 'all' : '3');
+                }}
                 className={`py-1 px-1 rounded-lg border text-center transition-all cursor-pointer ${
-                  severityFilter === 'severe'
+                  (severityFilter === '3' || severityFilter === 'severe')
                     ? 'bg-rose-600 text-white border-rose-600 shadow-xs'
                     : isDark ? 'bg-slate-850 border-slate-800 hover:bg-slate-800 text-slate-300' : 'bg-slate-50 border-slate-200 hover:bg-slate-100 text-slate-700'
                 }`}
+                title="ระดับ 3: วิกฤต (>30 ซม.)"
               >
                 <div className="text-[10px] font-medium leading-none text-slate-400 dark:text-slate-500">วิกฤต</div>
                 <div className="text-xs font-bold text-rose-600 dark:text-rose-400 mt-0.5">{severe}</div>
@@ -3474,7 +3738,7 @@ export default function App() {
             </div>
 
             {/* Tab Contents (Scrollable) */}
-            <div className="flex-1 overflow-y-auto p-3 space-y-3">
+            <div className="flex-1 overflow-y-auto p-3 space-y-3 custom-scrollbar-thin">
               {/* TAB 1: OVERVIEW & SEARCH */}
               {mobileSheetTab === 'overview' && (
                 <div className="space-y-3">
@@ -3496,28 +3760,130 @@ export default function App() {
                       <button
                         type="button"
                         onClick={() => setSearchQuery('')}
-                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1"
+                        aria-label="ล้างคำค้นหา"
                       >
                         <X className="w-3.5 h-3.5" />
                       </button>
                     )}
                   </div>
 
-                  {/* District Dropdown Selector */}
-                  <div className="flex items-center gap-2">
-                    <span className="text-[11px] font-medium text-slate-500 shrink-0">อำเภอ:</span>
-                    <select
-                      value={selectedDistrict}
-                      onChange={(e) => setSelectedDistrict(e.target.value)}
-                      className={`flex-1 py-1.5 px-2 rounded-lg border text-xs font-medium focus:outline-hidden ${
-                        isDark ? 'bg-slate-850 border-slate-750 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'
+                  {/* Horizontal District Filter Pills */}
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5 px-0.5">
+                      <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400">
+                        เลือกอำเภอ (6 อำเภอ)
+                      </span>
+                      {selectedDistrict !== "ทั้งหมด" && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            try { playSelectSound(); } catch (_) {}
+                            setSelectedDistrict("ทั้งหมด");
+                            setFlyToLocation({ lat: 13.6000, lng: 100.6500, zoom: 11, ts: Date.now() });
+                          }}
+                          className="text-[11px] text-blue-600 dark:text-blue-400 font-medium hover:underline cursor-pointer"
+                        >
+                          ดูทุกอำเภอ
+                        </button>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1 -mx-1 px-1">
+                      {['ทั้งหมด', ...SAMUT_PRAKAN_DISTRICTS_DATA.map(d => d.name)].map((dist) => {
+                        const isSelected = selectedDistrict === dist;
+                        return (
+                          <button
+                            key={dist}
+                            type="button"
+                            onClick={() => {
+                              try { playSelectSound(); } catch (_) {}
+                              setSelectedDistrict(dist);
+                              if (dist === "ทั้งหมด") {
+                                setFlyToLocation({ lat: 13.6000, lng: 100.6500, zoom: 11, ts: Date.now() });
+                              } else {
+                                const dData = SAMUT_PRAKAN_DISTRICTS_DATA.find(d => d.name === dist);
+                                if (dData?.center) {
+                                  setFlyToLocation({ lat: dData.center.lat, lng: dData.center.lng, zoom: 13, ts: Date.now() });
+                                }
+                              }
+                            }}
+                            className={`px-2.5 py-1 rounded-full text-xs font-semibold whitespace-nowrap shrink-0 transition-all cursor-pointer border ${
+                              isSelected
+                                ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
+                                : isDark
+                                  ? 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-750'
+                                  : 'bg-slate-100 border-slate-200 text-slate-700 hover:bg-slate-200'
+                            }`}
+                          >
+                            {dist === 'ทั้งหมด' ? 'ทุกอำเภอ' : dist.replace(/^อ\./, '')}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Severity Level Filter Badges (Quick Filter inside Sheet) */}
+                  <div className="grid grid-cols-4 gap-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        try { playSelectSound(); } catch (_) {}
+                        setSeverityFilter(severityFilter === 'falling' ? 'all' : 'falling');
+                      }}
+                      className={`py-1 px-1 rounded-md border text-center transition-all cursor-pointer ${
+                        severityFilter === 'falling'
+                          ? 'bg-emerald-500 text-white border-emerald-500 shadow-xs'
+                          : isDark ? 'bg-slate-800/80 border-slate-700 text-slate-300' : 'bg-slate-100 border-slate-200 text-slate-700'
                       }`}
                     >
-                      <option value="all">ทุกอำเภอในสมุทรปราการ ({points.length + citizenReports.filter(r => r.isApproved && !r.isResolved).length})</option>
-                      {SAMUT_PRAKAN_DISTRICTS_DATA.map(d => (
-                        <option key={d.name} value={d.name}>{d.name}</option>
-                      ))}
-                    </select>
+                      <div className="text-[10px] font-medium leading-none">ปกติ/ลด</div>
+                      <div className="text-xs font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">{falling}</div>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        try { playSelectSound(); } catch (_) {}
+                        setSeverityFilter((severityFilter === '1' || severityFilter === 'minor') ? 'all' : '1');
+                      }}
+                      className={`py-1 px-1 rounded-md border text-center transition-all cursor-pointer ${
+                        (severityFilter === '1' || severityFilter === 'minor')
+                          ? 'bg-amber-500 text-white border-amber-500 shadow-xs'
+                          : isDark ? 'bg-slate-800/80 border-slate-700 text-slate-300' : 'bg-slate-100 border-slate-200 text-slate-700'
+                      }`}
+                    >
+                      <div className="text-[10px] font-medium leading-none">เฝ้าระวัง</div>
+                      <div className="text-xs font-bold text-amber-600 dark:text-amber-400 mt-0.5">{minor}</div>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        try { playSelectSound(); } catch (_) {}
+                        setSeverityFilter((severityFilter === '2' || severityFilter === 'moderate') ? 'all' : '2');
+                      }}
+                      className={`py-1 px-1 rounded-md border text-center transition-all cursor-pointer ${
+                        (severityFilter === '2' || severityFilter === 'moderate')
+                          ? 'bg-orange-500 text-white border-orange-500 shadow-xs'
+                          : isDark ? 'bg-slate-800/80 border-slate-700 text-slate-300' : 'bg-slate-100 border-slate-200 text-slate-700'
+                      }`}
+                    >
+                      <div className="text-[10px] font-medium leading-none">ปานกลาง</div>
+                      <div className="text-xs font-bold text-orange-600 dark:text-orange-400 mt-0.5">{moderate}</div>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        try { playSelectSound(); } catch (_) {}
+                        setSeverityFilter((severityFilter === '3' || severityFilter === 'severe') ? 'all' : '3');
+                      }}
+                      className={`py-1 px-1 rounded-md border text-center transition-all cursor-pointer ${
+                        (severityFilter === '3' || severityFilter === 'severe')
+                          ? 'bg-rose-600 text-white border-rose-600 shadow-xs'
+                          : isDark ? 'bg-slate-800/80 border-slate-700 text-slate-300' : 'bg-slate-100 border-slate-200 text-slate-700'
+                      }`}
+                    >
+                      <div className="text-[10px] font-medium leading-none">วิกฤต</div>
+                      <div className="text-xs font-bold text-rose-600 dark:text-rose-400 mt-0.5">{severe}</div>
+                    </button>
                   </div>
 
                   {/* Flood Corridor Quick Jump Chips */}
@@ -3525,7 +3891,7 @@ export default function App() {
                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
                       เส้นทางสัญจรสายหลัก
                     </span>
-                    <div className="flex flex-wrap gap-1">
+                    <div className="flex items-center gap-1 overflow-x-auto no-scrollbar pb-1 -mx-1 px-1">
                       {MAJOR_FLOOD_CORRIDORS.map(corridor => (
                         <button
                           key={corridor.id}
@@ -3533,7 +3899,7 @@ export default function App() {
                           onClick={() => {
                             setSearchQuery(corridor.name);
                           }}
-                          className={`px-2 py-1 rounded-md text-[11px] border font-medium transition-colors cursor-pointer ${
+                          className={`px-2 py-1 rounded-md text-[11px] border font-medium whitespace-nowrap shrink-0 transition-colors cursor-pointer ${
                             searchQuery === corridor.name
                               ? 'bg-blue-600 text-white border-blue-600'
                               : isDark ? 'bg-slate-800 border-slate-700 text-slate-300' : 'bg-slate-100 border-slate-200 text-slate-700'
@@ -3549,55 +3915,104 @@ export default function App() {
                   <div className="space-y-1.5 pt-1">
                     <div className="flex items-center justify-between text-[11px] text-slate-500 font-medium">
                       <span>รายการจุดรายงาน ({displayPoints.length})</span>
-                      {severityFilter !== 'all' && (
+                      {(severityFilter !== 'all' || selectedDistrict !== 'ทั้งหมด' || searchQuery) && (
                         <button
                           type="button"
-                          onClick={() => setSeverityFilter('all')}
+                          onClick={() => {
+                            setSeverityFilter('all');
+                            setSelectedDistrict('ทั้งหมด');
+                            setSearchQuery('');
+                          }}
                           className="text-blue-500 hover:underline cursor-pointer"
                         >
-                          ล้างตัวกรอง
+                          ล้างตัวกรองทั้งหมด
                         </button>
                       )}
                     </div>
 
                     {displayPoints.length === 0 ? (
-                      <div className="py-6 text-center text-xs text-slate-400">
-                        ไม่พบข้อมูลตามเงื่อนไขที่เลือก
+                      <div className="py-8 text-center text-xs text-slate-400">
+                        <p>ไม่พบจุดรายงานตามเงื่อนไขที่เลือก</p>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSeverityFilter('all');
+                            setSelectedDistrict('ทั้งหมด');
+                            setSearchQuery('');
+                          }}
+                          className="mt-2 text-blue-600 dark:text-blue-400 text-xs font-bold hover:underline"
+                        >
+                          รีเซ็ตการค้นหาและตัวกรอง
+                        </button>
                       </div>
                     ) : (
-                      displayPoints.slice(0, 15).map(pt => {
+                      displayPoints.map(pt => {
                         const lvl = resolveLevel(pt);
+                        const isReceding = isWaterReceding(pt);
+                        const hasPtPhoto = Boolean(pt.photoUrl || pt.photo_url || pt.photo || pt.image || pt.imageUrl);
                         return (
                           <div
                             key={pt.id}
-                            className={`p-2 rounded-lg border transition-all flex items-center justify-between gap-2 ${
-                              isDark ? 'bg-slate-850/60 border-slate-800' : 'bg-slate-50/80 border-slate-200'
+                            onClick={() => {
+                              handleSelectLocation(pt);
+                              setIsMobileSheetOpen(false);
+                            }}
+                            className={`p-2.5 rounded-xl border transition-all flex flex-col gap-1.5 cursor-pointer active:scale-[0.99] ${
+                              isDark ? 'bg-slate-850/70 border-slate-800 hover:bg-slate-800' : 'bg-slate-50 border-slate-200 hover:bg-slate-100'
                             }`}
                           >
-                            <div className="min-w-0 flex-1">
-                              <div className="flex items-center gap-1.5">
-                                <span className={`w-2 h-2 rounded-full shrink-0 ${
-                                  lvl === 'severe' ? 'bg-rose-500' :
-                                  lvl === 'moderate' ? 'bg-orange-500' :
-                                  lvl === 'minor' ? 'bg-amber-500' : 'bg-emerald-500'
-                                }`} />
-                                <h4 className="text-xs font-bold truncate">{pt.name}</h4>
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center gap-1.5">
+                                  <span className={`w-2 h-2 rounded-full shrink-0 ${
+                                    lvl === 3 ? 'bg-rose-500 animate-pulse ring-2 ring-rose-500/20' :
+                                    lvl === 2 ? 'bg-orange-500 ring-2 ring-orange-500/20' :
+                                    lvl === 1 ? 'bg-amber-500' : 'bg-emerald-500'
+                                  }`} />
+                                  <h4 className="text-xs font-bold truncate text-slate-900 dark:text-white">{pt.name}</h4>
+                                  {hasPtPhoto && (
+                                    <span className="text-[9px] px-1 py-0.2 rounded font-semibold bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-cyan-300 shrink-0">
+                                      📷
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="flex items-center gap-1.5 text-[10px] text-slate-500 dark:text-slate-400 mt-1 truncate">
+                                  <span className="font-medium text-slate-700 dark:text-slate-300">อ.{pt.district?.replace(/^อ\./, '')}</span>
+                                  <span>•</span>
+                                  <span className={`font-semibold ${
+                                    lvl === 3 ? 'text-rose-600 dark:text-rose-400' :
+                                    lvl === 2 ? 'text-orange-600 dark:text-orange-400' :
+                                    'text-amber-600 dark:text-amber-400'
+                                  }`}>
+                                    {pt.depthCm ? `ลึก ${pt.depthCm} ซม.` : (lvl === 3 ? 'น้ำท่วมสูง (>30 ซม.)' : lvl === 2 ? 'น้ำท่วมขัง (15-30 ซม.)' : 'ผิวจราจร (<15 ซม.)')}
+                                  </span>
+                                  {isReceding && (
+                                    <span className="text-emerald-600 dark:text-emerald-400 font-medium">
+                                      • น้ำลด
+                                    </span>
+                                  )}
+                                </div>
                               </div>
-                              <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
-                                อ.{pt.district} • {pt.depth || (lvl === 'severe' ? 'น้ำท่วมสูง (>30 ซม.)' : lvl === 'moderate' ? 'น้ำท่วมขัง (15-30 ซม.)' : lvl === 'minor' ? 'ผิวจราจร (5-15 ซม.)' : 'ปกติ')}
-                              </p>
+
+                              <span className={`px-2 py-0.5 rounded text-[10px] font-bold shrink-0 border ${
+                                lvl === 3 ? 'bg-rose-500/10 border-rose-500/30 text-rose-600 dark:text-rose-400' :
+                                lvl === 2 ? 'bg-orange-500/10 border-orange-500/30 text-orange-600 dark:text-orange-400' :
+                                'bg-amber-500/10 border-amber-500/30 text-amber-600 dark:text-amber-400'
+                              }`}>
+                                {lvl === 3 ? 'วิกฤต' : lvl === 2 ? 'ปานกลาง' : 'เฝ้าระวัง'}
+                              </span>
                             </div>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                handleSelectLocation(pt);
-                                setIsMobileSheetOpen(false);
-                              }}
-                              className="px-2.5 py-1 rounded-md bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-bold shrink-0 transition-transform active:scale-95 flex items-center gap-1 cursor-pointer"
-                            >
-                              <Navigation2 className="w-3 h-3" />
-                              <span>ดูจุดนี้</span>
-                            </button>
+
+                            {/* Vehicle Guidance & Navigation Pill */}
+                            <div className="flex items-center justify-between text-[10px] pt-1 border-t border-slate-200/50 dark:border-slate-800/50">
+                              <span className="text-slate-500 dark:text-slate-400 truncate max-w-[200px]">
+                                {lvl === 3 ? '🚫 รถเล็กห้ามผ่าน (เฉพาะยกสูง)' : lvl === 2 ? '⚠️ รถเก๋ง/เล็กควรเลี่ยง' : '✅ สัญจรได้ระมัดระวัง'}
+                              </span>
+                              <span className="text-blue-600 dark:text-blue-400 font-bold shrink-0 flex items-center gap-1">
+                                <Navigation2 className="w-3 h-3" />
+                                <span>ดูข้อมูล & นำทาง</span>
+                              </span>
+                            </div>
                           </div>
                         );
                       })
@@ -3852,9 +4267,9 @@ export default function App() {
       {isAnnouncementModalOpen && latestAnnouncement && (
         <div 
           onClick={(e) => { if (e.target === e.currentTarget) { playCloseSound(); setIsAnnouncementModalOpen(false); } }}
-          className="fixed inset-0 z-[105] bg-slate-950/65 backdrop-blur-xs flex items-start justify-center pt-[7vh] pb-20 sm:items-center sm:pt-4 sm:pb-4 smooth-backdrop pointer-events-auto"
+          className="fixed inset-0 z-[105] bg-slate-950/65 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 smooth-backdrop pointer-events-auto overflow-hidden"
         >
-          <div className={`w-[92vw] max-w-[390px] sm:max-w-md border-2 rounded-2xl sm:rounded-3xl shadow-2xl p-3.5 sm:p-5 flex flex-col max-h-[72vh] sm:max-h-[80vh] overflow-hidden smooth-pop transition-all ${
+          <div className={`w-full max-w-[420px] sm:max-w-md border-2 rounded-2xl shadow-2xl p-3.5 sm:p-5 flex flex-col max-h-[82vh] sm:max-h-[86vh] overflow-hidden smooth-pop transition-all ${
             isDark 
               ? 'bg-slate-900 border-amber-500/50 text-slate-100 shadow-2xl shadow-black/80' 
               : 'bg-white border-amber-400 text-slate-900 shadow-2xl shadow-slate-900/30'
