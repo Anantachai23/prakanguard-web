@@ -241,6 +241,26 @@ export default function Navbar({
             <RealTimeClock theme={theme} />
           </div>
 
+          {/* Mobile Admin Announcement Button */}
+          {hasAnnouncement && (
+            <button 
+              type="button"
+              onClick={() => {
+                playModalOpenSound();
+                if (onOpenAnnouncement) onOpenAnnouncement();
+              }}
+              className={`sm:hidden px-2 py-1 rounded-xl border text-[11px] font-bold flex items-center gap-1 transition-all cursor-pointer shadow-xs active:scale-95 shrink-0 ${
+                isDark 
+                  ? 'bg-amber-950/80 hover:bg-amber-900/90 text-amber-300 border-amber-700/80 shadow-amber-950/40' 
+                  : 'bg-amber-500 hover:bg-amber-600 text-white border-amber-400 shadow-amber-500/20'
+              }`}
+              title="ดูประกาศล่าสุดจากเจ้าหน้าที่แอดมิน"
+            >
+              <Bell className="w-3.5 h-3.5 animate-pulse shrink-0" />
+              <span>ประกาศ</span>
+            </button>
+          )}
+
           {/* Desktop/iPad Public Updates Button (อัปเดตสถานการณ์สดรายวัน) */}
           <button 
             type="button"

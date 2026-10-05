@@ -32,13 +32,13 @@ export default function PrivacyPolicyModal({
 
   return (
     <div 
-      className="fixed inset-0 z-50 flex items-start justify-center pt-[13vh] pb-24 sm:items-center sm:pt-4 sm:pb-4 overflow-hidden select-none bg-slate-950/75 backdrop-blur-md animate-in fade-in duration-200"
+      className="fixed inset-0 z-50 flex items-start justify-center pt-[7vh] pb-20 sm:items-center sm:pt-4 sm:pb-4 overflow-hidden select-none bg-slate-950/75 backdrop-blur-md animate-in fade-in duration-200"
       onClick={(e) => {
         if (e.target === e.currentTarget) handleClose();
       }}
     >
       <div 
-        className={`w-[82vw] max-w-[295px] sm:max-w-2xl max-h-[50vh] sm:max-h-[88vh] border rounded-2xl sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-200 ${
+        className={`w-[92vw] max-w-[390px] sm:max-w-2xl max-h-[74vh] sm:max-h-[88vh] border rounded-2xl sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-200 ${
           isDark 
             ? 'bg-slate-900 border-slate-700/80 text-slate-100 shadow-cyan-950/40' 
             : 'bg-white border-slate-200 text-slate-800 shadow-blue-900/20'
@@ -48,12 +48,12 @@ export default function PrivacyPolicyModal({
         <div className="h-1.5 w-full bg-gradient-to-r from-blue-600 via-cyan-400 to-teal-400 shrink-0"></div>
 
         {/* Header with Official Logo */}
-        <div className={`p-2 sm:p-5 border-b flex items-center justify-between gap-2 shrink-0 ${
+        <div className={`p-3 sm:p-5 border-b flex items-center justify-between gap-2 shrink-0 ${
           isDark ? 'bg-slate-950/60 border-slate-800' : 'bg-slate-50 border-slate-200'
         }`}>
-          <div className="flex items-center space-x-1.5 sm:space-x-3 min-w-0">
+          <div className="flex items-center space-x-2 sm:space-x-3 min-w-0">
             {/* Logo Emblem */}
-            <div className="w-6 h-6 sm:w-11 sm:h-11 rounded-lg sm:rounded-2xl p-[1px] sm:p-[1.5px] bg-gradient-to-tr from-blue-600 via-cyan-400 to-teal-300 shadow-md shadow-blue-500/20 shrink-0 flex items-center justify-center overflow-hidden">
+            <div className="w-8 h-8 sm:w-11 sm:h-11 rounded-lg sm:rounded-2xl p-[1px] sm:p-[1.5px] bg-gradient-to-tr from-blue-600 via-cyan-400 to-teal-300 shadow-md shadow-blue-500/20 shrink-0 flex items-center justify-center overflow-hidden">
               <img 
                 src="/logo.png" 
                 alt="PrakanGuard Logo" 

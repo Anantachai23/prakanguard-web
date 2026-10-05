@@ -60,9 +60,9 @@ export default function AdminVerificationPrompt({
   return (
     <>
       {/* Full Interactive Verification Dialog Asking the Admin */}
-      <div className="fixed inset-0 z-50 flex items-start justify-center pt-[13vh] pb-24 sm:items-center sm:pt-4 sm:pb-4 bg-slate-950/60 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="fixed inset-0 z-50 flex items-start justify-center pt-[7vh] pb-20 sm:items-center sm:pt-4 sm:pb-4 bg-slate-950/60 backdrop-blur-sm animate-in fade-in duration-200">
         <div 
-          className={`w-[84vw] max-w-[320px] sm:max-w-lg rounded-2xl sm:rounded-3xl border shadow-2xl overflow-hidden backdrop-blur-2xl flex flex-col max-h-[52vh] sm:max-h-[92vh] ${
+          className={`w-[92vw] max-w-[390px] sm:max-w-lg rounded-2xl sm:rounded-3xl border shadow-2xl overflow-hidden backdrop-blur-2xl flex flex-col max-h-[74vh] sm:max-h-[92vh] ${
             isDark 
               ? 'bg-slate-900/98 border-amber-600/70 text-slate-100 shadow-amber-500/10' 
               : 'bg-white border-amber-300 text-slate-800 shadow-xl'
@@ -77,7 +77,7 @@ export default function AdminVerificationPrompt({
                 <ShieldAlert className="w-4 h-4 sm:w-5 sm:h-5 text-slate-950" />
               </div>
               <div>
-                <h3 className={`text-[11px] sm:text-sm font-bold flex items-center gap-1.5 ${
+                <h3 className={`text-xs sm:text-sm font-bold flex items-center gap-1.5 ${
                   isDark ? 'text-amber-300' : 'text-amber-950'
                 }`}>
                   <span>🚨 มีผู้รายงานสถานการณ์ใหม่เข้ามา!</span>

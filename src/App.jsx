@@ -2462,9 +2462,10 @@ export default function App() {
         )}
 
         {/* Admin Web Announcement Banner (มีหลอดค่อยๆ ลด หายไปใน 10 วิ โดยไม่ต้องมีข้อความบอก และกดดูซ้ำได้) */}
+        {/* Admin Web Announcement Banner (แสดงแถบด้านล่างบนมือถือ ไม่บังปุ่มดาวเทียมและคอนโทรลแผนที่ด้านบน) */}
         {showAnnouncementBanner && activeAnnouncement && (
-          <div className="fixed top-12 sm:top-14 left-2 right-2 sm:left-1/2 sm:-translate-x-1/2 sm:w-[92vw] sm:max-w-2xl z-[95] pointer-events-auto animate-in fade-in slide-in-from-top-3 duration-300">
-            <div className={`w-full p-2.5 sm:px-4 sm:py-3 rounded-2xl border shadow-2xl backdrop-blur-xl flex flex-col gap-1.5 transition-all overflow-hidden ${
+          <div className="fixed bottom-16 sm:bottom-auto sm:top-14 left-2 right-2 sm:left-1/2 sm:-translate-x-1/2 sm:w-[92vw] sm:max-w-2xl z-[95] pointer-events-auto animate-in fade-in slide-in-from-bottom-3 sm:slide-in-from-top-3 duration-300">
+            <div className={`w-full p-3 sm:px-4 sm:py-3.5 rounded-2xl border shadow-2xl backdrop-blur-xl flex flex-col gap-2 transition-all overflow-hidden ${
               isDark ? 'bg-slate-900/98 text-slate-100 border-blue-500/50 shadow-blue-950/50' : 'bg-white/98 text-slate-900 border-blue-400/60 shadow-xl'
             }`}>
               <div className="flex items-center justify-between gap-2 border-b pb-1.5 border-blue-200/40 dark:border-blue-900/40">
@@ -2472,7 +2473,7 @@ export default function App() {
                   <span className="flex items-center justify-center w-6 h-6 rounded-lg bg-blue-600 text-white shrink-0">
                     <Bell className="w-3.5 h-3.5 animate-pulse" />
                   </span>
-                  <span className="text-[11px] sm:text-xs font-bold text-blue-600 dark:text-cyan-400 truncate tracking-wide">
+                  <span className="text-xs sm:text-xs font-bold text-blue-600 dark:text-cyan-400 truncate tracking-wide">
                     📢 ประกาศจากเจ้าหน้าที่ PrakanGuard
                   </span>
                 </div>
@@ -2500,28 +2501,6 @@ export default function App() {
                 />
               </div>
             </div>
-          </div>
-        )}
-
-        {/* Mobile Floating Admin Announcement Button (หากมีประกาศทางการ จะมีปุ่มให้กดดูได้ตลอดเวลา) */}
-        {latestAnnouncement && (
-          <div className="sm:hidden fixed top-[54px] right-2 z-30 pointer-events-auto animate-in fade-in">
-            <button
-              type="button"
-              onClick={() => {
-                playModalOpenSound();
-                setIsAnnouncementModalOpen(true);
-              }}
-              className={`px-2 py-1 rounded-full border shadow-md backdrop-blur-xl flex items-center gap-1 text-[9.5px] font-bold active:scale-95 transition-all ${
-                isDark 
-                  ? 'bg-amber-950/90 text-amber-300 border-amber-700/80 shadow-black/50' 
-                  : 'bg-amber-500 text-white border-amber-400 shadow-amber-600/30'
-              }`}
-              title="แตะเพื่อดูประกาศทางการจากเจ้าหน้าที่"
-            >
-              <Bell className="w-3 h-3 animate-pulse" />
-              <span>ประกาศแอดมิน</span>
-            </button>
           </div>
         )}
 
@@ -3082,24 +3061,24 @@ export default function App() {
                 setSelectedPoint(null);
               }
             }}
-            className="fixed inset-0 z-[100] bg-slate-950/65 backdrop-blur-xs flex items-start justify-center pt-[13vh] pb-24 sm:items-center sm:pt-4 sm:pb-4 smooth-backdrop animate-in fade-in duration-200 pointer-events-auto"
+            className="fixed inset-0 z-[100] bg-slate-950/65 backdrop-blur-xs flex items-start justify-center pt-[7vh] pb-20 sm:items-center sm:pt-4 sm:pb-4 smooth-backdrop animate-in fade-in duration-200 pointer-events-auto"
           >
             <div 
-              className={`w-[82vw] max-w-[295px] sm:max-w-md border-2 rounded-2xl sm:rounded-3xl shadow-2xl relative max-h-[50vh] sm:max-h-[82vh] flex flex-col p-2 sm:p-5 overflow-y-auto overscroll-contain smooth-pop transition-all ${
+              className={`w-[92vw] max-w-[390px] sm:max-w-md border-2 rounded-2xl sm:rounded-3xl shadow-2xl relative max-h-[72vh] sm:max-h-[85vh] flex flex-col p-3.5 sm:p-5 overflow-y-auto overscroll-contain smooth-pop transition-all ${
                 isDark 
                   ? 'bg-slate-900 border-slate-700 text-slate-100 shadow-2xl shadow-black/80' 
                   : 'bg-white border-slate-200 text-slate-900 shadow-2xl shadow-slate-900/30'
               }`}
             >
               {/* Header: District Badge + Severity Badge + Easy-to-Tap Close Button */}
-              <div className={`flex items-center justify-between gap-1 sm:gap-2 pb-1 sm:pb-2.5 border-b ${isDark ? 'border-slate-800' : 'border-slate-200'}`}>
-                <div className="flex flex-wrap items-center gap-1 sm:gap-1.5 min-w-0">
-                  <span className={`text-[9px] sm:text-xs font-bold px-1.5 py-0.5 sm:px-2.5 sm:py-1 rounded-md sm:rounded-xl border shadow-xs ${
+              <div className={`flex items-center justify-between gap-1.5 sm:gap-2 pb-2 sm:pb-2.5 border-b ${isDark ? 'border-slate-800' : 'border-slate-200'}`}>
+                <div className="flex flex-wrap items-center gap-1.5 min-w-0">
+                  <span className={`text-xs sm:text-xs font-bold px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg sm:rounded-xl border shadow-xs ${
                     isDark ? 'bg-blue-950 text-cyan-300 border-blue-700' : 'bg-white text-blue-700 border-blue-200'
                   }`}>
                     อ.{selectedPoint.district}
                   </span>
-                  <span className={`text-[9px] sm:text-xs font-bold px-1.5 py-0.5 sm:px-2.5 sm:py-1 rounded-md sm:rounded-xl border shadow-xs ${
+                  <span className={`text-xs sm:text-xs font-bold px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg sm:rounded-xl border shadow-xs ${
                     selectedPoint.hazardType === 'hail' ? (isDark ? 'bg-cyan-950 text-cyan-300 border-cyan-700' : 'bg-cyan-50 text-cyan-700 border-cyan-200') :
                     getFloodLevel(selectedPoint.depthCm) === 3 ? (isDark ? 'bg-rose-950 text-rose-300 border-rose-700' : 'bg-rose-50 text-rose-700 border-rose-200') :
                     getFloodLevel(selectedPoint.depthCm) === 2 ? (isDark ? 'bg-amber-950 text-amber-300 border-amber-700' : 'bg-amber-50 text-amber-700 border-amber-200') :
@@ -3110,17 +3089,17 @@ export default function App() {
                      getFloodLevel(selectedPoint.depthCm) === 2 ? "🟠 น้ำท่วมปานกลาง (21-50 ซม.)" : "🟢 น้ำท่วมปกติ (5-20 ซม.)"}
                   </span>
                   {hasPhoto && (
-                    <span className="text-[9px] sm:text-xs font-bold px-1.5 py-0.5 sm:px-2.5 sm:py-1 rounded-md sm:rounded-xl border shadow-xs bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-cyan-300 dark:border-blue-700 flex items-center gap-1 animate-in fade-in duration-200">
+                    <span className="text-xs sm:text-xs font-bold px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg sm:rounded-xl border shadow-xs bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-cyan-300 dark:border-blue-700 flex items-center gap-1 animate-in fade-in duration-200">
                       <span>📷 มีภาพถ่าย</span>
                     </span>
                   )}
                   {isWaterReceding(selectedPoint) && (
-                    <span className="text-[8.5px] sm:text-[11px] font-bold px-1 py-0.5 rounded-md sm:rounded-xl bg-teal-50 text-teal-800 border border-teal-300 dark:bg-teal-950 dark:text-teal-300 dark:border-teal-700 flex items-center gap-1">
+                    <span className="text-xs sm:text-[11px] font-bold px-1.5 py-0.5 rounded-lg sm:rounded-xl bg-teal-50 text-teal-800 border border-teal-300 dark:bg-teal-950 dark:text-teal-300 dark:border-teal-700 flex items-center gap-1">
                       <span>📉 น้ำลด</span>
                     </span>
                   )}
                   {selectedPoint.waterTrend === 'rising' && !isWaterReceding(selectedPoint) && (
-                    <span className="text-[8.5px] sm:text-[11px] font-bold px-1 py-0.5 rounded-md sm:rounded-xl bg-rose-50 text-rose-800 border border-rose-300 dark:bg-rose-950 dark:text-rose-300 dark:border-rose-700 flex items-center gap-1">
+                    <span className="text-xs sm:text-[11px] font-bold px-1.5 py-0.5 rounded-lg sm:rounded-xl bg-rose-50 text-rose-800 border border-rose-300 dark:bg-rose-950 dark:text-rose-300 dark:border-rose-700 flex items-center gap-1">
                       <span>📈 น้ำขึ้น</span>
                     </span>
                   )}
@@ -3133,24 +3112,24 @@ export default function App() {
                     playCloseSound();
                     setSelectedPoint(null);
                   }}
-                  className={`w-5 h-5 sm:w-8 sm:h-8 rounded-full border shadow-md flex items-center justify-center transition-all cursor-pointer shrink-0 active:scale-95 ${
+                  className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full border shadow-md flex items-center justify-center transition-all cursor-pointer shrink-0 active:scale-95 ${
                     isDark 
                       ? 'bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700' 
                       : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-200'
                   }`}
                   title="ปิดหน้าต่างข้อมูล"
                 >
-                  <X className="w-3 h-3 sm:w-4 sm:h-4 font-black" />
+                  <X className="w-4 h-4 font-black" />
                 </button>
               </div>
 
               {/* Point Title & Clean Location Subtitle */}
-              <div className="pt-1 pb-0.5 sm:pt-2 sm:pb-1">
-                <h3 className={`text-xs sm:text-lg font-black leading-snug break-words ${isDark ? 'text-white' : 'text-slate-900'}`}>
+              <div className="pt-2 pb-1 sm:pt-2 sm:pb-1">
+                <h3 className={`text-base sm:text-lg font-black leading-snug break-words ${isDark ? 'text-white' : 'text-slate-900'}`}>
                   {selectedPoint.name}
                 </h3>
                 {(selectedPoint.district || selectedPoint.subdistrict) && (
-                  <p className={`text-[9px] sm:text-xs mt-0.5 font-medium ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                  <p className={`text-xs sm:text-xs mt-0.5 font-medium ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
                     {selectedPoint.district ? `อ.${selectedPoint.district.replace(/^อ\./, '')}` : ''}
                     {selectedPoint.subdistrict ? ` • ${selectedPoint.subdistrict.startsWith('ต.') ? selectedPoint.subdistrict : `ต.${selectedPoint.subdistrict}`}` : ''}
                     {(typeof selectedPoint.roadSegment === 'string' && selectedPoint.roadSegment.trim() && !/^[0-9.,\s-]+$/.test(selectedPoint.roadSegment.trim())) ? ` • ${selectedPoint.roadSegment}` : ''}
@@ -3161,7 +3140,7 @@ export default function App() {
             {/* Citizen Uploaded Photo Preview (If available) */}
             {hasPhoto && (
               <div 
-                className="mt-1.5 sm:mt-2.5 rounded-xl sm:rounded-2xl overflow-hidden border-2 border-blue-400/50 dark:border-blue-500/50 shadow-md relative cursor-pointer group bg-black touch-manipulation active:scale-[0.98] transition-transform"
+                className="mt-2 sm:mt-2.5 rounded-xl sm:rounded-2xl overflow-hidden border-2 border-blue-400/50 dark:border-blue-500/50 shadow-md relative cursor-pointer group bg-black touch-manipulation active:scale-[0.98] transition-transform"
                 onClick={() => setLightboxPhoto({
                   url: pointPhoto,
                   title: selectedPoint.name,
@@ -3173,21 +3152,21 @@ export default function App() {
                   <img 
                     src={pointPhoto} 
                     alt="รูปภาพสถานการณ์น้ำท่วม" 
-                    className="w-full h-20 sm:h-32 object-cover group-hover:scale-105 transition-transform duration-200" 
+                    className="w-full h-32 sm:h-40 object-cover group-hover:scale-105 transition-transform duration-200" 
                   />
-                  <div className="absolute top-1 left-1 px-1.5 py-0.5 rounded-full bg-slate-950 text-cyan-300 text-[9px] sm:text-[10px] font-bold border border-cyan-400 flex items-center gap-1 shadow-md">
+                  <div className="absolute top-1.5 left-1.5 px-2 py-0.5 rounded-full bg-slate-950 text-cyan-300 text-xs sm:text-[10px] font-bold border border-cyan-400 flex items-center gap-1 shadow-md">
                     <span>📸 ภาพถ่ายรายงาน</span>
                   </div>
                 </div>
-                <div className={`p-1 sm:p-2 text-[9.5px] sm:text-xs text-center font-bold flex items-center justify-between px-2 sm:px-3 ${
+                <div className={`p-1.5 sm:p-2 text-xs sm:text-xs text-center font-bold flex items-center justify-between px-2.5 sm:px-3 ${
                   isDark ? 'bg-slate-800 text-cyan-300' : 'bg-blue-50 text-blue-700'
                 }`}>
-                  <span className="flex items-center gap-1 text-[9.5px] sm:text-[11px]">
+                  <span className="flex items-center gap-1 text-xs sm:text-[11px]">
                     <span>🔍</span>
                     <span>แตะเพื่อดูภาพขนาดใหญ่</span>
                   </span>
                   {(selectedPoint.reportedAt || selectedPoint.time) && (
-                    <span className="opacity-75 text-[8.5px] sm:text-[10px]">
+                    <span className="opacity-75 text-[10px] sm:text-[10px]">
                       รายงาน {selectedPoint.reportedAt || selectedPoint.time}
                     </span>
                   )}
@@ -3196,7 +3175,7 @@ export default function App() {
             )}
 
             {/* Visual Gauge with Standard Waterline & Sleek Vehicle Silhouettes (100% Solid & High Contrast) */}
-            <div className="mt-2 sm:mt-2.5">
+            <div className="mt-2.5 sm:mt-3">
               <VisualGauge 
                 depthCm={selectedPoint.depthCm} 
                 level={getFloodLevel(selectedPoint.depthCm)} 
@@ -3206,12 +3185,12 @@ export default function App() {
             </div>
 
             {/* Fact-based Summary Details with Citations */}
-            <div className="space-y-1 sm:space-y-2 mt-1 sm:mt-2.5 text-[10px] sm:text-sm">
+            <div className="space-y-1.5 sm:space-y-2 mt-2 sm:mt-2.5 text-xs sm:text-sm">
               {selectedPoint.cause && (
-                <div className={`p-1.5 sm:p-2.5 rounded-lg sm:rounded-2xl border ${
+                <div className={`p-2.5 sm:p-2.5 rounded-xl sm:rounded-2xl border ${
                   isDark ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'
                 }`}>
-                  <span className={`block text-[9px] sm:text-xs font-semibold ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>สาเหตุสำคัญ:</span>
+                  <span className={`block text-xs sm:text-xs font-semibold ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>สาเหตุสำคัญ:</span>
                   <span className={`mt-0.5 block leading-relaxed font-medium ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>
                     {selectedPoint.cause}
                   </span>
@@ -3219,10 +3198,10 @@ export default function App() {
               )}
 
               {(selectedPoint.officialGuidance || selectedPoint.trafficStatus) && (
-                <div className={`p-1.5 sm:p-2.5 rounded-lg sm:rounded-2xl border ${
+                <div className={`p-2.5 sm:p-2.5 rounded-xl sm:rounded-2xl border ${
                   isDark ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'
                 }`}>
-                  <span className={`block text-[9px] sm:text-xs font-semibold ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>คำแนะนำการสัญจร:</span>
+                  <span className={`block text-xs sm:text-xs font-semibold ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>คำแนะนำการสัญจร:</span>
                   <span className={`mt-0.5 block leading-relaxed font-medium ${isDark ? 'text-cyan-400' : 'text-blue-700'}`}>
                     {selectedPoint.officialGuidance || selectedPoint.trafficStatus}
                   </span>
@@ -3230,11 +3209,11 @@ export default function App() {
               )}
 
               {/* Source info (Clean reference line as requested) */}
-              <div className={`p-1.5 sm:p-2.5 rounded-lg sm:rounded-2xl border text-[9px] sm:text-[11.5px] flex items-center justify-between gap-1.5 sm:gap-2 shadow-xs ${
+              <div className={`p-2 sm:p-2.5 rounded-xl sm:rounded-2xl border text-xs sm:text-[11.5px] flex items-center justify-between gap-2 shadow-xs ${
                 isDark ? 'bg-slate-800 border-slate-700 text-slate-300' : 'bg-white border-slate-200 text-slate-800'
               }`}>
-                <div className="flex items-start gap-1 sm:gap-1.5 min-w-0 flex-1">
-                  <Shield className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-blue-500 shrink-0 mt-0.5" />
+                <div className="flex items-start gap-1.5 min-w-0 flex-1">
+                  <Shield className="w-3.5 h-3.5 sm:w-3.5 sm:h-3.5 text-blue-500 shrink-0 mt-0.5" />
                   <span className="break-words whitespace-normal leading-tight">
                     อ้างอิง: <strong className={isDark ? 'text-slate-100' : 'text-slate-900'}>
                       {selectedPoint.isCitizen || (selectedPoint.source && selectedPoint.source.includes('ประชาชน')) 
@@ -3244,7 +3223,7 @@ export default function App() {
                   </span>
                 </div>
                 {(selectedPoint.reportedAt || selectedPoint.time) && (
-                  <span className="text-[8.5px] sm:text-[10px] text-slate-400 shrink-0">
+                  <span className="text-[10px] sm:text-[10px] text-slate-400 shrink-0">
                     {selectedPoint.reportedAt || selectedPoint.time}
                   </span>
                 )}
@@ -3252,29 +3231,29 @@ export default function App() {
             </div>
 
             {/* Quick Action Buttons: Standards Guide & Direct Helpline */}
-            <div className="grid grid-cols-2 gap-1 sm:gap-2 mt-1.5 sm:mt-3 pt-1.5 sm:pt-2.5 border-t border-slate-200 dark:border-slate-800">
+            <div className="grid grid-cols-2 gap-2 mt-2.5 sm:mt-3 pt-2.5 sm:pt-2.5 border-t border-slate-200 dark:border-slate-800">
               <button
                 type="button"
                 onClick={() => {
                   try { playModalOpenSound(); } catch (_) {}
                   setIsStandardsModalOpen(true);
                 }}
-                className={`py-1 sm:py-2.5 px-1.5 sm:px-3 rounded-lg sm:rounded-2xl border text-[10px] sm:text-xs font-bold flex items-center justify-center gap-1 sm:gap-1.5 transition-all cursor-pointer shadow-xs active:scale-95 ${
+                className={`py-2 sm:py-2.5 px-2.5 sm:px-3 rounded-xl sm:rounded-2xl border text-xs sm:text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-xs active:scale-95 ${
                   isDark 
                     ? 'bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700' 
                     : 'bg-white hover:bg-slate-100 text-slate-800 border-slate-200'
                 }`}
               >
-                <BookOpen className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-blue-500 shrink-0" />
+                <BookOpen className="w-3.5 h-3.5 text-blue-500 shrink-0" />
                 <span className="truncate">เกณฑ์ระดับน้ำ</span>
               </button>
 
               <a 
                 href={`tel:${selectedPoint.phone ? selectedPoint.phone.replace(/-/g, '') : '1784'}`}
                 onClick={() => playClickSound()}
-                className="py-1 sm:py-2.5 px-1.5 sm:px-3 rounded-lg sm:rounded-2xl bg-rose-600 hover:bg-rose-500 text-white text-[10px] sm:text-xs font-bold flex items-center justify-center gap-1 sm:gap-1.5 transition-all text-center cursor-pointer shadow-md shadow-rose-600/30 active:scale-95"
+                className="py-2 sm:py-2.5 px-2.5 sm:px-3 rounded-xl sm:rounded-2xl bg-rose-600 hover:bg-rose-500 text-white text-xs sm:text-xs font-bold flex items-center justify-center gap-1.5 transition-all text-center cursor-pointer shadow-md shadow-rose-600/30 active:scale-95"
               >
-                <Phone className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
+                <Phone className="w-3.5 h-3.5 shrink-0" />
                 <span className="break-words whitespace-normal leading-tight text-center">โทรศูนย์ {selectedPoint.district ? selectedPoint.district.replace(/^อ\./, '') : 'สมุทรปราการ'}</span>
               </a>
             </div>
@@ -3414,24 +3393,24 @@ export default function App() {
       {isAnnouncementModalOpen && latestAnnouncement && (
         <div 
           onClick={(e) => { if (e.target === e.currentTarget) { playCloseSound(); setIsAnnouncementModalOpen(false); } }}
-          className="fixed inset-0 z-[105] bg-slate-950/65 backdrop-blur-xs flex items-start justify-center pt-[13vh] pb-24 sm:items-center sm:pt-4 sm:pb-4 smooth-backdrop pointer-events-auto"
+          className="fixed inset-0 z-[105] bg-slate-950/65 backdrop-blur-xs flex items-start justify-center pt-[7vh] pb-20 sm:items-center sm:pt-4 sm:pb-4 smooth-backdrop pointer-events-auto"
         >
-          <div className={`w-[82vw] max-w-[295px] sm:max-w-md border-2 rounded-2xl sm:rounded-3xl shadow-2xl p-2.5 sm:p-5 flex flex-col max-h-[50vh] sm:max-h-[80vh] overflow-hidden smooth-pop transition-all ${
+          <div className={`w-[92vw] max-w-[390px] sm:max-w-md border-2 rounded-2xl sm:rounded-3xl shadow-2xl p-3.5 sm:p-5 flex flex-col max-h-[72vh] sm:max-h-[80vh] overflow-hidden smooth-pop transition-all ${
             isDark 
               ? 'bg-slate-900 border-amber-500/50 text-slate-100 shadow-2xl shadow-black/80' 
               : 'bg-white border-amber-400 text-slate-900 shadow-2xl shadow-slate-900/30'
           }`}>
             {/* Modal Header */}
-            <div className="flex items-center justify-between gap-1.5 sm:gap-2 pb-1.5 sm:pb-2.5 border-b border-amber-500/30 shrink-0">
-              <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
-                <span className="flex items-center justify-center w-6 h-6 rounded-lg bg-amber-500 text-white shrink-0">
-                  <Bell className="w-3.5 h-3.5" />
+            <div className="flex items-center justify-between gap-2 pb-2 sm:pb-2.5 border-b border-amber-500/30 shrink-0">
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-amber-500 text-white shrink-0 shadow-sm">
+                  <Bell className="w-4 h-4" />
                 </span>
                 <div className="min-w-0">
-                  <h3 className="text-xs sm:text-base font-bold text-amber-600 dark:text-amber-400 truncate">
+                  <h3 className="text-sm sm:text-base font-bold text-amber-600 dark:text-amber-400 truncate">
                     ประกาศจากเจ้าหน้าที่
                   </h3>
-                  <span className="text-[8.5px] sm:text-[10px] text-slate-400 block">
+                  <span className="text-[10px] sm:text-[10px] text-slate-400 block">
                     PrakanGuard Official
                   </span>
                 </div>

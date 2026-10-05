@@ -41,23 +41,23 @@ export default function FloodStandardsModal({ isOpen, onClose, theme = 'light' }
   return (
     <div 
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
-      className="fixed inset-0 z-[9999] bg-slate-950/75 backdrop-blur-xs flex items-start justify-center pt-[13vh] pb-24 sm:items-center sm:pt-4 sm:pb-4 smooth-backdrop animate-in fade-in duration-200"
+      className="fixed inset-0 z-[9999] bg-slate-950/75 backdrop-blur-xs flex items-start justify-center pt-[7vh] pb-20 sm:items-center sm:pt-4 sm:pb-4 smooth-backdrop animate-in fade-in duration-200"
     >
-      <div className={`w-[82vw] max-w-[295px] sm:max-w-md flex flex-col rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden max-h-[50vh] sm:max-h-[82vh] smooth-pop transition-colors ${
+      <div className={`w-[92vw] max-w-[390px] sm:max-w-md flex flex-col rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden max-h-[72vh] sm:max-h-[82vh] smooth-pop transition-colors ${
         isDark ? 'bg-slate-900 border border-slate-700 text-slate-100' : 'bg-white border border-slate-200 text-slate-900'
       }`}>
 
         {/* Header */}
-        <div className={`flex items-center justify-between px-2.5 py-1.5 sm:px-4 sm:py-2.5 border-b shrink-0 ${isDark ? 'border-slate-800' : 'border-slate-100'}`}>
-          <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
-            <div className="w-5 h-5 sm:w-8 sm:h-8 rounded-full overflow-hidden shrink-0 border border-blue-400/50 shadow-sm">
+        <div className={`flex items-center justify-between px-3.5 py-2.5 sm:px-4 sm:py-2.5 border-b shrink-0 ${isDark ? 'border-slate-800' : 'border-slate-100'}`}>
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full overflow-hidden shrink-0 border border-blue-400/50 shadow-sm">
               <img src="/logo.png" alt="PrakanGuard" className="w-full h-full object-cover" />
             </div>
             <div className="min-w-0">
-              <h3 className={`text-[11px] sm:text-base font-bold leading-tight break-words ${isDark ? 'text-white' : 'text-slate-900'}`}>
+              <h3 className={`text-sm sm:text-base font-bold leading-tight break-words ${isDark ? 'text-white' : 'text-slate-900'}`}>
                 เกณฑ์ระดับน้ำท่วม
               </h3>
-              <p className={`text-[8.5px] sm:text-xs text-slate-400 break-words whitespace-normal leading-tight mt-0.5`}>
+              <p className={`text-[10.5px] sm:text-xs text-slate-400 break-words whitespace-normal leading-tight mt-0.5`}>
                 คำแนะนำความปลอดภัยต่อยานพาหนะ
               </p>
             </div>
@@ -69,7 +69,7 @@ export default function FloodStandardsModal({ isOpen, onClose, theme = 'light' }
               isDark ? 'bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white' : 'bg-slate-100 hover:bg-slate-200 text-slate-500'
             }`}
           >
-            <X className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            <X className="w-4 h-4 sm:w-4 sm:h-4" />
           </button>
         </div>
 

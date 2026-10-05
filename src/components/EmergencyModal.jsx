@@ -18,79 +18,79 @@ export default function EmergencyModal({ isOpen, onClose, theme = 'light' }) {
   return (
     <div 
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
-      className="fixed inset-0 z-50 bg-slate-950/65 backdrop-blur-xs flex items-start justify-center pt-[13vh] pb-24 sm:items-center sm:pt-4 sm:pb-4 smooth-backdrop"
+      className="fixed inset-0 z-50 bg-slate-950/65 backdrop-blur-xs flex items-start justify-center pt-[7vh] pb-20 sm:items-center sm:pt-4 sm:pb-4 smooth-backdrop"
     >
-      <div className={`w-[82vw] max-w-[295px] sm:max-w-md border rounded-2xl sm:rounded-3xl p-2 sm:p-4 shadow-2xl relative max-h-[50vh] sm:max-h-[82vh] flex flex-col overflow-hidden smooth-pop transition-colors ${
+      <div className={`w-[92vw] max-w-[390px] sm:max-w-md border rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 shadow-2xl relative max-h-[72vh] sm:max-h-[82vh] flex flex-col overflow-hidden smooth-pop transition-colors ${
         isDark ? 'bg-slate-900 border-slate-700 text-slate-100' : 'bg-white border-slate-200 text-slate-800'
       }`}>
         
         {/* Header */}
-        <div className={`flex items-center justify-between gap-1.5 sm:gap-2 pb-1 sm:pb-2.5 border-b shrink-0 ${isDark ? 'border-slate-800' : 'border-slate-200'}`}>
-          <div className="flex items-center space-x-1.5 sm:space-x-2 min-w-0">
-            <div className={`p-1 sm:p-2 rounded-xl border shrink-0 ${
+        <div className={`flex items-center justify-between gap-2 pb-2 sm:pb-3 border-b shrink-0 ${isDark ? 'border-slate-800' : 'border-slate-200'}`}>
+          <div className="flex items-center space-x-2 sm:space-x-2.5 min-w-0">
+            <div className={`p-1.5 sm:p-2 rounded-xl border shrink-0 ${
               isDark ? 'bg-rose-950/80 text-rose-400 border-rose-800' : 'bg-rose-50 text-rose-600 border border-rose-200'
             }`}>
-              <PhoneForwarded className="w-3 h-3 sm:w-5 sm:h-5 animate-pulse" />
+              <PhoneForwarded className="w-4 h-4 sm:w-5 sm:h-5 animate-pulse" />
             </div>
             <div className="min-w-0">
-              <h3 className={`text-[11px] sm:text-base font-bold leading-tight break-words ${isDark ? 'text-white' : 'text-slate-900'}`}>
+              <h3 className={`text-sm sm:text-base font-bold leading-tight break-words ${isDark ? 'text-white' : 'text-slate-900'}`}>
                 สายด่วนฉุกเฉิน 24 ชม.
               </h3>
-              <p className={`text-[8.5px] sm:text-xs text-slate-400 break-words whitespace-normal leading-tight mt-0.5`}>
+              <p className={`text-[10.5px] sm:text-xs text-slate-400 break-words whitespace-normal leading-tight mt-0.5`}>
                 จ.สมุทรปราการ (แผนเผชิญเหตุน้ำท่วม)
               </p>
             </div>
           </div>
           <button 
             onClick={onClose} 
-            className={`p-1 sm:p-1.5 rounded-xl transition-all cursor-pointer shrink-0 ${
+            className={`p-1.5 sm:p-1.5 rounded-xl transition-all cursor-pointer shrink-0 ${
               isDark ? 'bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white' : 'bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800'
             }`}
             title="ปิดหน้าต่าง"
           >
-            <X className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            <X className="w-4 h-4 sm:w-4 sm:h-4" />
           </button>
         </div>
 
         {/* Hotlines List */}
-        <div className="mt-1.5 sm:mt-2.5 space-y-1 sm:space-y-2 text-xs overflow-y-auto flex-1 pr-0.5 sm:pr-1 overscroll-contain">
+        <div className="mt-2.5 space-y-1.5 sm:space-y-2 text-xs overflow-y-auto flex-1 pr-0.5 sm:pr-1 overscroll-contain">
           {hotlines.map((item, idx) => (
             <a 
               key={idx} 
               href={`tel:${item.tel.replace(/-/g, '')}`} 
-              className={`p-1.5 sm:p-2.5 rounded-lg sm:rounded-2xl border transition-all flex items-center justify-between group shadow-xs cursor-pointer block ${
+              className={`p-2.5 sm:p-3 rounded-xl sm:rounded-2xl border transition-all flex items-center justify-between group shadow-xs cursor-pointer block ${
                 isDark 
                   ? 'bg-slate-850/80 border-slate-750 hover:border-rose-400 hover:bg-rose-950/20' 
                   : 'bg-slate-50 border-slate-200 hover:border-rose-400 hover:bg-rose-50/30'
               }`}
             >
-              <div className="min-w-0 pr-1.5 sm:pr-2 flex-1">
-                <div className="flex flex-wrap items-center gap-1 mb-0.5">
-                  <span className={`font-bold text-[10.5px] sm:text-xs group-hover:text-rose-500 transition-colors leading-tight ${
+              <div className="min-w-0 pr-2 flex-1">
+                <div className="flex flex-wrap items-center gap-1.5 mb-0.5">
+                  <span className={`font-bold text-xs sm:text-xs group-hover:text-rose-500 transition-colors leading-tight ${
                     isDark ? 'text-slate-100' : 'text-slate-900'
                   }`}>
                     {item.name}
                   </span>
-                  <span className={`text-[8px] sm:text-[9px] px-1 sm:px-1.5 py-0.2 rounded shrink-0 font-medium ${
+                  <span className={`text-[9px] sm:text-[9.5px] px-1.5 py-0.2 rounded shrink-0 font-medium ${
                     isDark ? 'bg-slate-800 text-slate-300 border border-slate-700' : 'bg-white text-slate-600 border border-slate-200'
                   }`}>
                     {item.badge}
                   </span>
                 </div>
-                <span className={`text-[9px] sm:text-[10px] block leading-snug break-words whitespace-normal mt-0.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                <span className={`text-[10px] sm:text-[11px] block leading-snug break-words whitespace-normal mt-0.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
                   {item.desc}
                 </span>
               </div>
-              <div className="flex items-center gap-0.5 sm:gap-1 bg-rose-600/10 group-hover:bg-rose-600 px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded-lg sm:rounded-xl border border-rose-500/30 text-rose-500 group-hover:text-white transition-all shrink-0">
-                <PhoneCall className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
-                <span className="font-bold font-mono text-[10px] sm:text-xs">{item.tel}</span>
+              <div className="flex items-center gap-1 bg-rose-600/10 group-hover:bg-rose-600 px-2 sm:px-2.5 py-1 rounded-lg sm:rounded-xl border border-rose-500/30 text-rose-500 group-hover:text-white transition-all shrink-0">
+                <PhoneCall className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                <span className="font-bold font-mono text-xs sm:text-xs">{item.tel}</span>
               </div>
             </a>
           ))}
         </div>
 
         {/* Footer Citation */}
-        <div className={`mt-2.5 pt-2 border-t flex items-center justify-between text-[10px] shrink-0 ${
+        <div className={`mt-2.5 pt-2 border-t flex items-center justify-between text-[10.5px] shrink-0 ${
           isDark ? 'border-slate-800 text-slate-400' : 'border-slate-200 text-slate-500'
         }`}>
           <span className="flex items-center gap-1">

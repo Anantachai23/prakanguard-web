@@ -1007,10 +1007,10 @@ export default function MapView({
       </div>
 
       {/* FLOATING MAP CONTROLS (TOP RIGHT - CLEAN, UNCLUTTERED, COMPACT) */}
-      <div className="absolute top-2 right-2 sm:top-4 sm:right-4 z-20 flex flex-col items-end gap-1.5 sm:gap-2 pointer-events-auto">
+      <div className="absolute top-2 right-2 sm:top-4 sm:right-4 z-25 flex flex-col items-end gap-1.5 sm:gap-2 pointer-events-auto">
         
         {/* Map Tile Switcher */}
-        <div className={`p-0.5 sm:p-1 rounded-xl sm:rounded-2xl flex items-center gap-0.5 sm:gap-1 border shadow-md text-[11px] sm:text-xs backdrop-blur-md transition-colors ${
+        <div className={`p-1 sm:p-1 rounded-xl sm:rounded-2xl flex items-center gap-1 sm:gap-1 border shadow-md text-xs backdrop-blur-md transition-colors ${
           isDark ? 'bg-slate-900/95 border-slate-700 shadow-xl' : 'bg-white/95 border-slate-200 shadow-md'
         }`}>
           {[
@@ -1023,7 +1023,7 @@ export default function MapView({
                 playToggleSound(style === 'google-satellite');
                 setMapStyle(style);
               }}
-              className={`px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-lg sm:rounded-xl font-semibold transition-all cursor-pointer flex items-center gap-1 text-[11px] sm:text-xs active:scale-95 ${
+              className={`px-2.5 py-1.5 sm:px-3 sm:py-1.5 rounded-lg sm:rounded-xl font-bold transition-all cursor-pointer flex items-center gap-1.5 text-[11.5px] sm:text-xs active:scale-95 ${
                 mapStyle === style
                   ? 'bg-blue-600 text-white shadow-sm'
                   : isDark 
@@ -1033,7 +1033,7 @@ export default function MapView({
               title={`สลับเป็นแผนที่ ${label}`}
             >
               <span>{emoji}</span>
-              <span className="hidden md:inline">{label}</span>
+              <span className="inline font-bold">{label}</span>
             </button>
           ))}
         </div>
