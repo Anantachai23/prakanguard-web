@@ -563,6 +563,22 @@ export default function AdminModal({
   const [trashFilter, setTrashFilter] = useState('all'); // 'all' | 'report' | 'feedback'
   const [trashSearch, setTrashSearch] = useState('');
 
+  // Live Website Announcement States (ซิงค์ตรงกับหน้าเว็บหลัก)
+  const [activeAnnouncementsList, setActiveAnnouncementsList] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('pg_admin_announcements_v2') || '[]');
+    } catch (e) {
+      return [];
+    }
+  });
+
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem('pg_admin_announcements_v2') || '[]');
+      if (Array.isArray(saved)) setActiveAnnouncementsList(saved);
+    } catch (e) {}
+  }, [isOpen]);
+
   // Pending Reports Filter States
   const [pendingDistrictFilter, setPendingDistrictFilter] = useState('ทั้งหมด');
   const [pendingHazardFilter, setPendingHazardFilter] = useState('all'); // 'all' | 'flood' | 'hail'
@@ -1321,7 +1337,7 @@ export default function AdminModal({
     }
   };
 
-  // Broadcast Handler
+  // Broadcast Handler (เผยแพร่ประกาศขึ้นเว็บหลักและแผนที่)
   const handlePublishBroadcast = (e) => {
     e.preventDefault();
     if (!broadcastName.trim()) return;
@@ -1330,6 +1346,7 @@ export default function AdminModal({
     const numLng = parseFloat(broadcastLng) || 100.6012;
     const nowTime = new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) + ' น.';
 
+    // 1. Point payload on GIS Map
     const adminAnnouncement = {
       id: 'admin-broadcast-' + Date.now(),
       isAdminBroadcast: true,
@@ -1358,9 +1375,80 @@ export default function AdminModal({
       onApproveReport(adminAnnouncement.id, adminAnnouncement);
     }
 
-    showNotice(`📢 ประกาศด่วน "${adminAnnouncement.name}" ขึ้นแสดงบนแผนที่แล้ว`);
+    // 2. Official Website Banner Announcement Payload
+    const announcementPayload = {
+      id: 'ann-' + Date.now(),
+      title: broadcastName.trim(),
+      message: broadcastName.trim() + (broadcastGuidance.trim() ? `\nคำแนะนำ: ${broadcastGuidance.trim()}` : ''),
+      districts: broadcastDistrict === 'ทั้งหมด' ? [] : [broadcastDistrict],
+      target_type: broadcastDistrict === 'ทั้งหมด' ? 'all' : 'district',
+      is_active: true,
+      created_at: new Date().toISOString()
+    };
+
+    // Update state and storage
+    const updatedAnnList = [announcementPayload, ...activeAnnouncementsList.filter(a => a.id !== announcementPayload.id)];
+    setActiveAnnouncementsList(updatedAnnList);
+    try {
+      localStorage.setItem('pg_admin_announcements_v2', JSON.stringify(updatedAnnList));
+      localStorage.setItem('pg_latest_saved_announcement', JSON.stringify(announcementPayload));
+      localStorage.setItem('pg_dismissed_announcements_v2', '[]');
+    } catch (_) {}
+
+    // Live sync event to main web interface
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('pg_announcement_updated', { detail: announcementPayload }));
+    }
+
+    // Background push to Supabase
+    try {
+      fetch('https://cnjufleeibbgmpvuvrpg.supabase.co/rest/v1/announcements', {
+        method: 'POST',
+        headers: {
+          apikey: 'sb_publishable_cwxpTPIFXkyWVgXksZASAQ_76DreEAw',
+          Authorization: 'Bearer sb_publishable_cwxpTPIFXkyWVgXksZASAQ_76DreEAw',
+          'Content-Type': 'application/json',
+          Prefer: 'return=minimal'
+        },
+        body: JSON.stringify(announcementPayload)
+      }).catch(() => {});
+    } catch (_) {}
+
+    showNotice(`📢 เผยแพร่ประกาศ "${announcementPayload.title}" ขึ้นหน้าเว็บหลักและแผนที่เรียบร้อยแล้ว`);
     setBroadcastName('');
-    setActiveTab('approved');
+    setBroadcastGuidance('');
+  };
+
+  // Cancel / Deactivate Announcement Handler (นำออกจากหน้าเว็บหลักทันที)
+  const handleCancelAnnouncement = (annId) => {
+    const updatedList = activeAnnouncementsList.map(a => a.id === annId ? { ...a, is_active: false } : a);
+    setActiveAnnouncementsList(updatedList);
+    try {
+      localStorage.setItem('pg_admin_announcements_v2', JSON.stringify(updatedList));
+      const remainingActive = updatedList.filter(a => a.is_active !== false);
+      if (remainingActive.length > 0) {
+        localStorage.setItem('pg_latest_saved_announcement', JSON.stringify(remainingActive[0]));
+        window.dispatchEvent(new CustomEvent('pg_announcement_updated', { detail: remainingActive[0] }));
+      } else {
+        localStorage.removeItem('pg_latest_saved_announcement');
+        window.dispatchEvent(new CustomEvent('pg_announcement_cancelled', { detail: { id: annId } }));
+      }
+    } catch (_) {}
+
+    // Sync cancellation to Supabase
+    try {
+      fetch(`https://cnjufleeibbgmpvuvrpg.supabase.co/rest/v1/announcements?id=eq.${encodeURIComponent(annId)}`, {
+        method: 'PATCH',
+        headers: {
+          apikey: 'sb_publishable_cwxpTPIFXkyWVgXksZASAQ_76DreEAw',
+          Authorization: 'Bearer sb_publishable_cwxpTPIFXkyWVgXksZASAQ_76DreEAw',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ is_active: false })
+      }).catch(() => {});
+    } catch (_) {}
+
+    showNotice('🚫 ยกเลิกประกาศและนำออกจากหน้าเว็บหลักเรียบร้อยแล้ว');
   };
 
   // Change Password
@@ -3344,11 +3432,67 @@ export default function AdminModal({
 
                     <button
                       type="submit"
-                      className="w-full py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs sm:text-sm cursor-pointer shadow-md transition-all"
+                      className="w-full py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs sm:text-sm cursor-pointer shadow-md transition-all active:scale-[0.99]"
                     >
-                      เผยแพร่ประกาศฉุกเฉินขึ้นแผนที่ทันที
+                      📢 เผยแพร่ประกาศฉุกเฉินขึ้นเว็บหลักและแผนที่ทันที
                     </button>
                   </form>
+
+                  {/* Active Announcements List & Quick Cancel Action (นำออกจากเว็บหลักทันที) */}
+                  <div className="pt-4 border-t border-slate-700/60 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                        <span>📢</span>
+                        <span>รายการประกาศที่กำลังแสดงบนเว็บหลัก</span>
+                      </h4>
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-700 dark:text-cyan-300 font-bold border border-blue-500/30">
+                        {activeAnnouncementsList.filter(a => a && a.is_active !== false).length} ประกาศ
+                      </span>
+                    </div>
+
+                    {activeAnnouncementsList.filter(a => a && a.is_active !== false).length === 0 ? (
+                      <div className={`p-4 rounded-xl border text-center text-xs ${isDark ? 'bg-slate-800/50 border-slate-700 text-slate-400' : 'bg-slate-50 border-slate-200 text-slate-500'}`}>
+                        ขณะนี้ไม่มีประกาศที่กำลังแสดงบนเว็บหลัก (เมื่อออกประกาศจะขึ้นแสดงที่นี่และหน้าเว็บหลักทันที)
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        {activeAnnouncementsList.filter(a => a && a.is_active !== false).map(ann => (
+                          <div 
+                            key={ann.id}
+                            className={`p-3 rounded-xl border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 transition-all ${
+                              isDark ? 'bg-slate-800/90 border-amber-500/30 text-slate-100' : 'bg-amber-50/80 border-amber-200 text-slate-900'
+                            }`}
+                          >
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-2 mb-1 flex-wrap">
+                                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
+                                <span className="font-bold text-xs truncate">{ann.title || ann.message}</span>
+                                <span className="text-[10px] px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-600 dark:text-amber-300 font-semibold border border-amber-500/30 shrink-0">
+                                  {ann.target_type === 'all' || !ann.districts?.length ? 'แสดงทุกอุปกรณ์ & ทั่วไป' : `เฉพาะ อ.${ann.districts.join(', ')}`}
+                                </span>
+                              </div>
+                              <p className="text-[11px] text-slate-600 dark:text-slate-300 line-clamp-2 leading-relaxed">
+                                {ann.message}
+                              </p>
+                              <span className="text-[10px] text-slate-400 block mt-1 font-mono">
+                                เผยแพร่เมื่อ: {ann.created_at ? new Date(ann.created_at).toLocaleTimeString('th-TH') + ' น.' : 'ล่าสุด'}
+                              </span>
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={() => handleCancelAnnouncement(ann.id)}
+                              className="w-full sm:w-auto px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 cursor-pointer shadow-xs active:scale-95 transition-all shrink-0"
+                              title="ยกเลิกประกาศนี้และนำออกจากหน้าเว็บหลักทันที"
+                            >
+                              <span>🚫</span>
+                              <span>ยกเลิกประกาศ (นำออกจากเว็บหลักทันที)</span>
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
 

@@ -701,9 +701,6 @@ export default function App() {
   const lsAnnAddDismiss = (id) => { try { const s = lsAnnDismissed(); s.add(id); localStorage.setItem(LS_ANN_DISMISSED, JSON.stringify([...s])); } catch {} };
 
   const checkAnnouncements = React.useCallback(() => {
-    // RULE 1: Never show to users without GPS
-    if (!userLocation || typeof userLocation.lat !== 'number') return;
-
     const userDistrictName = userDistrict
       ? userDistrict.replace(/^อ\./, '').replace(/^อำเภอ/, '').replace('เมืองสมุทรปราการ', 'เมือง').trim()
       : null;
@@ -725,10 +722,17 @@ export default function App() {
     (async () => {
       let anns = await trySupabase();
       if (!Array.isArray(anns) || anns.length === 0) anns = readLocalAnn();
-      if (!Array.isArray(anns) || anns.length === 0) return;
 
       const dismissed = lsAnnDismissed();
-      const activeAnns = anns.filter(a => a.is_active !== false);
+      const activeAnns = Array.isArray(anns) ? anns.filter(a => a && a.is_active !== false) : [];
+
+      if (activeAnns.length === 0) {
+        setLatestAnnouncement(null);
+        setActiveAnnouncement(null);
+        setShowAnnouncementBanner(false);
+        try { localStorage.removeItem('pg_latest_saved_announcement'); } catch {}
+        return;
+      }
 
       const ann = activeAnns.find(a => {
         const isAll = a.target_type === 'all' || !a.districts || a.districts.length === 0;
@@ -745,7 +749,6 @@ export default function App() {
         setLatestAnnouncement(ann);
         try { localStorage.setItem('pg_latest_saved_announcement', JSON.stringify(ann)); } catch {}
 
-        // แสดงประกาศอัตโนมัติเพียงรอบเดียวเท่านั้น (หากเคยแสดง/ปิดไปแล้ว จะไม่เด้งขึ้นมาอีก)
         if (!dismissed.has(ann.id)) {
           setActiveAnnouncement(ann);
           setShowAnnouncementBanner(true);
@@ -753,15 +756,45 @@ export default function App() {
           setShowAnnouncementBanner(false);
         }
       } else {
+        setLatestAnnouncement(null);
+        setActiveAnnouncement(null);
         setShowAnnouncementBanner(false);
+        try { localStorage.removeItem('pg_latest_saved_announcement'); } catch {}
       }
     })();
-  }, [userLocation, userDistrict]);
+  }, [userDistrict]);
 
   useEffect(() => {
     checkAnnouncements();
-    const annInterval = setInterval(checkAnnouncements, 60000); // check every 1 min
-    return () => clearInterval(annInterval);
+    const annInterval = setInterval(checkAnnouncements, 45000); // check every 45s
+
+    // Real-time synchronization listeners with Admin Dashboard
+    const handleLiveAnnouncementUpdate = (e) => {
+      const ann = e.detail;
+      if (ann && ann.is_active !== false) {
+        setLatestAnnouncement(ann);
+        setActiveAnnouncement(ann);
+        setShowAnnouncementBanner(true);
+        try { localStorage.setItem('pg_latest_saved_announcement', JSON.stringify(ann)); } catch {}
+      }
+    };
+
+    const handleLiveAnnouncementCancel = () => {
+      setLatestAnnouncement(null);
+      setActiveAnnouncement(null);
+      setShowAnnouncementBanner(false);
+      setIsAnnouncementModalOpen(false);
+      try { localStorage.removeItem('pg_latest_saved_announcement'); } catch {}
+    };
+
+    window.addEventListener('pg_announcement_updated', handleLiveAnnouncementUpdate);
+    window.addEventListener('pg_announcement_cancelled', handleLiveAnnouncementCancel);
+
+    return () => {
+      clearInterval(annInterval);
+      window.removeEventListener('pg_announcement_updated', handleLiveAnnouncementUpdate);
+      window.removeEventListener('pg_announcement_cancelled', handleLiveAnnouncementCancel);
+    };
   }, [checkAnnouncements]);
 
   // Auto-dismiss Admin Web Announcement Banner within 10 seconds (ตามคำขอผู้ใช้ ไม่ให้บังหน้าจอ)
@@ -2093,7 +2126,7 @@ export default function App() {
     if (!searchQuery.trim()) return [];
     return points
       .filter(point => {
-        if (isPointDryOrResolved(point)) return false;
+        if (!point || !isPointInSamutPrakan(point.lat, point.lng) || isPointDryOrResolved(point)) return false;
         return matchesLocationSearch(point, searchQuery);
       })
       .sort((a, b) => scoreLocationSearch(b, searchQuery) - scoreLocationSearch(a, searchQuery));
@@ -2104,7 +2137,7 @@ export default function App() {
     if (!searchQuery.trim()) return [];
     return citizenReports
       .filter(report => {
-        if (!report || report.isApproved !== true || isPointDryOrResolved(report)) return false;
+        if (!report || report.isApproved !== true || isPointDryOrResolved(report) || !isPointInSamutPrakan(report.lat, report.lng)) return false;
         if (report.id && (report.id.includes('test') || report.id.includes('verify') || report.id.startsWith('node-'))) return false;
         return matchesLocationSearch(report, searchQuery);
       })
@@ -2388,16 +2421,17 @@ export default function App() {
 
         {/* Sidebar Panel */}
         <aside className={`
-          hidden md:flex flex-col h-full z-40 lg:z-20 shrink-0 border-r backdrop-blur-md transition-all duration-300 ease-in-out select-none
-          ${isDark ? 'bg-slate-900/98 border-slate-800 text-slate-100' : 'bg-white/98 border-slate-200 text-slate-800'}
+          hidden md:flex flex-col h-full z-40 lg:z-20 shrink-0 backdrop-blur-md transition-[width,opacity,transform] duration-300 ease-in-out select-none
+          ${isDark ? 'bg-slate-900/98 text-slate-100' : 'bg-white/98 text-slate-800'}
           fixed lg:relative top-0 bottom-0 left-0
-          w-[340px] lg:w-[380px] xl:w-[410px]
           ${isSidebarOpen 
-              ? 'translate-x-0 opacity-100 shadow-2xl lg:shadow-none' 
-              : '-translate-x-full lg:w-0 lg:opacity-0 lg:overflow-hidden pointer-events-none'
+              ? 'w-[340px] lg:w-[380px] xl:w-[410px] border-r translate-x-0 opacity-100 shadow-2xl lg:shadow-none' 
+              : 'w-0 min-w-0 max-w-0 border-r-0 border-transparent overflow-hidden opacity-0 pointer-events-none -translate-x-full lg:translate-x-0'
           }
+          ${isDark ? 'border-slate-800' : 'border-slate-200'}
         `}>
-          {/* Sidebar Header */}
+          <div className="w-[340px] lg:w-[380px] xl:w-[410px] h-full flex flex-col shrink-0 overflow-hidden">
+            {/* Sidebar Header */}
           <div className="p-3 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between gap-2 shrink-0">
             <div className="flex items-center gap-2 min-w-0">
               <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
@@ -2679,7 +2713,7 @@ export default function App() {
                 }`}
               >
                 <CloudRain className="w-3.5 h-3.5 text-cyan-500" />
-                <span className="truncate">พยากรณ์ & เส้นทาง</span>
+                <span className="truncate">พยากรณ์สภาพอากาศ</span>
               </button>
             </div>
 
@@ -2818,9 +2852,28 @@ export default function App() {
               </div>
             )}
 
-            {/* TAB 2: WEATHER & CORRIDORS (พยากรณ์ฝน & เส้นทางสัญจร) */}
+            {/* TAB 2: WEATHER FORECAST (พยากรณ์สภาพอากาศ) */}
             {desktopSidebarTab === 'weather' && (
               <div className="space-y-3">
+                {/* Direct Action Button: Open Detailed Weather & Radar Forecast Modal */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    playModalOpenSound();
+                    setIsOfficialModalOpen(true);
+                  }}
+                  className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-bold text-xs flex items-center justify-between shadow-sm transition-all cursor-pointer active:scale-[0.98]"
+                  title="คลิกเพื่อดูข้อมูลพยากรณ์อากาศและเรดาร์ตรวจฝน TMD อย่างละเอียด"
+                >
+                  <div className="flex items-center gap-2">
+                    <CloudRain className="w-4 h-4 text-white" />
+                    <span>ดูพยากรณ์อากาศ & เรดาร์ฝนละเอียด</span>
+                  </div>
+                  <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded-full font-mono font-bold">
+                    AI + TMD ↗
+                  </span>
+                </button>
+
                 {/* 24-Hour Rain Forecast Card */}
                 <RainForecast24hCard
                   forecast={weather?.forecast24h}
@@ -2906,7 +2959,8 @@ export default function App() {
               {isRefreshingData ? 'กำลังซิงค์...' : 'รีเฟรชทันที'}
             </button>
           </div>
-        </aside>
+        </div>
+      </aside>
 
         {/* ========================================================================= */}
         {/* B. MAIN INTERACTIVE MAP CANVAS (FLEX-1)                                   */}
@@ -3153,12 +3207,16 @@ export default function App() {
           let matchedPhoto = null;
           if (!directPhoto) {
             const allCandidates = [...(citizenReports || []), ...(points || [])];
-            const matched = allCandidates.find(c => 
-              (c.id && selectedPoint.id && String(c.id) === String(selectedPoint.id)) ||
-              (c.name && selectedPoint.name && c.name.trim().toLowerCase() === selectedPoint.name.trim().toLowerCase()) ||
-              (typeof c.lat === 'number' && typeof selectedPoint.lat === 'number' && Math.abs(c.lat - selectedPoint.lat) < 0.0035 && Math.abs(c.lng - selectedPoint.lng) < 0.0035)
-            );
-            matchedPhoto = matched?.photoUrl || matched?.photo_url || matched?.photo || null;
+            const matched = allCandidates.find(c => {
+              const cPhoto = c.photoUrl || c.photo_url || c.photo || c.image || c.imageUrl;
+              if (!cPhoto) return false;
+              return (
+                (c.id && selectedPoint.id && String(c.id) === String(selectedPoint.id)) ||
+                (c.name && selectedPoint.name && c.name.trim().toLowerCase() === selectedPoint.name.trim().toLowerCase()) ||
+                (typeof c.lat === 'number' && typeof selectedPoint.lat === 'number' && Math.abs(c.lat - selectedPoint.lat) < 0.005 && Math.abs(c.lng - selectedPoint.lng) < 0.005)
+              );
+            });
+            matchedPhoto = matched?.photoUrl || matched?.photo_url || matched?.photo || matched?.image || matched?.imageUrl || null;
           }
           const pointPhoto = directPhoto || matchedPhoto;
           const hasPhoto = !!(pointPhoto && typeof pointPhoto === 'string' && pointPhoto.trim() && pointPhoto !== 'null' && pointPhoto !== 'undefined');
@@ -3199,9 +3257,22 @@ export default function App() {
                      getFloodLevel(selectedPoint.depthCm) === 2 ? "🟠 น้ำท่วมปานกลาง (21-50 ซม.)" : "🟢 น้ำท่วมปกติ (5-20 ซม.)"}
                   </span>
                   {hasPhoto && (
-                    <span className="text-xs font-semibold px-2 py-0.5 rounded-md border shadow-xs bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-cyan-300 dark:border-blue-700 flex items-center gap-1 animate-in fade-in duration-200">
-                      <span>📷 มีภาพถ่าย</span>
-                    </span>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        playModalOpenSound();
+                        setLightboxPhoto({
+                          url: pointPhoto,
+                          title: selectedPoint.name,
+                          time: selectedPoint.reportedAt || selectedPoint.time
+                        });
+                      }}
+                      className="text-xs font-bold px-2 py-0.5 rounded-md border shadow-xs bg-blue-100 hover:bg-blue-200 text-blue-800 border-blue-300 dark:bg-blue-950 dark:hover:bg-blue-900 dark:text-cyan-300 dark:border-blue-700 flex items-center gap-1 cursor-pointer transition-all active:scale-95 animate-in fade-in duration-200"
+                      title="แตะเพื่อเปิดดูภาพถ่ายขนาดใหญ่"
+                    >
+                      <span>📷 มีภาพถ่าย (แตะเพื่อดู)</span>
+                    </button>
                   )}
                   {isWaterReceding(selectedPoint) && (
                     <span className="text-xs font-semibold px-1.5 py-0.5 rounded-md bg-teal-50 text-teal-800 border border-teal-300 dark:bg-teal-950 dark:text-teal-300 dark:border-teal-700 flex items-center gap-1">
@@ -3255,34 +3326,40 @@ export default function App() {
             {/* Citizen Uploaded Photo Preview (If available) */}
             {hasPhoto && (
               <div 
-                className="mt-2 sm:mt-2.5 rounded-md overflow-hidden border border-slate-200 dark:border-slate-800 shadow-xs relative cursor-pointer group bg-black touch-manipulation active:scale-[0.98] transition-transform"
-                onClick={() => setLightboxPhoto({
-                  url: pointPhoto,
-                  title: selectedPoint.name,
-                  time: selectedPoint.reportedAt || selectedPoint.time
-                })}
+                className="mt-2 sm:mt-2.5 rounded-xl overflow-hidden border border-blue-200 dark:border-blue-900/60 shadow-sm relative cursor-pointer group bg-slate-950 touch-manipulation active:scale-[0.98] transition-transform"
+                onClick={() => {
+                  playModalOpenSound();
+                  setLightboxPhoto({
+                    url: pointPhoto,
+                    title: selectedPoint.name,
+                    time: selectedPoint.reportedAt || selectedPoint.time
+                  });
+                }}
                 title="แตะเพื่อดูภาพขนาดเต็ม"
               >
                 <div className="relative">
                   <img 
                     src={pointPhoto} 
                     alt="รูปภาพสถานการณ์น้ำท่วม" 
-                    className="w-full h-32 sm:h-40 object-cover group-hover:scale-105 transition-transform duration-200" 
+                    className="w-full h-36 sm:h-44 object-cover group-hover:scale-105 transition-transform duration-200" 
+                    loading="lazy"
                   />
-                  <div className="absolute top-1.5 left-1.5 px-2 py-0.5 rounded-md bg-slate-950/90 text-cyan-300 text-xs font-semibold border border-cyan-400 flex items-center gap-1 shadow-md">
+                  <div className="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-black/80 backdrop-blur-xs text-cyan-300 text-xs font-bold border border-cyan-400/50 flex items-center gap-1 shadow-md">
                     <span>📸 ภาพถ่ายรายงาน</span>
                   </div>
+                  <div className="absolute bottom-2 right-2 px-2 py-0.5 rounded-md bg-blue-600/90 text-white text-[11px] font-semibold flex items-center gap-1 shadow-md">
+                    <span>🔍 แตะดูเต็มจอ</span>
+                  </div>
                 </div>
-                <div className={`p-1.5 sm:p-2 text-xs text-center font-semibold flex items-center justify-between px-2.5 sm:px-3 ${
-                  isDark ? 'bg-slate-850 text-cyan-300' : 'bg-slate-100 text-slate-800'
+                <div className={`p-2 text-xs text-center font-medium flex items-center justify-between px-3 ${
+                  isDark ? 'bg-slate-850 text-slate-300' : 'bg-slate-100 text-slate-700'
                 }`}>
-                  <span className="flex items-center gap-1 text-xs">
-                    <span>🔍</span>
-                    <span>แตะเพื่อดูภาพขนาดใหญ่</span>
+                  <span className="flex items-center gap-1 font-semibold text-blue-600 dark:text-cyan-400">
+                    <span>🔎 คลิกเพื่อเปิดภาพถ่ายความละเอียดสูง</span>
                   </span>
                   {(selectedPoint.reportedAt || selectedPoint.time) && (
-                    <span className="opacity-75 text-[10px]">
-                      รายงาน {selectedPoint.reportedAt || selectedPoint.time}
+                    <span className="opacity-75 text-[10px] font-mono">
+                      {selectedPoint.reportedAt || selectedPoint.time}
                     </span>
                   )}
                 </div>

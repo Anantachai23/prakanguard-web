@@ -45,7 +45,7 @@ export function getMsUntilBangkokMidnight() {
 // ชุดข้อมูลอัปเดตสถานการณ์จริงประจำวัน (เริ่มต้นของวัน) จากแหล่งข้อมูลโทรมาตรทางการ 6 อำเภอ
 export const SEED_REAL_DAILY_UPDATES = [
   {
-    id: 'upd-bkk-01',
+    id: 'upd-spk-01',
     locationKey: 'sp-15',
     locationName: 'สถานีป้อมพระจุลจอมเกล้า (ปากอ่าวไทย)',
     district: 'พระสมุทรเจดีย์',
@@ -62,7 +62,7 @@ export const SEED_REAL_DAILY_UPDATES = [
     lng: 100.5845
   },
   {
-    id: 'upd-bkk-02',
+    id: 'upd-spk-02',
     locationKey: 'sp-10',
     locationName: 'การเคหะเมืองใหม่บางเสาธง (ซอย C1 - C5)',
     district: 'บางเสาธง',
@@ -79,7 +79,7 @@ export const SEED_REAL_DAILY_UPDATES = [
     lng: 100.8250
   },
   {
-    id: 'upd-bkk-03',
+    id: 'upd-spk-03',
     locationKey: 'cat-sp-03',
     locationName: 'ถนนท้ายบ้าน ปากซอย 38 (เลียบคลองตาเจี่ย)',
     district: 'เมืองสมุทรปราการ',
@@ -96,7 +96,7 @@ export const SEED_REAL_DAILY_UPDATES = [
     lng: 100.6020
   },
   {
-    id: 'upd-bkk-04',
+    id: 'upd-spk-04',
     locationKey: 'sp-30',
     locationName: 'แยกสุขสมาน (ถ.ลาดกระบัง - สุวรรณภูมิ 4)',
     district: 'บางพลี',
@@ -113,7 +113,7 @@ export const SEED_REAL_DAILY_UPDATES = [
     lng: 100.7686
   },
   {
-    id: 'upd-bkk-05',
+    id: 'upd-spk-05',
     locationKey: 'sp-17',
     locationName: 'ถนนบางนา-ตราด กม.18 (บางโฉลง / ม.หัวเฉียว)',
     district: 'บางพลี',
@@ -130,7 +130,7 @@ export const SEED_REAL_DAILY_UPDATES = [
     lng: 100.7420
   },
   {
-    id: 'upd-bkk-06',
+    id: 'upd-spk-06',
     locationKey: 'sp-13',
     locationName: 'ถนนปู่เจ้าสมิงพราย (ช่วงท่าน้ำเภตรา)',
     district: 'พระประแดง',
@@ -147,7 +147,7 @@ export const SEED_REAL_DAILY_UPDATES = [
     lng: 100.5620
   },
   {
-    id: 'upd-bkk-07',
+    id: 'upd-spk-07',
     locationKey: 'sp-06',
     locationName: 'ทางลงด่วนบางพลี ถ.บางนา-ตราด กม.12 (เมกาบางนา)',
     district: 'บางพลี',
@@ -164,7 +164,7 @@ export const SEED_REAL_DAILY_UPDATES = [
     lng: 100.6800
   },
   {
-    id: 'upd-bkk-08',
+    id: 'upd-spk-08',
     locationKey: 'sp-25',
     locationName: 'ซอยกิ่งแก้ว 45 - 43 (โซนชุมชนและโรงงานกิ่งแก้ว)',
     district: 'บางพลี',
@@ -181,7 +181,7 @@ export const SEED_REAL_DAILY_UPDATES = [
     lng: 100.7285
   },
   {
-    id: 'upd-bkk-09',
+    id: 'upd-spk-09',
     locationKey: 'sp-27',
     locationName: 'ถนนปานวิถี หน้าตลาดสดเทศบาลบางบ่อ (ริมคลองสำโรง)',
     district: 'บางบ่อ',
@@ -198,7 +198,7 @@ export const SEED_REAL_DAILY_UPDATES = [
     lng: 100.8350
   },
   {
-    id: 'upd-bkk-10',
+    id: 'upd-spk-10',
     locationKey: 'cat-sp-02',
     locationName: 'สี่แยกการไฟฟ้าสมุทรปราการ (ถ.สุขุมวิท ตัด ถ.สายลวด)',
     district: 'เมืองสมุทรปราการ',
@@ -215,7 +215,7 @@ export const SEED_REAL_DAILY_UPDATES = [
     lng: 100.6050
   },
   {
-    id: 'upd-bkk-11',
+    id: 'upd-spk-11',
     locationKey: 'sp-23',
     locationName: 'ชุมชนบ้านสาขลา - แหลมฟ้าผ่า (เลียบคลองสรรพสามิต)',
     district: 'พระสมุทรเจดีย์',
@@ -232,7 +232,7 @@ export const SEED_REAL_DAILY_UPDATES = [
     lng: 100.5620
   },
   {
-    id: 'upd-bkk-12',
+    id: 'upd-spk-12',
     locationKey: 'sp-srinakarin-to-bangpoo',
     locationName: 'ถ.ศรีนครินทร์ ไปบางปู (ช่วงเปาโล - สามแยกการไฟฟ้า)',
     district: 'เมืองสมุทรปราการ',
@@ -249,7 +249,7 @@ export const SEED_REAL_DAILY_UPDATES = [
     lng: 100.6170
   },
   {
-    id: 'upd-bkk-13',
+    id: 'upd-spk-13',
     locationKey: 'sp-12',
     locationName: 'ท่าน้ำพระประแดง - สุขสวัสดิ์ 39 (ตลาดพระประแดง)',
     district: 'พระประแดง',
@@ -266,7 +266,7 @@ export const SEED_REAL_DAILY_UPDATES = [
     lng: 100.5340
   },
   {
-    id: 'upd-bkk-14',
+    id: 'upd-spk-14',
     locationKey: 'sp-srithepha',
     locationName: 'แยกศรีเทพา ถนนเทพารักษ์ (จุดตัด ถ.ศรีนครินทร์)',
     district: 'เมืองสมุทรปราการ',
@@ -283,7 +283,7 @@ export const SEED_REAL_DAILY_UPDATES = [
     lng: 100.6260
   },
   {
-    id: 'upd-bkk-15',
+    id: 'upd-spk-15',
     locationKey: 'sp-theparak-sriboonruang',
     locationName: 'หน้าซอยศรีบุญเรือง (ถนนเทพารักษ์ กม.1.5)',
     district: 'เมืองสมุทรปราการ',
@@ -405,3 +405,4 @@ export function mergeDailyUpdateEvent(prevList = [], newEvent = {}) {
 
   return nextList;
 }
+

@@ -255,9 +255,10 @@ export default function MapView({
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map) return;
-    const t1 = setTimeout(() => map.invalidateSize(), 150);
-    const t2 = setTimeout(() => map.invalidateSize(), 350);
-    return () => { clearTimeout(t1); clearTimeout(t2); };
+    const t1 = setTimeout(() => map.invalidateSize({ pan: false }), 80);
+    const t2 = setTimeout(() => map.invalidateSize({ pan: false }), 320);
+    const t3 = setTimeout(() => map.invalidateSize({ pan: false }), 500);
+    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
   }, [isTopPanelCollapsed, isSidebarOpen]);
 
   const mapContainerRef = useRef(null);
@@ -281,6 +282,10 @@ export default function MapView({
   onMapLocationPickedRef.current = onMapLocationPicked;
   const onSelectPointRef = useRef(onSelectPoint);
   onSelectPointRef.current = onSelectPoint;
+
+  // Track map motion (pan/pinch-zoom) to completely prevent accidental pin clicks
+  const isMapMovingRef = useRef(false);
+  const lastMapMoveEndTimeRef = useRef(0);
 
   // Map Tile Style: 'google-roadmap' | 'google-satellite' | 'google-terrain'
   const [mapStyle, setMapStyle] = useState('google-roadmap');
@@ -414,10 +419,10 @@ export default function MapView({
     // Set seamless background color to avoid grey flashing when zooming
     mapContainerRef.current.style.backgroundColor = isDark ? '#0b132b' : '#e6ecf2';
 
-    // Samut Prakan Boundary Bounds: locks pan & zoom strictly to Samut Prakan
+    // Samut Prakan Boundary Bounds: locks pan & zoom strictly to Samut Prakan (Prevents panning into Bangkok/Nonthaburi)
     const SAMUT_PRAKAN_BOUNDS_RESTRICT = [
-      [13.4100, 100.3800], // Southwest
-      [13.7800, 100.9800]  // Northeast
+      [13.4500, 100.4400], // Southwest (Gulf of Thailand & Phra Samut Chedi border)
+      [13.7350, 100.9400]  // Northeast (Suvarnabhumi North & Bang Bo East border)
     ];
 
     const map = L.map(mapContainerRef.current, {
@@ -432,6 +437,15 @@ export default function MapView({
       zoomAnimation: true,
       fadeAnimation: true,
       markerZoomAnimation: true
+    });
+
+    // Suppress marker taps during pan/zoom gestures
+    map.on('movestart zoomstart dragstart', () => {
+      isMapMovingRef.current = true;
+    });
+    map.on('moveend zoomend dragend', () => {
+      isMapMovingRef.current = false;
+      lastMapMoveEndTimeRef.current = Date.now();
     });
 
     if (typeof window !== 'undefined' && window.innerWidth >= 640) {
@@ -475,13 +489,26 @@ export default function MapView({
       }
     });
 
-    // Invalidate size on load
-    const timer1 = setTimeout(() => map.invalidateSize(), 200);
-    const timer2 = setTimeout(() => map.invalidateSize(), 800);
+    // Invalidate size on load and on any container resize (e.g. sidebar collapse / expand)
+    const timer1 = setTimeout(() => map.invalidateSize({ pan: false }), 200);
+    const timer2 = setTimeout(() => map.invalidateSize({ pan: false }), 800);
+
+    let resizeObserver = null;
+    if (typeof ResizeObserver !== 'undefined' && mapContainerRef.current) {
+      resizeObserver = new ResizeObserver(() => {
+        if (mapInstanceRef.current) {
+          mapInstanceRef.current.invalidateSize({ pan: false });
+        }
+      });
+      resizeObserver.observe(mapContainerRef.current);
+    }
 
     return () => {
       clearTimeout(timer1);
       clearTimeout(timer2);
+      if (resizeObserver) {
+        resizeObserver.disconnect();
+      }
       map.remove();
       mapInstanceRef.current = null;
       if (typeof window !== 'undefined') {
@@ -761,18 +788,8 @@ export default function MapView({
         fillColor: circleColor,
         fillOpacity: isSelected ? 0.25 : baseFillOpacity,
         dashArray: isFalling ? '5, 5' : undefined,
-        interactive: true,
-        bubblingMouseEvents: false
+        interactive: false // Non-interactive so pinch-zoom & pan never accidentally trigger the pin!
       }).addTo(map);
-
-      const levelLabel = isL3 ? 'วิกฤต' : (isL2 ? 'ปานกลาง' : 'ปกติ');
-      const depthText = point.depthCm ? `${point.depthCm} ซม.` : (point.depthRange || 'เฝ้าระวัง');
-
-      circle.bindTooltip(`📡 รัศมีน้ำท่วม ~${radius}ม. • ${point.name} (${levelLabel} ${depthText})`, {
-        sticky: true,
-        direction: 'top',
-        className: 'bg-slate-900/95 text-white font-prompt text-[11px] font-bold px-2 py-0.5 rounded-lg border border-slate-700 shadow-md'
-      });
 
       // 2. Official Pin Marker
       const customIcon = createOfficialFloodPin({
@@ -792,11 +809,15 @@ export default function MapView({
         bubblingMouseEvents: false
       }).addTo(map);
 
-      // Direct select handler: guaranteed responsive on mobile touch and desktop click
+      // Direct select handler: suppressed during map drag/pinch-zoom
       let lastMarkerTap = 0;
       const handleMarkerSelect = (e) => {
+        // Strict guard: ignore taps if map is actively moving or just finished moving within 350ms
+        if (isMapMovingRef.current || (Date.now() - lastMapMoveEndTimeRef.current < 350)) {
+          return;
+        }
         const now = Date.now();
-        if (now - lastMarkerTap < 160) return;
+        if (now - lastMarkerTap < 300) return;
         lastMarkerTap = now;
 
         if (e) {
@@ -810,21 +831,15 @@ export default function MapView({
         lastFlyToTimeRef.current = Date.now();
         playPinClickSound();
         if (onSelectPointRef.current) {
-          // Pass effective photo attached so photo badge & preview always display
           const effPhoto = point.photoUrl || directPhoto || matchedCitizenPhoto;
           const pointPayload = effPhoto ? { ...point, photoUrl: effPhoto } : point;
           onSelectPointRef.current(pointPayload, { fromMapPin: true });
         }
       };
 
-      // Both Circle and Marker trigger selection reliably
-      circle.on('click', handleMarkerSelect);
-      circle.on('touchend', handleMarkerSelect);
-
       marker.on('click', handleMarkerSelect);
-      marker.on('touchend', handleMarkerSelect);
 
-      // Direct DOM event hooks on marker icon for instant touch / click response
+      // Direct DOM event hooks on marker icon for instant, intentional touch response
       const setupMarkerDomEvents = (el) => {
         if (!el || el._pgClickBound) return;
         el._pgClickBound = true;
@@ -832,43 +847,41 @@ export default function MapView({
         el.style.pointerEvents = 'auto';
         el.style.touchAction = 'manipulation';
 
-        // 1. STOP map drag when touching or clicking on pin (Prevents pin jitter / map sliding)
-        const stopDragToMap = (e) => {
-          if (e && e.stopPropagation) e.stopPropagation();
-        };
-        el.addEventListener('mousedown', stopDragToMap);
-        el.addEventListener('touchstart', stopDragToMap, { passive: true });
-        el.addEventListener('pointerdown', stopDragToMap);
+        // Track touch gestures to differentiate intentional tap from pan/zoom
+        let touchStartX = 0;
+        let touchStartY = 0;
+        let touchStartTime = 0;
 
-        // 2. Track pointer to reliably detect tap/click on both desktop and mobile
-        let pDownX = 0;
-        let pDownY = 0;
-        let pDownTime = 0;
-
-        el.addEventListener('pointerdown', (e) => {
-          pDownX = e.clientX;
-          pDownY = e.clientY;
-          pDownTime = Date.now();
-        });
-
-        el.addEventListener('pointerup', (e) => {
-          const elapsed = Date.now() - pDownTime;
-          const dist = Math.hypot(e.clientX - pDownX, e.clientY - pDownY);
-          if (elapsed < 650 && dist < 16) {
-            if (e && e.stopPropagation) e.stopPropagation();
-            handleMarkerSelect(e);
+        el.addEventListener('touchstart', (e) => {
+          if (e.touches && e.touches[0]) {
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+            touchStartTime = Date.now();
           }
-        });
-
-        el.addEventListener('click', (e) => {
-          if (e && e.stopPropagation) e.stopPropagation();
-          handleMarkerSelect(e);
-        }, { capture: true });
+        }, { passive: true });
 
         el.addEventListener('touchend', (e) => {
-          if (e && e.stopPropagation) e.stopPropagation();
+          if (isMapMovingRef.current || (Date.now() - lastMapMoveEndTimeRef.current < 350)) {
+            return;
+          }
+          const elapsed = Date.now() - touchStartTime;
+          const touch = e.changedTouches ? e.changedTouches[0] : null;
+          if (!touch) return;
+          const dist = Math.hypot(touch.clientX - touchStartX, touch.clientY - touchStartY);
+
+          // Strictly fire selection ONLY on intentional tap: moved < 6px, duration < 300ms
+          if (elapsed < 300 && dist < 6) {
+            if (e.cancelable) e.preventDefault();
+            handleMarkerSelect(e);
+          }
+        }, { passive: false });
+
+        el.addEventListener('click', (e) => {
+          if (isMapMovingRef.current || (Date.now() - lastMapMoveEndTimeRef.current < 350)) {
+            return;
+          }
           handleMarkerSelect(e);
-        }, { capture: true, passive: true });
+        });
       };
 
       marker.on('add', () => {

@@ -540,24 +540,7 @@ export default function Navbar({
 
           {/* --- DESKTOP (Screen >= 1024px): Spacious Full Command Center Bar --- */}
           <div className="hidden lg:flex items-center gap-1.5 shrink-0">
-            {/* Desktop Sidebar Toggle Button */}
-            <button
-              type="button"
-              onClick={() => {
-                playToggleSound(!isSidebarOpen);
-                if (onToggleSidebar) onToggleSidebar();
-              }}
-              className={`px-2.5 py-1.5 rounded-md border text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer shadow-xs active:scale-95 ${
-                isSidebarOpen
-                  ? isDark ? 'bg-slate-900 text-cyan-400 border-slate-700' : 'bg-slate-100 text-blue-700 border-slate-300'
-                  : isDark ? 'bg-slate-900 text-slate-300 border-slate-800' : 'bg-white text-slate-700 border-slate-200'
-              }`}
-              title={isSidebarOpen ? "ย่อแถบด้านข้าง (ขยายแผนที่เต็มจอ)" : "เปิดแถบด้านข้าง (ค้นหาและพยากรณ์)"}
-            >
-              {isSidebarOpen ? <PanelLeftClose className="w-3.5 h-3.5 text-blue-500" /> : <PanelLeftOpen className="w-3.5 h-3.5 text-blue-500" />}
-              <span className="hidden xl:inline">{isSidebarOpen ? "ย่อแผง GIS" : "เปิดแผง GIS"}</span>
-            </button>
-
+            {/* Desktop Public Updates Button */}
             {/* Desktop Public Updates Button */}
             <button 
               type="button"
