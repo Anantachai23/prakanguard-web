@@ -7,17 +7,24 @@ import {
   Clock, 
   Compass,
   Radio,
-  Calendar
+  Calendar,
+  RefreshCw,
+  Activity
 } from 'lucide-react';
 
 export default function RainForecast24hCard({
   forecast,
   userDistrict,
+  userLocation,
   onOpenRadar,
   theme = 'light',
   className = '',
   collapsible = true,
-  defaultExpanded
+  defaultExpanded,
+  onManualSync,
+  isSyncing = false,
+  onOpenPublicUpdates,
+  lastUpdatedTime
 }) {
   const isDark = theme === 'dark';
   
@@ -115,36 +122,36 @@ export default function RainForecast24hCard({
   // Collapsed Minimal Pill
   if (collapsible && !isExpanded) {
     return (
-      <div className={`rounded-xl sm:rounded-2xl border shadow-sm transition-all duration-200 pointer-events-auto select-none p-1.5 sm:p-2.5 backdrop-blur-xl ${
+      <div className={`rounded-lg border shadow-xs transition-all duration-200 pointer-events-auto select-none p-2 sm:p-2.5 backdrop-blur-md ${
         isDark 
-          ? 'bg-slate-900/90 border-slate-700/80 text-slate-100 shadow-slate-950/40' 
-          : 'bg-white/95 border-slate-200 text-slate-900 shadow-slate-200/50'
+          ? 'bg-slate-900/90 border-slate-800 text-slate-100' 
+          : 'bg-white/95 border-slate-200 text-slate-900'
       } ${className}`}>
-        <div className="flex items-center justify-between gap-1.5 sm:gap-2">
+        <div className="flex items-center justify-between gap-2">
           <button
             type="button"
             onClick={() => {
               playToggleSound(true);
               setIsExpanded(true);
             }}
-            className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1 text-left cursor-pointer group active:scale-95 transition-transform"
+            className="flex items-center gap-2 min-w-0 flex-1 text-left cursor-pointer group active:scale-95 transition-transform"
           >
-            <div className={`p-1 sm:p-1.5 rounded-lg sm:rounded-xl shrink-0 ${
-              isDark ? 'bg-blue-950 text-cyan-400 border border-blue-800' : 'bg-blue-50 text-blue-600 border border-blue-200'
+            <div className={`p-1.5 rounded-md shrink-0 border ${
+              isDark ? 'bg-slate-850 text-cyan-400 border-slate-700' : 'bg-blue-50 text-blue-600 border-blue-200'
             }`}>
-              <CloudRain className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-pulse shrink-0" />
+              <CloudRain className="w-4 h-4 animate-pulse shrink-0" />
             </div>
             <div className="min-w-0 truncate">
-              <span className="font-bold text-[11px] sm:text-xs truncate block text-slate-900 dark:text-white">
-                {isAllDistricts ? 'ภาพรวม' : 'ตำแหน่งของท่าน '}{displayDistrictLabel} มีโอกาสฝนตก <span className="text-blue-600 dark:text-cyan-400 font-extrabold">{userDistrictProb}%</span>
+              <span className="font-bold text-xs truncate block text-slate-900 dark:text-white">
+                {isAllDistricts ? 'ภาพรวม' : 'ตำแหน่ง '}{displayDistrictLabel} โอกาสฝน <span className="text-blue-600 dark:text-cyan-400 font-extrabold">{userDistrictProb}%</span>
                 {(matchedDistrict?.temperature || forecast?.temp) && (
-                  <span className="ml-1 sm:ml-1.5 px-1 sm:px-1.5 py-0.2 rounded-md bg-sky-100 dark:bg-sky-950 text-sky-700 dark:text-sky-300 font-mono text-[9px] sm:text-[10px] font-bold">
+                  <span className="ml-1.5 px-1.5 py-0.2 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-mono text-[10px] font-bold border border-slate-200 dark:border-slate-700">
                     🌡️ {matchedDistrict?.temperature || forecast?.temp}°C
                   </span>
                 )}
               </span>
-              <span className={`text-[9.5px] sm:text-[10px] block truncate ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                {todayLabel} • {rainTimeToday} (แตะเพื่อดูรายอำเภอ)
+              <span className={`text-[10px] block truncate ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                {todayLabel} • {rainTimeToday}
               </span>
             </div>
           </button>
@@ -155,54 +162,54 @@ export default function RainForecast24hCard({
               playToggleSound(true);
               setIsExpanded(true);
             }}
-            className={`px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-lg sm:rounded-xl text-[10.5px] sm:text-xs font-semibold border flex items-center gap-0.5 cursor-pointer transition-all active:scale-95 shrink-0 ${
+            className={`px-2 py-1 rounded-md text-xs font-semibold border flex items-center gap-1 cursor-pointer transition-all active:scale-95 shrink-0 ${
               isDark 
                 ? 'bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-200' 
                 : 'bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-700'
             }`}
           >
-            <span>ดูเวลา</span>
-            <ChevronDown className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+            <span>ดูรายอำเภอ</span>
+            <ChevronDown className="w-3.5 h-3.5" />
           </button>
         </div>
       </div>
     );
   }
 
-  // Expanded Minimal Card
+  // Expanded Enterprise Card (Windy + shadcn/ui style)
   return (
-    <div className={`rounded-2xl sm:rounded-3xl border shadow-lg transition-all duration-200 pointer-events-auto select-none overflow-hidden backdrop-blur-xl ${
+    <div className={`rounded-lg border shadow-sm transition-all duration-200 pointer-events-auto select-none overflow-hidden backdrop-blur-md ${
       isDark 
-        ? 'bg-slate-900/95 border-slate-700/80 text-slate-100 shadow-slate-950/40' 
-        : 'bg-white/95 border-slate-200 text-slate-900 shadow-slate-200/50'
+        ? 'bg-slate-900/95 border-slate-800 text-slate-100' 
+        : 'bg-white/95 border-slate-200 text-slate-900'
     } ${className}`}>
-      <div className="p-2.5 sm:p-4">
+      <div className="p-3 sm:p-3.5">
         
         {/* Header */}
-        <div className="flex items-center justify-between gap-1.5 sm:gap-2 pb-1.5 sm:pb-2.5 border-b border-slate-100 dark:border-slate-800">
-          <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
-            <div className={`p-1 sm:p-1.5 rounded-lg sm:rounded-xl shrink-0 ${
-              isDark ? 'bg-blue-950 text-cyan-400 border border-blue-800' : 'bg-blue-50 text-blue-600 border border-blue-200'
+        <div className="flex items-center justify-between gap-2 pb-2 border-b border-slate-200 dark:border-slate-800">
+          <div className="flex items-center gap-2 min-w-0">
+            <div className={`p-1.5 rounded-md shrink-0 border ${
+              isDark ? 'bg-slate-850 text-cyan-400 border-slate-700' : 'bg-blue-50 text-blue-600 border-blue-200'
             }`}>
-              <CloudRain className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-blue-600 animate-pulse shrink-0" />
+              <CloudRain className="w-4 h-4 text-blue-600 dark:text-cyan-400 animate-pulse shrink-0" />
             </div>
             <div className="min-w-0">
-              <span className={`font-bold text-[11px] sm:text-sm block ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                คาดการณ์ฝนตกวันนี้
+              <span className={`font-bold text-xs sm:text-sm block leading-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                คาดการณ์สภาพฝน 24 ชม.
               </span>
-              <span className={`text-[9.5px] sm:text-[11px] block ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                {todayLabel} • อัพเดทวันใหม่เที่ยงคืน
+              <span className={`text-[10px] sm:text-[11px] block mt-0.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                {todayLabel} • โทรมาตรความแม่นยำสูง
               </span>
             </div>
           </div>
 
           <div className="flex items-center gap-1.5 shrink-0">
-            <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${
+            <span className={`px-2 py-0.5 rounded-md text-xs font-semibold border ${
               isRainingNow 
-                ? 'bg-rose-50 text-rose-700 dark:bg-rose-950 dark:text-rose-300 border border-rose-300 dark:border-rose-800'
+                ? 'bg-rose-50 text-rose-700 dark:bg-rose-950/80 dark:text-rose-300 border-rose-300 dark:border-rose-800'
                 : maxProb >= 60
-                ? 'bg-amber-50 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border border-amber-300 dark:border-amber-800'
-                : 'bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-cyan-300 border border-blue-200 dark:border-blue-800'
+                ? 'bg-amber-50 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300 border-amber-300 dark:border-amber-800'
+                : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border-slate-200 dark:border-slate-700'
             }`}>
               โอกาส {maxProb}%
             </span>
@@ -214,12 +221,12 @@ export default function RainForecast24hCard({
                   playToggleSound(false);
                   setIsExpanded(false);
                 }}
-                className={`p-1.5 rounded-xl border transition-all cursor-pointer active:scale-95 ${
+                className={`p-1 rounded-md border transition-all cursor-pointer active:scale-95 ${
                   isDark 
                     ? 'bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-300' 
                     : 'bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-600'
                 }`}
-                title="ย่อขนาด"
+                title="ย่อแถบนี้"
               >
                 <ChevronUp className="w-4 h-4" />
               </button>
@@ -228,81 +235,86 @@ export default function RainForecast24hCard({
         </div>
 
         {/* User District Highlight Banner */}
-        <div className={`mt-3 p-3 rounded-2xl border flex items-center justify-between gap-3 ${
-          isDark ? 'bg-blue-950/60 border-cyan-500/40 text-cyan-200' : 'bg-blue-50/90 border-blue-300 text-blue-900'
+        <div className={`mt-2.5 p-2.5 rounded-md border flex items-center justify-between gap-2 ${
+          isDark 
+            ? 'bg-slate-850/80 border-slate-700 text-slate-200' 
+            : 'bg-slate-50 border-slate-200 text-slate-800'
         }`}>
           <div className="min-w-0">
-            <span className="text-[11px] font-semibold flex items-center gap-1.5 opacity-90">
+            <span className="text-[10.5px] font-medium flex items-center gap-1.5 opacity-85">
               <Compass className="w-3.5 h-3.5 text-blue-500 shrink-0" />
-              <span>ตำแหน่งปัจจุบันของคุณ:</span>
+              <span>ตำแหน่งปัจจุบัน:</span>
             </span>
-            <span className="text-xs sm:text-sm font-extrabold mt-0.5 block leading-tight">
+            <span className="text-xs sm:text-sm font-bold mt-0.5 block leading-tight text-slate-900 dark:text-white">
               {isAllDistricts ? 'ภาพรวมพื้นที่สมุทรปราการ' : 'ตำแหน่งของท่าน '}{displayDistrictLabel}
             </span>
           </div>
           <div className="text-right shrink-0">
-            <span className={`text-[10px] block ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>อุณหภูมิจริง • สภาพอากาศ</span>
+            <span className={`text-[10px] block ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>อุณหภูมิ • สภาพ</span>
             <span className={`text-xs sm:text-sm font-black ${isDark ? 'text-cyan-300' : 'text-blue-700'}`}>
               🌡️ {matchedDistrict?.temperature || forecast?.temp || 28}°C <span className="text-[10px] font-semibold opacity-85">({status})</span>
             </span>
           </div>
         </div>
 
-        {/* 6 Districts Compact List (คาดการณ์แยก 6 อำเภอ: โอกาสเกิดฝน ช่วงเวลา และระยะเวลาตกต่อเนื่อง) */}
-        <div className="mt-3">
-          <span className={`text-[11px] font-bold block mb-1.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-            คาดการณ์โอกาสเกิดฝนและช่วงเวลาแยก 6 อำเภอ:
-          </span>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        {/* ========================================================= */}
+        {/* COMPACT LIST VIEW แนวตั้ง (แสดงชื่อเต็ม ไม่เบียด ไม่ล้น 'อำเน...') */}
+        {/* ========================================================= */}
+        <div className="mt-2.5">
+          <div className="flex items-center justify-between mb-1.5">
+            <span className={`text-[11px] font-bold block ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+              ความเสี่ยงฝนตกแยก 6 อำเภอ (จ.สมุทรปราการ):
+            </span>
+            {lastUpdatedTime && (
+              <span className={`text-[10px] font-mono ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+                อัปเดต {lastUpdatedTime}
+              </span>
+            )}
+          </div>
+
+          <div className="space-y-1.5">
             {districtList.map((d, idx) => {
-              const districtName = d.district.startsWith('อำเภอ') || d.district.startsWith('อ.') 
-                ? d.district 
-                : `อำเภอ${d.district}`;
+              const raw = d.district.replace(/^(อ\.|อำเภอ)/, '').trim();
+              const fullName = raw.includes('เมือง') ? 'อำเภอเมืองสมุทรปราการ' : `อำเภอ${raw}`;
+              const isMatched = userDistrict && (userDistrict.includes(raw) || raw.includes(userDistrict.replace(/^(อ\.|อำเภอ)/, '').trim()));
+
               return (
                 <div
                   key={idx}
-                  className={`p-2.5 rounded-2xl border flex flex-col justify-between text-xs transition-colors ${
-                    userDistrict && userDistrict.includes(d.district)
-                      ? (isDark ? 'bg-blue-950/80 border-cyan-500/60 text-cyan-200' : 'bg-blue-50 border-blue-400 text-blue-900 font-bold')
-                      : (isDark ? 'bg-slate-850/60 border-slate-800 text-slate-300' : 'bg-slate-50 border-slate-200 text-slate-700')
+                  className={`p-2 rounded-md border text-xs transition-colors flex items-center justify-between gap-2 ${
+                    isMatched
+                      ? (isDark ? 'bg-blue-950/60 border-blue-700 text-cyan-200' : 'bg-blue-50/80 border-blue-300 text-blue-950 font-medium')
+                      : (isDark ? 'bg-slate-850/50 border-slate-800 text-slate-300 hover:bg-slate-800/60' : 'bg-slate-50/80 border-slate-200 text-slate-700 hover:bg-slate-100/70')
                   }`}
                 >
-                  <div className="flex items-center justify-between gap-1 mb-1.5">
-                    <div className="flex items-center gap-1.5 min-w-0">
-                      <span className="text-sm shrink-0">{d.icon || '🌦️'}</span>
-                      <span className="font-bold truncate text-slate-900 dark:text-white">
-                        {districtName}
+                  {/* Left: Icon + Full District Name + Temperature */}
+                  <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1">
+                    <span className="text-sm shrink-0">{d.icon || '🌦️'}</span>
+                    <span className={`font-semibold text-xs whitespace-nowrap ${
+                      isDark ? 'text-slate-100' : 'text-slate-900'
+                    } ${isMatched ? 'font-bold text-blue-700 dark:text-cyan-300' : ''}`}>
+                      {fullName}
+                    </span>
+                    {d.temperature && (
+                      <span className="text-[10.5px] font-mono font-medium text-slate-500 dark:text-slate-400 shrink-0">
+                        {d.temperature}°C
                       </span>
-                      {d.temperature && (
-                        <span className="text-[10px] font-mono font-medium text-slate-500 dark:text-slate-400 shrink-0">
-                          {d.temperature}°C
-                        </span>
-                      )}
-                    </div>
-                    <span className={`text-[11px] px-2 py-0.5 rounded-lg font-bold border shrink-0 ${
-                      d.probability >= 60 
-                        ? (isDark ? 'bg-amber-950/90 text-amber-300 border-amber-800' : 'bg-amber-100 text-amber-900 border-amber-300')
-                        : (isDark ? 'bg-slate-800 text-slate-300 border-slate-700' : 'bg-slate-200 text-slate-700 border-slate-300')
-                    }`}>
-                      โอกาส {d.probability}%
+                    )}
+                    {/* Time Window (Shown neatly on horizontal line without line wrap) */}
+                    <span className="hidden xl:inline text-[10.5px] text-slate-500 dark:text-slate-400 truncate">
+                      • {d.timeWindow || 'ไม่มีแนวโน้มฝนตกหนัก'}
                     </span>
                   </div>
 
-                  <div className="flex flex-col gap-1.5 text-[11px] pt-1.5 border-t border-slate-200/60 dark:border-slate-800/80">
-                    <div className="flex items-start gap-1.5 text-slate-600 dark:text-slate-400">
-                      <Clock className="w-3.5 h-3.5 shrink-0 text-blue-500 mt-0.5" />
-                      <span className="shrink-0 font-medium">ช่วงเวลา:</span>
-                      <span className="font-semibold text-slate-800 dark:text-slate-200 break-words leading-tight">
-                        {d.timeWindow || 'ไม่มีแนวโน้มฝนตกหนัก'}
-                      </span>
-                    </div>
-                    <div className="flex items-start gap-1.5 text-slate-600 dark:text-slate-400">
-                      <span className="text-xs shrink-0 mt-0.5">⏱️</span>
-                      <span className="shrink-0 font-medium">ระยะเวลา:</span>
-                      <span className="font-semibold text-slate-800 dark:text-slate-200 break-words leading-tight">
-                        {d.durationText || 'ไม่มีสัญญาณฝนต่อเนื่อง'}
-                      </span>
-                    </div>
+                  {/* Right: Rain Probability Badge */}
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <span className={`text-[10.5px] px-2 py-0.5 rounded-md font-bold border shrink-0 ${
+                      d.probability >= 60 
+                        ? (isDark ? 'bg-amber-950/80 text-amber-300 border-amber-800' : 'bg-amber-50 text-amber-900 border-amber-300')
+                        : (isDark ? 'bg-slate-800 text-slate-300 border-slate-700' : 'bg-slate-100 text-slate-700 border-slate-200')
+                    }`}>
+                      ฝน {d.probability}%
+                    </span>
                   </div>
                 </div>
               );
@@ -310,23 +322,40 @@ export default function RainForecast24hCard({
           </div>
         </div>
 
-        {/* Radar Quick Button (Optional) */}
-        {onOpenRadar && (
-          <div className="mt-3 pt-2.5 border-t border-slate-100 dark:border-slate-800 flex justify-end">
+        {/* Action Footer: Radar Quick Link & Sync */}
+        <div className="mt-2.5 pt-2 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs">
+          {onOpenPublicUpdates && (
             <button
+              type="button"
+              onClick={() => {
+                playClickSound();
+                onOpenPublicUpdates();
+              }}
+              className={`text-[11px] font-semibold flex items-center gap-1 cursor-pointer transition-colors ${
+                isDark ? 'text-slate-400 hover:text-white' : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <Activity className="w-3.5 h-3.5 text-blue-500" />
+              <span>สรุปสถานการณ์ประจำวัน</span>
+            </button>
+          )}
+
+          {onOpenRadar && (
+            <button
+              type="button"
               onClick={() => {
                 playClickSound();
                 onOpenRadar();
               }}
-              className={`text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer active:scale-95 ${
+              className={`text-[11px] font-semibold flex items-center gap-1 transition-colors cursor-pointer ml-auto ${
                 isDark ? 'text-cyan-400 hover:text-cyan-300' : 'text-blue-600 hover:text-blue-700'
               }`}
             >
               <Radio className="w-3.5 h-3.5" />
-              <span>เปิดดูภาพเรดาร์ตรวจฝนสด &rarr;</span>
+              <span>เรดาร์ฝนสด &rarr;</span>
             </button>
-          </div>
-        )}
+          )}
+        </div>
 
       </div>
     </div>

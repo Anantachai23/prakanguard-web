@@ -2408,7 +2408,7 @@ export default function App() {
 
         {/* Floating Toast Notification — ขนาดกะทัดรัด ตัวอักษรคมชัด อ่านง่าย */}
         {latestUpdateNotification && (
-          <div className={`fixed top-[56px] sm:top-[68px] left-1/2 -translate-x-1/2 z-[85] px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-full shadow-2xl backdrop-blur-md flex items-center gap-2 max-w-[90vw] sm:max-w-md pointer-events-auto animate-in fade-in slide-in-from-top-2 duration-300 border ${
+          <div className={`fixed top-[56px] sm:top-[68px] left-1/2 -translate-x-1/2 z-[85] px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-md shadow-md backdrop-blur-md flex items-center gap-2 max-w-[90vw] sm:max-w-md pointer-events-auto animate-in fade-in slide-in-from-top-2 duration-300 border ${
             latestUpdateNotification.includes('⚠️') || latestUpdateNotification.includes('ไม่ได้อยู่ใน')
               ? 'bg-slate-900 border-amber-400 text-amber-200 shadow-amber-950/50'
               : 'bg-slate-900 border-emerald-400 text-emerald-200 shadow-emerald-950/50'
@@ -2422,7 +2422,7 @@ export default function App() {
             <button
               type="button"
               onClick={() => setLatestUpdateNotification(null)}
-              className="p-0.5 hover:bg-white/20 rounded-full text-slate-400 hover:text-white cursor-pointer ml-1 shrink-0"
+              className="p-0.5 hover:bg-white/20 rounded-md text-slate-400 hover:text-white cursor-pointer ml-1 shrink-0"
               title="ปิดการแจ้งเตือน"
             >
               <X className="w-3 h-3" />
@@ -2433,7 +2433,7 @@ export default function App() {
         {/* Out of Province Warning Banner (เมื่อเปิดเว็บขึ้นมาจะแสดง 5 วินาทีแล้วหายไปอัตโนมัติ) */}
         {showOutOfProvinceBanner && userLocation && !userDistrict && (
           <div className="fixed top-[58px] sm:top-[72px] left-1/2 -translate-x-1/2 z-[80] w-auto max-w-[94vw] sm:max-w-md pointer-events-auto animate-in fade-in slide-in-from-top-2 duration-300">
-            <div className="flex items-center gap-2.5 px-3.5 py-2 rounded-2xl bg-amber-950/95 text-amber-200 border border-amber-500/50 shadow-xl backdrop-blur-xl">
+            <div className="flex items-center gap-2.5 px-3.5 py-2 rounded-md bg-amber-950/95 text-amber-200 border border-amber-500/50 shadow-md backdrop-blur-md">
               <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 animate-bounce" />
               <div className="flex-1 min-w-0 text-xs">
                 <span className="font-bold block text-white">ตำแหน่งท่านไม่ได้อยู่ในจังหวัดสมุทรปราการ</span>
@@ -2445,14 +2445,14 @@ export default function App() {
                   setSelectedDistrict('ทั้งหมด');
                   setFlyToLocation({ lat: 13.6000, lng: 100.6500, zoom: 11, ts: Date.now() });
                 }}
-                className="px-2.5 py-1 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-400/40 text-[10px] font-bold shrink-0 cursor-pointer active:scale-95 transition-all"
+                className="px-2.5 py-1 rounded-md bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-400/40 text-[10px] font-bold shrink-0 cursor-pointer active:scale-95 transition-all"
               >
                 ดูสมุทรปราการ
               </button>
               <button
                 type="button"
                 onClick={() => setShowOutOfProvinceBanner(false)}
-                className="p-1 hover:bg-white/10 rounded-lg text-amber-300/80 hover:text-white cursor-pointer ml-0.5"
+                className="p-1 hover:bg-white/10 rounded-md text-amber-300/80 hover:text-white cursor-pointer ml-0.5"
                 title="ปิด"
               >
                 <X className="w-3.5 h-3.5" />
@@ -2465,12 +2465,12 @@ export default function App() {
         {/* Admin Web Announcement Banner (แสดงแถบด้านล่างบนมือถือ ไม่บังปุ่มดาวเทียมและคอนโทรลแผนที่ด้านบน) */}
         {showAnnouncementBanner && activeAnnouncement && (
           <div className="fixed bottom-16 sm:bottom-auto sm:top-14 left-2 right-2 sm:left-1/2 sm:-translate-x-1/2 sm:w-[92vw] sm:max-w-2xl z-[95] pointer-events-auto animate-in fade-in slide-in-from-bottom-3 sm:slide-in-from-top-3 duration-300">
-            <div className={`w-full p-3 sm:px-4 sm:py-3.5 rounded-2xl border shadow-2xl backdrop-blur-xl flex flex-col gap-2 transition-all overflow-hidden ${
-              isDark ? 'bg-slate-900/98 text-slate-100 border-blue-500/50 shadow-blue-950/50' : 'bg-white/98 text-slate-900 border-blue-400/60 shadow-xl'
+            <div className={`w-full p-3 sm:px-4 sm:py-3.5 rounded-lg border shadow-lg backdrop-blur-md flex flex-col gap-2 transition-all overflow-hidden ${
+              isDark ? 'bg-slate-900/98 text-slate-100 border-slate-800 shadow-slate-950/50' : 'bg-white/98 text-slate-900 border-slate-300 shadow-md'
             }`}>
-              <div className="flex items-center justify-between gap-2 border-b pb-1.5 border-blue-200/40 dark:border-blue-900/40">
+              <div className="flex items-center justify-between gap-2 border-b pb-1.5 border-slate-200 dark:border-slate-800">
                 <div className="flex items-center gap-2 min-w-0">
-                  <span className="flex items-center justify-center w-6 h-6 rounded-lg bg-blue-600 text-white shrink-0">
+                  <span className="flex items-center justify-center w-6 h-6 rounded-md bg-blue-600 text-white shrink-0">
                     <Bell className="w-3.5 h-3.5 animate-pulse" />
                   </span>
                   <span className="text-xs sm:text-xs font-bold text-blue-600 dark:text-cyan-400 truncate tracking-wide">
@@ -2484,7 +2484,7 @@ export default function App() {
                     lsAnnAddDismiss(activeAnnouncement.id);
                     setShowAnnouncementBanner(false);
                   }}
-                  className="p-1 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-white cursor-pointer shrink-0 transition-colors active:scale-90"
+                  className="p-1 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-white cursor-pointer shrink-0 transition-colors active:scale-90"
                   title="ปิดประกาศ"
                 >
                   <X className="w-4 h-4" />
@@ -2494,9 +2494,9 @@ export default function App() {
                 {activeAnnouncement.message}
               </div>
               {/* 10-Second Auto-dismiss Progress Bar (ค่อยๆ ลดลงนุ่มนวล) */}
-              <div className="w-full bg-blue-100 dark:bg-blue-950/60 h-1 rounded-full overflow-hidden mt-0.5">
+              <div className="w-full bg-slate-100 dark:bg-slate-800 h-1 rounded-md overflow-hidden mt-0.5">
                 <div 
-                  className="bg-blue-500 h-full rounded-full"
+                  className="bg-blue-600 h-full rounded-md"
                   style={{ animation: 'pg-announcement-timer 10s linear forwards' }}
                 />
               </div>
@@ -2506,14 +2506,14 @@ export default function App() {
 
         {/* Active District Mobile Indicator with Quick Reset (กดครั้งเดียวกลับดูทั้งจังหวัด ไม่สับสน) */}
         {selectedDistrict !== 'ทั้งหมด' && isTopPanelCollapsed && (
-          <div className="md:hidden absolute top-2.5 right-14 z-20 pointer-events-auto flex items-center gap-1.5 px-2.5 py-1.5 rounded-2xl bg-blue-600/95 text-white shadow-lg border border-blue-400 text-xs font-bold animate-in fade-in">
+          <div className="md:hidden absolute top-2.5 right-14 z-20 pointer-events-auto flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-blue-600/95 text-white shadow-xs border border-blue-500 text-xs font-semibold animate-in fade-in">
             <span className="truncate max-w-[120px]">📍 {selectedDistrict.replace(/^อ\./, '').replace('เมืองสมุทรปราการ', 'เมือง')}</span>
             <button
               onClick={() => {
                 playSelectSound();
                 setSelectedDistrict('ทั้งหมด');
               }}
-              className="px-1.5 py-0.5 rounded-lg bg-white/20 hover:bg-white/30 text-[10px] cursor-pointer active:scale-95 transition-transform"
+              className="px-1.5 py-0.5 rounded-md bg-white/20 hover:bg-white/30 text-[10px] cursor-pointer active:scale-95 transition-transform"
               title="ล้างตัวกรองอำเภอ กลับสู่มุมมองรวม"
             >
               ✕ ดูทั้งหมด
@@ -2528,15 +2528,15 @@ export default function App() {
               playToggleSound(true);
               setIsTopPanelCollapsed(false);
             }}
-            className={`absolute top-2.5 md:top-3.5 left-2.5 md:left-4 z-20 pointer-events-auto flex items-center gap-1.5 px-3 py-1.5 rounded-2xl shadow-xl border text-xs font-bold backdrop-blur-xl transition-all hover:scale-105 active:scale-95 cursor-pointer ${
+            className={`absolute top-2.5 md:top-3.5 left-2.5 md:left-4 z-20 pointer-events-auto flex items-center gap-1.5 px-3 py-1.5 rounded-md shadow-xs border text-xs font-semibold backdrop-blur-md transition-all active:scale-95 cursor-pointer ${
               isDark 
-                ? 'bg-slate-900/95 text-slate-100 border-slate-700 hover:border-blue-500' 
-                : 'bg-white/95 text-slate-800 border-slate-200 hover:border-blue-500'
+                ? 'bg-slate-900/95 text-slate-100 border-slate-800 hover:border-slate-700' 
+                : 'bg-white/95 text-slate-800 border-slate-200 hover:border-slate-300'
             }`}
             title="คลิกเพื่อขยายแถบค้นหาและตัวกรองอำเภอ"
           >
             <PanelLeftOpen className="w-3.5 h-3.5 text-blue-500 shrink-0" />
-            <span className="text-xs font-bold">
+            <span className="text-xs font-semibold">
               {selectedDistrict === 'ทั้งหมด' ? 'ค้นหา / กรอง' : selectedDistrict.replace(/^อ\./, '').replace('เมืองสมุทรปราการ','เมือง')}
             </span>
           </button>
@@ -2572,10 +2572,10 @@ export default function App() {
                   }
                 }}
                 placeholder="ค้นหาจุดเสี่ยงหรือชื่อถนน (กิ่งแก้ว, วัดด่าน)..."
-                className={`w-full text-xs sm:text-sm pl-8 sm:pl-9 pr-7 sm:pr-8 py-1.5 sm:py-2 rounded-xl sm:rounded-2xl border shadow-md focus:outline-none transition-colors backdrop-blur-md font-medium ${
+                className={`w-full text-xs sm:text-sm pl-8 sm:pl-9 pr-7 sm:pr-8 py-1.5 sm:py-2 rounded-md border shadow-xs focus:outline-none transition-colors backdrop-blur-md font-medium ${
                   isDark 
-                    ? 'bg-slate-900/95 text-slate-100 border-slate-700 placeholder-slate-500 focus:border-blue-400 focus:ring-2 focus:ring-blue-900/50' 
-                    : 'bg-white/95 text-slate-800 border-slate-300 placeholder-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100'
+                    ? 'bg-slate-900/95 text-slate-100 border-slate-800 placeholder-slate-500 focus:border-blue-500' 
+                    : 'bg-white/95 text-slate-800 border-slate-200 placeholder-slate-400 focus:border-blue-500'
                 }`}
               />
               <Search className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-400 absolute left-2.5 sm:left-3 top-2 sm:top-2.5" />
@@ -2593,8 +2593,8 @@ export default function App() {
 
               {/* Instant Search Suggestions & Popular Colloquial Shortcuts Dropdown */}
               {isSearchFocused && (
-                <div className={`absolute top-full left-0 right-0 mt-1 border rounded-2xl shadow-2xl max-h-72 overflow-y-auto z-50 p-2 text-xs backdrop-blur-xl ${
-                  isDark ? 'bg-slate-900/98 border-slate-700 text-slate-100 shadow-slate-950/80' : 'bg-white/98 border-slate-200 text-slate-800 shadow-slate-400/40'
+                <div className={`absolute top-full left-0 right-0 mt-1 border rounded-lg shadow-md max-h-72 overflow-y-auto z-50 p-2 text-xs backdrop-blur-md ${
+                  isDark ? 'bg-slate-900/98 border-slate-800 text-slate-100 shadow-slate-950/80' : 'bg-white/98 border-slate-200 text-slate-800 shadow-slate-300/40'
                 }`}>
                   {!searchQuery.trim() ? (
                     <div>
@@ -2608,16 +2608,16 @@ export default function App() {
                             key={idx}
                             type="button"
                             onClick={() => handleSelectPopularSuggestion(item)}
-                            className={`w-full p-2.5 rounded-xl cursor-pointer border transition-all text-left flex flex-col justify-between select-none active:scale-[0.98] ${
+                            className={`w-full p-2 rounded-md cursor-pointer border transition-all text-left flex flex-col justify-between select-none active:scale-[0.98] ${
                               isDark 
-                                ? 'bg-slate-800/80 hover:bg-blue-900/40 border-slate-700/80 hover:border-blue-500/60 text-slate-200' 
-                                : 'bg-slate-50 hover:bg-blue-50 border-slate-200/80 hover:border-blue-300 text-slate-800'
+                                ? 'bg-slate-850 hover:bg-slate-800 border-slate-800 text-slate-200' 
+                                : 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-800'
                             }`}
                           >
                             <div className="flex items-center justify-between gap-1 mb-0.5">
-                              <span className="font-bold text-xs truncate">{item.label}</span>
-                              <span className={`text-[9px] px-1.5 py-0.5 rounded font-medium shrink-0 ${
-                                isDark ? 'bg-slate-700 text-slate-300' : 'bg-slate-200 text-slate-700'
+                              <span className="font-semibold text-xs truncate">{item.label}</span>
+                              <span className={`text-[9px] px-1.5 py-0.5 rounded-md font-medium shrink-0 ${
+                                isDark ? 'bg-slate-800 text-slate-300' : 'bg-slate-200 text-slate-700'
                               }`}>
                                 {item.district ? item.district.replace(/^อ\./, '').replace('เมืองสมุทรปราการ', 'เมือง') : ''}
                               </span>
@@ -2639,7 +2639,7 @@ export default function App() {
                             key={idx}
                             type="button"
                             onClick={() => handleSelectPopularSuggestion(item)}
-                            className="px-2.5 py-1 rounded-lg text-[10px] bg-blue-500/10 text-blue-500 hover:bg-blue-500 hover:text-white border border-blue-400/20 font-medium transition-colors cursor-pointer active:scale-95"
+                            className="px-2.5 py-1 rounded-md text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-blue-600 hover:text-white dark:hover:bg-blue-600 border border-slate-200 dark:border-slate-700 font-medium transition-colors cursor-pointer active:scale-95"
                           >
                             {item.label}
                           </button>
@@ -2654,17 +2654,17 @@ export default function App() {
                           key={p.id}
                           type="button"
                           onClick={() => handleSelectLocation(p)}
-                          className={`w-full p-2.5 rounded-xl cursor-pointer flex items-center justify-between transition-colors text-left select-none active:scale-[0.98] ${
-                            isDark ? 'hover:bg-slate-800 text-slate-200' : 'hover:bg-blue-50 text-slate-800'
+                          className={`w-full p-2 rounded-md cursor-pointer flex items-center justify-between transition-colors text-left select-none active:scale-[0.98] ${
+                            isDark ? 'hover:bg-slate-850 text-slate-200' : 'hover:bg-slate-100 text-slate-800'
                           }`}
                         >
                           <div className="truncate pr-2">
-                            <span className={`font-bold block truncate ${isDark ? 'text-white' : 'text-slate-900'}`}>{p.name}</span>
+                            <span className={`font-semibold block truncate ${isDark ? 'text-white' : 'text-slate-900'}`}>{p.name}</span>
                             <span className={`text-[10px] block truncate ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
                               {p.district.replace(/^อ\./, '')} • {p.depthRange} {p.aliases ? `• ${p.aliases.slice(0, 3).join(', ')}` : ''}
                             </span>
                           </div>
-                          <span className={`text-[10px] px-2 py-0.5 rounded font-bold shrink-0 ${
+                          <span className={`text-[10px] px-2 py-0.5 rounded-md font-bold shrink-0 ${
                             p.level === 3 ? (isDark ? 'bg-rose-950/80 text-rose-300 border border-rose-800' : 'bg-rose-100 text-rose-800') :
                             p.level === 2 ? (isDark ? 'bg-amber-950/80 text-amber-300 border border-amber-800' : 'bg-amber-100 text-amber-800') : 
                             (isDark ? 'bg-emerald-950/80 text-emerald-300 border border-emerald-800' : 'bg-emerald-100 text-emerald-800')
@@ -2680,17 +2680,17 @@ export default function App() {
                           key={cr.id}
                           type="button"
                           onClick={() => handleSelectLocation(cr)}
-                          className={`w-full p-2.5 rounded-xl cursor-pointer flex items-center justify-between transition-colors border-t border-dashed text-left select-none active:scale-[0.98] ${
-                            isDark ? 'hover:bg-blue-950/50 text-slate-200 border-slate-800' : 'hover:bg-blue-50 text-slate-800 border-slate-100'
+                          className={`w-full p-2 rounded-md cursor-pointer flex items-center justify-between transition-colors border-t border-slate-100 dark:border-slate-800 text-left select-none active:scale-[0.98] ${
+                            isDark ? 'hover:bg-slate-850 text-slate-200' : 'hover:bg-slate-100 text-slate-800'
                           }`}
                         >
                           <div className="truncate pr-2">
-                            <span className={`font-bold flex items-center gap-1 ${isDark ? 'text-cyan-300' : 'text-blue-700'}`}>
+                            <span className={`font-semibold flex items-center gap-1 ${isDark ? 'text-cyan-300' : 'text-blue-700'}`}>
                               <span>💧 {cr.name}</span>
                             </span>
                             <span className={`text-[10px] block ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{cr.district.replace(/^อ\./, '')} • ระดับ{cr.bodyLevelLabel}</span>
                           </div>
-                          <span className={`text-[10px] px-2 py-0.5 rounded font-bold shrink-0 bg-blue-100 text-blue-800 border border-blue-200 dark:bg-blue-950/80 dark:text-cyan-300 dark:border-blue-800`}>
+                          <span className={`text-[10px] px-2 py-0.5 rounded-md font-bold shrink-0 bg-blue-100 text-blue-800 border border-blue-200 dark:bg-blue-950/80 dark:text-cyan-300 dark:border-blue-800`}>
                             ภาคประชาชน
                           </span>
                         </button>
@@ -2701,25 +2701,25 @@ export default function App() {
               )}
             </div>
 
-            {/* Collapse Side Button (Icon Only with Folding Symbol) */}
+            {/* Collapse Side Button */}
             <button
               onClick={() => {
                 playToggleSound(false);
                 setIsTopPanelCollapsed(true);
               }}
-              className={`p-2 sm:p-2.5 rounded-2xl border shadow-md flex items-center justify-center transition-all cursor-pointer backdrop-blur-xl shrink-0 group active:scale-95 ${
+              className={`p-2 sm:p-2 rounded-md border shadow-xs flex items-center justify-center transition-all cursor-pointer backdrop-blur-md shrink-0 active:scale-95 ${
                 isDark 
-                  ? 'bg-slate-900/90 hover:bg-slate-800 text-slate-300 hover:text-white border-slate-700/80 hover:border-blue-500/50' 
-                  : 'bg-white/90 hover:bg-slate-50 text-slate-600 hover:text-slate-900 border-slate-200 hover:border-blue-400'
+                  ? 'bg-slate-900/95 hover:bg-slate-850 text-slate-300 hover:text-white border-slate-800' 
+                  : 'bg-white/95 hover:bg-slate-50 text-slate-600 hover:text-slate-900 border-slate-200'
               }`}
               title="ย่อแถบเมนู (พับเก็บเข้าด้านข้าง)"
               aria-label="ย่อแถบเมนู"
             >
-              <PanelLeftClose className="w-4 h-4 sm:w-4.5 sm:h-4.5 group-hover:scale-110 transition-transform text-slate-400 group-hover:text-blue-500" />
+              <PanelLeftClose className="w-4 h-4 text-slate-400 hover:text-blue-500" />
             </button>
           </div>
 
-          {/* 24-HOUR RAIN FORECAST & LIVE METEOROLOGICAL TELEMETRY CARD (ซ่อนบนมือถือตามสั่ง ให้เหลือแค่ด้านล่าง/เปิดดูได้บนจอใหญ่) */}
+          {/* 24-HOUR RAIN FORECAST & LIVE METEOROLOGICAL TELEMETRY CARD */}
           <div className="pointer-events-auto w-full hidden md:block">
             <RainForecast24hCard
               forecast={weather?.forecast24h}
@@ -2736,11 +2736,10 @@ export default function App() {
             />
           </div>
 
-
-          {/* District Dropdown Selector (แถบเลือกอำเภอแบบกดแถบลงมาตามรูปที่ 2 พร้อมระบุตำแหน่ง) */}
+          {/* District Dropdown Selector */}
           <div className="pointer-events-auto flex items-center gap-1.5 w-full max-w-full">
-            <div className={`relative flex-1 min-w-0 flex items-center px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl sm:rounded-2xl border shadow-md backdrop-blur-xl transition-colors ${
-              isDark ? 'bg-slate-900/95 border-slate-700 text-slate-100' : 'bg-white/95 border-slate-200 text-slate-800'
+            <div className={`relative flex-1 min-w-0 flex items-center px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-md border shadow-xs backdrop-blur-md transition-colors ${
+              isDark ? 'bg-slate-900/95 border-slate-800 text-slate-100' : 'bg-white/95 border-slate-200 text-slate-800'
             }`}>
               <MapPin className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-500 shrink-0 mr-1.5 sm:mr-2" />
               <select
@@ -2758,7 +2757,7 @@ export default function App() {
                     }
                   }
                 }}
-                className={`w-full bg-transparent text-[11px] sm:text-sm font-bold focus:outline-hidden cursor-pointer appearance-none ${
+                className={`w-full bg-transparent text-[11px] sm:text-sm font-semibold focus:outline-hidden cursor-pointer appearance-none ${
                   isDark ? 'text-white' : 'text-slate-900'
                 }`}
                 title="คลิกเพื่อเลือกดูตามอำเภอ"
@@ -2779,13 +2778,13 @@ export default function App() {
               <ChevronDown className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-400 shrink-0 pointer-events-none ml-1" />
             </div>
 
-            {/* User GPS Location Badge (ระบุว่าอยู่อำเภอไหน) */}
+            {/* User GPS Location Badge */}
             {userLocation ? (
               <div 
-                className={`shrink-0 flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 sm:py-2 rounded-xl sm:rounded-2xl border text-[10px] sm:text-xs font-bold shadow-md backdrop-blur-xl ${
+                className={`shrink-0 flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-md border text-[10px] sm:text-xs font-semibold shadow-xs backdrop-blur-md ${
                   userDistrict 
-                    ? (isDark ? 'bg-blue-950/90 border-blue-800 text-cyan-300' : 'bg-blue-50/95 border-blue-200 text-blue-900')
-                    : (isDark ? 'bg-amber-950/90 border-amber-800 text-amber-300' : 'bg-amber-50/95 border-amber-200 text-amber-900')
+                    ? (isDark ? 'bg-slate-850 border-slate-750 text-cyan-300' : 'bg-slate-50 border-slate-200 text-slate-800')
+                    : (isDark ? 'bg-amber-950/80 border-amber-800 text-amber-300' : 'bg-amber-50 border-amber-200 text-amber-900')
                 }`}
                 title="ตำแหน่งปัจจุบันของคุณ"
               >
@@ -2798,8 +2797,8 @@ export default function App() {
               <button
                 type="button"
                 onClick={() => handleLocateMe(false)}
-                className={`shrink-0 flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 sm:py-2 rounded-xl sm:rounded-2xl border text-[10px] sm:text-xs font-semibold shadow-md backdrop-blur-xl cursor-pointer active:scale-95 transition-all ${
-                  isDark ? 'bg-slate-900/90 border-slate-700 text-slate-300 hover:text-white' : 'bg-white/95 border-slate-200 text-slate-700 hover:text-slate-900'
+                className={`shrink-0 flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-md border text-[10px] sm:text-xs font-semibold shadow-xs backdrop-blur-md cursor-pointer active:scale-95 transition-all ${
+                  isDark ? 'bg-slate-900/90 border-slate-800 text-slate-300 hover:text-white' : 'bg-white/95 border-slate-200 text-slate-700 hover:text-slate-900'
                 }`}
                 title="คลิกเพื่อเปิดตำแหน่งและระบุพิกัด GPS"
               >
@@ -2822,35 +2821,35 @@ export default function App() {
               try { playModalOpenSound(); } catch (_) {}
               setIsStandardsModalOpen(true);
             }}
-            className={`px-3.5 py-2 rounded-2xl border text-xs flex items-center gap-3 shadow-lg backdrop-blur-md cursor-pointer transition-all hover:scale-[1.02] active:scale-95 group ${
+            className={`px-3 py-1.5 rounded-md border text-xs flex items-center gap-2.5 shadow-xs backdrop-blur-md cursor-pointer transition-all active:scale-95 group ${
               isDark 
-                ? 'bg-slate-900/95 border-slate-700 hover:border-cyan-500/60 text-slate-300 shadow-xl' 
-                : 'bg-white/95 border-slate-200 hover:border-blue-400 text-slate-700'
+                ? 'bg-slate-900/95 border-slate-800 hover:border-slate-700 text-slate-300' 
+                : 'bg-white/95 border-slate-200 hover:border-slate-300 text-slate-700'
             }`}
             title="คลิกเพื่อดูรายละเอียดเกณฑ์วัดระดับน้ำและผลกระทบฉบับเต็ม"
           >
-            <div className="flex items-center gap-1.5 font-bold">
-              <BookOpen className={`w-4 h-4 transition-transform group-hover:scale-110 ${isDark ? 'text-cyan-400' : 'text-blue-600'}`} />
+            <div className="flex items-center gap-1.5 font-semibold">
+              <BookOpen className={`w-3.5 h-3.5 ${isDark ? 'text-cyan-400' : 'text-blue-600'}`} />
               <span className={isDark ? 'text-white' : 'text-slate-900'}>เกณฑ์ระดับน้ำ:</span>
             </div>
 
             <div className="flex items-center space-x-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
-              <span className="font-semibold text-emerald-700 dark:text-emerald-400">ปกติ 5-20 ซม.</span>
+              <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+              <span className="font-medium text-emerald-700 dark:text-emerald-400">ปกติ 5-20 ซม.</span>
             </div>
 
-            <span className={isDark ? 'text-slate-700' : 'text-slate-300'}>•</span>
+            <span className={isDark ? 'text-slate-800' : 'text-slate-300'}>•</span>
 
             <div className="flex items-center space-x-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
-              <span className="font-semibold text-amber-700 dark:text-amber-400">ปานกลาง 21-50 ซม.</span>
+              <span className="w-2 h-2 rounded-full bg-amber-500"></span>
+              <span className="font-medium text-amber-700 dark:text-amber-400">ปานกลาง 21-50 ซม.</span>
             </div>
 
-            <span className={isDark ? 'text-slate-700' : 'text-slate-300'}>•</span>
+            <span className={isDark ? 'text-slate-800' : 'text-slate-300'}>•</span>
 
             <div className="flex items-center space-x-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse"></span>
-              <span className="text-rose-600 dark:text-rose-400 font-bold">วิกฤต &gt;50 ซม.</span>
+              <span className="w-2 h-2 rounded-full bg-rose-600 animate-pulse"></span>
+              <span className="text-rose-600 dark:text-rose-400 font-semibold">วิกฤต &gt;50 ซม.</span>
             </div>
 
             <span 
@@ -2859,10 +2858,10 @@ export default function App() {
                 try { playModalOpenSound(); } catch (_) {}
                 setIsStandardsModalOpen(true);
               }}
-              className={`ml-1 text-[11px] font-bold px-2 py-0.5 rounded-lg border flex items-center gap-1 transition-colors cursor-pointer ${
+              className={`ml-1 text-[11px] font-medium px-2 py-0.5 rounded-md border flex items-center gap-1 transition-colors cursor-pointer ${
                 isDark 
-                  ? 'bg-blue-950/80 text-cyan-300 border-blue-800 group-hover:bg-blue-900' 
-                  : 'bg-blue-50 text-blue-700 border-blue-200 group-hover:bg-blue-100'
+                  ? 'bg-slate-800 text-slate-200 border-slate-700 hover:bg-slate-700' 
+                  : 'bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200'
               }`}
             >
               ดูรายละเอียด ↗
@@ -2872,18 +2871,18 @@ export default function App() {
 
         {/* MOBILE DOCKED WATER LEVEL STRIP & MAP SYMBOL GUIDE (เกณฑ์ระดับน้ำและไกด์สัญลักษณ์ 📷 และ 📉) */}
         <div className="md:hidden fixed bottom-[66px] left-1/2 -translate-x-1/2 z-30 pointer-events-auto select-none max-w-[96vw]">
-          <div className={`px-2.5 py-1 rounded-full border shadow-lg backdrop-blur-xl flex items-center gap-1.5 text-[9.5px] font-bold ${
+          <div className={`px-2 py-1 rounded-md border shadow-xs backdrop-blur-md flex items-center gap-1 text-[10px] font-semibold ${
             isDark 
-              ? 'bg-slate-950/95 border-slate-800 text-slate-300 shadow-black/50' 
-              : 'bg-white/95 border-slate-200 text-slate-700 shadow-slate-300/50'
+              ? 'bg-slate-950/95 border-slate-800 text-slate-300' 
+              : 'bg-white/95 border-slate-200 text-slate-700'
           }`}>
             {/* Green: 5-20 cm */}
             <button
               type="button"
               onClick={() => setSeverityFilter(prev => prev === '1' ? 'all' : '1')}
-              className={`px-2 py-0.5 rounded-full flex items-center gap-1 cursor-pointer transition-all active:scale-95 ${
+              className={`px-2 py-0.5 rounded-md flex items-center gap-1 cursor-pointer transition-all active:scale-95 ${
                 severityFilter === '1'
-                  ? 'bg-emerald-500 text-white font-extrabold shadow-xs'
+                  ? 'bg-emerald-600 text-white font-bold shadow-xs'
                   : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-emerald-600 dark:text-emerald-400'
               }`}
               title="5-20 ซม."
@@ -2896,9 +2895,9 @@ export default function App() {
             <button
               type="button"
               onClick={() => setSeverityFilter(prev => prev === '2' ? 'all' : '2')}
-              className={`px-2 py-0.5 rounded-full flex items-center gap-1 cursor-pointer transition-all active:scale-95 ${
+              className={`px-2 py-0.5 rounded-md flex items-center gap-1 cursor-pointer transition-all active:scale-95 ${
                 severityFilter === '2'
-                  ? 'bg-amber-500 text-slate-950 font-extrabold shadow-xs'
+                  ? 'bg-amber-500 text-slate-950 font-bold shadow-xs'
                   : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-amber-600 dark:text-amber-400'
               }`}
               title="21-50 ซม."
@@ -2911,9 +2910,9 @@ export default function App() {
             <button
               type="button"
               onClick={() => setSeverityFilter(prev => prev === '3' ? 'all' : '3')}
-              className={`px-2 py-0.5 rounded-full flex items-center gap-1 cursor-pointer transition-all active:scale-95 ${
+              className={`px-2 py-0.5 rounded-md flex items-center gap-1 cursor-pointer transition-all active:scale-95 ${
                 severityFilter === '3'
-                  ? 'bg-rose-500 text-white font-extrabold shadow-xs'
+                  ? 'bg-rose-600 text-white font-bold shadow-xs'
                   : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-rose-600 dark:text-rose-400'
               }`}
               title=">50 ซม."
@@ -2926,9 +2925,9 @@ export default function App() {
             <button
               type="button"
               onClick={() => setSeverityFilter(prev => prev === 'falling' ? 'all' : 'falling')}
-              className={`px-2 py-0.5 rounded-full flex items-center gap-1 cursor-pointer transition-all active:scale-95 ${
+              className={`px-2 py-0.5 rounded-md flex items-center gap-1 cursor-pointer transition-all active:scale-95 ${
                 severityFilter === 'falling'
-                  ? 'bg-teal-600 text-white font-extrabold shadow-xs'
+                  ? 'bg-teal-600 text-white font-bold shadow-xs'
                   : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-teal-600 dark:text-teal-400'
               }`}
               title="น้ำกำลังลด"
@@ -2941,20 +2940,20 @@ export default function App() {
               <button
                 type="button"
                 onClick={() => setSeverityFilter('all')}
-                className="px-1.5 py-0.5 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-[9px] font-bold cursor-pointer active:scale-95"
+                className="px-1.5 py-0.5 rounded-md bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-[9px] font-bold cursor-pointer active:scale-95"
               >
                 ✕
               </button>
             )}
 
             {/* Vertical Divider */}
-            <span className="w-[1px] h-3.5 bg-slate-300 dark:bg-slate-700"></span>
+            <span className="w-[1px] h-3.5 bg-slate-200 dark:bg-slate-800"></span>
 
             {/* Mobile Symbol Guide Trigger Button */}
             <button
               type="button"
               onClick={() => setIsMobileGuideOpen(prev => !prev)}
-              className="flex items-center px-1.5 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950/80 text-blue-600 dark:text-cyan-300 border border-blue-200 dark:border-blue-800 text-[10px] font-bold cursor-pointer active:scale-95 shrink-0"
+              className="flex items-center px-1.5 py-0.5 rounded-md bg-slate-100 dark:bg-slate-850 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-800 text-[10px] font-semibold cursor-pointer active:scale-95 shrink-0"
               title="แตะเพื่อดูความหมายสัญลักษณ์ 📷 (มีภาพถ่าย) และ 📉 (น้ำกำลังลด)"
             >
               <span className="flex items-center -space-x-0.5">
@@ -2972,21 +2971,21 @@ export default function App() {
             onClick={() => setIsMobileGuideOpen(false)}
           >
             <div 
-              className={`w-[86vw] max-w-[320px] max-h-[58vh] overflow-y-auto rounded-2xl border p-3 shadow-2xl backdrop-blur-2xl animate-in zoom-in-95 ${
+              className={`w-[86vw] max-w-[320px] max-h-[58vh] overflow-y-auto rounded-lg border p-3 shadow-xl backdrop-blur-md animate-in zoom-in-95 ${
                 isDark 
-                  ? 'bg-slate-900/98 border-slate-700 text-slate-100 shadow-black/80' 
+                  ? 'bg-slate-900/98 border-slate-800 text-slate-100 shadow-black/80' 
                   : 'bg-white/98 border-slate-200 text-slate-800 shadow-slate-300/80'
               }`}
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-800">
-                <span className="font-extrabold text-[11.5px] sm:text-sm flex items-center gap-1.5 text-blue-600 dark:text-cyan-400">
+                <span className="font-bold text-xs sm:text-sm flex items-center gap-1.5 text-blue-600 dark:text-cyan-400">
                   <span>💡</span> ไกด์สัญลักษณ์บนแผนที่
                 </span>
                 <button
                   type="button"
                   onClick={() => setIsMobileGuideOpen(false)}
-                  className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-white"
+                  className="p-1 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-white"
                 >
                   <X className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 </button>
@@ -2994,12 +2993,12 @@ export default function App() {
 
               <div className="space-y-2 mt-2.5 text-[11px] sm:text-xs">
                 {/* 1. Camera Symbol Guide */}
-                <div className="flex items-start gap-2 p-2 sm:p-2.5 rounded-xl sm:rounded-2xl bg-blue-50/80 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800">
-                  <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg sm:rounded-xl bg-white dark:bg-slate-800 border border-blue-400 flex items-center justify-center text-sm sm:text-base shadow-xs shrink-0">
+                <div className="flex items-start gap-2 p-2 sm:p-2.5 rounded-md bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800">
+                  <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-md bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-sm sm:text-base shadow-xs shrink-0">
                     📷
                   </div>
                   <div className="min-w-0 flex-1">
-                    <span className="font-bold text-blue-700 dark:text-cyan-300 block text-[11px] sm:text-xs">
+                    <span className="font-semibold text-blue-700 dark:text-cyan-300 block text-[11px] sm:text-xs">
                       รูปกล้อง (📷)
                     </span>
                     <span className="text-[10px] sm:text-[11px] text-slate-600 dark:text-slate-300 block leading-snug mt-0.5">
@@ -3009,12 +3008,12 @@ export default function App() {
                 </div>
 
                 {/* 2. Graph / Falling Water Symbol Guide */}
-                <div className="flex items-start gap-2 p-2 sm:p-2.5 rounded-xl sm:rounded-2xl bg-teal-50/80 dark:bg-teal-950/50 border border-teal-200 dark:border-teal-800">
-                  <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg sm:rounded-xl bg-white dark:bg-slate-800 border border-teal-400 flex items-center justify-center text-sm sm:text-base shadow-xs shrink-0">
+                <div className="flex items-start gap-2 p-2 sm:p-2.5 rounded-md bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800">
+                  <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-md bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-sm sm:text-base shadow-xs shrink-0">
                     📉
                   </div>
                   <div className="min-w-0 flex-1">
-                    <span className="font-bold text-teal-700 dark:text-teal-300 block text-[11px] sm:text-xs">
+                    <span className="font-semibold text-teal-700 dark:text-teal-300 block text-[11px] sm:text-xs">
                       เส้นกราฟสีฟ้า/เขียว (📉)
                     </span>
                     <span className="text-[10px] sm:text-[11px] text-slate-600 dark:text-slate-300 block leading-snug mt-0.5">
@@ -3028,7 +3027,7 @@ export default function App() {
                 <button
                   type="button"
                   onClick={() => setIsMobileGuideOpen(false)}
-                  className="w-full py-1.5 sm:py-2 rounded-xl sm:rounded-2xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-[11px] sm:text-xs cursor-pointer active:scale-95 shadow-md shadow-blue-600/30 transition-all"
+                  className="w-full py-1.5 sm:py-2 rounded-md bg-blue-600 hover:bg-blue-700 text-white font-semibold text-[11px] sm:text-xs cursor-pointer active:scale-95 shadow-xs transition-all"
                 >
                   เข้าใจแล้ว
                 </button>
@@ -3064,21 +3063,21 @@ export default function App() {
             className="fixed inset-0 z-[100] bg-slate-950/65 backdrop-blur-xs flex items-start justify-center pt-[7vh] pb-20 sm:items-center sm:pt-4 sm:pb-4 smooth-backdrop animate-in fade-in duration-200 pointer-events-auto"
           >
             <div 
-              className={`w-[92vw] max-w-[390px] sm:max-w-md border-2 rounded-2xl sm:rounded-3xl shadow-2xl relative max-h-[72vh] sm:max-h-[85vh] flex flex-col p-3.5 sm:p-5 overflow-y-auto overscroll-contain smooth-pop transition-all ${
+              className={`w-[92vw] max-w-[390px] sm:max-w-md border rounded-lg shadow-xl relative max-h-[72vh] sm:max-h-[85vh] flex flex-col p-3.5 sm:p-5 overflow-y-auto overscroll-contain transition-all ${
                 isDark 
-                  ? 'bg-slate-900 border-slate-700 text-slate-100 shadow-2xl shadow-black/80' 
+                  ? 'bg-slate-900 border-slate-800 text-slate-100 shadow-2xl shadow-black/80' 
                   : 'bg-white border-slate-200 text-slate-900 shadow-2xl shadow-slate-900/30'
               }`}
             >
               {/* Header: District Badge + Severity Badge + Easy-to-Tap Close Button */}
               <div className={`flex items-center justify-between gap-1.5 sm:gap-2 pb-2 sm:pb-2.5 border-b ${isDark ? 'border-slate-800' : 'border-slate-200'}`}>
                 <div className="flex flex-wrap items-center gap-1.5 min-w-0">
-                  <span className={`text-xs sm:text-xs font-bold px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg sm:rounded-xl border shadow-xs ${
-                    isDark ? 'bg-blue-950 text-cyan-300 border-blue-700' : 'bg-white text-blue-700 border-blue-200'
+                  <span className={`text-xs font-semibold px-2 py-0.5 rounded-md border shadow-xs ${
+                    isDark ? 'bg-slate-850 text-cyan-300 border-slate-700' : 'bg-slate-50 text-blue-700 border-slate-200'
                   }`}>
                     อ.{selectedPoint.district}
                   </span>
-                  <span className={`text-xs sm:text-xs font-bold px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg sm:rounded-xl border shadow-xs ${
+                  <span className={`text-xs font-semibold px-2 py-0.5 rounded-md border shadow-xs ${
                     selectedPoint.hazardType === 'hail' ? (isDark ? 'bg-cyan-950 text-cyan-300 border-cyan-700' : 'bg-cyan-50 text-cyan-700 border-cyan-200') :
                     getFloodLevel(selectedPoint.depthCm) === 3 ? (isDark ? 'bg-rose-950 text-rose-300 border-rose-700' : 'bg-rose-50 text-rose-700 border-rose-200') :
                     getFloodLevel(selectedPoint.depthCm) === 2 ? (isDark ? 'bg-amber-950 text-amber-300 border-amber-700' : 'bg-amber-50 text-amber-700 border-amber-200') :
@@ -3089,17 +3088,17 @@ export default function App() {
                      getFloodLevel(selectedPoint.depthCm) === 2 ? "🟠 น้ำท่วมปานกลาง (21-50 ซม.)" : "🟢 น้ำท่วมปกติ (5-20 ซม.)"}
                   </span>
                   {hasPhoto && (
-                    <span className="text-xs sm:text-xs font-bold px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg sm:rounded-xl border shadow-xs bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-cyan-300 dark:border-blue-700 flex items-center gap-1 animate-in fade-in duration-200">
+                    <span className="text-xs font-semibold px-2 py-0.5 rounded-md border shadow-xs bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-cyan-300 dark:border-blue-700 flex items-center gap-1 animate-in fade-in duration-200">
                       <span>📷 มีภาพถ่าย</span>
                     </span>
                   )}
                   {isWaterReceding(selectedPoint) && (
-                    <span className="text-xs sm:text-[11px] font-bold px-1.5 py-0.5 rounded-lg sm:rounded-xl bg-teal-50 text-teal-800 border border-teal-300 dark:bg-teal-950 dark:text-teal-300 dark:border-teal-700 flex items-center gap-1">
+                    <span className="text-xs font-semibold px-1.5 py-0.5 rounded-md bg-teal-50 text-teal-800 border border-teal-300 dark:bg-teal-950 dark:text-teal-300 dark:border-teal-700 flex items-center gap-1">
                       <span>📉 น้ำลด</span>
                     </span>
                   )}
                   {selectedPoint.waterTrend === 'rising' && !isWaterReceding(selectedPoint) && (
-                    <span className="text-xs sm:text-[11px] font-bold px-1.5 py-0.5 rounded-lg sm:rounded-xl bg-rose-50 text-rose-800 border border-rose-300 dark:bg-rose-950 dark:text-rose-300 dark:border-rose-700 flex items-center gap-1">
+                    <span className="text-xs font-semibold px-1.5 py-0.5 rounded-md bg-rose-50 text-rose-800 border border-rose-300 dark:bg-rose-950 dark:text-rose-300 dark:border-rose-700 flex items-center gap-1">
                       <span>📈 น้ำขึ้น</span>
                     </span>
                   )}
@@ -3112,24 +3111,24 @@ export default function App() {
                     playCloseSound();
                     setSelectedPoint(null);
                   }}
-                  className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full border shadow-md flex items-center justify-center transition-all cursor-pointer shrink-0 active:scale-95 ${
+                  className={`w-7 h-7 sm:w-8 sm:h-8 rounded-md border shadow-xs flex items-center justify-center transition-all cursor-pointer shrink-0 active:scale-95 ${
                     isDark 
                       ? 'bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700' 
                       : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-200'
                   }`}
                   title="ปิดหน้าต่างข้อมูล"
                 >
-                  <X className="w-4 h-4 font-black" />
+                  <X className="w-4 h-4 font-bold" />
                 </button>
               </div>
 
               {/* Point Title & Clean Location Subtitle */}
               <div className="pt-2 pb-1 sm:pt-2 sm:pb-1">
-                <h3 className={`text-base sm:text-lg font-black leading-snug break-words ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                <h3 className={`text-base sm:text-lg font-bold leading-snug break-words ${isDark ? 'text-white' : 'text-slate-900'}`}>
                   {selectedPoint.name}
                 </h3>
                 {(selectedPoint.district || selectedPoint.subdistrict) && (
-                  <p className={`text-xs sm:text-xs mt-0.5 font-medium ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                  <p className={`text-xs mt-0.5 font-medium ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
                     {selectedPoint.district ? `อ.${selectedPoint.district.replace(/^อ\./, '')}` : ''}
                     {selectedPoint.subdistrict ? ` • ${selectedPoint.subdistrict.startsWith('ต.') ? selectedPoint.subdistrict : `ต.${selectedPoint.subdistrict}`}` : ''}
                     {(typeof selectedPoint.roadSegment === 'string' && selectedPoint.roadSegment.trim() && !/^[0-9.,\s-]+$/.test(selectedPoint.roadSegment.trim())) ? ` • ${selectedPoint.roadSegment}` : ''}
@@ -3140,7 +3139,7 @@ export default function App() {
             {/* Citizen Uploaded Photo Preview (If available) */}
             {hasPhoto && (
               <div 
-                className="mt-2 sm:mt-2.5 rounded-xl sm:rounded-2xl overflow-hidden border-2 border-blue-400/50 dark:border-blue-500/50 shadow-md relative cursor-pointer group bg-black touch-manipulation active:scale-[0.98] transition-transform"
+                className="mt-2 sm:mt-2.5 rounded-md overflow-hidden border border-slate-200 dark:border-slate-800 shadow-xs relative cursor-pointer group bg-black touch-manipulation active:scale-[0.98] transition-transform"
                 onClick={() => setLightboxPhoto({
                   url: pointPhoto,
                   title: selectedPoint.name,
@@ -3154,19 +3153,19 @@ export default function App() {
                     alt="รูปภาพสถานการณ์น้ำท่วม" 
                     className="w-full h-32 sm:h-40 object-cover group-hover:scale-105 transition-transform duration-200" 
                   />
-                  <div className="absolute top-1.5 left-1.5 px-2 py-0.5 rounded-full bg-slate-950 text-cyan-300 text-xs sm:text-[10px] font-bold border border-cyan-400 flex items-center gap-1 shadow-md">
+                  <div className="absolute top-1.5 left-1.5 px-2 py-0.5 rounded-md bg-slate-950/90 text-cyan-300 text-xs font-semibold border border-cyan-400 flex items-center gap-1 shadow-md">
                     <span>📸 ภาพถ่ายรายงาน</span>
                   </div>
                 </div>
-                <div className={`p-1.5 sm:p-2 text-xs sm:text-xs text-center font-bold flex items-center justify-between px-2.5 sm:px-3 ${
-                  isDark ? 'bg-slate-800 text-cyan-300' : 'bg-blue-50 text-blue-700'
+                <div className={`p-1.5 sm:p-2 text-xs text-center font-semibold flex items-center justify-between px-2.5 sm:px-3 ${
+                  isDark ? 'bg-slate-850 text-cyan-300' : 'bg-slate-100 text-slate-800'
                 }`}>
-                  <span className="flex items-center gap-1 text-xs sm:text-[11px]">
+                  <span className="flex items-center gap-1 text-xs">
                     <span>🔍</span>
                     <span>แตะเพื่อดูภาพขนาดใหญ่</span>
                   </span>
                   {(selectedPoint.reportedAt || selectedPoint.time) && (
-                    <span className="opacity-75 text-[10px] sm:text-[10px]">
+                    <span className="opacity-75 text-[10px]">
                       รายงาน {selectedPoint.reportedAt || selectedPoint.time}
                     </span>
                   )}
@@ -3187,10 +3186,10 @@ export default function App() {
             {/* Fact-based Summary Details with Citations */}
             <div className="space-y-1.5 sm:space-y-2 mt-2 sm:mt-2.5 text-xs sm:text-sm">
               {selectedPoint.cause && (
-                <div className={`p-2.5 sm:p-2.5 rounded-xl sm:rounded-2xl border ${
-                  isDark ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'
+                <div className={`p-2.5 rounded-md border ${
+                  isDark ? 'bg-slate-850 border-slate-800' : 'bg-slate-50 border-slate-200'
                 }`}>
-                  <span className={`block text-xs sm:text-xs font-semibold ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>สาเหตุสำคัญ:</span>
+                  <span className={`block text-xs font-semibold ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>สาเหตุสำคัญ:</span>
                   <span className={`mt-0.5 block leading-relaxed font-medium ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>
                     {selectedPoint.cause}
                   </span>
@@ -3198,10 +3197,10 @@ export default function App() {
               )}
 
               {(selectedPoint.officialGuidance || selectedPoint.trafficStatus) && (
-                <div className={`p-2.5 sm:p-2.5 rounded-xl sm:rounded-2xl border ${
-                  isDark ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'
+                <div className={`p-2.5 rounded-md border ${
+                  isDark ? 'bg-slate-850 border-slate-800' : 'bg-slate-50 border-slate-200'
                 }`}>
-                  <span className={`block text-xs sm:text-xs font-semibold ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>คำแนะนำการสัญจร:</span>
+                  <span className={`block text-xs font-semibold ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>คำแนะนำการสัญจร:</span>
                   <span className={`mt-0.5 block leading-relaxed font-medium ${isDark ? 'text-cyan-400' : 'text-blue-700'}`}>
                     {selectedPoint.officialGuidance || selectedPoint.trafficStatus}
                   </span>
@@ -3209,11 +3208,11 @@ export default function App() {
               )}
 
               {/* Source info (Clean reference line as requested) */}
-              <div className={`p-2 sm:p-2.5 rounded-xl sm:rounded-2xl border text-xs sm:text-[11.5px] flex items-center justify-between gap-2 shadow-xs ${
-                isDark ? 'bg-slate-800 border-slate-700 text-slate-300' : 'bg-white border-slate-200 text-slate-800'
+              <div className={`p-2 sm:p-2.5 rounded-md border text-xs sm:text-[11.5px] flex items-center justify-between gap-2 shadow-xs ${
+                isDark ? 'bg-slate-850 border-slate-800 text-slate-300' : 'bg-white border-slate-200 text-slate-800'
               }`}>
                 <div className="flex items-start gap-1.5 min-w-0 flex-1">
-                  <Shield className="w-3.5 h-3.5 sm:w-3.5 sm:h-3.5 text-blue-500 shrink-0 mt-0.5" />
+                  <Shield className="w-3.5 h-3.5 text-blue-500 shrink-0 mt-0.5" />
                   <span className="break-words whitespace-normal leading-tight">
                     อ้างอิง: <strong className={isDark ? 'text-slate-100' : 'text-slate-900'}>
                       {selectedPoint.isCitizen || (selectedPoint.source && selectedPoint.source.includes('ประชาชน')) 
@@ -3223,7 +3222,7 @@ export default function App() {
                   </span>
                 </div>
                 {(selectedPoint.reportedAt || selectedPoint.time) && (
-                  <span className="text-[10px] sm:text-[10px] text-slate-400 shrink-0">
+                  <span className="text-[10px] text-slate-400 shrink-0">
                     {selectedPoint.reportedAt || selectedPoint.time}
                   </span>
                 )}
@@ -3238,9 +3237,9 @@ export default function App() {
                   try { playModalOpenSound(); } catch (_) {}
                   setIsStandardsModalOpen(true);
                 }}
-                className={`py-2 sm:py-2.5 px-2.5 sm:px-3 rounded-xl sm:rounded-2xl border text-xs sm:text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-xs active:scale-95 ${
+                className={`py-2 px-2.5 rounded-md border text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-xs active:scale-95 ${
                   isDark 
-                    ? 'bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700' 
+                    ? 'bg-slate-850 hover:bg-slate-800 text-slate-200 border-slate-800' 
                     : 'bg-white hover:bg-slate-100 text-slate-800 border-slate-200'
                 }`}
               >
@@ -3251,7 +3250,7 @@ export default function App() {
               <a 
                 href={`tel:${selectedPoint.phone ? selectedPoint.phone.replace(/-/g, '') : '1784'}`}
                 onClick={() => playClickSound()}
-                className="py-2 sm:py-2.5 px-2.5 sm:px-3 rounded-xl sm:rounded-2xl bg-rose-600 hover:bg-rose-500 text-white text-xs sm:text-xs font-bold flex items-center justify-center gap-1.5 transition-all text-center cursor-pointer shadow-md shadow-rose-600/30 active:scale-95"
+                className="py-2 px-2.5 rounded-md bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition-all text-center cursor-pointer border border-rose-700/60 shadow-xs active:scale-95"
               >
                 <Phone className="w-3.5 h-3.5 shrink-0" />
                 <span className="break-words whitespace-normal leading-tight text-center">โทรศูนย์ {selectedPoint.district ? selectedPoint.district.replace(/^อ\./, '') : 'สมุทรปราการ'}</span>
@@ -3260,8 +3259,8 @@ export default function App() {
 
             {/* Admin Broadcast & AI Alert Direct Delete Action (Visible ONLY to Logged-in Admin) */}
             {isAdminAuthenticated && (selectedPoint.isAdminBroadcast || selectedPoint.isAiGenerated) && (
-              <div className="mt-2 p-1.5 sm:p-2 rounded-lg sm:rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-between gap-1.5">
-                <span className="text-[10px] sm:text-xs font-bold text-amber-600 dark:text-amber-400 flex items-center gap-1">
+              <div className="mt-2 p-1.5 sm:p-2 rounded-md bg-amber-500/10 border border-amber-500/30 flex items-center justify-between gap-1.5">
+                <span className="text-[10px] sm:text-xs font-semibold text-amber-600 dark:text-amber-400 flex items-center gap-1">
                   <Megaphone className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
                   <span>ประกาศฉุกเฉิน</span>
                 </span>
@@ -3272,7 +3271,7 @@ export default function App() {
                       handleRejectReport(selectedPoint.id);
                     }
                   }}
-                  className="px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md sm:rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-[10px] sm:text-xs font-bold transition-all flex items-center gap-1 cursor-pointer"
+                  className="px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md bg-rose-600 hover:bg-rose-700 text-white text-[10px] sm:text-xs font-bold transition-all flex items-center gap-1 cursor-pointer"
                   title="ลบข้อความประกาศนี้"
                 >
                   <Trash2 className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
@@ -3281,20 +3280,20 @@ export default function App() {
               </div>
             )}
 
-            {/* Quick Exit Button at Bottom of Card (Solid Gray Pill matching screenshot) */}
+            {/* Quick Exit Button at Bottom of Card */}
             <button
               type="button"
               onClick={() => {
                 playCloseSound();
                 setSelectedPoint(null);
               }}
-              className={`w-full mt-1.5 sm:mt-2.5 py-1 sm:py-2.5 rounded-lg sm:rounded-2xl border text-[10px] sm:text-xs font-bold flex items-center justify-center gap-1 sm:gap-1.5 transition-colors cursor-pointer shadow-xs active:scale-95 ${
+              className={`w-full mt-1.5 sm:mt-2.5 py-1.5 sm:py-2 rounded-md border text-xs font-semibold flex items-center justify-center gap-1 transition-colors cursor-pointer shadow-xs active:scale-95 ${
                 isDark 
-                  ? 'bg-slate-800 hover:bg-slate-700 text-slate-300 border-slate-700' 
+                  ? 'bg-slate-850 hover:bg-slate-800 text-slate-300 border-slate-800' 
                   : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200'
               }`}
             >
-              <X className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+              <X className="w-3.5 h-3.5" />
               <span>ปิดหน้าต่าง</span>
             </button>
 
