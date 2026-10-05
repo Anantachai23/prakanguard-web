@@ -13,14 +13,16 @@ import {
   CloudRain,
   Shield,
   Lock,
-  ChevronDown
+  ChevronDown,
+  PanelLeftClose,
+  PanelLeftOpen
 } from 'lucide-react';
 import RealTimeClock from './RealTimeClock';
 import { 
   playToggleSound, 
   playSelectSound, 
   playReportSound, 
-  playEmergencySound,
+  playEmergencySound, 
   playModalOpenSound,
   playCloseSound,
   playTabSound
@@ -51,7 +53,9 @@ export default function Navbar({
   onToggleTheme,
   onRefreshData,
   isRefreshing = false,
-  refreshCountdown = 300
+  refreshCountdown = 300,
+  isSidebarOpen = true,
+  onToggleSidebar
 }) {
   const isDark = theme === 'dark';
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
@@ -329,6 +333,26 @@ export default function Navbar({
           <div className="hidden md:flex lg:hidden items-center gap-1.5 shrink-0">
             <RealTimeClock theme={theme} />
 
+            {/* Tablet Sidebar Toggle Button */}
+            <button
+              type="button"
+              onClick={() => {
+                playTabSound();
+                if (onToggleSidebar) onToggleSidebar();
+              }}
+              className={`px-2.5 py-1.5 rounded-md border text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer shadow-xs active:scale-95 ${
+                isSidebarOpen
+                  ? 'bg-blue-600 text-white border-blue-600'
+                  : isDark
+                    ? 'bg-slate-900 hover:bg-slate-800 text-slate-200 border-slate-800'
+                    : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-200'
+              }`}
+              title={isSidebarOpen ? "ปิดแถบข้อมูลและพยากรณ์" : "เปิดแถบข้อมูลและพยากรณ์"}
+            >
+              <PanelLeftOpen className="w-3.5 h-3.5" />
+              <span>แผงข้อมูล</span>
+            </button>
+
             {/* Public Updates Button */}
             <button 
               type="button"
@@ -518,6 +542,24 @@ export default function Navbar({
 
           {/* --- DESKTOP (Screen >= 1024px): Spacious Full Command Center Bar --- */}
           <div className="hidden lg:flex items-center gap-1.5 shrink-0">
+            {/* Desktop Sidebar Toggle Button */}
+            <button
+              type="button"
+              onClick={() => {
+                playToggleSound(!isSidebarOpen);
+                if (onToggleSidebar) onToggleSidebar();
+              }}
+              className={`px-2.5 py-1.5 rounded-md border text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer shadow-xs active:scale-95 ${
+                isSidebarOpen
+                  ? isDark ? 'bg-slate-900 text-cyan-400 border-slate-700' : 'bg-slate-100 text-blue-700 border-slate-300'
+                  : isDark ? 'bg-slate-900 text-slate-300 border-slate-800' : 'bg-white text-slate-700 border-slate-200'
+              }`}
+              title={isSidebarOpen ? "ย่อแถบด้านข้าง (ขยายแผนที่เต็มจอ)" : "เปิดแถบด้านข้าง (ค้นหาและพยากรณ์)"}
+            >
+              {isSidebarOpen ? <PanelLeftClose className="w-3.5 h-3.5 text-blue-500" /> : <PanelLeftOpen className="w-3.5 h-3.5 text-blue-500" />}
+              <span className="hidden xl:inline">{isSidebarOpen ? "ย่อแผง GIS" : "เปิดแผง GIS"}</span>
+            </button>
+
             {/* Desktop Public Updates Button */}
             <button 
               type="button"

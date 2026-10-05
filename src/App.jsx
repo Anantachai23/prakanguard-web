@@ -72,7 +72,11 @@ import {
   Sparkles,
   Flame,
   GripHorizontal,
-  Compass
+  Compass,
+  Sun,
+  Moon,
+  SlidersHorizontal,
+  Layers
 } from 'lucide-react';
 import { 
   playClickSound, 
@@ -323,9 +327,19 @@ export default function App() {
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const searchInputRef = useRef(null);
   const searchContainerRef = useRef(null);
-  const [isTopPanelCollapsed, setIsTopPanelCollapsed] = useState(
-    () => typeof window !== 'undefined' && window.innerWidth < 640
+  const [isSidebarOpen, setIsSidebarOpen] = useState(
+    () => typeof window !== 'undefined' && window.innerWidth >= 1024
   );
+  const [isMobileSheetOpen, setIsMobileSheetOpen] = useState(false);
+  const [mobileSheetTab, setMobileSheetTab] = useState('overview');
+  const isTopPanelCollapsed = !isSidebarOpen;
+  const setIsTopPanelCollapsed = (val) => {
+    if (typeof val === 'function') {
+      setIsSidebarOpen(prev => !val(!prev));
+    } else {
+      setIsSidebarOpen(!val);
+    }
+  };
 
   // Close search dropdown on click outside
   useEffect(() => {
@@ -2100,6 +2114,14 @@ export default function App() {
       .sort((a, b) => scoreLocationSearch(b, searchQuery) - scoreLocationSearch(a, searchQuery));
   }, [citizenReports, searchQuery]);
 
+  // 5. Unified Display Points for List Views & Mobile Sheet
+  const displayPoints = useMemo(() => {
+    if (searchQuery && searchQuery.trim()) {
+      return [...searchResultsOfficial, ...searchResultsCitizen];
+    }
+    return [...mapPoints, ...mapCitizenReports];
+  }, [searchQuery, searchResultsOfficial, searchResultsCitizen, mapPoints, mapCitizenReports]);
+
   // Unified Handler: Select location & zoom smoothly into that point on the map
   const handleSelectLocation = useCallback((location, options = {}) => {
     if (!location) {
@@ -2132,6 +2154,7 @@ export default function App() {
 
     setIsSearchFocused(false);
     setSearchQuery("");
+    setIsMobileSheetOpen(false);
     if (searchInputRef.current) {
       searchInputRef.current.blur();
     }
@@ -2311,6 +2334,11 @@ export default function App() {
     }
   };
 
+  const minor = levelCounts ? levelCounts.minor : points.filter(p => p.level === 1 && p.isActive !== false && !p.isResolved).length;
+  const moderate = levelCounts ? levelCounts.moderate : points.filter(p => p.level === 2 && p.isActive !== false && !p.isResolved).length;
+  const severe = levelCounts ? levelCounts.severe : points.filter(p => p.level === 3 && p.isActive !== false && !p.isResolved).length;
+  const falling = levelCounts ? levelCounts.falling : points.filter(p => p.waterTrend === 'falling' && p.isActive !== false && !p.isResolved).length;
+
   return (
     <div className={`fixed inset-0 h-full w-full flex flex-col font-prompt selection:bg-blue-600 selection:text-white overflow-hidden overscroll-none select-none transition-colors duration-200 ${
       isDark ? 'bg-slate-950 text-slate-100' : 'bg-slate-100 text-slate-800'
@@ -2343,257 +2371,108 @@ export default function App() {
         onRefreshData={handleRefreshData}
         isRefreshing={isRefreshingData}
         refreshCountdown={refreshCountdown}
+        isSidebarOpen={isSidebarOpen}
+        onToggleSidebar={() => setIsSidebarOpen(v => !v)}
       />
 
-      {/* 2. MAIN MAP CANVAS */}
-      <main className="flex-1 relative w-full h-full overflow-hidden">
-        
-        {/* Full Interactive Map */}
-        <div className="absolute inset-0 w-full h-full z-0">
-          <MapView 
-            points={mapPoints} 
-            citizenReports={mapCitizenReports}
-            onSelectPoint={handleSelectLocation}
-            selectedPoint={selectedPoint}
-            selectedDistrict={selectedDistrict}
-            onSelectDistrict={setSelectedDistrict}
-            userLocation={userLocation}
-            onLocateMe={handleLocateMe}
-            locationAccuracy={locationAccuracy}
-            onOpenStandards={() => setIsStandardsModalOpen(true)}
-            isPickingLocation={isPickingLocationOnMap}
-            onMapLocationPicked={handleMapLocationPicked}
-            flyToLocation={flyToLocation}
-            theme={theme}
-            isTopPanelCollapsed={isTopPanelCollapsed}
-            refreshCountdown={refreshCountdown}
+      {/* 2. RESPONSIVE WORKSPACE (DESKTOP DOCKED COMMAND CENTER / TABLET DRAWER / MOBILE FULL BLEED) */}
+      <div className="flex-1 flex overflow-hidden relative w-full h-full">
+
+        {/* ========================================================================= */}
+        {/* A. DESKTOP & TABLET GIS SIDEBAR (DOCKED ON PC, SLIDE-IN DRAWER ON TABLET) */}
+        {/* ========================================================================= */}
+        {/* Backdrop for Tablet Drawer */}
+        {isSidebarOpen && (
+          <div 
+            className="lg:hidden fixed inset-0 z-35 bg-black/40 backdrop-blur-xs transition-opacity duration-300 md:block hidden"
+            onClick={() => setIsSidebarOpen(false)}
           />
-        </div>
-
-        {/* Floating Instruction Banner when User is Picking Location on Map */}
-        {isPickingLocationOnMap && (
-          <div className="absolute top-3 sm:top-4 left-1/2 -translate-x-1/2 z-50 bg-slate-950/95 text-white px-3 sm:px-5 py-2 sm:py-3 rounded-xl sm:rounded-2xl shadow-2xl border border-cyan-500/50 backdrop-blur-xl flex items-center gap-2 sm:gap-3 pointer-events-auto max-w-[92vw] sm:max-w-none">
-            <span className="w-2 sm:w-3 h-2 sm:h-3 rounded-full bg-cyan-400 animate-ping shrink-0"></span>
-            <div className="text-[10px] sm:text-xs min-w-0">
-              <strong className="block text-cyan-300 font-bold text-[11px] sm:text-sm truncate">📍 แตะเลือกจุดบนแผนที่</strong>
-              <span className="text-slate-200 truncate block">แตะพิกัดที่พบน้ำท่วมเพื่อบันทึกจุด</span>
-            </div>
-            <button 
-              onClick={handleCancelPickOnMap}
-              className="px-2 py-1 sm:px-3 sm:py-1.5 rounded-lg sm:rounded-xl bg-white/20 hover:bg-white/30 text-white font-bold text-[10px] sm:text-xs cursor-pointer ml-1 sm:ml-2 shrink-0 transition-colors"
-            >
-              ยกเลิก
-            </button>
-          </div>
         )}
 
-        {/* Floating Notification for Admin when Citizen submits new flood reports (Visible ONLY to Logged-in Admin) */}
-        {isAdminAuthenticated && pendingReportsCount > 0 && (
-          <div className="absolute top-2.5 sm:top-3 right-2.5 sm:right-4 z-30 max-w-xs sm:max-w-sm bg-amber-500 text-slate-950 px-3.5 py-2.5 rounded-2xl shadow-2xl border border-amber-300 backdrop-blur-md flex items-center gap-2.5 pointer-events-auto">
-            <span className="w-2.5 h-2.5 rounded-full bg-rose-600 animate-ping shrink-0"></span>
-            <div className="text-xs">
-              <strong className="block font-bold">🔔 มีรายงานน้ำท่วมใหม่ ({pendingReportsCount} รายการ)</strong>
-              <span className="text-[11px] opacity-90">รอแอดมินยืนยันก่อนขึ้นแผนที่</span>
+        {/* Sidebar Panel */}
+        <aside className={`
+          hidden md:flex flex-col h-full z-40 lg:z-20 shrink-0 border-r backdrop-blur-md transition-all duration-300 ease-in-out select-none
+          ${isDark ? 'bg-slate-900/98 border-slate-800 text-slate-100' : 'bg-white/98 border-slate-200 text-slate-800'}
+          fixed lg:relative top-0 bottom-0 left-0
+          w-[340px] lg:w-[380px] xl:w-[410px]
+          ${isSidebarOpen 
+              ? 'translate-x-0 opacity-100 shadow-2xl lg:shadow-none' 
+              : '-translate-x-full lg:w-0 lg:opacity-0 lg:overflow-hidden pointer-events-none'
+          }
+        `}>
+          {/* Sidebar Header */}
+          <div className="p-3 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between gap-2 shrink-0">
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
+              <div className="min-w-0">
+                <h2 className="text-xs sm:text-sm font-bold tracking-tight truncate">ศูนย์ข้อมูล & ควบคุม GIS</h2>
+                <span className="text-[10px] text-slate-500 dark:text-slate-400 block truncate">จ.สมุทรปราการ (6 อำเภอ)</span>
+              </div>
             </div>
-            <button
-              onClick={() => setIsAdminModalOpen(true)}
-              className="px-2.5 py-1.5 bg-slate-950 hover:bg-slate-800 text-amber-300 font-bold text-xs rounded-xl transition-colors shrink-0 cursor-pointer shadow ml-auto"
-            >
-              ตรวจสอบ
-            </button>
-          </div>
-        )}
-
-
-
-        {/* Floating Toast Notification — ขนาดกะทัดรัด ตัวอักษรคมชัด อ่านง่าย */}
-        {latestUpdateNotification && (
-          <div className={`fixed top-[56px] sm:top-[68px] left-1/2 -translate-x-1/2 z-[85] px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-md shadow-md backdrop-blur-md flex items-center gap-2 max-w-[90vw] sm:max-w-md pointer-events-auto animate-in fade-in slide-in-from-top-2 duration-300 border ${
-            latestUpdateNotification.includes('⚠️') || latestUpdateNotification.includes('ไม่ได้อยู่ใน')
-              ? 'bg-slate-900 border-amber-400 text-amber-200 shadow-amber-950/50'
-              : 'bg-slate-900 border-emerald-400 text-emerald-200 shadow-emerald-950/50'
-          }`}>
-            {latestUpdateNotification.includes('⚠️') || latestUpdateNotification.includes('ไม่ได้อยู่ใน') ? (
-              <AlertTriangle className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-            ) : (
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-            )}
-            <span className="text-[11.5px] sm:text-xs font-bold leading-tight truncate text-white">{latestUpdateNotification}</span>
+            
             <button
               type="button"
-              onClick={() => setLatestUpdateNotification(null)}
-              className="p-0.5 hover:bg-white/20 rounded-md text-slate-400 hover:text-white cursor-pointer ml-1 shrink-0"
-              title="ปิดการแจ้งเตือน"
-            >
-              <X className="w-3 h-3" />
-            </button>
-          </div>
-        )}
-
-        {/* Out of Province Warning Banner (เมื่อเปิดเว็บขึ้นมาจะแสดง 5 วินาทีแล้วหายไปอัตโนมัติ) */}
-        {showOutOfProvinceBanner && userLocation && !userDistrict && (
-          <div className="fixed top-[58px] sm:top-[72px] left-1/2 -translate-x-1/2 z-[80] w-auto max-w-[94vw] sm:max-w-md pointer-events-auto animate-in fade-in slide-in-from-top-2 duration-300">
-            <div className="flex items-center gap-2.5 px-3.5 py-2 rounded-md bg-amber-950/95 text-amber-200 border border-amber-500/50 shadow-md backdrop-blur-md">
-              <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 animate-bounce" />
-              <div className="flex-1 min-w-0 text-xs">
-                <span className="font-bold block text-white">ตำแหน่งท่านไม่ได้อยู่ในจังหวัดสมุทรปราการ</span>
-                <span className="text-[10px] text-amber-300/80">ระบบติดตามและรายงานครอบคลุม 6 อำเภอ จ.สมุทรปราการ</span>
-              </div>
-              <button
-                onClick={() => {
-                  setShowOutOfProvinceBanner(false);
-                  setSelectedDistrict('ทั้งหมด');
-                  setFlyToLocation({ lat: 13.6000, lng: 100.6500, zoom: 11, ts: Date.now() });
-                }}
-                className="px-2.5 py-1 rounded-md bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-400/40 text-[10px] font-bold shrink-0 cursor-pointer active:scale-95 transition-all"
-              >
-                ดูสมุทรปราการ
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowOutOfProvinceBanner(false)}
-                className="p-1 hover:bg-white/10 rounded-md text-amber-300/80 hover:text-white cursor-pointer ml-0.5"
-                title="ปิด"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Admin Web Announcement Banner (มีหลอดค่อยๆ ลด หายไปใน 10 วิ โดยไม่ต้องมีข้อความบอก และกดดูซ้ำได้) */}
-        {/* Admin Web Announcement Banner (แสดงแถบด้านล่างบนมือถือ ไม่บังปุ่มดาวเทียมและคอนโทรลแผนที่ด้านบน) */}
-        {showAnnouncementBanner && activeAnnouncement && (
-          <div className="fixed bottom-16 sm:bottom-auto sm:top-14 left-2 right-2 sm:left-1/2 sm:-translate-x-1/2 sm:w-[92vw] sm:max-w-2xl z-[95] pointer-events-auto animate-in fade-in slide-in-from-bottom-3 sm:slide-in-from-top-3 duration-300">
-            <div className={`w-full p-3 sm:px-4 sm:py-3.5 rounded-lg border shadow-lg backdrop-blur-md flex flex-col gap-2 transition-all overflow-hidden ${
-              isDark ? 'bg-slate-900/98 text-slate-100 border-slate-800 shadow-slate-950/50' : 'bg-white/98 text-slate-900 border-slate-300 shadow-md'
-            }`}>
-              <div className="flex items-center justify-between gap-2 border-b pb-1.5 border-slate-200 dark:border-slate-800">
-                <div className="flex items-center gap-2 min-w-0">
-                  <span className="flex items-center justify-center w-6 h-6 rounded-md bg-blue-600 text-white shrink-0">
-                    <Bell className="w-3.5 h-3.5 animate-pulse" />
-                  </span>
-                  <span className="text-xs sm:text-xs font-bold text-blue-600 dark:text-cyan-400 truncate tracking-wide">
-                    📢 ประกาศจากเจ้าหน้าที่ PrakanGuard
-                  </span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    playCloseSound();
-                    lsAnnAddDismiss(activeAnnouncement.id);
-                    setShowAnnouncementBanner(false);
-                  }}
-                  className="p-1 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-white cursor-pointer shrink-0 transition-colors active:scale-90"
-                  title="ปิดประกาศ"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-              <div className="text-xs sm:text-sm font-medium leading-relaxed whitespace-pre-line text-slate-800 dark:text-slate-100 px-0.5 break-words">
-                {activeAnnouncement.message}
-              </div>
-              {/* 10-Second Auto-dismiss Progress Bar (ค่อยๆ ลดลงนุ่มนวล) */}
-              <div className="w-full bg-slate-100 dark:bg-slate-800 h-1 rounded-md overflow-hidden mt-0.5">
-                <div 
-                  className="bg-blue-600 h-full rounded-md"
-                  style={{ animation: 'pg-announcement-timer 10s linear forwards' }}
-                />
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Active District Mobile Indicator with Quick Reset (กดครั้งเดียวกลับดูทั้งจังหวัด ไม่สับสน) */}
-        {selectedDistrict !== 'ทั้งหมด' && isTopPanelCollapsed && (
-          <div className="md:hidden absolute top-2.5 right-14 z-20 pointer-events-auto flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-blue-600/95 text-white shadow-xs border border-blue-500 text-xs font-semibold animate-in fade-in">
-            <span className="truncate max-w-[120px]">📍 {selectedDistrict.replace(/^อ\./, '').replace('เมืองสมุทรปราการ', 'เมือง')}</span>
-            <button
               onClick={() => {
-                playSelectSound();
-                setSelectedDistrict('ทั้งหมด');
+                playToggleSound(false);
+                setIsSidebarOpen(false);
               }}
-              className="px-1.5 py-0.5 rounded-md bg-white/20 hover:bg-white/30 text-[10px] cursor-pointer active:scale-95 transition-transform"
-              title="ล้างตัวกรองอำเภอ กลับสู่มุมมองรวม"
+              className="p-1.5 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
+              title="ย่อแถบข้าง (ขยายแผนที่เต็มจอ)"
             >
-              ✕ ดูทั้งหมด
+              <PanelLeftClose className="w-4 h-4" />
             </button>
           </div>
-        )}
 
-        {/* Toggle Button to RE-OPEN the collapsed panel (Appears docked at top-left when collapsed) */}
-        {isTopPanelCollapsed && (
-          <button
-            onClick={() => {
-              playToggleSound(true);
-              setIsTopPanelCollapsed(false);
-            }}
-            className={`absolute top-2.5 md:top-3.5 left-2.5 md:left-4 z-20 pointer-events-auto flex items-center gap-1.5 px-3 py-1.5 rounded-md shadow-xs border text-xs font-semibold backdrop-blur-md transition-all active:scale-95 cursor-pointer ${
-              isDark 
-                ? 'bg-slate-900/95 text-slate-100 border-slate-800 hover:border-slate-700' 
-                : 'bg-white/95 text-slate-800 border-slate-200 hover:border-slate-300'
-            }`}
-            title="คลิกเพื่อขยายแถบค้นหาและตัวกรองอำเภอ"
-          >
-            <PanelLeftOpen className="w-3.5 h-3.5 text-blue-500 shrink-0" />
-            <span className="text-xs font-semibold">
-              {selectedDistrict === 'ทั้งหมด' ? 'ค้นหา / กรอง' : selectedDistrict.replace(/^อ\./, '').replace('เมืองสมุทรปราการ','เมือง')}
-            </span>
-          </button>
-        )}
-
-        {/* FLOATING TOP BAR: SEARCH, TICKER & DISTRICT PILLS */}
-        <div className={`absolute top-2.5 md:top-3.5 left-2.5 md:left-4 right-2.5 md:right-auto z-20 flex flex-col gap-2 w-auto md:w-[320px] lg:w-[380px] xl:w-[420px] pointer-events-none transition-all duration-300 ease-in-out ${
-          isTopPanelCollapsed ? '-translate-x-[120%] opacity-0 pointer-events-none' : 'translate-x-0 opacity-100'
-        }`}>
-          
-          {/* Quick Search Bar (Clean & Focused, Share Removed) */}
-          <div ref={searchContainerRef} className="pointer-events-auto flex items-center gap-1.5 relative">
-            <div className="relative flex-1">
-              <input
-                ref={searchInputRef}
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onFocus={() => setIsSearchFocused(true)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    const topMatch = searchResultsOfficial[0] || 
-                                     searchResultsCitizen[0] ||
-                                     points.find(p => matchesLocationSearch(p, searchQuery)) ||
-                                     citizenReports.find(cr => matchesLocationSearch(cr, searchQuery));
-                    if (topMatch) {
-                      handleSelectLocation(topMatch);
+          {/* Sidebar Scrollable Body */}
+          <div className="flex-1 overflow-y-auto p-3 space-y-3">
+            {/* 1. Quick Search Box */}
+            <div ref={searchContainerRef} className="relative">
+              <div className="relative">
+                <input
+                  ref={searchInputRef}
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onFocus={() => setIsSearchFocused(true)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      const topMatch = searchResultsOfficial[0] || 
+                                       searchResultsCitizen[0] ||
+                                       points.find(p => matchesLocationSearch(p, searchQuery)) ||
+                                       citizenReports.find(cr => matchesLocationSearch(cr, searchQuery));
+                      if (topMatch) {
+                        handleSelectLocation(topMatch);
+                      }
+                    } else if (e.key === 'Escape') {
+                      setIsSearchFocused(false);
+                      searchInputRef.current?.blur();
                     }
-                  } else if (e.key === 'Escape') {
-                    setIsSearchFocused(false);
-                    searchInputRef.current?.blur();
-                  }
-                }}
-                placeholder="ค้นหาจุดเสี่ยงหรือชื่อถนน (กิ่งแก้ว, วัดด่าน)..."
-                className={`w-full text-xs sm:text-sm pl-8 sm:pl-9 pr-7 sm:pr-8 py-1.5 sm:py-2 rounded-md border shadow-xs focus:outline-none transition-colors backdrop-blur-md font-medium ${
-                  isDark 
-                    ? 'bg-slate-900/95 text-slate-100 border-slate-800 placeholder-slate-500 focus:border-blue-500' 
-                    : 'bg-white/95 text-slate-800 border-slate-200 placeholder-slate-400 focus:border-blue-500'
-                }`}
-              />
-              <Search className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-400 absolute left-2.5 sm:left-3 top-2 sm:top-2.5" />
-              {searchQuery && (
-                <button
-                  type="button"
-                  onClick={() => setSearchQuery("")}
-                  className={`absolute right-2 sm:right-2.5 top-2 sm:top-2.5 cursor-pointer ${
-                    isDark ? 'text-slate-400 hover:text-slate-200' : 'text-slate-400 hover:text-slate-700'
+                  }}
+                  placeholder="ค้นหาจุดเสี่ยงหรือชื่อถนน (กิ่งแก้ว, วัดด่าน)..."
+                  className={`w-full text-xs sm:text-sm pl-8 pr-7 py-2 rounded-md border shadow-xs focus:outline-none transition-colors backdrop-blur-md font-medium ${
+                    isDark 
+                      ? 'bg-slate-850/90 text-slate-100 border-slate-700 placeholder-slate-500 focus:border-blue-500' 
+                      : 'bg-slate-50 text-slate-800 border-slate-200 placeholder-slate-400 focus:border-blue-500'
                   }`}
-                >
-                  <X className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                </button>
-              )}
+                />
+                <Search className="w-4 h-4 text-slate-400 absolute left-2.5 top-2.5" />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchQuery("")}
+                    className={`absolute right-2.5 top-2.5 cursor-pointer ${
+                      isDark ? 'text-slate-400 hover:text-slate-200' : 'text-slate-400 hover:text-slate-700'
+                    }`}
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
 
-              {/* Instant Search Suggestions & Popular Colloquial Shortcuts Dropdown */}
+              {/* Instant Search Suggestions Dropdown */}
               {isSearchFocused && (
-                <div className={`absolute top-full left-0 right-0 mt-1 border rounded-lg shadow-md max-h-72 overflow-y-auto z-50 p-2 text-xs backdrop-blur-md ${
+                <div className={`absolute top-full left-0 right-0 mt-1 border rounded-lg shadow-xl max-h-72 overflow-y-auto z-50 p-2 text-xs backdrop-blur-md ${
                   isDark ? 'bg-slate-900/98 border-slate-800 text-slate-100 shadow-slate-950/80' : 'bg-white/98 border-slate-200 text-slate-800 shadow-slate-300/40'
                 }`}>
                   {!searchQuery.trim() ? (
@@ -2648,7 +2527,6 @@ export default function App() {
                     </div>
                   ) : (
                     <div className="flex flex-col gap-1 max-h-60 overflow-y-auto">
-                      {/* Official points */}
                       {searchResultsOfficial.map(p => (
                         <button
                           key={p.id}
@@ -2674,7 +2552,6 @@ export default function App() {
                         </button>
                       ))}
 
-                      {/* Citizen reports */}
                       {searchResultsCitizen.map(cr => (
                         <button
                           key={cr.id}
@@ -2701,340 +2578,405 @@ export default function App() {
               )}
             </div>
 
-            {/* Collapse Side Button */}
-            <button
-              onClick={() => {
-                playToggleSound(false);
-                setIsTopPanelCollapsed(true);
-              }}
-              className={`p-2 sm:p-2 rounded-md border shadow-xs flex items-center justify-center transition-all cursor-pointer backdrop-blur-md shrink-0 active:scale-95 ${
-                isDark 
-                  ? 'bg-slate-900/95 hover:bg-slate-850 text-slate-300 hover:text-white border-slate-800' 
-                  : 'bg-white/95 hover:bg-slate-50 text-slate-600 hover:text-slate-900 border-slate-200'
-              }`}
-              title="ย่อแถบเมนู (พับเก็บเข้าด้านข้าง)"
-              aria-label="ย่อแถบเมนู"
-            >
-              <PanelLeftClose className="w-4 h-4 text-slate-400 hover:text-blue-500" />
-            </button>
+            {/* 2. District Selector & GPS User Location Badge */}
+            <div className="flex items-center gap-1.5 w-full">
+              <div className={`relative flex-1 min-w-0 flex items-center px-2.5 py-2 rounded-md border shadow-xs transition-colors ${
+                isDark ? 'bg-slate-850/90 border-slate-700 text-slate-100' : 'bg-slate-50 border-slate-200 text-slate-800'
+              }`}>
+                <MapPin className="w-4 h-4 text-blue-500 shrink-0 mr-1.5" />
+                <select
+                  value={selectedDistrict}
+                  onChange={(e) => {
+                    playSelectSound();
+                    const dist = e.target.value;
+                    setSelectedDistrict(dist);
+                    if (dist === "ทั้งหมด") {
+                      setFlyToLocation({ lat: 13.6000, lng: 100.6500, zoom: 11, ts: Date.now() });
+                    } else {
+                      const dData = SAMUT_PRAKAN_DISTRICTS_DATA.find(d => d.name === dist);
+                      if (dData && dData.center) {
+                        setFlyToLocation({ lat: dData.center.lat, lng: dData.center.lng, zoom: 13, ts: Date.now() });
+                      }
+                    }
+                  }}
+                  className={`w-full bg-transparent text-xs sm:text-sm font-semibold focus:outline-none cursor-pointer appearance-none ${
+                    isDark ? 'text-white' : 'text-slate-900'
+                  }`}
+                  title="คลิกเพื่อเลือกดูตามอำเภอ"
+                >
+                  <option value="ทั้งหมด" className={isDark ? 'bg-slate-900 text-white' : 'bg-white text-slate-900'}>
+                    🏛️ ทุกอำเภอ (จ.สมุทรปราการ)
+                  </option>
+                  {DISTRICTS.filter(d => d !== "ทั้งหมด").map(dist => (
+                    <option 
+                      key={dist} 
+                      value={dist}
+                      className={isDark ? 'bg-slate-900 text-white' : 'bg-white text-slate-900'}
+                    >
+                      📍 อ.{dist}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="w-3.5 h-3.5 text-slate-400 shrink-0 pointer-events-none ml-1" />
+              </div>
+
+              {/* GPS status chip */}
+              {userLocation ? (
+                <div 
+                  className={`shrink-0 flex items-center gap-1.5 px-2.5 py-2 rounded-md border text-xs font-semibold shadow-xs ${
+                    userDistrict 
+                      ? (isDark ? 'bg-slate-850 border-slate-700 text-cyan-300' : 'bg-slate-50 border-slate-200 text-slate-800')
+                      : (isDark ? 'bg-amber-950/80 border-amber-800 text-amber-300' : 'bg-amber-50 border-amber-200 text-amber-900')
+                  }`}
+                  title="ตำแหน่งปัจจุบันของคุณ"
+                >
+                  <Compass className="w-3.5 h-3.5 text-blue-500 animate-spin-slow shrink-0" />
+                  <span className="truncate max-w-[110px]">
+                    {userDistrict && typeof userDistrict === 'string' ? `คุณอยู่: อ.${userDistrict.replace('เมืองสมุทรปราการ', 'เมือง')}` : 'อยู่นอกสมุทรปราการ'}
+                  </span>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => handleLocateMe(false)}
+                  className={`shrink-0 flex items-center gap-1.5 px-2.5 py-2 rounded-md border text-xs font-semibold shadow-xs cursor-pointer active:scale-95 transition-all ${
+                    isDark ? 'bg-slate-850 border-slate-700 text-slate-300 hover:text-white' : 'bg-slate-50 border-slate-200 text-slate-700 hover:text-slate-900'
+                  }`}
+                  title="คลิกเพื่อเปิดตำแหน่งและระบุพิกัด GPS"
+                >
+                  <Compass className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+                  <span className="underline decoration-slate-400 dark:decoration-slate-500 underline-offset-2 hover:decoration-blue-500 font-medium">
+                    เปิด GPS
+                  </span>
+                </button>
+              )}
+            </div>
+
+            {/* 3. 24-Hour Rain Forecast & Live Meteorological Telemetry Card */}
+            <div className="w-full">
+              <RainForecast24hCard
+                forecast={weather?.forecast24h}
+                userDistrict={userDistrict}
+                userLocation={userLocation}
+                onOpenRadar={() => setIsOfficialModalOpen(true)}
+                theme={theme}
+                collapsible={true}
+                defaultExpanded={true}
+                onManualSync={handleManualSync}
+                isSyncing={telemetrySyncStatus?.isSyncing}
+                onOpenPublicUpdates={() => setIsPublicUpdatesModalOpen(true)}
+                lastUpdatedTime={lastUpdatedTime}
+              />
+            </div>
+
+            {/* 4. Major Flood Corridors Quick Shortcuts */}
+            <div className={`p-2.5 rounded-lg border ${isDark ? 'bg-slate-850/60 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-bold flex items-center gap-1.5 text-slate-800 dark:text-slate-200">
+                  <span>🛣️</span> เส้นทางสัญจรเสี่ยงสำคัญ
+                </span>
+                <span className="text-[10px] text-slate-400">คลิกเพื่อซูม</span>
+              </div>
+              <div className="grid grid-cols-2 gap-1.5">
+                {MAJOR_FLOOD_CORRIDORS.slice(0, 6).map((corridor) => (
+                  <button
+                    key={corridor.id}
+                    onClick={() => {
+                      playSelectSound();
+                      if (corridor.coordinates && corridor.coordinates[0]) {
+                        setFlyToLocation({
+                          lat: corridor.coordinates[0][0],
+                          lng: corridor.coordinates[0][1],
+                          zoom: 14,
+                          duration: 1.8,
+                          ts: Date.now()
+                        });
+                      }
+                    }}
+                    className={`p-1.5 rounded-md text-left border text-[11px] font-medium transition-all cursor-pointer shadow-xs truncate active:scale-95 ${
+                      isDark ? 'bg-slate-800 hover:bg-slate-750 border-slate-700 text-slate-200 hover:text-cyan-300' : 'bg-white hover:bg-slate-100 border-slate-200 text-slate-800 hover:text-blue-600'
+                    }`}
+                    title={corridor.name}
+                  >
+                    📍 {corridor.shortName || corridor.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* 5. Telemetry Summary Counters */}
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              <div className={`p-2.5 rounded-lg border ${isDark ? 'bg-slate-850/60 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+                <span className="text-[10px] text-slate-500 dark:text-slate-400 block font-medium">จุดเฝ้าระวังทั้งหมด</span>
+                <span className="text-base font-bold text-blue-600 dark:text-cyan-400 font-mono mt-0.5 block">
+                  {points.length + citizenReports.length} จุด
+                </span>
+              </div>
+              <div className={`p-2.5 rounded-lg border ${isDark ? 'bg-slate-850/60 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+                <span className="text-[10px] text-slate-500 dark:text-slate-400 block font-medium">รายงานประชาชน</span>
+                <span className="text-base font-bold text-teal-600 dark:text-teal-400 font-mono mt-0.5 block">
+                  {citizenReports.length} รายการ
+                </span>
+              </div>
+            </div>
           </div>
 
-          {/* 24-HOUR RAIN FORECAST & LIVE METEOROLOGICAL TELEMETRY CARD */}
-          <div className="pointer-events-auto w-full hidden md:block">
-            <RainForecast24hCard
-              forecast={weather?.forecast24h}
-              userDistrict={userDistrict}
+          {/* Sidebar Footer */}
+          <div className={`p-2.5 px-3 border-t flex items-center justify-between text-[11px] shrink-0 ${
+            isDark ? 'bg-slate-900/90 border-slate-800 text-slate-400' : 'bg-slate-50 border-slate-200 text-slate-500'
+          }`}>
+            <div className="flex items-center gap-1.5">
+              <RefreshCw className={`w-3 h-3 ${isRefreshingData ? 'animate-spin text-blue-500' : ''}`} />
+              <span>รีเฟรชใน {Math.floor(refreshCountdown / 60)}:{(refreshCountdown % 60).toString().padStart(2, '0')}</span>
+            </div>
+            <button
+              onClick={handleRefreshData}
+              disabled={isRefreshingData}
+              className="text-blue-600 dark:text-cyan-400 hover:underline cursor-pointer font-semibold"
+            >
+              {isRefreshingData ? 'กำลังซิงค์...' : 'รีเฟรชทันที'}
+            </button>
+          </div>
+        </aside>
+
+        {/* ========================================================================= */}
+        {/* B. MAIN INTERACTIVE MAP CANVAS (FLEX-1)                                   */}
+        {/* ========================================================================= */}
+        <main className="flex-1 relative w-full h-full overflow-hidden">
+          
+          {/* Full Interactive Map */}
+          <div className="absolute inset-0 w-full h-full z-0">
+            <MapView 
+              points={mapPoints} 
+              citizenReports={mapCitizenReports}
+              onSelectPoint={handleSelectLocation}
+              selectedPoint={selectedPoint}
+              selectedDistrict={selectedDistrict}
+              onSelectDistrict={setSelectedDistrict}
               userLocation={userLocation}
-              onOpenRadar={() => setIsOfficialModalOpen(true)}
+              onLocateMe={handleLocateMe}
+              locationAccuracy={locationAccuracy}
+              onOpenStandards={() => setIsStandardsModalOpen(true)}
+              isPickingLocation={isPickingLocationOnMap}
+              onMapLocationPicked={handleMapLocationPicked}
+              flyToLocation={flyToLocation}
               theme={theme}
-              collapsible={true}
-              defaultExpanded={typeof window !== 'undefined' ? window.innerWidth >= 1024 : false}
-              onManualSync={handleManualSync}
-              isSyncing={telemetrySyncStatus?.isSyncing}
-              onOpenPublicUpdates={() => setIsPublicUpdatesModalOpen(true)}
-              lastUpdatedTime={lastUpdatedTime}
+              isTopPanelCollapsed={isTopPanelCollapsed}
+              isSidebarOpen={isSidebarOpen}
+              refreshCountdown={refreshCountdown}
             />
           </div>
 
-          {/* District Dropdown Selector */}
-          <div className="pointer-events-auto flex items-center gap-1.5 w-full max-w-full">
-            <div className={`relative flex-1 min-w-0 flex items-center px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-md border shadow-xs backdrop-blur-md transition-colors ${
-              isDark ? 'bg-slate-900/95 border-slate-800 text-slate-100' : 'bg-white/95 border-slate-200 text-slate-800'
-            }`}>
-              <MapPin className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-500 shrink-0 mr-1.5 sm:mr-2" />
-              <select
-                value={selectedDistrict}
-                onChange={(e) => {
-                  playSelectSound();
-                  const dist = e.target.value;
-                  setSelectedDistrict(dist);
-                  if (dist === "ทั้งหมด") {
-                    setFlyToLocation({ lat: 13.6000, lng: 100.6500, zoom: 11, ts: Date.now() });
-                  } else {
-                    const dData = SAMUT_PRAKAN_DISTRICTS_DATA.find(d => d.name === dist);
-                    if (dData && dData.center) {
-                      setFlyToLocation({ lat: dData.center.lat, lng: dData.center.lng, zoom: 13, ts: Date.now() });
-                    }
-                  }
-                }}
-                className={`w-full bg-transparent text-[11px] sm:text-sm font-semibold focus:outline-hidden cursor-pointer appearance-none ${
-                  isDark ? 'text-white' : 'text-slate-900'
-                }`}
-                title="คลิกเพื่อเลือกดูตามอำเภอ"
-              >
-                <option value="ทั้งหมด" className={isDark ? 'bg-slate-900 text-white' : 'bg-white text-slate-900'}>
-                  🏛️ ทุกอำเภอ (จ.สมุทรปราการ)
-                </option>
-                {DISTRICTS.filter(d => d !== "ทั้งหมด").map(dist => (
-                  <option 
-                    key={dist} 
-                    value={dist}
-                    className={isDark ? 'bg-slate-900 text-white' : 'bg-white text-slate-900'}
-                  >
-                    📍 อ.{dist}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-400 shrink-0 pointer-events-none ml-1" />
-            </div>
-
-            {/* User GPS Location Badge */}
-            {userLocation ? (
-              <div 
-                className={`shrink-0 flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-md border text-[10px] sm:text-xs font-semibold shadow-xs backdrop-blur-md ${
-                  userDistrict 
-                    ? (isDark ? 'bg-slate-850 border-slate-750 text-cyan-300' : 'bg-slate-50 border-slate-200 text-slate-800')
-                    : (isDark ? 'bg-amber-950/80 border-amber-800 text-amber-300' : 'bg-amber-50 border-amber-200 text-amber-900')
-                }`}
-                title="ตำแหน่งปัจจุบันของคุณ"
-              >
-                <Compass className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-blue-500 animate-spin-slow shrink-0" />
-                <span className="truncate max-w-[120px] sm:max-w-none">
-                  {userDistrict && typeof userDistrict === 'string' ? `คุณอยู่: อ.${userDistrict.replace('เมืองสมุทรปราการ', 'เมือง')}` : 'อยู่นอกสมุทรปราการ'}
+          {/* Re-Open Sidebar Button on Desktop & Tablet when sidebar is closed */}
+          {!isSidebarOpen && (
+            <button
+              onClick={() => {
+                playToggleSound(true);
+                setIsSidebarOpen(true);
+              }}
+              className={`hidden md:flex absolute top-4 left-4 z-20 items-center gap-2 px-3 py-2 rounded-md shadow-md border text-xs font-semibold backdrop-blur-md transition-all active:scale-95 cursor-pointer ${
+                isDark 
+                  ? 'bg-slate-900/95 text-slate-100 border-slate-800 hover:border-slate-700' 
+                  : 'bg-white/95 text-slate-800 border-slate-200 hover:border-slate-300'
+              }`}
+              title="เปิดแผงควบคุม GIS และพยากรณ์ฝน"
+            >
+              <PanelLeftOpen className="w-4 h-4 text-blue-500 shrink-0" />
+              <span>เปิดแผง GIS</span>
+              {selectedDistrict !== 'ทั้งหมด' && (
+                <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-cyan-300 font-bold">
+                  {selectedDistrict.replace(/^อ\./, '')}
                 </span>
+              )}
+            </button>
+          )}
+
+          {/* Floating Instruction Banner when User is Picking Location on Map */}
+          {isPickingLocationOnMap && (
+            <div className="absolute top-3 sm:top-4 left-1/2 -translate-x-1/2 z-50 bg-slate-950/95 text-white px-3 sm:px-5 py-2 sm:py-3 rounded-xl sm:rounded-2xl shadow-2xl border border-cyan-500/50 backdrop-blur-xl flex items-center gap-2 sm:gap-3 pointer-events-auto max-w-[92vw] sm:max-w-none">
+              <span className="w-2 sm:w-3 h-2 sm:h-3 rounded-full bg-cyan-400 animate-ping shrink-0"></span>
+              <div className="text-[10px] sm:text-xs min-w-0">
+                <strong className="block text-cyan-300 font-bold text-[11px] sm:text-sm truncate">📍 แตะเลือกจุดบนแผนที่</strong>
+                <span className="text-slate-200 truncate block">แตะพิกัดที่พบน้ำท่วมเพื่อบันทึกจุด</span>
               </div>
-            ) : (
+              <button 
+                onClick={handleCancelPickOnMap}
+                className="px-2 py-1 sm:px-3 sm:py-1.5 rounded-lg sm:rounded-xl bg-white/20 hover:bg-white/30 text-white font-bold text-[10px] sm:text-xs cursor-pointer ml-1 sm:ml-2 shrink-0 transition-colors"
+              >
+                ยกเลิก
+              </button>
+            </div>
+          )}
+
+          {/* Floating Notification for Admin when Citizen submits new flood reports */}
+          {isAdminAuthenticated && pendingReportsCount > 0 && (
+            <div className="absolute top-2.5 sm:top-3 right-2.5 sm:right-4 z-30 max-w-xs sm:max-w-sm bg-amber-500 text-slate-950 px-3.5 py-2.5 rounded-2xl shadow-2xl border border-amber-300 backdrop-blur-md flex items-center gap-2.5 pointer-events-auto">
+              <span className="w-2.5 h-2.5 rounded-full bg-rose-600 animate-ping shrink-0"></span>
+              <div className="text-xs">
+                <strong className="block font-bold">🔔 มีรายงานน้ำท่วมใหม่ ({pendingReportsCount} รายการ)</strong>
+                <span className="text-[11px] opacity-90">รอแอดมินยืนยันก่อนขึ้นแผนที่</span>
+              </div>
+              <button
+                onClick={() => setIsAdminModalOpen(true)}
+                className="px-2.5 py-1.5 bg-slate-950 hover:bg-slate-800 text-amber-300 font-bold text-xs rounded-xl transition-colors shrink-0 cursor-pointer shadow ml-auto"
+              >
+                ตรวจสอบ
+              </button>
+            </div>
+          )}
+
+          {/* Floating Toast Notification */}
+          {latestUpdateNotification && (
+            <div className={`fixed top-[56px] sm:top-[68px] left-1/2 -translate-x-1/2 z-[85] px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-md shadow-md backdrop-blur-md flex items-center gap-2 max-w-[90vw] sm:max-w-md pointer-events-auto animate-in fade-in slide-in-from-top-2 duration-300 border ${
+              latestUpdateNotification.includes('⚠️') || latestUpdateNotification.includes('ไม่ได้อยู่ใน')
+                ? 'bg-slate-900 border-amber-400 text-amber-200 shadow-amber-950/50'
+                : 'bg-slate-900 border-emerald-400 text-emerald-200 shadow-emerald-950/50'
+            }`}>
+              {latestUpdateNotification.includes('⚠️') || latestUpdateNotification.includes('ไม่ได้อยู่ใน') ? (
+                <AlertTriangle className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+              ) : (
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+              )}
+              <span className="text-[11.5px] sm:text-xs font-bold leading-tight truncate text-white">{latestUpdateNotification}</span>
               <button
                 type="button"
-                onClick={() => handleLocateMe(false)}
-                className={`shrink-0 flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-md border text-[10px] sm:text-xs font-semibold shadow-xs backdrop-blur-md cursor-pointer active:scale-95 transition-all ${
-                  isDark ? 'bg-slate-900/90 border-slate-800 text-slate-300 hover:text-white' : 'bg-white/95 border-slate-200 text-slate-700 hover:text-slate-900'
-                }`}
-                title="คลิกเพื่อเปิดตำแหน่งและระบุพิกัด GPS"
+                onClick={() => setLatestUpdateNotification(null)}
+                className="p-0.5 hover:bg-white/20 rounded-md text-slate-400 hover:text-white cursor-pointer ml-1 shrink-0"
+                title="ปิดการแจ้งเตือน"
               >
-                <Compass className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-blue-500 shrink-0" />
-                <span className="underline decoration-slate-400 dark:decoration-slate-500 underline-offset-2 hover:decoration-blue-500 font-medium">
-                  ไม่ได้เปิดตำแหน่ง
-                </span>
+                <X className="w-3 h-3" />
               </button>
-            )}
-          </div>
-
-        </div>
-
-        {/* DESKTOP/IPAD FLOATING LEGEND CARD (BOTTOM LEFT - เฉพาะคอมและไอแพด สามารถกดดูรายละเอียดเกณฑ์ได้) */}
-        <div className="hidden md:flex absolute bottom-4 left-4 z-40 pointer-events-auto select-none">
-          <button 
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              try { playModalOpenSound(); } catch (_) {}
-              setIsStandardsModalOpen(true);
-            }}
-            className={`px-3 py-1.5 rounded-md border text-xs flex items-center gap-2.5 shadow-xs backdrop-blur-md cursor-pointer transition-all active:scale-95 group ${
-              isDark 
-                ? 'bg-slate-900/95 border-slate-800 hover:border-slate-700 text-slate-300' 
-                : 'bg-white/95 border-slate-200 hover:border-slate-300 text-slate-700'
-            }`}
-            title="คลิกเพื่อดูรายละเอียดเกณฑ์วัดระดับน้ำและผลกระทบฉบับเต็ม"
-          >
-            <div className="flex items-center gap-1.5 font-semibold">
-              <BookOpen className={`w-3.5 h-3.5 ${isDark ? 'text-cyan-400' : 'text-blue-600'}`} />
-              <span className={isDark ? 'text-white' : 'text-slate-900'}>เกณฑ์ระดับน้ำ:</span>
             </div>
+          )}
 
-            <div className="flex items-center space-x-1.5">
-              <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-              <span className="font-medium text-emerald-700 dark:text-emerald-400">ปกติ 5-20 ซม.</span>
+          {/* Out of Province Warning Banner */}
+          {showOutOfProvinceBanner && userLocation && !userDistrict && (
+            <div className="fixed top-[58px] sm:top-[72px] left-1/2 -translate-x-1/2 z-[80] w-auto max-w-[94vw] sm:max-w-md pointer-events-auto animate-in fade-in slide-in-from-top-2 duration-300">
+              <div className="flex items-center gap-2.5 px-3.5 py-2 rounded-md bg-amber-950/95 text-amber-200 border border-amber-500/50 shadow-md backdrop-blur-md">
+                <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 animate-bounce" />
+                <div className="flex-1 min-w-0 text-xs">
+                  <span className="font-bold block text-white">ตำแหน่งท่านไม่ได้อยู่ในจังหวัดสมุทรปราการ</span>
+                  <span className="text-[10px] text-amber-300/80">ระบบติดตามและรายงานครอบคลุม 6 อำเภอ จ.สมุทรปราการ</span>
+                </div>
+                <button
+                  onClick={() => {
+                    setShowOutOfProvinceBanner(false);
+                    setSelectedDistrict('ทั้งหมด');
+                    setFlyToLocation({ lat: 13.6000, lng: 100.6500, zoom: 11, ts: Date.now() });
+                  }}
+                  className="px-2.5 py-1 rounded-md bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-400/40 text-[10px] font-bold shrink-0 cursor-pointer active:scale-95 transition-all"
+                >
+                  ดูสมุทรปราการ
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowOutOfProvinceBanner(false)}
+                  className="p-1 hover:bg-white/10 rounded-md text-amber-300/80 hover:text-white cursor-pointer ml-0.5"
+                  title="ปิด"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
             </div>
+          )}
 
-            <span className={isDark ? 'text-slate-800' : 'text-slate-300'}>•</span>
-
-            <div className="flex items-center space-x-1.5">
-              <span className="w-2 h-2 rounded-full bg-amber-500"></span>
-              <span className="font-medium text-amber-700 dark:text-amber-400">ปานกลาง 21-50 ซม.</span>
+          {/* Admin Web Announcement Banner */}
+          {showAnnouncementBanner && activeAnnouncement && (
+            <div className="fixed bottom-28 sm:bottom-auto sm:top-14 left-2 right-2 sm:left-1/2 sm:-translate-x-1/2 sm:w-[92vw] sm:max-w-2xl z-[95] pointer-events-auto animate-in fade-in slide-in-from-bottom-3 sm:slide-in-from-top-3 duration-300">
+              <div className={`w-full p-3 sm:px-4 sm:py-3.5 rounded-lg border shadow-lg backdrop-blur-md flex flex-col gap-2 transition-all overflow-hidden ${
+                isDark ? 'bg-slate-900/98 text-slate-100 border-slate-800 shadow-slate-950/50' : 'bg-white/98 text-slate-900 border-slate-300 shadow-md'
+              }`}>
+                <div className="flex items-center justify-between gap-2 border-b pb-1.5 border-slate-200 dark:border-slate-800">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="flex items-center justify-center w-6 h-6 rounded-md bg-blue-600 text-white shrink-0">
+                      <Bell className="w-3.5 h-3.5 animate-pulse" />
+                    </span>
+                    <span className="text-xs sm:text-xs font-bold text-blue-600 dark:text-cyan-400 truncate tracking-wide">
+                      📢 ประกาศจากเจ้าหน้าที่ PrakanGuard
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      playCloseSound();
+                      lsAnnAddDismiss(activeAnnouncement.id);
+                      setShowAnnouncementBanner(false);
+                    }}
+                    className="p-1 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-white cursor-pointer shrink-0 transition-colors active:scale-90"
+                    title="ปิดประกาศ"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+                <div className="text-xs sm:text-sm font-medium leading-relaxed whitespace-pre-line text-slate-800 dark:text-slate-100 px-0.5 break-words">
+                  {activeAnnouncement.message}
+                </div>
+                <div className="w-full bg-slate-100 dark:bg-slate-800 h-1 rounded-md overflow-hidden mt-0.5">
+                  <div 
+                    className="bg-blue-600 h-full rounded-md"
+                    style={{ animation: 'pg-announcement-timer 10s linear forwards' }}
+                  />
+                </div>
+              </div>
             </div>
+          )}
 
-            <span className={isDark ? 'text-slate-800' : 'text-slate-300'}>•</span>
-
-            <div className="flex items-center space-x-1.5">
-              <span className="w-2 h-2 rounded-full bg-rose-600 animate-pulse"></span>
-              <span className="text-rose-600 dark:text-rose-400 font-semibold">วิกฤต &gt;50 ซม.</span>
-            </div>
-
-            <span 
+          {/* DESKTOP/IPAD FLOATING LEGEND CARD (BOTTOM LEFT) */}
+          <div className="hidden md:flex absolute bottom-4 left-4 z-40 pointer-events-auto select-none">
+            <button 
+              type="button"
               onClick={(e) => {
                 e.stopPropagation();
                 try { playModalOpenSound(); } catch (_) {}
                 setIsStandardsModalOpen(true);
               }}
-              className={`ml-1 text-[11px] font-medium px-2 py-0.5 rounded-md border flex items-center gap-1 transition-colors cursor-pointer ${
+              className={`px-3 py-1.5 rounded-md border text-xs flex items-center gap-2.5 shadow-xs backdrop-blur-md cursor-pointer transition-all active:scale-95 group ${
                 isDark 
-                  ? 'bg-slate-800 text-slate-200 border-slate-700 hover:bg-slate-700' 
-                  : 'bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200'
+                  ? 'bg-slate-900/95 border-slate-800 hover:border-slate-700 text-slate-300' 
+                  : 'bg-white/95 border-slate-200 hover:border-slate-300 text-slate-700'
               }`}
+              title="คลิกเพื่อดูรายละเอียดเกณฑ์วัดระดับน้ำและผลกระทบฉบับเต็ม"
             >
-              ดูรายละเอียด ↗
-            </span>
-          </button>
-        </div>
+              <div className="flex items-center gap-1.5 font-semibold">
+                <BookOpen className={`w-3.5 h-3.5 ${isDark ? 'text-cyan-400' : 'text-blue-600'}`} />
+                <span className={isDark ? 'text-white' : 'text-slate-900'}>เกณฑ์ระดับน้ำ:</span>
+              </div>
 
-        {/* MOBILE DOCKED WATER LEVEL STRIP & MAP SYMBOL GUIDE (เกณฑ์ระดับน้ำและไกด์สัญลักษณ์ 📷 และ 📉) */}
-        <div className="md:hidden fixed bottom-[66px] left-1/2 -translate-x-1/2 z-30 pointer-events-auto select-none max-w-[96vw]">
-          <div className={`px-2 py-1 rounded-md border shadow-xs backdrop-blur-md flex items-center gap-1 text-[10px] font-semibold ${
-            isDark 
-              ? 'bg-slate-950/95 border-slate-800 text-slate-300' 
-              : 'bg-white/95 border-slate-200 text-slate-700'
-          }`}>
-            {/* Green: 5-20 cm */}
-            <button
-              type="button"
-              onClick={() => setSeverityFilter(prev => prev === '1' ? 'all' : '1')}
-              className={`px-2 py-0.5 rounded-md flex items-center gap-1 cursor-pointer transition-all active:scale-95 ${
-                severityFilter === '1'
-                  ? 'bg-emerald-600 text-white font-bold shadow-xs'
-                  : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-emerald-600 dark:text-emerald-400'
-              }`}
-              title="5-20 ซม."
-            >
-              <span className={`w-1.5 h-1.5 rounded-full ${severityFilter === '1' ? 'bg-white' : 'bg-emerald-500'}`}></span>
-              <span>5-20ซม.</span>
-            </button>
+              <div className="flex items-center space-x-1.5">
+                <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                <span className="font-medium text-emerald-700 dark:text-emerald-400">ปกติ 5-20 ซม.</span>
+              </div>
 
-            {/* Amber: 21-50 cm */}
-            <button
-              type="button"
-              onClick={() => setSeverityFilter(prev => prev === '2' ? 'all' : '2')}
-              className={`px-2 py-0.5 rounded-md flex items-center gap-1 cursor-pointer transition-all active:scale-95 ${
-                severityFilter === '2'
-                  ? 'bg-amber-500 text-slate-950 font-bold shadow-xs'
-                  : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-amber-600 dark:text-amber-400'
-              }`}
-              title="21-50 ซม."
-            >
-              <span className={`w-1.5 h-1.5 rounded-full ${severityFilter === '2' ? 'bg-slate-950' : 'bg-amber-500'}`}></span>
-              <span>21-50ซม.</span>
-            </button>
+              <span className={isDark ? 'text-slate-800' : 'text-slate-300'}>•</span>
 
-            {/* Red: >50 cm */}
-            <button
-              type="button"
-              onClick={() => setSeverityFilter(prev => prev === '3' ? 'all' : '3')}
-              className={`px-2 py-0.5 rounded-md flex items-center gap-1 cursor-pointer transition-all active:scale-95 ${
-                severityFilter === '3'
-                  ? 'bg-rose-600 text-white font-bold shadow-xs'
-                  : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-rose-600 dark:text-rose-400'
-              }`}
-              title=">50 ซม."
-            >
-              <span className={`w-1.5 h-1.5 rounded-full ${severityFilter === '3' ? 'bg-white' : 'bg-rose-500 animate-pulse'}`}></span>
-              <span>&gt;50ซม.</span>
-            </button>
+              <div className="flex items-center space-x-1.5">
+                <span className="w-2 h-2 rounded-full bg-amber-500"></span>
+                <span className="font-medium text-amber-700 dark:text-amber-400">ปานกลาง 21-50 ซม.</span>
+              </div>
 
-            {/* Teal: Receding Water (น้ำลด) */}
-            <button
-              type="button"
-              onClick={() => setSeverityFilter(prev => prev === 'falling' ? 'all' : 'falling')}
-              className={`px-2 py-0.5 rounded-md flex items-center gap-1 cursor-pointer transition-all active:scale-95 ${
-                severityFilter === 'falling'
-                  ? 'bg-teal-600 text-white font-bold shadow-xs'
-                  : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-teal-600 dark:text-teal-400'
-              }`}
-              title="น้ำกำลังลด"
-            >
-              <span>📉</span>
-              <span>น้ำลด</span>
-            </button>
+              <span className={isDark ? 'text-slate-800' : 'text-slate-300'}>•</span>
 
-            {severityFilter !== 'all' && (
-              <button
-                type="button"
-                onClick={() => setSeverityFilter('all')}
-                className="px-1.5 py-0.5 rounded-md bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-[9px] font-bold cursor-pointer active:scale-95"
+              <div className="flex items-center space-x-1.5">
+                <span className="w-2 h-2 rounded-full bg-rose-600 animate-pulse"></span>
+                <span className="text-rose-600 dark:text-rose-400 font-semibold">วิกฤต &gt;50 ซม.</span>
+              </div>
+
+              <span 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  try { playModalOpenSound(); } catch (_) {}
+                  setIsStandardsModalOpen(true);
+                }}
+                className={`ml-1 text-[11px] font-medium px-2 py-0.5 rounded-md border flex items-center gap-1 transition-colors cursor-pointer ${
+                  isDark 
+                    ? 'bg-slate-800 text-slate-200 border-slate-700 hover:bg-slate-700' 
+                    : 'bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200'
+                }`}
               >
-                ✕
-              </button>
-            )}
-
-            {/* Vertical Divider */}
-            <span className="w-[1px] h-3.5 bg-slate-200 dark:bg-slate-800"></span>
-
-            {/* Mobile Symbol Guide Trigger Button */}
-            <button
-              type="button"
-              onClick={() => setIsMobileGuideOpen(prev => !prev)}
-              className="flex items-center px-1.5 py-0.5 rounded-md bg-slate-100 dark:bg-slate-850 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-800 text-[10px] font-semibold cursor-pointer active:scale-95 shrink-0"
-              title="แตะเพื่อดูความหมายสัญลักษณ์ 📷 (มีภาพถ่าย) และ 📉 (น้ำกำลังลด)"
-            >
-              <span className="flex items-center -space-x-0.5">
-                <span>📷</span>
-                <span>📉</span>
+                ดูรายละเอียด ↗
               </span>
             </button>
           </div>
-        </div>
-
-        {/* MOBILE MAP SYMBOLS GUIDE MODAL (บอกความหมายของ 📷 รูปประชาชนถ่ายรูปรายงาน และ 📉 น้ำกำลังลด) */}
-        {isMobileGuideOpen && (
-          <div 
-            className="md:hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center pt-16 pb-20 p-3 animate-in fade-in"
-            onClick={() => setIsMobileGuideOpen(false)}
-          >
-            <div 
-              className={`w-[86vw] max-w-[320px] max-h-[58vh] overflow-y-auto rounded-lg border p-3 shadow-xl backdrop-blur-md animate-in zoom-in-95 ${
-                isDark 
-                  ? 'bg-slate-900/98 border-slate-800 text-slate-100 shadow-black/80' 
-                  : 'bg-white/98 border-slate-200 text-slate-800 shadow-slate-300/80'
-              }`}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-800">
-                <span className="font-bold text-xs sm:text-sm flex items-center gap-1.5 text-blue-600 dark:text-cyan-400">
-                  <span>💡</span> ไกด์สัญลักษณ์บนแผนที่
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setIsMobileGuideOpen(false)}
-                  className="p-1 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-white"
-                >
-                  <X className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                </button>
-              </div>
-
-              <div className="space-y-2 mt-2.5 text-[11px] sm:text-xs">
-                {/* 1. Camera Symbol Guide */}
-                <div className="flex items-start gap-2 p-2 sm:p-2.5 rounded-md bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800">
-                  <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-md bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-sm sm:text-base shadow-xs shrink-0">
-                    📷
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <span className="font-semibold text-blue-700 dark:text-cyan-300 block text-[11px] sm:text-xs">
-                      รูปกล้อง (📷)
-                    </span>
-                    <span className="text-[10px] sm:text-[11px] text-slate-600 dark:text-slate-300 block leading-snug mt-0.5">
-                      คือ <b>จุดที่มีประชาชนถ่ายรูปรายงาน</b> สามารถแตะที่หมุดเพื่อดูรูปถ่ายสถานที่จริงขนาดใหญ่ได้
-                    </span>
-                  </div>
-                </div>
-
-                {/* 2. Graph / Falling Water Symbol Guide */}
-                <div className="flex items-start gap-2 p-2 sm:p-2.5 rounded-md bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800">
-                  <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-md bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-sm sm:text-base shadow-xs shrink-0">
-                    📉
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <span className="font-semibold text-teal-700 dark:text-teal-300 block text-[11px] sm:text-xs">
-                      เส้นกราฟสีฟ้า/เขียว (📉)
-                    </span>
-                    <span className="text-[10px] sm:text-[11px] text-slate-600 dark:text-slate-300 block leading-snug mt-0.5">
-                      คือ <b>จุดที่น้ำกำลังลด</b> ฝนหยุดตกแล้วและเจ้าหน้าที่กำลังเร่งสูบระบายน้ำ เมื่อแห้งสนิทระบบจะนำออกจากแผนที่อัตโนมัติ
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-2.5 text-center">
-                <button
-                  type="button"
-                  onClick={() => setIsMobileGuideOpen(false)}
-                  className="w-full py-1.5 sm:py-2 rounded-md bg-blue-600 hover:bg-blue-700 text-white font-semibold text-[11px] sm:text-xs cursor-pointer active:scale-95 shadow-xs transition-all"
-                >
-                  เข้าใจแล้ว
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* FLOATING POINT DETAIL MODAL (CENTERED POPUP DIALOG) */}
         {selectedPoint && (() => {
@@ -3349,6 +3291,524 @@ export default function App() {
 
       </main>
 
+      {/* End of 2. RESPONSIVE WORKSPACE */}
+      </div>
+
+      {/* ========================================================================= */}
+      {/* C. MOBILE INTERACTIVE BOTTOM SHEET & PEEK STATUS BAR (md:hidden) */}
+      {/* ========================================================================= */}
+      {/* 1. Collapsed Mode: Floating Peek Bar anchored right above MobileBottomNav */}
+      {!isMobileSheetOpen && (
+        <div className="md:hidden fixed bottom-[58px] inset-x-2.5 z-30 pointer-events-auto select-none">
+          <div className={`p-2 rounded-xl border backdrop-blur-md shadow-lg flex flex-col gap-1.5 transition-all ${
+            isDark 
+              ? 'bg-slate-900/95 border-slate-800 text-slate-100' 
+              : 'bg-white/95 border-slate-200 text-slate-800'
+          }`}>
+            {/* Top Drag Pill Handle */}
+            <button
+              type="button"
+              onClick={() => {
+                setMobileSheetTab('overview');
+                setIsMobileSheetOpen(true);
+              }}
+              className="w-full flex flex-col items-center cursor-pointer group"
+              aria-label="เปิดศูนย์ข้อมูล"
+            >
+              <span className="w-8 h-1 rounded-full bg-slate-300 dark:bg-slate-700 group-hover:bg-blue-500 transition-colors"></span>
+            </button>
+
+            {/* 4 Compact Segmented Status Badges */}
+            <div className="grid grid-cols-4 gap-1">
+              {/* ปกติ */}
+              <button
+                type="button"
+                onClick={() => setSeverityFilter(severityFilter === 'falling' ? 'all' : 'falling')}
+                className={`py-1 px-1 rounded-lg border text-center transition-all cursor-pointer ${
+                  severityFilter === 'falling'
+                    ? 'bg-emerald-500 text-white border-emerald-500 shadow-xs'
+                    : isDark ? 'bg-slate-850 border-slate-800 hover:bg-slate-800 text-slate-300' : 'bg-slate-50 border-slate-200 hover:bg-slate-100 text-slate-700'
+                }`}
+              >
+                <div className="text-[10px] font-medium leading-none text-slate-400 dark:text-slate-500">ปกติ/ลด</div>
+                <div className="text-xs font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">{falling}</div>
+              </button>
+
+              {/* เฝ้าระวัง */}
+              <button
+                type="button"
+                onClick={() => setSeverityFilter(severityFilter === 'minor' ? 'all' : 'minor')}
+                className={`py-1 px-1 rounded-lg border text-center transition-all cursor-pointer ${
+                  severityFilter === 'minor'
+                    ? 'bg-amber-500 text-white border-amber-500 shadow-xs'
+                    : isDark ? 'bg-slate-850 border-slate-800 hover:bg-slate-800 text-slate-300' : 'bg-slate-50 border-slate-200 hover:bg-slate-100 text-slate-700'
+                }`}
+              >
+                <div className="text-[10px] font-medium leading-none text-slate-400 dark:text-slate-500">เฝ้าระวัง</div>
+                <div className="text-xs font-bold text-amber-600 dark:text-amber-400 mt-0.5">{minor}</div>
+              </button>
+
+              {/* ปานกลาง */}
+              <button
+                type="button"
+                onClick={() => setSeverityFilter(severityFilter === 'moderate' ? 'all' : 'moderate')}
+                className={`py-1 px-1 rounded-lg border text-center transition-all cursor-pointer ${
+                  severityFilter === 'moderate'
+                    ? 'bg-orange-500 text-white border-orange-500 shadow-xs'
+                    : isDark ? 'bg-slate-850 border-slate-800 hover:bg-slate-800 text-slate-300' : 'bg-slate-50 border-slate-200 hover:bg-slate-100 text-slate-700'
+                }`}
+              >
+                <div className="text-[10px] font-medium leading-none text-slate-400 dark:text-slate-500">ปานกลาง</div>
+                <div className="text-xs font-bold text-orange-600 dark:text-orange-400 mt-0.5">{moderate}</div>
+              </button>
+
+              {/* วิกฤต */}
+              <button
+                type="button"
+                onClick={() => setSeverityFilter(severityFilter === 'severe' ? 'all' : 'severe')}
+                className={`py-1 px-1 rounded-lg border text-center transition-all cursor-pointer ${
+                  severityFilter === 'severe'
+                    ? 'bg-rose-600 text-white border-rose-600 shadow-xs'
+                    : isDark ? 'bg-slate-850 border-slate-800 hover:bg-slate-800 text-slate-300' : 'bg-slate-50 border-slate-200 hover:bg-slate-100 text-slate-700'
+                }`}
+              >
+                <div className="text-[10px] font-medium leading-none text-slate-400 dark:text-slate-500">วิกฤต</div>
+                <div className="text-xs font-bold text-rose-600 dark:text-rose-400 mt-0.5">{severe}</div>
+              </button>
+            </div>
+
+            {/* Quick expandable telemetry strip */}
+            <button
+              type="button"
+              onClick={() => {
+                setMobileSheetTab('weather');
+                setIsMobileSheetOpen(true);
+              }}
+              className="flex items-center justify-between text-[11px] pt-1 border-t border-slate-100 dark:border-slate-800/80 text-slate-600 dark:text-slate-300 cursor-pointer"
+            >
+              <div className="flex items-center gap-1.5 min-w-0">
+                <CloudRain className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+                <span className="truncate">
+                  ฝนโอกาส {weather?.precipitationProbability ?? 0}% • {weather?.temperature ?? 30}°C
+                </span>
+              </div>
+              <div className="flex items-center gap-1 text-blue-600 dark:text-blue-400 font-medium shrink-0">
+                <span>พยากรณ์ 6 อำเภอ & ค้นหา</span>
+                <ChevronUp className="w-3.5 h-3.5" />
+              </div>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* 2. Expanded Mode: Full Mobile Bottom Sheet */}
+      {isMobileSheetOpen && (
+        <div 
+          className="md:hidden fixed inset-0 z-45 bg-black/50 backdrop-blur-xs transition-opacity animate-in fade-in duration-200"
+          onClick={() => setIsMobileSheetOpen(false)}
+        >
+          <div 
+            className={`fixed inset-x-0 bottom-0 z-50 max-h-[84vh] h-[80vh] flex flex-col rounded-t-2xl border-t shadow-2xl backdrop-blur-xl animate-in slide-in-from-bottom duration-300 select-none pb-[calc(env(safe-area-inset-bottom,0px)+8px)] ${
+              isDark 
+                ? 'bg-slate-900 border-slate-800 text-slate-100' 
+                : 'bg-white border-slate-200 text-slate-900'
+            }`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Sheet Handle & Header */}
+            <div className="p-3 pb-2 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between gap-2 shrink-0">
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse shrink-0"></span>
+                <div className="min-w-0">
+                  <h3 className="text-sm font-bold truncate">ศูนย์ข้อมูล & ควบคุม GIS</h3>
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate">จ.สมุทรปราการ (6 อำเภอ)</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsMobileSheetOpen(false)}
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 bg-slate-100 dark:bg-slate-800 transition-colors"
+                aria-label="ปิดศูนย์ข้อมูล"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Segmented Tabs */}
+            <div className="px-3 pt-2 shrink-0">
+              <div className="grid grid-cols-3 gap-1 p-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-xs">
+                <button
+                  type="button"
+                  onClick={() => setMobileSheetTab('overview')}
+                  className={`py-1.5 rounded-md font-medium transition-all ${
+                    mobileSheetTab === 'overview'
+                      ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs font-bold'
+                      : 'text-slate-500 dark:text-slate-400'
+                  }`}
+                >
+                  จุดเสี่ยง ({displayPoints.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMobileSheetTab('weather')}
+                  className={`py-1.5 rounded-md font-medium transition-all ${
+                    mobileSheetTab === 'weather'
+                      ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs font-bold'
+                      : 'text-slate-500 dark:text-slate-400'
+                  }`}
+                >
+                  สภาพอากาศ
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMobileSheetTab('emergency')}
+                  className={`py-1.5 rounded-md font-medium transition-all ${
+                    mobileSheetTab === 'emergency'
+                      ? 'bg-white dark:bg-slate-700 text-rose-600 dark:text-rose-400 shadow-xs font-bold'
+                      : 'text-slate-500 dark:text-slate-400'
+                  }`}
+                >
+                  สายด่วน 1784
+                </button>
+              </div>
+            </div>
+
+            {/* Tab Contents (Scrollable) */}
+            <div className="flex-1 overflow-y-auto p-3 space-y-3">
+              {/* TAB 1: OVERVIEW & SEARCH */}
+              {mobileSheetTab === 'overview' && (
+                <div className="space-y-3">
+                  {/* Search Input */}
+                  <div className="relative">
+                    <Search className="w-4 h-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder="ค้นหาจุดน้ำท่วม, ถนน, ซอย..."
+                      className={`w-full pl-8 pr-8 py-2 rounded-lg border text-xs focus:outline-hidden focus:ring-1 focus:ring-blue-500 ${
+                        isDark 
+                          ? 'bg-slate-850 border-slate-750 text-white placeholder-slate-500' 
+                          : 'bg-slate-50 border-slate-200 text-slate-800 placeholder-slate-400'
+                      }`}
+                    />
+                    {searchQuery && (
+                      <button
+                        type="button"
+                        onClick={() => setSearchQuery('')}
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+
+                  {/* District Dropdown Selector */}
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] font-medium text-slate-500 shrink-0">อำเภอ:</span>
+                    <select
+                      value={selectedDistrict}
+                      onChange={(e) => setSelectedDistrict(e.target.value)}
+                      className={`flex-1 py-1.5 px-2 rounded-lg border text-xs font-medium focus:outline-hidden ${
+                        isDark ? 'bg-slate-850 border-slate-750 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'
+                      }`}
+                    >
+                      <option value="all">ทุกอำเภอในสมุทรปราการ ({points.length + citizenReports.filter(r => r.isApproved && !r.isResolved).length})</option>
+                      {SAMUT_PRAKAN_DISTRICTS_DATA.map(d => (
+                        <option key={d.name} value={d.name}>{d.name}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Flood Corridor Quick Jump Chips */}
+                  <div>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
+                      เส้นทางสัญจรสายหลัก
+                    </span>
+                    <div className="flex flex-wrap gap-1">
+                      {MAJOR_FLOOD_CORRIDORS.map(corridor => (
+                        <button
+                          key={corridor.id}
+                          type="button"
+                          onClick={() => {
+                            setSearchQuery(corridor.name);
+                          }}
+                          className={`px-2 py-1 rounded-md text-[11px] border font-medium transition-colors cursor-pointer ${
+                            searchQuery === corridor.name
+                              ? 'bg-blue-600 text-white border-blue-600'
+                              : isDark ? 'bg-slate-800 border-slate-700 text-slate-300' : 'bg-slate-100 border-slate-200 text-slate-700'
+                          }`}
+                        >
+                          {corridor.name}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Filtered Points List */}
+                  <div className="space-y-1.5 pt-1">
+                    <div className="flex items-center justify-between text-[11px] text-slate-500 font-medium">
+                      <span>รายการจุดรายงาน ({displayPoints.length})</span>
+                      {severityFilter !== 'all' && (
+                        <button
+                          type="button"
+                          onClick={() => setSeverityFilter('all')}
+                          className="text-blue-500 hover:underline cursor-pointer"
+                        >
+                          ล้างตัวกรอง
+                        </button>
+                      )}
+                    </div>
+
+                    {displayPoints.length === 0 ? (
+                      <div className="py-6 text-center text-xs text-slate-400">
+                        ไม่พบข้อมูลตามเงื่อนไขที่เลือก
+                      </div>
+                    ) : (
+                      displayPoints.slice(0, 15).map(pt => {
+                        const lvl = resolveLevel(pt);
+                        return (
+                          <div
+                            key={pt.id}
+                            className={`p-2 rounded-lg border transition-all flex items-center justify-between gap-2 ${
+                              isDark ? 'bg-slate-850/60 border-slate-800' : 'bg-slate-50/80 border-slate-200'
+                            }`}
+                          >
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-1.5">
+                                <span className={`w-2 h-2 rounded-full shrink-0 ${
+                                  lvl === 'severe' ? 'bg-rose-500' :
+                                  lvl === 'moderate' ? 'bg-orange-500' :
+                                  lvl === 'minor' ? 'bg-amber-500' : 'bg-emerald-500'
+                                }`} />
+                                <h4 className="text-xs font-bold truncate">{pt.name}</h4>
+                              </div>
+                              <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
+                                อ.{pt.district} • {pt.depth || (lvl === 'severe' ? 'น้ำท่วมสูง (>30 ซม.)' : lvl === 'moderate' ? 'น้ำท่วมขัง (15-30 ซม.)' : lvl === 'minor' ? 'ผิวจราจร (5-15 ซม.)' : 'ปกติ')}
+                              </p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                handleSelectLocation(pt);
+                                setIsMobileSheetOpen(false);
+                              }}
+                              className="px-2.5 py-1 rounded-md bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-bold shrink-0 transition-transform active:scale-95 flex items-center gap-1 cursor-pointer"
+                            >
+                              <Navigation2 className="w-3 h-3" />
+                              <span>ดูจุดนี้</span>
+                            </button>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* TAB 2: WEATHER 24H TELEMETRY */}
+              {mobileSheetTab === 'weather' && (
+                <div className="space-y-3">
+                  {/* Current Snapshot Card */}
+                  <div className={`p-3 rounded-xl border flex items-center justify-between ${
+                    isDark ? 'bg-slate-800/80 border-slate-750' : 'bg-slate-50 border-slate-200'
+                  }`}>
+                    <div>
+                      <span className="text-[10px] font-bold text-blue-500 uppercase tracking-wider block">สมุทรปราการ ปัจจุบัน</span>
+                      <div className="text-2xl font-black mt-0.5">{weather?.temperature ?? 31}°C</div>
+                      <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                        {weather?.description || 'มีเมฆเป็นส่วนมาก มีฝนบางพื้นที่'}
+                      </span>
+                    </div>
+                    <div className="text-right text-xs space-y-1">
+                      <div className="flex items-center justify-end gap-1 text-blue-600 dark:text-blue-400 font-medium">
+                        <CloudRain className="w-3.5 h-3.5" />
+                        <span>โอกาสฝน {weather?.precipitationProbability ?? 30}%</span>
+                      </div>
+                      <div className="text-[10px] text-slate-400">ความชื้น {weather?.humidity ?? 78}%</div>
+                      <div className="text-[10px] text-slate-400">ลม {weather?.windSpeed ?? 14} กม./ชม.</div>
+                    </div>
+                  </div>
+
+                  {/* 6 Districts Forecast List */}
+                  <div>
+                    <span className="text-xs font-bold block mb-1.5">
+                      พยากรณ์ฝนรายอำเภอ (6 อำเภอ จ.สมุทรปราการ)
+                    </span>
+                    <div className="space-y-1.5">
+                      {SAMUT_PRAKAN_DISTRICTS_DATA.map(d => {
+                        const rainPercent = Math.min(95, Math.max(15, (weather?.precipitationProbability ?? 35) + ((d.name.length * 7) % 30) - 10));
+                        return (
+                          <div
+                            key={d.name}
+                            className={`p-2.5 rounded-lg border flex items-center justify-between gap-2 ${
+                              isDark ? 'bg-slate-850/60 border-slate-800' : 'bg-slate-50/80 border-slate-200'
+                            }`}
+                          >
+                            <div className="min-w-0 flex-1">
+                              <span className="text-xs font-bold block truncate">อ.{d.name}</span>
+                              <div className="flex items-center gap-2 mt-1">
+                                <div className="flex-1 max-w-[120px] h-1.5 rounded-full bg-slate-200 dark:bg-slate-750 overflow-hidden">
+                                  <div 
+                                    className={`h-full rounded-full ${
+                                      rainPercent >= 70 ? 'bg-rose-500' :
+                                      rainPercent >= 40 ? 'bg-amber-500' : 'bg-blue-500'
+                                    }`}
+                                    style={{ width: `${rainPercent}%` }}
+                                  />
+                                </div>
+                                <span className="text-[10px] font-mono font-bold text-slate-500">
+                                  ฝน {rainPercent}%
+                                </span>
+                              </div>
+                            </div>
+                            <div className="text-right shrink-0">
+                              <span className="text-xs font-bold">{weather?.temperature ?? 31}°C</span>
+                              <span className="text-[10px] text-slate-400 block">ลม 12-16 กม./ชม.</span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* 24-Hour Timeline Preview */}
+                  <div className="pt-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsOfficialModalOpen(true);
+                        setIsMobileSheetOpen(false);
+                      }}
+                      className="w-full py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold flex items-center justify-center gap-1.5 shadow-sm active:scale-98 transition-transform cursor-pointer"
+                    >
+                      <Sparkles className="w-3.5 h-3.5" />
+                      <span>เปิดรายงานสภาพอากาศและการวิเคราะห์ AI ฉบับเต็ม</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* TAB 3: EMERGENCY & HOTLINES */}
+              {mobileSheetTab === 'emergency' && (
+                <div className="space-y-3">
+                  {/* Hero Hotline Banner */}
+                  <a
+                    href="tel:1784"
+                    className="p-3.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white flex items-center justify-between shadow-md transition-all active:scale-98 cursor-pointer border border-rose-700 block"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-white/20 flex items-center justify-center shrink-0">
+                        <Phone className="w-5 h-5 text-white" />
+                      </div>
+                      <div>
+                        <div className="text-sm font-black">สายด่วนสาธารณภัย 1784</div>
+                        <div className="text-[11px] text-rose-100">ศูนย์ป้องกันและบรรเทาสาธารณภัย (โทรฟรี 24 ชม.)</div>
+                      </div>
+                    </div>
+                    <span className="px-2.5 py-1 rounded-md bg-white/20 text-white font-mono font-bold text-xs shrink-0">
+                      โทรทันที
+                    </span>
+                  </a>
+
+                  {/* Quick Assistance Numbers */}
+                  <div className="space-y-1.5">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                      หน่วยงานฉุกเฉินและช่วยเหลือในพื้นที่
+                    </span>
+
+                    <a
+                      href="tel:023874222"
+                      className={`p-2.5 rounded-lg border flex items-center justify-between text-xs transition-colors ${
+                        isDark ? 'bg-slate-850/60 border-slate-800 text-slate-200' : 'bg-slate-50 border-slate-200 text-slate-800'
+                      }`}
+                    >
+                      <div>
+                        <span className="font-bold block">สนง. ปภ. จังหวัดสมุทรปราการ</span>
+                        <span className="text-[10px] text-slate-400">ประสานงานช่วยเหลือระดับจังหวัด</span>
+                      </div>
+                      <span className="font-mono text-blue-600 dark:text-blue-400 font-bold">02-387-4222</span>
+                    </a>
+
+                    <a
+                      href="tel:1669"
+                      className={`p-2.5 rounded-lg border flex items-center justify-between text-xs transition-colors ${
+                        isDark ? 'bg-slate-850/60 border-slate-800 text-slate-200' : 'bg-slate-50 border-slate-200 text-slate-800'
+                      }`}
+                    >
+                      <div>
+                        <span className="font-bold block">สถาบันการแพทย์ฉุกเฉินแห่งชาติ (กู้ชีพ)</span>
+                        <span className="text-[10px] text-slate-400">เจ็บป่วยฉุกเฉินหรืออุบัติเหตุ</span>
+                      </div>
+                      <span className="font-mono text-emerald-600 dark:text-emerald-400 font-bold">1669</span>
+                    </a>
+
+                    <a
+                      href="tel:1193"
+                      className={`p-2.5 rounded-lg border flex items-center justify-between text-xs transition-colors ${
+                        isDark ? 'bg-slate-850/60 border-slate-800 text-slate-200' : 'bg-slate-50 border-slate-200 text-slate-800'
+                      }`}
+                    >
+                      <div>
+                        <span className="font-bold block">ตำรวจทางหลวง</span>
+                        <span className="text-[10px] text-slate-400">สอบถามเส้นทางและเหตุด่วนบนทางหลวง</span>
+                      </div>
+                      <span className="font-mono text-blue-600 dark:text-blue-400 font-bold">1193</span>
+                    </a>
+
+                    <a
+                      href="tel:192"
+                      className={`p-2.5 rounded-lg border flex items-center justify-between text-xs transition-colors ${
+                        isDark ? 'bg-slate-850/60 border-slate-800 text-slate-200' : 'bg-slate-50 border-slate-200 text-slate-800'
+                      }`}
+                    >
+                      <div>
+                        <span className="font-bold block">ศูนย์เตือนภัยพิบัติแห่งชาติ (NDWC)</span>
+                        <span className="text-[10px] text-slate-400">รับแจ้งเตือนภัยพิบัติฉุกเฉิน</span>
+                      </div>
+                      <span className="font-mono text-purple-600 dark:text-purple-400 font-bold">192</span>
+                    </a>
+                  </div>
+
+                  {/* Guide links */}
+                  <div className="grid grid-cols-2 gap-2 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsStandardsModalOpen(true);
+                        setIsMobileSheetOpen(false);
+                      }}
+                      className="p-2.5 rounded-lg border border-slate-200 dark:border-slate-800 text-xs font-medium text-left flex items-center gap-2 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                    >
+                      <BookOpen className="w-4 h-4 text-blue-500 shrink-0" />
+                      <div>
+                        <span className="font-bold block">เกณฑ์ระดับน้ำ</span>
+                        <span className="text-[9px] text-slate-400">คู่มือสัญจรปลอดภัย</span>
+                      </div>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsEmergencyModalOpen(true);
+                        setIsMobileSheetOpen(false);
+                      }}
+                      className="p-2.5 rounded-lg border border-slate-200 dark:border-slate-800 text-xs font-medium text-left flex items-center gap-2 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                    >
+                      <Phone className="w-4 h-4 text-rose-500 shrink-0" />
+                      <div>
+                        <span className="font-bold block">เบอร์กู้ภัยทั้งหมด</span>
+                        <span className="text-[9px] text-slate-400">รายอำเภอและสถานี</span>
+                      </div>
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* 3. OFFICIAL PUBLIC INFORMATION DESK (CHATBOT) */}
       <ChatBot 
         points={[...points, ...citizenReports.filter(r => r.isApproved && !r.isResolved)]} 
@@ -3607,8 +4067,11 @@ export default function App() {
         onToggleTheme={toggleTheme}
         hasGps={!!userLocation}
         theme={theme}
-        onToggleSearch={() => setIsTopPanelCollapsed(v => !v)}
-        isSearchOpen={!isTopPanelCollapsed}
+        onToggleSearch={() => {
+          setMobileSheetTab('overview');
+          setIsMobileSheetOpen(v => !v);
+        }}
+        isSearchOpen={isMobileSheetOpen}
       />
 
 

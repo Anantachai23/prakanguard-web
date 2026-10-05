@@ -370,6 +370,11 @@ export async function getLiveSamutPrakanWeather(forceRefresh = false) {
       const activeRainingDistricts = districtRainAnalysis.filter(d => d.isRainingNow);
       const riskIncomingDistricts = districtRainAnalysis.filter(d => !d.isRainingNow && d.probability >= 60);
 
+      const isRainingRightNow = Boolean(
+        (current.precipitation && current.precipitation > 0) || 
+        (current.weather_code !== undefined && [51, 53, 55, 61, 63, 65, 80, 81, 82, 95].includes(current.weather_code))
+      );
+
       const meteorologicalInsight = {
         activeCount: activeRainingDistricts.length,
         activeNames: activeRainingDistricts.map(d => `อ.${d.district}`).join(", "),

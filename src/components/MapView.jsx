@@ -232,6 +232,7 @@ export default function MapView({
   flyToLocation,
   theme = 'light',
   isTopPanelCollapsed = false,
+  isSidebarOpen = true,
   refreshCountdown = 300
 }) {
   const isDark = theme === 'dark';
@@ -250,6 +251,14 @@ export default function MapView({
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map) return;
+    const t1 = setTimeout(() => map.invalidateSize(), 150);
+    const t2 = setTimeout(() => map.invalidateSize(), 350);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
+  }, [isTopPanelCollapsed, isSidebarOpen]);
 
   const mapContainerRef = useRef(null);
   const mapInstanceRef = useRef(null);
@@ -1007,7 +1016,7 @@ export default function MapView({
       </div>
 
       {/* FLOATING MAP CONTROLS (TOP RIGHT - CLEAN, UNCLUTTERED, COMPACT) */}
-      <div className="absolute top-2 right-2 sm:top-4 sm:right-4 z-25 flex flex-col items-end gap-1.5 sm:gap-2 pointer-events-auto">
+      <div className="absolute top-14 right-2 sm:top-4 sm:right-4 z-25 flex flex-col items-end gap-1.5 sm:gap-2 pointer-events-auto">
         
         {/* Map Tile Switcher */}
         <div className={`p-0.5 rounded-md flex items-center gap-1 border shadow-xs text-xs backdrop-blur-md transition-colors ${
