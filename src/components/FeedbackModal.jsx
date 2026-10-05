@@ -98,9 +98,9 @@ export default function FeedbackModal({ isOpen, onClose, theme = 'light', onFeed
   return (
     <div 
       onClick={(e) => { if (e.target === e.currentTarget) handleResetAndClose(); }}
-      className="fixed inset-0 z-50 bg-slate-950/65 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 smooth-backdrop"
+      className="fixed inset-0 z-50 bg-slate-950/65 backdrop-blur-xs flex items-center justify-center pt-16 pb-20 sm:p-4 smooth-backdrop"
     >
-      <div className={`w-full max-w-[92vw] sm:max-w-md border rounded-3xl shadow-2xl flex flex-col max-h-[80vh] sm:max-h-[82vh] overflow-hidden smooth-pop transition-colors ${
+      <div className={`w-[80vw] max-w-[295px] sm:max-w-md border rounded-2xl sm:rounded-3xl shadow-2xl flex flex-col max-h-[48vh] sm:max-h-[82vh] overflow-hidden smooth-pop transition-colors ${
         isDark ? 'bg-slate-900 border-slate-700 text-slate-100' : 'bg-white border-slate-200 text-slate-800'
       }`}>
         
@@ -108,20 +108,20 @@ export default function FeedbackModal({ isOpen, onClose, theme = 'light', onFeed
         <div className="h-1.5 w-full bg-gradient-to-r from-teal-500 via-emerald-500 to-cyan-500 shrink-0"></div>
 
         {/* Header */}
-        <div className={`px-4 py-3 border-b flex items-center justify-between gap-2.5 shrink-0 ${
+        <div className={`px-2.5 py-1.5 sm:px-4 sm:py-3 border-b flex items-center justify-between gap-2 shrink-0 ${
           isDark ? 'border-slate-800 bg-slate-900/80' : 'border-slate-100 bg-slate-50/80'
         }`}>
-          <div className="flex items-center gap-2 min-w-0">
-            <div className={`w-8 h-8 rounded-xl flex items-center justify-center shadow-inner shrink-0 ${
+          <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
+            <div className={`w-6 h-6 sm:w-8 sm:h-8 rounded-lg sm:rounded-xl flex items-center justify-center shadow-inner shrink-0 ${
               isDark ? 'bg-teal-950/80 text-teal-400 border border-teal-800' : 'bg-teal-50 text-teal-600 border border-teal-200'
             }`}>
-              <MessageSquare className="w-4 h-4" />
+              <MessageSquare className="w-3 h-3 sm:w-4 sm:h-4" />
             </div>
             <div className="min-w-0">
-              <h2 className={`text-base sm:text-lg font-bold leading-tight break-words ${isDark ? 'text-white' : 'text-slate-900'}`}>
+              <h2 className={`text-[11px] sm:text-lg font-bold leading-tight break-words ${isDark ? 'text-white' : 'text-slate-900'}`}>
                 ข้อเสนอแนะ
               </h2>
-              <p className={`text-[11px] sm:text-xs mt-0.5 break-words whitespace-normal leading-tight ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+              <p className={`text-[8.5px] sm:text-xs mt-0.5 break-words whitespace-normal leading-tight ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
                 ร่วมแสดงความคิดเห็นหรือข้อเสนอแนะเพื่อร่วมพัฒนาเว็บไซต์รายงานน้ำท่วม
               </p>
             </div>
@@ -129,16 +129,16 @@ export default function FeedbackModal({ isOpen, onClose, theme = 'light', onFeed
 
           <button
             onClick={handleResetAndClose}
-            className={`p-2 rounded-xl transition-all cursor-pointer ${
+            className={`p-1.5 sm:p-2 rounded-xl transition-all cursor-pointer ${
               isDark ? 'hover:bg-slate-800 text-slate-400 hover:text-white' : 'hover:bg-slate-100 text-slate-500 hover:text-slate-900'
             }`}
           >
-            <X className="w-5 h-5" />
+            <X className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
           </button>
         </div>
 
         {/* Content Body */}
-        <div className="p-4 sm:p-6 overflow-y-auto flex-1">
+        <div className="p-2.5 sm:p-6 overflow-y-auto flex-1">
           {isSuccess ? (
             /* Success State */
             <div className="py-8 text-center space-y-4">

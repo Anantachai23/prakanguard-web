@@ -5,7 +5,9 @@ import {
   Moon, 
   Camera,
   MessageSquare,
-  ShieldCheck 
+  ShieldCheck,
+  Activity,
+  Bell
 } from 'lucide-react';
 import RealTimeClock from './RealTimeClock';
 import { 
@@ -31,6 +33,8 @@ export default function Navbar({
   onOpenFeedback,
   onOpenAdmin,
   onOpenPublicUpdates,
+  onOpenAnnouncement,
+  hasAnnouncement = false,
   onOpenPrivacyPolicy,
   lastUpdatedTime,
   lastUpdatedTimeDetailed,
@@ -53,12 +57,12 @@ export default function Navbar({
     <header className={`sticky top-0 z-[1001] w-full border-b backdrop-blur-md transition-colors select-none ${
       isDark ? 'bg-slate-950/95 border-slate-800 text-slate-100' : 'bg-white/95 border-slate-200 text-slate-800'
     }`}>
-      <div className="w-full max-w-full px-2.5 sm:px-4 py-2 flex items-center justify-between gap-1.5 sm:gap-2 overflow-hidden">
+      <div className="w-full max-w-full px-2 sm:px-4 py-1.5 sm:py-2 flex items-center justify-between gap-1 sm:gap-2 overflow-hidden">
         
         {/* Brand Area (Left) */}
-        <div className="flex items-center space-x-2 sm:space-x-2.5 shrink-0 min-w-0">
+        <div className="flex items-center space-x-1.5 sm:space-x-2.5 shrink-0 min-w-0">
           {/* PrakanGuard Official Mascot Emblem */}
-          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full p-[1.5px] bg-gradient-to-tr from-blue-600 via-cyan-400 to-teal-300 shadow-md shadow-blue-500/20 shrink-0 flex items-center justify-center">
+          <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-full p-[1px] sm:p-[1.5px] bg-gradient-to-tr from-blue-600 via-cyan-400 to-teal-300 shadow-md shadow-blue-500/20 shrink-0 flex items-center justify-center">
             <img 
               src="/logo.png" 
               alt="PrakanGuard Logo" 
@@ -67,13 +71,13 @@ export default function Navbar({
           </div>
 
           <div className="flex flex-col justify-center min-w-0">
-            <div className="flex items-center gap-1.5">
-              <span className={`text-sm sm:text-base font-black tracking-tight leading-tight shrink-0 ${
+            <div className="flex items-center gap-1 sm:gap-1.5">
+              <span className={`text-xs sm:text-base font-black tracking-tight leading-tight shrink-0 ${
                 isDark ? 'text-white' : 'text-slate-900'
               }`}>
                 PrakanGuard
               </span>
-              <span className={`text-[9px] sm:text-[10px] px-1.5 py-0.5 rounded-full font-bold shrink-0 ${
+              <span className={`text-[8.5px] sm:text-[10px] px-1 sm:px-1.5 py-0.2 sm:py-0.5 rounded-full font-bold shrink-0 ${
                 isDark ? 'bg-blue-950 text-cyan-300 border border-blue-800' : 'bg-blue-50 text-blue-700 border border-blue-200'
               }`}>
                 สมุทรปราการ
@@ -236,6 +240,44 @@ export default function Navbar({
           <div className="md:hidden shrink-0">
             <RealTimeClock theme={theme} />
           </div>
+
+          {/* Desktop/iPad Public Updates Button (อัปเดตสถานการณ์สดรายวัน) */}
+          <button 
+            type="button"
+            onClick={() => {
+              playModalOpenSound();
+              if (onOpenPublicUpdates) onOpenPublicUpdates();
+            }}
+            className={`hidden sm:inline-flex px-2 sm:px-2.5 py-1.5 rounded-xl border text-xs font-bold items-center gap-1 sm:gap-1.5 transition-all cursor-pointer shadow-xs active:scale-95 ${
+              isDark 
+                ? 'bg-blue-950/70 hover:bg-blue-900/80 text-cyan-300 border-blue-700/80 shadow-blue-950/40' 
+                : 'bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200 shadow-blue-500/10'
+            }`}
+            title="อัปเดตสถานการณ์น้ำท่วมสดรายวัน"
+          >
+            <Activity className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+            <span>อัปเดต</span>
+          </button>
+
+          {/* Desktop/iPad Admin Announcement Button (ปุ่มดูประกาศทางการจากแอดมิน) */}
+          {hasAnnouncement && (
+            <button 
+              type="button"
+              onClick={() => {
+                playModalOpenSound();
+                if (onOpenAnnouncement) onOpenAnnouncement();
+              }}
+              className={`hidden sm:inline-flex px-2 sm:px-2.5 py-1.5 rounded-xl border text-xs font-bold items-center gap-1 sm:gap-1.5 transition-all cursor-pointer shadow-xs active:scale-95 ${
+                isDark 
+                  ? 'bg-amber-950/70 hover:bg-amber-900/80 text-amber-300 border-amber-700/80 shadow-amber-950/40' 
+                  : 'bg-amber-50 hover:bg-amber-100 text-amber-800 border-amber-200 shadow-amber-500/10'
+              }`}
+              title="ดูประกาศล่าสุดจากเจ้าหน้าที่แอดมิน"
+            >
+              <Bell className="w-3.5 h-3.5 text-amber-500 shrink-0 animate-pulse" />
+              <span>ประกาศแอดมิน</span>
+            </button>
+          )}
 
           {/* Desktop/iPad Feedback Button */}
           <button 

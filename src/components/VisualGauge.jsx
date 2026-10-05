@@ -39,49 +39,48 @@ export default function VisualGauge({ depthCm = 0, level, theme = 'light' }) {
   }
 
   return (
-    <div className={`border rounded-2xl p-3 sm:p-4 shadow-sm transition-colors ${
+    <div className={`border rounded-xl sm:rounded-2xl p-1.5 sm:p-4 shadow-sm transition-colors ${
       isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'
     }`}>
       
       {/* Top Header: Level & Current Depth */}
-      <div className={`flex items-center justify-between pb-2.5 border-b mb-3 ${
+      <div className={`flex items-center justify-between pb-1 sm:pb-2.5 border-b mb-1.5 sm:mb-3 ${
         isDark ? 'border-slate-700/80' : 'border-slate-200'
       }`}>
-        <div className="flex items-center gap-2 min-w-0">
-          <div className={`w-8 h-8 rounded-xl flex items-center justify-center border shadow-inner shrink-0 ${levelTheme.badge}`}>
-            <Activity className="w-4 h-4" />
+        <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
+          <div className={`w-5 h-5 sm:w-8 sm:h-8 rounded-lg sm:rounded-xl flex items-center justify-center border shadow-inner shrink-0 ${levelTheme.badge}`}>
+            <Activity className="w-3 h-3 sm:w-4 sm:h-4" />
           </div>
           <div className="min-w-0">
-            <span className={`text-xs font-bold px-2 py-0.5 rounded-md border inline-block ${levelTheme.badge}`}>
+            <span className={`text-[9px] sm:text-xs font-bold px-1.5 sm:px-2 py-0.5 rounded-md border inline-block ${levelTheme.badge}`}>
               {standard.name}
             </span>
-            <span className={`text-[11px] block mt-0.5 font-medium ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+            <span className={`text-[8.5px] sm:text-[11px] block mt-0.5 font-medium ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
               เกณฑ์ระดับน้ำ: <strong className={isDark ? 'text-slate-200' : 'text-slate-900'}>{standard.depthRange}</strong>
             </span>
           </div>
         </div>
 
-        <div className="text-right shrink-0 pl-2">
-          <span className={`text-[10px] block font-bold ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>ระดับน้ำปัจจุบัน</span>
-          <div className="flex items-baseline justify-end gap-1">
-            <span className={`text-2xl sm:text-3xl font-black font-mono tracking-tight ${
+        <div className="text-right shrink-0 pl-1 sm:pl-2">
+          <span className={`text-[8.5px] sm:text-[10px] block font-bold ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>ระดับน้ำปัจจุบัน</span>
+          <div className="flex items-baseline justify-end gap-0.5 sm:gap-1">
+            <span className={`text-base sm:text-3xl font-black font-mono tracking-tight ${
               activeLevel === 3 ? 'text-rose-500' : activeLevel === 2 ? 'text-amber-500' : (isDark ? 'text-cyan-400' : 'text-emerald-600')
             }`}>
               {depthCm}
             </span>
-            <span className={`text-xs font-bold ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>ซม.</span>
+            <span className={`text-[9px] sm:text-xs font-bold ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>ซม.</span>
           </div>
         </div>
       </div>
 
       {/* SVG VISUAL GAUGE (170cm scale illustration with Person & Car) */}
-      <div className={`w-full rounded-2xl border overflow-hidden shadow-inner relative ${
+      <div className={`w-full rounded-xl sm:rounded-2xl border overflow-hidden shadow-inner relative ${
         isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-300/80'
       }`}>
         <svg 
           viewBox="0 -8 350 200" 
-          className="w-full h-auto select-none"
-          style={{ maxHeight: '250px' }}
+          className="w-full h-auto select-none max-h-[68px] sm:max-h-[240px]"
         >
           <defs>
             {/* Water Gradients */}
@@ -397,7 +396,7 @@ export default function VisualGauge({ depthCm = 0, level, theme = 'light' }) {
       </div>
 
       {/* Traffic Impact Status Tag (Clean & Compact) */}
-      <div className={`mt-2.5 p-2.5 rounded-xl border flex items-center justify-between text-xs font-semibold ${levelTheme.tagStyle}`}>
+      <div className={`mt-1 sm:mt-2.5 p-1 sm:p-2 rounded-lg sm:rounded-xl border flex items-center justify-between text-[8.5px] sm:text-xs font-semibold ${levelTheme.tagStyle}`}>
         <span>{levelTheme.tag}</span>
       </div>
 

@@ -106,36 +106,36 @@ export default function AiForecastModal({ isOpen, onClose, userDistrict, theme =
   const displayDistrictLabel = isAllDistricts ? 'ทุกอำเภอ (จ.สมุทรปราการ)' : `อ.${currentDistrict}`;
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/65 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 smooth-backdrop">
-      <div className={`w-full max-w-[92vw] sm:max-w-lg border rounded-3xl shadow-2xl p-3.5 sm:p-6 relative max-h-[80vh] sm:max-h-[85vh] overflow-y-auto smooth-pop transition-colors ${
+    <div className="fixed inset-0 z-50 bg-slate-950/65 backdrop-blur-xs flex items-center justify-center pt-16 pb-20 sm:p-4 smooth-backdrop">
+      <div className={`w-[80vw] max-w-[295px] sm:max-w-lg border rounded-2xl sm:rounded-3xl shadow-2xl p-2 sm:p-6 relative max-h-[48vh] sm:max-h-[85vh] overflow-y-auto smooth-pop transition-colors ${
         isDark ? 'bg-slate-900 border-slate-700 text-slate-100' : 'bg-white border-slate-200 text-slate-800'
       }`}>
         
         {/* Header */}
-        <div className={`flex items-center justify-between pb-3.5 border-b ${isDark ? 'border-slate-800' : 'border-slate-200'}`}>
-          <div className="flex items-center space-x-2.5 min-w-0">
-            <div className={`p-2.5 rounded-2xl shrink-0 ${
+        <div className={`flex items-center justify-between pb-1.5 sm:pb-3.5 border-b ${isDark ? 'border-slate-800' : 'border-slate-200'}`}>
+          <div className="flex items-center space-x-1.5 sm:space-x-2.5 min-w-0">
+            <div className={`p-1 sm:p-2.5 rounded-lg sm:rounded-2xl shrink-0 ${
               isDark ? 'bg-blue-950 text-cyan-400 border border-blue-800' : 'bg-blue-50 text-blue-600 border border-blue-200'
             }`}>
-              <CloudRain className="w-5 h-5 sm:w-6 sm:h-6 animate-pulse" />
+              <CloudRain className="w-3.5 h-3.5 sm:w-6 sm:h-6 animate-pulse" />
             </div>
             <div className="min-w-0">
-              <h3 className={`text-base sm:text-lg font-bold break-words leading-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>
+              <h3 className={`text-[11px] sm:text-lg font-bold break-words leading-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>
                 คาดการณ์ฝนตก
               </h3>
-              <p className={`text-xs break-words whitespace-normal leading-tight mt-0.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+              <p className={`text-[8.5px] sm:text-xs break-words whitespace-normal leading-tight mt-0.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
                 {todayTitle} • จ.สมุทรปราการ
               </p>
             </div>
           </div>
           <button 
             onClick={onClose} 
-            className={`p-2 rounded-xl transition-all cursor-pointer ${
+            className={`p-1.5 sm:p-2 rounded-xl transition-all cursor-pointer ${
               isDark ? 'bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white' : 'bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800'
             }`}
             title="ปิดหน้าต่าง"
           >
-            <X className="w-5 h-5" />
+            <X className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
           </button>
         </div>
 

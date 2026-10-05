@@ -295,8 +295,8 @@ export default function CitizenReportModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/65 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 smooth-backdrop">
-      <div className={`w-full max-w-[92vw] sm:max-w-md rounded-3xl border shadow-2xl overflow-hidden flex flex-col max-h-[80vh] sm:max-h-[85vh] smooth-pop transition-colors ${
+    <div className="fixed inset-0 z-50 bg-slate-950/65 backdrop-blur-xs flex items-center justify-center pt-16 pb-20 sm:p-4 smooth-backdrop">
+      <div className={`w-[80vw] max-w-[295px] sm:max-w-md rounded-2xl sm:rounded-3xl border shadow-2xl overflow-hidden flex flex-col max-h-[48vh] sm:max-h-[85vh] smooth-pop transition-colors ${
         isDark ? 'bg-slate-900 border-slate-700 text-slate-100' : 'bg-white border-slate-200 text-slate-900'
       }`}>
         
@@ -304,20 +304,20 @@ export default function CitizenReportModal({
         <div className="h-1.5 w-full bg-gradient-to-r from-blue-600 via-cyan-500 to-teal-500 shrink-0"></div>
 
         {/* Modal Header */}
-        <div className={`p-4 sm:p-5 pb-3 border-b flex items-center justify-between shrink-0 ${
+        <div className={`p-2 sm:p-5 pb-1.5 sm:pb-3 border-b flex items-center justify-between shrink-0 ${
           isDark ? 'border-slate-800 bg-slate-950/40' : 'border-slate-100 bg-slate-50/50'
         }`}>
-          <div className="flex items-center space-x-2.5 min-w-0">
-            <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shadow-sm shrink-0 border ${
+          <div className="flex items-center space-x-1.5 sm:space-x-2.5 min-w-0">
+            <div className={`w-6 h-6 sm:w-10 sm:h-10 rounded-lg sm:rounded-2xl flex items-center justify-center shadow-sm shrink-0 border ${
               isDark ? 'bg-blue-950 text-cyan-400 border-blue-800' : 'bg-blue-50 text-blue-600 border-blue-200'
             }`}>
-              <Camera className="w-5 h-5" />
+              <Camera className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
             </div>
             <div className="min-w-0">
-              <h3 className={`text-base sm:text-lg font-bold leading-snug break-words ${isDark ? 'text-white' : 'text-slate-900'}`}>
+              <h3 className={`text-[11px] sm:text-lg font-bold leading-snug break-words ${isDark ? 'text-white' : 'text-slate-900'}`}>
                 แจ้งจุดน้ำท่วม
               </h3>
-              <p className={`text-xs break-words whitespace-normal leading-tight mt-0.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+              <p className={`text-[8.5px] sm:text-xs break-words whitespace-normal leading-tight mt-0.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
                 ส่งข้อมูลเตือนภัยเพื่อนร่วมทางใน จ.สมุทรปราการ
               </p>
             </div>
@@ -325,22 +325,22 @@ export default function CitizenReportModal({
           <button 
             type="button"
             onClick={onClose} 
-            className={`p-2 rounded-xl transition-all cursor-pointer ${
+            className={`p-1.5 sm:p-2 rounded-xl transition-all cursor-pointer ${
               isDark ? 'bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white' : 'bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800'
             }`}
             title="ปิดหน้าต่าง"
           >
-            <X className="w-5 h-5" />
+            <X className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
           </button>
         </div>
 
         {/* Success Confirmation Overlay */}
         {submitSuccess ? (
-          <div className="p-8 sm:p-12 flex flex-col items-center justify-center text-center animate-in zoom-in-95 duration-200">
-            <div className="w-16 h-16 rounded-3xl bg-emerald-500/20 text-emerald-500 flex items-center justify-center mb-4 ring-8 ring-emerald-500/10">
-              <CheckCircle2 className="w-9 h-9" />
+          <div className="p-6 sm:p-12 flex flex-col items-center justify-center text-center animate-in zoom-in-95 duration-200">
+            <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl sm:rounded-3xl bg-emerald-500/20 text-emerald-500 flex items-center justify-center mb-3 sm:mb-4 ring-8 ring-emerald-500/10">
+              <CheckCircle2 className="w-7 h-7 sm:w-9 sm:h-9" />
             </div>
-            <h4 className="text-lg font-bold text-slate-900 dark:text-white mb-1">
+            <h4 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white mb-1">
               ส่งข้อมูลเรียบร้อยแล้ว
             </h4>
             <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 max-w-xs">
@@ -349,7 +349,7 @@ export default function CitizenReportModal({
           </div>
         ) : (
           /* Form Content (Clean & Streamlined) */
-          <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-3 sm:p-5 space-y-3 sm:space-y-4">
+          <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-2.5 sm:p-5 space-y-2.5 sm:space-y-4">
 
             {/* Location & Map Point Picker */}
             <div className="space-y-2">

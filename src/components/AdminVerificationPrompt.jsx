@@ -60,34 +60,34 @@ export default function AdminVerificationPrompt({
   return (
     <>
       {/* Full Interactive Verification Dialog Asking the Admin */}
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/60 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="fixed inset-0 z-50 flex items-center justify-center pt-16 pb-20 sm:p-4 bg-slate-950/60 backdrop-blur-sm animate-in fade-in duration-200">
         <div 
-          className={`w-full max-w-lg rounded-3xl border shadow-2xl overflow-hidden backdrop-blur-2xl flex flex-col max-h-[92vh] ${
+          className={`w-[86vw] max-w-[330px] sm:max-w-lg rounded-2xl sm:rounded-3xl border shadow-2xl overflow-hidden backdrop-blur-2xl flex flex-col max-h-[60vh] sm:max-h-[92vh] ${
             isDark 
               ? 'bg-slate-900/98 border-amber-600/70 text-slate-100 shadow-amber-500/10' 
               : 'bg-white border-amber-300 text-slate-800 shadow-xl'
           }`}
         >
           {/* Header */}
-          <div className={`px-4 sm:px-5 py-3.5 border-b flex items-center justify-between ${
+          <div className={`px-3 sm:px-5 py-2.5 sm:py-3.5 border-b flex items-center justify-between ${
             isDark ? 'bg-amber-950/60 border-slate-800' : 'bg-amber-50/80 border-amber-100'
           }`}>
-            <div className="flex items-center gap-2.5 min-w-0">
-              <div className="w-9 h-9 rounded-2xl bg-amber-500 text-slate-950 flex items-center justify-center font-bold shadow-md shrink-0">
-                <ShieldAlert className="w-5 h-5 text-slate-950" />
+            <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
+              <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-xl sm:rounded-2xl bg-amber-500 text-slate-950 flex items-center justify-center font-bold shadow-md shrink-0">
+                <ShieldAlert className="w-4 h-4 sm:w-5 sm:h-5 text-slate-950" />
               </div>
               <div>
-                <h3 className={`text-xs sm:text-sm font-bold flex items-center gap-1.5 ${
+                <h3 className={`text-[11px] sm:text-sm font-bold flex items-center gap-1.5 ${
                   isDark ? 'text-amber-300' : 'text-amber-950'
                 }`}>
                   <span>🚨 มีผู้รายงานสถานการณ์ใหม่เข้ามา!</span>
                   {pendingCount > 1 && (
-                    <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-rose-600 text-white font-bold">
+                    <span className="text-[9px] sm:text-[10px] px-1.5 py-0.2 rounded-full bg-rose-600 text-white font-bold">
                       +{pendingCount - 1} รายการในคิว
                     </span>
                   )}
                 </h3>
-                <p className={`text-[11px] ${isDark ? 'text-amber-400/80' : 'text-amber-800'}`}>
+                <p className={`text-[10px] sm:text-[11px] ${isDark ? 'text-amber-400/80' : 'text-amber-800'}`}>
                   ระบบส่งให้คุณพิจารณาอนุมัติก่อนขึ้นแสดงบนแผนที่สาธารณะ
                 </p>
               </div>
@@ -95,17 +95,17 @@ export default function AdminVerificationPrompt({
 
             <button
               onClick={() => setIsDismissed(true)}
-              className={`p-1.5 rounded-xl transition-all cursor-pointer ${
+              className={`p-1 sm:p-1.5 rounded-xl transition-all cursor-pointer ${
                 isDark ? 'hover:bg-slate-800 text-slate-400' : 'hover:bg-slate-200 text-slate-500'
               }`}
               title="ย่อหน้านี้ไว้ก่อน"
             >
-              <X className="w-5 h-5" />
+              <X className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
             </button>
           </div>
 
           {/* Report Details Content */}
-          <div className="p-4 sm:p-5 overflow-y-auto space-y-3.5 text-xs sm:text-sm">
+          <div className="p-2.5 sm:p-5 overflow-y-auto space-y-2.5 sm:space-y-3.5 text-xs sm:text-sm">
             
             {/* Location & District Badge */}
             <div className={`p-3.5 rounded-2xl border ${

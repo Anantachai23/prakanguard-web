@@ -308,8 +308,9 @@ export function loadDailyUpdatesFromStorage() {
   const todayKey = getBangkokDateKey();
   const storedDate = localStorage.getItem('prakanguard_daily_updates_date');
 
-  // หากเป็นวันใหม่ (ผ่านเที่ยงคืนแล้ว): ให้ลบออกทั้งหมดอัตโนมัติ 100%
-  if (storedDate && storedDate !== todayKey) {
+  // หากเป็นวันใหม่ (ผ่านเที่ยงคืน 00:00:00 น. แล้วจริงๆ): ให้ลบออกทั้งหมดอัตโนมัติ 100%
+  // ไม่ล้างระหว่างวัน และไม่ล้างหากเป็นวันเดียวกัน
+  if (storedDate && storedDate < todayKey) {
     try {
       localStorage.setItem('prakanguard_daily_updates_date', todayKey);
       localStorage.setItem('prakanguard_daily_updates_feed', '[]');

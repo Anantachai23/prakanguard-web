@@ -1454,8 +1454,8 @@ export default function AdminModal({
   }, [activeFeedbackList]);
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-md flex items-center justify-center p-2.5 sm:p-4 smooth-backdrop">
-      <div className={`w-full max-w-[94vw] sm:max-w-4xl border rounded-3xl shadow-2xl flex flex-col max-h-[85vh] sm:max-h-[94vh] overflow-hidden smooth-pop transition-all ${
+    <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-md flex items-center justify-center pt-16 pb-20 sm:p-4 smooth-backdrop">
+      <div className={`w-[84vw] max-w-[320px] sm:max-w-4xl border rounded-2xl sm:rounded-3xl shadow-2xl flex flex-col max-h-[52vh] sm:max-h-[94vh] overflow-hidden smooth-pop transition-all ${
         isDark ? 'bg-slate-900 border-slate-700/80 text-slate-100 shadow-slate-950/90' : 'bg-white border-slate-200 text-slate-800 shadow-xl'
       }`}>
         
@@ -1471,16 +1471,16 @@ export default function AdminModal({
         )}
 
         {/* Modal Header */}
-        <div className={`px-4 sm:px-6 py-3.5 border-b flex items-center justify-between shrink-0 ${
+        <div className={`px-3 sm:px-6 py-2.5 sm:py-3.5 border-b flex items-center justify-between shrink-0 ${
           isDark ? 'bg-slate-950/90 border-slate-800' : 'bg-slate-50 border-slate-200'
         }`}>
-          <div className="flex items-center space-x-3 min-w-0">
-            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full p-[1.5px] bg-gradient-to-tr from-amber-500 to-amber-300 shadow-md shrink-0 flex items-center justify-center">
+          <div className="flex items-center space-x-2 sm:space-x-3 min-w-0">
+            <div className="w-7 h-7 sm:w-10 sm:h-10 rounded-full p-[1px] sm:p-[1.5px] bg-gradient-to-tr from-amber-500 to-amber-300 shadow-md shrink-0 flex items-center justify-center">
               <img src="/logo.png" alt="PrakanGuard Admin" className="w-full h-full rounded-full object-cover" />
             </div>
             <div className="min-w-0">
-              <div className="flex items-center gap-2 flex-wrap">
-                <h3 className={`text-sm sm:text-base font-bold truncate ${isDark ? 'text-white' : 'text-slate-900'}`}>
+              <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                <h3 className={`text-xs sm:text-base font-bold truncate ${isDark ? 'text-white' : 'text-slate-900'}`}>
                   ระบบจัดการผู้ดูแลระบบ (ADMIN CONTROL)
                 </h3>
                 <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold border shrink-0 ${
@@ -4059,10 +4059,10 @@ export default function AdminModal({
         {confirmModal.isOpen && (
           <div 
             onClick={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
-            className="fixed inset-0 z-[70] bg-slate-950/75 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 animate-in fade-in"
+            className="fixed inset-0 z-[70] bg-slate-950/75 backdrop-blur-xs flex items-center justify-center p-2.5 sm:p-4 animate-in fade-in"
           >
             <div 
-              className={`w-full max-w-[92vw] sm:max-w-md rounded-3xl border shadow-2xl p-4 sm:p-5 flex flex-col gap-3.5 smooth-pop ${
+              className={`w-full max-w-[88vw] xs:max-w-[340px] sm:max-w-md rounded-2xl sm:rounded-3xl border shadow-2xl p-3 sm:p-5 flex flex-col gap-2.5 sm:gap-3.5 smooth-pop ${
                 isDark 
                   ? 'bg-slate-900 border-slate-700 text-slate-100 shadow-2xl shadow-black/90' 
                   : 'bg-white border-slate-200 text-slate-900 shadow-2xl shadow-slate-400/40'

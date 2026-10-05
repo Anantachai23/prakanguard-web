@@ -90,6 +90,15 @@ function createOfficialFloodPin({ level, depthCm, hasPhoto, isSelected, isFallin
     `
     : '';
 
+  // สัญลักษณ์รูปกล้อง 📷 สำหรับจุดที่มีรูปภาพจากประชาชนรายงานหรือเจ้าหน้าที่
+  const photoBadgeHtml = hasPhoto
+    ? `
+      <div class="pg-pin-photo-tag" style="position:absolute;top:-8px;right:-9px;background:#1d4ed8;color:#ffffff;font-size:10px;line-height:1;width:20px;height:20px;border-radius:50%;border:1.5px solid #ffffff;box-shadow:0 2px 6px rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;z-index:25;pointer-events:none;" title="มีรูปภาพสถานที่จริง">
+        📷
+      </div>
+    `
+    : '';
+
   const selectedRingHtml = isSelected
     ? `<div style="position:absolute;inset:-6px;border-radius:24px;border:2.5px solid #0284c7;box-shadow:0 0 12px rgba(2,132,199,0.8);animation:pgSelectedGlow 1.5s ease-in-out infinite alternate;pointer-events:none;z-index:1;"></div>`
     : '';
@@ -102,10 +111,12 @@ function createOfficialFloodPin({ level, depthCm, hasPhoto, isSelected, isFallin
   const html = `
     <div class="pg-flood-pin-container ${levelClass} ${isSelected ? 'pg-pin-selected' : ''}" 
          data-point-id="${id || ''}"
+         onclick="window.__pgSelectPointById && window.__pgSelectPointById('${id}')"
          style="position:relative;width:34px;height:44px;display:flex;align-items:center;justify-content:center;cursor:pointer;transform-origin:bottom center;touch-action:manipulation;">
       ${pulseHtml}
       ${selectedRingHtml}
       ${fallingBadgeHtml}
+      ${photoBadgeHtml}
       <svg width="34" height="44" viewBox="0 0 34 44" fill="none" xmlns="http://www.w3.org/2000/svg" style="position:relative;z-index:2;filter:drop-shadow(0 4px 6px rgba(0,0,0,0.38));pointer-events:none;">
         <defs>
           <linearGradient id="pgGrad-${level}" x1="17" y1="2" x2="17" y2="43" gradientUnits="userSpaceOnUse">
@@ -716,10 +727,11 @@ export default function MapView({
       });
 
       // 2. Official Pin Marker
+      const hasPhoto = !!(point.photoUrl || point.photo_url || point.photo);
       const customIcon = createOfficialFloodPin({
         level,
         depthCm: point.depthCm,
-        hasPhoto: false,
+        hasPhoto,
         isFalling,
         isSelected,
         name: point.name,
@@ -753,8 +765,9 @@ export default function MapView({
         }
       };
 
-      // Click on circle selects point
+      // Click & Touchend on circle selects point
       circle.on('click', handleMarkerSelect);
+      circle.on('touchend', handleMarkerSelect);
 
       // Marker Leaflet event
       marker.on('click', handleMarkerSelect);
@@ -768,12 +781,33 @@ export default function MapView({
         markerEl.style.cursor = 'pointer';
         markerEl.style.pointerEvents = 'auto';
 
-        // CRITICAL: Stop mousedown, pointerdown, touchstart, mouseup, pointerup from reaching Leaflet map
-        // This guarantees that mouse clicks NEVER trigger Leaflet map dragging/panning
-        // Fixes "เวลาคลิกเม้าแล้วหมุดมันเลื่อนออกแล้วมันก็ไม่ขึ้นข้อมูลด้วย"
+        let touchStartX = 0;
+        let touchStartY = 0;
+
+        markerEl.addEventListener('touchstart', (e) => {
+          if (e.touches && e.touches[0]) {
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+          }
+          e.stopPropagation();
+        }, { passive: true });
+
+        markerEl.addEventListener('touchend', (e) => {
+          let moved = false;
+          if (e.changedTouches && e.changedTouches[0]) {
+            const dx = Math.abs(e.changedTouches[0].clientX - touchStartX);
+            const dy = Math.abs(e.changedTouches[0].clientY - touchStartY);
+            if (dx > 12 || dy > 12) moved = true;
+          }
+          if (!moved) {
+            e.stopPropagation();
+            handleMarkerSelect(e);
+          }
+        }, { passive: true });
+
+        // Stop mouse dragging on map when clicking marker
         markerEl.addEventListener('mousedown', (e) => e.stopPropagation());
         markerEl.addEventListener('pointerdown', (e) => e.stopPropagation());
-        markerEl.addEventListener('touchstart', (e) => e.stopPropagation(), { passive: true });
         markerEl.addEventListener('mouseup', (e) => e.stopPropagation());
         markerEl.addEventListener('pointerup', (e) => e.stopPropagation());
         markerEl.addEventListener('click', handleMarkerSelect);
@@ -901,13 +935,13 @@ export default function MapView({
       ></div>
 
       {/* 5-MIN AUTO-REFRESH READ-ONLY BADGE (TOP CENTER OF MAP - STRICTLY NON-CLICKABLE AS REQUESTED) */}
-      <div className="absolute top-2.5 sm:top-3 left-1/2 -translate-x-1/2 z-20 pointer-events-none select-none max-w-[90vw]">
-        <div className={`px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-full border shadow-md backdrop-blur-md flex items-center gap-1.5 sm:gap-2 text-[10.5px] sm:text-xs font-semibold transition-colors ${
+      <div className="absolute top-2 sm:top-3 left-1/2 -translate-x-1/2 z-20 pointer-events-none select-none max-w-[90vw]">
+        <div className={`px-2 sm:px-3.5 py-0.5 sm:py-1.5 rounded-full border shadow-md backdrop-blur-md flex items-center gap-1 sm:gap-2 text-[9.5px] sm:text-xs font-semibold transition-colors ${
           isDark 
             ? 'bg-slate-900/90 border-slate-700/80 text-slate-200 shadow-black/40' 
             : 'bg-white/95 border-slate-200 text-slate-700 shadow-slate-300/50'
         }`}>
-          <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse shrink-0"></span>
+          <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-cyan-400 animate-pulse shrink-0"></span>
           <span>รีเฟรชอัตโนมัติใน</span>
           <span className="font-mono font-extrabold text-cyan-600 dark:text-cyan-400">
             {formatCountdown(refreshCountdown)}
@@ -916,10 +950,10 @@ export default function MapView({
       </div>
 
       {/* FLOATING MAP CONTROLS (TOP RIGHT - CLEAN, UNCLUTTERED, COMPACT) */}
-      <div className="absolute top-3 right-3 sm:top-4 sm:right-4 z-20 flex flex-col items-end gap-2 pointer-events-auto">
+      <div className="absolute top-2 right-2 sm:top-4 sm:right-4 z-20 flex flex-col items-end gap-1.5 sm:gap-2 pointer-events-auto">
         
         {/* Map Tile Switcher */}
-        <div className={`p-1 rounded-2xl flex items-center gap-1 border shadow-md text-xs backdrop-blur-md transition-colors ${
+        <div className={`p-0.5 sm:p-1 rounded-xl sm:rounded-2xl flex items-center gap-0.5 sm:gap-1 border shadow-md text-[11px] sm:text-xs backdrop-blur-md transition-colors ${
           isDark ? 'bg-slate-900/95 border-slate-700 shadow-xl' : 'bg-white/95 border-slate-200 shadow-md'
         }`}>
           {[
@@ -932,7 +966,7 @@ export default function MapView({
                 playToggleSound(style === 'google-satellite');
                 setMapStyle(style);
               }}
-              className={`px-2.5 py-1.5 rounded-xl font-semibold transition-all cursor-pointer flex items-center gap-1 text-xs active:scale-95 ${
+              className={`px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-lg sm:rounded-xl font-semibold transition-all cursor-pointer flex items-center gap-1 text-[11px] sm:text-xs active:scale-95 ${
                 mapStyle === style
                   ? 'bg-blue-600 text-white shadow-sm'
                   : isDark 
@@ -948,20 +982,20 @@ export default function MapView({
         </div>
 
         {/* GPS & Reset Buttons */}
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1 sm:gap-1.5">
           <button 
             onClick={() => {
               playGpsSound();
               if (onLocateMe) onLocateMe();
             }}
             title="ค้นหาพิกัดตำแหน่งปัจจุบันของคุณ"
-            className={`px-3 py-2 rounded-xl shadow-md border transition-all flex items-center gap-1.5 text-xs cursor-pointer backdrop-blur-md font-bold active:scale-95 ${
+            className={`px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-lg sm:rounded-xl shadow-md border transition-all flex items-center gap-1 sm:gap-1.5 text-[11px] sm:text-xs cursor-pointer backdrop-blur-md font-bold active:scale-95 ${
               isDark 
                 ? 'bg-slate-900/95 text-slate-200 hover:text-cyan-400 hover:bg-slate-800 border-slate-700 shadow-xl' 
                 : 'bg-white/95 text-slate-700 hover:text-blue-700 hover:bg-blue-50/80 border-slate-200'
             }`}
           >
-            <Navigation className={`w-3.5 h-3.5 ${isDark ? 'text-cyan-400' : 'text-blue-600'}`} />
+            <Navigation className={`w-3 h-3 sm:w-3.5 sm:h-3.5 ${isDark ? 'text-cyan-400' : 'text-blue-600'}`} />
             <span className="hidden sm:inline">พิกัดฉัน</span>
           </button>
           
@@ -971,13 +1005,13 @@ export default function MapView({
               resetView();
             }}
             title="รีเซ็ตมุมมองขอบเขตจังหวัดสมุทรปราการ"
-            className={`p-2 rounded-xl shadow-md border transition-all cursor-pointer backdrop-blur-md active:scale-95 ${
+            className={`p-1.5 sm:p-2 rounded-lg sm:rounded-xl shadow-md border transition-all cursor-pointer backdrop-blur-md active:scale-95 ${
               isDark 
                 ? 'bg-slate-900/95 text-slate-200 hover:text-cyan-400 hover:bg-slate-800 border-slate-700 shadow-xl' 
                 : 'bg-white/95 text-slate-700 hover:text-blue-700 hover:bg-blue-50/80 border-slate-200'
             }`}
           >
-            <Crosshair className="w-4 h-4" />
+            <Crosshair className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
           </button>
         </div>
 

@@ -2119,7 +2119,7 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
             right: 'auto',
             touchAction: 'none'
           } : undefined}
-          className={`fixed bottom-[calc(7.25rem+env(safe-area-inset-bottom,0px))] right-2.5 sm:bottom-6 sm:right-6 z-40 px-2.5 sm:px-4 py-2 sm:py-3 rounded-2xl font-semibold text-xs sm:text-sm shadow-xl items-center gap-2 border cursor-grab active:cursor-grabbing transition-shadow select-none backdrop-blur-xl group ${
+          className={`fixed bottom-[calc(6.5rem+env(safe-area-inset-bottom,0px))] right-2 sm:bottom-6 sm:right-6 z-40 px-2 sm:px-4 py-1.5 sm:py-3 rounded-xl sm:rounded-2xl font-semibold text-[11px] sm:text-sm shadow-xl items-center gap-1.5 sm:gap-2 border cursor-grab active:cursor-grabbing transition-shadow select-none backdrop-blur-xl group ${
             isPointSelected ? 'hidden' : 'flex'
           } ${
             isDark 
@@ -2128,11 +2128,11 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
           }`}
           title="ผู้ช่วยถาม-ตอบข้อมูลน้ำท่วม (คลิกเพื่อเปิด หรือลากย้ายได้)"
         >
-          <AiOfficialEmblem size={32} />
+          <AiOfficialEmblem size={26} />
           <div className="text-left pointer-events-none">
-            <div className="flex items-center gap-1.5">
-              <span className={`block text-xs sm:text-sm font-bold leading-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>PrakanGuard AI</span>
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
+            <div className="flex items-center gap-1 sm:gap-1.5">
+              <span className={`block text-[11px] sm:text-sm font-bold leading-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>PrakanGuard AI</span>
+              <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
             </div>
             <span className={`hidden sm:block text-[10px] font-medium ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>ศูนย์ข้อมูลน้ำท่วมและเส้นทาง 24 ชม.</span>
           </div>
@@ -2244,13 +2244,13 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
             ...(customSize.width ? { width: `${customSize.width}px`, maxWidth: '98vw' } : {}),
             ...(customSize.height ? { height: `${customSize.height}px`, maxHeight: '94vh' } : {})
           }}
-          className={`fixed z-50 w-[94vw] max-w-[420px] sm:max-w-none ${
+          className={`fixed z-50 w-[88vw] xs:max-w-[340px] sm:max-w-none ${
             customSize.width || customSize.height
               ? ''
               : isExpanded 
-              ? 'sm:w-[620px] h-[660px] max-h-[90vh]' 
-              : 'sm:w-[460px] h-[480px] max-h-[calc(100dvh-7.5rem)] sm:h-[600px] sm:max-h-[88vh]'
-          } border rounded-3xl shadow-2xl flex flex-col overflow-hidden backdrop-blur-2xl transition-[box-shadow,border-color] duration-150 ${
+              ? 'sm:w-[620px] h-[520px] sm:h-[660px] max-h-[85vh] sm:max-h-[90vh]' 
+              : 'sm:w-[460px] h-[390px] max-h-[calc(100dvh-7.5rem)] sm:h-[600px] sm:max-h-[88vh]'
+          } border rounded-2xl sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden backdrop-blur-2xl transition-[box-shadow,border-color] duration-150 ${
             !position ? 'bottom-[calc(4.25rem+env(safe-area-inset-bottom,0px))] left-1/2 -translate-x-1/2 sm:translate-x-0 sm:left-auto sm:bottom-6 sm:right-6' : ''
           } ${
             isDraggingModal || isResizingModal ? 'ring-2 ring-blue-500/60 shadow-blue-500/30' : ''

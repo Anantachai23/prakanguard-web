@@ -56,7 +56,7 @@ export default function WelcomeModal({
 
   return (
     <div 
-      className={`fixed inset-0 z-50 flex items-center justify-center p-3.5 sm:p-5 overflow-hidden select-none transition-all duration-700 ${
+      className={`fixed inset-0 z-50 flex items-center justify-center pt-16 pb-20 sm:p-5 overflow-hidden select-none transition-all duration-700 ${
         isEntering && !isExiting 
           ? 'bg-slate-950/75 backdrop-blur-md opacity-100 pointer-events-auto' 
           : 'bg-slate-950/0 backdrop-blur-none opacity-0 pointer-events-none'
@@ -70,7 +70,7 @@ export default function WelcomeModal({
     >
       {/* Welcome Card Container with Smooth Slide-Up Exit Animation */}
       <div 
-        className={`w-full max-w-[92vw] sm:max-w-xl max-h-[82vh] sm:max-h-[88vh] border rounded-3xl shadow-2xl overflow-hidden flex flex-col relative transition-all duration-800 ${
+        className={`w-[80vw] max-w-[295px] sm:max-w-xl max-h-[48vh] sm:max-h-[88vh] border rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col relative transition-all duration-800 ${
           isDark 
             ? 'bg-slate-900/95 border-slate-700/80 text-slate-100 shadow-cyan-950/40' 
             : 'bg-white/95 border-slate-200/90 text-slate-800 shadow-blue-900/20'
@@ -92,39 +92,39 @@ export default function WelcomeModal({
         <div className="h-1.5 w-full bg-gradient-to-r from-blue-600 via-cyan-400 to-teal-400 shrink-0"></div>
 
         {/* Modal Header */}
-        <div className={`p-4 sm:p-6 pb-2 sm:pb-3 flex items-start justify-between gap-3 shrink-0 ${
+        <div className={`p-3 sm:p-6 pb-2 sm:pb-3 flex items-start justify-between gap-2.5 shrink-0 ${
           isDark ? 'bg-slate-950/40' : 'bg-slate-50/60'
         }`}>
-          <div className="flex items-center space-x-3 sm:space-x-3.5 min-w-0">
+          <div className="flex items-center space-x-2.5 sm:space-x-3.5 min-w-0">
             <div className="relative shrink-0">
-              <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-full p-[1.5px] bg-gradient-to-tr from-blue-600 via-cyan-400 to-teal-300 shadow-lg shadow-cyan-500/20 flex items-center justify-center shrink-0">
+              <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-full p-[1px] sm:p-[1.5px] bg-gradient-to-tr from-blue-600 via-cyan-400 to-teal-300 shadow-lg shadow-cyan-500/20 flex items-center justify-center shrink-0">
                 <img 
                   src="/logo.png" 
                   alt="PrakanGuard Mascot" 
                   className="w-full h-full rounded-full object-cover" 
                 />
               </div>
-              <span className="absolute -top-1 -right-1 flex h-3 w-3">
+              <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5 sm:h-3 sm:w-3">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-3 w-3 bg-cyan-500"></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 sm:h-3 sm:w-3 bg-cyan-500"></span>
               </span>
             </div>
 
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1.5 flex-wrap">
-                <span className={`text-[10.5px] sm:text-[11px] font-extrabold px-2.5 py-0.5 rounded-full uppercase tracking-wider border ${
+                <span className={`text-[9.5px] sm:text-[11px] font-extrabold px-2 py-0.2 sm:px-2.5 sm:py-0.5 rounded-full uppercase tracking-wider border ${
                   isDark 
                     ? 'bg-blue-950/80 text-cyan-300 border-blue-800/80' 
                     : 'bg-blue-50 text-blue-700 border-blue-200'
                 }`}>
                   ยินดีต้อนรับสู่ระบบ
                 </span>
-                <span className="flex items-center gap-1 text-[11px] font-bold text-amber-500">
-                  <Sparkles className="w-3 h-3" />
+                <span className="flex items-center gap-1 text-[10px] sm:text-[11px] font-bold text-amber-500">
+                  <Sparkles className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
                   <span>PrakanGuard</span>
                 </span>
               </div>
-              <h2 className={`text-base sm:text-lg font-black mt-0.5 leading-snug tracking-tight break-words whitespace-normal ${
+              <h2 className={`text-xs sm:text-lg font-black mt-0.5 leading-snug tracking-tight break-words whitespace-normal ${
                 isDark ? 'text-white' : 'text-slate-900'
               }`}>
                 ระบบสารสนเทศและเฝ้าระวังอุทกภัย จ.สมุทรปราการ
@@ -135,14 +135,14 @@ export default function WelcomeModal({
           <button 
             type="button"
             onClick={handleEnter} 
-            className={`p-1.5 rounded-xl transition-all cursor-pointer shrink-0 ${
+            className={`p-1 sm:p-1.5 rounded-xl transition-all cursor-pointer shrink-0 ${
               isDark 
                 ? 'bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white' 
                 : 'bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800'
             }`}
             title="ปิดหน้าต่างและเข้าสู่แผนที่"
           >
-            <X className="w-4 h-4" />
+            <X className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
           </button>
         </div>
 
@@ -219,7 +219,7 @@ export default function WelcomeModal({
         </div>
 
         {/* Modal Footer with the Hero "เข้าสู่เว็บ" Button */}
-        <div className={`p-4 sm:p-5 border-t flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0 ${
+        <div className={`p-2.5 sm:p-5 border-t flex flex-col sm:flex-row items-center justify-between gap-2 sm:gap-3 shrink-0 ${
           isDark ? 'border-slate-800 bg-slate-950/80' : 'border-slate-200 bg-slate-50/90'
         }`}>
           <div className="hidden sm:flex items-center gap-1.5 text-[11px] font-semibold text-slate-400 dark:text-slate-500">
@@ -230,10 +230,10 @@ export default function WelcomeModal({
           <button
             type="button"
             onClick={handleEnter}
-            className="w-full sm:w-auto px-7 py-3 sm:py-3.5 rounded-2xl bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white font-black text-sm sm:text-base transition-all duration-300 cursor-pointer shadow-lg shadow-blue-500/25 hover:shadow-cyan-500/30 hover:scale-102 active:scale-98 flex items-center justify-center gap-2.5 group"
+            className="w-full sm:w-auto px-5 sm:px-7 py-2 sm:py-3.5 rounded-xl sm:rounded-2xl bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white font-black text-xs sm:text-base transition-all duration-300 cursor-pointer shadow-lg shadow-blue-500/25 hover:shadow-cyan-500/30 hover:scale-102 active:scale-98 flex items-center justify-center gap-2 group"
           >
             <span>เข้าสู่ระบบเว็บไซต์</span>
-            <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 transition-transform group-hover:translate-x-1" />
+            <ArrowRight className="w-3.5 h-3.5 sm:w-5 sm:h-5 transition-transform group-hover:translate-x-1" />
           </button>
         </div>
 
