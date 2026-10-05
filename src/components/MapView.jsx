@@ -111,8 +111,8 @@ function createOfficialFloodPin({ level, depthCm, hasPhoto, isSelected, isFallin
   const html = `
     <div class="pg-flood-pin-container ${levelClass} ${isSelected ? 'pg-pin-selected' : ''}" 
          data-point-id="${id || ''}"
-         onclick="window.__pgSelectPointById && window.__pgSelectPointById('${id}')"
-         style="position:relative;width:34px;height:44px;display:flex;align-items:center;justify-content:center;cursor:pointer;transform-origin:bottom center;touch-action:manipulation;">
+         onclick="window.__pgSelectPointById && window.__pgSelectPointById('${id}', event)"
+         style="position:relative;width:34px;height:44px;display:flex;align-items:center;justify-content:center;cursor:pointer;transform-origin:bottom center;touch-action:none;user-select:none;-webkit-user-select:none;">
       ${pulseHtml}
       ${selectedRingHtml}
       ${fallingBadgeHtml}
@@ -292,13 +292,18 @@ export default function MapView({
         .pg-unified-flood-marker {
           cursor: pointer !important;
           pointer-events: auto !important;
+          touch-action: none !important;
+          user-select: none !important;
+          -webkit-user-select: none !important;
         }
         .pg-flood-pin-container {
           position: relative;
-          touch-action: manipulation;
+          touch-action: none !important;
           -webkit-tap-highlight-color: transparent;
-          cursor: pointer;
-          pointer-events: auto;
+          cursor: pointer !important;
+          pointer-events: auto !important;
+          user-select: none !important;
+          -webkit-user-select: none !important;
         }
         /* Expanded touch hitbox (64x74px) for effortless mobile & desktop clicking */
         .pg-flood-pin-container::before {
@@ -310,8 +315,9 @@ export default function MapView({
           right: -15px;
           border-radius: 50%;
           z-index: 10;
-          cursor: pointer;
-          pointer-events: auto;
+          cursor: pointer !important;
+          pointer-events: auto !important;
+          touch-action: none !important;
           background: transparent;
         }
         @media (hover: hover) {
@@ -594,15 +600,21 @@ export default function MapView({
     let lastSelectTime = 0;
     window.__pgSelectPointById = (id, e) => {
       const now = Date.now();
-      if (now - lastSelectTime < 200) return; // Prevent duplicate rapid touch+click
+      if (now - lastSelectTime < 180) return; // Prevent duplicate rapid touch+click
       lastSelectTime = now;
 
-      if (e && e.stopPropagation) {
-        e.stopPropagation();
+      if (e) {
+        if (e.stopPropagation) e.stopPropagation();
+        if (e.stopImmediatePropagation) e.stopImmediatePropagation();
       }
 
-      const all = [...points, ...citizenReports];
-      const found = all.find(p => String(p.id) === String(id));
+      // Check current points map first
+      let found = window.__pgPointsMap ? window.__pgPointsMap.get(String(id)) : null;
+      if (!found) {
+        const all = [...(citizenReports || []), ...(points || [])];
+        found = all.find(p => String(p.id) === String(id) || (p.name && String(p.name) === String(id)));
+      }
+
       if (found && onSelectPoint) {
         lastFlyToTimeRef.current = Date.now();
         playPinClickSound();
@@ -673,6 +685,7 @@ export default function MapView({
     radarCirclesByIdRef.current = {};
 
     const displayPoints = deduplicateAndDeclutterPoints(citizenReports, points, isMobile);
+    window.__pgPointsMap = new Map();
 
     displayPoints.forEach(point => {
       if (!point || typeof point.lat !== 'number' || typeof point.lng !== 'number' || isNaN(point.lat) || isNaN(point.lng)) {
@@ -690,6 +703,30 @@ export default function MapView({
         return;
       }
 
+      // 1. Resolve photo from point itself OR from any matching citizen report
+      const directPhoto = point.photoUrl || point.photo_url || point.photo || point.image || point.imageUrl;
+      let matchedCitizenPhoto = null;
+      if (!directPhoto && Array.isArray(citizenReports)) {
+        const matched = citizenReports.find(c => 
+          (c.id && point.id && String(c.id) === String(point.id)) ||
+          (c.name && point.name && c.name.trim().toLowerCase() === point.name.trim().toLowerCase()) ||
+          (typeof c.lat === 'number' && typeof point.lat === 'number' && Math.abs(c.lat - point.lat) < 0.0035 && Math.abs(c.lng - point.lng) < 0.0035)
+        );
+        matchedCitizenPhoto = matched?.photoUrl || matched?.photo_url || matched?.photo || null;
+      }
+      const effectivePhoto = directPhoto || matchedCitizenPhoto;
+      const hasPhoto = !!(effectivePhoto && typeof effectivePhoto === 'string' && effectivePhoto.trim() && effectivePhoto !== 'null' && effectivePhoto !== 'undefined');
+
+      if (effectivePhoto && !point.photoUrl) {
+        point.photoUrl = effectivePhoto;
+      }
+
+      // Register point in global quick-access lookup
+      window.__pgPointsMap.set(String(point.id), point);
+      if (point.name) {
+        window.__pgPointsMap.set(String(point.name), point);
+      }
+
       const level = resolveLevel(point);
       const isSelected = selectedPoint && (
         selectedPoint.id === point.id || 
@@ -700,7 +737,7 @@ export default function MapView({
       const isL3 = level === 3;
       const isL2 = level === 2;
 
-      // 1. Concentric Radar Flood Coverage Circle (100% dead-centered on the pin coordinate)
+      // Concentric Radar Flood Coverage Circle (100% dead-centered on the pin coordinate)
       const radius = isL3 ? 300 : (isL2 ? 220 : 150);
       const circleColor = isFalling ? '#0d9488' : (isL3 ? '#dc2626' : (isL2 ? '#eab308' : '#16a34a'));
       const baseFillOpacity = isDark ? 0.16 : 0.12;
@@ -727,7 +764,6 @@ export default function MapView({
       });
 
       // 2. Official Pin Marker
-      const hasPhoto = !!(point.photoUrl || point.photo_url || point.photo);
       const customIcon = createOfficialFloodPin({
         level,
         depthCm: point.depthCm,
@@ -741,6 +777,7 @@ export default function MapView({
       const marker = L.marker([point.lat, point.lng], { 
         icon: customIcon,
         riseOnHover: true,
+        interactive: true,
         bubblingMouseEvents: false
       }).addTo(map);
 
@@ -748,12 +785,13 @@ export default function MapView({
       let lastMarkerTap = 0;
       const handleMarkerSelect = (e) => {
         const now = Date.now();
-        if (now - lastMarkerTap < 250) return;
+        if (now - lastMarkerTap < 160) return;
         lastMarkerTap = now;
 
         if (e) {
-          if (e.originalEvent && e.originalEvent.stopPropagation) {
-            e.originalEvent.stopPropagation();
+          if (e.originalEvent) {
+            if (e.originalEvent.stopPropagation) e.originalEvent.stopPropagation();
+            if (e.originalEvent.preventDefault && e.originalEvent.type === 'click') e.originalEvent.preventDefault();
           } else if (e.stopPropagation) {
             e.stopPropagation();
           }
@@ -765,53 +803,28 @@ export default function MapView({
         }
       };
 
-      // Click & Touchend on circle selects point
+      // Both Circle and Marker trigger selection reliably
       circle.on('click', handleMarkerSelect);
       circle.on('touchend', handleMarkerSelect);
 
-      // Marker Leaflet event
       marker.on('click', handleMarkerSelect);
 
-      // Direct DOM manipulation on marker element
+      // Direct DOM event hooks on marker icon for instant touch / click response
       const markerEl = marker.getElement();
       if (markerEl) {
-        L.DomEvent.disableClickPropagation(markerEl);
-        L.DomEvent.disableScrollPropagation(markerEl);
-
         markerEl.style.cursor = 'pointer';
         markerEl.style.pointerEvents = 'auto';
+        markerEl.style.touchAction = 'none';
 
-        let touchStartX = 0;
-        let touchStartY = 0;
-
-        markerEl.addEventListener('touchstart', (e) => {
-          if (e.touches && e.touches[0]) {
-            touchStartX = e.touches[0].clientX;
-            touchStartY = e.touches[0].clientY;
-          }
-          e.stopPropagation();
-        }, { passive: true });
+        markerEl.addEventListener('click', (e) => {
+          if (e && e.stopPropagation) e.stopPropagation();
+          handleMarkerSelect(e);
+        }, { capture: true });
 
         markerEl.addEventListener('touchend', (e) => {
-          let moved = false;
-          if (e.changedTouches && e.changedTouches[0]) {
-            const dx = Math.abs(e.changedTouches[0].clientX - touchStartX);
-            const dy = Math.abs(e.changedTouches[0].clientY - touchStartY);
-            if (dx > 12 || dy > 12) moved = true;
-          }
-          if (!moved) {
-            e.stopPropagation();
-            handleMarkerSelect(e);
-          }
-        }, { passive: true });
-
-        // Stop mouse dragging on map when clicking marker
-        markerEl.addEventListener('mousedown', (e) => e.stopPropagation());
-        markerEl.addEventListener('pointerdown', (e) => e.stopPropagation());
-        markerEl.addEventListener('mouseup', (e) => e.stopPropagation());
-        markerEl.addEventListener('pointerup', (e) => e.stopPropagation());
-        markerEl.addEventListener('click', handleMarkerSelect);
-        markerEl.onclick = handleMarkerSelect;
+          if (e && e.stopPropagation) e.stopPropagation();
+          handleMarkerSelect(e);
+        }, { capture: true, passive: true });
       }
 
       markersRef.current.push(marker);

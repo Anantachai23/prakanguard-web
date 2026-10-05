@@ -583,12 +583,20 @@ export default function App() {
         !isNaN(r.lng) &&
         isPointInSamutPrakan(r.lat, r.lng)
       );
+      if (Array.isArray(INITIAL_CITIZEN_REPORTS) && INITIAL_CITIZEN_REPORTS.length > 0) {
+        const idSet = new Set(cleaned.map(x => x.id));
+        INITIAL_CITIZEN_REPORTS.forEach(initR => {
+          if (!idSet.has(initR.id)) {
+            cleaned.push(initR);
+          }
+        });
+      }
       try {
         localStorage.setItem('prakanguard_citizen_reports', JSON.stringify(cleaned));
       } catch (e) {}
       return cleaned;
     } catch (e) {
-      return [];
+      return Array.isArray(INITIAL_CITIZEN_REPORTS) ? INITIAL_CITIZEN_REPORTS : [];
     }
   });
 
@@ -1276,7 +1284,8 @@ export default function App() {
                 const cloudNewer = (cr.timestamp || 0) > (existing.timestamp || 0);
                 const statusChanged = (cr.isApproved !== existing.isApproved) || (cr.isResolved !== existing.isResolved);
                 if (cloudNewer || statusChanged) {
-                  prevMap.set(cr.id, { ...existing, ...cr });
+                  const photoToKeep = cr.photoUrl || existing.photoUrl || existing.photo_url || null;
+                  prevMap.set(cr.id, { ...existing, ...cr, photoUrl: photoToKeep });
                   changed = true;
                 }
               }
@@ -1715,6 +1724,7 @@ export default function App() {
           found = true;
           approvedPoint = { 
             ...r, 
+            photoUrl: r.photoUrl || r.photo_url || r.photo || null,
             isApproved: true, 
             isResolved: false, 
             isActive: true, 
@@ -1732,6 +1742,7 @@ export default function App() {
           if (remote) {
             const fresh = { 
               ...remote, 
+              photoUrl: remote.photoUrl || remote.photo_url || remote.photo || null,
               isApproved: true, 
               isResolved: false, 
               isActive: true, 
@@ -1767,6 +1778,7 @@ export default function App() {
         source: 'ประชาชนในพื้นที่แจ้งน้ำท่วม',
         lat: approvedPoint.lat,
         lng: approvedPoint.lng,
+        photoUrl: approvedPoint.photoUrl || null,
         rawPoint: approvedPoint
       };
       setDailyUpdates(prev => mergeDailyUpdateEvent(prev, newEvent));
@@ -3047,7 +3059,22 @@ export default function App() {
         )}
 
         {/* FLOATING POINT DETAIL MODAL (CENTERED POPUP DIALOG) */}
-        {selectedPoint && (
+        {selectedPoint && (() => {
+          const directPhoto = selectedPoint.photoUrl || selectedPoint.photo_url || selectedPoint.photo || selectedPoint.image || selectedPoint.imageUrl;
+          let matchedPhoto = null;
+          if (!directPhoto) {
+            const allCandidates = [...(citizenReports || []), ...(points || [])];
+            const matched = allCandidates.find(c => 
+              (c.id && selectedPoint.id && String(c.id) === String(selectedPoint.id)) ||
+              (c.name && selectedPoint.name && c.name.trim().toLowerCase() === selectedPoint.name.trim().toLowerCase()) ||
+              (typeof c.lat === 'number' && typeof selectedPoint.lat === 'number' && Math.abs(c.lat - selectedPoint.lat) < 0.0035 && Math.abs(c.lng - selectedPoint.lng) < 0.0035)
+            );
+            matchedPhoto = matched?.photoUrl || matched?.photo_url || matched?.photo || null;
+          }
+          const pointPhoto = directPhoto || matchedPhoto;
+          const hasPhoto = !!(pointPhoto && typeof pointPhoto === 'string' && pointPhoto.trim() && pointPhoto !== 'null' && pointPhoto !== 'undefined');
+
+          return (
           <div 
             onClick={(e) => {
               if (e.target === e.currentTarget) {
@@ -3082,6 +3109,11 @@ export default function App() {
                      getFloodLevel(selectedPoint.depthCm) === 3 ? "🔴 น้ำท่วมวิกฤต (>50 ซม.)" :
                      getFloodLevel(selectedPoint.depthCm) === 2 ? "🟠 น้ำท่วมปานกลาง (21-50 ซม.)" : "🟢 น้ำท่วมปกติ (5-20 ซม.)"}
                   </span>
+                  {hasPhoto && (
+                    <span className="text-[9px] sm:text-xs font-bold px-1.5 py-0.5 sm:px-2.5 sm:py-1 rounded-md sm:rounded-xl border shadow-xs bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-cyan-300 dark:border-blue-700 flex items-center gap-1 animate-in fade-in duration-200">
+                      <span>📷 มีภาพถ่าย</span>
+                    </span>
+                  )}
                   {isWaterReceding(selectedPoint) && (
                     <span className="text-[8.5px] sm:text-[11px] font-bold px-1 py-0.5 rounded-md sm:rounded-xl bg-teal-50 text-teal-800 border border-teal-300 dark:bg-teal-950 dark:text-teal-300 dark:border-teal-700 flex items-center gap-1">
                       <span>📉 น้ำลด</span>
@@ -3127,48 +3159,41 @@ export default function App() {
               </div>
 
             {/* Citizen Uploaded Photo Preview (If available) */}
-            {(() => {
-              const photo = selectedPoint.photoUrl || selectedPoint.photo_url || selectedPoint.photo || (
-                citizenReports.find(c => (c.id === selectedPoint.id || (c.name && selectedPoint.name && c.name === selectedPoint.name) || (c.lat && selectedPoint.lat && Math.abs(c.lat - selectedPoint.lat) < 0.003 && Math.abs(c.lng - selectedPoint.lng) < 0.003)))?.photoUrl ||
-                citizenReports.find(c => (c.id === selectedPoint.id || (c.name && selectedPoint.name && c.name === selectedPoint.name) || (c.lat && selectedPoint.lat && Math.abs(c.lat - selectedPoint.lat) < 0.003 && Math.abs(c.lng - selectedPoint.lng) < 0.003)))?.photo_url
-              );
-              if (!photo) return null;
-              return (
-                <div 
-                  className="mt-1.5 sm:mt-2.5 rounded-xl sm:rounded-2xl overflow-hidden border-2 border-blue-400/50 dark:border-blue-500/50 shadow-md relative cursor-pointer group bg-black touch-manipulation active:scale-[0.98] transition-transform"
-                  onClick={() => setLightboxPhoto({
-                    url: photo,
-                    title: selectedPoint.name,
-                    time: selectedPoint.reportedAt || selectedPoint.time
-                  })}
-                  title="แตะเพื่อดูภาพขนาดเต็ม"
-                >
-                  <div className="relative">
-                    <img 
-                      src={photo} 
-                      alt="รูปภาพสถานการณ์น้ำท่วม" 
-                      className="w-full h-20 sm:h-32 object-cover group-hover:scale-105 transition-transform duration-200" 
-                    />
-                    <div className="absolute top-1 left-1 px-1.5 py-0.5 rounded-full bg-slate-950 text-cyan-300 text-[9px] sm:text-[10px] font-bold border border-cyan-400 flex items-center gap-1 shadow-md">
-                      <span>📸 ภาพถ่ายรายงาน</span>
-                    </div>
-                  </div>
-                  <div className={`p-1 sm:p-2 text-[9.5px] sm:text-xs text-center font-bold flex items-center justify-between px-2 sm:px-3 ${
-                    isDark ? 'bg-slate-800 text-cyan-300' : 'bg-blue-50 text-blue-700'
-                  }`}>
-                    <span className="flex items-center gap-1 text-[9.5px] sm:text-[11px]">
-                      <span>🔍</span>
-                      <span>แตะเพื่อดูภาพขนาดใหญ่</span>
-                    </span>
-                    {(selectedPoint.reportedAt || selectedPoint.time) && (
-                      <span className="opacity-75 text-[8.5px] sm:text-[10px]">
-                        รายงาน {selectedPoint.reportedAt || selectedPoint.time}
-                      </span>
-                    )}
+            {hasPhoto && (
+              <div 
+                className="mt-1.5 sm:mt-2.5 rounded-xl sm:rounded-2xl overflow-hidden border-2 border-blue-400/50 dark:border-blue-500/50 shadow-md relative cursor-pointer group bg-black touch-manipulation active:scale-[0.98] transition-transform"
+                onClick={() => setLightboxPhoto({
+                  url: pointPhoto,
+                  title: selectedPoint.name,
+                  time: selectedPoint.reportedAt || selectedPoint.time
+                })}
+                title="แตะเพื่อดูภาพขนาดเต็ม"
+              >
+                <div className="relative">
+                  <img 
+                    src={pointPhoto} 
+                    alt="รูปภาพสถานการณ์น้ำท่วม" 
+                    className="w-full h-20 sm:h-32 object-cover group-hover:scale-105 transition-transform duration-200" 
+                  />
+                  <div className="absolute top-1 left-1 px-1.5 py-0.5 rounded-full bg-slate-950 text-cyan-300 text-[9px] sm:text-[10px] font-bold border border-cyan-400 flex items-center gap-1 shadow-md">
+                    <span>📸 ภาพถ่ายรายงาน</span>
                   </div>
                 </div>
-              );
-            })()}
+                <div className={`p-1 sm:p-2 text-[9.5px] sm:text-xs text-center font-bold flex items-center justify-between px-2 sm:px-3 ${
+                  isDark ? 'bg-slate-800 text-cyan-300' : 'bg-blue-50 text-blue-700'
+                }`}>
+                  <span className="flex items-center gap-1 text-[9.5px] sm:text-[11px]">
+                    <span>🔍</span>
+                    <span>แตะเพื่อดูภาพขนาดใหญ่</span>
+                  </span>
+                  {(selectedPoint.reportedAt || selectedPoint.time) && (
+                    <span className="opacity-75 text-[8.5px] sm:text-[10px]">
+                      รายงาน {selectedPoint.reportedAt || selectedPoint.time}
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* Visual Gauge with Standard Waterline & Sleek Vehicle Silhouettes (100% Solid & High Contrast) */}
             <div className="mt-2 sm:mt-2.5">
@@ -3296,7 +3321,8 @@ export default function App() {
 
             </div>
           </div>
-        )}
+          );
+        })()}
 
         {/* FULLSCREEN PHOTO LIGHTBOX MODAL (Mobile, Tablet & PC) */}
         {lightboxPhoto && (

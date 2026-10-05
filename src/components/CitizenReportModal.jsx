@@ -142,11 +142,12 @@ export default function CitizenReportModal({
     }
   };
 
-  // Image Compression & Optimization for Mobile Uploads
-  const compressImage = (file, maxWidth = 1200, maxHeight = 1200, quality = 0.8) => {
+  // Image Compression & Optimization for Mobile Uploads (Safely under 80KB to fit localStorage & Supabase)
+  const compressImage = (file, maxWidth = 800, maxHeight = 800, quality = 0.65) => {
     return new Promise((resolve) => {
       const reader = new FileReader();
       reader.onload = (event) => {
+        const rawResult = event.target?.result;
         const img = new Image();
         img.onload = () => {
           let { width, height } = img;
@@ -169,10 +170,17 @@ export default function CitizenReportModal({
             resolve(dataUrl);
             return;
           }
-          resolve(event.target?.result);
+          resolve(rawResult);
         };
-        img.onerror = () => resolve(event.target?.result);
-        img.src = event.target?.result;
+        img.onerror = () => {
+          // If image failed to load in canvas, check size before falling back
+          if (rawResult && typeof rawResult === 'string' && rawResult.length < 500000) {
+            resolve(rawResult);
+          } else {
+            resolve(null);
+          }
+        };
+        img.src = rawResult;
       };
       reader.onerror = () => resolve(null);
       reader.readAsDataURL(file);

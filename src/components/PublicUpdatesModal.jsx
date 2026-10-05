@@ -40,26 +40,32 @@ export default function PublicUpdatesModal({
   const risingCount = items.filter(i => i.statusType === 'rising').length;
 
   const handleItemClick = (item) => {
-    // 1. ค้นหาจุดข้อมูลเต็มจาก points และ citizenReports
-    const all = [...(points || []), ...(citizenReports || [])];
+    // 1. ค้นหาจุดข้อมูลเต็มจาก citizenReports และ points (citizenReports ขึ้นก่อนเพื่อให้รูปภาพติดไปด้วย)
+    const all = [...(citizenReports || []), ...(points || [])];
     const found = all.find(p => 
       String(p.id) === String(item.locationKey || item.id) ||
-      (p.name && item.locationName && p.name.trim() === item.locationName.trim()) ||
-      (p.lat && item.lat && Math.abs(p.lat - item.lat) < 0.0015 && Math.abs(p.lng - item.lng) < 0.0015)
+      (p.name && item.locationName && p.name.trim().toLowerCase() === item.locationName.trim().toLowerCase()) ||
+      (p.lat && item.lat && Math.abs(p.lat - item.lat) < 0.003 && Math.abs(p.lng - item.lng) < 0.003)
     );
 
-    const target = found || item.rawPoint || {
+    const photo = item.photoUrl || item.rawPoint?.photoUrl || found?.photoUrl || found?.photo_url || found?.photo || null;
+
+    const target = {
+      ...(found || item.rawPoint || {}),
       ...item,
-      id: item.id || item.locationKey,
-      name: item.locationName || 'จุดน้ำท่วม',
-      district: item.district || 'สมุทรปราการ',
-      subdistrict: item.subdistrict || '',
-      depthCm: Number(item.depthCm) || 0,
+      id: found?.id || item.rawPoint?.id || item.id || item.locationKey,
+      name: found?.name || item.locationName || 'จุดน้ำท่วม',
+      district: found?.district || item.district || 'สมุทรปราการ',
+      subdistrict: found?.subdistrict || item.subdistrict || '',
+      depthCm: Number(found?.depthCm !== undefined ? found.depthCm : item.depthCm) || 0,
       level: Number(item.depthCm) > 50 ? 3 : (Number(item.depthCm) > 20 ? 2 : 1),
       depthRange: Number(item.depthCm) > 50 ? '> 50 ซม.' : (Number(item.depthCm) > 20 ? '21 - 50 ซม.' : (Number(item.depthCm) > 0 ? '5 - 20 ซม.' : '0 ซม.')),
       statusLabel: item.statusLabel,
       trafficStatus: item.trafficStatus || item.statusLabel,
-      source: item.source || 'รายงานสถานการณ์น้ำ'
+      source: item.source || 'รายงานสถานการณ์น้ำ',
+      photoUrl: photo,
+      lat: found?.lat || item.lat || item.rawPoint?.lat,
+      lng: found?.lng || item.lng || item.rawPoint?.lng
     };
 
     if (onSelectPoint && target && target.lat && target.lng) {

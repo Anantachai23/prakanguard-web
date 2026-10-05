@@ -2085,12 +2085,12 @@ export default function AdminModal({
                             </div>
 
                             {/* Photo Evidence Thumbnail */}
-                            {report.photoUrl && (
+                            {(report.photoUrl || report.photo_url || report.photo) && (
                               <div 
-                                onClick={() => setSelectedPhotoModal(report.photoUrl)}
+                                onClick={() => setSelectedPhotoModal(report.photoUrl || report.photo_url || report.photo)}
                                 className="relative w-24 h-24 rounded-2xl overflow-hidden border border-white/20 shrink-0 cursor-pointer group shadow-md"
                               >
-                                <img src={report.photoUrl} alt="หลักฐาน" className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                                <img src={report.photoUrl || report.photo_url || report.photo} alt="หลักฐาน" className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
                                 <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                                   <Eye className="w-5 h-5 text-white" />
                                 </div>
@@ -3427,12 +3427,12 @@ export default function AdminModal({
                               </div>
                             </div>
 
-                            {item.photoUrl && (
+                            {(item.photoUrl || item.photo_url || item.photo) && (
                               <div 
-                                onClick={() => setSelectedPhotoModal(item.photoUrl)}
+                                onClick={() => setSelectedPhotoModal(item.photoUrl || item.photo_url || item.photo)}
                                 className="w-10 h-10 rounded-xl overflow-hidden shrink-0 cursor-pointer border border-white/10"
                               >
-                                <img src={item.photoUrl} alt="รูป" className="w-full h-full object-cover" />
+                                <img src={item.photoUrl || item.photo_url || item.photo} alt="รูป" className="w-full h-full object-cover" />
                               </div>
                             )}
                           </div>
@@ -3776,13 +3776,13 @@ export default function AdminModal({
                             </div>
 
                             {/* Photo Thumbnail */}
-                            {item.photoUrl && (
+                            {(item.photoUrl || item.photo_url || item.photo) && (
                               <div
-                                onClick={() => setSelectedPhotoModal(item.photoUrl)}
+                                onClick={() => setSelectedPhotoModal(item.photoUrl || item.photo_url || item.photo)}
                                 className="w-16 h-16 rounded-xl overflow-hidden shrink-0 cursor-pointer border border-white/10 hover:opacity-90 transition-opacity self-center sm:self-start"
                                 title="คลิกเพื่อดูรูปขยาย"
                               >
-                                <img src={item.photoUrl} alt="รูปจุดท่วม" className="w-full h-full object-cover" />
+                                <img src={item.photoUrl || item.photo_url || item.photo} alt="รูปจุดท่วม" className="w-full h-full object-cover" />
                               </div>
                             )}
 

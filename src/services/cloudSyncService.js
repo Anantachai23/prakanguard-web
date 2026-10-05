@@ -68,7 +68,7 @@ function fromSupabaseReport(row) {
     officialGuidance: row.official_guidance || '',
     source: row.source || 'รายงานจากประชาชน',
     phone: row.phone || '',
-    photoUrl: row.photo_url || null,
+    photoUrl: row.photo_url || row.photoUrl || row.photo || row.image || null,
     isApproved: !!row.is_approved,
     isResolved: !!row.is_resolved,
     reportedAt: row.reported_at || '',
@@ -328,7 +328,7 @@ export async function fetchRecentCloudReports() {
 
     // 1. ดึงจาก Supabase Cloud Database เป็นหลัก
     try {
-      const supaRes = await fetch(`${SUPABASE_URL}/rest/v1/reports?order=timestamp.desc&limit=60`, {
+      const supaRes = await fetch(`${SUPABASE_URL}/rest/v1/reports?order=timestamp.desc&limit=300`, {
         headers: {
           'apikey': SUPABASE_KEY,
           'Authorization': `Bearer ${SUPABASE_KEY}`
