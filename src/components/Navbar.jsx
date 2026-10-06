@@ -12,7 +12,6 @@ import {
   BookOpen,
   CloudRain,
   Shield,
-  Lock,
   ChevronDown,
   PanelLeftClose,
   PanelLeftOpen
@@ -88,7 +87,7 @@ export default function Navbar({
     <header className={`sticky top-0 z-[1001] w-full border-b backdrop-blur-md transition-colors select-none ${
       isDark ? 'bg-slate-950/90 border-slate-800 text-slate-100' : 'bg-white/90 border-slate-200 text-slate-900'
     }`}>
-      <div className="w-full max-w-full px-2.5 sm:px-4 py-1.5 sm:py-2 flex items-center justify-between gap-1.5 sm:gap-2.5 overflow-visible relative">
+      <div className="w-full max-w-full px-2 sm:px-4 py-1.5 sm:py-2 flex items-center justify-between gap-1.5 sm:gap-2.5 overflow-hidden relative">
         
         {/* ========================================================= */}
         {/* 1. BRAND AREA (LEFT) — Clean Official Style               */}
@@ -292,29 +291,9 @@ export default function Navbar({
         {/* ========================================================= */}
         <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
           
-          {/* --- MOBILE (Screen < 768px): Minimal, Clean, 0 Map Blocking --- */}
-          <div className="flex md:hidden items-center gap-1.5 shrink-0">
+          {/* --- MOBILE (Screen < 768px): Minimal, Clean, 0 Horizontal Overflow --- */}
+          <div className="flex md:hidden items-center gap-1 sm:gap-1.5 shrink-0">
             <RealTimeClock theme={theme} />
-
-            {/* Mobile Announcement Button on Navbar */}
-            {hasAnnouncement && (
-              <button 
-                type="button"
-                onClick={() => {
-                  playModalOpenSound();
-                  if (onOpenAnnouncement) onOpenAnnouncement();
-                }}
-                className={`px-2 py-1 rounded-md border text-[11px] font-semibold flex items-center gap-1 transition-all cursor-pointer shadow-xs active:scale-95 shrink-0 ${
-                  isDark 
-                    ? 'bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border-amber-700/80 shadow-amber-950/40' 
-                    : 'bg-amber-50 hover:bg-amber-100 text-amber-800 border-amber-300 shadow-amber-500/10'
-                }`}
-                title="ดูประกาศล่าสุดจากเจ้าหน้าที่แอดมิน"
-              >
-                <Bell className="w-3.5 h-3.5 text-amber-500 animate-pulse shrink-0" />
-                <span>ประกาศ</span>
-              </button>
-            )}
 
             {/* Theme Switcher Button */}
             <button
@@ -323,7 +302,7 @@ export default function Navbar({
                 playToggleSound(!isDark);
                 if (onToggleTheme) onToggleTheme();
               }}
-              className={`p-1.5 rounded-md border text-xs font-semibold flex items-center justify-center transition-all cursor-pointer shadow-xs active:scale-95 ${
+              className={`p-1.5 rounded-md border text-xs font-semibold flex items-center justify-center transition-all cursor-pointer shadow-xs active:scale-95 shrink-0 ${
                 isDark 
                   ? 'bg-slate-900 hover:bg-slate-800 text-amber-300 border-slate-800' 
                   : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-200'
@@ -504,23 +483,6 @@ export default function Navbar({
                     <ShieldCheck className="w-4 h-4 text-sky-500 shrink-0" />
                     <span>นโยบาย & ข้อมูลอ้างอิง</span>
                   </button>
-
-                  <div className="h-[1px] bg-slate-200 dark:bg-slate-800 my-1"></div>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      playModalOpenSound();
-                      setIsMoreMenuOpen(false);
-                      if (onOpenAdmin) onOpenAdmin();
-                    }}
-                    className={`w-full p-2 rounded-md text-xs font-medium text-left flex items-center gap-2 transition-colors cursor-pointer ${
-                      isDark ? 'hover:bg-indigo-950/60 text-indigo-300' : 'hover:bg-indigo-50 text-indigo-800'
-                    }`}
-                  >
-                    <Lock className="w-4 h-4 text-indigo-500 shrink-0" />
-                    <span>สำหรับเจ้าหน้าที่ / แอดมิน</span>
-                  </button>
                 </div>
               )}
             </div>
@@ -649,23 +611,6 @@ export default function Navbar({
               <PhoneCall className="w-3.5 h-3.5 shrink-0" />
               <span className="hidden xl:inline">สายด่วน</span>
               <span className="font-bold">1784</span>
-            </button>
-
-            {/* Desktop Staff / Admin Login Button */}
-            <button 
-              type="button"
-              onClick={() => {
-                playModalOpenSound();
-                if (onOpenAdmin) onOpenAdmin();
-              }}
-              title="สำหรับเจ้าหน้าที่ / ผู้ดูแลระบบ (ADMIN)"
-              className={`p-2 rounded-md border text-xs font-semibold flex items-center justify-center transition-all cursor-pointer shadow-xs active:scale-95 ${
-                isDark 
-                  ? 'bg-slate-900 hover:bg-slate-800 text-indigo-400 border-slate-800 hover:border-indigo-700' 
-                  : 'bg-white hover:bg-slate-100 text-indigo-600 border-slate-200 hover:border-indigo-300'
-              }`}
-            >
-              <Lock className="w-3.5 h-3.5" />
             </button>
 
             {/* Theme Switcher Button */}

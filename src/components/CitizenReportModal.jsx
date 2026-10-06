@@ -12,7 +12,7 @@ import {
   Trash2
 } from 'lucide-react';
 import { SAMUT_PRAKAN_DISTRICTS_DATA } from '../data/samutPrakanDistricts';
-import { detectDistrictForCoordinates, isPointInSamutPrakan } from '../data/samutPrakanBoundary';
+import { detectDistrictForCoordinates, isPointInSamutPrakan, detectSubdistrictForLocation } from '../data/samutPrakanBoundary';
 import { getDetailedDeviceInfo } from '../services/cloudSyncService';
 
 // ระดับน้ำตามส่วนของร่างกาย (อวัยวะ) ตามความต้องการของผู้ใช้งาน
@@ -111,20 +111,52 @@ export default function CitizenReportModal({
 
   const fileInputRef = useRef(null);
 
-  // Sync picked coordinates from map
+  // Sync picked coordinates from map & auto-detect exact district/subdistrict
   useEffect(() => {
     if (pickedCoords && typeof pickedCoords.lat === 'number' && typeof pickedCoords.lng === 'number') {
       setCustomCoords(pickedCoords);
-      const detected = detectDistrictForCoordinates(pickedCoords.lat, pickedCoords.lng);
-      if (detected) {
-        setDistrict(detected);
-        const distObj = SAMUT_PRAKAN_DISTRICTS_DATA.find(d => d.name === detected);
-        if (distObj && distObj.subdistricts.length > 0) {
-          setSubdistrict(distObj.subdistricts[0].name);
+      const subDetected = detectSubdistrictForLocation(pickedCoords.lat, pickedCoords.lng, notes);
+      if (subDetected) {
+        setDistrict(subDetected.district);
+        setSubdistrict(subDetected.subdistrict);
+      } else {
+        const detected = detectDistrictForCoordinates(pickedCoords.lat, pickedCoords.lng);
+        if (detected) {
+          setDistrict(detected);
+          const distObj = SAMUT_PRAKAN_DISTRICTS_DATA.find(d => d.name === detected);
+          if (distObj && distObj.subdistricts.length > 0) {
+            let closestSub = distObj.subdistricts[0].name;
+            let minDist = Infinity;
+            distObj.subdistricts.forEach(s => {
+              if (s.lat && s.lng) {
+                const d = Math.hypot(pickedCoords.lat - s.lat, pickedCoords.lng - s.lng);
+                if (d < minDist) {
+                  minDist = d;
+                  closestSub = s.name;
+                }
+              }
+            });
+            setSubdistrict(closestSub);
+          }
         }
       }
     }
   }, [pickedCoords]);
+
+  // Handle notes change with smart subdistrict auto-detection
+  const handleNotesChange = (e) => {
+    const val = e.target.value;
+    setNotes(val);
+    const subDetected = detectSubdistrictForLocation(customCoords?.lat, customCoords?.lng, val, district);
+    if (subDetected) {
+      if (subDetected.district && subDetected.district !== district) {
+        setDistrict(subDetected.district);
+      }
+      if (subDetected.subdistrict && subDetected.subdistrict !== subdistrict) {
+        setSubdistrict(subDetected.subdistrict);
+      }
+    }
+  };
 
   // Available subdistricts based on selected district
   const currentDistrictObj = SAMUT_PRAKAN_DISTRICTS_DATA.find(d => d.name === district) || SAMUT_PRAKAN_DISTRICTS_DATA[0];
@@ -253,11 +285,20 @@ export default function CitizenReportModal({
     }
     const reporterDevice = getDetailedDeviceInfo();
 
+    // Ensure final subdistrict and district match what the reporter specifies across all locations
+    let finalDistrict = district;
+    let finalSubdistrict = subdistrict;
+    const smartCheck = detectSubdistrictForLocation(finalLat, finalLng, notes, district);
+    if (smartCheck) {
+      if (smartCheck.district) finalDistrict = smartCheck.district;
+      if (smartCheck.subdistrict) finalSubdistrict = smartCheck.subdistrict;
+    }
+
     const newReport = {
       id: `citizen_${Date.now()}`,
       name: `${notes.trim()}`,
-      district: district,
-      subdistrict: subdistrict,
+      district: finalDistrict,
+      subdistrict: finalSubdistrict,
       notes: notes.trim(),
       level: computedLevel,
       severity: computedLevel,
@@ -454,7 +495,7 @@ export default function CitizenReportModal({
               <textarea
                 rows={2}
                 value={notes}
-                onChange={(e) => setNotes(e.target.value)}
+                onChange={handleNotesChange}
                 placeholder="เช่น ถนนสุขุมวิท หน้าปากซอยวัดด่านสำโรง มุ่งหน้าบางนา"
                 className={`w-full px-3.5 py-2.5 rounded-2xl text-xs sm:text-sm border transition-all outline-none focus:ring-2 focus:ring-blue-500 resize-none ${
                   isDark 

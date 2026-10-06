@@ -558,3 +558,94 @@ export function validateCoordinatePrecision(lat, lng, specifiedDistrict = null) 
     reason: msg
   };
 }
+
+/**
+ * ตรวจสอบและระบุตำบลที่ตรงกับจุดที่รายงานอย่างแม่นยำ (รองรับทั้งพิกัดและชื่อจุดสังเกต)
+ * โดยเฉพาะ "แยกศรีเทพา" / "MRT ศรีเทพา" -> "สำโรงเหนือ" (ต.สำโรงเหนือ)
+ */
+export function detectSubdistrictForLocation(lat, lng, locationText = '', userDistrict = null) {
+  const normText = String(locationText || '').toLowerCase();
+
+  // 1. ตรวจจับจากชื่อสถานที่และจุดสังเกตเฉพาะ (High-Precision Landmark Match)
+  // แยกศรีเทพา / MRT ศรีเทพา / ซอยศรีบุญเรือง / วัดด่าน / แบริ่ง อยู่ใน ต.สำโรงเหนือ อ.เมืองสมุทรปราการ
+  if (
+    normText.includes('ศรีเทพา') || 
+    normText.includes('mrt ศรีเทพา') || 
+    normText.includes('แยกศรีเทพา') || 
+    normText.includes('สถานีศรีเทพา') ||
+    normText.includes('ด่านสำโรง') || 
+    normText.includes('วัดด่าน') || 
+    normText.includes('ศรีบุญเรือง') || 
+    normText.includes('แบริ่ง') || 
+    normText.includes('bts สำโรง') ||
+    normText.includes('อิมพีเรียลสำโรง') ||
+    normText.includes('ศศิกานต์') ||
+    normText.includes('โค้งกสิกร')
+  ) {
+    return { district: 'เมืองสมุทรปราการ', subdistrict: 'สำโรงเหนือ' };
+  }
+
+  if (normText.includes('การไฟฟ้า') || normText.includes('สายลวด') || normText.includes('ตลาดปากน้ำ') || normText.includes('ศาลากลาง') || normText.includes('หอนาฬิกา')) {
+    return { district: 'เมืองสมุทรปราการ', subdistrict: 'ปากน้ำ' };
+  }
+  if (normText.includes('เปาโล') || normText.includes('โลตัสศรีนครินทร์') || normText.includes('ทรัพย์บุญชัย')) {
+    return { district: 'เมืองสมุทรปราการ', subdistrict: 'บางเมือง' };
+  }
+  if (normText.includes('ท้ายบ้าน') || normText.includes('ตาเจี่ย')) {
+    return { district: 'เมืองสมุทรปราการ', subdistrict: 'ท้ายบ้านใหม่' };
+  }
+  if (normText.includes('แพรกษา') || normText.includes('ซอยมังกร')) {
+    return { district: 'เมืองสมุทรปราการ', subdistrict: 'แพรกษา' };
+  }
+  if (normText.includes('บางปู') || normText.includes('สถานตากอากาศ') || normText.includes('นิคมบางปู')) {
+    return { district: 'เมืองสมุทรปราการ', subdistrict: 'บางปูใหม่' };
+  }
+  if (normText.includes('เมกาบางนา') || normText.includes('มัณฑนา') || normText.includes('หนามแดง') || normText.includes('บางนา-ตราด กม.12')) {
+    return { district: 'บางพลี', subdistrict: 'บางแก้ว' };
+  }
+  if (normText.includes('กิ่งแก้ว') || normText.includes('ราชาเทวะ')) {
+    return { district: 'บางพลี', subdistrict: 'ราชาเทวะ' };
+  }
+  if (normText.includes('สุขสมาน') || normText.includes('หนองปรือ') || normText.includes('สุวรรณภูมิ 4')) {
+    return { district: 'บางพลี', subdistrict: 'หนองปรือ' };
+  }
+  if (normText.includes('หัวเฉียว') || normText.includes('บางโฉลง') || normText.includes('พูลเจริญ') || normText.includes('กม.18')) {
+    return { district: 'บางพลี', subdistrict: 'บางโฉลง' };
+  }
+  if (normText.includes('หลวงพ่อโต') || normText.includes('วัดบางพลีใหญ่ใน') || normText.includes('บิ๊กซีบางพลี')) {
+    return { district: 'บางพลี', subdistrict: 'บางพลีใหญ่' };
+  }
+  if (normText.includes('ปู่เจ้า') || normText.includes('ท่าน้ำเภตรา') || normText.includes('สำโรงใต้') || normText.includes('สำโรงกลาง')) {
+    return { district: 'พระประแดง', subdistrict: 'สำโรงใต้' };
+  }
+  if (normText.includes('ตลาดพระประแดง') || normText.includes('ท่าน้ำพระประแดง') || normText.includes('สุขสวัสดิ์ 39')) {
+    return { district: 'พระประแดง', subdistrict: 'ตลาด' };
+  }
+  if (normText.includes('ป้อมพระจุล') || normText.includes('แหลมฟ้าผ่า')) {
+    return { district: 'พระสมุทรเจดีย์', subdistrict: 'แหลมฟ้าผ่า' };
+  }
+  if (normText.includes('สาขลา') || normText.includes('นาเกลือ')) {
+    return { district: 'พระสมุทรเจดีย์', subdistrict: 'นาเกลือ' };
+  }
+  if (normText.includes('ตลาดบางบ่อ') || normText.includes('ปานวิถี') || normText.includes('รัตนราช')) {
+    return { district: 'บางบ่อ', subdistrict: 'บางบ่อ' };
+  }
+  if (normText.includes('คลองด่าน') || normText.includes('ชลหารพิจิตร')) {
+    return { district: 'บางบ่อ', subdistrict: 'คลองด่าน' };
+  }
+  if (normText.includes('เคหะบางเสาธง') || normText.includes('เมืองใหม่บางเสาธง') || normText.includes('เอแบค') || normText.includes('abac') || normText.includes('บางนาการ์เด้นท์')) {
+    return { district: 'บางเสาธง', subdistrict: 'บางเสาธง' };
+  }
+
+  // 2. ตรวจสอบจากพิกัด (Coordinate-based Detection)
+  const numLat = Number(lat);
+  const numLng = Number(lng);
+  if (!isNaN(numLat) && !isNaN(numLng) && numLat > 0 && numLng > 0) {
+    // พิกัดบริเวณแยกศรีเทพาและแนวถนนเทพารักษ์ช่วงต้น (lat: 13.6200 - 13.6400, lng: 100.6100 - 100.6380) อยู่ใน ต.สำโรงเหนือ
+    if (numLat >= 13.6180 && numLat <= 13.6420 && numLng >= 100.6100 && numLng <= 100.6380) {
+      return { district: 'เมืองสมุทรปราการ', subdistrict: 'สำโรงเหนือ' };
+    }
+  }
+
+  return null;
+}

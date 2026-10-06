@@ -270,15 +270,15 @@ export const SEED_REAL_DAILY_UPDATES = [
     locationKey: 'sp-srithepha',
     locationName: 'แยกศรีเทพา ถนนเทพารักษ์ (จุดตัด ถ.ศรีนครินทร์)',
     district: 'เมืองสมุทรปราการ',
-    subdistrict: 'ต.เทพารักษ์',
-    locationSub: 'เมือง • ต.เทพารักษ์',
-    statusType: 'dry',
-    statusLabel: 'แห้งแล้ว',
-    statusBadgeClass: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30',
-    depthCm: 0,
+    subdistrict: 'ต.สำโรงเหนือ',
+    locationSub: 'เมือง • ต.สำโรงเหนือ',
+    statusType: 'rising',
+    statusLabel: 'เริ่มท่วมแล้ว',
+    statusBadgeClass: 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/30',
+    depthCm: 15,
     itemTime: '17:10 น.',
     timestamp: Date.now() - (0.5 * 3600 * 1000),
-    source: 'แขวงทางหลวงสมุทรปราการ',
+    source: 'แขวงทางหลวงสมุทรปราการ & สภ.สำโรงเหนือ',
     lat: 13.6270,
     lng: 100.6260
   },
@@ -287,12 +287,12 @@ export const SEED_REAL_DAILY_UPDATES = [
     locationKey: 'sp-theparak-sriboonruang',
     locationName: 'หน้าซอยศรีบุญเรือง (ถนนเทพารักษ์ กม.1.5)',
     district: 'เมืองสมุทรปราการ',
-    subdistrict: 'ต.เทพารักษ์',
-    locationSub: 'เมือง • ต.เทพารักษ์',
-    statusType: 'dry',
-    statusLabel: 'แห้งแล้ว',
-    statusBadgeClass: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30',
-    depthCm: 0,
+    subdistrict: 'ต.สำโรงเหนือ',
+    locationSub: 'เมือง • ต.สำโรงเหนือ',
+    statusType: 'rising',
+    statusLabel: 'เริ่มท่วมแล้ว',
+    statusBadgeClass: 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/30',
+    depthCm: 14,
     itemTime: '17:20 น.',
     timestamp: Date.now() - (0.3 * 3600 * 1000),
     source: 'สภ.สำโรงเหนือ',
@@ -318,13 +318,24 @@ export function loadDailyUpdatesFromStorage() {
     return [];
   }
 
-  // หากเป็นวันเดียวกัน: โหลดจาก cache
+  // หากเป็นวันเดียวกัน: โหลดจาก cache (พร้อมปรับตำบลให้ถูกต้องตรงตามจุดรายงาน)
   try {
     const raw = localStorage.getItem('prakanguard_daily_updates_feed');
     if (raw) {
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed)) {
-        return parsed;
+        return parsed.map(item => {
+          const locStr = `${item.locationName || ''} ${item.locationKey || ''}`.toLowerCase();
+          if (locStr.includes('ศรีเทพา') || (item.lat && Math.abs(item.lat - 13.627) < 0.015 && Math.abs(item.lng - 100.626) < 0.015)) {
+            return {
+              ...item,
+              district: 'เมืองสมุทรปราการ',
+              subdistrict: 'ต.สำโรงเหนือ',
+              locationSub: 'เมือง • ต.สำโรงเหนือ'
+            };
+          }
+          return item;
+        });
       }
     }
   } catch (_) {}
@@ -347,13 +358,27 @@ export function mergeDailyUpdateEvent(prevList = [], newEvent = {}) {
   const key = (newEvent.locationKey || newEvent.locationName || '').trim().toLowerCase();
   const eventTime = newEvent.itemTime || formatBangkokTime();
 
+  // ตรวจสอบความถูกต้องของตำบล โดยเฉพาะแยกศรีเทพา -> สำโรงเหนือ
+  let resolvedDistrict = newEvent.district || 'สมุทรปราการ';
+  let resolvedSubdistrict = newEvent.subdistrict || '';
+  const checkStr = `${newEvent.locationName} ${key}`.toLowerCase();
+  if (checkStr.includes('ศรีเทพา') || (newEvent.lat && Math.abs(newEvent.lat - 13.627) < 0.015 && Math.abs(newEvent.lng - 100.626) < 0.015)) {
+    resolvedDistrict = 'เมืองสมุทรปราการ';
+    resolvedSubdistrict = 'ต.สำโรงเหนือ';
+  }
+
+  const cleanSub = resolvedSubdistrict.startsWith('ต.') ? resolvedSubdistrict : (resolvedSubdistrict ? `ต.${resolvedSubdistrict}` : '');
+  const locationSubText = newEvent.locationSub && !checkStr.includes('ศรีเทพา')
+    ? newEvent.locationSub
+    : `${resolvedDistrict.replace('เมืองสมุทรปราการ', 'เมือง')} • ${cleanSub}`.trim();
+
   const formattedEvent = {
     id: newEvent.id || `upd_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
     locationKey: key,
     locationName: newEvent.locationName,
-    district: newEvent.district || 'สมุทรปราการ',
-    subdistrict: newEvent.subdistrict || '',
-    locationSub: newEvent.locationSub || (newEvent.district ? `${newEvent.district} ${newEvent.subdistrict ? '• ' + newEvent.subdistrict : ''}` : ''),
+    district: resolvedDistrict,
+    subdistrict: resolvedSubdistrict,
+    locationSub: locationSubText,
     statusType: newEvent.statusType || 'rising', // 'dry' | 'receding' | 'rising'
     statusLabel: newEvent.statusLabel || (newEvent.statusType === 'dry' ? 'แห้งแล้ว' : newEvent.statusType === 'receding' ? 'น้ำลดแล้ว' : 'เริ่มท่วมแล้ว'),
     statusBadgeClass: newEvent.statusType === 'dry'

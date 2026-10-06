@@ -23,8 +23,7 @@ import {
   Moon,
   Sparkles,
   ShieldCheck,
-  Bell,
-  Lock
+  Bell
 } from 'lucide-react';
 
 export default function MobileBottomNav({
@@ -183,28 +182,6 @@ export default function MobileBottomNav({
                   <span className="text-[10px] text-slate-500 dark:text-slate-400">เปิดแผงกรองอำเภอ</span>
                 </div>
               </button>
-
-              {/* 4. Staff / Admin Login */}
-              {onOpenAdmin && (
-                <button
-                  type="button"
-                  onClick={() => handleMenuAction(onOpenAdmin, playModalOpenSound)}
-                  className="col-span-2 p-2.5 rounded-md bg-indigo-50/70 hover:bg-indigo-100/70 dark:bg-indigo-950/40 dark:hover:bg-indigo-950/70 border border-indigo-200 dark:border-indigo-800 text-slate-700 dark:text-slate-300 flex items-center justify-between transition-all active:scale-98 text-left cursor-pointer"
-                >
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <div className="w-7 h-7 rounded-md bg-indigo-600 text-white flex items-center justify-center shrink-0">
-                      <Lock className="w-3.5 h-3.5" />
-                    </div>
-                    <div className="min-w-0">
-                      <span className="text-xs font-semibold block text-slate-900 dark:text-white truncate">สำหรับเจ้าหน้าที่ / แอดมิน</span>
-                      <span className="text-[10px] text-slate-500 dark:text-slate-400 truncate block">เข้าสู่ระบบควบคุมและจัดการสถานการณ์</span>
-                    </div>
-                  </div>
-                  <span className="text-[9px] px-2 py-0.5 rounded font-mono font-bold bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300 border border-indigo-300 dark:border-indigo-700 shrink-0">
-                    ADMIN
-                  </span>
-                </button>
-              )}
 
               {/* 5. Privacy Policy & Terms */}
               <button

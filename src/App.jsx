@@ -19,7 +19,7 @@ import ChatBot from './components/ChatBot';
 import { INITIAL_FLOOD_POINTS, INITIAL_CITIZEN_REPORTS, DISTRICTS, matchesLocationSearch, scoreLocationSearch, POPULAR_SEARCH_SUGGESTIONS, findCorridorForPoint, MAJOR_FLOOD_CORRIDORS } from './data/samutPrakanPoints';
 import { SAMUT_PRAKAN_DISTRICTS_DATA } from './data/samutPrakanDistricts';
 import { getFloodLevel, FLOOD_STANDARDS } from './data/floodStandards';
-import { detectDistrictForCoordinates, isPointInSamutPrakan } from './data/samutPrakanBoundary';
+import { detectDistrictForCoordinates, isPointInSamutPrakan, detectSubdistrictForLocation } from './data/samutPrakanBoundary';
 import { getOfficialAdvisorySummary } from './services/aiPredictor';
 import { getLiveSamutPrakanWeather } from './services/weatherService';
 import { runOfficial24HourSync, getFloodStatusSignature } from './services/aiSentryService';
@@ -128,11 +128,13 @@ function playNotificationChime() {
 export default function App() {
   const [points, setPoints] = useState(() => {
     try {
-      // Clear legacy stale cache (20 cm)
+      // Clear legacy stale caches
       localStorage.removeItem('prakanguard_points_state_v5');
       localStorage.removeItem('prakanguard_points_state_v6');
+      localStorage.removeItem('prakanguard_points_state_v7');
+      localStorage.removeItem('prakanguard_points_state_v8');
       
-      const saved = localStorage.getItem('prakanguard_points_state_v7');
+      const saved = localStorage.getItem('prakanguard_points_state_v9');
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
@@ -149,10 +151,13 @@ export default function App() {
                   name: initPoint.name,
                   lat: initPoint.lat,
                   lng: initPoint.lng,
+                  subdistrict: initPoint.subdistrict || item.subdistrict,
                   roadSegment: initPoint.roadSegment,
                   waterTrend: initPoint.waterTrend || item.waterTrend,
                   trendText: initPoint.trendText || item.trendText,
-                  depthCm: initPoint.depthCm,
+                  depthCm: initPoint.depthCm !== undefined ? initPoint.depthCm : item.depthCm,
+                  isActive: initPoint.isActive !== undefined ? initPoint.isActive : (item.isActive ?? true),
+                  isResolved: initPoint.isResolved !== undefined ? initPoint.isResolved : false,
                   trafficStatus: initPoint.trafficStatus || item.trafficStatus,
                   statusLabel: initPoint.statusLabel || item.statusLabel,
                   aliases: item.aliases || initPoint.aliases, 
@@ -169,7 +174,7 @@ export default function App() {
             };
           });
 
-          // Ensure any initial points that weren't in saved list are preserved
+          // Ensure all initial points that weren't in saved list are preserved
           INITIAL_FLOOD_POINTS.forEach(ip => {
             if (!parsedIds.has(ip.id) && isPointInSamutPrakan(ip.lat, ip.lng)) {
               const lvl = getFloodLevel(ip.depthCm);
@@ -186,7 +191,7 @@ export default function App() {
           // Strictly purge any point outside Samut Prakan boundary
           const cleanedList = list.filter(p => p && typeof p.lat === 'number' && typeof p.lng === 'number' && isPointInSamutPrakan(p.lat, p.lng));
           try {
-            localStorage.setItem('prakanguard_points_state_v7', JSON.stringify(cleanedList));
+            localStorage.setItem('prakanguard_points_state_v9', JSON.stringify(cleanedList));
           } catch (e) {}
 
           return cleanedList;
@@ -229,7 +234,7 @@ export default function App() {
   useEffect(() => {
     pointsRef.current = points;
     try {
-      localStorage.setItem('prakanguard_points_state_v7', JSON.stringify(points));
+      localStorage.setItem('prakanguard_points_state_v9', JSON.stringify(points));
     } catch (e) {}
   }, [points]);
 
@@ -599,18 +604,32 @@ export default function App() {
         !isNaN(r.lng) &&
         isPointInSamutPrakan(r.lat, r.lng)
       );
+      const sanitized = cleaned.map(r => {
+        const smartCheck = detectSubdistrictForLocation(r.lat, r.lng, `${r.name || ''} ${r.notes || ''}`, r.district);
+        let dist = r.district;
+        let sub = r.subdistrict;
+        if (smartCheck) {
+          if (smartCheck.district) dist = smartCheck.district;
+          if (smartCheck.subdistrict) sub = smartCheck.subdistrict;
+        }
+        return {
+          ...r,
+          district: dist,
+          subdistrict: sub
+        };
+      });
       if (Array.isArray(INITIAL_CITIZEN_REPORTS) && INITIAL_CITIZEN_REPORTS.length > 0) {
-        const idSet = new Set(cleaned.map(x => x.id));
+        const idSet = new Set(sanitized.map(x => x.id));
         INITIAL_CITIZEN_REPORTS.forEach(initR => {
           if (!idSet.has(initR.id)) {
-            cleaned.push(initR);
+            sanitized.push(initR);
           }
         });
       }
       try {
-        localStorage.setItem('prakanguard_citizen_reports', JSON.stringify(cleaned));
+        localStorage.setItem('prakanguard_citizen_reports', JSON.stringify(sanitized));
       } catch (e) {}
-      return cleaned;
+      return sanitized;
     } catch (e) {
       return Array.isArray(INITIAL_CITIZEN_REPORTS) ? INITIAL_CITIZEN_REPORTS : [];
     }
@@ -1812,13 +1831,24 @@ export default function App() {
     setLastUpdatedTime(timeStr);
     if (approvedPoint) {
       // บันทึกการแจ้งเตือนลงในอัปเดตสถานการณ์น้ำรายวัน (ไม่ซูมแผนที่ เพื่อให้แผนที่อยู่นิ่ง)
+      const smartCheck = detectSubdistrictForLocation(
+        approvedPoint.lat,
+        approvedPoint.lng,
+        `${approvedPoint.name || ''} ${approvedPoint.notes || ''} ${approvedPoint.locationName || ''}`,
+        approvedPoint.district
+      );
+      const finalDist = smartCheck?.district || approvedPoint.district || 'สมุทรปราการ';
+      const finalSub = smartCheck?.subdistrict || approvedPoint.subdistrict || '';
+      const cleanSub = finalSub.startsWith('ต.') ? finalSub : (finalSub ? `ต.${finalSub}` : '');
+      const locSub = `${finalDist.replace('เมืองสมุทรปราการ', 'เมือง')} • ${cleanSub}`.trim();
+
       const newEvent = {
         id: `upd_citizen_${approvedPoint.id}_${Date.now()}`,
         locationKey: approvedPoint.id,
         locationName: approvedPoint.name || approvedPoint.locationName || 'ประชาชนในพื้นที่แจ้งน้ำท่วม',
-        district: approvedPoint.district,
-        subdistrict: approvedPoint.subdistrict,
-        locationSub: `${approvedPoint.district || 'สมุทรปราการ'} ${approvedPoint.subdistrict ? '• ' + approvedPoint.subdistrict : ''}`,
+        district: finalDist,
+        subdistrict: finalSub,
+        locationSub: locSub,
         statusType: 'rising',
         statusLabel: 'เริ่มท่วมแล้ว',
         depthCm: approvedPoint.depthCm || 15,
@@ -1828,7 +1858,11 @@ export default function App() {
         lat: approvedPoint.lat,
         lng: approvedPoint.lng,
         photoUrl: approvedPoint.photoUrl || null,
-        rawPoint: approvedPoint
+        rawPoint: {
+          ...approvedPoint,
+          district: finalDist,
+          subdistrict: finalSub
+        }
       };
       setDailyUpdates(prev => mergeDailyUpdateEvent(prev, newEvent));
 
@@ -1920,7 +1954,7 @@ export default function App() {
       const filtered = prev.filter(p => p.id !== newPoint.id);
       const updated = [newPoint, ...filtered];
       try {
-        localStorage.setItem('prakanguard_points_state_v7', JSON.stringify(updated));
+        localStorage.setItem('prakanguard_points_state_v9', JSON.stringify(updated));
       } catch (e) {}
       return updated;
     });
@@ -1947,7 +1981,7 @@ export default function App() {
         return merged;
       });
       try {
-        localStorage.setItem('prakanguard_points_state_v7', JSON.stringify(updated));
+        localStorage.setItem('prakanguard_points_state_v9', JSON.stringify(updated));
       } catch (e) {}
       return updated;
     });
@@ -1964,7 +1998,7 @@ export default function App() {
     setPoints(prev => {
       const updated = prev.filter(p => p.id !== pointId);
       try {
-        localStorage.setItem('prakanguard_points_state_v7', JSON.stringify(updated));
+        localStorage.setItem('prakanguard_points_state_v9', JSON.stringify(updated));
       } catch (e) {}
       return updated;
     });
@@ -1984,7 +2018,7 @@ export default function App() {
       const newItems = pointsToImport.filter(p => !existingIds.has(p.id) && !existingNames.has(p.name));
       const updated = [...newItems, ...prev];
       try {
-        localStorage.setItem('prakanguard_points_state_v7', JSON.stringify(updated));
+        localStorage.setItem('prakanguard_points_state_v9', JSON.stringify(updated));
       } catch (e) {}
       return updated;
     });
@@ -2007,7 +2041,7 @@ export default function App() {
     });
     setPoints(defaultPoints);
     try {
-      localStorage.setItem('prakanguard_points_state_v7', JSON.stringify(defaultPoints));
+      localStorage.setItem('prakanguard_points_state_v9', JSON.stringify(defaultPoints));
     } catch (e) {}
   };
 
@@ -3084,20 +3118,27 @@ export default function App() {
             </div>
           )}
 
-          {/* Admin Web Announcement Banner */}
+          {/* Admin Web Announcement Banner (อยู่ด้านบนของเว็บไซต์ ย่อขนาดกะทัดรัด ตัวหนังสือคมชัด 100%) */}
           {showAnnouncementBanner && activeAnnouncement && (
-            <div className="fixed bottom-28 sm:bottom-auto sm:top-14 left-2 right-2 sm:left-1/2 sm:-translate-x-1/2 sm:w-[92vw] sm:max-w-2xl z-[95] pointer-events-auto animate-in fade-in slide-in-from-bottom-3 sm:slide-in-from-top-3 duration-300">
-              <div className={`w-full p-3 sm:px-4 sm:py-3.5 rounded-lg border shadow-lg backdrop-blur-md flex flex-col gap-2 transition-all overflow-hidden ${
-                isDark ? 'bg-slate-900/98 text-slate-100 border-slate-800 shadow-slate-950/50' : 'bg-white/98 text-slate-900 border-slate-300 shadow-md'
+            <div className="fixed top-12 sm:top-14 left-2 right-2 sm:left-1/2 sm:-translate-x-1/2 sm:w-[92vw] sm:max-w-lg z-[1002] pointer-events-auto animate-in fade-in slide-in-from-top-3 duration-300">
+              <div className={`w-full p-2.5 sm:p-3 rounded-xl border-2 shadow-2xl flex flex-col gap-1.5 transition-all overflow-hidden ${
+                isDark 
+                  ? 'bg-slate-900 border-amber-500/80 text-white shadow-2xl shadow-black/80' 
+                  : 'bg-white border-amber-500 text-slate-900 shadow-2xl shadow-slate-900/30'
               }`}>
-                <div className="flex items-center justify-between gap-2 border-b pb-1.5 border-slate-200 dark:border-slate-800">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <span className="flex items-center justify-center w-6 h-6 rounded-md bg-blue-600 text-white shrink-0">
-                      <Bell className="w-3.5 h-3.5 animate-pulse" />
+                <div className="flex items-center justify-between gap-2 border-b pb-1.5 border-amber-500/30">
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <span className="flex items-center justify-center w-5 h-5 sm:w-6 sm:h-6 rounded-md bg-amber-500 text-white shrink-0 shadow-xs">
+                      <Bell className="w-3 h-3 sm:w-3.5 sm:h-3.5 animate-pulse" />
                     </span>
-                    <span className="text-xs sm:text-xs font-bold text-blue-600 dark:text-cyan-400 truncate tracking-wide">
-                      📢 ประกาศจากเจ้าหน้าที่ PrakanGuard
-                    </span>
+                    <div className="min-w-0">
+                      <span className="text-xs font-bold text-amber-600 dark:text-amber-400 truncate tracking-wide block">
+                        📢 {activeAnnouncement.title || 'ประกาศจากเจ้าหน้าที่ PrakanGuard'}
+                      </span>
+                      <span className="text-[10px] text-slate-500 dark:text-slate-400 block truncate">
+                        {activeAnnouncement.districts?.length ? `พื้นที่: ${activeAnnouncement.districts.join(', ')}` : 'พื้นที่: ทุกอำเภอ (จ.สมุทรปราการ)'}
+                      </span>
+                    </div>
                   </div>
                   <button
                     type="button"
@@ -3106,22 +3147,50 @@ export default function App() {
                       lsAnnAddDismiss(activeAnnouncement.id);
                       setShowAnnouncementBanner(false);
                     }}
-                    className="p-1 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-white cursor-pointer shrink-0 transition-colors active:scale-90"
+                    className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-md text-slate-400 hover:text-slate-700 dark:hover:text-white cursor-pointer shrink-0 transition-colors active:scale-90"
                     title="ปิดประกาศ"
                   >
                     <X className="w-4 h-4" />
                   </button>
                 </div>
-                <div className="text-xs sm:text-sm font-medium leading-relaxed whitespace-pre-line text-slate-800 dark:text-slate-100 px-0.5 break-words">
+                <div className={`text-xs sm:text-xs font-medium leading-relaxed whitespace-pre-line px-0.5 max-h-[30vh] overflow-y-auto break-words ${
+                  isDark ? 'text-slate-100' : 'text-slate-900'
+                }`}>
                   {activeAnnouncement.message}
                 </div>
-                <div className="w-full bg-slate-100 dark:bg-slate-800 h-1 rounded-md overflow-hidden mt-0.5">
+                <div className="w-full bg-slate-200 dark:bg-slate-800 h-1 rounded-md overflow-hidden mt-0.5">
                   <div 
-                    className="bg-blue-600 h-full rounded-md"
+                    className="bg-amber-500 h-full rounded-md"
                     style={{ animation: 'pg-announcement-timer 10s linear forwards' }}
                   />
                 </div>
               </div>
+            </div>
+          )}
+
+          {/* Mobile Floating Announcement Trigger Pill (แสดงบนมือถือเห็นได้ทันทีเมื่อเข้าเว็บ ขนาดเหมาะสม ไม่ล้นขอบจอ) */}
+          {latestAnnouncement && !showAnnouncementBanner && (
+            <div className="md:hidden fixed top-12 left-2 z-40 pointer-events-auto animate-in fade-in duration-200">
+              <button
+                type="button"
+                onClick={() => {
+                  playModalOpenSound();
+                  setIsAnnouncementModalOpen(true);
+                }}
+                className={`px-2.5 py-1 rounded-full border shadow-md flex items-center gap-1.5 transition-all cursor-pointer active:scale-95 ${
+                  isDark 
+                    ? 'bg-slate-900/95 border-amber-500/70 text-amber-300 shadow-black/60' 
+                    : 'bg-white/95 border-amber-400 text-amber-800 shadow-slate-400/30'
+                }`}
+                title="แตะเพื่อดูประกาศจากเจ้าหน้าที่แอดมิน"
+              >
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+                </span>
+                <Bell className="w-3 h-3 text-amber-500 shrink-0" />
+                <span className="text-[10.5px] font-bold tracking-tight">ประกาศแอดมิน</span>
+              </button>
             </div>
           )}
 
@@ -3761,40 +3830,40 @@ export default function App() {
               <div className="grid grid-cols-3 gap-1 p-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-xs">
                 <button
                   type="button"
-                  onClick={() => setMobileSheetTab('overview')}
-                  className={`py-1.5 rounded-md font-medium transition-all ${
+                  onClick={() => {
+                    playTabSound();
+                    setMobileSheetTab('overview');
+                  }}
+                  className={`py-1.5 rounded-md font-medium transition-all cursor-pointer ${
                     mobileSheetTab === 'overview'
-                      ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs font-bold'
+                      ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-cyan-300 shadow-xs font-bold'
                       : 'text-slate-500 dark:text-slate-400'
                   }`}
                 >
-                  จุดเสี่ยง ({displayPoints.length})
+                  จุดเฝ้าระวัง ({displayPoints.length})
                 </button>
                 <button
                   type="button"
                   onClick={() => {
-                    if (mobileSheetTab === 'weather') {
-                      playModalOpenSound();
-                      setIsOfficialModalOpen(true);
-                      setIsMobileSheetOpen(false);
-                    } else {
-                      playTabSound();
-                      setMobileSheetTab('weather');
-                    }
+                    playTabSound();
+                    setMobileSheetTab('weather');
                   }}
                   className={`py-1.5 rounded-md font-medium transition-all cursor-pointer ${
                     mobileSheetTab === 'weather'
-                      ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs font-bold'
+                      ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-cyan-300 shadow-xs font-bold'
                       : 'text-slate-500 dark:text-slate-400'
                   }`}
-                  title="สภาพอากาศ (แตะซ้ำเพื่อเปิดพยากรณ์และเรดาร์ AI ฉบับเต็ม)"
+                  title="พยากรณ์สภาพอากาศ 6 อำเภอ"
                 >
-                  สภาพอากาศ
+                  พยากรณ์อากาศ
                 </button>
                 <button
                   type="button"
-                  onClick={() => setMobileSheetTab('emergency')}
-                  className={`py-1.5 rounded-md font-medium transition-all ${
+                  onClick={() => {
+                    playTabSound();
+                    setMobileSheetTab('emergency');
+                  }}
+                  className={`py-1.5 rounded-md font-medium transition-all cursor-pointer ${
                     mobileSheetTab === 'emergency'
                       ? 'bg-white dark:bg-slate-700 text-rose-600 dark:text-rose-400 shadow-xs font-bold'
                       : 'text-slate-500 dark:text-slate-400'
@@ -4116,11 +4185,15 @@ export default function App() {
                   {/* 6 Districts Forecast List */}
                   <div>
                     <span className="text-xs font-bold block mb-1.5">
-                      พยากรณ์ฝนรายอำเภอ (6 อำเภอ จ.สมุทรปราการ)
+                      พยากรณ์ฝนรายอำเภอแบบแม่นยำ (6 อำเภอ จ.สมุทรปราการ)
                     </span>
                     <div className="space-y-1.5">
                       {SAMUT_PRAKAN_DISTRICTS_DATA.map(d => {
-                        const rainPercent = Math.min(95, Math.max(15, (weather?.precipitationProbability ?? 35) + ((d.name.length * 7) % 30) - 10));
+                        const distAnalysis = weather?.forecast24h?.districtRainAnalysis?.find(item => item.district === d.name) || weather?.districtWeather?.[d.name];
+                        const rainPercent = distAnalysis?.probability ?? weather?.rainProbabilityToday ?? 35;
+                        const tempVal = distAnalysis?.temperature ?? weather?.temp ?? 31;
+                        const statusVal = distAnalysis?.status || (distAnalysis?.isRainingNow ? 'ฝนตกขณะนี้' : (rainPercent >= 60 ? 'มีโอกาสฝนตก' : 'โอกาสฝนน้อย'));
+                        const timeWin = distAnalysis?.timeWindow;
                         return (
                           <div
                             key={d.name}
@@ -4129,7 +4202,15 @@ export default function App() {
                             }`}
                           >
                             <div className="min-w-0 flex-1">
-                              <span className="text-xs font-bold block truncate">อ.{d.name}</span>
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-xs font-bold block truncate">อ.{d.name}</span>
+                                {distAnalysis?.icon && <span>{distAnalysis.icon}</span>}
+                                {distAnalysis?.isRainingNow && (
+                                  <span className="text-[9px] px-1.5 py-0.2 rounded font-bold bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/30">
+                                    ตกขณะนี้
+                                  </span>
+                                )}
+                              </div>
                               <div className="flex items-center gap-2 mt-1">
                                 <div className="flex-1 max-w-[120px] h-1.5 rounded-full bg-slate-200 dark:bg-slate-750 overflow-hidden">
                                   <div 
@@ -4144,9 +4225,12 @@ export default function App() {
                                   ฝน {rainPercent}%
                                 </span>
                               </div>
+                              <span className="text-[10px] text-slate-400 block mt-0.5 truncate">
+                                {statusVal} {timeWin && timeWin !== 'ไม่มีแนวโน้มฝนตกหนัก' ? `• ⏱️ ${timeWin}` : ''}
+                              </span>
                             </div>
                             <div className="text-right shrink-0">
-                              <span className="text-xs font-bold">{weather?.temperature ?? 31}°C</span>
+                              <span className="text-xs font-bold">{tempVal}°C</span>
                               <span className="text-[10px] text-slate-400 block">ลม 12-16 กม./ชม.</span>
                             </div>
                           </div>
@@ -4384,7 +4468,9 @@ export default function App() {
                 )}
               </div>
 
-              <div className="text-[11px] sm:text-sm font-medium leading-relaxed whitespace-pre-line p-2 sm:p-3 rounded-xl border bg-amber-500/5 border-amber-500/20 text-slate-800 dark:text-slate-100 break-words">
+              <div className={`text-xs sm:text-sm font-medium leading-relaxed whitespace-pre-line p-3 sm:p-4 rounded-xl border break-words shadow-2xs ${
+                isDark ? 'bg-slate-850 border-amber-500/40 text-slate-100' : 'bg-amber-50/80 border-amber-300 text-slate-900'
+              }`}>
                 {latestAnnouncement.message}
               </div>
             </div>
