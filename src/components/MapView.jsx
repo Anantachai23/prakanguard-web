@@ -354,6 +354,9 @@ export default function MapView({
           -webkit-backdrop-filter: blur(5px);
         }
         /* Dark Theme Road Map ('ถนน') Styling (ดาวเทียมคงเดิมไม่เปลี่ยนแปลง 100%) */
+        .leaflet-tile-pane {
+          transition: filter 0.15s ease-out;
+        }
         .pg-dark-tiles-mode .leaflet-tile-pane,
         .pg-dark-roadmap-tiles,
         .pg-dark-roadmap-tiles img.leaflet-tile {
@@ -373,7 +376,7 @@ export default function MapView({
   }, []);
 
   // Robust Tile Config Helper with Fallbacks
-  const getTileConfig = (style, isDarkTheme = false) => {
+  const getTileConfig = (style) => {
     if (style === 'google-satellite') {
       return {
         url: 'https://mt{s}.google.com/vt/lyrs=y&hl=th&x={x}&y={y}&z={z}',
@@ -390,7 +393,7 @@ export default function MapView({
         }
       };
     }
-    // Default: Google Roadmap (ถนน) — เมื่อเป็นธีมสีดำ ให้ปรับแผนที่ถนนเป็นสีดำด้วย
+    // Default: Google Roadmap (ถนน) — เมื่อเป็นธีมสีดำ จะถูกปรับฟิลเตอร์ที่ tilePane อัตโนมัติ โดยไม่ต้องโหลดภาพใหม่
     return {
       url: 'https://mt{s}.google.com/vt/lyrs=m&hl=th&x={x}&y={y}&z={z}',
       fallbackUrl: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',
@@ -402,7 +405,7 @@ export default function MapView({
         updateWhenIdle: false,
         crossOrigin: true,
         attribution: '&copy; Google Maps / Esri',
-        className: isDarkTheme ? 'pg-dark-roadmap-tiles' : 'pg-light-roadmap-tiles'
+        className: 'pg-roadmap-tiles'
       }
     };
   };
@@ -476,7 +479,7 @@ export default function MapView({
     }
 
     // Initial Tile Layer
-    const config = getTileConfig('google-roadmap', isDark);
+    const config = getTileConfig('google-roadmap');
     tileLayerRef.current = createTileLayer(config).addTo(map);
     const initialTilePane = map.getPane('tilePane');
     if (initialTilePane) {
@@ -549,41 +552,40 @@ export default function MapView({
     mapContainerRef.current.style.cursor = isPickingLocation ? 'crosshair' : '';
   }, [isPickingLocation]);
 
-  // Render Outside Samut Prakan Mask
+  // Render Outside Samut Prakan Mask (สร้างครั้งเดียว และปรับ opacity ทันทีเมื่อสลับธีม ไม่ทำลายเลเยอร์)
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map) return;
 
-    if (maskLayerRef.current) {
-      map.removeLayer(maskLayerRef.current);
-      maskLayerRef.current = null;
-    }
-
     const maskFillColor = '#020617';
     const maskFillOpacity = (isDark || mapStyle === 'google-satellite') ? 0.90 : 0.84;
 
-    maskLayerRef.current = L.geoJSON(SAMUT_PRAKAN_MASK_GEOJSON, {
-      pane: 'provinceMaskPane',
-      style: {
+    if (!maskLayerRef.current) {
+      maskLayerRef.current = L.geoJSON(SAMUT_PRAKAN_MASK_GEOJSON, {
+        pane: 'provinceMaskPane',
+        style: {
+          fillColor: maskFillColor,
+          fillOpacity: maskFillOpacity,
+          color: '#38bdf8',
+          weight: 2.5,
+          opacity: 0.95,
+          className: 'outside-province-mask'
+        },
+        interactive: false
+      }).addTo(map);
+    } else {
+      maskLayerRef.current.setStyle({
         fillColor: maskFillColor,
-        fillOpacity: maskFillOpacity,
-        color: '#38bdf8',
-        weight: 2.5,
-        opacity: 0.95,
-        className: 'outside-province-mask'
-      },
-      interactive: false
-    }).addTo(map);
+        fillOpacity: maskFillOpacity
+      });
+    }
 
     return () => {
-      if (maskLayerRef.current && map) {
-        map.removeLayer(maskLayerRef.current);
-        maskLayerRef.current = null;
-      }
+      // Cleanup only on unmount
     };
   }, [isDark, mapStyle]);
 
-  // Render Exact 6-District Polygons
+  // Render Exact 6-District Polygons (เรนเดอร์เฉพาะเมื่อเปลี่ยนอำเภอ ไม่โหลดใหม่เมื่อสลับธีม)
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map) return;
@@ -606,18 +608,16 @@ export default function MapView({
         }
       }).addTo(map);
 
-      // Clean, small district label tooltip
+      // Clean, small district label tooltip (ใช้คลาส Tailwind dark: เพื่อความเสถียร ไม่ต้องสร้างใหม่)
       layer.bindTooltip(`${feature.properties.districtName}`, {
         permanent: true,
         direction: 'center',
-        className: isDark
-          ? 'bg-slate-900/90 text-slate-100 font-prompt text-[11px] border border-slate-700 px-2 py-0.5 rounded-lg shadow-sm font-bold'
-          : 'bg-white/95 text-slate-800 font-prompt text-[11px] border border-slate-300 px-2 py-0.5 rounded-lg shadow-sm font-bold'
+        className: 'bg-white/95 dark:bg-slate-900/90 text-slate-800 dark:text-slate-100 font-prompt text-[11px] border border-slate-300 dark:border-slate-700 px-2 py-0.5 rounded-lg shadow-sm font-bold'
       });
 
       districtLayersRef.current.push(layer);
     });
-  }, [selectedDistrict, onSelectDistrict, isDark]);
+  }, [selectedDistrict]);
 
   // Pan & Zoom Smoothly when selectedDistrict changes
   useEffect(() => {
@@ -637,7 +637,7 @@ export default function MapView({
     }
   }, [selectedDistrict]);
 
-  // Switch Tile Layer Smoothly
+  // Switch Tile Layer Smoothly (ONLY when mapStyle changes between 'google-roadmap' <-> 'google-satellite')
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map) return;
@@ -646,7 +646,7 @@ export default function MapView({
       map.removeLayer(tileLayerRef.current);
     }
 
-    const config = getTileConfig(mapStyle, isDark);
+    const config = getTileConfig(mapStyle);
     tileLayerRef.current = createTileLayer(config).addTo(map);
 
     const tilePane = map.getPane('tilePane');
@@ -662,11 +662,9 @@ export default function MapView({
       maskLayerRef.current.bringToFront();
     }
     districtLayersRef.current.forEach(layer => layer.bringToFront());
+  }, [mapStyle]);
 
-    map.invalidateSize();
-  }, [mapStyle, isDark]);
-
-  // Zero-flicker Instant Theme Transition for Map Tiles & Background
+  // Instant, Zero-Reload Theme Transition for Map Tiles & Background (0ms, ไม่มีการ re-fetch ภาพแผนที่)
   useEffect(() => {
     if (mapContainerRef.current) {
       mapContainerRef.current.style.backgroundColor = (isDark || mapStyle === 'google-satellite') ? '#0b132b' : '#e6ecf2';
@@ -679,24 +677,6 @@ export default function MapView({
           tilePane.style.setProperty('filter', 'invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%)', 'important');
         } else {
           tilePane.style.setProperty('filter', 'none', 'important');
-        }
-      }
-    }
-    if (tileLayerRef.current) {
-      const container = tileLayerRef.current.getContainer();
-      if (container) {
-        if (mapStyle !== 'google-satellite' && isDark) {
-          container.classList.add('pg-dark-roadmap-tiles');
-          container.classList.remove('pg-light-roadmap-tiles', 'pg-satellite-tiles');
-        } else {
-          container.classList.remove('pg-dark-roadmap-tiles');
-          if (mapStyle === 'google-satellite') {
-            container.classList.add('pg-satellite-tiles');
-            container.classList.remove('pg-light-roadmap-tiles');
-          } else {
-            container.classList.add('pg-light-roadmap-tiles');
-            container.classList.remove('pg-satellite-tiles');
-          }
         }
       }
     }
@@ -735,7 +715,7 @@ export default function MapView({
 
   // Synchronize pin and radar circle selection styling smoothly without remounting
   useEffect(() => {
-    const baseFillOpacity = isDark ? 0.16 : 0.12;
+    const baseFillOpacity = 0.15;
 
     if (!selectedPoint) {
       Object.values(markersByIdRef.current).forEach(m => {
@@ -774,7 +754,7 @@ export default function MapView({
         });
       }
     });
-  }, [selectedPoint, isDark]);
+  }, [selectedPoint]);
 
   // 5. Render Unified Vulnerability & Citizen Points + 100% Concentric Radar Circles
   useEffect(() => {
@@ -847,7 +827,7 @@ export default function MapView({
       // Concentric Radar Flood Coverage Circle (100% dead-centered on the pin coordinate)
       const radius = isL3 ? 300 : (isL2 ? 220 : 150);
       const circleColor = isFalling ? '#0d9488' : (isL3 ? '#dc2626' : (isL2 ? '#eab308' : '#16a34a'));
-      const baseFillOpacity = isDark ? 0.16 : 0.12;
+      const baseFillOpacity = 0.15;
 
       const circle = L.circle([point.lat, point.lng], {
         radius: radius,
@@ -967,7 +947,7 @@ export default function MapView({
       radarCircleLayersRef.current.push(circle);
       radarCirclesByIdRef.current[point.id] = circle;
     });
-  }, [points, citizenReports, selectedDistrict, isMobile, isDark]);
+  }, [points, citizenReports, selectedDistrict, isMobile]);
 
   // 6. User GPS Location Marker
   useEffect(() => {
