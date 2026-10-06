@@ -701,7 +701,7 @@ function updateCharts() {
   }
 }
 
-/* ------------------------------------------------------------- 2.5 REPORTS MAP (Google Maps HD ไร้ลายน้ำ) */
+/* ------------------------------------------------------------- 2.5 REPORTS MAP */
 let mapTilesObj = null;
 
 export function getReportCoordinates(r) {
@@ -778,7 +778,7 @@ function initReportsMap() {
   });
   state.reportsMap = map;
 
-  // 2. Base Tile Layers — Google Maps HD Tiles (Zero Watermark + Official Thai Road/District Labels)
+  // 2. Base Tile Layers
   mapTilesObj = {
     dark: L.tileLayer('https://mt{s}.google.com/vt/lyrs=m&hl=th&x={x}&y={y}&z={z}', {
       subdomains: ['0', '1', '2', '3'],

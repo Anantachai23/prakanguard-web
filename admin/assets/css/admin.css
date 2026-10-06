@@ -875,7 +875,7 @@ body {
 }
 
 /* ==========================================================================
-   Leaflet Map (Google Maps / Clean Tiles Without Watermark)
+   Leaflet Map
    ========================================================================== */
 .map-card {
   box-shadow: var(--shadow-lg);

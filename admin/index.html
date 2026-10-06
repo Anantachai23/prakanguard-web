@@ -419,14 +419,14 @@
 
         <!-- ================= VIEW 2: FLOOD REPORTS ================= -->
         <section id="view-reports" class="view-section" style="display: none;">
-          <!-- 🗺️ Interactive Admin Map Card (Watermark-Free Google Maps) -->
+          <!-- 🗺️ Interactive Admin Map Card -->
           <div class="card map-card" style="padding: 0; overflow: hidden; margin-bottom: 20px; border: 1px solid var(--border-subtle);">
             <div class="map-card-header" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 18px; border-bottom: 1px solid var(--border-subtle); background: var(--bg-surface-elevated); flex-wrap: wrap; gap: 10px;">
               <div style="display: flex; align-items: center; gap: 10px;">
                 <span class="status-dot pulse" style="background: var(--accent);"></span>
                 <div>
                   <h3 style="font-size: 14.5px; font-weight: 700; margin: 0; display: flex; align-items: center; gap: 8px;">
-                    🗺️ แผนที่พิกัดจุดแจ้งเหตุน้ำท่วมและลูกเห็บ (Google Maps HD ไร้ลายน้ำ)
+                    🗺️ แผนที่พิกัดจุดแจ้งเหตุน้ำท่วมและลูกเห็บ
                     <span id="reports-map-counter" class="badge badge-primary" style="font-size: 11px;">0 จุดพิกัด</span>
                     <span id="reports-map-filter-info" class="badge badge-neutral" style="font-size: 10.5px;">แสดงทั้งหมด</span>
                   </h3>
@@ -437,9 +437,9 @@
               <!-- Map Toolbar Controls -->
               <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
                 <div class="tabs-pill" style="padding: 2px;">
-                  <button type="button" id="btn-map-layer-dark" class="tab-pill-btn active" title="แผนที่โหมดมืด (Dark Command Mode - Google Maps)">มืด</button>
-                  <button type="button" id="btn-map-layer-street" class="tab-pill-btn" title="แผนที่ถนน (Google Roadmap คมชัด ภาษาไทย)">ถนน</button>
-                  <button type="button" id="btn-map-layer-satellite" class="tab-pill-btn" title="ภาพถ่ายดาวเทียม (Google Satellite Hybrid)">ดาวเทียม</button>
+                  <button type="button" id="btn-map-layer-dark" class="tab-pill-btn active" title="แผนที่โหมดมืด (Dark Command Mode)">มืด</button>
+                  <button type="button" id="btn-map-layer-street" class="tab-pill-btn" title="แผนที่ถนน (Roadmap คมชัด ภาษาไทย)">ถนน</button>
+                  <button type="button" id="btn-map-layer-satellite" class="tab-pill-btn" title="ภาพถ่ายดาวเทียม (Satellite Hybrid)">ดาวเทียม</button>
                 </div>
                 <button type="button" id="btn-map-fit-bounds" class="btn btn-secondary btn-sm" title="ปรับมุมมองแผนที่ให้พอดีกับจุดรายงานทั้งหมด">
                   <svg class="ico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="m4.93 4.93 4.24 4.24"/><path d="m14.83 9.17 4.24-4.24"/><path d="m14.83 14.83 4.24 4.24"/><path d="m9.17 14.83-4.24 4.24"/></svg>
