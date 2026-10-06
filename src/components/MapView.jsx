@@ -350,7 +350,9 @@ export default function MapView({
           filter: drop-shadow(0 0 8px rgba(2, 132, 225, 0.95)) !important;
           z-index: 9999 !important;
         }
-        .outside-province-mask {
+        .outside-province-mask,
+        path.outside-province-mask {
+          fill-rule: evenodd !important;
           filter: drop-shadow(0 0 24px rgba(2, 6, 23, 0.98));
           backdrop-filter: blur(5px);
           -webkit-backdrop-filter: blur(5px);

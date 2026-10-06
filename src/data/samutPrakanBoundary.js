@@ -382,8 +382,8 @@ export const SAMUT_PRAKAN_MASK_GEOJSON = {
         [-180.0, 85.0],
         [-180.0, -85.0]
       ],
-      // Inner Ring (Hole): รูเจาะโปร่งใสรูปจังหวัดสมุทรปราการ
-      SAMUT_PRAKAN_OUTER_BOUNDARY
+      // Inner Ring (Hole): รูเจาะโปร่งใสรูปจังหวัดสมุทรปราการ (CW opposite winding)
+      SAMUT_PRAKAN_OUTER_BOUNDARY.slice().reverse()
     ]
   }
 };
