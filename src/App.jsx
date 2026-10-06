@@ -2703,14 +2703,16 @@ export default function App() {
               <button
                 type="button"
                 onClick={() => {
-                  playTabSound();
+                  playModalOpenSound();
                   setDesktopSidebarTab('weather');
+                  setIsOfficialModalOpen(true);
                 }}
-                className={`py-1.5 px-2 rounded-md font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                className={`py-1.5 px-2 rounded-md font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer select-none active:scale-95 ${
                   desktopSidebarTab === 'weather'
                     ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-cyan-300 shadow-xs'
                     : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                 }`}
+                title="คลิกเพื่อดูข้อมูลพยากรณ์สภาพอากาศและเรดาร์ตรวจฝน AI ละเอียด"
               >
                 <CloudRain className="w-3.5 h-3.5 text-cyan-500" />
                 <span className="truncate">พยากรณ์สภาพอากาศ</span>
@@ -3791,12 +3793,22 @@ export default function App() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setMobileSheetTab('weather')}
-                  className={`py-1.5 rounded-md font-medium transition-all ${
+                  onClick={() => {
+                    if (mobileSheetTab === 'weather') {
+                      playModalOpenSound();
+                      setIsOfficialModalOpen(true);
+                      setIsMobileSheetOpen(false);
+                    } else {
+                      playTabSound();
+                      setMobileSheetTab('weather');
+                    }
+                  }}
+                  className={`py-1.5 rounded-md font-medium transition-all cursor-pointer ${
                     mobileSheetTab === 'weather'
                       ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs font-bold'
                       : 'text-slate-500 dark:text-slate-400'
                   }`}
+                  title="สภาพอากาศ (แตะซ้ำเพื่อเปิดพยากรณ์และเรดาร์ AI ฉบับเต็ม)"
                 >
                   สภาพอากาศ
                 </button>

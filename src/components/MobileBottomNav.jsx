@@ -134,6 +134,26 @@ export default function MobileBottomNav({
                 </button>
               )}
 
+              {/* 1.5 Weather Forecast & Radar Option */}
+              <button
+                type="button"
+                onClick={() => handleMenuAction(onOpenAiForecast, playModalOpenSound)}
+                className="col-span-2 p-2.5 rounded-md bg-cyan-50/70 hover:bg-cyan-100/70 dark:bg-cyan-950/30 dark:hover:bg-cyan-950/60 border border-cyan-200 dark:border-cyan-800/80 text-cyan-900 dark:text-cyan-200 flex items-center justify-between transition-all active:scale-98 text-left cursor-pointer"
+              >
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="w-7 h-7 rounded-md bg-cyan-600 text-white flex items-center justify-center shrink-0">
+                    <CloudRain className="w-3.5 h-3.5" />
+                  </div>
+                  <div className="min-w-0">
+                    <span className="text-xs font-bold block text-slate-900 dark:text-white truncate">พยากรณ์สภาพอากาศ & เรดาร์ฝน</span>
+                    <span className="text-[10px] text-cyan-700 dark:text-cyan-300 truncate block">คาดการณ์ AI 24 ชม. และกลุ่มฝน TMD</span>
+                  </div>
+                </div>
+                <span className="text-[9px] px-2 py-0.5 rounded font-mono font-bold bg-cyan-100 dark:bg-cyan-900 text-cyan-700 dark:text-cyan-300 border border-cyan-300 dark:border-cyan-700 shrink-0">
+                  AI + TMD ↗
+                </span>
+              </button>
+
               {/* 2. Water Standards Guide */}
               <button
                 type="button"

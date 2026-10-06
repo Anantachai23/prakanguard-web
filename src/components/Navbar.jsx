@@ -257,15 +257,20 @@ export default function Navbar({
             )}
           </div>
 
-          {/* Live Weather & Temperature */}
+          {/* Live Weather & Temperature (Clickable to open AI Forecast Modal) */}
           {weather && weather.temp !== undefined && (
-            <div 
-              className={`hidden lg:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-xs font-semibold select-none shrink-0 ${
+            <button 
+              type="button"
+              onClick={() => {
+                playModalOpenSound();
+                if (onOpenAiForecast) onOpenAiForecast();
+              }}
+              className={`hidden lg:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-xs font-semibold select-none shrink-0 cursor-pointer transition-all active:scale-95 ${
                 isDark 
-                  ? 'bg-slate-900/90 border-slate-800 text-slate-200' 
-                  : 'bg-white/90 border-slate-200 text-slate-800'
+                  ? 'bg-slate-900/90 hover:bg-slate-800 border-slate-800 text-slate-200 hover:text-cyan-300' 
+                  : 'bg-white/90 hover:bg-slate-50 border-slate-200 text-slate-800 hover:text-blue-600'
               }`}
-              title={`สภาพอากาศจริง จ.สมุทรปราการ: ${weather.weatherDesc || 'มีเมฆบางส่วน'} • ${weather.temp}°C`}
+              title={`สภาพอากาศจริง จ.สมุทรปราการ: ${weather.weatherDesc || 'มีเมฆบางส่วน'} • ${weather.temp}°C (คลิกดูพยากรณ์อากาศและเรดาร์ฝน AI)`}
             >
               <span className="text-sm shrink-0">
                 {weather.forecast24h?.isRainingNow ? '🌧️' : (weather.temp >= 33 ? '☀️' : (weather.temp <= 26 ? '🌦️' : '⛅'))}
@@ -273,7 +278,7 @@ export default function Navbar({
               <span className="font-mono font-bold text-xs">
                 {weather.temp}°C
               </span>
-            </div>
+            </button>
           )}
 
           {/* Clock for Desktop */}
