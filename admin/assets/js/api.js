@@ -114,8 +114,30 @@ const REPORT_BASE_COLS = 'id,hazard_type,name,subdistrict,district,lat,lng,body_
 const REPORT_EXT_COLS = 'reporter_device,reporter_district,reporter_gps,reporter_ip';
 
 export async function fetchReports() {
-  const cols = REPORT_BASE_COLS + (caps.reportExt ? ',' + REPORT_EXT_COLS : '');
-  return restAll(`reports?select=${cols}&order=timestamp.desc`);
+  try {
+    const cols = REPORT_BASE_COLS + (caps.reportExt ? ',' + REPORT_EXT_COLS : '');
+    const data = await restAll(`reports?select=${cols}&order=timestamp.desc`);
+    if (Array.isArray(data) && data.length > 0) return data;
+  } catch (err) {
+    console.warn('[Admin API] Supabase fetchReports failed, using local fallback:', err);
+  }
+  // Fallback 1: Local server /api/reports
+  try {
+    const res = await fetch('/api/reports');
+    if (res.ok) {
+      const data = await res.json();
+      if (Array.isArray(data) && data.length > 0) return data;
+    }
+  } catch {}
+  // Fallback 2: Static ./data/reports.json
+  try {
+    const res = await fetch('./data/reports.json');
+    if (res.ok) {
+      const data = await res.json();
+      if (Array.isArray(data)) return data;
+    }
+  } catch {}
+  return [];
 }
 /** รายการ id ที่มีรูปภาพ (ไม่ดึงรูปทั้งหมดเพื่อให้โหลดเร็ว) */
 export async function fetchReportPhotoIds() {
@@ -247,7 +269,27 @@ export async function purgeTrash(entryIds) {
 
 /* ========================================================== Feedback */
 export async function fetchFeedback() {
-  return restAll('feedback?select=*&order=timestamp.desc');
+  try {
+    const data = await restAll('feedback?select=*&order=timestamp.desc');
+    if (Array.isArray(data) && data.length > 0) return data;
+  } catch (err) {
+    console.warn('[Admin API] Supabase fetchFeedback failed, using local fallback:', err);
+  }
+  try {
+    const res = await fetch('/api/feedback');
+    if (res.ok) {
+      const data = await res.json();
+      if (Array.isArray(data) && data.length > 0) return data;
+    }
+  } catch {}
+  try {
+    const res = await fetch('./data/feedback.json');
+    if (res.ok) {
+      const data = await res.json();
+      if (Array.isArray(data)) return data;
+    }
+  } catch {}
+  return [];
 }
 export async function setFeedbackRead(id, isRead) {
   const r = await rest(`feedback?id=eq.${encodeURIComponent(id)}`, { method: 'PATCH', body: { is_read: isRead }, prefer: 'return=minimal' });
@@ -322,16 +364,26 @@ const VIS_BASE = 'session_id,device,district,page,last_ping,created_at';
 const visCols = () => VIS_BASE + (caps.visitorExt ? ',device_id,ip,gps_status' : '');
 
 export async function fetchOnlineSessions(windowMs) {
-  const since = new Date(Date.now() - windowMs).toISOString();
-  const r = await rest(`visitors?select=${visCols()}&last_ping=gte.${since}&order=last_ping.desc&limit=1000`);
-  if (!r.ok || !Array.isArray(r.data)) throw new Error('โหลดผู้ใช้ออนไลน์ไม่สำเร็จ');
-  return r.data;
+  try {
+    const since = new Date(Date.now() - windowMs).toISOString();
+    const r = await rest(`visitors?select=${visCols()}&last_ping=gte.${since}&order=last_ping.desc&limit=1000`);
+    if (r.ok && Array.isArray(r.data)) return r.data;
+  } catch (err) {
+    console.warn('[Admin API] fetchOnlineSessions failed, fallback to empty:', err);
+  }
+  return [];
 }
 
 /** เซสชันที่เกี่ยวข้องกับวันนี้ (เริ่มวันนี้ หรือยังมี heartbeat หลังเที่ยงคืน) */
 export async function fetchTodaySessions(dayStart) {
-  const iso = dayStart.toISOString();
-  return restAll(`visitors?select=${visCols()}&or=(created_at.gte.${iso},last_ping.gte.${iso})&order=created_at.asc`);
+  try {
+    const iso = dayStart.toISOString();
+    const data = await restAll(`visitors?select=${visCols()}&or=(created_at.gte.${iso},last_ping.gte.${iso})&order=created_at.asc`);
+    if (Array.isArray(data)) return data;
+  } catch (err) {
+    console.warn('[Admin API] fetchTodaySessions failed, fallback to empty:', err);
+  }
+  return [];
 }
 /** เฉพาะเซสชันที่มีความเคลื่อนไหวหลังเวลาที่กำหนด (ใช้ดึงแบบเพิ่มทีละส่วน) */
 export async function fetchSessionsPingedSince(sinceDate) {

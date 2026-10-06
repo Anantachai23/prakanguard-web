@@ -11,7 +11,16 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700;800&family=Sarabun:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   
+  <!-- Leaflet & Chart Libraries (CDN with Local Fallback) -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+  <link rel="stylesheet" href="./assets/vendor/leaflet/leaflet.css">
   <link rel="stylesheet" href="./assets/css/admin.css">
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script>
+    if (typeof L === 'undefined') {
+      document.write('<script src="./assets/vendor/leaflet/leaflet.js"><\/script>');
+    }
+  </script>
   <script src="./assets/vendor/chart.umd.js"></script>
 </head>
 <body>
@@ -79,12 +88,23 @@
     <!-- SIDEBAR -->
     <aside class="app-sidebar">
       <div class="brand-section">
-        <div class="brand-emblem" style="background: none; border: none; padding: 0; width: 36px; height: 36px; overflow: hidden; border-radius: 50%; flex-shrink: 0;">
+        <div class="brand-emblem" style="background: none; border: none; padding: 0; width: 38px; height: 38px; overflow: hidden; border-radius: 50%; flex-shrink: 0;">
           <img src="./assets/img/logo.png" alt="PrakanGuard" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%; border: 1.5px solid #38bdf8;">
         </div>
         <div class="brand-titles">
           <span class="brand-title">PrakanGuard Admin</span>
-          <span class="brand-subtitle">ศูนย์ข้อมูลอุทกภัย 6 อำเภอ</span>
+          <span class="brand-subtitle">ศูนย์ควบคุมข้อมูลอุทกภัย 6 อำเภอ</span>
+        </div>
+      </div>
+
+      <!-- Welcome Back User Card (From Mockup) -->
+      <div style="margin: 12px 14px 4px 14px; padding: 10px 12px; background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); display: flex; align-items: center; gap: 10px;">
+        <div style="width: 32px; height: 32px; border-radius: 50%; overflow: hidden; border: 1.5px solid #38bdf8; flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: rgba(56, 189, 248, 0.1);">
+          <img src="./assets/img/logo.png" alt="Admin" style="width: 100%; height: 100%; object-fit: cover;">
+        </div>
+        <div style="min-width: 0; flex: 1;">
+          <div style="font-size: 10.5px; color: var(--text-muted);">ยินดีต้อนรับกลับมา</div>
+          <div id="sidebar-greeting-name" style="font-size: 12.5px; font-weight: 700; color: #ffffff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Admin Command</div>
         </div>
       </div>
 
@@ -109,7 +129,7 @@
           <span>ข้อเสนอจากประชาชน</span>
         </a>
 
-        <div class="nav-label" style="margin-top: 12px;">การจัดการ & ระบบ</div>
+        <div class="nav-label" style="margin-top: 10px;">การจัดการ & ระบบ</div>
         <a class="nav-item" data-tab="announcements">
           <svg class="ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg>
           <span>การประกาศหน้าเว็บ</span>
@@ -129,18 +149,22 @@
         </a>
       </nav>
 
-      <div class="sidebar-footer">
-        <div class="admin-pill">
-          <div class="admin-avatar" style="padding: 0; overflow: hidden; background: none; border: 1.5px solid #38bdf8; display: flex; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: 50%;">
-            <img src="./assets/img/logo.png" alt="Admin" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">
-          </div>
-          <div class="admin-meta">
-            <span id="sidebar-admin-name" class="admin-name">Admin</span>
-            <span class="admin-status"><span class="status-dot pulse"></span> กำลังใช้งาน</span>
-          </div>
+      <!-- Cloud Telemetry Banner (From Mockup) -->
+      <div style="margin: auto 14px 10px 14px; padding: 10px 12px; background: linear-gradient(135deg, rgba(37, 99, 235, 0.16), rgba(15, 23, 42, 0.7)); border: 1px solid rgba(59, 130, 246, 0.25); border-radius: var(--radius-md);">
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 2px;">
+          <span class="status-dot pulse" style="background: var(--accent);"></span>
+          <span style="font-size: 11px; font-weight: 700; color: #93c5fd;">Cloud Telemetry Live</span>
         </div>
-        <button id="btn-logout" class="icon-btn" title="ออกจากระบบ">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
+        <div style="font-size: 10px; color: var(--text-muted); line-height: 1.35;">
+          เชื่อมโยงข้อมูลกับเว็บหลักแบบเรียลไทม์ 100%
+        </div>
+      </div>
+
+      <div class="sidebar-footer">
+        <span id="sidebar-admin-name" style="display: none;">Admin</span>
+        <button id="btn-logout" class="btn btn-secondary btn-sm" style="width: 100%; justify-content: center; gap: 8px; color: #fca5a5; border-color: rgba(239, 68, 68, 0.25); background: rgba(239, 68, 68, 0.08); padding: 8px 12px;" title="ออกจากระบบ Admin">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
+          <span style="font-size: 12px; font-weight: 600;">ออกจากระบบ Admin</span>
         </button>
       </div>
     </aside>
@@ -149,16 +173,20 @@
     <main class="app-main">
       <div style="background: linear-gradient(90deg, rgba(30,58,138,0.35), rgba(15,23,42,0.85)); border-bottom: 1px solid rgba(59,130,246,0.25); padding: 7px 20px; font-size: 11px; color: #93c5fd; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;">
         <span>🛡️ <strong>สงวนสิทธิ์ลิขสิทธิ์:</strong> การเข้าใช้งานศูนย์ควบคุมระบบของเว็บเฉพาะผู้ร่วมพัฒนาเว็บไซต์และคณะทำงานที่ได้รับอนุญาตเท่านั้น</span>
-        <span style="opacity: 0.8; font-size: 10px;">PrakanGuard Security</span>
+        <span style="opacity: 0.8; font-size: 10px;">PrakanGuard Security Command</span>
       </div>
       <header class="app-header">
         <div class="header-left">
           <div class="header-title-group">
-            <h1 id="header-view-title">ภาพรวมระบบและการเข้าชม</h1>
+            <h1 id="header-view-title">ภาพรวมระบบและการเฝ้าระวังอุทกภัย</h1>
             <p>ระบบเชื่อมต่อข้อมูลตรงกับเว็บหลัก (Supabase Real-time Telemetry)</p>
           </div>
         </div>
         <div class="header-actions">
+          <div class="header-date-pill">
+            <span class="status-dot pulse" style="background: var(--accent);"></span>
+            <span>สดเรียลไทม์ (Live Telemetry)</span>
+          </div>
           <button id="btn-global-refresh" class="btn btn-secondary btn-sm" title="รีเฟรชข้อมูลสดทันที">
             <svg class="ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
             <span>รีเฟรชข้อมูล</span>
@@ -171,113 +199,200 @@
 
       <div class="app-content">
 
-        <!-- ================= VIEW 1: OVERVIEW ================= -->
+        <!-- ================= VIEW 1: OVERVIEW (Obsidian Neon Redesign) ================= -->
         <section id="view-overview" class="view-section">
-          <!-- 4 Stat Cards -->
-          <div class="stat-grid-4">
-            <div class="stat-card">
-              <div class="stat-info">
-                <span class="stat-label"><span class="status-dot pulse"></span> กำลังออนไลน์อยู่ขณะนี้</span>
-                <span id="stat-active-now" class="stat-value">0</span>
-                <span class="stat-sub">มีกิจกรรมในรอบ 60 วินาทีล่าสุด</span>
+          
+          <!-- 1. Top KPI Row (Matching Screen 1 & 2 in Mockup) -->
+          <div class="grid-4">
+            <!-- KPI 1: Active Now -->
+            <div class="card kpi-card">
+              <div class="kpi-top">
+                <span class="kpi-label">กำลังออนไลน์สด (Active Now)</span>
+                <div class="kpi-icon-wrap" style="color: var(--success); background: var(--success-subtle); border-color: var(--success-border);">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+                </div>
               </div>
-              <div class="stat-icon-wrap primary">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
-              </div>
-            </div>
-
-            <div class="stat-card">
-              <div class="stat-info">
-                <span class="stat-label">ยอดเข้าชมวันนี้ (อุปกรณ์จริง)</span>
-                <span id="stat-visitors-today" class="stat-value">0</span>
-                <span class="stat-sub">อุปกรณ์ของประชาชนที่เข้าใช้งานจริง</span>
-              </div>
-              <div class="stat-icon-wrap accent">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+              <div id="stat-active-now" class="kpi-val">0</div>
+              <div class="kpi-foot">
+                <span class="kpi-badge positive"><span class="status-dot pulse"></span> สดเรียลไทม์</span>
+                <span style="color: var(--text-muted);">มีกิจกรรมในรอบ 60 วินาที</span>
               </div>
             </div>
 
-            <div class="stat-card">
-              <div class="stat-info">
-                <span class="stat-label">เข้าใช้งานพร้อมกันสูงสุดวันนี้</span>
-                <span id="stat-peak-online" class="stat-value">0</span>
-                <span class="stat-sub">ยอดผู้เข้าชมสูงสุดพร้อมกัน</span>
+            <!-- KPI 2: Today Visitors -->
+            <div class="card kpi-card">
+              <div class="kpi-top">
+                <span class="kpi-label">ยอดเข้าชมวันนี้ (Visitors Today)</span>
+                <div class="kpi-icon-wrap" style="color: var(--accent); background: var(--accent-subtle); border-color: rgba(56, 189, 248, 0.3);">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                </div>
               </div>
-              <div class="stat-icon-wrap warning">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2"/></svg>
-              </div>
-            </div>
-
-            <div class="stat-card">
-              <div class="stat-info">
-                <span class="stat-label">อำเภอที่มีคนดูเยอะที่สุด (GPS จริง)</span>
-                <span id="stat-top-district" class="stat-value" style="font-size: 20px;">—</span>
-                <span id="stat-top-district-sub" class="stat-sub">อิงจากพิกัดเปิดจริงในพื้นที่</span>
-              </div>
-              <div class="stat-icon-wrap success">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 4.99-5.54 10.19-7.4 11.8a1 1 0 0 1-1.2 0C9.54 20.19 4 14.99 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></svg>
-              </div>
-            </div>
-          </div>
-
-          <!-- 2 Stat Cards for Reports -->
-          <div class="stat-grid-3" style="margin-top: 16px;">
-            <div class="stat-card">
-              <div class="stat-info">
-                <span class="stat-label">รายงานน้ำท่วม: รอการอนุมัติ</span>
-                <span id="stat-pending-reports" class="stat-value" style="color: var(--warning);">0</span>
-                <span class="stat-sub">รอแอดมินตรวจสอบเพื่อขึ้นแผนที่หลัก</span>
-              </div>
-              <div class="stat-icon-wrap warning">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              <div id="stat-visitors-today" class="kpi-val">0</div>
+              <div class="kpi-foot">
+                <span class="kpi-badge positive">อุปกรณ์จริง</span>
+                <span style="color: var(--text-muted);">เข้าชมพร้อมกันสูงสุด <strong id="stat-peak-online" style="color: #ffffff;">0</strong> คน</span>
               </div>
             </div>
 
-            <div class="stat-card">
-              <div class="stat-info">
-                <span class="stat-label">รายงานน้ำท่วม: อนุมัติขึ้นเว็บแล้ว</span>
-                <span id="stat-approved-reports" class="stat-value" style="color: var(--success);">0</span>
-                <span class="stat-sub">กำลังแสดงผลให้ประชาชนเห็นบนเว็บหลัก</span>
+            <!-- KPI 3: Flood Reports Queue -->
+            <div class="card kpi-card">
+              <div class="kpi-top">
+                <span class="kpi-label">รายงานน้ำท่วม (รอ / อนุมัติแล้ว)</span>
+                <div class="kpi-icon-wrap" style="color: var(--warning); background: var(--warning-subtle); border-color: var(--warning-border);">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 16.3c2.2 0 4-1.83 4-4.05 0-1.16-.57-2.26-1.71-3.19S7.29 6.75 7 5.3c-.29 1.45-1.14 2.84-2.29 3.76S3 11.1 3 12.25c0 2.22 1.8 4.05 4 4.05z"/></svg>
+                </div>
               </div>
-              <div class="stat-icon-wrap success">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg>
+              <div style="display: flex; align-items: baseline; gap: 8px;">
+                <span id="stat-pending-reports" class="kpi-val" style="color: var(--warning);">0</span>
+                <span style="font-size: 20px; color: var(--text-muted); font-weight: 300;">/</span>
+                <span id="stat-approved-reports" class="kpi-val" style="color: var(--success);">0</span>
+              </div>
+              <div class="kpi-foot">
+                <span class="kpi-badge warning">รอตรวจสอบ</span>
+                <span class="kpi-badge positive">ขึ้นแผนที่หลักแล้ว</span>
+              </div>
+            </div>
+
+            <!-- KPI 4: Peak Hotspot Zone -->
+            <div class="card kpi-card">
+              <div class="kpi-top">
+                <span class="kpi-label">อำเภอกิจกรรมสูงสุด (GPS จริง)</span>
+                <div class="kpi-icon-wrap" style="color: #a855f7; background: rgba(168, 85, 247, 0.12); border-color: rgba(168, 85, 247, 0.3);">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 4.99-5.54 10.19-7.4 11.8a1 1 0 0 1-1.2 0C9.54 20.19 4 14.99 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></svg>
+                </div>
+              </div>
+              <div id="stat-top-district" class="kpi-val" style="font-size: 20px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">—</div>
+              <div class="kpi-foot">
+                <span class="kpi-badge positive" style="background: rgba(59,130,246,0.15); color: #93c5fd; border-color: rgba(59,130,246,0.3);">GPS สด</span>
+                <span id="stat-top-district-sub" style="color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">อิงจากพิกัดเปิดจริงในพื้นที่</span>
               </div>
             </div>
           </div>
 
-          <!-- Charts Grid (30-min telemetry) -->
-          <div class="grid-2" style="margin-top: 20px;">
+          <!-- 2. Visual Intelligence Grid (Directly Matching Screen 2 Middle Row in Mockup) -->
+          <div class="grid-3">
+            
+            <!-- Widget 1: Severity Breakdown Donut Chart -->
             <div class="card">
               <div class="card-header">
                 <div>
-                  <h3 class="card-title">แนวโน้มผู้เข้าใช้งานตลอดวัน</h3>
-                  <p class="card-subtitle">กราฟอัปเดตข้อมูลจริงทุก 30 นาที</p>
+                  <h3 class="card-title">สัดส่วนระดับความรุนแรง</h3>
+                  <p class="card-subtitle">จำแนกวิกฤตน้ำท่วมและภัยพิบัติ 3 เกณฑ์</p>
                 </div>
               </div>
-              <div style="position: relative; height: 260px; width: 100%;">
-                <canvas id="chart-visitor-trend"></canvas>
+              <div class="donut-chart-container">
+                <canvas id="chart-severity-breakdown"></canvas>
+                <div class="donut-center-stat">
+                  <div id="stat-total-reports-center" class="donut-center-num">0</div>
+                  <div class="donut-center-label">จุดรายงาน</div>
+                </div>
+              </div>
+              <div class="donut-legend-list">
+                <div class="donut-legend-item">
+                  <div class="donut-legend-item-left">
+                    <span class="donut-legend-color" style="background: #ef4444; box-shadow: 0 0 8px rgba(239, 68, 68, 0.6);"></span>
+                    <span>วิกฤต (>50cm)</span>
+                  </div>
+                  <span id="legend-count-l3" class="donut-legend-val">0 จุด</span>
+                </div>
+                <div class="donut-legend-item">
+                  <div class="donut-legend-item-left">
+                    <span class="donut-legend-color" style="background: #f59e0b; box-shadow: 0 0 8px rgba(245, 158, 11, 0.6);"></span>
+                    <span>ปานกลาง (21-50cm)</span>
+                  </div>
+                  <span id="legend-count-l2" class="donut-legend-val">0 จุด</span>
+                </div>
+                <div class="donut-legend-item">
+                  <div class="donut-legend-item-left">
+                    <span class="donut-legend-color" style="background: #10b981; box-shadow: 0 0 8px rgba(16, 185, 129, 0.6);"></span>
+                    <span>ปกติ (5-20cm)</span>
+                  </div>
+                  <span id="legend-count-l1" class="donut-legend-val">0 จุด</span>
+                </div>
+                <div class="donut-legend-item">
+                  <div class="donut-legend-item-left">
+                    <span class="donut-legend-color" style="background: #06b6d4; box-shadow: 0 0 8px rgba(6, 182, 212, 0.6);"></span>
+                    <span>ลูกเห็บ (Hail)</span>
+                  </div>
+                  <span id="legend-count-hail" class="donut-legend-val">0 จุด</span>
+                </div>
               </div>
             </div>
 
+            <!-- Widget 2: Monitored Districts Telemetry -->
             <div class="card">
               <div class="card-header">
                 <div>
-                  <h3 class="card-title">สัดส่วนอุปกรณ์ผู้ใช้งานจริง</h3>
-                  <p class="card-subtitle">แผนภาพวงกลมอัปเดตข้อมูลจริงทุก 30 นาที</p>
+                  <h3 class="card-title">พื้นที่เฝ้าระวัง 6 อำเภอ</h3>
+                  <p class="card-subtitle">สถานะจุดน้ำท่วมและระดับน้ำ จ.สมุทรปราการ</p>
+                </div>
+                <button class="btn btn-secondary btn-sm" onclick="switchTab('reports')">ดูแผนที่</button>
+              </div>
+              <div id="district-status-list" class="district-stat-list">
+                <!-- Dynamically injected via dashboard.js -->
+                <div style="text-align: center; color: var(--text-muted); padding: 24px;">กำลังโหลดสถานะรายอำเภอ...</div>
+              </div>
+            </div>
+
+            <!-- Widget 3: Hourly Telemetry Bar Pillars -->
+            <div class="card">
+              <div class="card-header">
+                <div>
+                  <h3 class="card-title">ความถี่รายชั่วโมง (Hourly Telemetry)</h3>
+                  <p class="card-subtitle">การกระจายตัวของผู้เข้าใช้งานตลอดวัน</p>
                 </div>
               </div>
               <div style="position: relative; height: 260px; width: 100%;">
-                <canvas id="chart-device-share"></canvas>
+                <canvas id="chart-hourly-pillars"></canvas>
               </div>
             </div>
+
           </div>
 
-          <!-- Mini Live Session Activity Feed -->
-          <div class="card" style="margin-top: 20px;">
+          <!-- 3. Dual-Curve Glowing Spline Area Chart (Matching Screen 1 & 3 in Mockup) -->
+          <div class="card" style="margin-bottom: 22px;">
             <div class="card-header">
               <div>
-                <h3 class="card-title">เซสชันผู้เข้าใช้งานสดล่าสุด</h3>
-                <p class="card-subtitle">ประชาชนที่เปิดเว็บอยู่ ณ ขณะนี้</p>
+                <h3 class="card-title">แนวโน้มผู้เข้าใช้งานและการแจ้งเตือน (Telemetry Dynamics)</h3>
+                <p class="card-subtitle">สถิติผู้เข้าชมสด (Visitors) และการส่งรายงานน้ำท่วม (Reports) ตลอด 24 ชั่วโมง</p>
+              </div>
+              <div class="tabs-pill" style="padding: 2px;">
+                <span class="tab-pill-btn active" style="cursor: default;">24 ชั่วโมง</span>
+              </div>
+            </div>
+            <div style="position: relative; height: 260px; width: 100%;">
+              <canvas id="chart-visitor-trend"></canvas>
+            </div>
+          </div>
+
+          <!-- 4. Hero AI Situation Assessment & Hydro-Advisory (Matching Screen 1 & 2 Bottom in Mockup) -->
+          <div class="ai-insights-hero">
+            <div class="ai-insights-content">
+              <div class="ai-insights-header">
+                <span class="ai-badge">✨ AI HYDRO-ANALYTICS</span>
+                <span style="font-size: 11.5px; color: #93c5fd; opacity: 0.85;">การประเมินสถานการณ์อัจฉริยะ</span>
+              </div>
+              <h3 style="font-size: 16px; font-weight: 700; color: #ffffff; margin-bottom: 6px;">
+                สรุปสภาวะน้ำท่วมและข้อสั่งการแนะนำประจำศูนย์บัญชาการ
+              </h3>
+              <p id="ai-insight-text" class="ai-insights-text">
+                ระบบกำลังวิเคราะห์ข้อมูลโทรมาตรแบบเรียลไทม์ร่วมกับพิกัด GPS ประชาชน...
+              </p>
+            </div>
+            <div class="ai-insights-action">
+              <button class="btn btn-primary" onclick="switchTab('reports')">
+                <span>ตรวจสอบจุดรายงานบนแผนที่</span>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17l9.2-9.2M17 17V7H7"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- 5. Mini Live Session Activity Feed Table -->
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <h3 class="card-title">เซสชันผู้เข้าใช้งานสดล่าสุด (Live Active Telemetry)</h3>
+                <p class="card-subtitle">ประชาชนที่กำลังเปิดดูเว็บ ณ ขณะนี้ รีเฟรชสดอัตโนมัติ</p>
               </div>
               <button class="btn btn-secondary btn-sm" onclick="switchTab('visitors')">ดูทั้งหมด</button>
             </div>
@@ -299,10 +414,66 @@
               </table>
             </div>
           </div>
+
         </section>
 
         <!-- ================= VIEW 2: FLOOD REPORTS ================= -->
         <section id="view-reports" class="view-section" style="display: none;">
+          <!-- 🗺️ Interactive Admin Map Card (Watermark-Free Google Maps) -->
+          <div class="card map-card" style="padding: 0; overflow: hidden; margin-bottom: 20px; border: 1px solid var(--border-subtle);">
+            <div class="map-card-header" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 18px; border-bottom: 1px solid var(--border-subtle); background: var(--bg-surface-elevated); flex-wrap: wrap; gap: 10px;">
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <span class="status-dot pulse" style="background: var(--accent);"></span>
+                <div>
+                  <h3 style="font-size: 14.5px; font-weight: 700; margin: 0; display: flex; align-items: center; gap: 8px;">
+                    🗺️ แผนที่พิกัดจุดแจ้งเหตุน้ำท่วมและลูกเห็บ (Google Maps HD ไร้ลายน้ำ)
+                    <span id="reports-map-counter" class="badge badge-primary" style="font-size: 11px;">0 จุดพิกัด</span>
+                    <span id="reports-map-filter-info" class="badge badge-neutral" style="font-size: 10.5px;">แสดงทั้งหมด</span>
+                  </h3>
+                  <p style="font-size: 11.5px; color: var(--text-muted); margin: 2px 0 0 0;">คลิกที่หมุดบนแผนที่เพื่อดูพิกัดและรายละเอียด หรือคลิก "ดูพิกัดบนแผนที่" ในตารางด้านล่าง</p>
+                </div>
+              </div>
+
+              <!-- Map Toolbar Controls -->
+              <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                <div class="tabs-pill" style="padding: 2px;">
+                  <button type="button" id="btn-map-layer-dark" class="tab-pill-btn active" title="แผนที่โหมดมืด (Dark Command Mode - Google Maps)">มืด</button>
+                  <button type="button" id="btn-map-layer-street" class="tab-pill-btn" title="แผนที่ถนน (Google Roadmap คมชัด ภาษาไทย)">ถนน</button>
+                  <button type="button" id="btn-map-layer-satellite" class="tab-pill-btn" title="ภาพถ่ายดาวเทียม (Google Satellite Hybrid)">ดาวเทียม</button>
+                </div>
+                <button type="button" id="btn-map-fit-bounds" class="btn btn-secondary btn-sm" title="ปรับมุมมองแผนที่ให้พอดีกับจุดรายงานทั้งหมด">
+                  <svg class="ico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="m4.93 4.93 4.24 4.24"/><path d="m14.83 9.17 4.24-4.24"/><path d="m14.83 14.83 4.24 4.24"/><path d="m9.17 14.83-4.24 4.24"/></svg>
+                  <span>รวมจุด</span>
+                </button>
+                <button type="button" id="btn-map-toggle-view" class="btn btn-secondary btn-sm" title="ย่อ/ขยายความสูงของแผนที่">
+                  <svg class="ico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+                  <span id="btn-map-toggle-text">ขยาย</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Leaflet Map Container -->
+            <div id="reports-map" class="map-dark-tiles" style="height: 420px; width: 100%; position: relative; z-index: 1; transition: height 0.3s ease;">
+              <!-- Map Real-time Coordinate HUD -->
+              <div id="map-coord-hud" class="map-coord-hud">
+                <span class="map-coord-text" id="map-coord-text">📍 พิกัดเคอร์เซอร์: 13.5991, 100.5968</span>
+                <button type="button" id="btn-copy-map-hud" class="btn-copy-mini" title="คัดลอกพิกัดตำแหน่งนี้">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+                  <span>คัดลอกพิกัด</span>
+                </button>
+              </div>
+
+              <!-- Map Legend Overlay -->
+              <div class="map-legend-overlay">
+                <div class="map-legend-item"><span class="legend-color legend-l1"></span> ปกติ (5-20cm)</div>
+                <div class="map-legend-item"><span class="legend-color legend-l2"></span> ปานกลาง (21-50cm)</div>
+                <div class="map-legend-item"><span class="legend-color legend-l3"></span> วิกฤต (>50cm)</div>
+                <div class="map-legend-item"><span class="legend-color legend-hail"></span> ลูกเห็บ</div>
+                <div class="map-legend-item"><span class="legend-color legend-pending"></span> รออนุมัติ (กะพริบ)</div>
+              </div>
+            </div>
+          </div>
+
           <div class="card">
             <!-- Filter & Search Controls -->
             <div class="filter-bar">
@@ -349,11 +520,11 @@
                     <th style="width: 38px;"><input type="checkbox" id="th-reports-select-all" title="เลือกทั้งหมด"></th>
                     <th>ระดับน้ำ (3 เกณฑ์)</th>
                     <th>จุดสังเกต / อำเภอ</th>
-                    <th>ข้อมูลผู้แจ้ง & อุปกรณ์ (GPS)</th>
+                    <th>พิกัดบนแผนที่ & ข้อมูลผู้แจ้ง</th>
                     <th>เวลาที่แจ้ง</th>
                     <th>สถานะ</th>
                     <th>รูปภาพ</th>
-                    <th>จัดการ</th>
+                    <th>จัดการ & แผนที่</th>
                   </tr>
                 </thead>
                 <tbody id="reports-tbody">
@@ -361,9 +532,9 @@
                 </tbody>
               </table>
             </div>
-            <div style="margin-top: 14px; font-size: 12px; color: var(--text-muted); display: flex; justify-content: space-between;">
+            <div style="margin-top: 14px; font-size: 12px; color: var(--text-muted); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
               <span>รายการทั้งหมด: <strong id="reports-count-total">0</strong> รายการ</span>
-              <span>เกณฑ์ระดับน้ำ: 🟢 ปกติ (5-20cm) · 🟠 ปานกลาง (21-50cm) · 🔴 วิกฤต (>50cm)</span>
+              <span>เกณฑ์ระดับน้ำ: 🟢 ปกติ (5-20cm) · 🟠 ปานกลาง (21-50cm) · 🔴 วิกฤต (>50cm) · ❄️ ลูกเห็บ | 📍 คลิก "ดูพิกัดบนแผนที่" เพื่อโฟกัสหมุดทันที</span>
             </div>
           </div>
         </section>

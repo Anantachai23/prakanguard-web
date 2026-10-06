@@ -3,7 +3,7 @@
  */
 import { DISTRICTS, ONLINE_WINDOW_MS, LIVE_REFRESH_MS, CHART_REFRESH_MS } from './config.js';
 import { 
-  $, $$, h, icon, toast, confirmDialog, openModal, 
+  $, $$, h, icon, esc, toast, confirmDialog, openModal, 
   dateTime, timeOnly, hm, duration, timeAgo, startOfBangkokDay, nf,
   normPage, normDistrict, levelInfo, classifyDevice, deviceLabel, shortId, downloadFile,
   playApprovalChime, playNavClickSound, playRefreshSound, playThemeSound, playWarningSound, showApprovalSuccessDialog
@@ -27,6 +27,17 @@ const state = {
   reportsSearch: '',
   selectedReports: new Set(),
 
+  // Interactive Leaflet Map State
+  reportsMap: null,
+  reportsMarkersLayer: null,
+  markerMap: new Map(),
+  currentTileLayer: null,
+  currentTileType: 'dark',
+  mapExpanded: false,
+  activePulseCircle: null,
+  currentHoverLat: 13.5991,
+  currentHoverLng: 100.5968,
+
   feedback: [],
   feedbackSearch: '',
   selectedFeedback: new Set(),
@@ -43,6 +54,8 @@ const state = {
 
   visitorTrendChart: null,
   deviceDoughnutChart: null,
+  severityDoughnutChart: null,
+  hourlyPillarsChart: null,
   lastChartUpdate: 0,
   lastLiveRefresh: 0,
 
@@ -58,6 +71,10 @@ export function applyTheme(theme) {
   if (themeBtn) {
     themeBtn.innerHTML = icon(theme === 'dark' ? 'sun' : 'moon', 18);
     themeBtn.setAttribute('title', theme === 'dark' ? 'เปลี่ยนเป็นธีมสว่าง' : 'เปลี่ยนเป็นธีมมืด');
+  }
+  // Auto switch map theme if not on satellite
+  if (state.reportsMap && state.currentTileType !== 'satellite' && typeof setMapTileLayer === 'function') {
+    setMapTileLayer(theme === 'light' ? 'street' : 'dark');
   }
 }
 
@@ -87,7 +104,19 @@ export function switchTab(tabId, playSound = false) {
 
   // Specific render on switch
   if (tabId === 'overview') renderOverview();
-  else if (tabId === 'reports') renderReports();
+  else if (tabId === 'reports') {
+    renderReports();
+    setTimeout(() => {
+      if (state.reportsMap) {
+        state.reportsMap.invalidateSize();
+        if (state.markerMap && state.markerMap.size > 0) {
+          fitReportsMapBounds();
+        } else {
+          state.reportsMap.setView([13.5991, 100.5968], 11);
+        }
+      }
+    }, 120);
+  }
   else if (tabId === 'visitors') renderVisitorsTable();
   else if (tabId === 'feedback') renderFeedback();
   else if (tabId === 'announcements') renderAnnouncements();
@@ -115,6 +144,8 @@ function renderLoginWall() {
     if (wall) wall.style.display = 'none';
     const nameEl = $('#sidebar-admin-name');
     if (nameEl) nameEl.textContent = `${user.label} (${user.username})`;
+    const greetingEl = $('#sidebar-greeting-name');
+    if (greetingEl) greetingEl.textContent = `${user.label}`;
   }
 }
 
@@ -316,8 +347,91 @@ function renderOverview() {
     elApproved.textContent = nf(aCount);
   }
 
+  // Render Monitored Districts list, AI advisory, and charts
+  renderMonitoredDistricts();
+  renderAIAdvisory();
+  updateCharts();
+
   // Also render mini feed on overview
   renderMiniLiveFeed();
+}
+
+function renderMonitoredDistricts() {
+  const container = $('#district-status-list');
+  if (!container) return;
+
+  const districts = ['เมืองสมุทรปราการ', 'บางพลี', 'พระประแดง', 'บางบ่อ', 'พระสมุทรเจดีย์', 'บางเสาธง'];
+  container.innerHTML = '';
+
+  districts.forEach(d => {
+    const list = state.reports.filter(r => (r.district || '').includes(d));
+    const count = list.length;
+    const maxLevel = list.reduce((m, r) => Math.max(m, r.level || 1), 0);
+
+    let statusBadge = '<span class="badge badge-ok">ปกติ</span>';
+    if (count > 0 && maxLevel === 3) {
+      statusBadge = '<span class="badge badge-danger">วิกฤต (>50cm)</span>';
+    } else if (count > 0 && maxLevel === 2) {
+      statusBadge = '<span class="badge badge-warn">ปานกลาง</span>';
+    } else if (count > 0) {
+      statusBadge = '<span class="badge badge-ok">ปกติ (5-20cm)</span>';
+    }
+
+    const row = document.createElement('div');
+    row.className = 'district-stat-row';
+    row.innerHTML = `
+      <div class="district-stat-name">
+        <span>📍 อ.${d}</span>
+      </div>
+      <div class="district-stat-meta">
+        ${statusBadge}
+        <span class="cell-mono" style="font-size: 11px; color: ${count > 0 ? '#38bdf8' : 'var(--text-muted)'}; font-weight: 600;">${count} จุด</span>
+      </div>
+    `;
+    row.addEventListener('click', () => {
+      switchTab('reports');
+      const sel = $('#reports-district-select');
+      if (sel) {
+        sel.value = d;
+        state.reportsDistrict = d;
+        filterAndRenderReports();
+      }
+    });
+    container.appendChild(row);
+  });
+}
+
+function renderAIAdvisory() {
+  const aiTextEl = $('#ai-insight-text');
+  if (!aiTextEl) return;
+
+  const total = state.reports.length;
+  const pending = state.reports.filter(r => !r.is_approved && !r.isApproved).length;
+  const l3Count = state.reports.filter(r => r.level === 3).length;
+  const l2Count = state.reports.filter(r => r.level === 2).length;
+  const hailCount = state.reports.filter(r => r.hazard_type === 'hail' || r.hazardType === 'hail').length;
+  const activeVis = state.activeVisitors.length;
+
+  const parts = [];
+  if (l3Count > 0) {
+    parts.push(`⚠️ ตรวจพบจุดวิกฤตระดับน้ำเกิน 50 ซม. รวม ${l3Count} จุด ในเขตพื้นที่จังหวัด ต้องเร่งผลักดันเครื่องสูบน้ำและประสานเจ้าหน้าที่ภาคสนาม`);
+  } else if (l2Count > 0) {
+    parts.push(`🌊 มีรายงานจุดน้ำท่วมขังปานกลาง (21-50 ซม.) รวม ${l2Count} จุด สภาพการจราจรยังเคลื่อนตัวได้ช้า`);
+  } else {
+    parts.push(`✅ สภาพรวมของแม่น้ำเจ้าพระยาและพื้นที่ 6 อำเภอส่วนใหญ่ยังอยู่ในเกณฑ์ปกติ การระบายน้ำยังคล่องตัว`);
+  }
+
+  if (pending > 0) {
+    parts.push(`มีรายงานใหม่จากประชาชนรอการตรวจสอบ ${pending} จุด แนะนำให้รีบตรวจสอบและกดอนุมัติขึ้นแผนที่`);
+  }
+
+  if (hailCount > 0) {
+    parts.push(`❄️ มีรายงานลูกเห็บตก ${hailCount} จุด แจ้งเตือนประชาชนหลีกเลี่ยงพื้นที่โล่งแจ้ง`);
+  }
+
+  parts.push(`โทรมาตรสดตรวจพบผู้ใช้งาน ${activeVis} เซสชัน กำลังเข้าถึงแผนที่อย่างต่อเนื่อง`);
+
+  aiTextEl.textContent = parts.join(' · ');
 }
 
 function renderMiniLiveFeed() {
@@ -353,39 +467,96 @@ function renderMiniLiveFeed() {
   });
 }
 
-/* ------------------------------------------------------------- 2. CHARTS (30 min update) */
+/* ------------------------------------------------------------- 2. CHARTS (Futuristic Obsidian Visuals) */
 function updateCharts() {
   if (typeof Chart === 'undefined') return;
 
-  // Chart 1: Visitor Trend Today (per hour)
-  const ctxTrend = $('#chart-visitor-trend');
-  if (ctxTrend) {
+  // Chart 1: Severity Breakdown (Donut Chart)
+  const ctxSeverity = $('#chart-severity-breakdown');
+  if (ctxSeverity) {
+    let l3 = 0, l2 = 0, l1 = 0, hail = 0;
+    state.reports.forEach(r => {
+      if (r.hazard_type === 'hail' || r.hazardType === 'hail') hail++;
+      else if (r.level === 3) l3++;
+      else if (r.level === 2) l2++;
+      else l1++;
+    });
+
+    const totalReports = state.reports.length;
+    const centerEl = $('#stat-total-reports-center');
+    if (centerEl) centerEl.textContent = nf(totalReports);
+
+    const pct = (val) => totalReports > 0 ? ((val / totalReports) * 100).toFixed(0) : '0';
+    const elL3 = $('#legend-count-l3'); if (elL3) elL3.textContent = `${l3} จุด (${pct(l3)}%)`;
+    const elL2 = $('#legend-count-l2'); if (elL2) elL2.textContent = `${l2} จุด (${pct(l2)}%)`;
+    const elL1 = $('#legend-count-l1'); if (elL1) elL1.textContent = `${l1} จุด (${pct(l1)}%)`;
+    const elHail = $('#legend-count-hail'); if (elHail) elHail.textContent = `${hail} จุด (${pct(hail)}%)`;
+
+    const sevData = totalReports > 0 ? [l3, l2, l1, hail] : [0, 0, 1, 0];
+    const sevColors = ['#ef4444', '#f59e0b', '#10b981', '#06b6d4'];
+
+    if (state.severityDoughnutChart) {
+      state.severityDoughnutChart.data.datasets[0].data = sevData;
+      state.severityDoughnutChart.update();
+    } else {
+      state.severityDoughnutChart = new Chart(ctxSeverity, {
+        type: 'doughnut',
+        data: {
+          labels: ['วิกฤต (>50cm)', 'ปานกลาง (21-50cm)', 'ปกติ (5-20cm)', 'ลูกเห็บ (Hail)'],
+          datasets: [{
+            data: sevData,
+            backgroundColor: sevColors,
+            borderWidth: 2,
+            borderColor: 'rgba(14, 20, 36, 0.95)',
+            hoverOffset: 4
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          cutout: '72%',
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: 'rgba(14, 20, 36, 0.95)',
+              borderColor: 'rgba(255, 255, 255, 0.15)',
+              borderWidth: 1,
+              padding: 10,
+              bodyFont: { family: 'Prompt', size: 12 }
+            }
+          }
+        }
+      });
+    }
+  }
+
+  // Chart 2: Hourly Pillars (Projections vs Actuals)
+  const ctxPillars = $('#chart-hourly-pillars');
+  if (ctxPillars) {
     const hours = Array.from({ length: 24 }, (_, i) => `${String(i).padStart(2, '0')}:00`);
-    const hourlyCounts = new Array(24).fill(0);
+    const hourlyVisits = new Array(24).fill(0);
 
     state.todaySessions.forEach(s => {
       const d = new Date(s.created_at || s.last_ping);
       const h = d.getHours();
-      if (h >= 0 && h < 24) hourlyCounts[h]++;
+      if (h >= 0 && h < 24) hourlyVisits[h]++;
     });
 
-    if (state.visitorTrendChart) {
-      state.visitorTrendChart.data.datasets[0].data = hourlyCounts;
-      state.visitorTrendChart.update();
+    if (state.hourlyPillarsChart) {
+      state.hourlyPillarsChart.data.datasets[0].data = hourlyVisits;
+      state.hourlyPillarsChart.update();
     } else {
-      state.visitorTrendChart = new Chart(ctxTrend, {
-        type: 'line',
+      state.hourlyPillarsChart = new Chart(ctxPillars, {
+        type: 'bar',
         data: {
           labels: hours,
           datasets: [{
             label: 'ผู้เข้าชม (คน)',
-            data: hourlyCounts,
-            borderColor: '#2563eb',
-            backgroundColor: 'rgba(37, 99, 235, 0.12)',
-            fill: true,
-            tension: 0.35,
-            borderWidth: 2,
-            pointRadius: 3
+            data: hourlyVisits,
+            backgroundColor: 'rgba(56, 189, 248, 0.75)',
+            hoverBackgroundColor: '#38bdf8',
+            borderRadius: 6,
+            borderSkipped: false
           }]
         },
         options: {
@@ -393,55 +564,610 @@ function updateCharts() {
           maintainAspectRatio: false,
           plugins: {
             legend: { display: false },
-            tooltip: { mode: 'index', intersect: false }
+            tooltip: {
+              backgroundColor: 'rgba(14, 20, 36, 0.95)',
+              borderColor: 'rgba(56, 189, 248, 0.3)',
+              borderWidth: 1,
+              padding: 10,
+              bodyFont: { family: 'Prompt', size: 12 }
+            }
           },
           scales: {
-            y: { beginAtZero: true, ticks: { precision: 0 } },
-            x: { grid: { display: false } }
+            y: {
+              beginAtZero: true,
+              ticks: { precision: 0, color: '#64748b' },
+              grid: { color: 'rgba(255, 255, 255, 0.05)' }
+            },
+            x: {
+              ticks: { color: '#64748b', maxTicksLimit: 8 },
+              grid: { display: false }
+            }
           }
         }
       });
     }
   }
 
-  // Chart 2: Device Share (Donut Chart)
-  const ctxDevice = $('#chart-device-share');
-  if (ctxDevice) {
-    const counts = {};
+  // Chart 3: Multi-Curve Glowing Spline Area Chart (Dual curves)
+  const ctxTrend = $('#chart-visitor-trend');
+  if (ctxTrend) {
+    const hours = Array.from({ length: 24 }, (_, i) => `${String(i).padStart(2, '0')}:00`);
+    const hourlyVisits = new Array(24).fill(0);
+    const hourlyReports = new Array(24).fill(0);
+
     state.todaySessions.forEach(s => {
-      const { group } = classifyDevice(s.device);
-      counts[group] = (counts[group] || 0) + 1;
+      const d = new Date(s.created_at || s.last_ping);
+      const h = d.getHours();
+      if (h >= 0 && h < 24) hourlyVisits[h]++;
     });
 
-    const labels = Object.keys(counts);
-    const data = Object.values(counts);
-    const palette = ['#3b82f6', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6', '#06b6d4', '#64748b'];
+    state.reports.forEach(r => {
+      const d = new Date(r.timestamp || r.reported_at || r.reportedAt || Date.now());
+      const h = d.getHours();
+      if (h >= 0 && h < 24) hourlyReports[h]++;
+    });
 
-    if (state.deviceDoughnutChart) {
-      state.deviceDoughnutChart.data.labels = labels;
-      state.deviceDoughnutChart.data.datasets[0].data = data;
-      state.deviceDoughnutChart.update();
+    const canvas = ctxTrend.getContext('2d');
+    let gradVisitors = 'rgba(56, 189, 248, 0.15)';
+    let gradReports = 'rgba(168, 85, 247, 0.12)';
+    if (canvas) {
+      const g1 = canvas.createLinearGradient(0, 0, 0, 240);
+      g1.addColorStop(0, 'rgba(56, 189, 248, 0.35)');
+      g1.addColorStop(1, 'rgba(56, 189, 248, 0.0)');
+      gradVisitors = g1;
+
+      const g2 = canvas.createLinearGradient(0, 0, 0, 240);
+      g2.addColorStop(0, 'rgba(168, 85, 247, 0.28)');
+      g2.addColorStop(1, 'rgba(168, 85, 247, 0.0)');
+      gradReports = g2;
+    }
+
+    if (state.visitorTrendChart) {
+      state.visitorTrendChart.data.datasets[0].data = hourlyVisits;
+      state.visitorTrendChart.data.datasets[1].data = hourlyReports;
+      state.visitorTrendChart.update();
     } else {
-      state.deviceDoughnutChart = new Chart(ctxDevice, {
-        type: 'doughnut',
+      state.visitorTrendChart = new Chart(ctxTrend, {
+        type: 'line',
         data: {
-          labels: labels.length ? labels : ['ยังไม่มีข้อมูล'],
-          datasets: [{
-            data: data.length ? data : [1],
-            backgroundColor: palette,
-            borderWidth: 0
-          }]
+          labels: hours,
+          datasets: [
+            {
+              label: 'ผู้เข้าชมสด (Visitors)',
+              data: hourlyVisits,
+              borderColor: '#38bdf8',
+              backgroundColor: gradVisitors,
+              fill: true,
+              tension: 0.42,
+              borderWidth: 2.5,
+              pointRadius: 2,
+              pointHoverRadius: 6,
+              pointHoverBackgroundColor: '#38bdf8',
+              pointHoverBorderColor: '#ffffff'
+            },
+            {
+              label: 'การส่งรายงาน (Reports)',
+              data: hourlyReports,
+              borderColor: '#a855f7',
+              backgroundColor: gradReports,
+              fill: true,
+              tension: 0.42,
+              borderWidth: 2,
+              pointRadius: 2,
+              pointHoverRadius: 6,
+              pointHoverBackgroundColor: '#a855f7',
+              pointHoverBorderColor: '#ffffff'
+            }
+          ]
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
           plugins: {
-            legend: { position: 'right', labels: { boxWidth: 12, font: { size: 11 } } }
+            legend: {
+              display: true,
+              position: 'top',
+              align: 'end',
+              labels: {
+                boxWidth: 10,
+                color: '#94a3b8',
+                font: { family: 'Prompt', size: 11.5 }
+              }
+            },
+            tooltip: {
+              mode: 'index',
+              intersect: false,
+              backgroundColor: 'rgba(14, 20, 36, 0.95)',
+              borderColor: 'rgba(255, 255, 255, 0.12)',
+              borderWidth: 1,
+              padding: 10,
+              bodyFont: { family: 'Prompt', size: 12 }
+            }
           },
-          cutout: '68%'
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: { precision: 0, color: '#64748b' },
+              grid: { color: 'rgba(255, 255, 255, 0.05)' }
+            },
+            x: {
+              ticks: { color: '#64748b', maxTicksLimit: 12 },
+              grid: { display: false }
+            }
+          }
         }
       });
     }
+  }
+}
+
+/* ------------------------------------------------------------- 2.5 REPORTS MAP (Google Maps HD ไร้ลายน้ำ) */
+let mapTilesObj = null;
+
+export function getReportCoordinates(r) {
+  let lat = Number(r.lat !== undefined ? r.lat : r.latitude);
+  let lng = Number(r.lng !== undefined ? r.lng : (r.longitude || r.lon || r.long));
+
+  if ((!lat || !lng || isNaN(lat) || isNaN(lng)) && r.reporter_gps) {
+    const parts = String(r.reporter_gps).split(',');
+    if (parts.length === 2) {
+      const pLat = parseFloat(parts[0].trim());
+      const pLng = parseFloat(parts[1].trim());
+      if (!isNaN(pLat) && !isNaN(pLng)) {
+        lat = pLat;
+        lng = pLng;
+      }
+    }
+  }
+
+  const isValid = !isNaN(lat) && !isNaN(lng) && lat >= 12.0 && lat <= 15.5 && lng >= 99.0 && lng <= 102.5;
+  return { lat, lng, isValid };
+}
+
+export function setMapTileLayer(type) {
+  const container = document.getElementById('reports-map');
+  if (!state.reportsMap || !mapTilesObj) return;
+  if (state.currentTileLayer) state.reportsMap.removeLayer(state.currentTileLayer);
+  state.currentTileType = type;
+  state.currentTileLayer = mapTilesObj[type].addTo(state.reportsMap);
+
+  if (type === 'dark') {
+    container?.classList.add('map-dark-tiles');
+  } else {
+    container?.classList.remove('map-dark-tiles');
+  }
+  updateMapLayerButtons(type);
+}
+
+function updateMapLayerButtons(activeType) {
+  const btnDark = $('#btn-map-layer-dark');
+  const btnStreet = $('#btn-map-layer-street');
+  const btnSatellite = $('#btn-map-layer-satellite');
+  [btnDark, btnStreet, btnSatellite].forEach(b => b?.classList.remove('active'));
+  if (activeType === 'dark') btnDark?.classList.add('active');
+  else if (activeType === 'street') btnStreet?.classList.add('active');
+  else if (activeType === 'satellite') btnSatellite?.classList.add('active');
+}
+
+function updateCoordHUD(lat, lng, prefix = '📍 พิกัดเคอร์เซอร์') {
+  const textEl = document.getElementById('map-coord-text');
+  if (textEl && lat && lng) {
+    textEl.textContent = `${prefix}: ${Number(lat).toFixed(5)}, ${Number(lng).toFixed(5)}`;
+    state.currentHoverLat = Number(lat);
+    state.currentHoverLng = Number(lng);
+  }
+}
+
+function initReportsMap() {
+  const container = document.getElementById('reports-map');
+  if (!container || state.reportsMap || typeof L === 'undefined') return;
+
+  // 1. Initialize Leaflet Map locked to Samut Prakan
+  const map = L.map('reports-map', {
+    center: [13.5991, 100.5968],
+    zoom: 11,
+    minZoom: 10,
+    maxZoom: 18,
+    maxBounds: [
+      [13.15, 100.05],
+      [14.05, 101.10]
+    ],
+    maxBoundsViscosity: 0.85,
+    zoomControl: true,
+    scrollWheelZoom: true
+  });
+  state.reportsMap = map;
+
+  // 2. Base Tile Layers — Google Maps HD Tiles (Zero Watermark + Official Thai Road/District Labels)
+  mapTilesObj = {
+    dark: L.tileLayer('https://mt{s}.google.com/vt/lyrs=m&hl=th&x={x}&y={y}&z={z}', {
+      subdomains: ['0', '1', '2', '3'],
+      maxZoom: 20,
+      attribution: '&copy; Google Maps'
+    }),
+    street: L.tileLayer('https://mt{s}.google.com/vt/lyrs=m&hl=th&x={x}&y={y}&z={z}', {
+      subdomains: ['0', '1', '2', '3'],
+      maxZoom: 20,
+      attribution: '&copy; Google Maps'
+    }),
+    satellite: L.tileLayer('https://mt{s}.google.com/vt/lyrs=y&hl=th&x={x}&y={y}&z={z}', {
+      subdomains: ['0', '1', '2', '3'],
+      maxZoom: 20,
+      attribution: '&copy; ภาพถ่ายดาวเทียม Google'
+    })
+  };
+
+  const initialType = state.theme === 'light' ? 'street' : 'dark';
+  setMapTileLayer(initialType);
+
+  // Layer Switch Buttons
+  $('#btn-map-layer-dark')?.addEventListener('click', () => setMapTileLayer('dark'));
+  $('#btn-map-layer-street')?.addEventListener('click', () => setMapTileLayer('street'));
+  $('#btn-map-layer-satellite')?.addEventListener('click', () => setMapTileLayer('satellite'));
+
+  // Fit bounds button
+  $('#btn-map-fit-bounds')?.addEventListener('click', () => fitReportsMapBounds());
+
+  // Toggle Map Expand/Collapse
+  const btnToggle = $('#btn-map-toggle-view');
+  const toggleText = $('#btn-map-toggle-text');
+  btnToggle?.addEventListener('click', () => {
+    state.mapExpanded = !state.mapExpanded;
+    container.style.height = state.mapExpanded ? '600px' : '420px';
+    if (toggleText) toggleText.textContent = state.mapExpanded ? 'ย่อ' : 'ขยาย';
+    setTimeout(() => map.invalidateSize(), 320);
+  });
+
+  // Real-time Coordinate Tracker HUD
+  map.on('mousemove', (e) => {
+    updateCoordHUD(e.latlng.lat, e.latlng.lng, '📍 พิกัดเคอร์เซอร์');
+  });
+
+  map.on('click', (e) => {
+    updateCoordHUD(e.latlng.lat, e.latlng.lng, '📍 พิกัดที่คลิก');
+  });
+
+  $('#btn-copy-map-hud')?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const lat = state.currentHoverLat || map.getCenter().lat;
+    const lng = state.currentHoverLng || map.getCenter().lng;
+    window.__pgCopyCoords(lat, lng);
+  });
+
+  // Layer group for report markers
+  state.reportsMarkersLayer = L.layerGroup().addTo(map);
+
+  // Global helper for opening photo modal from popup
+  window.__pgShowPhotoModal = (url, name) => {
+    showPhotoModal(url, name);
+  };
+
+  // Global helper for copying coords to clipboard
+  window.__pgCopyCoords = (lat, lng, event) => {
+    if (event) event.stopPropagation();
+    const text = `${Number(lat).toFixed(6)}, ${Number(lng).toFixed(6)}`;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(() => {
+        toast(`📋 คัดลอกพิกัด ${text} เรียบร้อยแล้ว`, 'success');
+      }).catch(() => fallbackCopy(text));
+    } else {
+      fallbackCopy(text);
+    }
+  };
+
+  function fallbackCopy(text) {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    ta.remove();
+    toast(`📋 คัดลอกพิกัด ${text} เรียบร้อยแล้ว`, 'success');
+  }
+
+  // Global helper for inspecting coordinates in detailed modal
+  window.__pgShowCoordModal = (reportId) => {
+    showCoordinateModal(reportId);
+  };
+
+  // Global helper for flying to report from table
+  window.__pgFlyToReport = (reportId) => {
+    const marker = state.markerMap.get(reportId);
+    const rep = state.reports.find(x => x.id === reportId);
+    if (marker && rep) {
+      const coords = getReportCoordinates(rep);
+      container.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      map.flyTo(marker.getLatLng(), 16, { animate: true, duration: 0.85 });
+      
+      // Highlight Beacon Pulse Ring
+      if (state.activePulseCircle) {
+        state.reportsMap.removeLayer(state.activePulseCircle);
+      }
+      state.activePulseCircle = L.circleMarker(marker.getLatLng(), {
+        radius: 20,
+        color: '#38bdf8',
+        fillColor: '#38bdf8',
+        fillOpacity: 0.35,
+        weight: 3,
+        className: 'marker-highlight-pulse'
+      }).addTo(state.reportsMap);
+
+      setTimeout(() => {
+        if (state.activePulseCircle) {
+          state.reportsMap.removeLayer(state.activePulseCircle);
+          state.activePulseCircle = null;
+        }
+      }, 4000);
+
+      setTimeout(() => marker.openPopup(), 750);
+      toast(`📍 โฟกัสพิกัด ${coords.lat.toFixed(4)}, ${coords.lng.toFixed(4)}: ${rep.name || 'จุดแจ้งเหตุ'}`, 'info');
+    } else {
+      toast('จุดรายงานนี้ไม่มีพิกัด GPS ที่ระบุได้', 'warning');
+    }
+  };
+}
+
+function showCoordinateModal(reportId) {
+  const r = state.reports.find(x => x.id === reportId);
+  if (!r) return;
+  const { lat, lng, isValid } = getReportCoordinates(r);
+  if (!isValid) {
+    toast('รายงานนี้ไม่มีพิกัด GPS', 'warning');
+    return;
+  }
+  const gmapsUrl = `https://www.google.com/maps?q=${lat},${lng}`;
+  const streetViewUrl = `https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${lat},${lng}`;
+  const osmUrl = `https://www.openstreetmap.org/?mlat=${lat}&mlon=${lng}#map=16/${lat}/${lng}`;
+  const lv = levelInfo(r);
+
+  openModal({
+    title: '📍 รายละเอียดพิกัด GPS จุดรายงานน้ำท่วม',
+    subtitle: `${r.name || 'จุดแจ้งเหตุ'} · อ.${r.district || ''} ${r.subdistrict ? 'ต.' + r.subdistrict : ''}`,
+    body: h('div', {},
+      h('div', { class: 'coord-modal-grid' },
+        h('div', { class: 'coord-modal-card' },
+          h('div', { class: 'coord-modal-label' }, 'ละติจูด (Latitude)'),
+          h('div', { class: 'coord-modal-val' }, lat.toFixed(6))
+        ),
+        h('div', { class: 'coord-modal-card' },
+          h('div', { class: 'coord-modal-label' }, 'ลองจิจูด (Longitude)'),
+          h('div', { class: 'coord-modal-val' }, lng.toFixed(6))
+        ),
+        h('div', { class: 'coord-modal-card', style: { gridColumn: '1 / -1' } },
+          h('div', { class: 'coord-modal-label' }, 'คู่พิกัด (GPS Coordinates)'),
+          h('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '2px' } },
+            h('span', { class: 'coord-modal-val' }, `${lat.toFixed(6)}, ${lng.toFixed(6)}`),
+            h('button', {
+              type: 'button',
+              class: 'btn-copy-mini',
+              onclick: () => window.__pgCopyCoords(lat, lng),
+              html: `${icon('copy', 12)} คัดลอกพิกัด`
+            })
+          )
+        )
+      ),
+      h('div', { style: { background: 'var(--bg-subtle)', borderRadius: 'var(--radius-md)', padding: '14px', marginBottom: '16px', border: '1px solid var(--border-subtle)' } },
+        h('div', { style: { display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '12px' } },
+          h('span', { class: 'text-muted' }, 'ระดับน้ำ:'),
+          h('strong', { style: { color: 'var(--primary)' } }, `${r.body_level_label || lv.label} (${(r.depth_cm || lv.range)} ซม.)`)
+        ),
+        h('div', { style: { display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '12px' } },
+          h('span', { class: 'text-muted' }, 'อุปกรณ์ผู้แจ้ง:'),
+          h('span', {}, deviceLabel(r.reporter_device || r.device || 'สมาร์ตโฟน'))
+        ),
+        h('div', { style: { display: 'flex', justifyContent: 'space-between', fontSize: '12px' } },
+          h('span', { class: 'text-muted' }, 'เวลาบันทึก:'),
+          h('span', { class: 'cell-mono' }, r.timestamp ? dateTime(r.timestamp) : (r.reported_at || '—'))
+        )
+      ),
+      h('div', { style: { display: 'flex', gap: '8px', flexWrap: 'wrap' } },
+        h('a', {
+          href: gmapsUrl,
+          target: '_blank',
+          rel: 'noopener noreferrer',
+          class: 'btn btn-primary btn-sm',
+          style: { flex: 1, minWidth: '140px', justifyContent: 'center' },
+          html: `${icon('map', 14)} เปิด Google Maps`
+        }),
+        h('a', {
+          href: streetViewUrl,
+          target: '_blank',
+          rel: 'noopener noreferrer',
+          class: 'btn btn-secondary btn-sm',
+          style: { flex: 1, minWidth: '140px', justifyContent: 'center' },
+          html: `${icon('eye', 14)} สตรีทวิว 360°`
+        }),
+        h('a', {
+          href: osmUrl,
+          target: '_blank',
+          rel: 'noopener noreferrer',
+          class: 'btn btn-secondary btn-sm',
+          style: { flex: 1, minWidth: '140px', justifyContent: 'center' },
+          html: `${icon('globe', 14)} OpenStreetMap`
+        })
+      )
+    ),
+    width: 560
+  });
+}
+
+function fitReportsMapBounds() {
+  if (!state.reportsMap || !state.markerMap || state.markerMap.size === 0) {
+    state.reportsMap?.setView([13.5991, 100.5968], 11);
+    return;
+  }
+  const group = L.featureGroup(Array.from(state.markerMap.values()));
+  const bounds = group.getBounds();
+  if (bounds.isValid()) {
+    state.reportsMap.fitBounds(bounds.pad(0.12), { maxZoom: 14 });
+  } else {
+    state.reportsMap.setView([13.5991, 100.5968], 11);
+  }
+}
+
+function updateReportsMapMarkers(list) {
+  if (!state.reportsMap) {
+    initReportsMap();
+  }
+  if (!state.reportsMap || !state.reportsMarkersLayer) return;
+
+  state.reportsMarkersLayer.clearLayers();
+  state.markerMap.clear();
+
+  let validCount = 0;
+
+  list.forEach(r => {
+    const { lat, lng, isValid } = getReportCoordinates(r);
+    if (!isValid) return;
+
+    validCount++;
+    const isApproved = !!(r.is_approved || r.isApproved);
+    const isPending = !isApproved;
+    const lv = levelInfo(r);
+
+    let pinClass = 'pin-l2';
+    let iconEmoji = '🌊';
+    if (r.hazard_type === 'hail' || r.hazardType === 'hail') {
+      pinClass = 'pin-hail';
+      iconEmoji = '❄️';
+    } else if (r.level === 1) {
+      pinClass = 'pin-l1';
+    } else if (r.level === 3) {
+      pinClass = 'pin-l3';
+      iconEmoji = '⚠️';
+    }
+
+    const customIcon = L.divIcon({
+      className: '',
+      html: `<div class="admin-map-pin ${pinClass} ${isPending ? 'is-pending' : ''}" style="width: 32px; height: 32px;" title="${esc(r.name || 'จุดแจ้งเหตุน้ำท่วม')} (${lat.toFixed(4)}, ${lng.toFixed(4)})">${iconEmoji}</div>`,
+      iconSize: [32, 32],
+      iconAnchor: [16, 16],
+      popupAnchor: [0, -18]
+    });
+
+    const marker = L.marker([lat, lng], { icon: customIcon });
+
+    const photo = r.photo_url || r.photoUrl || (r.photo && r.photo.url);
+    const depthVal = (r.depth_cm || r.depthCm) ? `${r.depth_cm || r.depthCm} ซม.` : lv.range;
+    const timeStr = r.timestamp ? dateTime(r.timestamp) : (r.reported_at || r.reportedAt || '—');
+
+    const popupContent = `
+      <div class="admin-popup-card">
+        <div class="admin-popup-top">
+          <div style="flex: 1; padding-right: 8px;">
+            <h4 class="admin-popup-title">${esc(r.name || 'จุดแจ้งเหตุน้ำท่วม')}</h4>
+            <p class="admin-popup-subtitle">อ.${esc(r.district || 'เมืองสมุทรปราการ')} ${r.subdistrict ? 'ต.' + esc(r.subdistrict) : ''}</p>
+          </div>
+          <span class="badge ${isApproved ? 'badge-ok' : 'badge-warn'}" style="flex-shrink: 0;">${isApproved ? 'อนุมัติแล้ว' : 'รออนุมัติ'}</span>
+        </div>
+
+        <div class="popup-coord-box">
+          <div class="popup-coord-info">
+            <span style="font-size: 13px;">📍</span>
+            <div>
+              <div style="font-size: 10px; color: var(--text-muted);">พิกัด GPS</div>
+              <div class="popup-coord-val">${lat.toFixed(5)}, ${lng.toFixed(5)}</div>
+            </div>
+          </div>
+          <button type="button" class="btn-copy-mini" onclick="window.__pgCopyCoords(${lat}, ${lng}, event)" title="คัดลอกพิกัด">
+            📋 คัดลอก
+          </button>
+        </div>
+
+        <div class="admin-popup-details">
+          <div class="admin-popup-row">
+            <span class="text-muted">ระดับน้ำ:</span>
+            <strong style="color: var(--primary);">${r.body_level_label || r.bodyLevelLabel || lv.label} (${depthVal})</strong>
+          </div>
+          <div class="admin-popup-row">
+            <span class="text-muted">การจราจร:</span>
+            <span>${r.traffic_status || r.trafficStatus || 'ระมัดระวัง'}</span>
+          </div>
+          <div class="admin-popup-row">
+            <span class="text-muted">เวลาแจ้ง:</span>
+            <span class="cell-mono">${timeStr}</span>
+          </div>
+        </div>
+
+        ${photo ? `<img src="${photo}" class="admin-popup-photo" alt="ภาพรายงาน" onclick="window.__pgShowPhotoModal && window.__pgShowPhotoModal('${photo}', '${esc(r.name || '').replace(/'/g, "\\'")}')" title="คลิกดูภาพขนาดเต็ม">` : ''}
+
+        <div class="admin-popup-actions">
+          ${!isApproved ? `
+            <button type="button" class="btn btn-success btn-sm btn-popup-approve" data-id="${r.id}">
+              ${icon('check', 12)}
+              อนุมัติ
+            </button>
+            <button type="button" class="btn btn-secondary btn-sm btn-popup-reject" data-id="${r.id}" style="color: var(--danger);">
+              ${icon('x', 12)}
+              ไม่อนุมัติ
+            </button>
+          ` : `
+            <button type="button" class="btn btn-secondary btn-sm btn-popup-unapprove" data-id="${r.id}">
+              ถอนอนุมัติ
+            </button>
+          `}
+          <a href="https://www.google.com/maps?q=${lat},${lng}" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm" title="เปิด Google Maps นำทาง">
+            ${icon('map', 12)}
+            นำทาง
+          </a>
+          <button type="button" class="btn btn-secondary btn-sm" onclick="window.__pgShowCoordModal && window.__pgShowCoordModal('${r.id}')" title="ดูข้อมูลพิกัดเชิงลึก">
+            ${icon('compass', 12)}
+            พิกัด
+          </button>
+        </div>
+      </div>
+    `;
+
+    marker.bindPopup(popupContent, { maxWidth: 320 });
+
+    marker.on('popupopen', () => {
+      const popupEl = marker.getPopup().getElement();
+      if (!popupEl) return;
+      const btnApprove = popupEl.querySelector('.btn-popup-approve');
+      if (btnApprove) {
+        btnApprove.onclick = () => {
+          marker.closePopup();
+          handleApproveSingle(r.id);
+        };
+      }
+      const btnReject = popupEl.querySelector('.btn-popup-reject');
+      if (btnReject) {
+        btnReject.onclick = () => {
+          marker.closePopup();
+          const targetReport = state.reports.find(x => x.id === r.id) || r;
+          handleRejectSingle(targetReport);
+        };
+      }
+      const btnUnapprove = popupEl.querySelector('.btn-popup-unapprove');
+      if (btnUnapprove) {
+        btnUnapprove.onclick = () => {
+          marker.closePopup();
+          handleUnapproveSingle(r.id);
+        };
+      }
+    });
+
+    marker.addTo(state.reportsMarkersLayer);
+    state.markerMap.set(r.id, marker);
+  });
+
+  const counterEl = document.getElementById('reports-map-counter');
+  if (counterEl) {
+    counterEl.textContent = `${validCount} จุดพิกัด`;
+  }
+
+  const filterInfoEl = document.getElementById('reports-map-filter-info');
+  if (filterInfoEl) {
+    const distText = state.reportsDistrict !== 'all' ? `อ.${state.reportsDistrict}` : '';
+    const statusText = state.reportsFilter === 'pending' ? 'รออนุมัติ' : state.reportsFilter === 'approved' ? 'อนุมัติแล้ว' : 'ทั้งหมด';
+    filterInfoEl.textContent = distText ? `${distText} · ${statusText}` : statusText;
+  }
+
+  // Auto fit map to markers or center on Samut Prakan
+  if (validCount > 0) {
+    fitReportsMapBounds();
+  } else if (state.reportsMap) {
+    state.reportsMap.setView([13.5991, 100.5968], 11);
   }
 }
 
@@ -476,10 +1202,20 @@ function renderReports() {
     );
   }
 
-  $('#reports-count-total').textContent = list.length;
+  const countTotalEl = $('#reports-count-total');
+  if (countTotalEl) countTotalEl.textContent = list.length;
+
+  // Update Interactive Leaflet Map Markers
+  updateReportsMapMarkers(list);
 
   if (list.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="8" class="text-center text-muted" style="padding: 36px;">ไม่พบรายการรายงานน้ำท่วมตามเงื่อนไขที่เลือก</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="8" class="text-center text-muted" style="padding: 44px 20px;">
+      <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;">
+        <span style="font-size: 32px; opacity: 0.65;">📋</span>
+        <span style="font-size: 13.5px; font-weight: 600; color: var(--text-secondary);">ไม่พบรายการรายงานน้ำท่วมตามเงื่อนไขที่เลือก</span>
+        <span style="font-size: 11.5px; color: var(--text-muted);">ลองเปลี่ยนตัวกรองอำเภอ หรือคลิกปุ่ม "รีเฟรชข้อมูล" เพื่อดึงข้อมูลล่าสุด</span>
+      </div>
+    </td></tr>`;
     return;
   }
 
@@ -487,6 +1223,7 @@ function renderReports() {
     const isApproved = !!(r.is_approved || r.isApproved);
     const lv = levelInfo(r);
     const isChecked = state.selectedReports.has(r.id);
+    const { lat, lng, isValid: hasGps } = getReportCoordinates(r);
 
     // Reporter GPS & District
     let repDistText = 'ผู้รายงานปิด GPS';
@@ -522,18 +1259,33 @@ function renderReports() {
           `${r.body_level_label || r.bodyLevelLabel || lv.label} (${(r.depth_cm || r.depthCm) ? (r.depth_cm || r.depthCm) + ' ซม.' : lv.range})`
         )
       ),
-      // Location Name & Details
+      // Location Name & Details + Jump to Map Button
       h('td', {},
-        h('div', { style: { fontWeight: 600 } }, r.name || 'ไม่ระบุชื่อจุด'),
-        h('div', { class: 'text-muted', style: { fontSize: '11.5px' } },
+        h('div', { style: { fontWeight: 600, color: '#ffffff' } }, r.name || 'ไม่ระบุชื่อจุด'),
+        h('div', { class: 'text-muted', style: { fontSize: '11.5px', marginTop: '2px' } },
           `อ.${r.district || 'เมืองสมุทรปราการ'} ${r.subdistrict ? 'ต.' + r.subdistrict : ''}`
-        )
+        ),
+        hasGps ? h('div', { style: { marginTop: '5px' } },
+          h('button', {
+            type: 'button',
+            class: 'btn-view-map-pin',
+            title: 'คลิกเพื่อเลื่อนแผนที่และดูพิกัดนี้ทันที',
+            onclick: () => window.__pgFlyToReport && window.__pgFlyToReport(r.id),
+            html: `${icon('map', 13)} ดูพิกัดบนแผนที่ (${lat.toFixed(4)}, ${lng.toFixed(4)})`
+          })
+        ) : null
       ),
-      // Reporter Device & GPS District
+      // Reporter Device & GPS District + Clickable Coordinate Tag
       h('td', {},
         h('div', { style: { fontSize: '12px', fontWeight: 500 } }, deviceLabel(r.reporter_device || r.device || 'สมาร์ตโฟน')),
-        h('div', { style: { marginTop: '3px' } },
-          h('span', { class: `badge ${repDistBadgeClass}` }, repDistText)
+        h('div', { style: { marginTop: '4px', display: 'flex', flexDirection: 'column', gap: '4px' } },
+          h('span', { class: `badge ${repDistBadgeClass}` }, repDistText),
+          hasGps ? h('div', {
+            class: 'report-coord-tag',
+            onclick: () => window.__pgFlyToReport && window.__pgFlyToReport(r.id),
+            title: 'คลิกเพื่อดูหมุดพิกัดบนแผนที่',
+            html: `📍 ${lat.toFixed(4)}, ${lng.toFixed(4)}`
+          }) : h('span', { class: 'badge badge-neutral', style: { alignSelf: 'flex-start', fontSize: '10px' } }, 'ไม่มีพิกัด GPS')
         )
       ),
       // Date Time (Bangkok Official Time)
@@ -572,9 +1324,27 @@ function renderReports() {
             : h('span', { class: 'text-muted' }, 'ไม่มีรูป')
         );
       })(),
-      // Actions
+      // Actions & Map Focus
       h('td', {},
-        h('div', { style: { display: 'flex', gap: '6px' } },
+        h('div', { style: { display: 'flex', gap: '6px', alignItems: 'center' } },
+          hasGps
+            ? [
+                h('button', {
+                  type: 'button',
+                  class: 'btn btn-secondary btn-sm',
+                  title: 'ดูหมุดจุดนี้บนแผนที่',
+                  onclick: () => window.__pgFlyToReport && window.__pgFlyToReport(r.id),
+                  html: icon('pin', 14)
+                }),
+                h('button', {
+                  type: 'button',
+                  class: 'btn btn-secondary btn-sm',
+                  title: 'ดูรายละเอียดพิกัดเชิงลึก (Coordinate Inspector)',
+                  onclick: () => window.__pgShowCoordModal && window.__pgShowCoordModal(r.id),
+                  html: icon('compass', 14)
+                })
+              ]
+            : null,
           !isApproved
             ? [
                 h('button', {

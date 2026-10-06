@@ -39,16 +39,45 @@ node server.js
 ## 🛠️ โครงสร้างไฟล์ระบบแอดมิน (`admin/`)
 ```
 admin/
-├── data/
-│   ├── reports.json        # ฐานข้อมูลรายงานน้ำท่วมและลูกเห็บ (จัดเก็บถาวร)
-│   ├── feedback.json       # ฐานข้อมูลข้อเสนอแนะจากประชาชน
-│   └── visitors.json       # ฐานข้อมูลสถิติและเซสชันผู้เข้าชมเว็บ
-├── index.html              # หน้าเว็บ Single Page Application ศูนย์บัญชาการแอดมิน
-├── server.js               # เซิร์ฟเวอร์ Node.js แท้ (Native Zero-Dependency) + Cloud Bridge
-├── package.json            # การตั้งค่าระบบแอดมิน
-├── start_admin.bat         # ไฟล์เริ่มระบบแอดมิน 1 คลิก
-├── visitor-tracker.js      # สคริปต์ตรวจจับเซสชันผู้เข้าชมเว็บ (ทางเลือกเสริม)
-└── README.md               # คู่มือการใช้งานระบบแอดมิน
+├── assets/                     # ส่วนประกอบหน้าเว็บแอดมิน (Frontend Assets)
+│   ├── css/admin.css           # สไตล์ชีตระบบแอดมิน (ธีมมืด/สว่าง, สไตล์ Dashboard)
+│   ├── img/logo.png            # โลโก้ศูนย์บัญชาการ
+│   ├── js/                     # สคริปต์หน้าบ้าน (UI, State & Modules)
+│   │   ├── api.js              # ตัวกลางเรียก API แอดมิน & Supabase
+│   │   ├── auth.js             # ยืนยันตัวตนแอดมิน (PBKDF2 / Sessions)
+│   │   ├── config.js           # ค่าคงที่ระบบและ Endpoint
+│   │   ├── core.js             # ยูทิลิตี้ DOM, เสียงแจ้งเตือน, ตัวช่วยฟอร์แมต
+│   │   └── dashboard.js        # Controller หลักคุมหน้า Dashboard และแต่ละแท็บ
+│   └── vendor/chart.umd.js     # ไลบรารีกราฟสถิติ Chart.js
+├── data/                       # ฐานข้อมูลไฟล์ JSON (Local Persistence)
+│   ├── feedback.json           # ข้อมูลข้อเสนอแนะจากประชาชน
+│   ├── reports.json            # รายงานน้ำท่วมและลูกเห็บ
+│   ├── trash.json              # ถังขยะ (Soft Delete กู้คืนได้)
+│   └── visitors.json           # สถิติและเซสชันผู้เข้าชมเว็บ
+├── database/                   # สคริปต์และโครงสร้างฐานข้อมูล (SQL)
+│   └── supabase_setup.sql      # Schema, RLS Policies, Database Functions สำหรับ Supabase
+├── scripts/                    # เครื่องมือและสคริปต์เสริม (Telemetry)
+│   └── visitor-tracker.js      # สคริปต์ตรวจจับเซสชันผู้เข้าชมเว็บ (ทางเลือกเสริม)
+├── server/                     # โครงสร้างระบบหลังบ้าน (Modular Node.js Backend)
+│   ├── config.js               # การตั้งค่าพอร์ต, Path, Supabase Keys, Topics
+│   ├── storage.js              # แคชหน่วยความจำ & บันทึกไฟล์ JSON ใน /data/
+│   ├── sse.js                  # ระบบ Real-Time Server-Sent Events (SSE)
+│   ├── presence.js             # ตรวจจับและคำนวณผู้ใช้งานสด (Visitor Telemetry)
+│   ├── sync/
+│   │   ├── supabase-sync.js    # ซิงก์ข้อมูลสองทางกับ Supabase Cloud DB
+│   │   └── cloud-bridge.js     # ซิงก์ข้อมูลผ่าน ntfy.sh Topics และ Action Dispatcher
+│   ├── routes/
+│   │   ├── reports.js          # API /api/reports (จัดการรายงานน้ำท่วม/ลูกเห็บ)
+│   │   ├── feedback.js         # API /api/feedback (จัดการข้อเสนอแนะ/โน้ตแอดมิน)
+│   │   ├── trash.js            # API /api/trash (ถังขยะ, กู้คืน, ลบถาวร)
+│   │   ├── visitors.js         # API /api/visitors & /api/heartbeat (สถิติผู้เข้าชม)
+│   │   └── stats.js            # API /api/stats, /api/status, /api/cloud-sync
+│   └── app.js                  # Main Application Orchestrator & Static File Server
+├── index.html                  # หน้า Single Page Application ศูนย์บัญชาการแอดมิน
+├── server.js                   # Entry Point หลักสำหรับเริ่มเซิร์ฟเวอร์ (node server.js)
+├── package.json                # ข้อมูลและคำสั่งรันระบบ
+├── start_admin.bat             # ไฟล์เริ่มระบบแอดมิน 1 คลิก
+└── README.md                   # คู่มือการใช้งานระบบแอดมิน
 ```
 
 ---

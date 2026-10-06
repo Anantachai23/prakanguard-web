@@ -47,6 +47,47 @@ Located at the mouth of the Chao Phraya River, Samut Prakan Province frequently 
 
 ---
 
+## 📁 โครงสร้างโปรเจกต์ (Project Structure)
+```
+PrakanGuard/
+├── 📁 admin/                 # ระบบบริหารจัดการแอดมิน (Admin Command Center & Backend Server)
+│   ├── assets/               # Frontend แอดมิน (CSS, JS, โลโก้, Chart.js)
+│   ├── data/                 # ฐานข้อมูลจัดเก็บ JSON ในเครื่อง (Reports, Feedback, Visitors, Trash)
+│   ├── database/             # สคริปต์ฐานข้อมูล Supabase SQL (Schema, RLS, Functions)
+│   ├── scripts/              # สคริปต์เครื่องมือเสริมและ Client Telemetry (visitor-tracker.js)
+│   ├── server/               # ระบบหลังบ้านแบบแยกโมดูล (Config, Storage, SSE, Sync, Routes, App)
+│   ├── index.html            # หน้า Dashboard แอดมิน (SPA)
+│   ├── server.js             # Entry Point รันเซิร์ฟเวอร์แอดมิน (พอร์ต 4000)
+│   ├── package.json          # Admin package
+│   └── start_admin.bat       # สคริปต์เปิดแอดมิน 1 คลิก
+├── 📁 api/                   # Vercel Serverless API Functions
+│   ├── official-flood.js     # API ซิงก์ข้อมูลน้ำท่วมทางการ (TMD & ทร.)
+│   └── sync.js               # API ซิงก์ข้อมูลทั่วไป
+├── 📁 docs/                  # คู่มือและเอกสารประกอบ
+│   └── DEPLOY_GUIDE.md       # คู่มือการอัพโหลดขึ้น GitHub และขั้นตอน Deploy
+├── 📁 public/                # Static Assets สำหรับเว็บประชาชน (ไอคอน PWA, สคริปต์ซิงก์)
+├── 📁 scratch/               # โฟลเดอร์สคริปต์ทดสอบและ Verification
+├── 📁 src/                   # โค้ดต้นฉบับเว็บประชาชน (React 18 + Tailwind)
+│   ├── components/           # UI Components (แผนที่, สภาพอากาศ, รายงาน, แชทบอท AI ฯลฯ)
+│   ├── context/              # State & Context
+│   ├── data/                 # ข้อมูลพิกัดจุดเสี่ยง 23 พิกัด
+│   ├── services/             # ตัวเชื่อมต่อ API
+│   ├── views/                # หน้าจอหลักและแท็บย่อย
+│   ├── App.jsx               # คอมโพเนนต์หลัก
+│   └── main.jsx              # Entry point ของ React
+├── 📄 index.html             # หน้าเว็บหลักของประชาชน
+├── 📄 package.json           # การตั้งค่า Dependencies และ Scripts
+├── 📄 vite.config.js         # การตั้งค่า Vite Build
+├── 📄 tailwind.config.js     # การตั้งค่า Tailwind CSS
+├── 📄 vercel.json            # การตั้งค่า Vercel Deploy & Rewrites
+├── ⚙️ start_all.bat           # รันทั้งเว็บประชาชนและแอดมินพร้อมกัน 1 คลิก
+├── ⚙️ start_website.bat       # รันเฉพาะเว็บประชาชน (Vite พอร์ต 5173) 1 คลิก
+├── ⚙️ start_admin.bat         # รันเฉพาะระบบแอดมิน (Node พอร์ต 4000) 1 คลิก
+└── ⚙️ deploy_to_github.bat    # สคริปต์ช่วย Deploy ขึ้น GitHub 1 คลิก
+```
+
+---
+
 ## 🚀 Getting Started
 
 ### Local Development
