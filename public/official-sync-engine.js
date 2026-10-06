@@ -120,6 +120,10 @@
     floodPoints.forEach(p => {
       const id = String(p.ticket_id || p.id || '');
       if (id && typeof p.lat === 'number' && typeof p.lng === 'number' && !isNaN(p.lat) && !isNaN(p.lng)) {
+        // Strictly filter out any point outside Samut Prakan (No Bangkok/external points!)
+        if (typeof window !== 'undefined' && typeof window.isPointInSamutPrakan === 'function') {
+          if (!window.isPointInSamutPrakan(p.lat, p.lng)) return;
+        }
         incomingIds.add(id);
         incomingPoints.set(id, p);
       }

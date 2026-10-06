@@ -92,7 +92,7 @@ export default function Navbar({
     <header className={`sticky top-0 z-[1001] w-full border-b backdrop-blur-md transition-colors select-none ${
       isDark ? 'bg-slate-950/90 border-slate-800 text-slate-100' : 'bg-white/90 border-slate-200 text-slate-900'
     }`}>
-      <div className="w-full max-w-full px-2 sm:px-4 py-1.5 sm:py-2 flex items-center justify-between gap-1.5 sm:gap-2.5 overflow-hidden relative">
+      <div className="w-full max-w-full px-2 sm:px-4 py-1.5 sm:py-2 flex items-center justify-between gap-1.5 sm:gap-2.5 relative">
         
         {/* ========================================================= */}
         {/* 1. BRAND AREA (LEFT) — Clean Official Style               */}

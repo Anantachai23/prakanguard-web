@@ -11,6 +11,7 @@
  */
 
 import crypto from 'crypto';
+import { isPointInSamutPrakan, detectDistrictForCoordinates } from '../src/data/samutPrakanBoundary.js';
 
 // In-Memory Cache Storage (180 seconds TTL)
 const CACHE_TTL_MS = 180 * 1000;
@@ -123,8 +124,29 @@ async function fetchOfficialFloodPoints() {
         lng = parseFloat(item.longitude);
       }
 
-      // Geo-boundary validation for Samut Prakan (13.3 - 13.85 N, 100.4 - 101.05 E)
-      if (lat && lng && !isNaN(lat) && !isNaN(lng) && lat >= 13.3 && lat <= 13.85 && lng >= 100.4 && lng <= 101.05) {
+      // Reject any reports containing Bangkok / non-Samut Prakan text
+      const fullText = `${item.address || ''} ${item.description || ''} ${item.comment || ''}`.toLowerCase();
+      if (
+        fullText.includes('กรุงเทพ') || fullText.includes('bangkok') || 
+        fullText.includes('นนทบุรี') || fullText.includes('ดินแดง') || 
+        fullText.includes('ตลิ่งชัน') || fullText.includes('คลองเตย') || 
+        fullText.includes('พระนคร') || fullText.includes('จตุจักร') || 
+        fullText.includes('พญาไท') || fullText.includes('ราชเทวี') ||
+        fullText.includes('สยาม') || fullText.includes('บางกอก')
+      ) {
+        return;
+      }
+
+      // Realign Preng if mentioned
+      if (fullText.includes('เปร็ง') || fullText.includes('สี่แยกเปร็ง') || fullText.includes('แยกเปร็ง')) {
+        lat = 13.6650;
+        lng = 100.8850;
+        item.district = 'บางบ่อ';
+      }
+
+      // Geo-boundary validation strictly for Samut Prakan (No Bangkok/external points allowed!)
+      if (lat && lng && !isNaN(lat) && !isNaN(lng) && isPointInSamutPrakan(lat, lng)) {
+        const detectedDistrict = detectDistrictForCoordinates(lat, lng) || 'สมุทรปราการ';
         const ticketId = item.ticket_id || item.id || `traffy-${lat.toFixed(4)}-${lng.toFixed(4)}-${index}`;
         floodPoints.push({
           id: String(ticketId),
@@ -132,7 +154,7 @@ async function fetchOfficialFloodPoints() {
           lat: Number(lat.toFixed(6)),
           lng: Number(lng.toFixed(6)),
           description: item.description || item.comment || 'รายงานน้ำท่วมขังรอการระบาย (Traffy Fondue)',
-          district: item.district || 'สมุทรปราการ',
+          district: detectedDistrict,
           address: item.address || '',
           state: item.state || 'doing',
           photo: item.photo || item.photo_url || null,

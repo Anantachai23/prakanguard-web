@@ -19,7 +19,7 @@ import ChatBot from './components/ChatBot';
 import { INITIAL_FLOOD_POINTS, INITIAL_CITIZEN_REPORTS, DISTRICTS, matchesLocationSearch, scoreLocationSearch, POPULAR_SEARCH_SUGGESTIONS, findCorridorForPoint, MAJOR_FLOOD_CORRIDORS } from './data/samutPrakanPoints';
 import { SAMUT_PRAKAN_DISTRICTS_DATA } from './data/samutPrakanDistricts';
 import { getFloodLevel, FLOOD_STANDARDS } from './data/floodStandards';
-import { detectDistrictForCoordinates, isPointInSamutPrakan, detectSubdistrictForLocation } from './data/samutPrakanBoundary';
+import { detectDistrictForCoordinates, isPointInSamutPrakan, detectSubdistrictForLocation, realignPointLocation } from './data/samutPrakanBoundary';
 import { getOfficialAdvisorySummary } from './services/aiPredictor';
 import { getLiveSamutPrakanWeather } from './services/weatherService';
 import { runOfficial24HourSync, getFloodStatusSignature } from './services/aiSentryService';
@@ -91,6 +91,10 @@ import {
   playEmergencySound,
   playModalOpenSound
 } from './services/soundEffects';
+
+if (typeof window !== 'undefined') {
+  window.isPointInSamutPrakan = isPointInSamutPrakan;
+}
 
 // Distance calculation helper (Haversine Formula)
 function getDistanceKm(lat1, lon1, lat2, lon2) {
@@ -188,8 +192,10 @@ export default function App() {
             }
           });
 
-          // Strictly purge any point outside Samut Prakan boundary
-          const cleanedList = list.filter(p => p && typeof p.lat === 'number' && typeof p.lng === 'number' && isPointInSamutPrakan(p.lat, p.lng));
+          // Strictly purge any point outside Samut Prakan boundary and realign coordinates
+          const cleanedList = list
+            .map(realignPointLocation)
+            .filter(p => p && typeof p.lat === 'number' && typeof p.lng === 'number' && isPointInSamutPrakan(p.lat, p.lng));
           try {
             localStorage.setItem('prakanguard_points_state_v9', JSON.stringify(cleanedList));
           } catch (e) {}
@@ -199,6 +205,7 @@ export default function App() {
       }
     } catch (e) {}
     const defaultPoints = INITIAL_FLOOD_POINTS
+      .map(realignPointLocation)
       .filter(p => isPointInSamutPrakan(p.lat, p.lng))
       .map(p => {
         const lvl = getFloodLevel(p.depthCm);
@@ -589,7 +596,8 @@ export default function App() {
       const saved = localStorage.getItem('prakanguard_citizen_reports');
       const parsed = saved ? JSON.parse(saved) : null;
       let rawList = (Array.isArray(parsed) && parsed.length > 0) ? parsed : [];
-      const cleaned = rawList.filter(r => 
+      const realigned = rawList.map(realignPointLocation);
+      const cleaned = realigned.filter(r => 
         r && 
         r.id && 
         !r.id.includes('test') &&
