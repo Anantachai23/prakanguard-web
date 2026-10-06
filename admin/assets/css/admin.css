@@ -149,24 +149,29 @@ body {
   transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.sidebar-header {
-  padding: 22px 20px;
+.sidebar-header,
+.brand-section {
+  padding: 18px 16px 16px 16px;
   display: flex;
   align-items: center;
   gap: 12px;
   border-bottom: 1px solid var(--border-subtle);
+  background: rgba(14, 20, 36, 0.4);
+  flex-shrink: 0;
+  box-sizing: border-box;
+  width: 100%;
 }
 
 .brand-emblem {
-  width: 42px;
-  height: 42px;
-  border-radius: 12px;
-  background: linear-gradient(135deg, rgba(37, 99, 235, 0.2), rgba(168, 85, 247, 0.2));
-  border: 1px solid rgba(59, 130, 246, 0.3);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(56, 189, 248, 0.1);
+  border: 1.5px solid #38bdf8;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 16px rgba(37, 99, 235, 0.3);
+  box-shadow: 0 2px 12px rgba(56, 189, 248, 0.25);
   overflow: hidden;
   flex-shrink: 0;
 }
@@ -175,19 +180,38 @@ body {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  border-radius: 50%;
+  display: block;
+}
+
+.brand-titles {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
 }
 
 .brand-title {
-  font-size: 15px;
+  font-size: 14.5px;
   font-weight: 700;
   color: #ffffff;
-  letter-spacing: -0.3px;
+  letter-spacing: -0.2px;
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   display: block;
 }
 
 .brand-subtitle {
-  font-size: 11px;
+  font-size: 10.5px;
   color: var(--text-muted);
+  line-height: 1.35;
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   display: block;
 }
 
