@@ -216,6 +216,8 @@ export function deduplicateAndDeclutterPoints(citizenList = [], officialList = [
   return retained;
 }
 
+const DARK_ROADMAP_FILTER = 'brightness(0.7) invert(1) contrast(1.8) hue-rotate(185deg) saturate(0.8) brightness(1.2)';
+
 export default function MapView({ 
   points = [], 
   citizenReports = [],
@@ -360,7 +362,7 @@ export default function MapView({
         .pg-dark-tiles-mode .leaflet-tile-pane,
         .pg-dark-roadmap-tiles,
         .pg-dark-roadmap-tiles img.leaflet-tile {
-          filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%) !important;
+          filter: brightness(0.7) invert(1) contrast(1.8) hue-rotate(185deg) saturate(0.8) brightness(1.2) !important;
         }
         .pg-satellite-mode .leaflet-tile-pane,
         .pg-light-tiles-mode .leaflet-tile-pane,
@@ -484,7 +486,7 @@ export default function MapView({
     const initialTilePane = map.getPane('tilePane');
     if (initialTilePane) {
       if (isDark) {
-        initialTilePane.style.setProperty('filter', 'invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%)', 'important');
+        initialTilePane.style.setProperty('filter', DARK_ROADMAP_FILTER, 'important');
       } else {
         initialTilePane.style.setProperty('filter', 'none', 'important');
       }
@@ -652,7 +654,7 @@ export default function MapView({
     const tilePane = map.getPane('tilePane');
     if (tilePane) {
       if (mapStyle !== 'google-satellite' && isDark) {
-        tilePane.style.setProperty('filter', 'invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%)', 'important');
+        tilePane.style.setProperty('filter', DARK_ROADMAP_FILTER, 'important');
       } else {
         tilePane.style.setProperty('filter', 'none', 'important');
       }
@@ -674,7 +676,7 @@ export default function MapView({
       const tilePane = map.getPane('tilePane');
       if (tilePane) {
         if (mapStyle !== 'google-satellite' && isDark) {
-          tilePane.style.setProperty('filter', 'invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%)', 'important');
+          tilePane.style.setProperty('filter', DARK_ROADMAP_FILTER, 'important');
         } else {
           tilePane.style.setProperty('filter', 'none', 'important');
         }
