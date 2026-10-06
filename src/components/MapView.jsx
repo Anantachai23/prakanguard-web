@@ -6,6 +6,7 @@ import { playClickSound, playPinClickSound, playToggleSound, playGpsSound } from
 import { 
   SAMUT_PRAKAN_DISTRICTS_GEOJSON, 
   SAMUT_PRAKAN_MASK_GEOJSON,
+  SAMUT_PRAKAN_OUTER_BOUNDARY,
   DISTRICT_METADATA,
   isPointInSamutPrakan
 } from '../data/samutPrakanBoundary';
@@ -565,26 +566,32 @@ export default function MapView({
     const maskFillOpacity = (isDark || mapStyle === 'google-satellite') ? 0.90 : 0.84;
 
     if (!maskLayerRef.current) {
+      const outerWorldLatLong = [
+        [-85.0, -180.0],
+        [-85.0, 180.0],
+        [85.0, 180.0],
+        [85.0, -180.0],
+        [-85.0, -180.0]
+      ];
+      const innerHoleLatLong = SAMUT_PRAKAN_OUTER_BOUNDARY.map(c => [c[1], c[0]]);
       const svgMaskRenderer = L.svg({ pane: 'provinceMaskPane' });
-      maskLayerRef.current = L.geoJSON(SAMUT_PRAKAN_MASK_GEOJSON, {
+
+      maskLayerRef.current = L.polygon([outerWorldLatLong, innerHoleLatLong], {
         pane: 'provinceMaskPane',
         renderer: svgMaskRenderer,
-        style: {
-          fillColor: maskFillColor,
-          fillOpacity: maskFillOpacity,
-          color: '#38bdf8',
-          weight: 2.5,
-          opacity: 0.95,
-          fillRule: 'evenodd',
-          className: 'outside-province-mask'
-        },
+        fillColor: maskFillColor,
+        fillOpacity: maskFillOpacity,
+        color: '#38bdf8',
+        weight: 2.5,
+        opacity: 0.95,
+        fillRule: 'evenodd',
+        className: 'outside-province-mask',
         interactive: false
       }).addTo(map);
     } else {
       maskLayerRef.current.setStyle({
         fillColor: maskFillColor,
-        fillOpacity: maskFillOpacity,
-        fillRule: 'evenodd'
+        fillOpacity: maskFillOpacity
       });
     }
 
