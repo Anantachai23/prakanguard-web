@@ -42,263 +42,76 @@
         </div>
       </div>
 
-      <!-- Main Split Card -->
-      <div class="login-split-card">
-        
-        <!-- LEFT COLUMN: Modern Login Form -->
-        <div class="login-left-pane">
-          <div class="login-hero">
-            <h1 class="split-login-title">
-              <span class="text-cyan-gradient">Admin</span> Login
-            </h1>
-            <p class="login-subtitle">กรุณากรอกชื่อผู้ใช้และรหัสผ่านเพื่อเข้าสู่ระบบศูนย์ควบคุม</p>
-          </div>
-
-          <div id="login-error" class="login-error"></div>
-
-          <form id="login-form" autocomplete="off">
-            <!-- Username Input with Floating Outlined Box -->
-            <div class="floating-input-group">
-              <label class="floating-label" for="login-username">ชื่อผู้ใช้งาน (Username)</label>
-              <div class="floating-input-box">
-                <svg class="floating-input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                <input 
-                  type="text" 
-                  id="login-username" 
-                  name="username" 
-                  class="floating-input-field" 
-                  placeholder="admin_prakanguard01" 
-                  autocomplete="off" 
-                  required
-                  value=""
-                >
-              </div>
-            </div>
-
-            <!-- Password Input with Floating Outlined Box & Toggle Visibility -->
-            <div class="floating-input-group">
-              <label class="floating-label" for="login-password">รหัสผ่าน (Password)</label>
-              <div class="floating-input-box">
-                <svg class="floating-input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                <input 
-                  type="password" 
-                  id="login-password" 
-                  name="password" 
-                  class="floating-input-field" 
-                  placeholder="••••••••••••••••" 
-                  autocomplete="new-password" 
-                  required
-                  value=""
-                >
-                <button type="button" id="btn-toggle-login-pass" class="toggle-pass-btn" title="แสดง/ซ่อนรหัสผ่าน">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2.06 12.35a1 1 0 0 1 0-.7 10.75 10.75 0 0 1 19.88 0 1 1 0 0 1 0 .7 10.75 10.75 0 0 1-19.88 0"/><circle cx="12" cy="12" r="3"/></svg>
-                </button>
-              </div>
-            </div>
-
-            <!-- Options Row (Remember Me & Security Indicator) -->
-            <div class="login-options-row">
-              <label class="remember-checkbox-label">
-                <input type="checkbox" id="login-remember-me" checked>
-                <span class="checkbox-custom"></span>
-                <span>จดจำการใช้งาน</span>
-              </label>
-              <div class="security-level-pill">
-                <span class="status-dot pulse" style="background: #10b981;"></span>
-                <span>PBKDF2-SHA256 Encrypted</span>
-              </div>
-            </div>
-
-            <!-- Submit Button -->
-            <button type="submit" id="btn-login-submit" class="split-login-btn">
-              <span>เข้าสู่ระบบ Admin</span>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
-            </button>
-
-            <!-- Accounts Card -->
-            <div class="login-accounts-panel">
-              <div class="login-accounts-title">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
-                <span>บัญชีผู้ดูแลระบบที่ได้รับอนุญาต (Admin Accounts):</span>
-              </div>
-              <div class="login-accounts-grid">
-                <div class="login-acc-chip">
-                  <img src="./assets/img/admin01.jpg" alt="Admin 01" class="chip-avatar">
-                  <div class="chip-info">
-                    <span class="chip-name">Admin 01</span>
-                    <span class="chip-user">admin_prakanguard01</span>
-                  </div>
-                </div>
-                <div class="login-acc-chip">
-                  <img src="./assets/img/admin02.jpg" alt="Admin 02" class="chip-avatar">
-                  <div class="chip-info">
-                    <span class="chip-name">Admin 02</span>
-                    <span class="chip-user">admin_prakanguard02</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div class="login-legal-notice">
-              🛡️ <strong>สงวนสิทธิ์:</strong> ระบบศูนย์บัญชาการอุทกภัยสมุทรปราการ เฉพาะ Admin 01 และ Admin 02 เท่านั้น
-            </div>
-          </form>
+      <!-- Main Login Card (Clean, Focused, Secure) -->
+      <div class="login-card-clean">
+        <div class="login-hero">
+          <h1 class="split-login-title">
+            <span class="text-cyan-gradient">Admin</span> Login
+          </h1>
+          <p class="login-subtitle">กรุณากรอกชื่อผู้ใช้และรหัสผ่านเพื่อเข้าสู่ระบบศูนย์ควบคุม</p>
         </div>
 
-        <!-- RIGHT COLUMN: Perspective Dashboard Mockup (Matching media_1791312293807.png) -->
-        <div class="login-right-pane">
-          <div class="mock-dashboard-wrapper">
-            
-            <!-- Mock Header -->
-            <div class="mock-dash-header">
-              <div class="mock-dash-left">
-                <div class="mock-logo-pill">
-                  <span class="mock-wave">~</span>
-                  <span>PrakanGuard</span>
-                </div>
-                <div class="mock-dash-titles">
-                  <div class="mock-title">Admin Dashboard</div>
-                  <div class="mock-breadcrumbs">OVERVIEW &bull; COMMAND &bull; SAMUT PRAKAN</div>
-                </div>
-              </div>
-              <div class="mock-dash-right">
-                <div class="mock-admin-pill">
-                  <img src="./assets/img/admin01.jpg" alt="Admin 01" class="mock-avatar">
-                  <span class="status-dot pulse" style="background: #10b981;"></span>
-                </div>
-              </div>
+        <div id="login-error" class="login-error"></div>
+
+        <form id="login-form" autocomplete="off">
+          <!-- Username Input with Floating Outlined Box -->
+          <div class="floating-input-group">
+            <label class="floating-label" for="login-username">ชื่อผู้ใช้งาน (Username)</label>
+            <div class="floating-input-box">
+              <svg class="floating-input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              <input 
+                type="text" 
+                id="login-username" 
+                name="username" 
+                class="floating-input-field" 
+                placeholder="กรอกชื่อผู้ใช้แอดมิน" 
+                autocomplete="off" 
+                required
+                value=""
+              >
             </div>
-
-            <!-- Mock KPI Grid (4 Cards) -->
-            <div class="mock-kpi-grid">
-              <div class="mock-kpi-card">
-                <div class="mock-kpi-header">
-                  <span>จุดเฝ้าระวัง 6 อำเภอ</span>
-                  <span class="mock-kpi-badge badge-teal">+2 ใหม่</span>
-                </div>
-                <div class="mock-kpi-val">24</div>
-                <div class="mock-kpi-sub">พื้นที่เสี่ยงจุดอุทกภัย</div>
-              </div>
-
-              <div class="mock-kpi-card">
-                <div class="mock-kpi-header">
-                  <span>รายงานจากประชาชน</span>
-                  <span class="mock-kpi-badge badge-amber">สด</span>
-                </div>
-                <div class="mock-kpi-val">5</div>
-                <div class="mock-kpi-sub">รอเจ้าหน้าที่ตรวจสอบ</div>
-              </div>
-
-              <div class="mock-kpi-card">
-                <div class="mock-kpi-header">
-                  <span>ผู้เข้าชมสดตอนนี้</span>
-                  <span class="mock-kpi-badge badge-cyan"><span class="status-dot pulse"></span> สด</span>
-                </div>
-                <div class="mock-kpi-val">142</div>
-                <div class="mock-kpi-sub">อุปกรณ์กำลังออนไลน์</div>
-              </div>
-
-              <div class="mock-kpi-card">
-                <div class="mock-kpi-header">
-                  <span>ระดับน้ำเฉลี่ย</span>
-                  <span class="mock-kpi-badge badge-green">ปกติ</span>
-                </div>
-                <div class="mock-kpi-val">+18<small style="font-size: 13px; font-weight: normal; margin-left: 2px;">ซม.</small></div>
-                <div class="mock-kpi-sub">ระดับตรวจวัดตามเกณฑ์</div>
-              </div>
-            </div>
-
-            <!-- Mock Wave Spline Chart & Donut Telemetry -->
-            <div class="mock-chart-row">
-              <div class="mock-chart-card">
-                <div class="mock-chart-head">
-                  <div>
-                    <div class="mock-chart-title">ระดับน้ำ & สถานการณ์ (Flood Telemetry)</div>
-                    <div class="mock-chart-sub">แนวโน้มความเสี่ยงอุทกภัย 24 ชม.</div>
-                  </div>
-                  <div class="mock-filter-tabs">
-                    <span class="mock-tab active">Daily</span>
-                    <span class="mock-tab">Weekly</span>
-                    <span class="mock-tab">Monthly</span>
-                  </div>
-                </div>
-
-                <!-- Spline SVG Waves -->
-                <div class="mock-svg-container">
-                  <svg viewBox="0 0 360 110" preserveAspectRatio="none" class="mock-wave-svg">
-                    <defs>
-                      <linearGradient id="waveGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stop-color="#22d3ee" stop-opacity="0.45"/>
-                        <stop offset="100%" stop-color="#22d3ee" stop-opacity="0.0"/>
-                      </linearGradient>
-                      <linearGradient id="lineGrad" x1="0" y1="0" x2="1" y2="0">
-                        <stop offset="0%" stop-color="#10b981"/>
-                        <stop offset="60%" stop-color="#06b6d4"/>
-                        <stop offset="100%" stop-color="#3b82f6"/>
-                      </linearGradient>
-                    </defs>
-                    <!-- Background Grid Lines -->
-                    <line x1="0" y1="25" x2="360" y2="25" stroke="rgba(255,255,255,0.05)" stroke-dasharray="3 3"/>
-                    <line x1="0" y1="55" x2="360" y2="55" stroke="rgba(255,255,255,0.05)" stroke-dasharray="3 3"/>
-                    <line x1="0" y1="85" x2="360" y2="85" stroke="rgba(255,255,255,0.05)" stroke-dasharray="3 3"/>
-                    <!-- Area Fill -->
-                    <path d="M 0 95 C 40 85, 70 50, 110 65 C 150 80, 180 35, 230 40 C 275 45, 310 75, 360 55 L 360 110 L 0 110 Z" fill="url(#waveGrad)"/>
-                    <!-- Stroke Curve -->
-                    <path d="M 0 95 C 40 85, 70 50, 110 65 C 150 80, 180 35, 230 40 C 275 45, 310 75, 360 55" fill="none" stroke="url(#lineGrad)" stroke-width="2.5"/>
-                    <!-- Pulse Peak Point -->
-                    <circle cx="230" cy="40" r="4.5" fill="#38bdf8" stroke="#ffffff" stroke-width="2"/>
-                  </svg>
-                  <div class="mock-x-labels">
-                    <span>00:00</span>
-                    <span>04:00</span>
-                    <span>08:00</span>
-                    <span>12:00</span>
-                    <span>16:00</span>
-                    <span>20:00</span>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Radial Gauge Card -->
-              <div class="mock-gauge-card">
-                <div class="mock-gauge-head">System Readiness</div>
-                <div class="mock-ring-wrap">
-                  <svg viewBox="0 0 100 100" class="mock-ring-svg">
-                    <circle cx="50" cy="50" r="40" stroke="rgba(255,255,255,0.08)" stroke-width="9" fill="none"/>
-                    <circle cx="50" cy="50" r="40" stroke="#06b6d4" stroke-width="9" stroke-linecap="round" fill="none" stroke-dasharray="251.2" stroke-dashoffset="35" transform="rotate(-90 50 50)"/>
-                  </svg>
-                  <div class="mock-ring-center">
-                    <span class="mock-ring-num">98.4%</span>
-                    <span class="mock-ring-lbl">Active</span>
-                  </div>
-                </div>
-                <div class="mock-gauge-sub">ระบบพร้อมรับมือ 100%</div>
-              </div>
-            </div>
-
-            <!-- Mock Bottom Row: Active Command Personnel -->
-            <div class="mock-team-row">
-              <div class="mock-team-cell">
-                <img src="./assets/img/admin01.jpg" alt="Admin 01" class="mock-team-avatar">
-                <div>
-                  <div class="mock-team-name">Admin 01</div>
-                  <div class="mock-team-role">ศูนย์บัญชาการ &bull; กำลังปฏิบัติหน้าที่</div>
-                </div>
-                <span class="mock-status-chip online"><span class="status-dot pulse"></span> ออนไลน์</span>
-              </div>
-              <div class="mock-team-cell">
-                <img src="./assets/img/admin02.jpg" alt="Admin 02" class="mock-team-avatar">
-                <div>
-                  <div class="mock-team-name">Admin 02</div>
-                  <div class="mock-team-role">หน่วยเคลื่อนที่เร็ว &bull; เฝ้าระวัง</div>
-                </div>
-                <span class="mock-status-chip standby">สแตนด์บาย</span>
-              </div>
-            </div>
-
           </div>
-        </div>
 
+          <!-- Password Input with Floating Outlined Box & Toggle Visibility -->
+          <div class="floating-input-group">
+            <label class="floating-label" for="login-password">รหัสผ่าน (Password)</label>
+            <div class="floating-input-box">
+              <svg class="floating-input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              <input 
+                type="password" 
+                id="login-password" 
+                name="password" 
+                class="floating-input-field" 
+                placeholder="กรอกรหัสผ่านเพื่อเข้าสู่ระบบ" 
+                autocomplete="new-password" 
+                required
+                value=""
+              >
+              <button type="button" id="btn-toggle-login-pass" class="toggle-pass-btn" title="แสดง/ซ่อนรหัสผ่าน">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2.06 12.35a1 1 0 0 1 0-.7 10.75 10.75 0 0 1 19.88 0 1 1 0 0 1 0 .7 10.75 10.75 0 0 1-19.88 0"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Options Row (Remember Me & Security Indicator) -->
+          <div class="login-options-row">
+            <label class="remember-checkbox-label">
+              <input type="checkbox" id="login-remember-me" checked>
+              <span class="checkbox-custom"></span>
+              <span>จดจำการใช้งาน</span>
+            </label>
+            <div class="security-level-pill">
+              <span class="status-dot pulse" style="background: #10b981;"></span>
+              <span>PBKDF2-SHA256 Encrypted</span>
+            </div>
+          </div>
+
+          <!-- Submit Button -->
+          <button type="submit" id="btn-login-submit" class="split-login-btn">
+            <span>เข้าสู่ระบบ Admin</span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+          </button>
+        </form>
       </div>
     </div>
   </div>

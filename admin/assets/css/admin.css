@@ -1914,7 +1914,7 @@ body {
 
 .login-wrapper {
   width: 100%;
-  max-width: 1160px;
+  max-width: 500px;
   margin: auto;
   display: flex;
   flex-direction: column;
@@ -1972,29 +1972,19 @@ body {
   text-transform: uppercase;
 }
 
-/* Main Split Card */
-.login-split-card {
-  display: grid;
-  grid-template-columns: 1.05fr 1.35fr;
-  gap: 36px;
-  border-radius: 28px;
+/* Main Clean Centered Login Card */
+.login-card-clean {
+  width: 100%;
+  border-radius: 26px;
   background: linear-gradient(155deg, rgba(14, 23, 38, 0.96) 0%, rgba(6, 11, 18, 0.98) 100%);
-  border: 1px solid rgba(56, 189, 248, 0.16);
+  border: 1.5px solid rgba(56, 189, 248, 0.2);
   box-shadow: 
     0 30px 80px -15px rgba(0, 0, 0, 0.85),
-    0 0 50px rgba(6, 182, 212, 0.08),
+    0 0 50px rgba(6, 182, 212, 0.1),
     inset 0 1px 0 rgba(255, 255, 255, 0.08);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
-  overflow: hidden;
-}
-
-/* LEFT COLUMN: Modern Form */
-.login-left-pane {
-  padding: 44px 38px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
+  padding: 42px 38px;
 }
 
 .split-login-title {
@@ -2667,7 +2657,7 @@ body {
   color: #0f172a;
 }
 
-[data-theme="light"] .login-split-card {
+[data-theme="light"] .login-card-clean {
   background: #ffffff;
   border-color: #cbd5e1;
   box-shadow: 0 20px 50px -10px rgba(15, 23, 42, 0.15);
@@ -2699,60 +2689,19 @@ body {
   color: #334155;
 }
 
-[data-theme="light"] .login-accounts-panel {
-  background: #f1f5f9;
-  border-color: #cbd5e1;
-}
-
-[data-theme="light"] .login-acc-chip {
-  background: #ffffff;
-  border-color: #cbd5e1;
-}
-
-[data-theme="light"] .chip-name {
-  color: #0f172a;
-}
-
-[data-theme="light"] .login-legal-notice {
-  background: #f8fafc;
-  color: #475569;
-}
-
 /* Responsive Rules */
-@media (max-width: 960px) {
-  .login-split-card {
-    grid-template-columns: 1fr;
-    gap: 0;
-  }
-  
-  .login-left-pane {
-    padding: 32px 24px;
-  }
-
-  .login-right-pane {
-    padding: 0 24px 32px 24px;
-  }
-}
-
 @media (max-width: 480px) {
   #login-wall {
     padding: 16px 12px;
   }
 
-  .login-left-pane {
-    padding: 24px 16px;
+  .login-card-clean {
+    padding: 28px 20px;
+    border-radius: 20px;
   }
 
   .split-login-title {
     font-size: 28px;
-  }
-
-  .login-accounts-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .login-right-pane {
-    display: none;
   }
 }
 
