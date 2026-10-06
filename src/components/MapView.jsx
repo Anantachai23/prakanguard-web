@@ -353,13 +353,26 @@ export default function MapView({
           backdrop-filter: blur(5px);
           -webkit-backdrop-filter: blur(5px);
         }
+        /* Dark Theme Road Map ('ถนน') Styling (ดาวเทียมคงเดิมไม่เปลี่ยนแปลง) */
+        .pg-dark-roadmap-tiles,
+        .pg-dark-roadmap-tiles img.leaflet-tile {
+          filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%) !important;
+        }
+        .pg-light-roadmap-tiles,
+        .pg-light-roadmap-tiles img.leaflet-tile {
+          filter: none !important;
+        }
+        .pg-satellite-tiles,
+        .pg-satellite-tiles img.leaflet-tile {
+          filter: none !important;
+        }
       `;
       document.head.appendChild(styleEl);
     }
   }, []);
 
   // Robust Tile Config Helper with Fallbacks
-  const getTileConfig = (style) => {
+  const getTileConfig = (style, isDarkTheme = false) => {
     if (style === 'google-satellite') {
       return {
         url: 'https://mt{s}.google.com/vt/lyrs=y&hl=th&x={x}&y={y}&z={z}',
@@ -371,11 +384,12 @@ export default function MapView({
           updateWhenZooming: false,
           updateWhenIdle: false,
           crossOrigin: true,
-          attribution: '&copy; ภาพถ่ายดาวเทียม Google / Esri'
+          attribution: '&copy; ภาพถ่ายดาวเทียม Google / Esri',
+          className: 'pg-satellite-tiles'
         }
       };
     }
-    // Default: Google Roadmap (คมชัด โหลดไว)
+    // Default: Google Roadmap (ถนน) — เมื่อเป็นธีมสีดำ ให้ปรับแผนที่ถนนเป็นสีดำด้วย
     return {
       url: 'https://mt{s}.google.com/vt/lyrs=m&hl=th&x={x}&y={y}&z={z}',
       fallbackUrl: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',
@@ -386,7 +400,8 @@ export default function MapView({
         updateWhenZooming: false,
         updateWhenIdle: false,
         crossOrigin: true,
-        attribution: '&copy; Google Maps / Esri'
+        attribution: '&copy; Google Maps / Esri',
+        className: isDarkTheme ? 'pg-dark-roadmap-tiles' : 'pg-light-roadmap-tiles'
       }
     };
   };
@@ -586,14 +601,14 @@ export default function MapView({
       layer.bindTooltip(`${feature.properties.districtName}`, {
         permanent: true,
         direction: 'center',
-        className: 'bg-white/95 text-slate-800 font-prompt text-[11px] border border-slate-300 px-2 py-0.5 rounded-lg shadow-sm font-bold'
+        className: isDark
+          ? 'bg-slate-900/90 text-slate-100 font-prompt text-[11px] border border-slate-700 px-2 py-0.5 rounded-lg shadow-sm font-bold'
+          : 'bg-white/95 text-slate-800 font-prompt text-[11px] border border-slate-300 px-2 py-0.5 rounded-lg shadow-sm font-bold'
       });
-
-
 
       districtLayersRef.current.push(layer);
     });
-  }, [selectedDistrict, onSelectDistrict]);
+  }, [selectedDistrict, onSelectDistrict, isDark]);
 
   // Pan & Zoom Smoothly when selectedDistrict changes
   useEffect(() => {
@@ -622,7 +637,7 @@ export default function MapView({
       map.removeLayer(tileLayerRef.current);
     }
 
-    const config = getTileConfig(mapStyle);
+    const config = getTileConfig(mapStyle, isDark);
     tileLayerRef.current = createTileLayer(config).addTo(map);
 
     if (maskLayerRef.current && maskLayerRef.current.bringToFront) {
@@ -631,7 +646,32 @@ export default function MapView({
     districtLayersRef.current.forEach(layer => layer.bringToFront());
 
     map.invalidateSize();
-  }, [mapStyle]);
+  }, [mapStyle, isDark]);
+
+  // Zero-flicker Instant Theme Transition for Map Tiles & Background
+  useEffect(() => {
+    if (mapContainerRef.current) {
+      mapContainerRef.current.style.backgroundColor = (isDark || mapStyle === 'google-satellite') ? '#0b132b' : '#e6ecf2';
+    }
+    if (tileLayerRef.current) {
+      const container = tileLayerRef.current.getContainer();
+      if (container) {
+        if (mapStyle !== 'google-satellite' && isDark) {
+          container.classList.add('pg-dark-roadmap-tiles');
+          container.classList.remove('pg-light-roadmap-tiles', 'pg-satellite-tiles');
+        } else {
+          container.classList.remove('pg-dark-roadmap-tiles');
+          if (mapStyle === 'google-satellite') {
+            container.classList.add('pg-satellite-tiles');
+            container.classList.remove('pg-light-roadmap-tiles');
+          } else {
+            container.classList.add('pg-light-roadmap-tiles');
+            container.classList.remove('pg-satellite-tiles');
+          }
+        }
+      }
+    }
+  }, [isDark, mapStyle]);
 
   // Expose global point selection for pin taps & external triggers
   useEffect(() => {
@@ -1004,13 +1044,13 @@ export default function MapView({
   };
 
   return (
-    <div className="relative w-full h-full min-h-[500px] overflow-hidden bg-slate-100">
+    <div className={`relative w-full h-full min-h-[500px] overflow-hidden ${isDark ? 'bg-slate-950' : 'bg-slate-100'}`}>
       
       {/* Leaflet Map Canvas */}
       <div 
         ref={mapContainerRef} 
         className="absolute inset-0 w-full h-full z-0"
-        style={{ width: '100%', height: '100%', background: '#f8fafc' }}
+        style={{ width: '100%', height: '100%', background: isDark ? '#0b132b' : '#f8fafc' }}
       ></div>
 
       {/* 5-MIN AUTO-REFRESH READ-ONLY BADGE (TOP CENTER OF MAP - STRICTLY NON-CLICKABLE AS REQUESTED) */}
