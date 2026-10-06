@@ -860,7 +860,7 @@ export default function App() {
         }
         if (h === '#admin') setIsAdminModalOpen(true);
         if (h === '#search') setIsMobileSheetOpen(true);
-        if (h === '#report') setIsCitizenReportOpen(true);
+        if (h === '#report') setIsCitizenReportModalOpen(true);
         if (h === '#point') setSelectedPoint(points[0] || null);
       }
     };
