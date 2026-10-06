@@ -2703,16 +2703,14 @@ export default function App() {
               <button
                 type="button"
                 onClick={() => {
-                  playModalOpenSound();
+                  playTabSound();
                   setDesktopSidebarTab('weather');
-                  setIsOfficialModalOpen(true);
                 }}
-                className={`py-1.5 px-2 rounded-md font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer select-none active:scale-95 ${
+                className={`py-1.5 px-2 rounded-md font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                   desktopSidebarTab === 'weather'
                     ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-cyan-300 shadow-xs'
                     : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                 }`}
-                title="คลิกเพื่อดูข้อมูลพยากรณ์สภาพอากาศและเรดาร์ตรวจฝน AI ละเอียด"
               >
                 <CloudRain className="w-3.5 h-3.5 text-cyan-500" />
                 <span className="truncate">พยากรณ์สภาพอากาศ</span>
@@ -2857,25 +2855,6 @@ export default function App() {
             {/* TAB 2: WEATHER FORECAST (พยากรณ์สภาพอากาศ) */}
             {desktopSidebarTab === 'weather' && (
               <div className="space-y-3">
-                {/* Direct Action Button: Open Detailed Weather & Radar Forecast Modal */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    playModalOpenSound();
-                    setIsOfficialModalOpen(true);
-                  }}
-                  className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-bold text-xs flex items-center justify-between shadow-sm transition-all cursor-pointer active:scale-[0.98]"
-                  title="คลิกเพื่อดูข้อมูลพยากรณ์อากาศและเรดาร์ตรวจฝน TMD อย่างละเอียด"
-                >
-                  <div className="flex items-center gap-2">
-                    <CloudRain className="w-4 h-4 text-white" />
-                    <span>ดูพยากรณ์อากาศ & เรดาร์ฝนละเอียด</span>
-                  </div>
-                  <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded-full font-mono font-bold">
-                    AI + TMD ↗
-                  </span>
-                </button>
-
                 {/* 24-Hour Rain Forecast Card */}
                 <RainForecast24hCard
                   forecast={weather?.forecast24h}

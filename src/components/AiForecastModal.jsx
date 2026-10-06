@@ -179,7 +179,7 @@ export default function AiForecastModal({ isOpen, onClose, userDistrict, theme =
                   <span>เวลาที่มีโอกาสฝนตกวันนี้</span>
                 </span>
                 <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${
-                  isRainingNow
+                  isRainingNow || matchedDistrict?.isRainingNow
                     ? 'bg-rose-500 text-white'
                     : (userDistrictProb || maxProb) >= 60
                     ? 'bg-amber-500 text-white'
@@ -189,17 +189,17 @@ export default function AiForecastModal({ isOpen, onClose, userDistrict, theme =
                 </span>
               </div>
               <div className={`text-lg sm:text-xl font-black break-words leading-snug ${isDark ? 'text-cyan-300' : 'text-blue-700'}`}>
-                {rainTimeToday}
+                {matchedDistrict?.timeWindow ? matchedDistrict.timeWindow : rainTimeToday}
               </div>
               <div className={`text-xs mt-1 font-medium break-words leading-relaxed ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
-                {weather?.weatherDesc || 'มีเมฆเป็นส่วนมาก'} • อุณหภูมิ {weather?.temp || 32}°C
+                {matchedDistrict?.durationText ? `${matchedDistrict.durationText} • ` : ''}{matchedDistrict?.rainIntensityText ? `${matchedDistrict.rainIntensityText} • ` : ''}{weather?.weatherDesc || 'มีเมฆเป็นส่วนมาก'} • อุณหภูมิ {matchedDistrict?.temperature || weather?.temp || 30}°C
               </div>
             </div>
 
             {/* 6 Districts Simple Breakdown */}
             <div>
               <h4 className={`text-xs font-bold mb-2 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
-                คาดการณ์โอกาสเกิดฝนและช่วงเวลาแยกตามอำเภอ:
+                คาดการณ์โอกาสเกิดฝนและช่วงเวลาแยกตามอำเภอ (ความแม่นยำสูง):
               </h4>
               <div className="space-y-2">
                 {districtAnalysis.map((d, i) => {
@@ -220,6 +220,16 @@ export default function AiForecastModal({ isOpen, onClose, userDistrict, theme =
                           {d.temperature && (
                             <span className="text-[10px] font-mono text-slate-500 dark:text-slate-400">
                               {d.temperature}°C
+                            </span>
+                          )}
+                          {d.isRainingNow && (
+                            <span className="text-[9.5px] px-1.5 py-0.2 rounded-md font-bold bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/30">
+                              ตกขณะนี้
+                            </span>
+                          )}
+                          {d.rainIntensityText && !d.isRainingNow && (
+                            <span className="text-[9.5px] px-1.5 py-0.2 rounded-md font-medium bg-blue-500/10 text-blue-600 dark:text-cyan-400">
+                              {d.rainIntensityText}
                             </span>
                           )}
                         </div>

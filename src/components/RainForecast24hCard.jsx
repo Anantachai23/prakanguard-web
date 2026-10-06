@@ -287,27 +287,40 @@ export default function RainForecast24hCard({
                       : (isDark ? 'bg-slate-850/50 border-slate-800 text-slate-300 hover:bg-slate-800/60' : 'bg-slate-50/80 border-slate-200 text-slate-700 hover:bg-slate-100/70')
                   }`}
                 >
-                  {/* Left: Icon + Full District Name + Temperature */}
-                  <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1">
-                    <span className="text-sm shrink-0">{d.icon || '🌦️'}</span>
-                    <span className={`font-semibold text-xs whitespace-nowrap ${
-                      isDark ? 'text-slate-100' : 'text-slate-900'
-                    } ${isMatched ? 'font-bold text-blue-700 dark:text-cyan-300' : ''}`}>
-                      {fullName}
-                    </span>
-                    {d.temperature && (
-                      <span className="text-[10.5px] font-mono font-medium text-slate-500 dark:text-slate-400 shrink-0">
-                        {d.temperature}°C
-                      </span>
-                    )}
-                    {/* Time Window (Shown neatly on horizontal line without line wrap) */}
-                    <span className="hidden xl:inline text-[10.5px] text-slate-500 dark:text-slate-400 truncate">
-                      • {d.timeWindow || 'ไม่มีแนวโน้มฝนตกหนัก'}
-                    </span>
+                  {/* Left: Icon + Full District Name + Temperature + Accurate Time Window */}
+                  <div className="flex items-start gap-1.5 sm:gap-2 min-w-0 flex-1">
+                    <span className="text-sm shrink-0 mt-0.5">{d.icon || '🌦️'}</span>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className={`font-semibold text-xs whitespace-nowrap ${
+                          isDark ? 'text-slate-100' : 'text-slate-900'
+                        } ${isMatched ? 'font-bold text-blue-700 dark:text-cyan-300' : ''}`}>
+                          {fullName}
+                        </span>
+                        {d.temperature && (
+                          <span className="text-[10px] font-mono font-medium text-slate-500 dark:text-slate-400 shrink-0">
+                            {d.temperature}°C
+                          </span>
+                        )}
+                        {d.isRainingNow && (
+                          <span className="text-[9px] px-1.5 py-0.2 rounded font-bold bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/30 shrink-0">
+                            ตกขณะนี้
+                          </span>
+                        )}
+                        {d.rainIntensityText && !d.isRainingNow && d.hasForecastRain && (
+                          <span className="text-[9px] px-1 py-0.2 rounded text-slate-500 dark:text-slate-400 font-medium">
+                            {d.rainIntensityText}
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-[10px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
+                        ⏱️ {d.timeWindow || 'ไม่มีแนวโน้มฝนตกหนัก'} {d.durationText ? `(${d.durationText})` : ''}
+                      </div>
+                    </div>
                   </div>
 
                   {/* Right: Rain Probability Badge */}
-                  <div className="flex items-center gap-1.5 shrink-0">
+                  <div className="flex items-center gap-1.5 shrink-0 self-center">
                     <span className={`text-[10.5px] px-2 py-0.5 rounded-md font-bold border shrink-0 ${
                       d.probability >= 60 
                         ? (isDark ? 'bg-amber-950/80 text-amber-300 border-amber-800' : 'bg-amber-50 text-amber-900 border-amber-300')

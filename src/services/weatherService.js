@@ -214,77 +214,112 @@ export async function getLiveSamutPrakanWeather(forceRefresh = false) {
       const currentProb = next24[0] ? next24[0].probability : 0;
       const currentCode = current.weather_code !== undefined ? current.weather_code : (next24[0] ? next24[0].weatherCode : 2);
 
-      // ตรวจสอบชั่วโมงปัจจุบันเพื่อเริ่มต้นวิเคราะห์ช่วงเวลาและระยะเวลาต่อเนื่อง
-      const startHourIdx = currentHour;
+      // ตรวจสอบดัชนีชั่วโมงเริ่มต้นตามเวลาจริง (Thailand UTC+7)
+      const startHourIdx = startIdx;
 
-      // ฟังก์ชันวิเคราะห์ช่วงเวลาและระยะเวลาตกต่อเนื่องจากข้อมูลรายชั่วโมง (Open-Meteo)
-      const analyzeRainEpisode = (hourlyObj, fromHour) => {
+      // ฟังก์ชันวิเคราะห์ช่วงเวลาและระยะเวลาตกต่อเนื่องอย่างแม่นยำสูง (High-Precision District Rain Analyzer)
+      const analyzeDistrictRainAccurately = (hourlyObj, fromHour, currentPrecip) => {
         const times = hourlyObj?.time || [];
         const precips = hourlyObj?.precipitation || [];
         const probs = hourlyObj?.precipitation_probability || [];
         const codes = hourlyObj?.weather_code || [];
 
-        let firstIdx = -1;
-        for (let i = fromHour; i < Math.min(fromHour + 12, times.length); i++) {
+        const isRainingRightNow = (currentPrecip && currentPrecip > 0) || 
+          (precips[fromHour] >= 0.3 && [53, 55, 61, 63, 65, 80, 81, 82, 95, 96].includes(codes[fromHour]));
+
+        // ค้นหาช่วงเวลาที่มีฝนตกจริงตามแบบจำลอง (precipitation >= 0.2 มม. หรือฝนฟ้าคะนองรหัส 61-96)
+        const rainHours = [];
+        for (let i = fromHour; i < Math.min(fromHour + 14, times.length); i++) {
           const p = precips[i] || 0;
           const prob = probs[i] || 0;
           const code = codes[i] || 0;
-          if ((p >= 0.2 && prob >= 35) || prob >= 50 || [61, 63, 65, 80, 81, 82, 95, 96].includes(code)) {
-            firstIdx = i;
-            break;
+          const hasRain = p >= 0.2 || (p >= 0.1 && prob >= 85) || [61, 63, 65, 80, 81, 82, 95, 96].includes(code);
+          if (hasRain) {
+            rainHours.push({
+              idx: i,
+              time: times[i].substring(11, 16),
+              precip: p,
+              prob,
+              code
+            });
           }
         }
 
-        if (firstIdx === -1) {
+        if (rainHours.length === 0) {
           return {
             hasForecastRain: false,
-            timeWindow: 'ไม่มีแนวโน้มฝนตก',
+            isRainingNow: isRainingRightNow,
+            timeWindow: 'ไม่มีแนวโน้มฝนตกหนัก',
             durationText: 'ไม่มีแนวโน้มฝนตกต่อเนื่อง',
-            durationHours: 0
+            peakPrecip: 0,
+            peakProbability: probs[fromHour] ? Math.round(probs[fromHour]) : 20,
+            rainIntensityText: 'ท้องฟ้าโปร่ง/เมฆบางส่วน'
           };
         }
 
-        let lastIdx = firstIdx;
-        for (let i = firstIdx + 1; i < Math.min(firstIdx + 8, times.length); i++) {
-          const p = precips[i] || 0;
-          const prob = probs[i] || 0;
-          const code = codes[i] || 0;
-          const isContinuing = (p >= 0.2 && prob >= 35) || prob >= 45 || [61, 63, 65, 80, 81, 82, 95, 96].includes(code);
-          if (isContinuing) {
-            lastIdx = i;
+        // รวมกลุ่มฝนที่ตกต่อเนื่อง (Gap <= 2 ชั่วโมงถือเป็นกลุ่มฝนระลอกเดียวกัน)
+        const clusters = [];
+        let currentCluster = [rainHours[0]];
+        for (let i = 1; i < rainHours.length; i++) {
+          const gap = rainHours[i].idx - rainHours[i - 1].idx;
+          if (gap <= 2) {
+            currentCluster.push(rainHours[i]);
           } else {
-            break;
+            clusters.push(currentCluster);
+            currentCluster = [rainHours[i]];
           }
         }
+        clusters.push(currentCluster);
 
-        const durationHours = lastIdx - firstIdx + 1;
-        const startStr = times[firstIdx].substring(11, 16);
-        const endHourNum = (parseInt(times[lastIdx].substring(11, 13), 10) + 1) % 24;
-        const endStr = String(endHourNum).padStart(2, '0') + ':00';
-        const episodeProbs = probs.slice(firstIdx, lastIdx + 1);
-        const peakProb = episodeProbs.length > 0 ? Math.max(...episodeProbs) : (probs[firstIdx] || 50);
+        // ให้ความสำคัญกับกลุ่มฝนระลอกหลักที่ใกล้ที่สุด
+        const primaryCluster = clusters[0];
+        const firstItem = primaryCluster[0];
+        const lastItem = primaryCluster[primaryCluster.length - 1];
+
+        const startHourStr = firstItem.time;
+        const endHourNum = (parseInt(lastItem.time.split(':')[0], 10) + 1) % 24;
+        const endHourStr = String(endHourNum).padStart(2, '0') + ':00';
+        const durationCount = primaryCluster.length;
 
         let durationText = '';
-        if (durationHours === 1) {
-          durationText = 'คาดการณ์ตกต่อเนื่อง ~30 - 45 นาที';
-        } else if (durationHours === 2) {
+        if (durationCount === 1) {
+          durationText = 'คาดการณ์ตกช่วงสั้น ~30 - 45 นาที';
+        } else if (durationCount === 2) {
           durationText = 'คาดการณ์ตกต่อเนื่อง ~1 - 2 ชั่วโมง';
-        } else if (durationHours === 3) {
+        } else if (durationCount === 3) {
           durationText = 'คาดการณ์ตกต่อเนื่อง ~2 - 3 ชั่วโมง';
         } else {
-          durationText = `คาดการณ์ตกต่อเนื่อง ~${durationHours} ชั่วโมง`;
+          durationText = `คาดการณ์ตกต่อเนื่อง ~${durationCount} ชั่วโมง`;
+        }
+
+        const clusterMaxPrecip = Math.max(...primaryCluster.map(h => h.precip));
+        const clusterMaxProb = Math.max(...primaryCluster.map(h => h.prob));
+
+        let timeWindow = `~${startHourStr} - ${endHourStr} น.`;
+        if (clusters.length > 1) {
+          const nextClusterStart = clusters[1][0].time;
+          timeWindow += ` (และช่วงดึก ~${nextClusterStart} น.)`;
+        }
+
+        let rainIntensityText = 'ฝนตกเล็กน้อย';
+        if (clusterMaxPrecip >= 4.0 || primaryCluster.some(h => [95, 96].includes(h.code))) {
+          rainIntensityText = 'เสี่ยงพายุฝนฟ้าคะนอง';
+        } else if (clusterMaxPrecip >= 1.0) {
+          rainIntensityText = 'ฝนปานกลาง';
         }
 
         return {
           hasForecastRain: true,
-          timeWindow: `~${startStr} - ${endStr} น.`,
+          isRainingNow: isRainingRightNow,
+          timeWindow,
           durationText,
-          durationHours,
-          peakProbability: Math.round(peakProb)
+          peakPrecip: clusterMaxPrecip,
+          peakProbability: Math.round(clusterMaxProb),
+          rainIntensityText
         };
       };
 
-      const provinceRainEpisode = analyzeRainEpisode(hourly, startHourIdx);
+      const provinceRainEpisode = analyzeDistrictRainAccurately(hourly, startIdx, current.precipitation);
 
       let rainStatusTitle = "ไม่มีฝน";
       if (maxProb >= 70) {
@@ -308,7 +343,7 @@ export async function getLiveSamutPrakanWeather(forceRefresh = false) {
         next24[18] ? next24[18].time : "17:00"
       ];
 
-      // วิเคราะห์กลุ่มฝน 6 อำเภอแบบสดจริงจาก Open-Meteo Multi-Coordinate Telemetry
+      // วิเคราะห์กลุ่มฝน 6 อำเภอแบบสดจริงและแม่นยำสูงแยกรายพิกัด
       districtRainAnalysis = DISTRICT_COORDINATES.map((dist, idx) => {
         const dData = Array.isArray(data) ? (data[idx] || data[0]) : data;
         const dCur = dData.current || {};
@@ -319,39 +354,29 @@ export async function getLiveSamutPrakanWeather(forceRefresh = false) {
         const code = dCur.weather_code !== undefined ? dCur.weather_code : 2;
         
         // คำนวณช่วงเวลาที่จะตก และระยะเวลาตกต่อเนื่องของอำเภอนี้เฉพาะพิกัด
-        const dRainEpisode = analyzeRainEpisode(dHourly, startHourIdx);
+        const dRainEpisode = analyzeDistrictRainAccurately(dHourly, startIdx, precip);
 
-        // ดึงความน่าจะเป็นจริงเฉพาะอำเภอนี้ (พิกัดเฉพาะจุดจากแบบจำลอง Open-Meteo)
-        const dHourlyProbs = dHourly.precipitation_probability || [];
-        const currentHourProb = dHourlyProbs[startHourIdx] !== undefined ? dHourlyProbs[startHourIdx] : 0;
-        const upcomingSlice = dHourlyProbs.slice(startHourIdx, startHourIdx + 4);
-        const upcomingPeak = upcomingSlice.length > 0 ? Math.max(...upcomingSlice, currentHourProb) : currentHourProb;
-
-        // ถ้ามีช่วงเวลาฝนตก ใช้ความน่าจะเป็นจริงของเหตุการณ์ฝนนั้น ถ้าไม่มี ให้ใช้ค่าพยากรณ์จริงตามพิกัดชั่วโมงนี้-ช่วงถัดไป
-        const distinctProb = dRainEpisode.hasForecastRain && dRainEpisode.peakProbability
-          ? dRainEpisode.peakProbability
-          : Math.round(upcomingPeak);
-
-        // อุณหภูมิจริงของอำเภอนี้จากพิกัดอุตุนิยมวิทยาเฉพาะจุด
         const temp = dCur.temperature_2m !== undefined ? Math.round(dCur.temperature_2m) : 26;
+        const distinctProb = dRainEpisode.peakProbability;
 
         let icon = "☀️";
-        if (code >= 95) icon = "⚡";
+        if (code >= 95 || dRainEpisode.rainIntensityText.includes('พายุ')) icon = "⚡";
+        else if (dRainEpisode.isRainingNow) icon = "🌧️";
         else if (distinctProb >= 70) icon = "🌧️";
         else if (distinctProb >= 40) icon = "🌦️";
         else if (code >= 3) icon = "☁️";
         else if (code >= 1) icon = "⛅";
         
-        const statusText = distinctProb >= 70 
-          ? `โอกาสฝน ${distinctProb}%` 
-          : distinctProb >= 40 
-            ? `โอกาสฝน ${distinctProb}%` 
+        const statusText = dRainEpisode.isRainingNow
+          ? `ฝนตกขณะนี้ (${dRainEpisode.rainIntensityText})`
+          : dRainEpisode.hasForecastRain
+            ? `${dRainEpisode.rainIntensityText} (${distinctProb}%)`
             : translateWeatherCode(code);
 
         return {
           district: dist.name,
-          isRainingNow: false, // ระบบคาดการณ์ล่วงหน้า
-          precipitationMm: Number(precip.toFixed(1)),
+          isRainingNow: dRainEpisode.isRainingNow,
+          precipitationMm: Number((dRainEpisode.peakPrecip || precip).toFixed(1)),
           temperature: temp,
           probability: distinctProb,
           weatherCode: code,
@@ -359,6 +384,7 @@ export async function getLiveSamutPrakanWeather(forceRefresh = false) {
           timeWindow: dRainEpisode.timeWindow,
           durationText: dRainEpisode.durationText,
           hasForecastRain: dRainEpisode.hasForecastRain,
+          rainIntensityText: dRainEpisode.rainIntensityText,
           icon
         };
       });
