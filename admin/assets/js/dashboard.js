@@ -131,9 +131,12 @@ export function switchTab(tabId, playSound = false) {
 /* --------------------------------------------------------- Authentication UI */
 function renderLoginWall() {
   const wall = $('#login-wall');
+  const appShell = $('#app-shell');
   const user = currentAdmin();
   if (!user) {
-    if (wall) wall.style.display = 'flex';
+    document.documentElement.classList.remove('admin-authenticated');
+    if (wall) wall.style.setProperty('display', 'flex', 'important');
+    if (appShell) appShell.style.setProperty('display', 'none', 'important');
     // Ensure inputs are blank - never pre-filled
     const uIn = $('#login-username');
     const pIn = $('#login-password');
@@ -141,7 +144,9 @@ function renderLoginWall() {
     if (pIn) pIn.value = '';
     $('#login-error')?.style.setProperty('display', 'none');
   } else {
-    if (wall) wall.style.display = 'none';
+    document.documentElement.classList.add('admin-authenticated');
+    if (wall) wall.style.setProperty('display', 'none', 'important');
+    if (appShell) appShell.style.setProperty('display', 'flex', 'important');
     const nameEl = $('#sidebar-admin-name');
     if (nameEl) nameEl.textContent = `${user.label} (${user.username})`;
     const greetingTitleEl = $('#sidebar-greeting-title');
@@ -211,6 +216,7 @@ async function handleLogout() {
     icon: 'logout'
   });
   if (ok) {
+    document.documentElement.classList.remove('admin-authenticated');
     await logout();
     toast('ออกจากระบบเรียบร้อยแล้ว', 'info');
     renderLoginWall();

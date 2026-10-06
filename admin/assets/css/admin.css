@@ -2047,16 +2047,18 @@ body {
 .floating-input-box {
   display: flex;
   align-items: center;
-  border: 1.5px solid rgba(56, 189, 248, 0.24);
+  border: 1.5px solid rgba(56, 189, 248, 0.25);
   border-radius: 14px;
-  background: rgba(8, 14, 23, 0.85);
+  background: #090f19 !important;
+  background-color: #090f19 !important;
   transition: all 0.2s ease;
-  padding: 2px 14px;
+  padding: 0 14px;
+  overflow: hidden;
 }
 
 .floating-input-box:focus-within {
   border-color: #38bdf8;
-  background: rgba(10, 18, 30, 0.95);
+  background: #0a111c !important;
   box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.18), 0 0 20px rgba(56, 189, 248, 0.15);
 }
 
@@ -2078,17 +2080,48 @@ body {
 
 .floating-input-field {
   flex: 1;
-  border: none;
-  background: transparent;
-  padding: 13px 0;
-  color: #ffffff;
+  border: none !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  padding: 13px 0 !important;
+  color: #ffffff !important;
   font-size: 14px;
-  outline: none;
+  outline: none !important;
   font-family: inherit;
+  box-shadow: none !important;
 }
 
 .floating-input-field::placeholder {
   color: #475569;
+}
+
+/* Chrome, Edge, Safari & WebKit Autofill Kill Shield: Completely removes white/light box */
+input:-webkit-autofill,
+input:-webkit-autofill:hover, 
+input:-webkit-autofill:focus, 
+input:-webkit-autofill:active,
+.floating-input-field:-webkit-autofill,
+.floating-input-field:-webkit-autofill:hover,
+.floating-input-field:-webkit-autofill:focus,
+.floating-input-field:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px #090f19 inset !important;
+  box-shadow: 0 0 0 1000px #090f19 inset !important;
+  -webkit-text-fill-color: #ffffff !important;
+  color: #ffffff !important;
+  caret-color: #38bdf8 !important;
+  border-radius: 8px !important;
+  background-color: transparent !important;
+  transition: background-color 50000s ease-in-out 0s !important;
+}
+
+/* Firefox Autofill Kill Shield */
+input:-moz-autofill,
+input:-moz-autofill-preview,
+.floating-input-field:-moz-autofill,
+.floating-input-field:-moz-autofill-preview {
+  filter: none !important;
+  background-color: #090f19 !important;
+  color: #ffffff !important;
 }
 
 .toggle-pass-btn {

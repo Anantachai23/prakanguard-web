@@ -563,14 +563,17 @@ export default function MapView({
     const maskFillOpacity = (isDark || mapStyle === 'google-satellite') ? 0.90 : 0.84;
 
     if (!maskLayerRef.current) {
+      const svgMaskRenderer = L.svg({ pane: 'provinceMaskPane' });
       maskLayerRef.current = L.geoJSON(SAMUT_PRAKAN_MASK_GEOJSON, {
         pane: 'provinceMaskPane',
+        renderer: svgMaskRenderer,
         style: {
           fillColor: maskFillColor,
           fillOpacity: maskFillOpacity,
           color: '#38bdf8',
           weight: 2.5,
           opacity: 0.95,
+          fillRule: 'evenodd',
           className: 'outside-province-mask'
         },
         interactive: false
@@ -578,7 +581,8 @@ export default function MapView({
     } else {
       maskLayerRef.current.setStyle({
         fillColor: maskFillColor,
-        fillOpacity: maskFillOpacity
+        fillOpacity: maskFillOpacity,
+        fillRule: 'evenodd'
       });
     }
 

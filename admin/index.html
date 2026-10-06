@@ -22,13 +22,51 @@
     }
   </script>
   <script src="./assets/vendor/chart.umd.js"></script>
+  
+  <!-- Critical Anti-FOUC (Flash of Unauthenticated Content) & White Autofill Box Shield -->
+  <style>
+    /* Prevent 1-second flash of admin dashboard menu on initial page load */
+    #app-shell { display: none !important; }
+    #login-wall { display: flex !important; }
+    html.admin-authenticated #app-shell { display: flex !important; }
+    html.admin-authenticated #login-wall { display: none !important; }
+
+    /* WebKit Autofill Box Kill: prevents browser from rendering white/light blue rectangular boxes */
+    input:-webkit-autofill,
+    input:-webkit-autofill:hover, 
+    input:-webkit-autofill:focus, 
+    input:-webkit-autofill:active,
+    .floating-input-field:-webkit-autofill,
+    .floating-input-field:-webkit-autofill:hover,
+    .floating-input-field:-webkit-autofill:focus,
+    .floating-input-field:-webkit-autofill:active {
+      -webkit-box-shadow: 0 0 0 1000px #090f19 inset !important;
+      box-shadow: 0 0 0 1000px #090f19 inset !important;
+      -webkit-text-fill-color: #ffffff !important;
+      color: #ffffff !important;
+      caret-color: #38bdf8 !important;
+      border-radius: 8px !important;
+      transition: background-color 50000s ease-in-out 0s !important;
+    }
+  </style>
+  <script>
+    (function() {
+      try {
+        var s = JSON.parse(sessionStorage.getItem('pg_admin_session_v2') || 'null');
+        var TTL = 12 * 60 * 60 * 1000;
+        if (s && s.ts && (Date.now() - s.ts < TTL)) {
+          document.documentElement.classList.add('admin-authenticated');
+        }
+      } catch(e) {}
+    })();
+  </script>
 </head>
 <body>
 
   <!-- =========================================================================
        1. LOGIN WALL (แสดงเฉพาะเมื่อยังไม่ได้เข้าสู่ระบบ - ห้ามใส่รหัสผ่านค้างไว้)
        ========================================================================= -->
-  <div id="login-wall" style="display: none;">
+  <div id="login-wall">
     <div class="login-wrapper">
       
       <!-- Top Brand Crest -->
@@ -119,7 +157,7 @@
   <!-- =========================================================================
        2. APP SHELL
        ========================================================================= -->
-  <div id="app-shell">
+  <div id="app-shell" style="display: none;">
 
     <!-- SIDEBAR -->
     <aside class="app-sidebar">
