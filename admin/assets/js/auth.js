@@ -22,23 +22,27 @@ async function pbkdf2Hex(password, saltHex, iter) {
 
 function normalizeAdminUser(u) {
   const s = String(u || '').trim().toLowerCase().replace(/[\s_]/g, '');
-  if (s === 'admin01' || s === 'admin1') return 'admin01';
-  if (s === 'admin02' || s === 'admin2') return 'admin02';
+  if (s === 'admin_prakanguard01' || s === 'adminprakanguard01' || s === 'admin01' || s === 'admin1') {
+    return 'admin_prakanguard01';
+  }
+  if (s === 'admin_prakanguard02' || s === 'adminprakanguard02' || s === 'admin02' || s === 'admin2') {
+    return 'admin_prakanguard02';
+  }
   return null;
 }
 
 async function verifyLocal(username, password) {
   const normUser = normalizeAdminUser(username);
-  if (!normUser) return null; // Only admin01 and admin02 allowed!
+  if (!normUser) return null;
   const acc = ADMIN_ACCOUNTS[normUser];
   if (!acc) return null;
 
   const cleanP = String(password || '').trim();
-  // Direct match for admin01 / admin02 passwords
-  if (normUser === 'admin01' && (cleanP === 'admin01' || cleanP === 'admin 01')) {
+  // Exact match for the new designated passwords only
+  if (normUser === 'admin_prakanguard01' && cleanP === 'Prakan#Guard2026!Secured001') {
     return { key: acc.key, label: acc.label, username: normUser, role: acc.role, avatar: acc.avatar };
   }
-  if (normUser === 'admin02' && (cleanP === 'admin02' || cleanP === 'admin 02')) {
+  if (normUser === 'admin_prakanguard02' && cleanP === 'Prakan#Guard2026!Secured002') {
     return { key: acc.key, label: acc.label, username: normUser, role: acc.role, avatar: acc.avatar };
   }
 

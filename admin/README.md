@@ -30,12 +30,12 @@ node server.js
 ---
 
 ## 🔐 ข้อมูลเข้าสู่ระบบ (Admin Accounts)
-- **แอดมินคนที่ 1:**
-  - **ชื่อผู้ใช้ (Username):** `admin01`
-  - **รหัสผ่าน (Password):** `admin01`
-- **แอดมินคนที่ 2:**
-  - **ชื่อผู้ใช้ (Username):** `admin02`
-  - **รหัสผ่าน (Password):** `admin02`
+- **Admin 01:**
+  - **ชื่อผู้ใช้ (Username):** `admin_prakanguard01`
+  - **รหัสผ่าน (Password):** `Prakan#Guard2026!Secured001`
+- **Admin 02:**
+  - **ชื่อผู้ใช้ (Username):** `admin_prakanguard02`
+  - **รหัสผ่าน (Password):** `Prakan#Guard2026!Secured002`
 
 ---
 

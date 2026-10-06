@@ -30,26 +30,26 @@ export const ADMIN_ACTIVE_WINDOW_MS = 60 * 1000;        // ถ้าไม่ม
  * เมื่อติดตั้ง supabase_setup.sql แล้ว ระบบจะตรวจรหัสผ่านที่ฝั่งเซิร์ฟเวอร์แทน
  */
 export const ADMIN_ACCOUNTS = {
-  admin01: {
+  admin_prakanguard01: {
     key: 'admin01',
     label: 'Admin 01',
     role: 'ผู้ดูแลระบบ 01',
     avatar: './assets/img/admin01.jpg',
     pbkdf2: {
-      salt: '155aee4301588fc7c82e365d7cff63fb',
+      salt: '1eb0e3f213c47656519d799a940330a8',
       iter: 100000,
-      hash: 'd7ea5d86c618ee7cec79937be05503395b25cc207d90643f9f622b2da679a284'
+      hash: '3177f20666a6575fdf7a0b899ee2208bdb15753102d5d0b26aaad757ff4fc407'
     }
   },
-  admin02: {
+  admin_prakanguard02: {
     key: 'admin02',
     label: 'Admin 02',
     role: 'ผู้ดูแลระบบ 02',
     avatar: './assets/img/admin02.jpg',
     pbkdf2: {
-      salt: '8737ea52431e63920e696cb616d31ea5',
+      salt: '1e0f6a9c8410aa9a406bc42e16e3e2f7',
       iter: 100000,
-      hash: '885b7a26634c7858443b33149abffb444be6f508cd4697b3d8127f859a453172'
+      hash: 'ec832f45423ce70af5eb673f2ed4b7de873f19a1738193a026279e577ef6583d'
     }
   }
 };

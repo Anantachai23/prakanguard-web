@@ -103,8 +103,8 @@ alter table public.admin_accounts enable row level security;
 revoke all on public.admin_accounts from anon, authenticated;
 
 insert into public.admin_accounts (admin_key, username, label, pass_hash) values
-  ('admin01', 'admin01', 'Admin 01', crypt('admin01', gen_salt('bf', 10))),
-  ('admin02', 'admin02', 'Admin 02', crypt('admin02', gen_salt('bf', 10)))
+  ('admin01', 'admin_prakanguard01', 'Admin 01', crypt('Prakan#Guard2026!Secured001', gen_salt('bf', 10))),
+  ('admin02', 'admin_prakanguard02', 'Admin 02', crypt('Prakan#Guard2026!Secured002', gen_salt('bf', 10)))
 on conflict (admin_key) do update set
   username = excluded.username,
   label = excluded.label,

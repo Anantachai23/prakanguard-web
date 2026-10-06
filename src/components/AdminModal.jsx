@@ -73,8 +73,8 @@ import {
 
 // Default Hardened Admin Credentials (เฉพาะ Admin 01 และ Admin 02)
 const DEFAULT_ADMIN_CREDENTIALS = {
-  username: 'admin01',
-  password: 'admin01',
+  username: 'admin_prakanguard01',
+  password: 'Prakan#Guard2026!Secured001',
   role: 'Admin 01'
 };
 
@@ -690,18 +690,18 @@ export default function AdminModal({
     const normU = inputUsername.trim().toLowerCase().replace(/[\s_]/g, '');
     const normP = inputPassword.trim();
 
-    // Check strictly: only Admin 01 and Admin 02
-    const is01 = (normU === 'admin01' || normU === 'admin1') && (normP === 'admin01' || normP === 'admin 01');
-    const is02 = (normU === 'admin02' || normU === 'admin2') && (normP === 'admin02' || normP === 'admin 02');
+    // Check strictly: only Admin 01 and Admin 02 with their dedicated passwords
+    const is01 = (normU === 'admin_prakanguard01' || normU === 'adminprakanguard01' || normU === 'admin01' || normU === 'admin1') && normP === 'Prakan#Guard2026!Secured001';
+    const is02 = (normU === 'admin_prakanguard02' || normU === 'adminprakanguard02' || normU === 'admin02' || normU === 'admin2') && normP === 'Prakan#Guard2026!Secured002';
 
     if (is01 || is02) {
       const activeAdmin = is01 ? {
-        username: 'admin01',
-        password: 'admin01',
+        username: 'admin_prakanguard01',
+        password: 'Prakan#Guard2026!Secured001',
         role: 'Admin 01'
       } : {
-        username: 'admin02',
-        password: 'admin02',
+        username: 'admin_prakanguard02',
+        password: 'Prakan#Guard2026!Secured002',
         role: 'Admin 02'
       };
 

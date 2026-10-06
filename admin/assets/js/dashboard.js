@@ -6,7 +6,7 @@ import {
   $, $$, h, icon, esc, toast, confirmDialog, openModal, 
   dateTime, timeOnly, hm, duration, timeAgo, startOfBangkokDay, nf,
   normPage, normDistrict, levelInfo, classifyDevice, deviceLabel, shortId, downloadFile,
-  playApprovalChime, playNavClickSound, playRefreshSound, playThemeSound, playWarningSound, showApprovalSuccessDialog
+  playApprovalChime, playNavClickSound, playRefreshSound, playThemeSound, playWarningSound, playNotificationAlertSound, showApprovalSuccessDialog
 } from './core.js';
 import { 
   detectCaps, caps, fetchReports, fetchFeedback, fetchTrash, 
@@ -218,6 +218,9 @@ async function handleLogout() {
 }
 
 /* ------------------------------------------------------------- Data Refreshing */
+let prevReportCount = null;
+let prevFeedbackCount = null;
+
 export async function refreshAllData(forceCharts = false) {
   const refreshBtn = $('#btn-global-refresh');
   if (refreshBtn) refreshBtn.classList.add('spinning');
@@ -235,6 +238,20 @@ export async function refreshAllData(forceCharts = false) {
       fetchAnnouncements().catch(() => []),
       fetchAdminSessions().catch(() => [])
     ]);
+
+    // Detect incoming submissions and alert immediately
+    if (prevReportCount !== null && rep.length > prevReportCount) {
+      const diffRep = rep.length - prevReportCount;
+      toast(`🚨 มีการแจ้งรายงานน้ำท่วมใหม่เข้ามา +${diffRep} รายการ!`, 'warning', 7000);
+      playNotificationAlertSound();
+    }
+    if (prevFeedbackCount !== null && fb.length > prevFeedbackCount) {
+      const diffFb = fb.length - prevFeedbackCount;
+      toast(`💬 มีข้อเสนอแนะใหม่จากประชาชนเข้ามา +${diffFb} รายการ!`, 'info', 7000);
+      playNotificationAlertSound();
+    }
+    prevReportCount = rep.length;
+    prevFeedbackCount = fb.length;
 
     state.activeVisitors = online;
     state.todaySessions = today;
@@ -270,7 +287,7 @@ function updateNavBadges() {
   const repBadge = $('#badge-reports-count');
   if (repBadge) {
     repBadge.textContent = pendingReports > 0 ? pendingReports : state.reports.length;
-    repBadge.className = `nav-badge ${pendingReports > 0 ? 'badge-alert' : ''}`;
+    repBadge.className = `nav-badge ${pendingReports > 0 ? 'badge-alert pulse' : ''}`;
   }
 
   const onlineCount = state.activeVisitors.length;
@@ -279,9 +296,23 @@ function updateNavBadges() {
     visBadge.textContent = onlineCount;
   }
 
+  const fbBadge = $('#badge-feedback-count');
+  if (fbBadge) {
+    fbBadge.textContent = state.feedback.length;
+    fbBadge.className = `nav-badge ${state.feedback.length > 0 ? 'badge-info' : ''}`;
+  }
+
   const trashBadge = $('#badge-trash-count');
   if (trashBadge) {
     trashBadge.textContent = state.trash.length;
+  }
+
+  // Header quick alert pill
+  const headerNotifyBadge = $('#header-notify-badge');
+  if (headerNotifyBadge) {
+    const totalPending = pendingReports + state.feedback.length;
+    headerNotifyBadge.textContent = totalPending;
+    headerNotifyBadge.style.display = totalPending > 0 ? 'inline-flex' : 'none';
   }
 }
 
@@ -2127,6 +2158,31 @@ export function initDashboard() {
 
   // Login Form
   $('#login-form')?.addEventListener('submit', handleLoginSubmit);
+
+  // Toggle Login Password Visibility
+  $('#btn-toggle-login-pass')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    const pIn = $('#login-password');
+    if (!pIn) return;
+    const isPass = pIn.type === 'password';
+    pIn.type = isPass ? 'text' : 'password';
+    const btn = $('#btn-toggle-login-pass');
+    if (btn) {
+      btn.innerHTML = isPass ? icon('eyeOff', 18) : icon('eye', 18);
+    }
+  });
+
+  // Header Notifications Click
+  $('#btn-header-notifications')?.addEventListener('click', () => {
+    const pendingReports = state.reports.filter(r => !r.is_approved && !r.isApproved).length;
+    if (pendingReports > 0) {
+      switchTab('reports', true);
+    } else if (state.feedback.length > 0) {
+      switchTab('feedback', true);
+    } else {
+      switchTab('reports', true);
+    }
+  });
 
   // Logout Buttons
   $('#btn-logout')?.addEventListener('click', () => {
