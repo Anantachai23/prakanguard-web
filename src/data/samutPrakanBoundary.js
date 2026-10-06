@@ -1,3 +1,5 @@
+import { SAMUT_PRAKAN_DISTRICTS_DATA } from './samutPrakanDistricts.js';
+
 // พิกัดเส้นแบ่งขอบเขตการปกครองจังหวัดสมุทรปราการ และ 6 อำเภอแบบแนบสนิท 100% ไร้ช่องว่าง (Watertight Contiguous Topology)
 // 1. อำเภอเมืองสมุทรปราการ
 // 2. อำเภอพระประแดง
@@ -177,9 +179,11 @@ const OUTER_EAST_BB = [
   [100.9000, 13.4900],
   [100.9200, 13.5250],
   [100.9300, 13.5650],
-  [100.9150, 13.6150],
-  [100.8900, 13.6550],
-  [100.8650, 13.6900],
+  [100.9250, 13.6150],
+  [100.9150, 13.6600],
+  [100.9050, 13.6800],
+  [100.8950, 13.7050],
+  [100.8750, 13.7250],
   [100.8400, 13.7320]
 ];
 
@@ -430,41 +434,51 @@ export function detectDistrictForCoordinates(lat, lng) {
 
   // 1.5 ตรวจสอบโพลีกอนภาพรวมขอบเขตจังหวัดสมุทรปราการ
   if (isPointInPolygonCoords(numLat, numLng, SAMUT_PRAKAN_OUTER_BOUNDARY)) {
-    // หาอำเภอที่ใกล้ที่สุดเฉพาะเมื่ออยู่ภายในเขตจังหวัดจริง
+    // หาอำเภอที่ใกล้ที่สุดจากตำบลและศูนย์กลางอำเภอ
     let closestDistrict = "เมืองสมุทรปราการ";
     let minDistance = Infinity;
-    for (const [distName, meta] of Object.entries(DISTRICT_METADATA)) {
-      if (distName === "ทั้งหมด" || !meta.center) continue;
-      const [cLat, cLng] = meta.center;
-      const d = Math.hypot(numLat - cLat, numLng - cLng);
-      if (d < minDistance) {
-        minDistance = d;
-        closestDistrict = distName;
+    for (const dist of SAMUT_PRAKAN_DISTRICTS_DATA) {
+      if (dist.center) {
+        const d = Math.hypot(numLat - dist.center.lat, numLng - dist.center.lng);
+        if (d < minDistance) {
+          minDistance = d;
+          closestDistrict = dist.name;
+        }
+      }
+      for (const sub of dist.subdistricts) {
+        if (typeof sub.lat === 'number' && typeof sub.lng === 'number') {
+          const d = Math.hypot(numLat - sub.lat, numLng - sub.lng);
+          if (d < minDistance) {
+            minDistance = d;
+            closestDistrict = dist.name;
+          }
+        }
       }
     }
     return closestDistrict;
   }
 
   // 2. ขอบเขตต้องอยู่ภายในกรอบพิกัดสมุทรปราการเท่านั้น (ไม่รับกรุงเทพฯ, นนทบุรี หรือพื้นที่ภายนอก)
-  const minLat = 13.4600;
-  const maxLat = 13.7320;
-  const minLng = 100.4600;
-  const maxLng = 100.9300;
+  const minLat = 13.4500;
+  const maxLat = 13.7500;
+  const minLng = 100.4500;
+  const maxLng = 100.9500;
 
   if (numLat >= minLat && numLat <= maxLat && numLng >= minLng && numLng <= maxLng) {
     let closestDistrict = null;
     let minDistance = Infinity;
-    for (const [distName, meta] of Object.entries(DISTRICT_METADATA)) {
-      if (distName === "ทั้งหมด" || !meta.center) continue;
-      const [cLat, cLng] = meta.center;
-      const d = Math.hypot(numLat - cLat, numLng - cLng);
-      if (d < minDistance) {
-        minDistance = d;
-        closestDistrict = distName;
+    for (const dist of SAMUT_PRAKAN_DISTRICTS_DATA) {
+      for (const sub of dist.subdistricts) {
+        if (typeof sub.lat === 'number' && typeof sub.lng === 'number') {
+          const d = Math.hypot(numLat - sub.lat, numLng - sub.lng);
+          if (d < minDistance) {
+            minDistance = d;
+            closestDistrict = dist.name;
+          }
+        }
       }
     }
-    // เผื่อความคลาดเคลื่อนเฉพาะแนวตะเข็บรอยต่อไม่เกิน ~800 ม. (0.008 องศา)
-    if (minDistance < 0.008) {
+    if (closestDistrict && minDistance < 0.15) {
       return closestDistrict;
     }
   }
@@ -567,6 +581,17 @@ export function detectSubdistrictForLocation(lat, lng, locationText = '', userDi
   const normText = String(locationText || '').toLowerCase();
 
   // 1. ตรวจจับจากชื่อสถานที่และจุดสังเกตเฉพาะ (High-Precision Landmark Match)
+  // สี่แยกเปร็ง / เปร็ง / คลองเปร็ง -> ต.เปร็ง อ.บางบ่อ
+  if (
+    normText.includes('เปร็ง') || 
+    normText.includes('สี่แยกเปร็ง') || 
+    normText.includes('แยกเปร็ง') ||
+    normText.includes('คลองเปร็ง') ||
+    normText.includes('วัดเปร็ง')
+  ) {
+    return { district: 'บางบ่อ', subdistrict: 'เปร็ง' };
+  }
+
   // แยกศรีเทพา / MRT ศรีเทพา / ซอยศรีบุญเรือง / วัดด่าน / แบริ่ง อยู่ใน ต.สำโรงเหนือ อ.เมืองสมุทรปราการ
   if (
     normText.includes('ศรีเทพา') || 
@@ -633,17 +658,63 @@ export function detectSubdistrictForLocation(lat, lng, locationText = '', userDi
   if (normText.includes('คลองด่าน') || normText.includes('ชลหารพิจิตร')) {
     return { district: 'บางบ่อ', subdistrict: 'คลองด่าน' };
   }
+  if (normText.includes('คลองสวน')) {
+    return { district: 'บางบ่อ', subdistrict: 'คลองสวน' };
+  }
+  if (normText.includes('บางพลีน้อย')) {
+    return { district: 'บางบ่อ', subdistrict: 'บางพลีน้อย' };
+  }
+  if (normText.includes('บ้านระกาศ')) {
+    return { district: 'บางบ่อ', subdistrict: 'บ้านระกาศ' };
+  }
   if (normText.includes('เคหะบางเสาธง') || normText.includes('เมืองใหม่บางเสาธง') || normText.includes('เอแบค') || normText.includes('abac') || normText.includes('บางนาการ์เด้นท์')) {
     return { district: 'บางเสาธง', subdistrict: 'บางเสาธง' };
   }
+  if (normText.includes('ศีรษะจรเข้น้อย')) {
+    return { district: 'บางเสาธง', subdistrict: 'ศีรษะจรเข้น้อย' };
+  }
+  if (normText.includes('ศีรษะจรเข้ใหญ่')) {
+    return { district: 'บางเสาธง', subdistrict: 'ศีรษะจรเข้ใหญ่' };
+  }
 
-  // 2. ตรวจสอบจากพิกัด (Coordinate-based Detection)
+  // ตรวจจับชื่อตำบลโดยตรงจาก SAMUT_PRAKAN_DISTRICTS_DATA
+  if (normText.trim()) {
+    for (const d of SAMUT_PRAKAN_DISTRICTS_DATA) {
+      for (const s of d.subdistricts) {
+        if (normText.includes(s.name.toLowerCase())) {
+          return { district: d.name, subdistrict: s.name };
+        }
+      }
+    }
+  }
+
+  // 2. ตรวจสอบจากพิกัด (Coordinate-based Detection with nearest subdistrict in SAMUT_PRAKAN_DISTRICTS_DATA)
   const numLat = Number(lat);
   const numLng = Number(lng);
   if (!isNaN(numLat) && !isNaN(numLng) && numLat > 0 && numLng > 0) {
-    // พิกัดบริเวณแยกศรีเทพาและแนวถนนเทพารักษ์ช่วงต้น (lat: 13.6200 - 13.6400, lng: 100.6100 - 100.6380) อยู่ใน ต.สำโรงเหนือ
+    // พิกัดบริเวณแยกศรีเทพาและแนวถนนเทพารักษ์ช่วงต้น (lat: 13.6180 - 13.6420, lng: 100.6100 - 100.6380) อยู่ใน ต.สำโรงเหนือ
     if (numLat >= 13.6180 && numLat <= 13.6420 && numLng >= 100.6100 && numLng <= 100.6380) {
       return { district: 'เมืองสมุทรปราการ', subdistrict: 'สำโรงเหนือ' };
+    }
+
+    // คำนวณหาตำบลและอำเภอที่ตรงพิกัดที่สุดในฐานข้อมูล 48 ตำบลของสมุทรปราการ
+    let closest = null;
+    let minSubDist = Infinity;
+    for (const d of SAMUT_PRAKAN_DISTRICTS_DATA) {
+      for (const s of d.subdistricts) {
+        if (typeof s.lat === 'number' && typeof s.lng === 'number') {
+          const dist = Math.hypot(numLat - s.lat, numLng - s.lng);
+          if (dist < minSubDist) {
+            minSubDist = dist;
+            closest = { district: d.name, subdistrict: s.name };
+          }
+        }
+      }
+    }
+
+    // หากอยู่ใกล้ตำบลใดตำบลหนึ่งไม่เกิน ~15 กม. (0.15 deg) ให้คืนค่านั้น
+    if (closest && minSubDist < 0.15) {
+      return closest;
     }
   }
 

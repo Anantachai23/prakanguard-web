@@ -50,7 +50,7 @@ import {
 import { BODY_WATER_LEVELS } from './CitizenReportModal';
 import { DISTRICTS } from '../data/samutPrakanPoints';
 import { OFFICIAL_LOCATION_CATALOG, formatPointForTracking, parseAndValidateExternalData } from '../data/officialLocationCatalog';
-import { validateCoordinatePrecision, detectDistrictForCoordinates, isPointInSamutPrakan } from '../data/samutPrakanBoundary';
+import { validateCoordinatePrecision, detectDistrictForCoordinates, detectSubdistrictForLocation, isPointInSamutPrakan } from '../data/samutPrakanBoundary';
 import { getFloodLevel } from '../data/floodStandards';
 import { getDetailedDeviceInfo } from '../services/cloudSyncService';
 import { 
@@ -822,15 +822,29 @@ export default function AdminModal({
       alert("ไม่สามารถอนุมัติได้เนื่องจากพิกัดของรายงานนี้อยู่นอกพื้นที่ 6 อำเภอของจังหวัดสมุทรปราการ");
       return;
     }
-    if (editingReportId === reportId && onUpdateReport) {
-      onUpdateReport(reportId, { depthCm: editingReportDepth });
+    // Auto-detect exact district and subdistrict
+    const analyzed = (report?.lat && report?.lng) 
+      ? detectSubdistrictForLocation(report.lat, report.lng, report.name || report.notes) 
+      : null;
+    const finalDist = analyzed?.district || (report?.lat && report?.lng ? detectDistrictForCoordinates(report.lat, report.lng) : null) || report?.district || 'เมืองสมุทรปราการ';
+    const finalSub = analyzed?.subdistrict || report?.subdistrict || '';
+
+    const updatePayload = {
+      district: finalDist,
+      subdistrict: finalSub
+    };
+    if (editingReportId === reportId) {
+      updatePayload.depthCm = editingReportDepth;
+    }
+    if (onUpdateReport) {
+      onUpdateReport(reportId, updatePayload);
     }
     if (onApproveReport) {
       onApproveReport(reportId);
     }
     setEditingReportId(null);
     playAdminApproveSound();
-    showNotice(`✅ ยืนยันอนุมัติจุด "${report?.name || 'รายงาน'}" ขึ้นแสดงบนแผนที่สาธารณะเรียบร้อยแล้ว`);
+    showNotice(`✅ ยืนยันอนุมัติจุด "${report?.name || 'รายงาน'}" (อ.${finalDist} ต.${finalSub}) ขึ้นแสดงบนแผนที่เรียบร้อยแล้ว`);
   };
 
   const handleReject = (reportId) => {
@@ -881,6 +895,15 @@ export default function AdminModal({
     if (selectedPendingIds.size === 0) return;
     const count = selectedPendingIds.size;
     selectedPendingIds.forEach(id => {
+      const report = citizenReports.find(r => r.id === id);
+      if (report && report.lat && report.lng) {
+        const analyzed = detectSubdistrictForLocation(report.lat, report.lng, report.name || report.notes);
+        const finalDist = analyzed?.district || detectDistrictForCoordinates(report.lat, report.lng) || report.district;
+        const finalSub = analyzed?.subdistrict || report.subdistrict;
+        if (onUpdateReport) {
+          onUpdateReport(id, { district: finalDist, subdistrict: finalSub });
+        }
+      }
       if (onApproveReport) onApproveReport(id);
     });
     setSelectedPendingIds(new Set());
@@ -2132,15 +2155,26 @@ export default function AdminModal({
                                 {report.name}
                               </h4>
                               
-                              <div className="mt-1 flex items-center gap-2 flex-wrap text-xs">
-                                <span className="text-slate-600 dark:text-slate-300 font-medium">
-                                  อ.{report.district} {report.subdistrict ? `• ต.${report.subdistrict}` : ''}
-                                </span>
-                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-blue-500/10 dark:bg-blue-950/60 border border-blue-500/30 text-blue-700 dark:text-cyan-300 font-mono font-bold text-[11px] shadow-2xs">
-                                  <MapPin className="w-3.5 h-3.5 text-rose-500 shrink-0" />
-                                  <span>พิกัดที่แน่นอน: {Number(report.lat).toFixed(5)}, {Number(report.lng).toFixed(5)}</span>
-                                </span>
-                              </div>
+                              {(() => {
+                                const analyzed = (report.lat && report.lng)
+                                  ? detectSubdistrictForLocation(report.lat, report.lng, report.name || report.notes)
+                                  : null;
+                                const realDistrict = analyzed?.district || (report.lat && report.lng ? detectDistrictForCoordinates(report.lat, report.lng) : null) || report.district || 'เมืองสมุทรปราการ';
+                                const realSubdistrict = analyzed?.subdistrict || report.subdistrict || '';
+                                return (
+                                  <div className="mt-1 flex items-center gap-2 flex-wrap text-xs">
+                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-blue-500/10 dark:bg-blue-950/60 border border-blue-500/30 text-blue-700 dark:text-cyan-300 font-bold text-xs shadow-2xs">
+                                      <span>📍 วิเคราะห์พิกัด:</span>
+                                      <strong>อ.{realDistrict}</strong>
+                                      {realSubdistrict ? <span>• ต.{realSubdistrict}</span> : ''}
+                                    </span>
+                                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-mono text-[11px]">
+                                      <MapPin className="w-3.5 h-3.5 text-rose-500 shrink-0" />
+                                      <span>{Number(report.lat).toFixed(5)}, {Number(report.lng).toFixed(5)}</span>
+                                    </span>
+                                  </div>
+                                );
+                              })()}
 
                               {report.cause && (
                                 <p className="text-xs text-slate-700 dark:text-slate-300 bg-black/5 dark:bg-black/30 p-2.5 rounded-xl border border-black/5 dark:border-white/5">
@@ -2392,15 +2426,24 @@ export default function AdminModal({
                             {report.name}
                           </h4>
                           
-                          <div className="mt-1 flex items-center gap-2 flex-wrap text-xs">
-                            <span className="text-slate-600 dark:text-slate-300 font-medium">
-                              อ.{report.district} {report.subdistrict ? `• ต.${report.subdistrict}` : ''}
-                            </span>
-                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-emerald-500/10 dark:bg-emerald-950/60 border border-emerald-500/30 text-emerald-700 dark:text-emerald-300 font-mono font-bold text-[11px] shadow-2xs">
-                              <MapPin className="w-3.5 h-3.5 text-rose-500 shrink-0" />
-                              <span>พิกัดที่แน่นอน: {Number(report.lat).toFixed(5)}, {Number(report.lng).toFixed(5)}</span>
-                            </span>
-                          </div>
+                          {(() => {
+                            const analyzed = (report.lat && report.lng)
+                              ? detectSubdistrictForLocation(report.lat, report.lng, report.name || report.notes)
+                              : null;
+                            const realDistrict = analyzed?.district || (report.lat && report.lng ? detectDistrictForCoordinates(report.lat, report.lng) : null) || report.district || 'เมืองสมุทรปราการ';
+                            const realSubdistrict = analyzed?.subdistrict || report.subdistrict || '';
+                            return (
+                              <div className="mt-1 flex items-center gap-2 flex-wrap text-xs">
+                                <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-emerald-500/10 dark:bg-emerald-950/60 border border-emerald-500/30 text-emerald-700 dark:text-emerald-300 font-bold text-[11px]">
+                                  <span>อ.{realDistrict} {realSubdistrict ? `• ต.${realSubdistrict}` : ''}</span>
+                                </span>
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 font-mono text-[10.5px]">
+                                  <MapPin className="w-3 h-3 text-rose-500 shrink-0" />
+                                  <span>{Number(report.lat).toFixed(5)}, {Number(report.lng).toFixed(5)}</span>
+                                </span>
+                              </div>
+                            );
+                          })()}
 
                           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                             ระดับ: {report.bodyLevelLabel ? `${report.bodyLevelLabel} • ` : ''}{report.depthCm !== undefined && report.depthCm !== null ? report.depthCm : 0} ซม. ({report.depthRange || 'ท่วมผิวจราจร'}) {report.cause ? `• ${report.cause}` : ''}
@@ -3887,9 +3930,18 @@ export default function AdminModal({
                                 <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-rose-500/15 text-rose-500 border border-rose-500/20">
                                   รายงานน้ำท่วม
                                 </span>
-                                <span className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">
-                                  อ.{item.district || '-'} {item.subdistrict ? `ต.${item.subdistrict}` : ''}
-                                </span>
+                                {(() => {
+                                  const analyzed = (item.lat && item.lng)
+                                    ? detectSubdistrictForLocation(item.lat, item.lng, item.name || item.notes)
+                                    : null;
+                                  const realDistrict = analyzed?.district || (item.lat && item.lng ? detectDistrictForCoordinates(item.lat, item.lng) : null) || item.district || '-';
+                                  const realSubdistrict = analyzed?.subdistrict || item.subdistrict || '';
+                                  return (
+                                    <span className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">
+                                      อ.{realDistrict} {realSubdistrict ? `ต.${realSubdistrict}` : ''}
+                                    </span>
+                                  );
+                                })()}
                                 {item.depthRange && (
                                   <span className="text-[11px] px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-500 font-medium">
                                     ระดับ {item.depthRange}
