@@ -81,6 +81,8 @@ import {
 } from 'lucide-react';
 import { 
   playClickSound, 
+  playPinClickSound,
+  playTabSound,
   playToggleSound, 
   playRefreshSound, 
   playGpsSound, 
@@ -89,7 +91,9 @@ import {
   playSelectSound, 
   playCloseSound,
   playEmergencySound,
-  playModalOpenSound
+  playModalOpenSound,
+  playSuccessSound,
+  playDangerSound
 } from './services/soundEffects';
 
 if (typeof window !== 'undefined') {
@@ -537,12 +541,57 @@ export default function App() {
   }, []);
 
   // Live Meteorological Weather Telemetry
-  const [weather, setWeather] = useState({
-    temp: 29,
-    weatherDesc: 'มีเมฆบางส่วน',
-    rainProbabilityToday: 60,
-    rainSumToday: 8.5,
-    peakHour: '16:00 น.'
+  const [weather, setWeather] = useState(() => {
+    try {
+      const cached = localStorage.getItem('prakanguard_cached_weather_v2');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (parsed && parsed.forecast24h) return parsed;
+      }
+    } catch (_) {}
+
+    return {
+      temp: 29,
+      feelsLike: 32,
+      weatherDesc: 'มีเมฆบางส่วน',
+      rainProbabilityToday: 55,
+      rainSumToday: 5.2,
+      peakHour: '16:00 น.',
+      forecast24h: {
+        title: "คาดการณ์ฝนตก",
+        status: "เฝ้าระวังฝนฟ้าคะนอง",
+        temp: 29,
+        feelsLike: 32,
+        totalRainMm: 5.2,
+        maxProbability: 55,
+        startTimeText: "ช่วงบ่ายถึงเย็น (15:30 - 18:30 น.)",
+        isRainingNow: false,
+        timeLabels: ["12:00", "15:00", "18:00", "21:00", "00:00", "03:00", "06:00", "09:00"],
+        hourly: Array.from({ length: 24 }).map((_, i) => ({
+          time: `${String(i).padStart(2, '0')}:00`,
+          dayLabel: "วันนี้",
+          precipitation: (i >= 15 && i <= 18) ? 1.2 : 0,
+          probability: (i >= 15 && i <= 18) ? 55 : 15,
+          barHeightPercent: (i >= 15 && i <= 18) ? 60 : 10
+        })),
+        districtRainAnalysis: [
+          { district: "เมืองสมุทรปราการ", probability: 65, temperature: 29, status: "เฝ้าระวังฝนตก", timeWindow: "15:00 - 18:00 น.", durationText: "คาดการณ์ ~30 - 45 นาที", hasForecastRain: true, icon: "🌦️" },
+          { district: "บางพลี", probability: 55, temperature: 29, status: "มีเมฆบางส่วน", timeWindow: "15:30 - 18:30 น.", durationText: "คาดการณ์ ~30 - 60 นาที", hasForecastRain: true, icon: "🌦️" },
+          { district: "บางบ่อ", probability: 50, temperature: 28, status: "มีเมฆบางส่วน", timeWindow: "16:00 - 18:30 น.", durationText: "คาดการณ์ ~30 - 45 นาที", hasForecastRain: true, icon: "⛅" },
+          { district: "บางเสาธง", probability: 45, temperature: 28, status: "มีเมฆบางส่วน", timeWindow: "15:30 - 18:00 น.", durationText: "คาดการณ์ ~30 - 45 นาที", hasForecastRain: true, icon: "⛅" },
+          { district: "พระประแดง", probability: 60, temperature: 29, status: "เฝ้าระวังฝนตก", timeWindow: "15:00 - 18:00 น.", durationText: "คาดการณ์ ~45 - 60 นาที", hasForecastRain: true, icon: "🌦️" },
+          { district: "พระสมุทรเจดีย์", probability: 55, temperature: 29, status: "เฝ้าระวังฝนตก", timeWindow: "15:00 - 17:30 น.", durationText: "คาดการณ์ ~30 - 45 นาที", hasForecastRain: true, icon: "🌦️" }
+        ],
+        meteorologicalInsight: {
+          activeCount: 0,
+          activeNames: "",
+          incomingCount: 2,
+          incomingNames: "อ.เมืองสมุทรปราการ, อ.พระประแดง",
+          isRainingNow: false,
+          expectedStartTime: "ช่วงบ่ายถึงเย็น (15:30 - 18:30 น.)"
+        }
+      }
+    };
   });
 
   // Continuous 24/7 Live Weather & Temperature Telemetry (Auto-refreshed every 45 seconds)
@@ -2748,7 +2797,7 @@ export default function App() {
               <button
                 type="button"
                 onClick={() => {
-                  playTabSound();
+                  try { playTabSound(); } catch (e) {}
                   setDesktopSidebarTab('points');
                 }}
                 className={`py-1.5 px-2 rounded-md font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
@@ -2763,7 +2812,7 @@ export default function App() {
               <button
                 type="button"
                 onClick={() => {
-                  playTabSound();
+                  try { playTabSound(); } catch (e) {}
                   setDesktopSidebarTab('weather');
                 }}
                 className={`py-1.5 px-2 rounded-md font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${

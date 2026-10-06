@@ -57,21 +57,31 @@ export default function RainForecast24hCard({
     return () => clearTimeout(timer);
   }, []);
 
-  if (!forecast) return null;
+  const activeForecast = forecast || {
+    title: "คาดการณ์สภาพอากาศ",
+    status: "ท้องฟ้าโปร่ง มีเมฆบางส่วน",
+    temp: 29,
+    feelsLike: 32,
+    maxProbability: 45,
+    startTimeText: "ไม่มีแนวโน้มฝนตกหนัก",
+    isRainingNow: false,
+    hourly: [],
+    districtRainAnalysis: []
+  };
 
   const todayDate = currentDate;
   const thaiDays = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'];
   const thaiMonths = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
   const todayLabel = `วัน${thaiDays[todayDate.getDay()]}ที่ ${todayDate.getDate()} ${thaiMonths[todayDate.getMonth()]}`;
 
-  const isRainingNow = forecast.isRainingNow;
-  const status = forecast.status || (isRainingNow ? 'ฝนตกในพื้นที่' : 'โอกาสฝนตกปานกลาง');
-  const maxProb = forecast.maxProbability ?? 50;
+  const isRainingNow = activeForecast.isRainingNow;
+  const status = activeForecast.status || (isRainingNow ? 'ฝนตกในพื้นที่' : 'โอกาสฝนตกปานกลาง');
+  const maxProb = activeForecast.maxProbability ?? 50;
 
   // Clean time window text for today (คาดการณ์ล่วงหน้า ไม่แสดงว่ากำลังตก)
   let rainTimeToday = "ไม่มีแนวโน้มฝนตกหนัก";
-  if (forecast.startTimeText && forecast.startTimeText !== 'ไม่มีแนวโน้มฝนตกหนัก') {
-    rainTimeToday = forecast.startTimeText.replace('เริ่มราว ', '').replace('เริ่มประมาณ ', '');
+  if (activeForecast.startTimeText && activeForecast.startTimeText !== 'ไม่มีแนวโน้มฝนตกหนัก') {
+    rainTimeToday = activeForecast.startTimeText.replace('เริ่มราว ', '').replace('เริ่มประมาณ ', '');
   } else if (maxProb >= 60) {
     rainTimeToday = "ช่วงบ่าย-เย็น (15:00 - 18:30 น.)";
   } else if (maxProb >= 40) {
@@ -88,17 +98,17 @@ export default function RainForecast24hCard({
     } catch (_) { return null; }
   })();
 
-  const districtList = (Array.isArray(forecast.districtRainAnalysis) && forecast.districtRainAnalysis.length > 0)
-    ? forecast.districtRainAnalysis
+  const districtList = (Array.isArray(activeForecast.districtRainAnalysis) && activeForecast.districtRainAnalysis.length > 0)
+    ? activeForecast.districtRainAnalysis
     : (Array.isArray(storedDistrictTemps) && storedDistrictTemps.length > 0)
       ? storedDistrictTemps
       : [
-          { district: "เมืองสมุทรปราการ", probability: maxProb, temperature: 26, status: forecast?.status || "ปกติ", timeWindow: defaultTimeWindow, durationText: defaultDuration },
-          { district: "บางพลี", probability: maxProb, temperature: 26, status: forecast?.status || "ปกติ", timeWindow: defaultTimeWindow, durationText: defaultDuration },
-          { district: "พระประแดง", probability: maxProb, temperature: 26, status: forecast?.status || "ปกติ", timeWindow: defaultTimeWindow, durationText: defaultDuration },
-          { district: "บางเสาธง", probability: maxProb, temperature: 25, status: forecast?.status || "ปกติ", timeWindow: defaultTimeWindow, durationText: defaultDuration },
-          { district: "บางบ่อ", probability: maxProb, temperature: 25, status: forecast?.status || "ปกติ", timeWindow: defaultTimeWindow, durationText: defaultDuration },
-          { district: "พระสมุทรเจดีย์", probability: maxProb, temperature: 27, status: forecast?.status || "ปกติ", timeWindow: defaultTimeWindow, durationText: defaultDuration }
+          { district: "เมืองสมุทรปราการ", probability: maxProb, temperature: 26, status: activeForecast?.status || "ปกติ", timeWindow: defaultTimeWindow, durationText: defaultDuration },
+          { district: "บางพลี", probability: maxProb, temperature: 26, status: activeForecast?.status || "ปกติ", timeWindow: defaultTimeWindow, durationText: defaultDuration },
+          { district: "พระประแดง", probability: maxProb, temperature: 26, status: activeForecast?.status || "ปกติ", timeWindow: defaultTimeWindow, durationText: defaultDuration },
+          { district: "บางเสาธง", probability: maxProb, temperature: 25, status: activeForecast?.status || "ปกติ", timeWindow: defaultTimeWindow, durationText: defaultDuration },
+          { district: "บางบ่อ", probability: maxProb, temperature: 25, status: activeForecast?.status || "ปกติ", timeWindow: defaultTimeWindow, durationText: defaultDuration },
+          { district: "พระสมุทรเจดีย์", probability: maxProb, temperature: 27, status: activeForecast?.status || "ปกติ", timeWindow: defaultTimeWindow, durationText: defaultDuration }
         ];
 
   const cleanDistrictName = (dName) => {

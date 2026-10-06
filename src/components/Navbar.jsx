@@ -347,18 +347,22 @@ export default function Navbar({
               <span>แจ้งท่วม</span>
             </button>
 
-            {/* Emergency Hotline 1784 (Polite Crimson/Rose) */}
+            {/* Citizen Feedback Button (กล่องข้อเสนอแนะ นำออกมาข้างนอก) */}
             <button 
               type="button"
               onClick={() => {
-                playEmergencySound();
-                if (onOpenEmergency) onOpenEmergency();
+                playModalOpenSound();
+                if (onOpenFeedback) onOpenFeedback();
               }}
-              title="สายด่วนฉุกเฉิน 1784 (โทรฟรี)"
-              className="px-2.5 py-1.5 rounded-md bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer border border-rose-700/50 shadow-xs active:scale-95"
+              title="กล่องข้อเสนอแนะประชาชน"
+              className={`px-2.5 py-1.5 rounded-md border text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer shadow-xs active:scale-95 ${
+                isDark 
+                  ? 'bg-teal-500/15 hover:bg-teal-500/25 text-teal-300 border-teal-700/80' 
+                  : 'bg-teal-50 hover:bg-teal-100 text-teal-800 border-teal-300'
+              }`}
             >
-              <PhoneCall className="w-3.5 h-3.5 shrink-0" />
-              <span className="font-bold">1784</span>
+              <MessageSquare className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400 shrink-0" />
+              <span>ข้อเสนอแนะ</span>
             </button>
 
             {/* TABLET MORE ACTIONS DROPDOWN (จัดเก็บเมนูเสริมเรียบร้อย ไม่ล้นจอ) */}
@@ -403,19 +407,25 @@ export default function Navbar({
                     <span>อัปเดตสถานการณ์สดรายวัน</span>
                   </button>
 
+                  {/* Emergency Hotline Option (นำเบอร์ฉุกเฉินเข้ามาในเมนู) */}
                   <button
                     type="button"
                     onClick={() => {
-                      playModalOpenSound();
+                      playEmergencySound();
                       setIsTabletMenuOpen(false);
-                      if (onOpenFeedback) onOpenFeedback();
+                      if (onOpenEmergency) onOpenEmergency();
                     }}
-                    className={`w-full p-2 rounded-md text-xs font-medium text-left flex items-center gap-2 transition-colors cursor-pointer ${
+                    className={`w-full p-2 rounded-md text-xs font-semibold text-left flex items-center justify-between transition-colors cursor-pointer ${
                       isDark ? 'hover:bg-slate-800 text-slate-200' : 'hover:bg-slate-100 text-slate-800'
                     }`}
                   >
-                    <MessageSquare className="w-4 h-4 text-teal-500 shrink-0" />
-                    <span>กล่องข้อเสนอแนะประชาชน</span>
+                    <div className="flex items-center gap-2">
+                      <PhoneCall className="w-4 h-4 text-rose-500 shrink-0" />
+                      <span>สายด่วนฉุกเฉิน 1784</span>
+                    </div>
+                    <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-700 dark:bg-rose-950/80 dark:text-rose-300 border border-rose-200 dark:border-rose-800">
+                      โทรฟรี
+                    </span>
                   </button>
 
                   <button
@@ -507,18 +517,23 @@ export default function Navbar({
               <span className="xl:hidden">แจ้งท่วม</span>
             </button>
 
-            {/* Emergency Hotline 1784 (Polite Crimson/Rose) */}
+            {/* Citizen Feedback Button (กล่องข้อเสนอแนะ นำออกมาข้างนอก) */}
             <button 
               type="button"
               onClick={() => {
-                playEmergencySound();
-                if (onOpenEmergency) onOpenEmergency();
+                playModalOpenSound();
+                if (onOpenFeedback) onOpenFeedback();
               }}
-              title="สายด่วนฉุกเฉิน 1784 (โทรฟรี)"
-              className="px-2.5 py-1.5 rounded-md bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer border border-rose-700/50 shadow-xs active:scale-95"
+              title="กล่องข้อเสนอแนะประชาชน"
+              className={`px-2.5 py-1.5 rounded-md border text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer shadow-xs active:scale-95 ${
+                isDark 
+                  ? 'bg-teal-500/15 hover:bg-teal-500/25 text-teal-300 border-teal-700/80 shadow-teal-950/40' 
+                  : 'bg-teal-50 hover:bg-teal-100 text-teal-800 border-teal-300 shadow-teal-500/10'
+              }`}
             >
-              <PhoneCall className="w-3.5 h-3.5 shrink-0" />
-              <span>1784</span>
+              <MessageSquare className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400 shrink-0" />
+              <span className="hidden xl:inline">กล่องข้อเสนอแนะ</span>
+              <span className="xl:hidden">ข้อเสนอแนะ</span>
             </button>
 
             {/* DESKTOP MORE ACTIONS DROPDOWN (จัดเก็บเมนูเสริมเรียบร้อย ไม่ล้นขอบจอเด็ดขาด) */}
@@ -564,20 +579,25 @@ export default function Navbar({
                     <span>อัปเดตสถานการณ์สดรายวัน</span>
                   </button>
 
-                  {/* Feedback Option */}
+                  {/* Emergency Hotline Option (นำเบอร์ฉุกเฉินเข้ามาในเมนู) */}
                   <button
                     type="button"
                     onClick={() => {
-                      playModalOpenSound();
+                      playEmergencySound();
                       setIsDesktopMenuOpen(false);
-                      if (onOpenFeedback) onOpenFeedback();
+                      if (onOpenEmergency) onOpenEmergency();
                     }}
-                    className={`w-full p-2 rounded-md text-xs font-medium text-left flex items-center gap-2 transition-colors cursor-pointer ${
+                    className={`w-full p-2 rounded-md text-xs font-semibold text-left flex items-center justify-between transition-colors cursor-pointer ${
                       isDark ? 'hover:bg-slate-800 text-slate-200' : 'hover:bg-slate-100 text-slate-800'
                     }`}
                   >
-                    <MessageSquare className="w-4 h-4 text-teal-500 shrink-0" />
-                    <span>กล่องข้อเสนอแนะประชาชน</span>
+                    <div className="flex items-center gap-2">
+                      <PhoneCall className="w-4 h-4 text-rose-500 shrink-0" />
+                      <span>สายด่วนฉุกเฉิน 1784</span>
+                    </div>
+                    <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-700 dark:bg-rose-950/80 dark:text-rose-300 border border-rose-200 dark:border-rose-800">
+                      โทรฟรี
+                    </span>
                   </button>
 
                   {/* Water Standards Option */}
