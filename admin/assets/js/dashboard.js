@@ -185,7 +185,7 @@ async function handleLoginSubmit(e) {
       await refreshAllData(true);
     } else {
       if (errEl) {
-        errEl.textContent = 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง (เฉพาะ Admin 01 และ Admin 02)';
+        errEl.textContent = 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง';
         errEl.style.display = 'block';
       }
       if (pIn) pIn.value = '';
@@ -1992,9 +1992,11 @@ function renderLogins() {
   });
 
   if (validSessions.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted" style="padding: 36px;">ไม่พบประวัติการเข้าใช้งาน (มีเฉพาะ Admin 01 และ Admin 02)</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted" style="padding: 36px;">ไม่พบประวัติการเข้าใช้งานแอดมิน</td></tr>`;
     return;
   }
+
+  const currentAdm = currentAdmin();
 
   validSessions.forEach(s => {
     const rawU = String(s.username || '').toLowerCase().replace(/[\s_]/g, '');
@@ -2002,6 +2004,14 @@ function renderLogins() {
     const displayUser = is02 ? 'admin02' : 'admin01';
     const displayLabel = is02 ? 'Admin 02' : 'Admin 01';
     const avatarImg = is02 ? './assets/img/admin02.jpg' : './assets/img/admin01.jpg';
+
+    // Status: ออนไลน์ เมื่อใช้งานเว็บอยู่, ออฟไลน์ เมื่อปิดไปแล้ว
+    // 1. ตรวจสอบว่าออกจากระบบหรือปิดแท็บไปแล้วหรือไม่ (s.logged_out_at)
+    // 2. ถ้าเป็นแท็บนี้ในขณะนี้ หรือมี heartbeat ล่าสุดไม่เกิน 60 วินาที = ออนไลน์
+    const isCurrentActive = currentAdm && (currentAdm.loginId === s.id);
+    const lastSeenMs = s.last_seen ? new Date(s.last_seen).getTime() : (s.logged_in_at ? new Date(s.logged_in_at).getTime() : 0);
+    const isRecentlyActive = (Date.now() - lastSeenMs) < 60 * 1000;
+    const isOnline = !s.logged_out_at && (isCurrentActive || isRecentlyActive);
 
     const tr = h('tr', {},
       // Username with avatar
@@ -2021,12 +2031,17 @@ function renderLogins() {
       ),
       // Device
       h('td', {}, s.device || 'Windows PC'),
-      // Status
+      // Status (ออนไลน์ / ออฟไลน์)
       h('td', {},
-        h('span', { class: 'badge badge-ok' },
-          h('span', { class: 'status-dot pulse' }),
-          'กำลังใช้งาน'
-        )
+        isOnline
+          ? h('span', { class: 'badge badge-ok' },
+              h('span', { class: 'status-dot pulse' }),
+              'ออนไลน์'
+            )
+          : h('span', { class: 'badge badge-neutral', style: { color: 'var(--text-muted)' } },
+              h('span', { class: 'status-dot', style: { background: 'var(--text-muted)' } }),
+              'ออฟไลน์'
+            )
       ),
       // Login Time
       h('td', { class: 'cell-mono' }, dateTime(s.logged_in_at))

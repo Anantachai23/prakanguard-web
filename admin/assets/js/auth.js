@@ -158,3 +158,15 @@ export async function changePassword(oldPass, newPass) {
   if (r.missing) return { ok: false, reason: 'no-db' };
   return r.ok ? { ok: true } : { ok: false, reason: 'rejected' };
 }
+
+// Automatically mark offline when closing tab/browser
+if (typeof window !== 'undefined') {
+  const markOffline = () => {
+    const s = currentAdmin();
+    if (s && s.loginId) {
+      endAdminSession(s.loginId, { keepalive: true });
+    }
+  };
+  window.addEventListener('beforeunload', markOffline);
+  window.addEventListener('pagehide', markOffline);
+}

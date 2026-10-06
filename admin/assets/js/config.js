@@ -22,8 +22,8 @@ export const ONLINE_WINDOW_MS = 30 * 1000;          // ออนไลน์ = �
 export const LIVE_REFRESH_MS = 15 * 1000;           // รีเฟรชยอดผู้ใช้งานสดทุก 15 วินาที
 export const CHART_REFRESH_MS = 30 * 60 * 1000;     // กราฟ/วงกลมอัปเดตทุก 30 นาที
 export const SESSION_TTL_MS = 12 * 60 * 60 * 1000;  // เซสชันแอดมินอยู่ได้ 12 ชม.
-export const ADMIN_PING_MS = 60 * 1000;             // แอดมินส่งสถานะ "กำลังใช้งาน" ทุก 1 นาที
-export const ADMIN_ACTIVE_WINDOW_MS = 3 * 60 * 1000;
+export const ADMIN_PING_MS = 20 * 1000;             // แอดมินส่งสถานะ "กำลังใช้งาน" ทุก 20 วินาที
+export const ADMIN_ACTIVE_WINDOW_MS = 60 * 1000;        // ถ้าไม่มี ping เกิน 1 นาที ถือว่าออฟไลน์
 
 /**
  * ข้อมูลตรวจสอบรหัสผ่านสำรอง (PBKDF2-SHA256) ใช้เฉพาะกรณีฐานข้อมูลยังไม่ได้ติดตั้งฟังก์ชัน admin_verify

@@ -724,7 +724,7 @@ export default function AdminModal({
         setLockoutSeconds(30);
         setLoginError('ระบบล็อกชั่วคราว 30 วินาที เนื่องจากใส่รหัสผ่านผิดเกิน 5 ครั้ง');
       } else {
-        setLoginError(`ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง (ครั้งที่ ${nextFail}/5) เฉพาะ Admin 01 และ Admin 02 เท่านั้น`);
+        setLoginError(`ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง (ครั้งที่ ${nextFail}/5)`);
       }
     }
   };
