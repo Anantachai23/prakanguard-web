@@ -3672,27 +3672,14 @@ export default function App() {
       {/* ========================================================================= */}
       {/* C. MOBILE INTERACTIVE BOTTOM SHEET & PEEK STATUS BAR (md:hidden) */}
       {/* ========================================================================= */}
-      {/* 1. Collapsed Mode: Floating Peek Bar anchored right above MobileBottomNav */}
+      {/* 1. Collapsed Mode: Clean Floating Status Bar anchored right above MobileBottomNav (Not expandable) */}
       {!isMobileSheetOpen && (
         <div className="md:hidden fixed bottom-[58px] inset-x-2.5 z-30 pointer-events-auto select-none">
-          <div className={`p-2 rounded-xl border backdrop-blur-md shadow-lg flex flex-col gap-1.5 transition-all ${
+          <div className={`p-1.5 rounded-xl border backdrop-blur-md shadow-lg transition-all ${
             isDark 
               ? 'bg-slate-900/95 border-slate-800 text-slate-100' 
               : 'bg-white/95 border-slate-200 text-slate-800'
           }`}>
-            {/* Top Drag Pill Handle */}
-            <button
-              type="button"
-              onClick={() => {
-                setMobileSheetTab('overview');
-                setIsMobileSheetOpen(true);
-              }}
-              className="w-full flex flex-col items-center cursor-pointer group"
-              aria-label="เปิดศูนย์ข้อมูล"
-            >
-              <span className="w-8 h-1 rounded-full bg-slate-300 dark:bg-slate-700 group-hover:bg-blue-500 transition-colors"></span>
-            </button>
-
             {/* 4 Compact Segmented Status Badges */}
             <div className="grid grid-cols-4 gap-1">
               {/* ปกติ */}
@@ -3767,27 +3754,6 @@ export default function App() {
                 <div className="text-xs font-bold text-rose-600 dark:text-rose-400 mt-0.5">{severe}</div>
               </button>
             </div>
-
-            {/* Quick expandable telemetry strip */}
-            <button
-              type="button"
-              onClick={() => {
-                setMobileSheetTab('weather');
-                setIsMobileSheetOpen(true);
-              }}
-              className="flex items-center justify-between text-[11px] pt-1 border-t border-slate-100 dark:border-slate-800/80 text-slate-600 dark:text-slate-300 cursor-pointer"
-            >
-              <div className="flex items-center gap-1.5 min-w-0">
-                <CloudRain className="w-3.5 h-3.5 text-blue-500 shrink-0" />
-                <span className="truncate">
-                  ฝนโอกาส {weather?.precipitationProbability ?? 0}% • {weather?.temperature ?? 30}°C
-                </span>
-              </div>
-              <div className="flex items-center gap-1 text-blue-600 dark:text-blue-400 font-medium shrink-0">
-                <span>พยากรณ์ 6 อำเภอ & ค้นหา</span>
-                <ChevronUp className="w-3.5 h-3.5" />
-              </div>
-            </button>
           </div>
         </div>
       )}

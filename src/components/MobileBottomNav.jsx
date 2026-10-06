@@ -19,11 +19,8 @@ import {
   Grid, 
   X, 
   BookOpen, 
-  Sun, 
-  Moon,
   Sparkles,
-  ShieldCheck,
-  Bell
+  ShieldCheck
 } from 'lucide-react';
 
 export default function MobileBottomNav({
@@ -93,10 +90,10 @@ export default function MobileBottomNav({
               </button>
             </div>
 
-            {/* Quick Actions Grid (Enterprise shadcn style) */}
+            {/* Quick Actions Grid (Enterprise shadcn style - Unique features only) */}
             <div className="grid grid-cols-2 gap-2">
               
-              {/* 0. Emergency Hotline 1784 (Polite Crimson/Rose - เข้าถึงง่ายชิดบนเมนู) */}
+              {/* 1. Emergency Hotline 1784 (Polite Crimson/Rose - เข้าถึงง่ายชิดบนเมนู) */}
               <button
                 type="button"
                 onClick={() => handleMenuAction(onOpenEmergency, playEmergencySound)}
@@ -113,43 +110,6 @@ export default function MobileBottomNav({
                 </div>
                 <span className="px-2 py-1 rounded-md bg-white/20 text-white text-xs font-mono font-bold shrink-0">
                   โทรฟรี
-                </span>
-              </button>
-
-              {/* 1. Admin Announcement (ปุ่มดูประกาศทางการจากแอดมิน) */}
-              {hasAnnouncement && (
-                <button
-                  type="button"
-                  onClick={() => handleMenuAction(onOpenAnnouncement, playModalOpenSound)}
-                  className="col-span-2 p-2.5 rounded-md bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-700 dark:text-amber-300 flex items-center gap-2.5 transition-all active:scale-98 text-left cursor-pointer"
-                >
-                  <div className="w-7 h-7 rounded-md bg-amber-500 text-white flex items-center justify-center shrink-0">
-                    <Bell className="w-3.5 h-3.5 animate-pulse" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <span className="text-xs font-bold block text-slate-900 dark:text-white">ประกาศจากเจ้าหน้าที่แอดมิน</span>
-                    <span className="text-[10px] text-amber-600 dark:text-amber-400 font-medium truncate block">แตะเพื่ออ่านประกาศทางการล่าสุด</span>
-                  </div>
-                </button>
-              )}
-
-              {/* 1.5 Weather Forecast & Radar Option */}
-              <button
-                type="button"
-                onClick={() => handleMenuAction(onOpenAiForecast, playModalOpenSound)}
-                className="col-span-2 p-2.5 rounded-md bg-cyan-50/70 hover:bg-cyan-100/70 dark:bg-cyan-950/30 dark:hover:bg-cyan-950/60 border border-cyan-200 dark:border-cyan-800/80 text-cyan-900 dark:text-cyan-200 flex items-center justify-between transition-all active:scale-98 text-left cursor-pointer"
-              >
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <div className="w-7 h-7 rounded-md bg-cyan-600 text-white flex items-center justify-center shrink-0">
-                    <CloudRain className="w-3.5 h-3.5" />
-                  </div>
-                  <div className="min-w-0">
-                    <span className="text-xs font-bold block text-slate-900 dark:text-white truncate">พยากรณ์สภาพอากาศ & เรดาร์ฝน</span>
-                    <span className="text-[10px] text-cyan-700 dark:text-cyan-300 truncate block">คาดการณ์ AI 24 ชม. และกลุ่มฝน TMD</span>
-                  </div>
-                </div>
-                <span className="text-[9px] px-2 py-0.5 rounded font-mono font-bold bg-cyan-100 dark:bg-cyan-900 text-cyan-700 dark:text-cyan-300 border border-cyan-300 dark:border-cyan-700 shrink-0">
-                  AI + TMD ↗
                 </span>
               </button>
 
@@ -183,7 +143,7 @@ export default function MobileBottomNav({
                 </div>
               </button>
 
-              {/* 5. Privacy Policy & Terms */}
+              {/* 4. Privacy Policy & Terms */}
               <button
                 type="button"
                 onClick={() => handleMenuAction(onOpenPrivacyPolicy, playModalOpenSound)}
@@ -194,26 +154,6 @@ export default function MobileBottomNav({
                 </div>
                 <span className="text-xs font-medium text-slate-900 dark:text-white">
                   นโยบายข้อกำหนดความเป็นส่วนตัวและแหล่งข้อมูล
-                </span>
-              </button>
-
-              {/* 5. Dark / Light Theme Toggle */}
-              <button
-                type="button"
-                onClick={() => handleMenuAction(onToggleTheme, () => playToggleSound(!isDark))}
-                className="col-span-2 p-2 rounded-md bg-slate-100 hover:bg-slate-200 dark:bg-slate-850 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 flex items-center justify-between transition-all active:scale-98 cursor-pointer"
-              >
-                <div className="flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-md bg-slate-800 dark:bg-slate-700 text-amber-300 flex items-center justify-center shrink-0">
-                    {isDark ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-slate-200" />}
-                  </div>
-                  <div className="text-left">
-                    <span className="text-xs font-medium block text-slate-900 dark:text-white">ธีมหน้าจอแสดงผล</span>
-                    <span className="text-[10px] text-slate-500 dark:text-slate-400">{isDark ? 'สลับเป็นโหมดสว่าง' : 'สลับเป็นโหมดมืด'}</span>
-                  </div>
-                </div>
-                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700">
-                  {isDark ? 'โหมดมืด 🌙' : 'โหมดสว่าง ☀️'}
                 </span>
               </button>
 

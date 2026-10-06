@@ -64,13 +64,8 @@ export default function RealTimeClock({ theme = 'light' }) {
 
       {/* Date display (Only on wide screens >= 1280px to guarantee zero navbar overflow) */}
       <div className="flex items-center gap-1 shrink-0">
-        {/* Full Date for 2XL screens */}
-        <span className="hidden 2xl:inline font-sans font-semibold">
-          {dayNameFull}ที่ {date} {monthNameFull} {yearBE}
-        </span>
-
-        {/* Medium Date for XL screens */}
-        <span className="hidden xl:inline 2xl:hidden font-sans font-semibold">
+        {/* Compact Date for XL and 2XL screens */}
+        <span className="hidden xl:inline font-sans font-semibold text-slate-600 dark:text-slate-300">
           {dayNameShort} {date} {monthNameShort}
         </span>
 
