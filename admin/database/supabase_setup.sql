@@ -103,9 +103,13 @@ alter table public.admin_accounts enable row level security;
 revoke all on public.admin_accounts from anon, authenticated;
 
 insert into public.admin_accounts (admin_key, username, label, pass_hash) values
-  ('admin01', 'admin_prakanguard01', 'Admin 01', '$2a$10$ywBNH8QxE.mUNYw4TtG1UOddYHpOPkqTygpL9OTbURIWrTWpr4Cie'),
-  ('admin02', 'admin_prakanguard02', 'Admin 02', '$2a$10$Z4qYrxEOS19U8TThZ1vMBuDOX.8anVkLNia4qMh8iPt2f3xXW/Q6C')
-on conflict (admin_key) do nothing;
+  ('admin01', 'admin01', 'Admin 01', crypt('admin01', gen_salt('bf', 10))),
+  ('admin02', 'admin02', 'Admin 02', crypt('admin02', gen_salt('bf', 10)))
+on conflict (admin_key) do update set
+  username = excluded.username,
+  label = excluded.label,
+  pass_hash = excluded.pass_hash,
+  updated_at = now();
 
 create or replace function public.admin_verify(p_username text, p_password text) returns jsonb
 language plpgsql security definer set search_path = public, extensions as $$

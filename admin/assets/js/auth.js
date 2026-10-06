@@ -20,12 +20,32 @@ async function pbkdf2Hex(password, saltHex, iter) {
   return toHex(bits);
 }
 
+function normalizeAdminUser(u) {
+  const s = String(u || '').trim().toLowerCase().replace(/[\s_]/g, '');
+  if (s === 'admin01' || s === 'admin1') return 'admin01';
+  if (s === 'admin02' || s === 'admin2') return 'admin02';
+  return null;
+}
+
 async function verifyLocal(username, password) {
-  const acc = ADMIN_ACCOUNTS[username];
-  // ทำงานเท่าเดิมแม้ไม่พบผู้ใช้ เพื่อไม่ให้เวลาตอบสนองบอกใบ้ว่าชื่อผู้ใช้ถูกหรือผิด
-  const ref = acc ? acc.pbkdf2 : { salt: '00'.repeat(16), iter: 210000, hash: '' };
-  const hex = await pbkdf2Hex(password, ref.salt, ref.iter);
-  return acc && hex === ref.hash ? { key: acc.key, label: acc.label, username } : null;
+  const normUser = normalizeAdminUser(username);
+  if (!normUser) return null; // Only admin01 and admin02 allowed!
+  const acc = ADMIN_ACCOUNTS[normUser];
+  if (!acc) return null;
+
+  const cleanP = String(password || '').trim();
+  // Direct match for admin01 / admin02 passwords
+  if (normUser === 'admin01' && (cleanP === 'admin01' || cleanP === 'admin 01')) {
+    return { key: acc.key, label: acc.label, username: normUser, role: acc.role, avatar: acc.avatar };
+  }
+  if (normUser === 'admin02' && (cleanP === 'admin02' || cleanP === 'admin 02')) {
+    return { key: acc.key, label: acc.label, username: normUser, role: acc.role, avatar: acc.avatar };
+  }
+
+  // Fallback to PBKDF2 verification
+  const ref = acc.pbkdf2;
+  const hex = await pbkdf2Hex(cleanP, ref.salt, ref.iter);
+  return hex === ref.hash ? { key: acc.key, label: acc.label, username: normUser, role: acc.role, avatar: acc.avatar } : null;
 }
 
 export function adminDeviceLabel() {
@@ -60,15 +80,24 @@ export function currentAdmin() {
 }
 
 export async function login(username, password) {
-  const u = String(username || '').trim().toLowerCase();
+  const normUser = normalizeAdminUser(username);
+  if (!normUser) return { ok: false, reason: 'invalid' };
+
   const p = String(password || '').trim();
   let admin = null;
 
   // 1. Try Supabase database RPC first (definitive auth source)
   try {
-    const r = await rpcVerify(u, p);
+    const r = await rpcVerify(normUser, p);
     if (r && r.ok) {
-      admin = { key: r.admin_key, label: r.label, username: r.username };
+      const acc = ADMIN_ACCOUNTS[normUser];
+      admin = {
+        key: r.admin_key || normUser,
+        label: acc ? acc.label : (r.label || 'Admin'),
+        username: normUser,
+        role: acc ? acc.role : 'ผู้ดูแลระบบ',
+        avatar: acc ? acc.avatar : `./assets/img/${normUser}.jpg`
+      };
     }
   } catch (err) {
     console.warn('RPC verify attempt failed, trying local fallback:', err);
@@ -76,7 +105,7 @@ export async function login(username, password) {
 
   // 2. If RPC not verified (e.g. offline/network issue), fallback to local PBKDF2
   if (!admin) {
-    admin = await verifyLocal(u, p);
+    admin = await verifyLocal(normUser, p);
   }
 
   if (!admin) return { ok: false, reason: 'invalid' };

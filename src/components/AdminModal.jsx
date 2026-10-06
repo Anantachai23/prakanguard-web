@@ -71,11 +71,11 @@ import {
   playAdminTerminalSound
 } from '../services/soundEffects';
 
-// Default Hardened Admin Credentials
+// Default Hardened Admin Credentials (เฉพาะ Admin 01 และ Admin 02)
 const DEFAULT_ADMIN_CREDENTIALS = {
-  username: 'admin_prakanguard',
-  password: 'Prakan#Guard2026!Secured',
-  role: 'ผู้ดูแลระบบสูงสุด (Super Administrator)'
+  username: 'admin01',
+  password: 'admin01',
+  role: 'Admin 01'
 };
 
 export default function AdminModal({ 
@@ -296,9 +296,9 @@ export default function AdminModal({
         },
         body: JSON.stringify({
           id: currentAdminSessionId,
-          admin_key: 'admin_prakanguard',
-          username: credentials.username || 'admin_prakanguard',
-          admin_label: credentials.role || 'Super Admin',
+          admin_key: credentials.username || 'admin01',
+          username: credentials.username || 'admin01',
+          admin_label: credentials.role || 'Admin 01',
           device: dev,
           logged_in_at: loginTime,
           last_seen: nowIso,
@@ -320,8 +320,8 @@ export default function AdminModal({
         } else {
           const newEntry = {
             id: currentAdminSessionId,
-            username: credentials.username || 'admin_prakanguard',
-            admin_label: credentials.role || 'Super Admin',
+            username: credentials.username || 'admin01',
+            admin_label: credentials.role || 'Admin 01',
             device: dev,
             timestamp: loginTime,
             last_seen: nowIso,
@@ -432,7 +432,7 @@ export default function AdminModal({
       const newEntry = {
         id: currentAdminSessionId,
         username: username,
-        admin_label: credentials.role || 'Super Admin',
+        admin_label: credentials.role || (username.includes('2') ? 'Admin 02' : 'Admin 01'),
         device: dev,
         status: 'เข้าสู่ระบบสำเร็จ',
         timestamp: now.toISOString(),
@@ -465,9 +465,9 @@ export default function AdminModal({
         },
         body: JSON.stringify({
           id: currentAdminSessionId,
-          admin_key: 'admin_prakanguard',
+          admin_key: username,
           username: username,
-          admin_label: credentials.role || 'Super Admin',
+          admin_label: credentials.role || (username.includes('2') ? 'Admin 02' : 'Admin 01'),
           device: dev,
           logged_in_at: now.toISOString(),
           last_seen: now.toISOString(),
@@ -682,36 +682,41 @@ export default function AdminModal({
     return validateCoordinatePrecision(newLocationLat, newLocationLng, newLocationDistrict);
   }, [newLocationLat, newLocationLng, newLocationDistrict]);
 
-  // Handle Login Authentication
+  // Handle Login Authentication (เฉพาะ Admin 01 และ Admin 02)
   const handleLogin = (e) => {
     e.preventDefault();
     if (lockoutSeconds > 0) return;
 
-    const u = inputUsername.trim();
-    const p = inputPassword.trim();
+    const normU = inputUsername.trim().toLowerCase().replace(/[\s_]/g, '');
+    const normP = inputPassword.trim();
 
-    // Check strictly against configured credentials or default super admin
-    const validUser = (
-      u.toLowerCase() === credentials.username.toLowerCase() || 
-      u.toLowerCase() === DEFAULT_ADMIN_CREDENTIALS.username.toLowerCase() ||
-      u.toLowerCase() === 'prakan_admin'
-    );
-    const validPass = (
-      p === credentials.password || 
-      p === DEFAULT_ADMIN_CREDENTIALS.password
-    );
+    // Check strictly: only Admin 01 and Admin 02
+    const is01 = (normU === 'admin01' || normU === 'admin1') && (normP === 'admin01' || normP === 'admin 01');
+    const is02 = (normU === 'admin02' || normU === 'admin2') && (normP === 'admin02' || normP === 'admin 02');
 
-    if (validUser && validPass) {
+    if (is01 || is02) {
+      const activeAdmin = is01 ? {
+        username: 'admin01',
+        password: 'admin01',
+        role: 'Admin 01'
+      } : {
+        username: 'admin02',
+        password: 'admin02',
+        role: 'Admin 02'
+      };
+
+      setCredentials(activeAdmin);
       setIsAuthenticated(true);
       if (onAuthChange) onAuthChange(true);
       try {
         sessionStorage.setItem('prakanguard_admin_auth', 'true');
+        sessionStorage.setItem('prakanguard_admin_credentials', JSON.stringify(activeAdmin));
       } catch (e) {}
-      recordAdminLogin(u);
+      recordAdminLogin(activeAdmin.username);
       setLoginError('');
       setFailedAttempts(0);
       setInputPassword('');
-      showNotice('เข้าสู่ระบบ ADMIN สำเร็จ ยินดีต้อนรับครับ');
+      showNotice(`ยินดีต้อนรับ ${activeAdmin.role} เข้าสู่ระบบสำเร็จ`);
     } else {
       const nextFail = failedAttempts + 1;
       setFailedAttempts(nextFail);
@@ -719,7 +724,7 @@ export default function AdminModal({
         setLockoutSeconds(30);
         setLoginError('ระบบล็อกชั่วคราว 30 วินาที เนื่องจากใส่รหัสผ่านผิดเกิน 5 ครั้ง');
       } else {
-        setLoginError(`ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง (ครั้งที่ ${nextFail}/5)`);
+        setLoginError(`ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง (ครั้งที่ ${nextFail}/5) เฉพาะ Admin 01 และ Admin 02 เท่านั้น`);
       }
     }
   };
@@ -1493,7 +1498,7 @@ export default function AdminModal({
     const updated = {
       username: newUsernameInput.trim() || credentials.username,
       password: newPassInput.trim(),
-      role: 'ผู้ดูแลระบบสูงสุด (Super Administrator)'
+      role: credentials.role || (credentials.username === 'admin02' ? 'Admin 02' : 'Admin 01')
     };
 
     setCredentials(updated);
@@ -1623,7 +1628,7 @@ export default function AdminModal({
               </div>
               <p className={`text-[11px] truncate ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
                 {isAuthenticated 
-                  ? `เข้าสู่ระบบ: ${credentials.username} (${credentials.role || 'Super Admin'})` 
+                  ? `เข้าสู่ระบบ: ${credentials.role || credentials.username}` 
                   : 'กรุณายืนยันตัวตนเพื่อเข้าถึงข้อมูลและการจัดการระบบ'}
               </p>
             </div>

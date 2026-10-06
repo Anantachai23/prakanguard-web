@@ -144,8 +144,15 @@ function renderLoginWall() {
     if (wall) wall.style.display = 'none';
     const nameEl = $('#sidebar-admin-name');
     if (nameEl) nameEl.textContent = `${user.label} (${user.username})`;
+    const greetingTitleEl = $('#sidebar-greeting-title');
+    if (greetingTitleEl) greetingTitleEl.textContent = 'ยินดีต้อนรับ';
     const greetingEl = $('#sidebar-greeting-name');
-    if (greetingEl) greetingEl.textContent = `${user.label}`;
+    if (greetingEl) greetingEl.textContent = `${user.label || 'Admin 01'}`;
+    const avatarEl = $('#sidebar-admin-avatar');
+    if (avatarEl) {
+      const is02 = String(user.username || '').includes('2');
+      avatarEl.src = user.avatar || (is02 ? './assets/img/admin02.jpg' : './assets/img/admin01.jpg');
+    }
   }
 }
 
@@ -1974,22 +1981,47 @@ function renderLogins() {
   if (!tbody) return;
   tbody.innerHTML = '';
 
-  if (state.adminSessions.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted" style="padding: 36px;">ไม่พบประวัติการเข้าใช้งานแอดมิน</td></tr>`;
+  // Filter only Admin 01 and Admin 02 accounts, completely removing super admin or other legacy accounts
+  const validSessions = (state.adminSessions || []).filter(s => {
+    const u = String(s.username || '').toLowerCase().replace(/[\s_]/g, '');
+    const l = String(s.admin_label || '').toLowerCase();
+    if (l.includes('super') || u.includes('prakanguard') && !u.includes('01') && !u.includes('02')) {
+      return false; // Discard super admin completely
+    }
+    return u === 'admin01' || u === 'admin1' || u === 'admin02' || u === 'admin2';
+  });
+
+  if (validSessions.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted" style="padding: 36px;">ไม่พบประวัติการเข้าใช้งาน (มีเฉพาะ Admin 01 และ Admin 02)</td></tr>`;
     return;
   }
 
-  state.adminSessions.forEach(s => {
+  validSessions.forEach(s => {
+    const rawU = String(s.username || '').toLowerCase().replace(/[\s_]/g, '');
+    const is02 = rawU.includes('2');
+    const displayUser = is02 ? 'admin02' : 'admin01';
+    const displayLabel = is02 ? 'Admin 02' : 'Admin 01';
+    const avatarImg = is02 ? './assets/img/admin02.jpg' : './assets/img/admin01.jpg';
+
     const tr = h('tr', {},
-      // Username
-      h('td', { style: { fontWeight: 600 } }, s.username),
-      // Admin Label (แอดมินคนที่...)
+      // Username with avatar
+      h('td', { style: { fontWeight: 600 } },
+        h('div', { style: { display: 'flex', alignItems: 'center', gap: '9px' } },
+          h('img', { 
+            src: avatarImg, 
+            alt: displayLabel,
+            style: { width: '26px', height: '26px', borderRadius: '50%', objectFit: 'cover', border: '1.5px solid #38bdf8', flexShrink: '0' } 
+          }),
+          h('span', {}, displayUser)
+        )
+      ),
+      // Admin Label (Admin 01 / Admin 02)
       h('td', {},
-        h('span', { class: 'badge badge-primary' }, s.admin_label || 'Admin')
+        h('span', { class: 'badge badge-primary' }, displayLabel)
       ),
       // Device
       h('td', {}, s.device || 'Windows PC'),
-      // Status (แสดงแค่ "กำลังใช้งาน" ตามที่ผู้ใช้สั่ง)
+      // Status
       h('td', {},
         h('span', { class: 'badge badge-ok' },
           h('span', { class: 'status-dot pulse' }),

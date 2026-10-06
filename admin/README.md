@@ -29,10 +29,13 @@ node server.js
 
 ---
 
-## 🔐 ข้อมูลเข้าสู่ระบบเริ่มต้น (Default Credentials)
-- **ชื่อผู้ใช้ (Username):** `admin_prakanguard`
-- **รหัสผ่าน (Password):** `Prakan#Guard2026!Secured`
-*(สามารถเปลี่ยนรหัสผ่านได้ในเมนู "ตั้งค่าระบบ")*
+## 🔐 ข้อมูลเข้าสู่ระบบ (Admin Accounts)
+- **แอดมินคนที่ 1:**
+  - **ชื่อผู้ใช้ (Username):** `admin01`
+  - **รหัสผ่าน (Password):** `admin01`
+- **แอดมินคนที่ 2:**
+  - **ชื่อผู้ใช้ (Username):** `admin02`
+  - **รหัสผ่าน (Password):** `admin02`
 
 ---
 
