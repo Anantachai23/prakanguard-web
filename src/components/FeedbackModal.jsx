@@ -98,9 +98,9 @@ export default function FeedbackModal({ isOpen, onClose, theme = 'light', onFeed
   return (
     <div 
       onClick={(e) => { if (e.target === e.currentTarget) handleResetAndClose(); }}
-      className="fixed inset-0 z-50 bg-slate-950/65 backdrop-blur-xs flex items-start justify-center pt-[7vh] pb-20 sm:items-center sm:pt-4 sm:pb-4 smooth-backdrop"
+      className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 smooth-backdrop overflow-y-auto"
     >
-      <div className={`w-[92vw] max-w-[390px] sm:max-w-md border rounded-2xl sm:rounded-3xl shadow-2xl flex flex-col max-h-[72vh] sm:max-h-[82vh] overflow-hidden smooth-pop transition-colors ${
+      <div className={`w-[90vw] max-w-[360px] sm:max-w-md my-auto m-auto border rounded-2xl shadow-2xl flex flex-col max-h-[75vh] sm:max-h-[82vh] overflow-hidden smooth-pop transition-colors ${
         isDark ? 'bg-slate-900 border-slate-700 text-slate-100' : 'bg-white border-slate-200 text-slate-800'
       }`}>
         

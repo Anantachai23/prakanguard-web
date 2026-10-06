@@ -344,8 +344,8 @@ export default function CitizenReportModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/65 backdrop-blur-xs flex items-start justify-center pt-[7vh] pb-20 sm:items-center sm:pt-4 sm:pb-4 smooth-backdrop">
-      <div className={`w-[92vw] max-w-[390px] sm:max-w-md rounded-2xl sm:rounded-3xl border shadow-2xl overflow-hidden flex flex-col max-h-[74vh] sm:max-h-[85vh] smooth-pop transition-colors ${
+    <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 smooth-backdrop overflow-y-auto">
+      <div className={`w-[90vw] max-w-[360px] sm:max-w-md my-auto m-auto rounded-2xl border shadow-2xl overflow-hidden flex flex-col max-h-[75vh] sm:max-h-[85vh] smooth-pop transition-colors ${
         isDark ? 'bg-slate-900 border-slate-700 text-slate-100' : 'bg-white border-slate-200 text-slate-900'
       }`}>
         

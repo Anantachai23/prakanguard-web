@@ -2119,7 +2119,7 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
             right: 'auto',
             touchAction: 'none'
           } : undefined}
-          className={`fixed bottom-[calc(6.5rem+env(safe-area-inset-bottom,0px))] right-2 sm:bottom-6 sm:right-6 z-40 px-2 sm:px-4 py-1.5 sm:py-3 rounded-xl sm:rounded-2xl font-semibold text-[11px] sm:text-sm shadow-xl items-center gap-1.5 sm:gap-2 border cursor-grab active:cursor-grabbing transition-shadow select-none backdrop-blur-xl group ${
+          className={`fixed bottom-[calc(11.5rem+env(safe-area-inset-bottom,0px))] right-2.5 sm:bottom-6 sm:right-6 z-40 px-2 sm:px-4 py-1.5 sm:py-3 rounded-xl sm:rounded-2xl font-semibold text-[11px] sm:text-sm shadow-xl items-center gap-1.5 sm:gap-2 border cursor-grab active:cursor-grabbing transition-shadow select-none backdrop-blur-xl group ${
             isPointSelected ? 'hidden' : 'flex'
           } ${
             isDark 
@@ -2148,7 +2148,7 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
             right: 'auto',
             bottom: 'auto'
           } : undefined}
-          className={`fixed z-50 bottom-[calc(4.25rem+env(safe-area-inset-bottom,0px))] right-2 sm:bottom-6 sm:right-6 w-auto max-w-[270px] sm:w-[380px] border rounded-2xl shadow-2xl flex items-center justify-between gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-2.5 backdrop-blur-2xl transition-all duration-200 animate-in fade-in slide-in-from-bottom-2 ${
+          className={`fixed z-50 bottom-[calc(11.5rem+env(safe-area-inset-bottom,0px))] right-2.5 sm:bottom-6 sm:right-6 w-auto max-w-[270px] sm:w-[380px] border rounded-2xl shadow-2xl flex items-center justify-between gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-2.5 backdrop-blur-2xl transition-all duration-200 animate-in fade-in slide-in-from-bottom-2 ${
             isDark 
               ? 'bg-slate-900/95 border-slate-700 text-slate-100 ring-1 ring-blue-500/20' 
               : 'bg-white/95 border-slate-200 text-slate-800 shadow-blue-500/10'

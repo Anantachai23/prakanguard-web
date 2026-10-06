@@ -56,7 +56,7 @@ export default function WelcomeModal({
 
   return (
     <div 
-      className={`fixed inset-0 z-50 flex items-start justify-center pt-[7vh] pb-20 sm:items-center sm:pt-4 sm:pb-4 overflow-hidden select-none transition-all duration-700 ${
+      className={`fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 overflow-y-auto select-none transition-all duration-700 ${
         isEntering && !isExiting 
           ? 'bg-slate-950/75 backdrop-blur-md opacity-100 pointer-events-auto' 
           : 'bg-slate-950/0 backdrop-blur-none opacity-0 pointer-events-none'
@@ -70,7 +70,7 @@ export default function WelcomeModal({
     >
       {/* Welcome Card Container with Smooth Slide-Up Exit Animation */}
       <div 
-        className={`w-[92vw] max-w-[390px] sm:max-w-xl max-h-[74vh] sm:max-h-[88vh] border rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col relative transition-all duration-800 ${
+        className={`w-[90vw] max-w-[360px] sm:max-w-xl my-auto m-auto max-h-[75vh] sm:max-h-[88vh] border rounded-2xl shadow-2xl overflow-hidden flex flex-col relative transition-all duration-800 ${
           isDark 
             ? 'bg-slate-900/95 border-slate-700/80 text-slate-100 shadow-cyan-950/40' 
             : 'bg-white/95 border-slate-200/90 text-slate-800 shadow-blue-900/20'

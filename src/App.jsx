@@ -3279,24 +3279,24 @@ export default function App() {
                 setSelectedPoint(null);
               }
             }}
-            className="fixed inset-0 z-[100] bg-slate-950/65 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 smooth-backdrop animate-in fade-in duration-200 pointer-events-auto overflow-hidden"
+            className="fixed inset-0 z-[100] bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 smooth-backdrop animate-in fade-in duration-200 pointer-events-auto overflow-y-auto"
           >
             <div 
-              className={`w-full max-w-[420px] sm:max-w-md border rounded-xl shadow-2xl relative max-h-[82vh] sm:max-h-[86vh] flex flex-col p-3.5 sm:p-5 overflow-y-auto overscroll-contain transition-all custom-scrollbar-thin ${
+              className={`w-[90vw] max-w-[360px] sm:max-w-[410px] my-auto m-auto border rounded-2xl shadow-2xl relative max-h-[75vh] sm:max-h-[82vh] flex flex-col p-3 sm:p-4 overflow-y-auto overscroll-contain transition-all custom-scrollbar-thin ${
                 isDark 
                   ? 'bg-slate-900 border-slate-800 text-slate-100 shadow-2xl shadow-black/80' 
                   : 'bg-white border-slate-200 text-slate-900 shadow-2xl shadow-slate-900/30'
               }`}
             >
               {/* Header: District Badge + Severity Badge + Easy-to-Tap Close Button */}
-              <div className={`flex items-center justify-between gap-1.5 sm:gap-2 pb-2 sm:pb-2.5 border-b ${isDark ? 'border-slate-800' : 'border-slate-200'}`}>
-                <div className="flex flex-wrap items-center gap-1.5 min-w-0">
-                  <span className={`text-xs font-semibold px-2 py-0.5 rounded-md border shadow-xs ${
+              <div className={`flex items-start justify-between gap-1.5 sm:gap-2 pb-2 sm:pb-2.5 border-b shrink-0 ${isDark ? 'border-slate-800' : 'border-slate-200'}`}>
+                <div className="flex flex-wrap items-center gap-1 sm:gap-1.5 min-w-0 flex-1">
+                  <span className={`text-[10.5px] sm:text-xs font-semibold px-2 py-0.5 rounded-md border shadow-xs ${
                     isDark ? 'bg-slate-850 text-cyan-300 border-slate-700' : 'bg-slate-50 text-blue-700 border-slate-200'
                   }`}>
                     อ.{selectedPoint.district}
                   </span>
-                  <span className={`text-xs font-semibold px-2 py-0.5 rounded-md border shadow-xs ${
+                  <span className={`text-[10.5px] sm:text-xs font-semibold px-2 py-0.5 rounded-md border shadow-xs break-words whitespace-normal leading-tight ${
                     selectedPoint.hazardType === 'hail' ? (isDark ? 'bg-cyan-950 text-cyan-300 border-cyan-700' : 'bg-cyan-50 text-cyan-700 border-cyan-200') :
                     getFloodLevel(selectedPoint.depthCm) === 3 ? (isDark ? 'bg-rose-950 text-rose-300 border-rose-700' : 'bg-rose-50 text-rose-700 border-rose-200') :
                     getFloodLevel(selectedPoint.depthCm) === 2 ? (isDark ? 'bg-amber-950 text-amber-300 border-amber-700' : 'bg-amber-50 text-amber-700 border-amber-200') :
@@ -3318,19 +3318,19 @@ export default function App() {
                           time: selectedPoint.reportedAt || selectedPoint.time
                         });
                       }}
-                      className="text-xs font-bold px-2 py-0.5 rounded-md border shadow-xs bg-blue-100 hover:bg-blue-200 text-blue-800 border-blue-300 dark:bg-blue-950 dark:hover:bg-blue-900 dark:text-cyan-300 dark:border-blue-700 flex items-center gap-1 cursor-pointer transition-all active:scale-95 animate-in fade-in duration-200"
+                      className="text-[10.5px] sm:text-xs font-bold px-2 py-0.5 rounded-md border shadow-xs bg-blue-100 hover:bg-blue-200 text-blue-800 border-blue-300 dark:bg-blue-950 dark:hover:bg-blue-900 dark:text-cyan-300 dark:border-blue-700 flex items-center gap-1 cursor-pointer transition-all active:scale-95 animate-in fade-in duration-200"
                       title="แตะเพื่อเปิดดูภาพถ่ายขนาดใหญ่"
                     >
                       <span>📷 มีภาพถ่าย (แตะเพื่อดู)</span>
                     </button>
                   )}
                   {isWaterReceding(selectedPoint) && (
-                    <span className="text-xs font-semibold px-1.5 py-0.5 rounded-md bg-teal-50 text-teal-800 border border-teal-300 dark:bg-teal-950 dark:text-teal-300 dark:border-teal-700 flex items-center gap-1">
+                    <span className="text-[10.5px] sm:text-xs font-semibold px-1.5 py-0.5 rounded-md bg-teal-50 text-teal-800 border border-teal-300 dark:bg-teal-950 dark:text-teal-300 dark:border-teal-700 flex items-center gap-1">
                       <span>📉 น้ำลด</span>
                     </span>
                   )}
                   {selectedPoint.waterTrend === 'rising' && !isWaterReceding(selectedPoint) && (
-                    <span className="text-xs font-semibold px-1.5 py-0.5 rounded-md bg-rose-50 text-rose-800 border border-rose-300 dark:bg-rose-950 dark:text-rose-300 dark:border-rose-700 flex items-center gap-1">
+                    <span className="text-[10.5px] sm:text-xs font-semibold px-1.5 py-0.5 rounded-md bg-rose-50 text-rose-800 border border-rose-300 dark:bg-rose-950 dark:text-rose-300 dark:border-rose-700 flex items-center gap-1">
                       <span>📈 น้ำขึ้น</span>
                     </span>
                   )}
@@ -3343,7 +3343,7 @@ export default function App() {
                     playCloseSound();
                     setSelectedPoint(null);
                   }}
-                  className={`w-7 h-7 sm:w-8 sm:h-8 rounded-md border shadow-xs flex items-center justify-center transition-all cursor-pointer shrink-0 active:scale-95 ${
+                  className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg border shadow-xs flex items-center justify-center transition-all cursor-pointer shrink-0 active:scale-95 ${
                     isDark 
                       ? 'bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700' 
                       : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-200'
@@ -3355,19 +3355,19 @@ export default function App() {
               </div>
 
               {/* Point Title & Clean Location Subtitle */}
-              <div className="pt-2 pb-1 sm:pt-2 sm:pb-1">
-                <h3 className={`text-base sm:text-lg font-bold leading-snug break-words ${isDark ? 'text-white' : 'text-slate-900'}`}>
+              <div className="pt-2 pb-1 sm:pt-2.5 sm:pb-1 shrink-0">
+                <h3 className={`text-sm sm:text-base font-bold leading-snug break-words whitespace-normal ${isDark ? 'text-white' : 'text-slate-900'}`}>
                   {selectedPoint.name}
                 </h3>
                 {(selectedPoint.district || selectedPoint.subdistrict) && (
-                  <p className={`text-xs mt-0.5 font-medium ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                  <p className={`text-[11px] sm:text-xs mt-0.5 font-medium leading-relaxed break-words whitespace-normal ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
                     {selectedPoint.district ? `อ.${selectedPoint.district.replace(/^อ\./, '')}` : ''}
                     {selectedPoint.subdistrict ? ` • ${selectedPoint.subdistrict.startsWith('ต.') ? selectedPoint.subdistrict : `ต.${selectedPoint.subdistrict}`}` : ''}
                     {(typeof selectedPoint.roadSegment === 'string' && selectedPoint.roadSegment.trim() && !/^[0-9.,\s-]+$/.test(selectedPoint.roadSegment.trim())) ? ` • ${selectedPoint.roadSegment}` : ''}
                   </p>
                 )}
                 {typeof selectedPoint.lat === 'number' && typeof selectedPoint.lng === 'number' && (
-                  <div className="text-[10px] font-mono text-slate-400 dark:text-slate-500 mt-0.5">
+                  <div className="text-[9.5px] sm:text-[10px] font-mono text-slate-400 dark:text-slate-500 mt-0.5 break-words whitespace-normal">
                     📍 พิกัด: {selectedPoint.lat.toFixed(5)}, {selectedPoint.lng.toFixed(5)}
                   </div>
                 )}
@@ -3376,7 +3376,7 @@ export default function App() {
             {/* Citizen Uploaded Photo Preview (If available) */}
             {hasPhoto && (
               <div 
-                className="mt-2 sm:mt-2.5 rounded-xl overflow-hidden border border-blue-200 dark:border-blue-900/60 shadow-sm relative cursor-pointer group bg-slate-950 touch-manipulation active:scale-[0.98] transition-transform"
+                className="mt-2 sm:mt-2.5 rounded-xl overflow-hidden border border-blue-200 dark:border-blue-900/60 shadow-sm relative cursor-pointer group bg-slate-950 touch-manipulation active:scale-[0.98] transition-transform shrink-0"
                 onClick={() => {
                   playModalOpenSound();
                   setLightboxPhoto({
@@ -3391,24 +3391,24 @@ export default function App() {
                   <img 
                     src={pointPhoto} 
                     alt="รูปภาพสถานการณ์น้ำท่วม" 
-                    className="w-full h-36 sm:h-44 object-cover group-hover:scale-105 transition-transform duration-200" 
+                    className="w-full h-32 sm:h-40 object-cover group-hover:scale-105 transition-transform duration-200" 
                     loading="lazy"
                   />
-                  <div className="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-black/80 backdrop-blur-xs text-cyan-300 text-xs font-bold border border-cyan-400/50 flex items-center gap-1 shadow-md">
+                  <div className="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-black/80 backdrop-blur-xs text-cyan-300 text-[10.5px] sm:text-xs font-bold border border-cyan-400/50 flex items-center gap-1 shadow-md">
                     <span>📸 ภาพถ่ายรายงาน</span>
                   </div>
-                  <div className="absolute bottom-2 right-2 px-2 py-0.5 rounded-md bg-blue-600/90 text-white text-[11px] font-semibold flex items-center gap-1 shadow-md">
+                  <div className="absolute bottom-2 right-2 px-2 py-0.5 rounded-md bg-blue-600/90 text-white text-[10px] sm:text-[11px] font-semibold flex items-center gap-1 shadow-md">
                     <span>🔍 แตะดูเต็มจอ</span>
                   </div>
                 </div>
-                <div className={`p-2 text-xs text-center font-medium flex items-center justify-between px-3 ${
+                <div className={`p-1.5 sm:p-2 text-[10.5px] sm:text-xs text-center font-medium flex items-center justify-between px-2.5 ${
                   isDark ? 'bg-slate-850 text-slate-300' : 'bg-slate-100 text-slate-700'
                 }`}>
                   <span className="flex items-center gap-1 font-semibold text-blue-600 dark:text-cyan-400">
                     <span>🔎 คลิกเพื่อเปิดภาพถ่ายความละเอียดสูง</span>
                   </span>
                   {(selectedPoint.reportedAt || selectedPoint.time) && (
-                    <span className="opacity-75 text-[10px] font-mono">
+                    <span className="opacity-75 text-[9.5px] sm:text-[10px] font-mono">
                       {selectedPoint.reportedAt || selectedPoint.time}
                     </span>
                   )}
@@ -3417,7 +3417,7 @@ export default function App() {
             )}
 
             {/* Visual Gauge with Standard Waterline & Sleek Vehicle Silhouettes (100% Solid & High Contrast) */}
-            <div className="mt-2.5 sm:mt-3">
+            <div className="mt-2 sm:mt-2.5">
               <VisualGauge 
                 depthCm={selectedPoint.depthCm} 
                 level={getFloodLevel(selectedPoint.depthCm)} 
@@ -3431,52 +3431,52 @@ export default function App() {
               const standard = FLOOD_STANDARDS.find(s => s.level === getFloodLevel(selectedPoint.depthCm)) || FLOOD_STANDARDS[0];
               const vi = standard.vehicleImpact || {};
               return (
-                <div className={`mt-2.5 p-2.5 rounded-lg border ${isDark ? 'bg-slate-850/70 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-[11px] font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                <div className={`mt-2 p-2 sm:p-2.5 rounded-xl border ${isDark ? 'bg-slate-850/70 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-[10.5px] sm:text-[11px] font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5 break-words whitespace-normal">
                       <span>🚗</span> คำแนะนำความปลอดภัยต่อยานพาหนะ
                     </span>
-                    <span className="text-[10px] text-slate-400">อิง ปภ./กรมทางหลวง</span>
+                    <span className="text-[9.5px] sm:text-[10px] text-slate-400 shrink-0">อิง ปภ./กรมทางหลวง</span>
                   </div>
                   <div className="grid grid-cols-2 gap-1.5 text-xs">
                     {/* รถเก๋ง */}
-                    <div className={`p-1.5 rounded-md border flex items-center justify-between gap-1 ${
+                    <div className={`p-1.5 rounded-lg border flex items-center justify-between gap-1 ${
                       vi.sedan?.status === 'danger' ? (isDark ? 'bg-rose-950/60 border-rose-800 text-rose-300' : 'bg-rose-50 border-rose-200 text-rose-800') :
                       vi.sedan?.status === 'warning' ? (isDark ? 'bg-amber-950/60 border-amber-800 text-amber-300' : 'bg-amber-50 border-amber-200 text-amber-800') :
                       (isDark ? 'bg-emerald-950/60 border-emerald-800 text-emerald-300' : 'bg-emerald-50 border-emerald-200 text-emerald-800')
                     }`}>
-                      <span className="text-[11px] font-semibold truncate">🚗 รถเก๋ง/เล็ก</span>
-                      <span className="text-[10px] font-bold shrink-0">{vi.sedan?.status === 'danger' ? 'ห้ามผ่าน' : vi.sedan?.status === 'warning' ? 'ควรเลี่ยง' : 'ผ่านได้'}</span>
+                      <span className="text-[10.5px] sm:text-[11px] font-semibold break-words whitespace-normal leading-tight">🚗 รถเก๋ง/เล็ก</span>
+                      <span className="text-[9.5px] sm:text-[10px] font-bold shrink-0">{vi.sedan?.status === 'danger' ? 'ห้ามผ่าน' : vi.sedan?.status === 'warning' ? 'ควรเลี่ยง' : 'ผ่านได้'}</span>
                     </div>
 
                     {/* มอเตอร์ไซค์ */}
-                    <div className={`p-1.5 rounded-md border flex items-center justify-between gap-1 ${
+                    <div className={`p-1.5 rounded-lg border flex items-center justify-between gap-1 ${
                       vi.motorcycle?.status === 'danger' ? (isDark ? 'bg-rose-950/60 border-rose-800 text-rose-300' : 'bg-rose-50 border-rose-200 text-rose-800') :
                       vi.motorcycle?.status === 'warning' ? (isDark ? 'bg-amber-950/60 border-amber-800 text-amber-300' : 'bg-amber-50 border-amber-200 text-amber-800') :
                       (isDark ? 'bg-emerald-950/60 border-emerald-800 text-emerald-300' : 'bg-emerald-50 border-emerald-200 text-emerald-800')
                     }`}>
-                      <span className="text-[11px] font-semibold truncate">🛵 มอเตอร์ไซค์</span>
-                      <span className="text-[10px] font-bold shrink-0">{vi.motorcycle?.status === 'danger' ? 'ห้ามผ่าน' : vi.motorcycle?.status === 'warning' ? 'ควรเลี่ยง' : 'ผ่านได้'}</span>
+                      <span className="text-[10.5px] sm:text-[11px] font-semibold break-words whitespace-normal leading-tight">🛵 มอเตอร์ไซค์</span>
+                      <span className="text-[9.5px] sm:text-[10px] font-bold shrink-0">{vi.motorcycle?.status === 'danger' ? 'ห้ามผ่าน' : vi.motorcycle?.status === 'warning' ? 'ควรเลี่ยง' : 'ผ่านได้'}</span>
                     </div>
 
                     {/* รถกระบะ/SUV */}
-                    <div className={`p-1.5 rounded-md border flex items-center justify-between gap-1 ${
+                    <div className={`p-1.5 rounded-lg border flex items-center justify-between gap-1 ${
                       vi.suv?.status === 'danger' ? (isDark ? 'bg-rose-950/60 border-rose-800 text-rose-300' : 'bg-rose-50 border-rose-200 text-rose-800') :
                       vi.suv?.status === 'warning' ? (isDark ? 'bg-amber-950/60 border-amber-800 text-amber-300' : 'bg-amber-50 border-amber-200 text-amber-800') :
                       (isDark ? 'bg-emerald-950/60 border-emerald-800 text-emerald-300' : 'bg-emerald-50 border-emerald-200 text-emerald-800')
                     }`}>
-                      <span className="text-[11px] font-semibold truncate">🚙 กระบะ/SUV</span>
-                      <span className="text-[10px] font-bold shrink-0">{vi.suv?.status === 'danger' ? 'ห้ามผ่าน' : vi.suv?.status === 'warning' ? 'ระวังคลื่น' : 'ผ่านได้'}</span>
+                      <span className="text-[10.5px] sm:text-[11px] font-semibold break-words whitespace-normal leading-tight">🚙 กระบะ/SUV</span>
+                      <span className="text-[9.5px] sm:text-[10px] font-bold shrink-0">{vi.suv?.status === 'danger' ? 'ห้ามผ่าน' : vi.suv?.status === 'warning' ? 'ระวังคลื่น' : 'ผ่านได้'}</span>
                     </div>
 
                     {/* รถบรรทุก */}
-                    <div className={`p-1.5 rounded-md border flex items-center justify-between gap-1 ${
+                    <div className={`p-1.5 rounded-lg border flex items-center justify-between gap-1 ${
                       vi.truck?.status === 'danger' ? (isDark ? 'bg-rose-950/60 border-rose-800 text-rose-300' : 'bg-rose-50 border-rose-200 text-rose-800') :
                       vi.truck?.status === 'warning' ? (isDark ? 'bg-amber-950/60 border-amber-800 text-amber-300' : 'bg-amber-50 border-amber-200 text-amber-800') :
                       (isDark ? 'bg-emerald-950/60 border-emerald-800 text-emerald-300' : 'bg-emerald-50 border-emerald-200 text-emerald-800')
                     }`}>
-                      <span className="text-[11px] font-semibold truncate">🚛 รถบรรทุก</span>
-                      <span className="text-[10px] font-bold shrink-0">{vi.truck?.status === 'danger' ? 'ห้ามผ่าน' : vi.truck?.status === 'warning' ? 'ระวังสูง' : 'ผ่านได้'}</span>
+                      <span className="text-[10.5px] sm:text-[11px] font-semibold break-words whitespace-normal leading-tight">🚛 รถบรรทุก</span>
+                      <span className="text-[9.5px] sm:text-[10px] font-bold shrink-0">{vi.truck?.status === 'danger' ? 'ห้ามผ่าน' : vi.truck?.status === 'warning' ? 'ระวังสูง' : 'ผ่านได้'}</span>
                     </div>
                   </div>
                 </div>
@@ -3484,34 +3484,34 @@ export default function App() {
             })()}
 
             {/* Fact-based Summary Details with Citations */}
-            <div className="space-y-1.5 sm:space-y-2 mt-2 sm:mt-2.5 text-xs sm:text-sm">
+            <div className="space-y-1.5 mt-2 text-xs sm:text-sm">
               {selectedPoint.cause && (
-                <div className={`p-2.5 rounded-md border ${
+                <div className={`p-2 sm:p-2.5 rounded-xl border ${
                   isDark ? 'bg-slate-850 border-slate-800' : 'bg-slate-50 border-slate-200'
                 }`}>
-                  <span className={`block text-xs font-semibold ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>สาเหตุสำคัญ:</span>
-                  <span className={`mt-0.5 block leading-relaxed font-medium ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>
+                  <span className={`block text-[10.5px] sm:text-[11px] font-semibold ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>สาเหตุสำคัญ:</span>
+                  <span className={`mt-0.5 block leading-relaxed font-medium text-[11px] sm:text-xs break-words whitespace-normal ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>
                     {selectedPoint.cause}
                   </span>
                 </div>
               )}
 
               {(selectedPoint.officialGuidance || selectedPoint.trafficStatus) && (
-                <div className={`p-2.5 rounded-md border ${
+                <div className={`p-2 sm:p-2.5 rounded-xl border ${
                   isDark ? 'bg-slate-850 border-slate-800' : 'bg-slate-50 border-slate-200'
                 }`}>
-                  <span className={`block text-xs font-semibold ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>คำแนะนำการสัญจร:</span>
-                  <span className={`mt-0.5 block leading-relaxed font-medium ${isDark ? 'text-cyan-400' : 'text-blue-700'}`}>
+                  <span className={`block text-[10.5px] sm:text-[11px] font-semibold ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>คำแนะนำการสัญจร:</span>
+                  <span className={`mt-0.5 block leading-relaxed font-medium text-[11px] sm:text-xs break-words whitespace-normal ${isDark ? 'text-cyan-400' : 'text-blue-700'}`}>
                     {selectedPoint.officialGuidance || selectedPoint.trafficStatus}
                   </span>
                 </div>
               )}
 
               {/* Source info (Clean reference line as requested) */}
-              <div className={`p-2 sm:p-2.5 rounded-md border text-xs sm:text-[11.5px] flex items-center justify-between gap-2 shadow-xs ${
+              <div className={`p-1.5 sm:p-2 rounded-xl border text-[10.5px] sm:text-[11px] flex items-center justify-between gap-1.5 shadow-xs ${
                 isDark ? 'bg-slate-850 border-slate-800 text-slate-300' : 'bg-white border-slate-200 text-slate-800'
               }`}>
-                <div className="flex items-start gap-1.5 min-w-0 flex-1">
+                <div className="flex items-start gap-1 min-w-0 flex-1">
                   <Shield className="w-3.5 h-3.5 text-blue-500 shrink-0 mt-0.5" />
                   <span className="break-words whitespace-normal leading-tight">
                     อ้างอิง: <strong className={isDark ? 'text-slate-100' : 'text-slate-900'}>
@@ -3522,7 +3522,7 @@ export default function App() {
                   </span>
                 </div>
                 {(selectedPoint.reportedAt || selectedPoint.time) && (
-                  <span className="text-[10px] text-slate-400 shrink-0">
+                  <span className="text-[9.5px] sm:text-[10px] text-slate-400 shrink-0">
                     {selectedPoint.reportedAt || selectedPoint.time}
                   </span>
                 )}
@@ -3530,18 +3530,18 @@ export default function App() {
             </div>
 
             {/* Quick Action Buttons: Direct Navigation & Standards & Helpline */}
-            <div className="mt-2.5 sm:mt-3 pt-2.5 sm:pt-2.5 border-t border-slate-200 dark:border-slate-800 space-y-2">
+            <div className="mt-2.5 sm:mt-3 pt-2 sm:pt-2.5 border-t border-slate-200 dark:border-slate-800 space-y-2">
               {/* Row 1: Google Maps Navigation Link */}
               {typeof selectedPoint.lat === 'number' && typeof selectedPoint.lng === 'number' && (
                 <a 
                   href={`https://www.google.com/maps/dir/?api=1&destination=${selectedPoint.lat},${selectedPoint.lng}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-full py-2 px-3 rounded-md bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition-all text-center cursor-pointer shadow-xs active:scale-95"
+                  className="w-full py-1.5 sm:py-2 px-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition-all text-center cursor-pointer shadow-xs active:scale-95 break-words whitespace-normal leading-tight"
                   title="เปิดแผนที่นำทางไปยังจุดนี้ด้วย Google Maps"
                 >
                   <Navigation className="w-3.5 h-3.5 shrink-0" />
-                  <span>นำทางด้วย Google Maps</span>
+                  <span className="break-words whitespace-normal leading-tight">นำทางด้วย Google Maps</span>
                 </a>
               )}
 
@@ -3553,23 +3553,23 @@ export default function App() {
                     try { playModalOpenSound(); } catch (_) {}
                     setIsStandardsModalOpen(true);
                   }}
-                  className={`py-2 px-2 rounded-md border text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-xs active:scale-95 ${
+                  className={`py-1.5 sm:py-2 px-2 rounded-lg border text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-xs active:scale-95 ${
                     isDark 
                       ? 'bg-slate-850 hover:bg-slate-800 text-slate-200 border-slate-800' 
                       : 'bg-white hover:bg-slate-100 text-slate-800 border-slate-200'
                   }`}
                 >
                   <BookOpen className="w-3.5 h-3.5 text-blue-500 shrink-0" />
-                  <span className="truncate">เกณฑ์ระดับน้ำ</span>
+                  <span className="break-words whitespace-normal leading-tight">เกณฑ์ระดับน้ำ</span>
                 </button>
 
                 <a 
                   href={`tel:${selectedPoint.phone ? selectedPoint.phone.replace(/-/g, '') : '1784'}`}
                   onClick={() => playClickSound()}
-                  className="py-2 px-2 rounded-md bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition-all text-center cursor-pointer border border-rose-700/60 shadow-xs active:scale-95"
+                  className="py-1.5 sm:py-2 px-2 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition-all text-center cursor-pointer border border-rose-700/60 shadow-xs active:scale-95"
                 >
                   <Phone className="w-3.5 h-3.5 shrink-0" />
-                  <span className="truncate">โทร {selectedPoint.district ? `อ.${selectedPoint.district.replace(/^อ\./, '')}` : '1784'}</span>
+                  <span className="break-words whitespace-normal leading-tight">โทร {selectedPoint.district ? `อ.${selectedPoint.district.replace(/^อ\./, '')}` : '1784'}</span>
                 </a>
               </div>
             </div>
@@ -4419,9 +4419,9 @@ export default function App() {
       {isAnnouncementModalOpen && latestAnnouncement && (
         <div 
           onClick={(e) => { if (e.target === e.currentTarget) { playCloseSound(); setIsAnnouncementModalOpen(false); } }}
-          className="fixed inset-0 z-[105] bg-slate-950/65 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 smooth-backdrop pointer-events-auto overflow-hidden"
+          className="fixed inset-0 z-[105] bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 smooth-backdrop pointer-events-auto overflow-y-auto"
         >
-          <div className={`w-full max-w-[420px] sm:max-w-md border-2 rounded-2xl shadow-2xl p-3.5 sm:p-5 flex flex-col max-h-[82vh] sm:max-h-[86vh] overflow-hidden smooth-pop transition-all ${
+          <div className={`w-[90vw] max-w-[360px] sm:max-w-md my-auto m-auto border-2 rounded-2xl shadow-2xl p-3 sm:p-4.5 flex flex-col max-h-[75vh] sm:max-h-[82vh] overflow-hidden smooth-pop transition-all ${
             isDark 
               ? 'bg-slate-900 border-amber-500/50 text-slate-100 shadow-2xl shadow-black/80' 
               : 'bg-white border-amber-400 text-slate-900 shadow-2xl shadow-slate-900/30'
@@ -4433,7 +4433,7 @@ export default function App() {
                   <Bell className="w-4 h-4" />
                 </span>
                 <div className="min-w-0">
-                  <h3 className="text-sm sm:text-base font-bold text-amber-600 dark:text-amber-400 truncate">
+                  <h3 className="text-sm sm:text-base font-bold text-amber-600 dark:text-amber-400 break-words whitespace-normal leading-tight">
                     ประกาศจากเจ้าหน้าที่
                   </h3>
                   <span className="text-[10px] sm:text-[10px] text-slate-400 block">

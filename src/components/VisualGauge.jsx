@@ -80,7 +80,7 @@ export default function VisualGauge({ depthCm = 0, level, theme = 'light' }) {
       }`}>
         <svg 
           viewBox="0 -8 350 200" 
-          className="w-full h-auto select-none max-h-[68px] sm:max-h-[240px]"
+          className="w-full h-auto select-none min-h-[145px] max-h-[185px] sm:max-h-[230px]"
         >
           <defs>
             {/* Water Gradients */}
@@ -396,8 +396,8 @@ export default function VisualGauge({ depthCm = 0, level, theme = 'light' }) {
       </div>
 
       {/* Traffic Impact Status Tag (Clean & Compact) */}
-      <div className={`mt-1 sm:mt-2.5 p-1 sm:p-2 rounded-lg sm:rounded-xl border flex items-center justify-between text-[8.5px] sm:text-xs font-semibold ${levelTheme.tagStyle}`}>
-        <span>{levelTheme.tag}</span>
+      <div className={`mt-1 sm:mt-2.5 p-1 sm:p-2 rounded-lg sm:rounded-xl border flex items-center justify-between text-[8.5px] sm:text-xs font-semibold break-words whitespace-normal leading-snug ${levelTheme.tagStyle}`}>
+        <span className="break-words whitespace-normal leading-snug">{levelTheme.tag}</span>
       </div>
 
     </div>

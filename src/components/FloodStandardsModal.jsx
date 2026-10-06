@@ -41,9 +41,9 @@ export default function FloodStandardsModal({ isOpen, onClose, theme = 'light' }
   return (
     <div 
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
-      className="fixed inset-0 z-[9999] bg-slate-950/75 backdrop-blur-xs flex items-start justify-center pt-[7vh] pb-20 sm:items-center sm:pt-4 sm:pb-4 smooth-backdrop animate-in fade-in duration-200"
+      className="fixed inset-0 z-[9999] bg-slate-950/75 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 smooth-backdrop animate-in fade-in duration-200 overflow-y-auto"
     >
-      <div className={`w-[92vw] max-w-[390px] sm:max-w-md flex flex-col rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden max-h-[72vh] sm:max-h-[82vh] smooth-pop transition-colors ${
+      <div className={`w-[90vw] max-w-[360px] sm:max-w-md my-auto m-auto flex flex-col rounded-2xl shadow-2xl overflow-hidden max-h-[75vh] sm:max-h-[82vh] smooth-pop transition-colors ${
         isDark ? 'bg-slate-900 border border-slate-700 text-slate-100' : 'bg-white border border-slate-200 text-slate-900'
       }`}>
 
