@@ -520,22 +520,37 @@ export function sendVisitorTelemetry(district = null, customDevice = null, activ
       sessionId = 'v-' + Math.random().toString(36).substring(2, 9) + '-' + Date.now().toString(36);
       sessionStorage.setItem('pg_visitor_sid', sessionId);
     }
+    let deviceId = null;
+    try {
+      deviceId = localStorage.getItem('pg_visitor_did');
+      if (!deviceId) {
+        deviceId = 'd-' + Math.random().toString(36).substring(2, 9) + '-' + Date.now().toString(36);
+        localStorage.setItem('pg_visitor_did', deviceId);
+      }
+    } catch (e) {}
+
     const deviceModel = customDevice || getDetailedDeviceInfo();
 
     // Determine district status as requested by user (ไม่ต้องมี อ. นำหน้า)
     let finalDistrict = 'ปิด GPS';
+    let gpsStatus = 'denied';
     if (!district || district === 'none' || district === 'no_gps' || district === 'ปิด GPS' || district.includes('GPS') || district.includes('พิกัด')) {
       finalDistrict = 'ปิด GPS';
+      gpsStatus = 'denied';
     } else if (district === 'outside' || district.includes('นอก') || district.includes('ไม่ได้อยู่')) {
       finalDistrict = 'ไม่ได้อยู่สมุทรปราการ';
+      gpsStatus = 'outside';
     } else {
       finalDistrict = district.replace(/^อ\./, '').replace(/^อำเภอ/, '').replace('เมืองสมุทรปราการ', 'เมือง').trim();
+      gpsStatus = 'granted';
     }
 
     const payload = {
       session_id: sessionId,
+      device_id: deviceId,
       device: deviceModel,
       district: finalDistrict,
+      gps_status: gpsStatus,
       page: activeSection || document.title || 'หน้าหลัก (แผนที่)',
       last_ping: new Date().toISOString()
     };
@@ -558,8 +573,10 @@ export function sendVisitorTelemetry(district = null, customDevice = null, activ
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         sessionId,
+        deviceId,
         device: payload.device,
         district: payload.district,
+        gpsStatus,
         page: payload.page,
         timestamp: Date.now()
       }),

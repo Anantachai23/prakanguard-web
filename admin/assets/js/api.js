@@ -365,9 +365,17 @@ const visCols = () => VIS_BASE + (caps.visitorExt ? ',device_id,ip,gps_status' :
 
 export async function fetchOnlineSessions(windowMs) {
   try {
-    const since = new Date(Date.now() - windowMs).toISOString();
-    const r = await rest(`visitors?select=${visCols()}&last_ping=gte.${since}&order=last_ping.desc&limit=1000`);
-    if (r.ok && Array.isArray(r.data)) return r.data;
+    const now = serverNow();
+    // Safety buffer for query to overcome network latency & clock variations
+    const querySince = new Date(now - (windowMs + 15000)).toISOString();
+    const r = await rest(`visitors?select=${visCols()}&last_ping=gte.${querySince}&order=last_ping.desc&limit=1000`);
+    if (r.ok && Array.isArray(r.data)) {
+      // Filter strictly by windowMs against serverNow()
+      return r.data.filter(s => {
+        const pingTime = new Date(s.last_ping).getTime();
+        return !isNaN(pingTime) && (now - pingTime) <= windowMs;
+      });
+    }
   } catch (err) {
     console.warn('[Admin API] fetchOnlineSessions failed, fallback to empty:', err);
   }

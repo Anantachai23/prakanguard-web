@@ -124,8 +124,15 @@ export function switchTab(tabId, playSound = false) {
   else if (tabId === 'logins') renderLogins();
   else if (tabId === 'settings') renderSettings();
 
-  // Close mobile sidebar if open
+  // Close mobile sidebar and backdrop if open
   $('.app-sidebar')?.classList.remove('open');
+  $('#sidebar-backdrop')?.classList.remove('active');
+  document.body.classList.remove('sidebar-open-lock');
+}
+
+// Bind switchTab to global window object so inline HTML onclick works flawlessly
+if (typeof window !== 'undefined') {
+  window.switchTab = switchTab;
 }
 
 /* --------------------------------------------------------- Authentication UI */
@@ -332,8 +339,27 @@ function renderOverview() {
     state.todaySessions.map(s => s.device_id || s.session_id)
   ).size;
 
-  // Peak online today (highest concurrent in recorded blocks)
-  const peakOnline = Math.max(onlineCount, state.todaySessions.length > 0 ? Math.min(state.todaySessions.length, Math.max(onlineCount, 1)) : 1);
+  // Real peak concurrent online today (Exact mathematical sweep-line overlap over today's recorded sessions)
+  let peakOnline = 0;
+  if (state.todaySessions && state.todaySessions.length > 0) {
+    const events = [];
+    state.todaySessions.forEach(s => {
+      const start = new Date(s.created_at || s.last_ping).getTime();
+      const lastPing = new Date(s.last_ping || s.created_at).getTime();
+      const end = Math.max(start + ONLINE_WINDOW_MS, lastPing + ONLINE_WINDOW_MS);
+      if (!isNaN(start) && !isNaN(end)) {
+        events.push({ time: start, val: 1 });
+        events.push({ time: end, val: -1 });
+      }
+    });
+    events.sort((a, b) => a.time - b.time || b.val - a.val);
+    let currentConcurrent = 0;
+    for (const ev of events) {
+      currentConcurrent += ev.val;
+      if (currentConcurrent > peakOnline) peakOnline = currentConcurrent;
+    }
+  }
+  peakOnline = Math.max(peakOnline, onlineCount);
 
   // Top district from real GPS within Samut Prakan
   const districtCounts = {};
@@ -580,9 +606,25 @@ function updateCharts() {
     const hours = Array.from({ length: 24 }, (_, i) => `${String(i).padStart(2, '0')}:00`);
     const hourlyVisits = new Array(24).fill(0);
 
+    const bkkHourFormatter = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'Asia/Bangkok',
+      hour: 'numeric',
+      hour12: false
+    });
+    const getBkkHour = (timeVal) => {
+      if (!timeVal) return -1;
+      const d = new Date(timeVal);
+      if (isNaN(d.getTime())) return -1;
+      try {
+        const val = parseInt(bkkHourFormatter.format(d), 10);
+        return isNaN(val) ? d.getHours() : (val % 24);
+      } catch (e) {
+        return d.getHours();
+      }
+    };
+
     state.todaySessions.forEach(s => {
-      const d = new Date(s.created_at || s.last_ping);
-      const h = d.getHours();
+      const h = getBkkHour(s.created_at || s.last_ping);
       if (h >= 0 && h < 24) hourlyVisits[h]++;
     });
 
@@ -639,15 +681,30 @@ function updateCharts() {
     const hourlyVisits = new Array(24).fill(0);
     const hourlyReports = new Array(24).fill(0);
 
+    const bkkHourFormatter = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'Asia/Bangkok',
+      hour: 'numeric',
+      hour12: false
+    });
+    const getBkkHour = (timeVal) => {
+      if (!timeVal) return -1;
+      const d = new Date(timeVal);
+      if (isNaN(d.getTime())) return -1;
+      try {
+        const val = parseInt(bkkHourFormatter.format(d), 10);
+        return isNaN(val) ? d.getHours() : (val % 24);
+      } catch (e) {
+        return d.getHours();
+      }
+    };
+
     state.todaySessions.forEach(s => {
-      const d = new Date(s.created_at || s.last_ping);
-      const h = d.getHours();
+      const h = getBkkHour(s.created_at || s.last_ping);
       if (h >= 0 && h < 24) hourlyVisits[h]++;
     });
 
     state.reports.forEach(r => {
-      const d = new Date(r.timestamp || r.reported_at || r.reportedAt || Date.now());
-      const h = d.getHours();
+      const h = getBkkHour(r.timestamp || r.reported_at || r.reportedAt || Date.now());
       if (h >= 0 && h < 24) hourlyReports[h]++;
     });
 
@@ -2146,6 +2203,36 @@ export function initDashboard() {
       e.preventDefault();
       switchTab(btn.dataset.tab, true);
     });
+  });
+
+  // Mobile Sidebar Drawer Toggle & Backdrop
+  const btnSidebarToggle = $('#btn-sidebar-toggle');
+  const btnSidebarClose = $('#btn-sidebar-close');
+  const sidebarEl = $('.app-sidebar');
+  const backdropEl = $('#sidebar-backdrop');
+
+  const openMobileSidebar = (e) => {
+    if (e) e.preventDefault();
+    sidebarEl?.classList.add('open');
+    backdropEl?.classList.add('active');
+    document.body.classList.add('sidebar-open-lock');
+  };
+
+  const closeMobileSidebar = (e) => {
+    if (e) e.preventDefault();
+    sidebarEl?.classList.remove('open');
+    backdropEl?.classList.remove('active');
+    document.body.classList.remove('sidebar-open-lock');
+  };
+
+  btnSidebarToggle?.addEventListener('click', openMobileSidebar);
+  btnSidebarClose?.addEventListener('click', closeMobileSidebar);
+  backdropEl?.addEventListener('click', closeMobileSidebar);
+
+  // Wire AI Insights Map Button
+  $('#btn-goto-reports-map')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    switchTab('reports', true);
   });
 
   // Global tactile click feedback for all buttons, inputs, checkboxes, and filters
