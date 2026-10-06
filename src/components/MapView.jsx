@@ -353,15 +353,16 @@ export default function MapView({
           backdrop-filter: blur(5px);
           -webkit-backdrop-filter: blur(5px);
         }
-        /* Dark Theme Road Map ('ถนน') Styling (ดาวเทียมคงเดิมไม่เปลี่ยนแปลง) */
+        /* Dark Theme Road Map ('ถนน') Styling (ดาวเทียมคงเดิมไม่เปลี่ยนแปลง 100%) */
+        .pg-dark-tiles-mode .leaflet-tile-pane,
         .pg-dark-roadmap-tiles,
         .pg-dark-roadmap-tiles img.leaflet-tile {
           filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%) !important;
         }
+        .pg-satellite-mode .leaflet-tile-pane,
+        .pg-light-tiles-mode .leaflet-tile-pane,
         .pg-light-roadmap-tiles,
-        .pg-light-roadmap-tiles img.leaflet-tile {
-          filter: none !important;
-        }
+        .pg-light-roadmap-tiles img.leaflet-tile,
         .pg-satellite-tiles,
         .pg-satellite-tiles img.leaflet-tile {
           filter: none !important;
@@ -475,8 +476,16 @@ export default function MapView({
     }
 
     // Initial Tile Layer
-    const config = getTileConfig('google-roadmap');
+    const config = getTileConfig('google-roadmap', isDark);
     tileLayerRef.current = createTileLayer(config).addTo(map);
+    const initialTilePane = map.getPane('tilePane');
+    if (initialTilePane) {
+      if (isDark) {
+        initialTilePane.style.setProperty('filter', 'invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%)', 'important');
+      } else {
+        initialTilePane.style.setProperty('filter', 'none', 'important');
+      }
+    }
     mapInstanceRef.current = map;
 
     // Expose map reference for external background sync engines
@@ -640,6 +649,15 @@ export default function MapView({
     const config = getTileConfig(mapStyle, isDark);
     tileLayerRef.current = createTileLayer(config).addTo(map);
 
+    const tilePane = map.getPane('tilePane');
+    if (tilePane) {
+      if (mapStyle !== 'google-satellite' && isDark) {
+        tilePane.style.setProperty('filter', 'invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%)', 'important');
+      } else {
+        tilePane.style.setProperty('filter', 'none', 'important');
+      }
+    }
+
     if (maskLayerRef.current && maskLayerRef.current.bringToFront) {
       maskLayerRef.current.bringToFront();
     }
@@ -652,6 +670,17 @@ export default function MapView({
   useEffect(() => {
     if (mapContainerRef.current) {
       mapContainerRef.current.style.backgroundColor = (isDark || mapStyle === 'google-satellite') ? '#0b132b' : '#e6ecf2';
+    }
+    const map = mapInstanceRef.current;
+    if (map) {
+      const tilePane = map.getPane('tilePane');
+      if (tilePane) {
+        if (mapStyle !== 'google-satellite' && isDark) {
+          tilePane.style.setProperty('filter', 'invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%)', 'important');
+        } else {
+          tilePane.style.setProperty('filter', 'none', 'important');
+        }
+      }
     }
     if (tileLayerRef.current) {
       const container = tileLayerRef.current.getContainer();
@@ -1049,7 +1078,13 @@ export default function MapView({
       {/* Leaflet Map Canvas */}
       <div 
         ref={mapContainerRef} 
-        className="absolute inset-0 w-full h-full z-0"
+        className={`absolute inset-0 w-full h-full z-0 ${
+          mapStyle === 'google-satellite' 
+            ? 'pg-satellite-mode' 
+            : isDark 
+              ? 'pg-dark-tiles-mode' 
+              : 'pg-light-tiles-mode'
+        }`}
         style={{ width: '100%', height: '100%', background: isDark ? '#0b132b' : '#f8fafc' }}
       ></div>
 
