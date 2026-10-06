@@ -2,6 +2,15 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Bulletproof Leaflet Tile sizing - prevents Tailwind Preflight max-width: 100% collapse */
+.leaflet-container img,
+.leaflet-tile-pane img,
+.leaflet-tile,
+img.leaflet-tile {
+  max-width: none !important;
+  max-height: none !important;
+}
+
 body {
   font-family: 'Prompt', sans-serif;
   overflow-x: hidden;

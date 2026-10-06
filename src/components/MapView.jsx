@@ -217,7 +217,7 @@ export function deduplicateAndDeclutterPoints(citizenList = [], officialList = [
   return retained;
 }
 
-const DARK_ROADMAP_FILTER = 'brightness(0.7) invert(1) contrast(1.8) hue-rotate(185deg) saturate(0.8) brightness(1.2)';
+const DARK_ROADMAP_FILTER = 'invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%)';
 
 export default function MapView({ 
   points = [], 
@@ -358,21 +358,23 @@ export default function MapView({
           backdrop-filter: blur(5px);
           -webkit-backdrop-filter: blur(5px);
         }
+        /* Bulletproof Leaflet Tile sizing against Tailwind Preflight max-width collapse */
+        .leaflet-container img,
+        .leaflet-tile-pane img,
+        .leaflet-tile,
+        img.leaflet-tile {
+          max-width: none !important;
+          max-height: none !important;
+        }
         /* Dark Theme Road Map ('ถนน') Styling (ดาวเทียมคงเดิมไม่เปลี่ยนแปลง 100%) */
         .leaflet-tile-pane {
           transition: filter 0.15s ease-out;
         }
-        .pg-dark-tiles-mode .leaflet-tile-pane,
-        .pg-dark-roadmap-tiles,
-        .pg-dark-roadmap-tiles img.leaflet-tile {
-          filter: brightness(0.7) invert(1) contrast(1.8) hue-rotate(185deg) saturate(0.8) brightness(1.2) !important;
+        .pg-dark-tiles-mode .leaflet-tile-pane {
+          filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%) !important;
         }
         .pg-satellite-mode .leaflet-tile-pane,
-        .pg-light-tiles-mode .leaflet-tile-pane,
-        .pg-light-roadmap-tiles,
-        .pg-light-roadmap-tiles img.leaflet-tile,
-        .pg-satellite-tiles,
-        .pg-satellite-tiles img.leaflet-tile {
+        .pg-light-tiles-mode .leaflet-tile-pane {
           filter: none !important;
         }
       `;
@@ -683,6 +685,9 @@ export default function MapView({
   useEffect(() => {
     if (mapContainerRef.current) {
       mapContainerRef.current.style.backgroundColor = (isDark || mapStyle === 'google-satellite') ? '#0b132b' : '#e6ecf2';
+      if (!mapContainerRef.current.classList.contains('leaflet-container')) {
+        mapContainerRef.current.classList.add('leaflet-container');
+      }
     }
     const map = mapInstanceRef.current;
     if (map) {
@@ -1068,18 +1073,18 @@ export default function MapView({
   };
 
   return (
-    <div className={`relative w-full h-full min-h-[500px] overflow-hidden ${isDark ? 'bg-slate-950' : 'bg-slate-100'}`}>
+    <div className={`relative w-full h-full min-h-[500px] overflow-hidden ${isDark ? 'bg-slate-950' : 'bg-slate-100'} ${
+      mapStyle === 'google-satellite' 
+        ? 'pg-satellite-mode' 
+        : isDark 
+          ? 'pg-dark-tiles-mode' 
+          : 'pg-light-tiles-mode'
+    }`}>
       
-      {/* Leaflet Map Canvas */}
+      {/* Leaflet Map Canvas - stable className ensures React never strips Leaflet core classes */}
       <div 
         ref={mapContainerRef} 
-        className={`absolute inset-0 w-full h-full z-0 ${
-          mapStyle === 'google-satellite' 
-            ? 'pg-satellite-mode' 
-            : isDark 
-              ? 'pg-dark-tiles-mode' 
-              : 'pg-light-tiles-mode'
-        }`}
+        className="absolute inset-0 w-full h-full z-0 leaflet-container"
         style={{ width: '100%', height: '100%', background: isDark ? '#0b132b' : '#f8fafc' }}
       ></div>
 
