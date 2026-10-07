@@ -131,7 +131,7 @@ export function confirmDialog({
       class: `dialog-btn btn-confirm tone-${tone}`, 
       onclick: () => done(true) 
     }, 
-      tone === 'danger' ? icon('alert', 16) : icon('check', 16),
+      h('span', { class: 'dialog-btn-icon', html: icon(tone === 'danger' ? 'alert' : 'check', 16) }),
       h('span', {}, confirmText)
     );
 
@@ -139,7 +139,7 @@ export function confirmDialog({
       class: 'dialog-btn btn-cancel', 
       onclick: () => done(false) 
     }, 
-      icon('x', 16),
+      h('span', { class: 'dialog-btn-icon', html: icon('x', 16) }),
       h('span', {}, cancelText)
     );
 
