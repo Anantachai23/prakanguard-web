@@ -19,7 +19,7 @@ export const DISTRICTS = [
 
 /** ช่วงเวลา (มิลลิวินาที) */
 export const ONLINE_WINDOW_MS = 60 * 1000;          // ออนไลน์ = มี heartbeat ภายใน 60 วินาที (ตรงกับ "มีกิจกรรมในรอบ 60 วินาที")
-export const LIVE_REFRESH_MS = 15 * 1000;           // รีเฟรชยอดผู้ใช้งานสดทุก 15 วินาที
+export const LIVE_REFRESH_MS = 60 * 1000;           // รีเฟรชยอดผู้ใช้งานสดทุก 60 วินาที (ตามคำสั่งผู้ใช้)
 export const CHART_REFRESH_MS = 30 * 60 * 1000;     // กราฟ/วงกลมอัปเดตทุก 30 นาที
 export const SESSION_TTL_MS = 12 * 60 * 60 * 1000;  // เซสชันแอดมินอยู่ได้ 12 ชม.
 export const ADMIN_PING_MS = 20 * 1000;             // แอดมินส่งสถานะ "กำลังใช้งาน" ทุก 20 วินาที

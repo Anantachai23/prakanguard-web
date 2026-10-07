@@ -508,13 +508,48 @@ export function getDetailedDeviceInfo() {
   return 'PC';
 }
 
+// Global BroadcastChannel to command all tabs on this PC to halt visitor telemetry
+if (typeof window !== 'undefined') {
+  try {
+    const bc = new BroadcastChannel('pg_telemetry_control');
+    bc.onmessage = (ev) => {
+      if (ev.data && ev.data.type === 'EXCLUDE_ADMIN_WORK_PC') {
+        window.__pg_stop_telemetry = true;
+        try { localStorage.setItem('pg_is_admin_device', 'true'); } catch (e) {}
+      }
+    };
+  } catch (e) {}
+}
+
+export function isCurrentDeviceAdminWorkPC() {
+  if (typeof window === 'undefined') return false;
+  try {
+    if (window.__pg_stop_telemetry === true) return true;
+    if (localStorage.getItem('pg_is_admin_device') === 'true') return true;
+    if (localStorage.getItem('pg_admin_work_device') === 'true') return true;
+    if (localStorage.getItem('pg_exclude_from_visitor_telemetry') === 'true') return true;
+    if (localStorage.getItem('pg_admin_session_v2')) return true;
+    if (sessionStorage.getItem('pg_admin_session_v2')) return true;
+    if (document.cookie && document.cookie.includes('pg_admin_work_device=true')) return true;
+    if (window.location && (window.location.pathname.includes('/admin') || window.location.hash.includes('admin'))) return true;
+  } catch (e) {}
+  return false;
+}
+
 /**
  * ส่ง Heartbeat ข้อมูลการเข้าชมเบาๆ ไปยัง Supabase + Admin Server (Non-blocking)
  * บันทึกตำแหน่ง GPS อำเภอ และประเภท/รุ่นอุปกรณ์จริง (เช่น iPhone 14, Samsung Galaxy S24)
+ * หมายเหตุ: ไม่นับ PC เครื่องทำงานของแอดมิน และไม่นับแท็บที่ถูกพับเก็บ/ซ่อนอยู่
  */
 export function sendVisitorTelemetry(district = null, customDevice = null, activeSection = null) {
   if (typeof window === 'undefined') return;
   try {
+    // 1. ตรวจสอบว่าคือเครื่องทำงานของ Admin หรือไม่ (ไม่นับเครื่องแอดมิน 100%)
+    if (isCurrentDeviceAdminWorkPC()) return;
+
+    // 2. ตรวจสอบว่าผู้ใช้กำลังเปิดดูหน้าเว็บอยู่จริงๆ หรือไม่ (ไม่นับแท็บที่ถูกซ่อน/ย่อไว้)
+    if (document.visibilityState === 'hidden') return;
+
     let sessionId = sessionStorage.getItem('pg_visitor_sid');
     if (!sessionId) {
       sessionId = 'v-' + Math.random().toString(36).substring(2, 9) + '-' + Date.now().toString(36);

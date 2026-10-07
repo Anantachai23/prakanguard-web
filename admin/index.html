@@ -480,7 +480,7 @@
             <div class="card-header">
               <div>
                 <h3 class="card-title">เซสชันผู้เข้าใช้งานสดล่าสุด (Live Active Telemetry)</h3>
-                <p class="card-subtitle">ประชาชนที่กำลังเปิดดูเว็บ ณ ขณะนี้ รีเฟรชสดอัตโนมัติ</p>
+                <p class="card-subtitle">ประชาชนที่กำลังเปิดดูเว็บ ณ ขณะนี้ (ไม่นับ PC เครื่องทำงานแอดมิน) · รีเฟรชอัตโนมัติทุก 60 วินาที</p>
               </div>
               <button class="btn btn-secondary btn-sm" onclick="switchTab('visitors')">ดูทั้งหมด</button>
             </div>
@@ -633,7 +633,7 @@
             <div class="card-header">
               <div>
                 <h3 class="card-title">รายการเซสชันผู้เข้าใช้งานสด (Live Session Activity Feed)</h3>
-                <p class="card-subtitle">แสดงสถานะผู้ใช้งานจริงที่กำลังเปิดเว็บอยู่ ณ ขณะนี้ รีเฟรชอัตโนมัติทุก 1 นาที</p>
+                <p class="card-subtitle">แสดงสถานะประชาชนผู้ใช้งานจริง ณ ขณะนี้ (ไม่นับ PC เครื่องทำงานแอดมิน) · รีเฟรชอัตโนมัติทุก 60 วินาที</p>
               </div>
               <div>
                 <span class="badge badge-ok"><span class="status-dot pulse"></span> ออนไลน์ <span id="visitors-active-count">0</span> คน</span>
@@ -708,51 +708,78 @@
             <!-- Create Announcement Card -->
             <div class="card">
               <div class="card-header">
-                <h3 class="card-title">สร้างการประกาศหน้าเว็บ</h3>
+                <div>
+                  <h3 class="card-title">สร้างการประกาศหน้าเว็บ</h3>
+                  <p class="card-subtitle">ส่งข้อความแจ้งเตือนด่วนไปยังหน้าเว็บประชาชนแบบเรียลไทม์</p>
+                </div>
               </div>
               <form id="form-create-announcement">
                 <div class="login-field">
-                  <label class="login-label">ข้อความที่ต้องการประกาศ</label>
+                  <label class="login-label" for="announcement-message">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                    <span>ข้อความที่ต้องการประกาศ</span>
+                    <span class="label-hint" id="ann-char-count">0 / 300 ตัวอักษร</span>
+                  </label>
+
+                  <!-- Quick Preset Templates -->
+                  <div class="quick-templates-wrap">
+                    <button type="button" class="quick-template-chip" data-tpl="🌊 แจ้งเตือนน้ำทะเลหนุนสูงในพื้นที่ริมแม่น้ำเจ้าพระยาและชายฝั่ง ขอให้เฝ้าระวัง">🌊 น้ำทะเลหนุนสูง</button>
+                    <button type="button" class="quick-template-chip" data-tpl="⛈️ ประกาศเตือนฝนตกหนักถึงหนักมาก อาจมีน้ำท่วมขังรอการระบาย">⛈️ ฝนตกหนัก/พายุ</button>
+                    <button type="button" class="quick-template-chip" data-tpl="⚠️ แจ้งเตือนน้ำท่วมขังเส้นทางสัญจร โปรดหลีกเลี่ยงเส้นทางหรือขับขี่ด้วยความระมัดระวัง">⚠️ ปิดเส้นทางน้ำท่วม</button>
+                    <button type="button" class="quick-template-chip" data-tpl="🔧 ปิดปรับปรุงระบบประมวลผลข้อมูลชั่วคราว ข้อมูลสภาพอากาศยังเปิดให้บริการปกติ">🔧 ปรับปรุงระบบ</button>
+                  </div>
+
                   <textarea 
                     id="announcement-message" 
                     rows="4" 
-                    class="login-input" 
-                    style="resize: vertical;" 
+                    class="login-input form-textarea" 
+                    maxlength="300"
                     placeholder="เช่น แจ้งเตือนน้ำทะเลหนุนสูง หรือ ประกาศอัปเดตระบบ..." 
                     required
                   ></textarea>
                 </div>
 
                 <div class="login-field">
-                  <label class="login-label">ขอบเขตพื้นที่ที่ต้องการประกาศ</label>
-                  <div style="display: flex; gap: 16px; margin: 8px 0;">
-                    <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                  <label class="login-label">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    <span>ขอบเขตพื้นที่ที่ต้องการประกาศ</span>
+                  </label>
+                  
+                  <div class="segmented-target-grid">
+                    <label class="segmented-target-card">
                       <input type="radio" name="ann-target" value="all" checked>
-                      <span>ประกาศทุกอำเภอ</span>
+                      <div>
+                        <div class="segmented-target-title">🌐 ทุกอำเภอ</div>
+                        <div class="segmented-target-desc">ครอบคลุมทั้ง 6 อำเภอ</div>
+                      </div>
                     </label>
-                    <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                    <label class="segmented-target-card">
                       <input type="radio" name="ann-target" value="specific">
-                      <span>ระบุเฉพาะอำเภอ</span>
+                      <div>
+                        <div class="segmented-target-title">📍 ระบุเฉพาะอำเภอ</div>
+                        <div class="segmented-target-desc">เฉพาะอำเภอที่เลือก</div>
+                      </div>
                     </label>
                   </div>
                 </div>
 
                 <!-- Specific District Checkboxes -->
-                <div id="ann-district-checkboxes" style="display: none; grid-template-columns: 1fr 1fr; gap: 10px; background: var(--bg-subtle); padding: 14px; border-radius: var(--radius-md); margin-bottom: 16px;">
-                  <label style="display: flex; align-items: center; gap: 6px;"><input type="checkbox" name="ann-district" value="เมืองสมุทรปราการ"> อ.เมืองสมุทรปราการ</label>
-                  <label style="display: flex; align-items: center; gap: 6px;"><input type="checkbox" name="ann-district" value="บางพลี"> อ.บางพลี</label>
-                  <label style="display: flex; align-items: center; gap: 6px;"><input type="checkbox" name="ann-district" value="พระประแดง"> อ.พระประแดง</label>
-                  <label style="display: flex; align-items: center; gap: 6px;"><input type="checkbox" name="ann-district" value="บางบ่อ"> อ.บางบ่อ</label>
-                  <label style="display: flex; align-items: center; gap: 6px;"><input type="checkbox" name="ann-district" value="พระสมุทรเจดีย์"> อ.พระสมุทรเจดีย์</label>
-                  <label style="display: flex; align-items: center; gap: 6px;"><input type="checkbox" name="ann-district" value="บางเสาธง"> อ.บางเสาธง</label>
+                <div id="ann-district-checkboxes" class="district-checkboxes-grid" style="display: none;">
+                  <label class="district-checkbox-label"><input type="checkbox" name="ann-district" value="เมืองสมุทรปราการ"> อ.เมืองสมุทรปราการ</label>
+                  <label class="district-checkbox-label"><input type="checkbox" name="ann-district" value="บางพลี"> อ.บางพลี</label>
+                  <label class="district-checkbox-label"><input type="checkbox" name="ann-district" value="พระประแดง"> อ.พระประแดง</label>
+                  <label class="district-checkbox-label"><input type="checkbox" name="ann-district" value="บางบ่อ"> อ.บางบ่อ</label>
+                  <label class="district-checkbox-label"><input type="checkbox" name="ann-district" value="พระสมุทรเจดีย์"> อ.พระสมุทรเจดีย์</label>
+                  <label class="district-checkbox-label"><input type="checkbox" name="ann-district" value="บางเสาธง"> อ.บางเสาธง</label>
                 </div>
 
-                <div style="background: var(--bg-subtle); border-left: 3px solid var(--primary); padding: 10px 14px; font-size: 11.5px; color: var(--text-muted); margin-bottom: 16px; border-radius: 4px;">
+                <div style="background: var(--bg-subtle); border-left: 3px solid var(--primary); padding: 12px 14px; font-size: 12px; color: var(--text-muted); margin-bottom: 20px; border-radius: 8px; line-height: 1.5;">
                   💡 <strong>เงื่อนไขการแสดงผล:</strong> ประกาศจะแสดงเตือนเฉพาะผู้ที่เปิด GPS เท่านั้น หากผู้ใช้ไม่เปิด GPS จะไม่เห็นประกาศ
                 </div>
 
-                <button type="submit" class="btn btn-primary" style="width: 100%;">
-                  เผยแพร่การประกาศหน้าเว็บ
+                <button type="submit" class="btn btn-primary" style="width: 100%; padding: 13px 20px; font-size: 14px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                  <span>เผยแพร่การประกาศหน้าเว็บ</span>
                 </button>
               </form>
             </div>
@@ -852,26 +879,70 @@
             <!-- Password Change -->
             <div class="card">
               <div class="card-header">
-                <h3 class="card-title">เปลี่ยนรหัสผ่านแอดมิน</h3>
+                <div>
+                  <h3 class="card-title">เปลี่ยนรหัสผ่านแอดมิน</h3>
+                  <p class="card-subtitle">ตั้งค่ารหัสผ่านใหม่เพื่อความปลอดภัยในการเข้าถึงระบบศูนย์บัญชาการ</p>
+                </div>
               </div>
-              <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 16px;">
-                กำลังเข้าสู่ระบบในชื่อ: <strong id="settings-current-admin" style="color: var(--text-main);">Admin</strong>
-              </p>
+              <div style="background: rgba(59, 130, 246, 0.08); border: 1px solid rgba(59, 130, 246, 0.2); padding: 10px 14px; border-radius: 10px; margin-bottom: 18px; display: flex; align-items: center; gap: 10px;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                <div style="font-size: 12.5px; color: var(--text-secondary);">
+                  กำลังเข้าสู่ระบบในชื่อ: <strong id="settings-current-admin" style="color: var(--text-main); font-weight: 600;">Admin</strong>
+                </div>
+              </div>
               <form id="form-change-password">
                 <div class="login-field">
-                  <label class="login-label">รหัสผ่านปัจจุบัน</label>
-                  <input type="password" id="pwd-old" class="login-input" placeholder="กรอกรหัสผ่านเดิม" required>
+                  <label class="login-label" for="pwd-old">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6"/><path d="m15.5 7.5 3 3L22 7l-3-3"/></svg>
+                    <span>รหัสผ่านปัจจุบัน</span>
+                  </label>
+                  <div class="password-input-group">
+                    <span class="input-icon-left">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                    </span>
+                    <input type="password" id="pwd-old" class="login-input form-input" placeholder="กรอกรหัสผ่านเดิม" required autocomplete="current-password">
+                    <button type="button" class="password-toggle-btn" data-target="pwd-old" title="แสดง/ซ่อนรหัสผ่าน" aria-label="แสดง/ซ่อนรหัสผ่าน">
+                      <svg class="eye-open" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                    </button>
+                  </div>
                 </div>
+
                 <div class="login-field">
-                  <label class="login-label">รหัสผ่านใหม่ (อย่างน้อย 10 ตัวอักษร)</label>
-                  <input type="password" id="pwd-new" class="login-input" placeholder="กรอกรหัสผ่านใหม่" required>
+                  <label class="login-label" for="pwd-new">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                    <span>รหัสผ่านใหม่</span>
+                    <span class="label-hint">อย่างน้อย 10 ตัวอักษร</span>
+                  </label>
+                  <div class="password-input-group">
+                    <span class="input-icon-left">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                    </span>
+                    <input type="password" id="pwd-new" class="login-input form-input" placeholder="กรอกรหัสผ่านใหม่ (อย่างน้อย 10 ตัวอักษร)" required autocomplete="new-password">
+                    <button type="button" class="password-toggle-btn" data-target="pwd-new" title="แสดง/ซ่อนรหัสผ่าน" aria-label="แสดง/ซ่อนรหัสผ่าน">
+                      <svg class="eye-open" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                    </button>
+                  </div>
                 </div>
+
                 <div class="login-field">
-                  <label class="login-label">ยืนยันรหัสผ่านใหม่</label>
-                  <input type="password" id="pwd-confirm" class="login-input" placeholder="กรอกรหัสผ่านใหม่อีกครั้ง" required>
+                  <label class="login-label" for="pwd-confirm">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                    <span>ยืนยันรหัสผ่านใหม่</span>
+                  </label>
+                  <div class="password-input-group">
+                    <span class="input-icon-left">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                    </span>
+                    <input type="password" id="pwd-confirm" class="login-input form-input" placeholder="กรอกรหัสผ่านใหม่อีกครั้งเพื่อยืนยัน" required autocomplete="new-password">
+                    <button type="button" class="password-toggle-btn" data-target="pwd-confirm" title="แสดง/ซ่อนรหัสผ่าน" aria-label="แสดง/ซ่อนรหัสผ่าน">
+                      <svg class="eye-open" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                    </button>
+                  </div>
                 </div>
-                <button type="submit" class="btn btn-primary" style="margin-top: 8px;">
-                  บันทึกรหัสผ่านใหม่
+
+                <button type="submit" class="btn btn-primary" style="margin-top: 10px; padding: 12px 22px; font-size: 13.5px; font-weight: 600; display: inline-flex; align-items: center; gap: 8px;">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                  <span>บันทึกรหัสผ่านใหม่</span>
                 </button>
               </form>
             </div>
