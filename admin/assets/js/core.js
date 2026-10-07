@@ -99,30 +99,107 @@ export function toast(message, type = 'info', ms = 3600) {
 }
 
 /* -------------------------------------------------------------- Dialogs */
-/** กล่องยืนยันแบบสวยงาม (แทน confirm() ของเบราว์เซอร์ที่ขึ้นข้อความ localhost) */
-export function confirmDialog({ title, message, confirmText = 'ยืนยัน', cancelText = 'ยกเลิก', tone = 'danger', icon: ic = 'trash', details = null }) {
+/** กล่องยืนยันแบบทางการและสวยงามระดับศูนย์บัญชาการภาครัฐ */
+export function confirmDialog({ 
+  title, 
+  message, 
+  confirmText = 'ยืนยัน', 
+  cancelText = 'ยกเลิก', 
+  tone = 'danger', 
+  icon: ic = 'trash', 
+  details = null,
+  badge = null 
+}) {
   return new Promise((resolve) => {
+    try {
+      if (tone === 'danger' || tone === 'warning') playWarningSound();
+      else playNavClickSound();
+    } catch (e) {}
+
     const overlay = h('div', { class: 'overlay', role: 'dialog', 'aria-modal': 'true' });
     const done = (val) => {
       document.removeEventListener('keydown', onKey);
       overlay.classList.remove('show');
-      setTimeout(() => overlay.remove(), 220);
+      setTimeout(() => overlay.remove(), 240);
       resolve(val);
     };
     const onKey = (e) => {
       if (e.key === 'Escape') done(false);
     };
-    const okBtn = h('button', { class: `btn btn-${tone === 'danger' ? 'danger' : 'primary'}`, onclick: () => done(true) }, confirmText);
-    const card = h('div', { class: 'dialog' },
-      h('div', { class: `dialog-ic tone-${tone}`, html: icon(ic, 28) }),
+
+    const okBtn = h('button', { 
+      class: `dialog-btn btn-confirm tone-${tone}`, 
+      onclick: () => done(true) 
+    }, 
+      tone === 'danger' ? icon('alert', 16) : icon('check', 16),
+      h('span', {}, confirmText)
+    );
+
+    const cancelBtn = h('button', { 
+      class: 'dialog-btn btn-cancel', 
+      onclick: () => done(false) 
+    }, 
+      icon('x', 16),
+      h('span', {}, cancelText)
+    );
+
+    // Official Tone Labels & Badges
+    const toneBadgeText = badge || (
+      tone === 'danger' ? 'ยืนยันการดำเนินการสำคัญ' :
+      tone === 'warning' ? 'แจ้งเตือนความปลอดภัย' :
+      tone === 'success' ? 'บันทึกการเปลี่ยนแปลง' : 'คำสั่งควบคุมระบบ'
+    );
+
+    // Format message: If message contains quotes e.g. "หน้าสถานีตำรวจภูธรบางเสาธง"
+    // format it with a styled callout quote tag for extreme clarity and elegance
+    const messageNode = h('div', { class: 'dialog-msg' });
+    if (typeof message === 'string' && message.includes('"')) {
+      const parts = message.split('"');
+      parts.forEach((part, idx) => {
+        if (idx % 2 === 1) {
+          messageNode.appendChild(h('span', { class: 'dialog-highlight' }, `"${part}"`));
+        } else if (part) {
+          messageNode.appendChild(document.createTextNode(part));
+        }
+      });
+    } else {
+      messageNode.textContent = message;
+    }
+
+    const card = h('div', { class: `dialog tone-${tone}` },
+      // Top Status Pill & Close X
+      h('div', { class: 'dialog-header-bar' },
+        h('div', { class: `dialog-pill tone-${tone}` },
+          h('span', { class: 'dialog-pill-dot' }),
+          h('span', {}, toneBadgeText)
+        ),
+        h('button', { 
+          class: 'dialog-close-btn', 
+          'aria-label': 'ปิด', 
+          onclick: () => done(false), 
+          html: icon('x', 15) 
+        })
+      ),
+
+      // Official Center Emblem
+      h('div', { class: `dialog-icon-emblem tone-${tone}` },
+        h('div', { class: 'dialog-icon-inner', html: icon(ic, 32) })
+      ),
+
+      // Title & Message
       h('h3', { class: 'dialog-title' }, title),
-      h('p', { class: 'dialog-msg' }, message),
+      messageNode,
+
+      // Optional details block
       details ? h('div', { class: 'dialog-details' }, details) : null,
+
+      // Action Buttons Bar
       h('div', { class: 'dialog-actions' },
-        h('button', { class: 'btn btn-ghost', onclick: () => done(false) }, cancelText),
+        cancelBtn,
         okBtn
       )
     );
+
     overlay.appendChild(card);
     overlay.addEventListener('mousedown', (e) => { if (e.target === overlay) done(false); });
     document.addEventListener('keydown', onKey);
@@ -131,23 +208,27 @@ export function confirmDialog({ title, message, confirmText = 'ยืนยั�
   });
 }
 
-/** หน้าต่างรายละเอียดทั่วไป */
+/** หน้าต่างรายละเอียดทั่วไป (โมดอลทางการ) */
 export function openModal({ title, subtitle = '', body, footer = null, width = 760, onClose = null }) {
   const overlay = h('div', { class: 'overlay', role: 'dialog', 'aria-modal': 'true' });
   const close = () => {
     document.removeEventListener('keydown', onKey);
     overlay.classList.remove('show');
-    setTimeout(() => overlay.remove(), 220);
+    setTimeout(() => overlay.remove(), 240);
     if (onClose) onClose();
   };
   const onKey = (e) => { if (e.key === 'Escape') close(); };
   const card = h('div', { class: 'modal', style: { maxWidth: width + 'px' } },
     h('div', { class: 'modal-head' },
       h('div', {},
+        h('div', { class: 'modal-badge' }, 
+          h('span', { class: 'status-dot pulse' }),
+          'ศูนย์บัญชาการสถานการณ์น้ำสมุทรปราการ'
+        ),
         h('h3', { class: 'modal-title' }, title),
         subtitle ? h('div', { class: 'modal-sub' }, subtitle) : null
       ),
-      h('button', { class: 'icon-btn', 'aria-label': 'ปิด', onclick: close, html: icon('x', 18) })
+      h('button', { class: 'modal-close-btn', 'aria-label': 'ปิด', onclick: close, html: icon('x', 18) })
     ),
     h('div', { class: 'modal-body' }, body),
     footer ? h('div', { class: 'modal-foot' }, footer) : null
