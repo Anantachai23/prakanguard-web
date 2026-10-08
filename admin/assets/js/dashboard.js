@@ -554,6 +554,8 @@ function renderOverview() {
 
   // Also render mini feed on overview
   renderMiniLiveFeed();
+  // Render auto-cleared dry points table on overview
+  renderOverviewAutoCleared();
 }
 
 function renderMonitoredDistricts() {
@@ -629,6 +631,11 @@ function renderAIAdvisory() {
     parts.push(`❄️ มีรายงานลูกเห็บตก ${hailCount} จุด แจ้งเตือนประชาชนหลีกเลี่ยงพื้นที่โล่งแจ้ง`);
   }
 
+  const autoDryCount = state.reports.filter(r => r.autoRemovedBecauseDry === true || r.is_resolved === true || r.isResolved === true || (r.depth_cm !== undefined && r.depth_cm <= 0) || (r.depthCm !== undefined && r.depthCm <= 0)).length;
+  if (autoDryCount > 0) {
+    parts.push(`💧 ระบบนำจุดที่น้ำแห้งแล้วออกจากแผนที่อัตโนมัติแล้ว ${autoDryCount} จุด เพื่อคงความแม่นยำของข้อมูลสด`);
+  }
+
   parts.push(`โทรมาตรสดตรวจพบผู้ใช้งาน ${activeVis} เซสชัน กำลังเข้าถึงแผนที่อย่างต่อเนื่อง`);
 
   aiTextEl.textContent = parts.join(' · ');
@@ -662,6 +669,106 @@ function renderMiniLiveFeed() {
       ),
       h('td', { style: { maxWidth: '240px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } }, normPage(s.page)),
       h('td', {}, duration(durMs))
+    );
+    tbody.appendChild(tr);
+  });
+}
+
+function renderOverviewAutoCleared() {
+  const tbody = $('#overview-auto-cleared-tbody');
+  const statEl = $('#stat-auto-cleared-dry');
+  const subEl = $('#stat-auto-cleared-sub');
+  const badgeEl = $('#badge-overview-auto-cleared');
+
+  const autoClearedList = state.reports.filter(r => 
+    r.autoRemovedBecauseDry === true || 
+    r.is_resolved === true || 
+    r.isResolved === true || 
+    (r.depth_cm !== undefined && r.depth_cm <= 0) || 
+    (r.depthCm !== undefined && r.depthCm <= 0)
+  );
+
+  const autoAiCount = autoClearedList.filter(r => r.autoRemovedBecauseDry).length;
+
+  if (statEl) statEl.textContent = autoClearedList.length;
+  if (subEl) subEl.textContent = autoAiCount > 0 ? `AI นำออกอัตโนมัติ ${autoAiCount} จุด` : `ระบายแห้งแล้ว ${autoClearedList.length} จุด`;
+  if (badgeEl) badgeEl.textContent = `${autoClearedList.length} จุด`;
+
+  if (!tbody) return;
+  tbody.innerHTML = '';
+
+  if (autoClearedList.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="8" class="text-center text-muted" style="padding: 28px;">
+      <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;">
+        <span style="font-size: 24px;">💧</span>
+        <span style="font-size: 13px; font-weight: 600;">ขณะนี้ยังไม่มีจุดที่ถูกนำออกอัตโนมัติ</span>
+        <span style="font-size: 11px; color: var(--text-muted);">เมื่อระดับน้ำลดเหลือ 0 ซม. ระบบ AI Sentry จะตรวจจับและนำออกจากแผนที่สด พร้อมบันทึกรายละเอียดที่นี่ทันที</span>
+      </div>
+    </td></tr>`;
+    return;
+  }
+
+  autoClearedList.slice(0, 10).forEach(r => {
+    const originalDepth = (r.depth_cm && r.depth_cm > 0) ? r.depth_cm : (r.depthCm && r.depthCm > 0) ? r.depthCm : 20;
+    const isAiCleared = !!r.autoRemovedBecauseDry;
+    const timeStr = r.cleared_at || r.clearedAt || (r.resolved_at ? dateTime(r.resolved_at) : (r.timestamp ? dateTime(r.timestamp) : 'ล่าสุด'));
+    const linkedName = r.linked_point_name || r.linkedPointName || (r.source ? r.source : 'โทรมาตรตรวจวัดหลัก');
+
+    const tr = h('tr', {},
+      // Name
+      h('td', {},
+        h('div', { style: { fontWeight: 600, color: '#ffffff' } }, r.name || 'จุดแจ้งเหตุ'),
+        h('div', { class: 'text-muted', style: { fontSize: '11px', marginTop: '2px' } }, r.cause ? `หมายเหตุเดิม: ${r.cause}` : '')
+      ),
+      // District / Subdistrict
+      h('td', {},
+        h('span', { class: 'badge badge-neutral' }, `อ.${r.district || 'เมืองสมุทรปราการ'}`),
+        r.subdistrict ? h('div', { class: 'text-muted', style: { fontSize: '11px', marginTop: '2px' } }, `ต.${r.subdistrict}`) : null
+      ),
+      // Original Depth
+      h('td', {},
+        h('span', { class: 'cell-mono', style: { color: 'var(--text-muted)' } }, `~${originalDepth} ซม.`)
+      ),
+      // Reason
+      h('td', {},
+        h('div', { style: { fontSize: '11.5px', color: '#38bdf8', maxWidth: '280px', lineHeight: '1.4' } },
+          r.dry_reason || r.dryReason || 'จุดตรวจวัดหลักระดับน้ำลดเหลือ 0 ซม. สภาพอากาศแห้งปกติ'
+        )
+      ),
+      // Linked Point
+      h('td', {},
+        h('div', { style: { fontSize: '11px', color: 'var(--text-secondary)' } }, linkedName)
+      ),
+      // Time
+      h('td', { class: 'cell-mono', style: { fontSize: '11px' } }, timeStr),
+      // Status Badge
+      h('td', {},
+        isAiCleared
+          ? h('span', { class: 'badge', style: 'background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); font-size: 10.5px;' }, '🟢 นำออกอัตโนมัติ')
+          : h('span', { class: 'badge', style: 'background: rgba(56, 189, 248, 0.2); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.4); font-size: 10.5px;' }, '💧 น้ำแห้งแล้ว')
+      ),
+      // Actions
+      h('td', {},
+        h('div', { style: { display: 'flex', gap: '6px', alignItems: 'center' } },
+          h('button', {
+            type: 'button',
+            class: 'btn btn-success btn-sm',
+            title: 'กู้คืนจุดนี้กลับขึ้นแผนที่หากยังมีน้ำท่วมขังอยู่',
+            onclick: () => handleRestoreDryReportSingle(r),
+            html: '🔄 กู้คืน'
+          }),
+          r.lat && r.lng ? h('button', {
+            type: 'button',
+            class: 'btn btn-secondary btn-sm',
+            title: 'ดูพิกัดบนแผนที่',
+            onclick: () => {
+              switchTab('reports');
+              window.__pgFlyToReport && window.__pgFlyToReport(r.id);
+            },
+            html: icon('pin', 12)
+          }) : null
+        )
+      )
     );
     tbody.appendChild(tr);
   });

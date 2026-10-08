@@ -326,7 +326,7 @@
           </div>
 
           <!-- 1. Top KPI Row (Matching Screen 1 & 2 in Mockup) -->
-          <div class="grid-4">
+          <div class="grid-5">
             <!-- KPI 1: Active Now -->
             <div class="card kpi-card">
               <div class="kpi-top">
@@ -388,6 +388,21 @@
               <div class="kpi-foot">
                 <span class="kpi-badge positive">GPS สด</span>
                 <span id="stat-top-district-sub" style="color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">อิงจากพิกัดเปิดจริงในพื้นที่</span>
+              </div>
+            </div>
+
+            <!-- KPI 5: Auto-Cleared Dry Reports -->
+            <div class="card kpi-card" onclick="switchTab('reports'); document.querySelector('.reports-filter-btn[data-filter=dry]')?.click();" style="cursor: pointer;" title="คลิกเพื่อดูจุดที่ระบบนำออกอัตโนมัติแล้ว">
+              <div class="kpi-top">
+                <span class="kpi-label">น้ำแห้งแล้ว (นำออกอัตโนมัติ)</span>
+                <div class="kpi-icon-wrap" style="color: #38bdf8; background: rgba(56, 189, 248, 0.12); border-color: rgba(56, 189, 248, 0.3);">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>
+                </div>
+              </div>
+              <div id="stat-auto-cleared-dry" class="kpi-val" style="color: #38bdf8;">0</div>
+              <div class="kpi-foot">
+                <span class="kpi-badge positive" style="background: rgba(16, 185, 129, 0.2); color: #34d399; border-color: rgba(16, 185, 129, 0.4);">AI Telemetry</span>
+                <span id="stat-auto-cleared-sub" style="color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">นำออกจากแผนที่แล้ว</span>
               </div>
             </div>
           </div>
@@ -533,6 +548,43 @@
                 </thead>
                 <tbody id="overview-live-feed-tbody">
                   <tr><td colspan="6" class="text-center text-muted" style="padding: 24px;">กำลังโหลดข้อมูล...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- 6. Auto-Cleared Dry Flood Points Table (แสดงชัดเจนบนแดชบอร์ดว่าจุดไหนนำออกอัตโนมัติแล้ว) -->
+          <div class="card" style="margin-top: 22px;">
+            <div class="card-header" style="flex-wrap: wrap; gap: 10px;">
+              <div>
+                <h3 class="card-title" style="display: flex; align-items: center; gap: 8px;">
+                  <span style="color: #38bdf8;">💧</span>
+                  <span>จุดที่ระบบนำออกอัตโนมัติแล้วเพราะน้ำแห้ง (Auto-Cleared Dry Points)</span>
+                  <span id="badge-overview-auto-cleared" class="badge badge-ok" style="font-size: 11px;">0 จุด</span>
+                </h3>
+                <p class="card-subtitle">จุดที่เชื่อมโยงกับเซนเซอร์/โทรมาตรหรือรายงานประชาชนที่ระดับน้ำลดเหลือ 0 ซม. ระบบ AI Sentry นำออกจากแผนที่สาธารณะแล้ว เพื่อไม่ให้ข้อมูลค้าง</p>
+              </div>
+              <button class="btn btn-secondary btn-sm" onclick="switchTab('reports'); document.querySelector('.reports-filter-btn[data-filter=dry]')?.click();" style="gap: 6px;">
+                <span>ดูทั้งหมดในหน้ารายงาน</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+              </button>
+            </div>
+            <div class="table-wrap">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>ชื่อจุดที่นำออก</th>
+                    <th>อำเภอ / ตำบล</th>
+                    <th>ระดับน้ำเดิม</th>
+                    <th>เหตุผลที่นำออกอัตโนมัติ</th>
+                    <th>จุดตรวจวัดที่เชื่อมโยง</th>
+                    <th>เวลาที่นำออก</th>
+                    <th>สถานะ</th>
+                    <th>จัดการ</th>
+                  </tr>
+                </thead>
+                <tbody id="overview-auto-cleared-tbody">
+                  <tr><td colspan="8" class="text-center text-muted" style="padding: 24px;">กำลังโหลดข้อมูลจุดที่นำออก...</td></tr>
                 </tbody>
               </table>
             </div>

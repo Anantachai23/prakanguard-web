@@ -597,6 +597,7 @@ export default function AdminModal({
 
   // Dry / Auto-Cleared Reports Filter States
   const [dryDistrictFilter, setDryDistrictFilter] = useState('ทั้งหมด');
+  const [drySourceFilter, setDrySourceFilter] = useState('all'); // 'all' | 'auto' | 'manual'
   const [drySearch, setDrySearch] = useState('');
 
   // Confirmation Modal Dialog State (สำหรับยืนยันถอนอนุมัติ, ไม่อนุมัติ, หรือลบรายงาน)
@@ -1601,6 +1602,12 @@ export default function AdminModal({
     (r.depthCm !== undefined && r.depthCm !== null && Number(r.depthCm) <= 0) || 
     r.waterTrend === 'dry'
   );
+  const autoRemovedDryReports = useMemo(() => {
+    return clearedDryReports.filter(r => 
+      r.autoRemovedBecauseDry === true || 
+      (r.clearedBy && (r.clearedBy.includes('AI') || r.clearedBy.includes('อัตโนมัติ') || r.clearedBy.includes('โทรมาตร')))
+    );
+  }, [clearedDryReports]);
   const historyReports = citizenReports.filter(r => r.isApproved || r.isResolved || r.autoRemovedBecauseDry);
   const unreadFeedbackCount = activeFeedbackList.filter(f => !f.isRead).length;
 
@@ -1633,6 +1640,9 @@ export default function AdminModal({
   // Filtered Dry / Auto-Cleared Reports
   const filteredDryReports = useMemo(() => {
     return clearedDryReports.filter(r => {
+      const isAuto = r.autoRemovedBecauseDry === true || (r.clearedBy && (r.clearedBy.includes('AI') || r.clearedBy.includes('อัตโนมัติ') || r.clearedBy.includes('โทรมาตร')));
+      if (drySourceFilter === 'auto' && !isAuto) return false;
+      if (drySourceFilter === 'manual' && isAuto) return false;
       if (dryDistrictFilter !== 'ทั้งหมด' && r.district !== dryDistrictFilter) return false;
       if (drySearch.trim()) {
         const q = drySearch.toLowerCase();
@@ -1644,7 +1654,7 @@ export default function AdminModal({
       }
       return true;
     });
-  }, [clearedDryReports, dryDistrictFilter, drySearch]);
+  }, [clearedDryReports, drySourceFilter, dryDistrictFilter, drySearch]);
 
   // Filtered Feedback
   const filteredFeedbackList = useMemo(() => {
@@ -2095,6 +2105,59 @@ export default function AdminModal({
             {/* TAB CONTENTS */}
             <div className="p-3 sm:p-6 overflow-y-auto flex-1 space-y-4">
               
+              {/* NOTIFICATION BANNER: AUTO-CLEARED DRY POINTS */}
+              {autoRemovedDryReports.length > 0 && activeTab !== 'dry_cleared' && (
+                <div className={`p-3.5 sm:p-4 rounded-2xl border flex flex-col md:flex-row md:items-center justify-between gap-3.5 shadow-sm transition-all ${
+                  isDark ? 'bg-gradient-to-r from-cyan-950/40 via-slate-900 to-slate-850 border-cyan-700/60 text-cyan-200' : 'bg-gradient-to-r from-cyan-50 via-sky-50 to-white border-cyan-300 text-cyan-950'
+                }`}>
+                  <div className="flex items-start gap-3 min-w-0">
+                    <div className="w-9 h-9 rounded-xl bg-cyan-500/20 text-cyan-400 border border-cyan-500/40 flex items-center justify-center shrink-0 mt-0.5">
+                      <Droplets className="w-5 h-5 text-cyan-400" />
+                    </div>
+                    <div className="min-w-0 space-y-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <strong className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
+                          💧 ระบบนำจุดที่น้ำแห้งแล้วออกจากแผนที่อัตโนมัติแล้ว {autoRemovedDryReports.length} จุด
+                        </strong>
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-500/20 text-emerald-600 dark:text-emerald-300 border border-emerald-500/30">
+                          AI Sentry & เซนเซอร์ 0 ซม.
+                        </span>
+                      </div>
+                      <p className="text-[11.5px] leading-relaxed text-slate-600 dark:text-slate-300">
+                        จุดที่เชื่อมโยงกับเซนเซอร์/โทรมาตรหรือรายงานประชาชนที่ระดับน้ำลดลงเหลือ 0 ซม. ได้ถูกปลดออกจากแผนที่สาธารณะแล้ว เพื่อไม่ให้ข้อมูลค้างบนแผนที่ประชาชน
+                      </p>
+                      <div className="flex items-center gap-1.5 flex-wrap text-[11px] text-slate-700 dark:text-slate-200 pt-0.5">
+                        <span className="font-semibold text-cyan-600 dark:text-cyan-400 shrink-0">จุดที่นำออก:</span>
+                        {autoRemovedDryReports.slice(0, 3).map((r, idx) => (
+                          <span key={r.id || idx} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-[10.5px]">
+                            <span className="font-semibold text-slate-900 dark:text-slate-100 truncate max-w-[160px]">{r.name}</span>
+                            <span className="text-slate-500 dark:text-slate-400">({r.district ? `อ.${r.district}` : 'สมุทรปราการ'})</span>
+                          </span>
+                        ))}
+                        {autoRemovedDryReports.length > 3 && (
+                          <span className="text-[10.5px] text-slate-500 dark:text-slate-400 font-medium">
+                            และอีก {autoRemovedDryReports.length - 3} จุด
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      playAdminTabSound();
+                      setDrySourceFilter('auto');
+                      setActiveTab('dry_cleared');
+                    }}
+                    className="px-3.5 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 active:scale-95 text-white font-bold text-xs flex items-center justify-center gap-1.5 shrink-0 transition-all shadow-sm cursor-pointer self-start md:self-center"
+                  >
+                    <Droplets className="w-3.5 h-3.5" />
+                    <span>ตรวจสอบรายการที่นำออก ({autoRemovedDryReports.length})</span>
+                  </button>
+                </div>
+              )}
+
               {/* TAB 1: PENDING REPORTS (WAITING FOR ADMIN APPROVAL) */}
               {activeTab === 'pending' && (
                 <div className="space-y-3.5">
@@ -2703,35 +2766,100 @@ export default function AdminModal({
                       เพื่อไม่ให้ข้อมูลค้าง โดยแอดมินสามารถตรวจสอบสาเหตุ เวลาที่นำออก และ<strong>กู้คืนกลับขึ้นแผนที่ได้ทันที</strong>หากพบว่ายังมีน้ำท่วมขังอยู่
                     </p>
                     <div className="mt-2.5 flex items-center gap-2 flex-wrap text-[11px] font-semibold">
-                      <span className="px-2.5 py-1 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-700 dark:text-cyan-300">
+                      <button
+                        type="button"
+                        onClick={() => setDrySourceFilter('all')}
+                        className={`px-2.5 py-1 rounded-xl border cursor-pointer transition-all ${
+                          drySourceFilter === 'all'
+                            ? 'bg-cyan-600 text-white border-cyan-500 shadow-xs font-bold'
+                            : 'bg-cyan-500/10 border-cyan-500/30 text-cyan-700 dark:text-cyan-300 hover:bg-cyan-500/20'
+                        }`}
+                      >
                         รวมทั้งหมด: <strong>{clearedDryReports.length}</strong> จุด
-                      </span>
-                      <span className="px-2.5 py-1 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-700 dark:text-emerald-300">
-                        นำออกอัตโนมัติ (AI & เซนเซอร์): <strong>{clearedDryReports.filter(r => r.autoRemovedBecauseDry).length}</strong> จุด
-                      </span>
-                      <span className="px-2.5 py-1 rounded-xl bg-blue-500/10 border border-blue-500/30 text-blue-700 dark:text-blue-300">
-                        ปิดจุดโดยแอดมิน: <strong>{clearedDryReports.filter(r => !r.autoRemovedBecauseDry).length}</strong> จุด
-                      </span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setDrySourceFilter('auto')}
+                        className={`px-2.5 py-1 rounded-xl border cursor-pointer transition-all ${
+                          drySourceFilter === 'auto'
+                            ? 'bg-emerald-600 text-white border-emerald-500 shadow-xs font-bold'
+                            : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-500/20'
+                        }`}
+                      >
+                        นำออกอัตโนมัติ (AI & เซนเซอร์): <strong>{autoRemovedDryReports.length}</strong> จุด
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setDrySourceFilter('manual')}
+                        className={`px-2.5 py-1 rounded-xl border cursor-pointer transition-all ${
+                          drySourceFilter === 'manual'
+                            ? 'bg-blue-600 text-white border-blue-500 shadow-xs font-bold'
+                            : 'bg-blue-500/10 border-blue-500/30 text-blue-700 dark:text-blue-300 hover:bg-blue-500/20'
+                        }`}
+                      >
+                        ปิดจุดโดยแอดมิน: <strong>{clearedDryReports.length - autoRemovedDryReports.length}</strong> จุด
+                      </button>
                     </div>
                   </div>
 
                   {/* Filter & Search Bar */}
-                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2">
-                    <div className="flex items-center gap-1 overflow-x-auto no-scrollbar py-1">
-                      {DISTRICTS.map(d => (
+                  <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-2.5">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {/* Source Sub-filter */}
+                      <div className="flex items-center gap-1 bg-slate-200/80 dark:bg-slate-800/80 p-0.5 rounded-xl border border-slate-300 dark:border-slate-700 shrink-0">
                         <button
-                          key={d}
                           type="button"
-                          onClick={() => setDryDistrictFilter(d)}
-                          className={`px-2.5 py-1 rounded-xl text-xs font-semibold whitespace-nowrap cursor-pointer transition-all ${
-                            dryDistrictFilter === d
-                              ? 'bg-cyan-600 text-white font-bold'
-                              : (isDark ? 'bg-slate-800 text-slate-300 hover:bg-slate-700' : 'bg-slate-200 text-slate-700 hover:bg-slate-300')
+                          onClick={() => setDrySourceFilter('all')}
+                          className={`px-2.5 py-1 rounded-lg text-xs font-semibold cursor-pointer transition-all ${
+                            drySourceFilter === 'all'
+                              ? 'bg-cyan-600 text-white font-bold shadow-xs'
+                              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                           }`}
                         >
-                          {d === "ทั้งหมด" ? "ทุกอำเภอ" : `อ.${d}`}
+                          ทั้งหมด
                         </button>
-                      ))}
+                        <button
+                          type="button"
+                          onClick={() => setDrySourceFilter('auto')}
+                          className={`px-2.5 py-1 rounded-lg text-xs font-semibold cursor-pointer transition-all flex items-center gap-1 ${
+                            drySourceFilter === 'auto'
+                              ? 'bg-emerald-600 text-white font-bold shadow-xs'
+                              : 'text-slate-600 dark:text-slate-400 hover:text-emerald-500'
+                          }`}
+                        >
+                          <span>🟢 นำออกอัตโนมัติ</span>
+                          <span className="text-[10px] opacity-80 font-bold">({autoRemovedDryReports.length})</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setDrySourceFilter('manual')}
+                          className={`px-2.5 py-1 rounded-lg text-xs font-semibold cursor-pointer transition-all flex items-center gap-1 ${
+                            drySourceFilter === 'manual'
+                              ? 'bg-blue-600 text-white font-bold shadow-xs'
+                              : 'text-slate-600 dark:text-slate-400 hover:text-blue-400'
+                          }`}
+                        >
+                          <span>👤 แอดมินปิดจุด</span>
+                        </button>
+                      </div>
+
+                      {/* District Pills */}
+                      <div className="flex items-center gap-1 overflow-x-auto no-scrollbar py-1">
+                        {DISTRICTS.map(d => (
+                          <button
+                            key={d}
+                            type="button"
+                            onClick={() => setDryDistrictFilter(d)}
+                            className={`px-2.5 py-1 rounded-xl text-xs font-semibold whitespace-nowrap cursor-pointer transition-all ${
+                              dryDistrictFilter === d
+                                ? 'bg-cyan-600 text-white font-bold'
+                                : (isDark ? 'bg-slate-800 text-slate-300 hover:bg-slate-700' : 'bg-slate-200 text-slate-700 hover:bg-slate-300')
+                            }`}
+                          >
+                            {d === "ทั้งหมด" ? "ทุกอำเภอ" : `อ.${d}`}
+                          </button>
+                        ))}
+                      </div>
                     </div>
 
                     <div className="relative flex-1 sm:w-56">
@@ -2751,11 +2879,11 @@ export default function AdminModal({
                   {filteredDryReports.length === 0 ? (
                     <div className="p-10 text-center text-slate-400 text-xs space-y-2 border rounded-2xl border-dashed border-slate-700/60">
                       <Droplets className="w-8 h-8 text-cyan-400/50 mx-auto" />
-                      <div className="font-bold text-slate-300">ไม่พบรายงานประชาชนที่ถูกนำออกเพราะน้ำแห้ง</div>
+                      <div className="font-bold text-slate-300">ไม่พบรายการจุดที่ถูกนำออกเพราะน้ำแห้งในหมวดหมู่นี้</div>
                       <div className="text-[11px] text-slate-500">
-                        {dryDistrictFilter !== 'ทั้งหมด' || drySearch.trim()
-                          ? 'ลองเปลี่ยนตัวกรองอำเภอหรือคำค้นหา'
-                          : 'เมื่อจุดน้ำท่วมเดิมระบายน้ำแห้งจนระดับน้ำเป็น 0 ซม. ระบบจะนำออกจากแผนที่และบันทึกประวัติไว้ที่นี่อัตโนมัติ'}
+                        {dryDistrictFilter !== 'ทั้งหมด' || drySearch.trim() || drySourceFilter !== 'all'
+                          ? 'ลองเปลี่ยนตัวกรองอำเภอ ตัวกรองที่มา หรือคำค้นหา'
+                          : 'เมื่อจุดน้ำท่วมเดิมระบายน้ำแห้งจนระดับน้ำเป็น 0 ซม. ระบบ AI Sentry จะนำออกจากแผนที่และบันทึกประวัติไว้ที่นี่อัตโนมัติ'}
                       </div>
                     </div>
                   ) : (
