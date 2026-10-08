@@ -433,11 +433,36 @@ export async function endAdminSession(id, { keepalive = false } = {}) {
   lsSessWrite(lsSessRead().map((s) => (s.id === id ? { ...s, logged_out_at: now } : s)));
 }
 export async function fetchAdminSessions() {
-  if (caps.sessions) {
+  try {
     const r = await rest('admin_sessions?select=*&order=logged_in_at.desc&limit=200');
-    return r.ok && Array.isArray(r.data) ? r.data : [];
-  }
+    if (r.ok && Array.isArray(r.data) && r.data.length > 0) {
+      return r.data;
+    }
+  } catch (err) {}
   return lsSessRead();
+}
+
+/** วัดค่า Latency Ping สดไปยัง Supabase REST Gateway */
+export async function fetchSupabasePing() {
+  const t0 = performance.now();
+  try {
+    const r = await rest('reports?select=id&limit=1');
+    const latency = Math.round(performance.now() - t0);
+    return { ok: r.ok, latency, status: r.status };
+  } catch (err) {
+    const latency = Math.round(performance.now() - t0);
+    return { ok: false, latency, status: 0, error: err };
+  }
+}
+
+/** ดึงข้อมูลตัวอย่างสดจากตาราง Supabase ใดๆ สำหรับตัวแสดงผล Live Table Inspector */
+export async function fetchTableSample(table, limit = 50) {
+  try {
+    const r = await rest(`${encodeURIComponent(table)}?limit=${limit}`);
+    return { ok: r.ok, data: Array.isArray(r.data) ? r.data : [], status: r.status };
+  } catch (err) {
+    return { ok: false, data: [], status: 0, error: err };
+  }
 }
 
 /* =================================================================== IP */

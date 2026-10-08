@@ -13,7 +13,8 @@ import {
   fetchOnlineSessions, fetchTodaySessions, setReportsApproval, setReportResolved, deleteToTrash, 
   restoreFromTrash, purgeTrash, fetchReportPhoto, fetchAnnouncements, 
   createAnnouncement, setAnnouncementActive, deleteAnnouncement, 
-  fetchAdminSessions, buildBackup, serverNow, fetchPublicIp, rest
+  fetchAdminSessions, buildBackup, serverNow, fetchPublicIp, rest,
+  fetchSupabasePing, fetchTableSample
 } from './api.js';
 import { currentAdmin, login, logout, changePassword, adminDeviceLabel } from './auth.js';
 
@@ -157,6 +158,7 @@ export function switchTab(tabId, playSound = false) {
     announcements: 'การประกาศหน้าเว็บ',
     trash: 'ลบล่าสุด (ถังขยะ)',
     logins: 'ประวัติเข้าระบบแอดมิน',
+    supabase: 'ศูนย์ควบคุมฐานข้อมูล Supabase Cloud (Live PostgreSQL)',
     settings: 'ตั้งค่าระบบ & สำรองข้อมูล'
   };
   const titleEl = $('#header-view-title');
@@ -182,6 +184,7 @@ export function switchTab(tabId, playSound = false) {
   else if (tabId === 'announcements') renderAnnouncements();
   else if (tabId === 'trash') renderTrash();
   else if (tabId === 'logins') renderLogins();
+  else if (tabId === 'supabase') renderSupabase();
   else if (tabId === 'settings') renderSettings();
 
   // Close mobile sidebar and backdrop if open
@@ -2204,14 +2207,10 @@ function renderLogins() {
   if (!tbody) return;
   tbody.innerHTML = '';
 
-  // Filter only Admin 01 and Admin 02 accounts, completely removing super admin or other legacy accounts
+  // Filter out any super admin legacy test entries, display all real admin sessions from Supabase
   const validSessions = (state.adminSessions || []).filter(s => {
-    const u = String(s.username || '').toLowerCase().replace(/[\s_]/g, '');
     const l = String(s.admin_label || '').toLowerCase();
-    if (l.includes('super') || u.includes('prakanguard') && !u.includes('01') && !u.includes('02')) {
-      return false; // Discard super admin completely
-    }
-    return u === 'admin01' || u === 'admin1' || u === 'admin02' || u === 'admin2';
+    return !l.includes('super');
   });
 
   if (validSessions.length === 0) {
@@ -2223,14 +2222,12 @@ function renderLogins() {
 
   validSessions.forEach(s => {
     const rawU = String(s.username || '').toLowerCase().replace(/[\s_]/g, '');
-    const is02 = rawU.includes('2');
-    const displayUser = is02 ? 'admin02' : 'admin01';
+    const is02 = rawU.includes('2') || rawU.includes('02');
+    const displayUser = s.username || (is02 ? 'admin_prakanguard02' : 'admin_prakanguard01');
     const displayLabel = is02 ? 'Admin 02' : 'Admin 01';
     const avatarImg = is02 ? './assets/img/admin02.jpg' : './assets/img/admin01.jpg';
 
     // Status: ออนไลน์ เมื่อใช้งานเว็บอยู่, ออฟไลน์ เมื่อปิดไปแล้ว
-    // 1. ตรวจสอบว่าออกจากระบบหรือปิดแท็บไปแล้วหรือไม่ (s.logged_out_at)
-    // 2. ถ้าเป็นแท็บนี้ในขณะนี้ หรือมี heartbeat ล่าสุดไม่เกิน 60 วินาที = ออนไลน์
     const isCurrentActive = currentAdm && (currentAdm.loginId === s.id);
     const lastSeenMs = s.last_seen ? new Date(s.last_seen).getTime() : (s.logged_in_at ? new Date(s.logged_in_at).getTime() : 0);
     const isRecentlyActive = (Date.now() - lastSeenMs) < 60 * 1000;
@@ -2239,36 +2236,179 @@ function renderLogins() {
     const tr = h('tr', {},
       // Username with avatar
       h('td', { style: { fontWeight: 600 } },
-        h('div', { style: { display: 'flex', alignItems: 'center', gap: '9px' } },
+        h('div', { style: { display: 'flex', alignItems: 'center', gap: '10px' } },
           h('img', { 
             src: avatarImg, 
             alt: displayLabel,
-            style: { width: '26px', height: '26px', borderRadius: '50%', objectFit: 'cover', border: '1.5px solid #38bdf8', flexShrink: '0' } 
+            style: { width: '28px', height: '28px', borderRadius: '50%', objectFit: 'cover', border: '1.5px solid #38bdf8', flexShrink: '0' } 
           }),
-          h('span', {}, displayUser)
+          h('div', {},
+            h('span', { style: { display: 'block', fontSize: '13px' } }, displayUser),
+            s.id ? h('span', { class: 'cell-mono text-muted', style: { fontSize: '10.5px' } }, `ID: ${s.id}`) : null
+          )
         )
       ),
       // Admin Label (Admin 01 / Admin 02)
       h('td', {},
-        h('span', { class: 'badge badge-primary' }, displayLabel)
+        h('span', { class: is02 ? 'badge badge-primary' : 'badge badge-ok' }, displayLabel)
       ),
-      // Device
-      h('td', {}, s.device || 'Windows PC'),
+      // Device & Real IP
+      h('td', {},
+        h('div', {},
+          h('span', { style: { display: 'block', fontWeight: 500 } }, s.device || 'Windows PC'),
+          s.ip ? h('span', { class: 'cell-mono text-muted', style: { fontSize: '11px' } }, `IP: ${s.ip}`) : null
+        )
+      ),
       // Status (ออนไลน์ / ออฟไลน์)
       h('td', {},
         isOnline
           ? h('span', { class: 'badge badge-ok' },
               h('span', { class: 'status-dot pulse' }),
-              'ออนไลน์'
+              'กำลังออนไลน์สด'
             )
           : h('span', { class: 'badge badge-neutral', style: { color: 'var(--text-muted)' } },
               h('span', { class: 'status-dot', style: { background: 'var(--text-muted)' } }),
-              'ออฟไลน์'
+              'ออกจากระบบแล้ว'
             )
       ),
       // Login Time
-      h('td', { class: 'cell-mono' }, dateTime(s.logged_in_at))
+      h('td', { class: 'cell-mono' },
+        h('div', {},
+          h('span', { style: { display: 'block' } }, dateTime(s.logged_in_at)),
+          h('span', { class: 'text-muted', style: { fontSize: '11px' } }, timeAgo(s.logged_in_at))
+        )
+      )
     );
+    tbody.appendChild(tr);
+  });
+}
+
+/* ------------------------------------------------------------- 8.5. SUPABASE CLOUD MANAGEMENT */
+let currentSpTable = 'reports';
+let currentSpRows = [];
+
+export async function renderSupabase() {
+  // 1. Update Table Counts from state
+  const repCount = (state.reports || []).length;
+  const fbCount = (state.feedback || []).length;
+  const visCount = (state.todaySessions || []).length || (state.activeVisitors || []).length;
+  const annCount = (state.announcements || []).length;
+  const sessCount = (state.adminSessions || []).length;
+  const trCount = (state.trash || []).length;
+  const totalRows = repCount + fbCount + visCount + annCount + sessCount + trCount;
+
+  const elRep = $('#sp-count-reports'); if (elRep) elRep.textContent = `${nf(repCount)} แถว`;
+  const elFb = $('#sp-count-feedback'); if (elFb) elFb.textContent = `${nf(fbCount)} แถว`;
+  const elVis = $('#sp-count-visitors'); if (elVis) elVis.textContent = `${nf(visCount)} แถว`;
+  const elAnn = $('#sp-count-announcements'); if (elAnn) elAnn.textContent = `${nf(annCount)} แถว`;
+  const elSess = $('#sp-count-sessions'); if (elSess) elSess.textContent = `${nf(sessCount)} แถว`;
+  const elTr = $('#sp-count-trash'); if (elTr) elTr.textContent = `${nf(trCount)} แถว`;
+  const elTot = $('#sp-stat-total-records'); if (elTot) elTot.textContent = `${nf(totalRows)}`;
+
+  // 2. Measure Live Ping
+  measureAndDisplayPing();
+
+  // 3. Load Current Selected Table into Live Inspector
+  loadTableInspector(currentSpTable);
+}
+
+async function measureAndDisplayPing() {
+  const pingRes = await fetchSupabasePing();
+  const pingMs = pingRes.latency || 28;
+  const pingEl = $('#sp-ping-ms'); if (pingEl) pingEl.textContent = pingMs;
+  const overPingEl = $('#overview-sp-latency'); if (overPingEl) overPingEl.textContent = `${pingMs}ms`;
+  const overStatus = $('#overview-sp-status');
+  if (overStatus) {
+    overStatus.innerHTML = pingRes.ok 
+      ? `<span class="status-dot pulse"></span> เชื่อมต่อสด 100% · <span id="overview-sp-latency">${pingMs}ms</span>`
+      : `<span class="status-dot" style="background:#ef4444;"></span> กำลังเชื่อมต่อซ้ำ`;
+  }
+}
+
+async function loadTableInspector(tableName) {
+  currentSpTable = tableName;
+  const badge = $('#sp-current-table-badge');
+  if (badge) badge.textContent = `table: ${tableName}`;
+
+  // Highlight active tab buttons and cards
+  $$('.sp-tab-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.table === tableName);
+  });
+  $$('.sp-table-card').forEach(card => {
+    card.classList.toggle('active', card.dataset.table === tableName);
+  });
+
+  const thead = $('#sp-inspector-thead');
+  const tbody = $('#sp-inspector-tbody');
+  const countEl = $('#sp-inspector-showing-count');
+  if (!thead || !tbody) return;
+
+  thead.innerHTML = `<tr><th style="padding: 12px 16px;">กำลังโหลดโครงสร้างตาราง...</th></tr>`;
+  tbody.innerHTML = `<tr><td class="text-center text-muted" style="padding: 32px;"><span class="status-dot pulse"></span> กำลังดึงข้อมูลแถวจาก Supabase Cloud...</td></tr>`;
+
+  // Fetch fresh data from Supabase
+  const res = await fetchTableSample(tableName, 100);
+  currentSpRows = res.ok && Array.isArray(res.data) ? res.data : [];
+
+  if (countEl) countEl.textContent = currentSpRows.length;
+
+  renderInspectorRows(currentSpRows);
+}
+
+function renderInspectorRows(rows) {
+  const thead = $('#sp-inspector-thead');
+  const tbody = $('#sp-inspector-tbody');
+  if (!thead || !tbody) return;
+
+  if (!rows || rows.length === 0) {
+    thead.innerHTML = `<tr><th style="padding: 12px 16px;">ตาราง ${esc(currentSpTable)}</th></tr>`;
+    tbody.innerHTML = `<tr><td class="text-center text-muted" style="padding: 36px;">ไม่พบข้อมูลในตารางนี้บน Supabase (ตารางว่างเปล่า)</td></tr>`;
+    return;
+  }
+
+  // Pick columns (limit to top 8 columns to keep table neat)
+  const allKeys = Object.keys(rows[0] || {});
+  const primaryKeys = allKeys.slice(0, 8);
+
+  thead.innerHTML = `<tr>${primaryKeys.map(k => `<th>${esc(k)}</th>`).join('')}<th>ดูแบบ RAW</th></tr>`;
+  tbody.innerHTML = '';
+
+  rows.forEach(row => {
+    const tr = document.createElement('tr');
+    primaryKeys.forEach(k => {
+      const td = document.createElement('td');
+      const val = row[k];
+      if (val === null || val === undefined) {
+        td.innerHTML = '<span class="text-muted" style="font-size: 11px;">NULL</span>';
+      } else if (typeof val === 'boolean') {
+        td.innerHTML = val ? '<span class="badge badge-ok">true</span>' : '<span class="badge badge-neutral">false</span>';
+      } else if (typeof val === 'object') {
+        td.innerHTML = `<span class="cell-mono text-muted" style="font-size: 11px;">${esc(JSON.stringify(val).slice(0, 30))}...</span>`;
+      } else {
+        const strVal = String(val);
+        td.textContent = strVal.length > 50 ? strVal.slice(0, 50) + '...' : strVal;
+        if (k === 'id' || k.includes('ip') || k.includes('at')) td.classList.add('cell-mono');
+      }
+      tr.appendChild(td);
+    });
+
+    // JSON RAW button
+    const jsonTd = document.createElement('td');
+    const btnJson = document.createElement('button');
+    btnJson.className = 'btn btn-ghost btn-sm';
+    btnJson.style.fontSize = '11px';
+    btnJson.style.padding = '3px 8px';
+    btnJson.textContent = 'ดู RAW';
+    btnJson.onclick = () => {
+      openModal({
+        title: `ข้อมูลแถว: ${esc(row.id || currentSpTable)}`,
+        content: `<pre style="background: var(--bg-surface); padding: 16px; border-radius: 8px; border: 1px solid var(--border-subtle); font-size: 12px; max-height: 400px; overflow: auto; color: #38bdf8; font-family: var(--font-mono);">${esc(JSON.stringify(row, null, 2))}</pre>`,
+        confirmText: 'ปิด'
+      });
+    };
+    jsonTd.appendChild(btnJson);
+    tr.appendChild(jsonTd);
+
     tbody.appendChild(tr);
   });
 }
@@ -2543,6 +2683,53 @@ export function initDashboard() {
   // Settings
   $('#form-change-password')?.addEventListener('submit', handleChangePasswordSubmit);
   $('#btn-download-backup')?.addEventListener('click', handleDownloadBackup);
+
+  // Supabase Table Selector Tabs & Cards
+  document.addEventListener('click', (e) => {
+    const tabBtn = e.target.closest('.sp-tab-btn');
+    if (tabBtn && tabBtn.dataset.table) {
+      loadTableInspector(tabBtn.dataset.table);
+      return;
+    }
+    const card = e.target.closest('.sp-table-card');
+    if (card && card.dataset.table) {
+      loadTableInspector(card.dataset.table);
+      return;
+    }
+  });
+
+  // Supabase Ping & Reload
+  $('#btn-sp-test-ping')?.addEventListener('click', async () => {
+    toast('⚡ กำลังวัดความเร็ว Supabase Latency...', 'info');
+    await measureAndDisplayPing();
+    const pingVal = $('#sp-ping-ms')?.textContent || '28';
+    toast(`🟢 การตอบสนอง Supabase Cloud สมบูรณ์ (${pingVal} ms)`, 'success');
+  });
+
+  $('#btn-sp-refresh-all')?.addEventListener('click', async () => {
+    await refreshAllData(true, true);
+    renderSupabase();
+  });
+
+  $('#btn-sp-reload-table')?.addEventListener('click', () => {
+    loadTableInspector(currentSpTable);
+    toast(`🔄 โหลดข้อมูลตาราง ${currentSpTable} สดใหม่แล้ว`, 'info');
+  });
+
+  // Supabase Table Inspector Search Filter
+  $('#sp-inspector-search')?.addEventListener('input', (e) => {
+    const q = (e.target.value || '').trim().toLowerCase();
+    if (!q) {
+      renderInspectorRows(currentSpRows);
+      const c = $('#sp-inspector-showing-count'); if (c) c.textContent = currentSpRows.length;
+      return;
+    }
+    const filtered = currentSpRows.filter(r => {
+      return Object.values(r).some(v => String(v || '').toLowerCase().includes(q));
+    });
+    renderInspectorRows(filtered);
+    const c = $('#sp-inspector-showing-count'); if (c) c.textContent = filtered.length;
+  });
 
   // Initial Load if logged in
   if (currentAdmin()) {

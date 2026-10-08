@@ -3913,3 +3913,46 @@ input:-moz-autofill-preview,
   }
 }
 
+/* Supabase Cloud Inspector & Table Cards */
+.sp-table-card {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid var(--border-subtle);
+}
+
+.sp-table-card:hover {
+  border-color: rgba(16, 185, 129, 0.5) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(16, 185, 129, 0.12) !important;
+}
+
+.sp-table-card.active {
+  border-color: rgba(16, 185, 129, 0.85) !important;
+  box-shadow: 0 0 24px rgba(16, 185, 129, 0.25), inset 0 0 12px rgba(16, 185, 129, 0.08) !important;
+  background: rgba(16, 185, 129, 0.04) !important;
+}
+
+.sp-tab-btn {
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  padding: 5px 10px;
+  color: var(--text-muted);
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+}
+
+.sp-tab-btn:hover {
+  color: var(--text-main);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.sp-tab-btn.active {
+  background: rgba(16, 185, 129, 0.2) !important;
+  color: #34d399 !important;
+  font-weight: 600;
+  border-color: rgba(16, 185, 129, 0.4) !important;
+}
+
+
