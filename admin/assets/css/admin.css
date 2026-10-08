@@ -403,7 +403,170 @@ body {
   font-size: 12px;
   font-weight: 500;
   color: var(--text-secondary);
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
+
+.header-date-pill.just-synced {
+  border-color: rgba(16, 185, 129, 0.6) !important;
+  background: rgba(16, 185, 129, 0.12) !important;
+  color: #34d399 !important;
+  box-shadow: 0 0 14px rgba(16, 185, 129, 0.3);
+}
+
+/* ==========================================================================
+   Cyber Sync Top Laser Beam & Refresh Button Micro-interactions
+   ========================================================================== */
+.global-sync-beam {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, rgba(0, 240, 255, 0.4), #00f0ff, #38bdf8, #00f0ff, rgba(0, 240, 255, 0.4), transparent);
+  background-size: 200% 100%;
+  box-shadow: 0 0 16px rgba(0, 240, 255, 0.85), 0 0 30px rgba(56, 189, 248, 0.6);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 99999;
+  transition: opacity 0.25s ease;
+}
+
+.global-sync-beam.active {
+  opacity: 1;
+  animation: syncBeamSweep 1.1s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+@keyframes syncBeamSweep {
+  0% {
+    background-position: 100% 0;
+    filter: brightness(1);
+  }
+  50% {
+    filter: brightness(1.5);
+  }
+  100% {
+    background-position: -100% 0;
+    filter: brightness(1);
+  }
+}
+
+.global-refresh-btn {
+  position: relative;
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.global-refresh-btn .refresh-icon-wrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.global-refresh-btn.is-refreshing {
+  border-color: rgba(0, 240, 255, 0.8) !important;
+  box-shadow: 0 0 16px rgba(0, 240, 255, 0.4), inset 0 0 10px rgba(0, 240, 255, 0.15) !important;
+  color: #38bdf8 !important;
+  pointer-events: none;
+}
+
+.global-refresh-btn.is-refreshing .refresh-icon-wrap {
+  animation: refreshSpinPulse 0.7s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+.global-refresh-btn.is-refreshing::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(0, 240, 255, 0.25), transparent);
+  animation: btnCyberSweep 1s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+.global-refresh-btn.is-success {
+  border-color: rgba(16, 185, 129, 0.85) !important;
+  background: rgba(16, 185, 129, 0.14) !important;
+  box-shadow: 0 0 18px rgba(16, 185, 129, 0.45), inset 0 0 10px rgba(16, 185, 129, 0.2) !important;
+  color: #34d399 !important;
+  animation: refreshSuccessPop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes refreshSpinPulse {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes btnCyberSweep {
+  0% { left: -100%; }
+  100% { left: 200%; }
+}
+
+@keyframes refreshSuccessPop {
+  0% { transform: scale(0.95); }
+  60% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+/* Card Telemetry Radar Scan Shimmer */
+.card.scanning-shimmer,
+.stat-card.scanning-shimmer {
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 0 22px rgba(0, 240, 255, 0.22), inset 0 0 14px rgba(0, 240, 255, 0.08) !important;
+  border-color: rgba(0, 240, 255, 0.45) !important;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card.scanning-shimmer::before,
+.stat-card.scanning-shimmer::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -150%;
+  width: 150%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(0, 240, 255, 0.04) 35%,
+    rgba(0, 240, 255, 0.22) 50%,
+    rgba(0, 240, 255, 0.04) 65%,
+    transparent 100%
+  );
+  transform: skewX(-20deg);
+  animation: cardScanBeam 1.1s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+  z-index: 5;
+}
+
+@keyframes cardScanBeam {
+  0% { left: -150%; }
+  100% { left: 150%; }
+}
+
+/* Light Theme Overrides */
+[data-theme="light"] .global-sync-beam {
+  background: linear-gradient(90deg, transparent, rgba(2, 132, 199, 0.4), #0284c7, #38bdf8, #0284c7, rgba(2, 132, 199, 0.4), transparent);
+  box-shadow: 0 0 14px rgba(2, 132, 199, 0.6);
+}
+
+[data-theme="light"] .global-refresh-btn.is-refreshing {
+  border-color: #0284c7 !important;
+  color: #0284c7 !important;
+  box-shadow: 0 0 14px rgba(2, 132, 199, 0.25) !important;
+}
+
+[data-theme="light"] .card.scanning-shimmer,
+[data-theme="light"] .stat-card.scanning-shimmer {
+  border-color: rgba(2, 132, 199, 0.45) !important;
+  box-shadow: 0 0 18px rgba(2, 132, 199, 0.18) !important;
+}
+
 
 /* Page Content View Area */
 .view-container {
@@ -2091,7 +2254,7 @@ body.sidebar-open-lock {
   .header-actions {
     gap: 6px;
   }
-  #btn-global-refresh span {
+  #btn-global-refresh #refresh-label-text {
     display: none;
   }
   #btn-global-refresh {

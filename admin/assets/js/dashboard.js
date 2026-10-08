@@ -6,7 +6,7 @@ import {
   $, $$, h, icon, esc, toast, confirmDialog, openModal, 
   dateTime, timeOnly, hm, duration, timeAgo, startOfBangkokDay, nf,
   normPage, normDistrict, levelInfo, classifyDevice, deviceLabel, shortId, downloadFile,
-  playApprovalChime, playNavClickSound, playRefreshSound, playThemeSound, playWarningSound, playNotificationAlertSound, showApprovalSuccessDialog
+  playApprovalChime, playNavClickSound, playRefreshSound, playSyncSuccessChime, playThemeSound, playWarningSound, playNotificationAlertSound, showApprovalSuccessDialog
 } from './core.js';
 import { 
   detectCaps, caps, fetchReports, fetchFeedback, fetchTrash, 
@@ -294,9 +294,25 @@ async function handleLogout() {
 let prevReportCount = null;
 let prevFeedbackCount = null;
 
-export async function refreshAllData(forceCharts = false) {
+export async function refreshAllData(forceCharts = false, isUserTriggered = false) {
   const refreshBtn = $('#btn-global-refresh');
-  if (refreshBtn) refreshBtn.classList.add('spinning');
+  const syncBeam = $('#global-sync-beam');
+  const refreshLabel = $('#refresh-label-text');
+  const refreshIconSlot = $('#refresh-icon-slot');
+  const syncStatusPill = $('#header-sync-status-pill');
+  const syncStatusText = $('#header-sync-status-text');
+
+  if (refreshBtn) {
+    refreshBtn.classList.add('is-refreshing', 'spinning');
+  }
+  if (syncBeam) {
+    syncBeam.classList.add('active');
+  }
+  if (isUserTriggered) {
+    if (refreshLabel) refreshLabel.textContent = 'กำลังซิงค์...';
+    // Add scanner shimmer pulse to cards across the dashboard
+    $$('.card, .stat-card').forEach(el => el.classList.add('scanning-shimmer'));
+  }
 
   try {
     await detectCaps();
@@ -358,11 +374,51 @@ export async function refreshAllData(forceCharts = false) {
       updateCharts();
       state.lastChartUpdate = now;
     }
+
+    // Update header sync status timestamp
+    const syncTimeStr = timeOnly(new Date());
+    if (syncStatusText) {
+      syncStatusText.textContent = `สดเรียลไทม์ (${syncTimeStr} น.)`;
+    }
+    if (syncStatusPill) {
+      syncStatusPill.classList.add('just-synced');
+      setTimeout(() => syncStatusPill.classList.remove('just-synced'), 2500);
+    }
+
+    // If triggered manually by user click, provide rich audio + visual feedback
+    if (isUserTriggered) {
+      playSyncSuccessChime();
+      if (refreshBtn) {
+        refreshBtn.classList.remove('is-refreshing', 'spinning');
+        refreshBtn.classList.add('is-success');
+      }
+      if (refreshLabel) refreshLabel.textContent = 'ซิงค์สำเร็จ!';
+      if (refreshIconSlot) {
+        refreshIconSlot.innerHTML = `<svg class="ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>`;
+      }
+      toast(`⚡ ซิงค์ข้อมูลโทรมาตรล่าสุดสำเร็จ (${syncTimeStr} น.)`, 'success');
+
+      setTimeout(() => {
+        if (refreshBtn) refreshBtn.classList.remove('is-success');
+        if (refreshLabel) refreshLabel.textContent = 'รีเฟรชข้อมูล';
+        if (refreshIconSlot) {
+          refreshIconSlot.innerHTML = `<svg class="ico refresh-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>`;
+        }
+      }, 1600);
+    }
   } catch (err) {
     console.error('Data refresh error:', err);
     toast('เกิดข้อผิดพลาดในการดึงข้อมูลสด', 'error');
   } finally {
-    if (refreshBtn) refreshBtn.classList.remove('spinning');
+    if (refreshBtn && !isUserTriggered) {
+      refreshBtn.classList.remove('is-refreshing', 'spinning');
+    }
+    if (syncBeam) {
+      setTimeout(() => syncBeam.classList.remove('active'), 350);
+    }
+    setTimeout(() => {
+      $$('.card, .stat-card').forEach(el => el.classList.remove('scanning-shimmer'));
+    }, 400);
   }
 }
 
@@ -2359,8 +2415,7 @@ export function initDashboard() {
   // Global Refresh Button
   $('#btn-global-refresh')?.addEventListener('click', () => {
     playRefreshSound();
-    refreshAllData(true);
-    toast('🔄 รีเฟรชข้อมูลเรียบร้อยแล้ว', 'success');
+    refreshAllData(true, true);
   });
 
   // Theme Toggle Button
