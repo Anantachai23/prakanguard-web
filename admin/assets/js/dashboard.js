@@ -1390,7 +1390,7 @@ function updateReportsMapMarkers(list) {
   const filterInfoEl = document.getElementById('reports-map-filter-info');
   if (filterInfoEl) {
     const distText = state.reportsDistrict !== 'all' ? `อ.${state.reportsDistrict}` : '';
-    const statusText = state.reportsFilter === 'pending' ? 'รออนุมัติ' : state.reportsFilter === 'approved' ? 'อนุมัติแล้ว' : 'ทั้งหมด';
+    const statusText = state.reportsFilter === 'pending' ? 'รออนุมัติ' : state.reportsFilter === 'approved' ? 'อนุมัติแล้ว' : state.reportsFilter === 'dry' ? 'น้ำแห้งแล้ว' : 'ทั้งหมด';
     filterInfoEl.textContent = distText ? `${distText} · ${statusText}` : statusText;
   }
 
@@ -1410,11 +1410,13 @@ function renderReports() {
 
   let list = [...state.reports];
 
-  // Filter: all | pending | approved
+  // Filter: all | pending | approved | dry
   if (state.reportsFilter === 'pending') {
     list = list.filter(r => !r.is_approved && !r.isApproved);
   } else if (state.reportsFilter === 'approved') {
-    list = list.filter(r => r.is_approved || r.isApproved);
+    list = list.filter(r => (r.is_approved || r.isApproved) && !r.is_resolved && !r.isResolved && !r.autoRemovedBecauseDry && (r.depth_cm > 0 || r.depthCm > 0 || r.depth_cm === undefined));
+  } else if (state.reportsFilter === 'dry') {
+    list = list.filter(r => r.is_resolved || r.isResolved || r.autoRemovedBecauseDry || (r.depth_cm !== undefined && r.depth_cm <= 0) || (r.depthCm !== undefined && r.depthCm <= 0));
   }
 
   // Filter: District
@@ -1526,11 +1528,25 @@ function renderReports() {
         if (r.reported_at || r.reportedAt) return r.reported_at || r.reportedAt;
         return '—';
       })()),
-      // Status (รออนุมัติ / อนุมัติแล้ว)
+      // Status (รออนุมัติ / อนุมัติแล้ว / น้ำแห้งแล้ว)
       h('td', {},
-        h('span', { class: `badge ${isApproved ? 'badge-ok' : 'badge-warn'}` },
-          isApproved ? 'อนุมัติแล้ว' : 'รออนุมัติ'
-        )
+        (() => {
+          if (r.autoRemovedBecauseDry) {
+            return h('div', {},
+              h('span', { class: 'badge', style: 'background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); font-size: 11px;' }, '💧 น้ำแห้งแล้ว (นำออกอัตโนมัติ)'),
+              (r.dry_reason || r.dryReason) ? h('div', { class: 'text-muted', style: { fontSize: '10.5px', marginTop: '3px' } }, r.dry_reason || r.dryReason) : null
+            );
+          }
+          if (r.is_resolved || r.isResolved || (r.depth_cm !== undefined && r.depth_cm <= 0) || (r.depthCm !== undefined && r.depthCm <= 0)) {
+            return h('div', {},
+              h('span', { class: 'badge', style: 'background: rgba(56, 189, 248, 0.2); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.4); font-size: 11px;' }, '💧 น้ำแห้งแล้ว (ระบายปกติ)'),
+              (r.dry_reason || r.dryReason) ? h('div', { class: 'text-muted', style: { fontSize: '10.5px', marginTop: '3px' } }, r.dry_reason || r.dryReason) : null
+            );
+          }
+          return h('span', { class: `badge ${isApproved ? 'badge-ok' : 'badge-warn'}` },
+            isApproved ? 'อนุมัติแล้ว' : 'รออนุมัติ'
+          );
+        })()
       ),
       // Photo thumbnail (if any)
       (() => {
@@ -1557,7 +1573,7 @@ function renderReports() {
       })(),
       // Actions & Map Focus
       h('td', {},
-        h('div', { style: { display: 'flex', gap: '6px', alignItems: 'center' } },
+        h('div', { style: { display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' } },
           hasGps
             ? [
                 h('button', {
@@ -1576,7 +1592,14 @@ function renderReports() {
                 })
               ]
             : null,
-          !isApproved
+          (r.autoRemovedBecauseDry || r.is_resolved || r.isResolved || (r.depth_cm !== undefined && r.depth_cm <= 0) || (r.depthCm !== undefined && r.depthCm <= 0))
+            ? h('button', {
+                class: 'btn btn-success btn-sm',
+                title: 'กู้คืนจุดนี้กลับขึ้นแผนที่หากยังมีน้ำท่วมขังอยู่',
+                onclick: () => handleRestoreDryReportSingle(r),
+                html: '🔄 กู้คืน'
+              })
+            : !isApproved
             ? [
                 h('button', {
                   class: 'btn btn-success btn-sm',
@@ -1591,11 +1614,19 @@ function renderReports() {
                   html: `${icon('x', 14)} ไม่อนุมัติ`
                 })
               ]
-            : h('button', {
-                class: 'btn btn-secondary btn-sm',
-                onclick: () => handleUnapproveSingle(r.id),
-                html: `ถอนอนุมัติ`
-              }),
+            : [
+                h('button', {
+                  class: 'btn btn-secondary btn-sm',
+                  title: 'ทำเครื่องหมายว่าน้ำแห้งแล้ว (นำออกจากแผนที่)',
+                  onclick: () => handleResolveReportSingle(r.id),
+                  html: '💧 น้ำแห้ง'
+                }),
+                h('button', {
+                  class: 'btn btn-secondary btn-sm',
+                  onclick: () => handleUnapproveSingle(r.id),
+                  html: `ถอนอนุมัติ`
+                })
+              ],
           h('button', {
             class: 'btn btn-danger btn-sm',
             onclick: () => handleDeleteReportsSingle(r),
@@ -1747,6 +1778,49 @@ async function handleDeleteReportsSelected() {
   toast(`ลบรายงานสำเร็จ ${deletedCount} รายการ`, 'success');
   state.selectedReports.clear();
   await refreshAllData();
+}
+
+async function handleRestoreDryReportSingle(r) {
+  const confirmed = await confirmDialog({
+    title: 'กู้คืนรายงานน้ำท่วม',
+    message: `คุณต้องการกู้คืนรายงาน "${r.name || 'จุดน้ำท่วม'}" กลับขึ้นแสดงบนแผนที่สาธารณะหรือไม่?`,
+    confirmText: 'กู้คืนขึ้นแผนที่',
+    cancelText: 'ยกเลิก',
+    tone: 'primary',
+    icon: 'check'
+  });
+  if (!confirmed) return;
+  const restoredDepth = (r.depth_cm && r.depth_cm > 0) ? r.depth_cm : (r.depthCm && r.depthCm > 0) ? r.depthCm : 20;
+  const res = await rest(`reports?id=eq.${encodeURIComponent(r.id)}`, {
+    method: 'PATCH',
+    body: { is_approved: true, is_resolved: false, depth_cm: restoredDepth },
+    prefer: 'return=representation'
+  });
+  if (res.ok) {
+    playApprovalChime();
+    toast(`กู้คืนจุด "${r.name || ''}" กลับขึ้นแผนที่เรียบร้อยแล้ว`, 'success');
+    await refreshAllData();
+  } else {
+    toast('ไม่สามารถกู้คืนได้ กรุณาลองใหม่', 'error');
+  }
+}
+
+async function handleResolveReportSingle(id) {
+  const confirmed = await confirmDialog({
+    title: 'ยืนยันทำเครื่องหมายน้ำแห้งแล้ว',
+    message: 'คุณต้องการทำเครื่องหมายว่าจุดนี้ระบายน้ำแห้งแล้ว และนำออกจากแผนที่สาธารณะหรือไม่?',
+    confirmText: 'น้ำแห้งแล้ว (ปิดจุด)',
+    cancelText: 'ยกเลิก',
+    tone: 'info',
+    icon: 'check'
+  });
+  if (!confirmed) return;
+  const ok = await setReportResolved(id, true);
+  if (ok) {
+    playWarningSound();
+    toast('ทำเครื่องหมายน้ำแห้งแล้ว (นำออกจากแผนที่เรียบร้อย)', 'info');
+    await refreshAllData();
+  }
 }
 
 function showPhotoModal(photoUrl, title = 'รูปภาพที่แนบมา') {

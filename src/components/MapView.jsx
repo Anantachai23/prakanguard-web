@@ -23,7 +23,7 @@ export function resolveLevel(item) {
 // Check if a point is dried up or resolved
 export function isPointDry(item) {
   if (!item) return true;
-  if (item.isResolved === true || item.isActive === false) return true;
+  if (item.autoRemovedBecauseDry === true || item.isResolved === true || item.isActive === false) return true;
   if (item.depthCm !== undefined && item.depthCm !== null && Number(item.depthCm) <= 0) return true;
   if (item.waterTrend === 'dry' || item.status === 'dry' || item.status === 'resolved' || item.isDry) return true;
   return false;

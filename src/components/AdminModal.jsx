@@ -45,7 +45,8 @@ import {
   Filter,
   AlertCircle,
   ThumbsUp,
-  XCircle
+  XCircle,
+  Droplets
 } from 'lucide-react';
 import { BODY_WATER_LEVELS } from './CitizenReportModal';
 import { DISTRICTS } from '../data/samutPrakanPoints';
@@ -251,6 +252,7 @@ export default function AdminModal({
   // Multi-Select States for Bulk Actions (Select All)
   const [selectedPendingIds, setSelectedPendingIds] = useState(new Set());
   const [selectedApprovedIds, setSelectedApprovedIds] = useState(new Set());
+  const [selectedDryIds, setSelectedDryIds] = useState(new Set());
   const [selectedFeedbackIds, setSelectedFeedbackIds] = useState(new Set());
   const [selectedTrashIds, setSelectedTrashIds] = useState(new Set());
 
@@ -589,8 +591,13 @@ export default function AdminModal({
   // Approved Reports Filter States
   const [approvedDistrictFilter, setApprovedDistrictFilter] = useState('ทั้งหมด');
   const [approvedSearch, setApprovedSearch] = useState('');
+  const [approvedViewMode, setApprovedViewMode] = useState('active'); // 'active' | 'dry'
   const [editingApprovedId, setEditingApprovedId] = useState(null);
   const [editingApprovedDepth, setEditingApprovedDepth] = useState(20);
+
+  // Dry / Auto-Cleared Reports Filter States
+  const [dryDistrictFilter, setDryDistrictFilter] = useState('ทั้งหมด');
+  const [drySearch, setDrySearch] = useState('');
 
   // Confirmation Modal Dialog State (สำหรับยืนยันถอนอนุมัติ, ไม่อนุมัติ, หรือลบรายงาน)
   const [confirmModal, setConfirmModal] = useState({
@@ -1004,6 +1011,72 @@ export default function AdminModal({
       if (onRejectReport) onRejectReport(id);
     });
     setSelectedApprovedIds(new Set());
+    showNotice(`🗑️ ย้ายรายงาน ${count} รายการไปยัง "ลบล่าสุด" เรียบร้อย`, 'info');
+  };
+
+  // Actions for Dry / Auto-Cleared Reports
+  const handleRestoreDryReport = (reportId) => {
+    const report = citizenReports.find(r => r.id === reportId);
+    if (!report) return;
+    const restoredDepth = (report.originalDepthCm && report.originalDepthCm > 0)
+      ? report.originalDepthCm
+      : (report.lastKnownDepth && report.lastKnownDepth > 0)
+      ? report.lastKnownDepth
+      : (report.depthCm && report.depthCm > 0)
+      ? report.depthCm
+      : 20;
+
+    const updatePayload = {
+      isApproved: true,
+      isActive: true,
+      isResolved: false,
+      autoRemovedBecauseDry: false,
+      depthCm: restoredDepth,
+      depthRange: restoredDepth > 50 ? '> 50 ซม.' : restoredDepth > 20 ? '21 - 50 ซม.' : '5 - 20 ซม.',
+      level: restoredDepth > 50 ? 3 : restoredDepth > 20 ? 2 : 1,
+      statusLabel: 'มีน้ำท่วมขัง (กู้คืนโดยแอดมิน)',
+      dryReason: null,
+      restoredAt: new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) + ' น.'
+    };
+
+    if (onUpdateReport) {
+      onUpdateReport(reportId, updatePayload);
+    }
+    if (onApproveReport) {
+      onApproveReport(reportId);
+    }
+    playAdminApproveSound();
+    showNotice(`🔄 กู้คืนจุด "${report.name || 'รายงาน'}" กลับขึ้นแผนที่สาธารณะแล้ว (ระดับน้ำ ${restoredDepth} ซม.)`);
+  };
+
+  const handleBulkRestoreDryReports = () => {
+    if (selectedDryIds.size === 0) return;
+    const count = selectedDryIds.size;
+    selectedDryIds.forEach(id => {
+      handleRestoreDryReport(id);
+    });
+    setSelectedDryIds(new Set());
+    showNotice(`🔄 กู้คืนรายงานน้ำท่วม ${count} รายการกลับขึ้นแสดงบนแผนที่เรียบร้อยแล้ว`);
+  };
+
+  const handleBulkDeleteDryReports = () => {
+    if (selectedDryIds.size === 0) return;
+    const count = selectedDryIds.size;
+    if (!window.confirm(`ยืนยันการลบรายงานที่เลือก ${count} รายการไปยัง "ลบล่าสุด" (ถังขยะ)?`)) return;
+    playDangerSound();
+    const itemsToDelete = citizenReports.filter(r => selectedDryIds.has(r.id));
+    if (itemsToDelete.length > 0) {
+      setDeletedReports(prev => {
+        const timestamped = itemsToDelete.map(it => ({ ...it, deletedAt: new Date().toISOString() }));
+        const updated = [...timestamped, ...prev.filter(x => !selectedDryIds.has(x.id))];
+        try { localStorage.setItem('pg_admin_deleted_reports', JSON.stringify(updated)); } catch (e) {}
+        return updated;
+      });
+    }
+    selectedDryIds.forEach(id => {
+      if (onRejectReport) onRejectReport(id);
+    });
+    setSelectedDryIds(new Set());
     showNotice(`🗑️ ย้ายรายงาน ${count} รายการไปยัง "ลบล่าสุด" เรียบร้อย`, 'info');
   };
 
@@ -1516,8 +1589,19 @@ export default function AdminModal({
 
   // Filtered Lists
   const pendingReports = citizenReports.filter(r => r.isApproved === false);
-  const approvedReports = citizenReports.filter(r => r.isApproved && !r.isResolved);
-  const historyReports = citizenReports.filter(r => r.isApproved || r.isResolved);
+  const approvedReports = citizenReports.filter(r => 
+    (r.isApproved || r.approvedAt) && 
+    !r.isResolved && 
+    !r.autoRemovedBecauseDry && 
+    (r.depthCm === undefined || r.depthCm === null || Number(r.depthCm) > 0)
+  );
+  const clearedDryReports = citizenReports.filter(r => 
+    r.autoRemovedBecauseDry === true || 
+    r.isResolved === true || 
+    (r.depthCm !== undefined && r.depthCm !== null && Number(r.depthCm) <= 0) || 
+    r.waterTrend === 'dry'
+  );
+  const historyReports = citizenReports.filter(r => r.isApproved || r.isResolved || r.autoRemovedBecauseDry);
   const unreadFeedbackCount = activeFeedbackList.filter(f => !f.isRead).length;
 
   // Filtered Pending Reports based on search & district
@@ -1545,6 +1629,22 @@ export default function AdminModal({
       return true;
     });
   }, [approvedReports, approvedDistrictFilter, approvedSearch]);
+
+  // Filtered Dry / Auto-Cleared Reports
+  const filteredDryReports = useMemo(() => {
+    return clearedDryReports.filter(r => {
+      if (dryDistrictFilter !== 'ทั้งหมด' && r.district !== dryDistrictFilter) return false;
+      if (drySearch.trim()) {
+        const q = drySearch.toLowerCase();
+        return (r.name && r.name.toLowerCase().includes(q)) || 
+               (r.district && r.district.toLowerCase().includes(q)) ||
+               (r.subdistrict && r.subdistrict.toLowerCase().includes(q)) ||
+               (r.dryReason && r.dryReason.toLowerCase().includes(q)) ||
+               (r.linkedPointName && r.linkedPointName.toLowerCase().includes(q));
+      }
+      return true;
+    });
+  }, [clearedDryReports, dryDistrictFilter, drySearch]);
 
   // Filtered Feedback
   const filteredFeedbackList = useMemo(() => {
@@ -1866,6 +1966,24 @@ export default function AdminModal({
                   }`}
                 >
                   <span>📍 แสดงบนแผนที่ ({approvedReports.length})</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => { playAdminTabSound(); setActiveTab('dry_cleared'); }}
+                  className={`px-3 py-2 rounded-t-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 border-b-2 whitespace-nowrap shrink-0 ${
+                    activeTab === 'dry_cleared'
+                      ? (isDark ? 'border-cyan-400 text-cyan-300 bg-slate-800' : 'border-cyan-500 text-cyan-700 bg-white')
+                      : 'border-transparent text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  <Droplets className="w-3.5 h-3.5 text-cyan-400" />
+                  <span>💧 น้ำแห้งแล้ว/นำออก ({clearedDryReports.length})</span>
+                  {clearedDryReports.filter(r => r.autoRemovedBecauseDry).length > 0 && (
+                    <span className="px-1.5 py-0.2 rounded-full text-[10px] font-extrabold bg-cyan-500 text-white animate-pulse">
+                      {clearedDryReports.filter(r => r.autoRemovedBecauseDry).length} Auto
+                    </span>
+                  )}
                 </button>
 
                 <button
@@ -2287,6 +2405,33 @@ export default function AdminModal({
               {/* TAB 2: APPROVED REPORTS (LIVE ON MAP) */}
               {activeTab === 'approved' && (
                 <div className="space-y-3.5">
+                  {/* Segmented view switch: Still flooded vs Dry */}
+                  <div className="flex items-center gap-2 p-1 rounded-2xl bg-slate-100 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60">
+                    <button
+                      type="button"
+                      onClick={() => setApprovedViewMode('active')}
+                      className={`flex-1 py-1.5 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                        approvedViewMode === 'active'
+                          ? 'bg-emerald-600 text-white shadow-sm'
+                          : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                      }`}
+                    >
+                      <span className="w-2 h-2 rounded-full bg-emerald-300 animate-pulse"></span>
+                      <span>🚨 ยังคงท่วมอยู่ ({approvedReports.length} จุด)</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        playAdminTabSound();
+                        setActiveTab('dry_cleared');
+                      }}
+                      className="flex-1 py-1.5 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 text-cyan-600 dark:text-cyan-400 hover:bg-cyan-50 dark:hover:bg-cyan-950/40"
+                    >
+                      <Droplets className="w-3.5 h-3.5" />
+                      <span>💧 น้ำแห้งแล้ว / นำออก ({clearedDryReports.length} จุด)</span>
+                    </button>
+                  </div>
+
                   <div className={`p-3 rounded-2xl border text-xs leading-relaxed ${
                     isDark ? 'bg-slate-850 border-slate-700 text-slate-300' : 'bg-emerald-50/60 border-emerald-200 text-slate-700'
                   }`}>
@@ -2533,6 +2678,315 @@ export default function AdminModal({
                         </div>
                       </div>
                     ))}
+                    </>
+                  )}
+                </div>
+              )}
+
+              {/* TAB: DRY / AUTO-CLEARED REPORTS */}
+              {activeTab === 'dry_cleared' && (
+                <div className="space-y-3.5">
+                  <div className={`p-3.5 rounded-2xl border text-xs leading-relaxed ${
+                    isDark ? 'bg-cyan-950/20 border-cyan-800/50 text-cyan-200' : 'bg-cyan-50/70 border-cyan-200 text-slate-700'
+                  }`}>
+                    <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                      <div className="w-6 h-6 rounded-lg bg-cyan-500/20 text-cyan-400 flex items-center justify-center shrink-0 border border-cyan-500/30">
+                        <Droplets className="w-3.5 h-3.5 text-cyan-400" />
+                      </div>
+                      <strong className="text-slate-900 dark:text-white text-xs sm:text-sm">
+                        💧 จุดรายงานประชาชนที่น้ำแห้งแล้ว / นำออกจากแผนที่อัตโนมัติ ({clearedDryReports.length} รายการ)
+                      </strong>
+                    </div>
+                    <p className="text-[11.5px] leading-relaxed text-slate-600 dark:text-slate-300">
+                      ระบบเชื่อมโยงข้อมูลกับจุดตรวจวัดหลัก โทรมาตรน้ำ และข้อมูลเรดาร์ฝนอัตโนมัติ 
+                      <strong> หากจุดใดระบายน้ำแห้งแล้ว (ระดับน้ำ 0 ซม.) ระบบจะนำออกจากแผนที่สาธารณะทันที </strong>
+                      เพื่อไม่ให้ข้อมูลค้าง โดยแอดมินสามารถตรวจสอบสาเหตุ เวลาที่นำออก และ<strong>กู้คืนกลับขึ้นแผนที่ได้ทันที</strong>หากพบว่ายังมีน้ำท่วมขังอยู่
+                    </p>
+                    <div className="mt-2.5 flex items-center gap-2 flex-wrap text-[11px] font-semibold">
+                      <span className="px-2.5 py-1 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-700 dark:text-cyan-300">
+                        รวมทั้งหมด: <strong>{clearedDryReports.length}</strong> จุด
+                      </span>
+                      <span className="px-2.5 py-1 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-700 dark:text-emerald-300">
+                        นำออกอัตโนมัติ (AI & เซนเซอร์): <strong>{clearedDryReports.filter(r => r.autoRemovedBecauseDry).length}</strong> จุด
+                      </span>
+                      <span className="px-2.5 py-1 rounded-xl bg-blue-500/10 border border-blue-500/30 text-blue-700 dark:text-blue-300">
+                        ปิดจุดโดยแอดมิน: <strong>{clearedDryReports.filter(r => !r.autoRemovedBecauseDry).length}</strong> จุด
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Filter & Search Bar */}
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2">
+                    <div className="flex items-center gap-1 overflow-x-auto no-scrollbar py-1">
+                      {DISTRICTS.map(d => (
+                        <button
+                          key={d}
+                          type="button"
+                          onClick={() => setDryDistrictFilter(d)}
+                          className={`px-2.5 py-1 rounded-xl text-xs font-semibold whitespace-nowrap cursor-pointer transition-all ${
+                            dryDistrictFilter === d
+                              ? 'bg-cyan-600 text-white font-bold'
+                              : (isDark ? 'bg-slate-800 text-slate-300 hover:bg-slate-700' : 'bg-slate-200 text-slate-700 hover:bg-slate-300')
+                          }`}
+                        >
+                          {d === "ทั้งหมด" ? "ทุกอำเภอ" : `อ.${d}`}
+                        </button>
+                      ))}
+                    </div>
+
+                    <div className="relative flex-1 sm:w-56">
+                      <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+                      <input 
+                        type="text"
+                        value={drySearch}
+                        onChange={(e) => setDrySearch(e.target.value)}
+                        placeholder="ค้นหาจุดที่แห้งแล้ว..."
+                        className={`w-full pl-8 pr-3 py-1.5 rounded-xl border text-xs focus:outline-none ${
+                          isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-300'
+                        }`}
+                      />
+                    </div>
+                  </div>
+
+                  {filteredDryReports.length === 0 ? (
+                    <div className="p-10 text-center text-slate-400 text-xs space-y-2 border rounded-2xl border-dashed border-slate-700/60">
+                      <Droplets className="w-8 h-8 text-cyan-400/50 mx-auto" />
+                      <div className="font-bold text-slate-300">ไม่พบรายงานประชาชนที่ถูกนำออกเพราะน้ำแห้ง</div>
+                      <div className="text-[11px] text-slate-500">
+                        {dryDistrictFilter !== 'ทั้งหมด' || drySearch.trim()
+                          ? 'ลองเปลี่ยนตัวกรองอำเภอหรือคำค้นหา'
+                          : 'เมื่อจุดน้ำท่วมเดิมระบายน้ำแห้งจนระดับน้ำเป็น 0 ซม. ระบบจะนำออกจากแผนที่และบันทึกประวัติไว้ที่นี่อัตโนมัติ'}
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      {/* Select All & Bulk Actions for Dry */}
+                      <div className={`p-2.5 px-3.5 rounded-2xl border flex items-center justify-between gap-2 flex-wrap ${
+                        isDark ? 'bg-slate-800/80 border-slate-700' : 'bg-slate-100 border-slate-200'
+                      }`}>
+                        <label className="flex items-center gap-2 text-xs font-bold cursor-pointer select-none">
+                          <input 
+                            type="checkbox"
+                            checked={selectedDryIds.size > 0 && selectedDryIds.size === filteredDryReports.length}
+                            ref={el => {
+                              if (el) el.indeterminate = selectedDryIds.size > 0 && selectedDryIds.size < filteredDryReports.length;
+                            }}
+                            onChange={(e) => {
+                              playSelectSound();
+                              if (e.target.checked) {
+                                setSelectedDryIds(new Set(filteredDryReports.map(r => r.id)));
+                              } else {
+                                setSelectedDryIds(new Set());
+                              }
+                            }}
+                            className="w-4 h-4 rounded text-cyan-500 cursor-pointer"
+                          />
+                          <span>เลือกทั้งหมด ({filteredDryReports.length} รายการ)</span>
+                        </label>
+
+                        {selectedDryIds.size > 0 && (
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-[11px] font-bold text-cyan-400">
+                              เลือก {selectedDryIds.size} รายการ:
+                            </span>
+                            <button
+                              type="button"
+                              onClick={handleBulkRestoreDryReports}
+                              className="px-2.5 py-1 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-1 shadow-xs cursor-pointer active:scale-95"
+                              title="กู้คืนรายการที่เลือกกลับขึ้นแสดงบนแผนที่"
+                            >
+                              <RotateCcw className="w-3.5 h-3.5" />
+                              <span>กู้คืนกลับขึ้นแผนที่</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={handleBulkDeleteDryReports}
+                              className="px-2.5 py-1 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs flex items-center gap-1 shadow-xs cursor-pointer active:scale-95"
+                              title="ย้ายรายการที่เลือกไปยังถังขยะ"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                              <span>ลบที่เลือก</span>
+                            </button>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Cards List for Dry Reports */}
+                      <div className="space-y-3">
+                        {filteredDryReports.map(report => {
+                          const originalDepth = (report.originalDepthCm && report.originalDepthCm > 0)
+                            ? report.originalDepthCm
+                            : (report.lastKnownDepth && report.lastKnownDepth > 0)
+                            ? report.lastKnownDepth
+                            : (report.depthCm && report.depthCm > 0)
+                            ? report.depthCm
+                            : 20;
+
+                          const analyzed = (report.lat && report.lng)
+                            ? detectSubdistrictForLocation(report.lat, report.lng, report.name || report.notes)
+                            : null;
+                          const realDistrict = analyzed?.district || (report.lat && report.lng ? detectDistrictForCoordinates(report.lat, report.lng) : null) || report.district || 'เมืองสมุทรปราการ';
+                          const realSubdistrict = analyzed?.subdistrict || report.subdistrict || '';
+
+                          return (
+                            <div 
+                              key={report.id}
+                              className={`p-3.5 rounded-2xl border flex flex-col sm:flex-row sm:items-start justify-between gap-3 transition-all ${
+                                selectedDryIds.has(report.id)
+                                  ? (isDark ? 'bg-cyan-950/20 border-cyan-500/60 shadow-md ring-1 ring-cyan-500/30' : 'bg-cyan-50/70 border-cyan-300 shadow-sm ring-1 ring-cyan-300')
+                                  : (isDark ? 'bg-slate-850/90 border-slate-750' : 'bg-white border-slate-200 shadow-xs')
+                              }`}
+                            >
+                              <div className="flex items-start gap-3 min-w-0 flex-1">
+                                <input 
+                                  type="checkbox"
+                                  checked={selectedDryIds.has(report.id)}
+                                  onChange={(e) => {
+                                    setSelectedDryIds(prev => {
+                                      const next = new Set(prev);
+                                      if (e.target.checked) next.add(report.id);
+                                      else next.delete(report.id);
+                                      return next;
+                                    });
+                                  }}
+                                  className="w-4 h-4 rounded text-cyan-500 cursor-pointer mt-1 shrink-0"
+                                  title="เลือกรายการนี้"
+                                />
+
+                                <div className="min-w-0 flex-1 space-y-1.5">
+                                  {/* Badges row */}
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    {report.autoRemovedBecauseDry ? (
+                                      <span className="px-2 py-0.5 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px] font-bold flex items-center gap-1">
+                                        <Droplets className="w-3 h-3 text-emerald-400" />
+                                        <span>น้ำแห้งแล้ว (นำออกอัตโนมัติ)</span>
+                                      </span>
+                                    ) : (
+                                      <span className="px-2 py-0.5 rounded-lg bg-blue-500/20 text-blue-400 border border-blue-500/30 text-[10px] font-bold flex items-center gap-1">
+                                        <CheckCircle2 className="w-3 h-3 text-blue-400" />
+                                        <span>น้ำแห้งแล้ว (แอดมินปิดจุด)</span>
+                                      </span>
+                                    )}
+
+                                    <span className="text-[10px] px-2 py-0.5 rounded-lg bg-slate-800 text-slate-300 border border-slate-700 font-semibold">
+                                      อ.{realDistrict}
+                                    </span>
+
+                                    <span className="text-[10px] font-mono text-slate-400">
+                                      นำออกเมื่อ: {report.clearedAt || report.resolvedAt || report.updatedAt || 'ล่าสุด'}
+                                    </span>
+                                  </div>
+
+                                  <h4 className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white truncate">
+                                    {report.name}
+                                  </h4>
+
+                                  <div className="flex items-center gap-2 flex-wrap text-xs">
+                                    <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-cyan-500/10 dark:bg-cyan-950/60 border border-cyan-500/30 text-cyan-700 dark:text-cyan-300 font-bold text-[11px]">
+                                      <span>อ.{realDistrict} {realSubdistrict ? `• ต.${realSubdistrict}` : ''}</span>
+                                    </span>
+                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 font-mono text-[10.5px]">
+                                      <MapPin className="w-3 h-3 text-rose-500 shrink-0" />
+                                      <span>{Number(report.lat).toFixed(5)}, {Number(report.lng).toFixed(5)}</span>
+                                    </span>
+                                    <span className="text-[11px] text-slate-400">
+                                      🌊 ระดับน้ำเดิม: {originalDepth} ซม.
+                                    </span>
+                                  </div>
+
+                                  {/* Dry audit details card */}
+                                  <div className={`p-2.5 rounded-xl border text-[11px] leading-relaxed space-y-1 ${
+                                    isDark ? 'bg-slate-900/80 border-slate-750 text-slate-300' : 'bg-slate-50 border-slate-200 text-slate-700'
+                                  }`}>
+                                    <div className="flex items-start gap-1.5">
+                                      <span className="font-bold text-cyan-400 shrink-0">💧 สาเหตุที่นำออก:</span>
+                                      <span className="text-slate-200 font-medium">
+                                        {report.dryReason || 'จุดตรวจวัดหลัก/เซนเซอร์ ระดับน้ำลดลงเหลือ 0 ซม. สภาพอากาศแห้งปกติ ไม่มีฝนตกสะสม'}
+                                      </span>
+                                    </div>
+                                    {report.linkedPointName && (
+                                      <div className="flex items-center gap-1.5 text-blue-400">
+                                        <span className="font-bold shrink-0">🔗 เชื่อมโยงกับ:</span>
+                                        <span className="truncate">{report.linkedPointName}</span>
+                                      </div>
+                                    )}
+                                    <div className="flex items-center gap-2 text-slate-400 text-[10px]">
+                                      <span>ดำเนินการโดย: <strong className="text-slate-300">{report.clearedBy || 'ระบบ AI Sentry ตรวจจับน้ำแห้งอัตโนมัติ'}</strong></span>
+                                    </div>
+                                  </div>
+
+                                  {report.cause && (
+                                    <p className="text-[11px] text-slate-400 italic">
+                                      หมายเหตุเดิม: "{report.cause}"
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+
+                              {/* Photo Evidence Thumbnail if any */}
+                              {(report.photoUrl || report.photo_url || report.photo) && (
+                                <div 
+                                  onClick={() => setSelectedPhotoModal(report.photoUrl || report.photo_url || report.photo)}
+                                  className="relative w-20 h-20 rounded-xl overflow-hidden border border-white/20 shrink-0 cursor-pointer group shadow-sm sm:self-center"
+                                >
+                                  <img src={report.photoUrl || report.photo_url || report.photo} alt="หลักฐาน" className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <Eye className="w-4 h-4 text-white" />
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Action Buttons */}
+                              <div className="flex items-center gap-2 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-800 flex-wrap sm:self-center">
+                                {onFlyToCoords && (
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      playAdminGpsSound();
+                                      onFlyToCoords(report.lat, report.lng, 17, report.id);
+                                      handleModalClose();
+                                    }}
+                                    className="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer border border-slate-700"
+                                    title="ดูตำแหน่งบนแผนที่"
+                                  >
+                                    <Compass className="w-3.5 h-3.5" />
+                                    <span>พิกัด</span>
+                                  </button>
+                                )}
+
+                                <a
+                                  href={`https://www.google.com/maps?q=${report.lat},${report.lng}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="p-1.5 rounded-xl border border-slate-700 text-slate-300 hover:text-white hover:bg-slate-800 cursor-pointer flex items-center gap-1"
+                                  title="เปิดใน Google Maps"
+                                >
+                                  <ExternalLink className="w-4 h-4 text-cyan-400" />
+                                </a>
+
+                                <button
+                                  type="button"
+                                  onClick={() => handleRestoreDryReport(report.id)}
+                                  className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all shadow-md shadow-emerald-600/30 cursor-pointer flex items-center gap-1.5 active:scale-95"
+                                  title="กู้คืนจุดนี้กลับขึ้นแผนที่หากยังมีน้ำท่วมขังอยู่"
+                                >
+                                  <RotateCcw className="w-3.5 h-3.5" />
+                                  <span>กู้คืนกลับสู่แผนที่</span>
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={() => handleReject(report.id)}
+                                  className="p-1.5 rounded-xl text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/60 cursor-pointer border border-transparent hover:border-rose-900"
+                                  title="ลบรายงานนี้ไปยังถังขยะ"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
                     </>
                   )}
                 </div>
@@ -3601,14 +4055,16 @@ export default function AdminModal({
                             <div className="min-w-0">
                               <div className="flex items-center gap-2 mb-0.5">
                                 <span className={`text-[10px] px-1.5 py-0.2 rounded font-bold ${
-                                  item.isResolved 
+                                  item.autoRemovedBecauseDry
+                                    ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30'
+                                    : item.isResolved 
                                     ? 'bg-emerald-500/20 text-emerald-400' 
                                     : 'bg-blue-500/20 text-blue-400'
                                 }`}>
-                                  {item.isResolved ? 'ระบายแห้งแล้ว' : 'อนุมัติแล้ว'}
+                                  {item.autoRemovedBecauseDry ? '💧 น้ำแห้งแล้ว (นำออกอัตโนมัติ)' : item.isResolved ? 'ระบายแห้งแล้ว' : 'อนุมัติแล้ว'}
                                 </span>
                                 <span className="text-[11px] text-slate-400 font-mono">
-                                  {item.resolvedAt || item.approvedAt || item.reportedAt}
+                                  {item.clearedAt || item.resolvedAt || item.approvedAt || item.reportedAt}
                                 </span>
                               </div>
                               <div className="font-bold text-slate-900 dark:text-white truncate">
@@ -3617,6 +4073,11 @@ export default function AdminModal({
                               <div className="text-[11px] text-slate-400">
                                 อ.{item.district} • {item.depthRange || `${item.depthCm} ซม.`}
                               </div>
+                              {item.autoRemovedBecauseDry && item.dryReason && (
+                                <div className="text-[10.5px] text-cyan-400/90 mt-0.5 line-clamp-1">
+                                  💧 เหตุผล: {item.dryReason}
+                                </div>
+                              )}
                             </div>
 
                             {(item.photoUrl || item.photo_url || item.photo) && (

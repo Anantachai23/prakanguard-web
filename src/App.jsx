@@ -1977,7 +1977,22 @@ export default function App() {
     setCitizenReports(prev => {
       const updated = prev.map(r => {
         if (r.id === id) {
-          resolvedItem = { ...r, isResolved: true, isActive: false, depthCm: 0, statusLabel: 'สัญจรปกติ (น้ำแห้งแล้ว)', resolvedAt: timeStr, statusChangedAt: timeStr };
+          resolvedItem = { 
+            ...r, 
+            originalDepthCm: r.originalDepthCm || (r.depthCm > 0 ? r.depthCm : 20),
+            isResolved: true, 
+            isActive: false, 
+            autoRemovedBecauseDry: true,
+            depthCm: 0, 
+            depthRange: '0 ซม. (แห้งปกติ)',
+            waterTrend: 'dry',
+            dryReason: 'แอดมินยืนยันน้ำแห้ง คืนผิวจราจรปกติ (นำออกจากแผนที่)',
+            clearedAt: timeStr,
+            clearedBy: 'แอดมินยืนยันน้ำแห้ง',
+            statusLabel: 'สัญจรปกติ (น้ำแห้งแล้ว)', 
+            resolvedAt: timeStr, 
+            statusChangedAt: timeStr 
+          };
           return resolvedItem;
         }
         return r;
@@ -2165,7 +2180,7 @@ export default function App() {
   // ตรวจสอบจุดที่น้ำแห้งสนิทหรือไม่ท่วมแล้ว เพื่อนำออกจากแผนที่อัตโนมัติ
   const isPointDryOrResolved = (item) => {
     if (!item) return true;
-    if (item.isActive === false || item.isResolved === true) return true;
+    if (item.autoRemovedBecauseDry === true || item.isActive === false || item.isResolved === true) return true;
     if (item.depthCm !== undefined && item.depthCm !== null && !isNaN(Number(item.depthCm)) && Number(item.depthCm) <= 0) return true;
     if (item.waterTrend === 'dry' || item.status === 'dry' || item.status === 'resolved' || item.isDry === true) return true;
     return false;

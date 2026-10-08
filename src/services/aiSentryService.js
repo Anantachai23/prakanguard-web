@@ -73,7 +73,7 @@ export function getFloodStatusSignature(points = [], citizenReports = []) {
   const rSig = (citizenReports || [])
     .filter(r => r && r.id && r.isApproved)
     .map(r => {
-      const isDry = r.isResolved || r.isActive === false || r.waterTrend === 'dry';
+      const isDry = r.isResolved || r.isActive === false || r.waterTrend === 'dry' || r.autoRemovedBecauseDry;
       const trend = r.waterTrend || (r.statusLabel && r.statusLabel.includes('ลด') ? 'falling' : 'normal');
       const lvl = isDry ? 0 : (r.level || 1);
       return `${r.id}:${isDry ? '0' : '1'}:${lvl}:${trend}`;
@@ -277,8 +277,14 @@ export function evaluateDynamicFloodLifecycle(points = [], citizenReports = [], 
   });
 
   // 2. ประเมินและวิเคราะห์รายงานประชาชน (Citizen Reports) แบบเรียลไทม์ 24 ชม.
+  // เชื่อมโยงข้อมูลกับจุดเฝ้าระวังทางการ (Official Points Telemetry) และสภาพอากาศ
   const updatedReports = citizenReports.map(report => {
-    if (!report || !report.isApproved || report.isResolved) return report;
+    if (!report || !report.isApproved) return report;
+
+    // เก็บค่าระดับน้ำเดิมก่อนแห้งไว้สำหรับแสดงบนบอร์ดแอดมิน
+    const originalDepthCm = report.originalDepthCm !== undefined 
+      ? Number(report.originalDepthCm) 
+      : (report.depthCm !== undefined && Number(report.depthCm) > 0 ? Number(report.depthCm) : 20);
 
     let reportAgeMinutes = 0;
     if (report.timestamp) {
@@ -290,70 +296,194 @@ export function evaluateDynamicFloodLifecycle(points = [], citizenReports = [], 
       (weather?.forecast24h?.districtRainAnalysis?.some(d => d.district && d.district.includes(report.district) && d.isRainingNow)) ||
       false;
 
-    // การประเมินวิเคราะห์สถานการณ์น้ำท่วมจากประชาชน:
-    // 1) หากฝนยังตกในพื้นที่ -> น้ำยังคงท่วมอยู่ (Active)
-    // 2) หากไม่มีฝนในพื้นที่ และเวลาผ่านไป 20 - 60 นาที หรือมีแนวโน้มลดลง -> ระดับน้ำกำลังลดลง (waterTrend = 'falling', statusLabel = 'น้ำกำลังลด') แสดงสัญลักษณ์ 📉 บนแผนที่
-    // 3) หากไม่มีฝนในพื้นที่ และเวลาผ่านไปเกิน 60 นาที หรือน้ำแห้งสนิท -> ปรับสถานะเป็นแห้งและนำออกจากแผนที่อัตโนมัติ (isResolved = true, isActive = false, depthCm = 0, waterTrend = 'dry')
+    // เชื่อมโยงข้อมูล: ค้นหาจุดเฝ้าระวังทางการที่ใกล้เคียงที่สุดในรัศมี 1.8 กม. หรือชื่อถนน/ตำบลตรงกัน
+    let linkedOfficialPoint = null;
+    if (typeof report.lat === 'number' && typeof report.lng === 'number' && !isNaN(report.lat) && !isNaN(report.lng)) {
+      linkedOfficialPoint = updatedPoints.find(p => {
+        if (!p || typeof p.lat !== 'number' || typeof p.lng !== 'number') return false;
+        const dLat = (report.lat - p.lat) * 111;
+        const dLng = (report.lng - p.lng) * 111 * Math.cos(report.lat * Math.PI / 180);
+        const distKm = Math.sqrt(dLat * dLat + dLng * dLng);
+        const sameName = p.name && report.name && (
+          report.name.includes(p.name) || p.name.includes(report.name) ||
+          (p.aliases && p.aliases.some(a => report.name.includes(a)))
+        );
+        return distKm < 1.8 || sameName;
+      });
+    }
 
-    if (!isDistrictRaining) {
-      if (reportAgeMinutes > 60 || report.waterTrend === 'dry') {
-        // น้ำแห้งสนิทแล้ว -> นำออกจากแผนที่อัตโนมัติ
-        if (report.waterTrend !== 'dry') {
+    // กรณีมีจุดเฝ้าระวังทางการเชื่อมโยงอยู่:
+    if (linkedOfficialPoint) {
+      const isOfficialPointStillFlooding = linkedOfficialPoint.isActive !== false && 
+                                           !linkedOfficialPoint.isResolved && 
+                                           Number(linkedOfficialPoint.depthCm) > 0;
+
+      // 1) หากจุดเฝ้าระวังทางการยังคงท่วมอยู่ -> ให้คงรายงานประชาชนนี้ไว้บนแผนที่เสมอ (ไม่เอาออกแม้เวลาจะเกิน 60 นาที)
+      if (isOfficialPointStillFlooding) {
+        return {
+          ...report,
+          originalDepthCm,
+          isActive: true,
+          isResolved: false,
+          autoRemovedBecauseDry: false,
+          linkedPointId: linkedOfficialPoint.id,
+          linkedPointName: linkedOfficialPoint.name,
+          verifiedSource: `เชื่อมโยงจุดเฝ้าระวังทางการ: ${linkedOfficialPoint.name} (ยังคงมีน้ำท่วมขัง ${linkedOfficialPoint.depthCm} ซม.)`
+        };
+      }
+
+      // 2) หากจุดเฝ้าระวังทางการระบายน้ำแห้งสนิทแล้ว (depth = 0 หรือ isResolved) และไม่มีฝนตกหนักในอำเภอ
+      if (!isDistrictRaining && !isHeavyRainWeather) {
+        const dryReason = `เชื่อมโยงข้อมูลจุดเฝ้าระวัง "${linkedOfficialPoint.name}": ระดับน้ำลดลงเหลือ 0 ซม. ผิวจราจรแห้งสนิท สัญจรได้ปกติ`;
+        const wasActive = report.isActive !== false && !report.isResolved;
+
+        if (wasActive) {
           newlyClearedPoints.push({
             id: report.id,
             name: report.name,
             district: report.district,
-            reason: 'การประเมินสภาพอากาศและระบบระบายน้ำ: ผิวจราจรแห้งสนิท คืนการสัญจรปกติแล้ว',
+            reason: dryReason,
             time: nowTime,
             timeDetailed: nowDetailed,
-            agency: 'เครือข่ายประชาชนสมุทรปราการ (ระบบ AI Telemetry ประเมินน้ำแห้ง)'
+            agency: `เครือข่ายประชาชนสมุทรปราการ (เชื่อมโยงข้อมูล ${linkedOfficialPoint.name})`
           });
         }
 
         return {
           ...report,
+          originalDepthCm,
           isResolved: true,
           isActive: false,
+          autoRemovedBecauseDry: true,
           depthCm: 0,
           depthRange: '0 ซม. (แห้งปกติ)',
           waterTrend: 'dry',
-          // resolvedAt / statusChangedAt — เขียนเฉพาะเมื่อเพิ่งเปลี่ยน
-          resolvedAt: report.waterTrend !== 'dry' ? nowTime : (report.resolvedAt || nowTime),
-          statusChangedAt: report.waterTrend !== 'dry' ? nowTime : (report.statusChangedAt || null),
-          resolvedAtDetailed: nowDetailed,
-          statusLabel: 'ระบายแห้งแล้ว (สัญจรปกติ)',
+          dryReason: dryReason,
+          linkedPointId: linkedOfficialPoint.id,
+          linkedPointName: linkedOfficialPoint.name,
+          resolvedAt: report.resolvedAt || nowTime,
+          resolvedAtDetailed: report.resolvedAtDetailed || nowDetailed,
+          clearedAt: report.clearedAt || nowTime,
+          clearedAtDetailed: report.clearedAtDetailed || nowDetailed,
+          clearedBy: `ระบบโทรมาตร AI เชื่อมโยงข้อมูลจุดเฝ้าระวังทางการ (${linkedOfficialPoint.name})`,
+          statusLabel: 'สัญจรปกติ (น้ำแห้งแล้ว)',
           trafficStatus: 'ผิวจราจรแห้งสนิท น้ำระบายหมดแล้ว สัญจรได้ปกติทุกช่องทาง',
-          verifiedSource: 'เครือข่ายประชาชนร่วมกับระบบโทรมาตรยืนยันน้ำแห้ง',
           lastCheckedTime: nowTime
-        };
-      } else if (reportAgeMinutes >= 20 || report.waterTrend === 'falling') {
-        // น้ำกำลังลด -> แสดงสัญลักษณ์กำกับว่า "น้ำกำลังลด"
-        const fallingDepth = Math.max(5, Math.min(report.depthCm || 15, 12));
-        if (report.waterTrend !== 'falling') {
-          newlyFallingPoints.push({
-            id: report.id,
-            name: report.name,
-            district: report.district,
-            time: nowTime
-          });
-        }
-        return {
-          ...report,
-          waterTrend: 'falling',
-          statusLabel: 'น้ำกำลังลด',
-          depthCm: fallingDepth,
-          depthRange: `${fallingDepth} ซม. (กำลังลดลง)`,
-          level: 1,
-          // statusChangedAt — เขียนเฉพาะเมื่อเพิ่งเปลี่ยนเป็น falling
-          statusChangedAt: report.waterTrend !== 'falling' ? nowTime : (report.statusChangedAt || null),
-          trafficStatus: 'ระดับน้ำกำลังลดลงเรื่อยๆ การระบายน้ำคลี่คลาย ใกล้คืนผิวจราจรปกติ',
-          lastCheckedTime: nowTime,
-          verifiedSource: 'เครือข่ายประชาชน (ระบบ AI ตรวจพบน้ำกำลังลด)'
         };
       }
     }
 
-    return report;
+    // กรณีไม่มีจุดเฝ้าระวังทางการเชื่อมโยงตรงๆ หรือเป็นรายงานอิสระ:
+    // 3) หากตัวรายงานประชาชนเองมีสถานะแห้งแล้ว หรือ depth <= 0
+    if (report.depthCm !== undefined && Number(report.depthCm) <= 0 || report.waterTrend === 'dry' || report.isResolved) {
+      const dryReason = report.dryReason || 'รายงานระบุระดับน้ำลดลงเหลือ 0 ซม. ผิวจราจรแห้งสนิท สัญจรได้ปกติ';
+      return {
+        ...report,
+        originalDepthCm,
+        isResolved: true,
+        isActive: false,
+        autoRemovedBecauseDry: true,
+        depthCm: 0,
+        depthRange: '0 ซม. (แห้งปกติ)',
+        waterTrend: 'dry',
+        dryReason: dryReason,
+        resolvedAt: report.resolvedAt || nowTime,
+        resolvedAtDetailed: report.resolvedAtDetailed || nowDetailed,
+        clearedAt: report.clearedAt || nowTime,
+        clearedAtDetailed: report.clearedAtDetailed || nowDetailed,
+        clearedBy: 'ระบบตรวจสอบสถานะน้ำแห้งอัตโนมัติ',
+        statusLabel: 'สัญจรปกติ (น้ำแห้งแล้ว)',
+        trafficStatus: 'ผิวจราจรแห้งสนิท สัญจรได้ปกติทุกช่องทาง',
+        lastCheckedTime: nowTime
+      };
+    }
+
+    // 4) หากฝนยังคงตกในพื้นที่อำเภอนั้น -> คงสถานะท่วมไว้เสมอ (Keep Active)
+    if (isDistrictRaining || isHeavyRainWeather) {
+      return {
+        ...report,
+        originalDepthCm,
+        isActive: true,
+        isResolved: false,
+        autoRemovedBecauseDry: false,
+        lastCheckedTime: nowTime
+      };
+    }
+
+    // 5) หากไม่มีฝนในพื้นที่ และเวลาผ่านไปเกิน 60 นาที -> ปรับสถานะเป็นแห้งและนำออกจากแผนที่อัตโนมัติ
+    if (reportAgeMinutes > 60) {
+      const dryReason = 'การประเมินสภาพอากาศและระบบระบายน้ำ: ผิวจราจรแห้งสนิท คืนการสัญจรปกติแล้ว';
+      const wasActive = report.isActive !== false && !report.isResolved;
+
+      if (wasActive) {
+        newlyClearedPoints.push({
+          id: report.id,
+          name: report.name,
+          district: report.district,
+          reason: dryReason,
+          time: nowTime,
+          timeDetailed: nowDetailed,
+          agency: 'เครือข่ายประชาชนสมุทรปราการ (ระบบ AI Telemetry ประเมินน้ำแห้ง)'
+        });
+      }
+
+      return {
+        ...report,
+        originalDepthCm,
+        isResolved: true,
+        isActive: false,
+        autoRemovedBecauseDry: true,
+        depthCm: 0,
+        depthRange: '0 ซม. (แห้งปกติ)',
+        waterTrend: 'dry',
+        dryReason: dryReason,
+        resolvedAt: report.resolvedAt || nowTime,
+        resolvedAtDetailed: report.resolvedAtDetailed || nowDetailed,
+        clearedAt: report.clearedAt || nowTime,
+        clearedAtDetailed: report.clearedAtDetailed || nowDetailed,
+        clearedBy: 'ระบบ AI Telemetry ประเมินน้ำแห้งอัตโนมัติ',
+        statusLabel: 'ระบายแห้งแล้ว (สัญจรปกติ)',
+        trafficStatus: 'ผิวจราจรแห้งสนิท น้ำระบายหมดแล้ว สัญจรได้ปกติทุกช่องทาง',
+        verifiedSource: 'เครือข่ายประชาชนร่วมกับระบบโทรมาตรยืนยันน้ำแห้ง',
+        lastCheckedTime: nowTime
+      };
+    }
+
+    // 6) หากไม่มีฝนในพื้นที่ และเวลาผ่านไป 20 - 60 นาที -> น้ำกำลังลด (แสดงสัญลักษณ์ลดลง 📉 แต่คงไว้บนแผนที่)
+    if (reportAgeMinutes >= 20 || report.waterTrend === 'falling') {
+      const fallingDepth = Math.max(5, Math.min(report.depthCm || 15, 12));
+      if (report.waterTrend !== 'falling') {
+        newlyFallingPoints.push({
+          id: report.id,
+          name: report.name,
+          district: report.district,
+          time: nowTime
+        });
+      }
+      return {
+        ...report,
+        originalDepthCm,
+        isActive: true,
+        isResolved: false,
+        autoRemovedBecauseDry: false,
+        waterTrend: 'falling',
+        statusLabel: 'น้ำกำลังลด',
+        depthCm: fallingDepth,
+        depthRange: `${fallingDepth} ซม. (กำลังลดลง)`,
+        level: 1,
+        trafficStatus: 'ระดับน้ำกำลังลดลงเรื่อยๆ การระบายน้ำคลี่คลาย ใกล้คืนผิวจราจรปกติ',
+        lastCheckedTime: nowTime,
+        verifiedSource: 'เครือข่ายประชาชน (ระบบ AI ตรวจพบน้ำกำลังลด)'
+      };
+    }
+
+    return {
+      ...report,
+      originalDepthCm,
+      isActive: true,
+      isResolved: false,
+      autoRemovedBecauseDry: false
+    };
   });
 
   // 3. ประเมินโครงข่ายแนวเส้นทางน้ำท่วมขังต่อเนื่อง (MAJOR_FLOOD_CORRIDORS) แบบไดนามิก 24 ชม.
