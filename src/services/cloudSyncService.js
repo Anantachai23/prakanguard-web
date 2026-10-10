@@ -9,7 +9,7 @@ export function getSupabaseUrl() {
     const custom = localStorage.getItem('pg_supabase_url');
     if (custom && custom.trim().startsWith('http')) return custom.trim().replace(/\/+$/, '');
   }
-  return 'https://cnjufleeibbgmpvuvrpg.supabase.co';
+  return 'https://uyszfmcumloxwuojmndy.supabase.co';
 }
 
 export function getSupabaseKey() {
@@ -17,7 +17,7 @@ export function getSupabaseKey() {
     const custom = localStorage.getItem('pg_supabase_key');
     if (custom && custom.trim()) return custom.trim();
   }
-  return 'sb_publishable_cwxpTPIFXkyWVgXksZASAQ_76DreEAw';
+  return 'sb_publishable_Y73zrfwvP8NnXyjJ5q6bSA_xYqU0jF7';
 }
 
 const getBase = () => getSupabaseUrl().replace(/\/+$/, '') + '/rest/v1/';

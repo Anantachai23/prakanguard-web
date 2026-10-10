@@ -2,8 +2,8 @@
  * PrakanGuard Admin — configuration
  * หมายเหตุ: ไม่มีรหัสผ่านใดๆ ในไฟล์นี้ (เก็บเฉพาะค่าแฮชสำหรับตรวจสอบเท่านั้น)
  */
-export const DEFAULT_SUPABASE_URL = 'https://cnjufleeibbgmpvuvrpg.supabase.co';
-export const DEFAULT_SUPABASE_KEY = 'sb_publishable_cwxpTPIFXkyWVgXksZASAQ_76DreEAw';
+export const DEFAULT_SUPABASE_URL = 'https://uyszfmcumloxwuojmndy.supabase.co';
+export const DEFAULT_SUPABASE_KEY = 'sb_publishable_Y73zrfwvP8NnXyjJ5q6bSA_xYqU0jF7';
 
 export function getSupabaseUrl() {
   if (typeof localStorage !== 'undefined') {
