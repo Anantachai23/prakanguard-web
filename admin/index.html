@@ -964,6 +964,77 @@
         <!-- ================= VIEW 8: SUPABASE CLOUD MANAGEMENT ================= -->
         <section id="view-supabase" class="view-section" style="display: none;">
           
+          <!-- Egress Quota Alert & Project Status Banner -->
+          <div id="sp-quota-banner" class="card" style="display: none; margin-bottom: 20px; background: linear-gradient(135deg, rgba(239, 68, 68, 0.12) 0%, rgba(245, 158, 11, 0.12) 100%); border: 1.5px solid rgba(239, 68, 68, 0.4); box-shadow: 0 4px 20px rgba(239, 68, 68, 0.15);">
+            <div style="display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 14px;">
+              <div style="display: flex; gap: 14px; align-items: flex-start; max-width: 850px;">
+                <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(239, 68, 68, 0.2); border: 2px solid #ef4444; display: flex; align-items: center; justify-content: center; color: #ef4444; flex-shrink: 0; font-size: 22px;">
+                  ⚠️
+                </div>
+                <div>
+                  <h3 style="font-size: 16px; font-weight: 700; color: #f87171; margin: 0 0 4px 0; display: flex; align-items: center; gap: 8px;">
+                    <span>แจ้งเตือน: โปรเจกต์ Supabase เดิมใช้โควตา Bandwidth ฟรีครบกำหนด (HTTP 402)</span>
+                    <span class="badge badge-error" style="font-size: 11px;">0.00 บาท ไม่มีค่าใช้จ่าย</span>
+                  </h3>
+                  <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.6; margin: 0;">
+                    Supabase จำกัดการเชื่อมต่อของโปรเจกต์นี้ชั่วคราวเนื่องจาก Outbound Egress ครบ 5.5 GB (ระบบ Free Tier <strong>ไม่มีการตัดเงินย้อนหลังแน่นอน 100%</strong>)<br>
+                    ขณะนี้ระบบ PrakanGuard กำลังทำงานต่อเนื่องด้วยระบบสำรอง (Local Storage + ntfy Pub/Sub) หรือท่านสามารถสร้างโปรเจกต์ Supabase ฟรีใหม่และวางเชื่อมต่อด้านล่างนี้ได้ทันที (ใช้เวลาเพียง 2 นาที)
+                  </p>
+                </div>
+              </div>
+              <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('sp-project-switcher-card')?.scrollIntoView({ behavior: 'smooth' });" style="gap: 6px; border-color: rgba(239, 68, 68, 0.4); color: #fca5a5;">
+                <span>ไปที่เครื่องมือสลับโปรเจกต์ ↓</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Supabase Project Connection & Switcher Card -->
+          <div id="sp-project-switcher-card" class="card" style="margin-bottom: 24px; border: 1px solid var(--border-subtle); background: var(--bg-surface-elevated);">
+            <div class="card-header" style="flex-wrap: wrap; gap: 10px;">
+              <div>
+                <h3 class="card-title" style="display: flex; align-items: center; gap: 8px;">
+                  <span>⚙️ ตั้งค่าและสลับโปรเจกต์ Supabase (Project Switcher)</span>
+                  <span id="sp-active-project-badge" class="badge badge-primary">Default Project</span>
+                </h3>
+                <p class="card-subtitle">สามารถวาง Project URL และ Publishable Anon Key ใหม่เพื่อเปลี่ยนฐานข้อมูลได้ทันทีโดยไม่ต้องแก้โค้ด</p>
+              </div>
+              <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <button type="button" id="btn-copy-supabase-sql" class="btn btn-secondary btn-sm" style="gap: 6px;">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+                  <span>คัดลอก SQL Setup (สร้างตาราง)</span>
+                </button>
+                <button type="button" id="btn-reset-supabase-config" class="btn btn-ghost btn-sm" style="gap: 6px; color: var(--text-muted);">
+                  <span>รีเซ็ตเป็นค่าเริ่มต้น</span>
+                </button>
+              </div>
+            </div>
+
+            <form id="form-supabase-config" style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 16px; align-items: flex-end; margin-top: 8px;">
+              <div class="form-group" style="margin: 0;">
+                <label class="form-label" for="input-sp-custom-url" style="font-size: 12px; font-weight: 600;">Supabase Project URL</label>
+                <input type="url" id="input-sp-custom-url" class="form-input" placeholder="https://xxxxxxxxxxxx.supabase.co" required style="font-family: var(--font-mono); font-size: 13px;">
+              </div>
+              <div class="form-group" style="margin: 0;">
+                <label class="form-label" for="input-sp-custom-key" style="font-size: 12px; font-weight: 600;">Supabase Anon / Publishable Key</label>
+                <input type="text" id="input-sp-custom-key" class="form-input" placeholder="sb_publishable_... หรือ eyJhbGciOi..." required style="font-family: var(--font-mono); font-size: 13px;">
+              </div>
+              <div>
+                <button type="submit" id="btn-save-supabase-config" class="btn btn-primary" style="white-space: nowrap; gap: 6px; height: 42px;">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                  <span>บันทึกและเชื่อมต่อทันที</span>
+                </button>
+              </div>
+            </form>
+
+            <div style="margin-top: 14px; padding: 10px 14px; background: rgba(56, 189, 248, 0.06); border-radius: 8px; border: 1px dashed rgba(56, 189, 248, 0.3); font-size: 12px; color: var(--text-muted); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="color: #38bdf8;">💡</span>
+                <span>หากต้องการเริ่มโปรเจกต์ใหม่: 1. สร้างโปรเจกต์ฟรีที่ <a href="https://supabase.com/dashboard" target="_blank" rel="noopener noreferrer" style="color: #38bdf8; text-decoration: underline;">Supabase Dashboard</a> &rarr; 2. นำคำสั่ง SQL ไปกด Run ในเมนู SQL Editor &rarr; 3. นำ URL และ Anon Key มาวางที่นี่</span>
+              </div>
+              <span id="sp-current-config-source" style="font-family: var(--font-mono); font-size: 11px; color: #94a3b8;">Active: DEFAULT</span>
+            </div>
+          </div>
+
           <!-- Top Control Card -->
           <div class="card" style="margin-bottom: 24px; background: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(56, 189, 248, 0.08) 100%); border-color: rgba(16, 185, 129, 0.35);">
             <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;">

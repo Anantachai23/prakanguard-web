@@ -2,10 +2,13 @@
  * PrakanGuard Admin — data layer (Supabase REST)
  * ใช้ฐานข้อมูลเดียวกับเว็บหลัก (reports / feedback / visitors) และตารางเสริมสำหรับระบบแอดมิน
  */
-import { SUPABASE_URL, SUPABASE_KEY } from './config.js';
+import { getSupabaseUrl, getSupabaseKey } from './config.js';
 
-const BASE = SUPABASE_URL + '/rest/v1/';
-const AUTH = { apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY };
+const getBase = () => getSupabaseUrl() + '/rest/v1/';
+const getAuth = () => {
+  const k = getSupabaseKey();
+  return { apikey: k, Authorization: 'Bearer ' + k };
+};
 
 /** ความสามารถของฐานข้อมูลที่ตรวจพบ (ขึ้นกับการรัน supabase_setup.sql) */
 export const caps = {
@@ -25,10 +28,10 @@ export const serverNow = () => Date.now() + serverSkewMs;
 
 export async function rest(path, { method = 'GET', body, prefer, headers = {}, signal } = {}) {
   try {
-    const res = await fetch(BASE + path, {
+    const res = await fetch(getBase() + path, {
       method,
       headers: {
-        ...AUTH,
+        ...getAuth(),
         ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}),
         ...(prefer ? { Prefer: prefer } : {}),
         ...headers
@@ -77,9 +80,9 @@ export async function detectCaps() {
     probe('admin_trash?select=id&limit=1'),
     probe('admin_sessions?select=id&limit=1')
   ]);
-  const rpcProbe = await fetch(SUPABASE_URL + '/rest/v1/rpc/admin_verify', {
+  const rpcProbe = await fetch(getSupabaseUrl() + '/rest/v1/rpc/admin_verify', {
     method: 'POST',
-    headers: { ...AUTH, 'Content-Type': 'application/json' },
+    headers: { ...getAuth(), 'Content-Type': 'application/json' },
     body: JSON.stringify({ p_username: '-', p_password: '-' })
   }).catch(() => null);
   Object.assign(caps, { visitorExt, reportExt, announcements, trash, sessions, rpc: !!rpcProbe && rpcProbe.status !== 404, checked: true });
@@ -88,9 +91,9 @@ export async function detectCaps() {
 
 /* ============================================================== Auth */
 export async function rpcVerify(username, password) {
-  const res = await fetch(SUPABASE_URL + '/rest/v1/rpc/admin_verify', {
+  const res = await fetch(getSupabaseUrl() + '/rest/v1/rpc/admin_verify', {
     method: 'POST',
-    headers: { ...AUTH, 'Content-Type': 'application/json' },
+    headers: { ...getAuth(), 'Content-Type': 'application/json' },
     body: JSON.stringify({ p_username: username, p_password: password })
   });
   if (res.status === 404) return { missing: true };
@@ -99,9 +102,9 @@ export async function rpcVerify(username, password) {
 }
 
 export async function rpcChangePassword(username, oldPass, newPass) {
-  const res = await fetch(SUPABASE_URL + '/rest/v1/rpc/admin_change_password', {
+  const res = await fetch(getSupabaseUrl() + '/rest/v1/rpc/admin_change_password', {
     method: 'POST',
-    headers: { ...AUTH, 'Content-Type': 'application/json' },
+    headers: { ...getAuth(), 'Content-Type': 'application/json' },
     body: JSON.stringify({ p_username: username, p_old: oldPass, p_new: newPass })
   });
   if (res.status === 404) return { missing: true };
@@ -110,7 +113,7 @@ export async function rpcChangePassword(username, oldPass, newPass) {
 }
 
 /* ============================================================ Reports */
-const REPORT_BASE_COLS = 'id,hazard_type,name,subdistrict,district,lat,lng,body_level_label,depth_cm,depth_range,level,traffic_status,cause,source,phone,photo_url,is_approved,is_resolved,reported_at,timestamp,created_at';
+const REPORT_BASE_COLS = 'id,hazard_type,name,subdistrict,district,lat,lng,body_level_label,depth_cm,depth_range,level,traffic_status,cause,source,phone,is_approved,is_resolved,reported_at,timestamp,created_at';
 const REPORT_EXT_COLS = 'reporter_device,reporter_district,reporter_gps,reporter_ip';
 
 export async function fetchReports() {
@@ -423,9 +426,9 @@ export async function pingAdminSession(id) {
 export async function endAdminSession(id, { keepalive = false } = {}) {
   const now = new Date().toISOString();
   if (caps.sessions) {
-    await fetch(`${BASE}admin_sessions?id=eq.${encodeURIComponent(id)}`, {
+    await fetch(`${getBase()}admin_sessions?id=eq.${encodeURIComponent(id)}`, {
       method: 'PATCH',
-      headers: { ...AUTH, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+      headers: { ...getAuth(), 'Content-Type': 'application/json', Prefer: 'return=minimal' },
       body: JSON.stringify({ logged_out_at: now }),
       keepalive
     }).catch(() => {});
@@ -448,7 +451,8 @@ export async function fetchSupabasePing() {
   try {
     const r = await rest('reports?select=id&limit=1');
     const latency = Math.round(performance.now() - t0);
-    return { ok: r.ok, latency, status: r.status };
+    const isQuotaExceeded = r.status === 402;
+    return { ok: r.ok, latency, status: r.status, isQuotaExceeded, data: r.data };
   } catch (err) {
     const latency = Math.round(performance.now() - t0);
     return { ok: false, latency, status: 0, error: err };

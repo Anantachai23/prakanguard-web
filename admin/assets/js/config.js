@@ -2,8 +2,41 @@
  * PrakanGuard Admin — configuration
  * หมายเหตุ: ไม่มีรหัสผ่านใดๆ ในไฟล์นี้ (เก็บเฉพาะค่าแฮชสำหรับตรวจสอบเท่านั้น)
  */
-export const SUPABASE_URL = 'https://cnjufleeibbgmpvuvrpg.supabase.co';
-export const SUPABASE_KEY = 'sb_publishable_cwxpTPIFXkyWVgXksZASAQ_76DreEAw';
+export const DEFAULT_SUPABASE_URL = 'https://cnjufleeibbgmpvuvrpg.supabase.co';
+export const DEFAULT_SUPABASE_KEY = 'sb_publishable_cwxpTPIFXkyWVgXksZASAQ_76DreEAw';
+
+export function getSupabaseUrl() {
+  if (typeof localStorage !== 'undefined') {
+    const custom = localStorage.getItem('pg_supabase_url');
+    if (custom && custom.trim().startsWith('http')) return custom.trim().replace(/\/+$/, '');
+  }
+  return DEFAULT_SUPABASE_URL;
+}
+
+export function getSupabaseKey() {
+  if (typeof localStorage !== 'undefined') {
+    const custom = localStorage.getItem('pg_supabase_key');
+    if (custom && custom.trim()) return custom.trim();
+  }
+  return DEFAULT_SUPABASE_KEY;
+}
+
+export function setCustomSupabaseConfig(url, key) {
+  if (typeof localStorage !== 'undefined') {
+    if (url && url.trim()) localStorage.setItem('pg_supabase_url', url.trim().replace(/\/+$/, ''));
+    if (key && key.trim()) localStorage.setItem('pg_supabase_key', key.trim());
+  }
+}
+
+export function resetSupabaseConfig() {
+  if (typeof localStorage !== 'undefined') {
+    localStorage.removeItem('pg_supabase_url');
+    localStorage.removeItem('pg_supabase_key');
+  }
+}
+
+export const SUPABASE_URL = getSupabaseUrl();
+export const SUPABASE_KEY = getSupabaseKey();
 
 export const MAIN_SITE_URL = 'https://prakanguard-web.vercel.app';
 

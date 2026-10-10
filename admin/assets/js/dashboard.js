@@ -1,7 +1,7 @@
 /**
  * PrakanGuard Admin Command Center — Main Application Logic
  */
-import { DISTRICTS, ONLINE_WINDOW_MS, LIVE_REFRESH_MS, CHART_REFRESH_MS } from './config.js';
+import { DISTRICTS, ONLINE_WINDOW_MS, LIVE_REFRESH_MS, CHART_REFRESH_MS, getSupabaseUrl, getSupabaseKey, setCustomSupabaseConfig, resetSupabaseConfig, DEFAULT_SUPABASE_URL, DEFAULT_SUPABASE_KEY } from './config.js';
 import { 
   $, $$, h, icon, esc, toast, confirmDialog, openModal, 
   dateTime, timeOnly, hm, duration, timeAgo, startOfBangkokDay, nf,
@@ -2469,7 +2469,38 @@ let currentSpTable = 'reports';
 let currentSpRows = [];
 
 export async function renderSupabase() {
-  // 1. Update Table Counts from state
+  // 1. Populate custom config inputs
+  const currentUrl = getSupabaseUrl();
+  const currentKey = getSupabaseKey();
+  const isCustom = typeof localStorage !== 'undefined' && !!localStorage.getItem('pg_supabase_url');
+  
+  const inUrl = $('#input-sp-custom-url');
+  if (inUrl && !inUrl.value) inUrl.value = currentUrl;
+  const inKey = $('#input-sp-custom-key');
+  if (inKey && !inKey.value) inKey.value = currentKey;
+
+  const projBadge = $('#sp-active-project-badge');
+  if (projBadge) {
+    if (isCustom) {
+      projBadge.className = 'badge badge-warning';
+      projBadge.textContent = 'Custom Project (กำหนดเอง)';
+    } else {
+      projBadge.className = 'badge badge-primary';
+      projBadge.textContent = 'Default Project (ค่าเริ่มต้น)';
+    }
+  }
+
+  const srcText = $('#sp-current-config-source');
+  if (srcText) {
+    try {
+      const host = new URL(currentUrl).hostname;
+      srcText.textContent = `Active Host: ${host}`;
+    } catch (e) {
+      srcText.textContent = `Active: ${currentUrl}`;
+    }
+  }
+
+  // 2. Update Table Counts from state
   const repCount = (state.reports || []).length;
   const fbCount = (state.feedback || []).length;
   const visCount = (state.todaySessions || []).length || (state.activeVisitors || []).length;
@@ -2486,10 +2517,10 @@ export async function renderSupabase() {
   const elTr = $('#sp-count-trash'); if (elTr) elTr.textContent = `${nf(trCount)} แถว`;
   const elTot = $('#sp-stat-total-records'); if (elTot) elTot.textContent = `${nf(totalRows)}`;
 
-  // 2. Measure Live Ping
+  // 3. Measure Live Ping
   measureAndDisplayPing();
 
-  // 3. Load Current Selected Table into Live Inspector
+  // 4. Load Current Selected Table into Live Inspector
   loadTableInspector(currentSpTable);
 }
 
@@ -2498,11 +2529,37 @@ async function measureAndDisplayPing() {
   const pingMs = pingRes.latency || 28;
   const pingEl = $('#sp-ping-ms'); if (pingEl) pingEl.textContent = pingMs;
   const overPingEl = $('#overview-sp-latency'); if (overPingEl) overPingEl.textContent = `${pingMs}ms`;
+  
+  const quotaBanner = $('#sp-quota-banner');
+  const headerStatus = $('#sp-header-status-badge');
   const overStatus = $('#overview-sp-status');
-  if (overStatus) {
-    overStatus.innerHTML = pingRes.ok 
-      ? `<span class="status-dot pulse"></span> เชื่อมต่อสด 100% · <span id="overview-sp-latency">${pingMs}ms</span>`
-      : `<span class="status-dot" style="background:#ef4444;"></span> กำลังเชื่อมต่อซ้ำ`;
+
+  if (pingRes.isQuotaExceeded || pingRes.status === 402) {
+    if (quotaBanner) quotaBanner.style.display = 'block';
+    if (headerStatus) {
+      headerStatus.className = 'badge badge-warning';
+      headerStatus.innerHTML = `<span class="status-dot" style="background:#f59e0b;"></span> โควตาเต็ม (HTTP 402) · สลับโปรเจกต์ได้ด้านล่าง`;
+    }
+    if (overStatus) {
+      overStatus.innerHTML = `<span class="status-dot" style="background:#f59e0b;"></span> โหมดสำรอง (402 Quota) · <span id="overview-sp-latency">${pingMs}ms</span>`;
+    }
+  } else if (pingRes.ok) {
+    if (quotaBanner) quotaBanner.style.display = 'none';
+    if (headerStatus) {
+      headerStatus.className = 'badge badge-ok';
+      headerStatus.innerHTML = `<span class="status-dot pulse"></span> เชื่อมต่อสมบูรณ์ (Active 24/7)`;
+    }
+    if (overStatus) {
+      overStatus.innerHTML = `<span class="status-dot pulse"></span> เชื่อมต่อสด 100% · <span id="overview-sp-latency">${pingMs}ms</span>`;
+    }
+  } else {
+    if (headerStatus) {
+      headerStatus.className = 'badge badge-error';
+      headerStatus.innerHTML = `<span class="status-dot" style="background:#ef4444;"></span> เชื่อมต่อไม่สำเร็จ (${pingRes.status || 'Offline'})`;
+    }
+    if (overStatus) {
+      overStatus.innerHTML = `<span class="status-dot" style="background:#ef4444;"></span> ออฟไลน์ (${pingRes.status || 'Offline'})`;
+    }
   }
 }
 
@@ -2895,6 +2952,67 @@ export function initDashboard() {
   $('#btn-sp-reload-table')?.addEventListener('click', () => {
     loadTableInspector(currentSpTable);
     toast(`🔄 โหลดข้อมูลตาราง ${currentSpTable} สดใหม่แล้ว`, 'info');
+  });
+
+  // Supabase Custom Config & Project Switcher Handlers
+  $('#btn-copy-supabase-sql')?.addEventListener('click', async () => {
+    try {
+      let sqlText = '';
+      try {
+        const res = await fetch('database/supabase_setup.sql');
+        if (res.ok) sqlText = await res.text();
+      } catch (e) {}
+      if (!sqlText) {
+        try {
+          const res = await fetch('/admin/database/supabase_setup.sql');
+          if (res.ok) sqlText = await res.text();
+        } catch (e) {}
+      }
+      if (!sqlText) {
+        throw new Error('Could not fetch supabase_setup.sql');
+      }
+      await navigator.clipboard.writeText(sqlText);
+      playApprovalChime();
+      toast('📋 คัดลอกคำสั่ง SQL Setup สำเร็จ! นำไปวางใน Supabase Dashboard > SQL Editor แล้วกด Run ได้ทันที', 'success');
+    } catch (err) {
+      toast('คัดลอกไม่สำเร็จ สามารถเปิดไฟล์ admin/database/supabase_setup.sql เพื่อคัดลอกด้วยตนเองได้', 'warning');
+    }
+  });
+
+  $('#form-supabase-config')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const url = $('#input-sp-custom-url')?.value?.trim();
+    const key = $('#input-sp-custom-key')?.value?.trim();
+    if (!url || !key) {
+      toast('กรุณากรอกทั้ง Supabase URL และ Anon / Publishable Key', 'warning');
+      return;
+    }
+    setCustomSupabaseConfig(url, key);
+    playSyncSuccessChime();
+    toast('💾 บันทึกและสลับโปรเจกต์ Supabase สำเร็จ กำลังเชื่อมต่อข้อมูล...', 'success');
+    await detectCaps();
+    await refreshAllData(true, true);
+    renderSupabase();
+  });
+
+  $('#btn-reset-supabase-config')?.addEventListener('click', () => {
+    confirmDialog({
+      title: 'รีเซ็ตการตั้งค่า Supabase?',
+      message: 'ต้องการคืนค่า Project URL และ Key กลับเป็นค่าเริ่มต้นของระบบใช่หรือไม่?',
+      confirmText: 'รีเซ็ตเป็นค่าเริ่มต้น',
+      onConfirm: async () => {
+        resetSupabaseConfig();
+        const inUrl = $('#input-sp-custom-url');
+        const inKey = $('#input-sp-custom-key');
+        if (inUrl) inUrl.value = DEFAULT_SUPABASE_URL;
+        if (inKey) inKey.value = DEFAULT_SUPABASE_KEY;
+        playWarningSound();
+        toast('🔄 คืนค่า Supabase เป็นโปรเจกต์เริ่มต้นแล้ว', 'info');
+        await detectCaps();
+        await refreshAllData(true, true);
+        renderSupabase();
+      }
+    });
   });
 
   // Supabase Table Inspector Search Filter

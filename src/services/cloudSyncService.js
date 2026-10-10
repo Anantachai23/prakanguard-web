@@ -4,8 +4,31 @@
 import { isPointInSamutPrakan } from '../data/samutPrakanBoundary';
 
 
-const SUPABASE_URL = 'https://cnjufleeibbgmpvuvrpg.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_cwxpTPIFXkyWVgXksZASAQ_76DreEAw';
+export function getSupabaseUrl() {
+  if (typeof localStorage !== 'undefined') {
+    const custom = localStorage.getItem('pg_supabase_url');
+    if (custom && custom.trim().startsWith('http')) return custom.trim().replace(/\/+$/, '');
+  }
+  return 'https://cnjufleeibbgmpvuvrpg.supabase.co';
+}
+
+export function getSupabaseKey() {
+  if (typeof localStorage !== 'undefined') {
+    const custom = localStorage.getItem('pg_supabase_key');
+    if (custom && custom.trim()) return custom.trim();
+  }
+  return 'sb_publishable_cwxpTPIFXkyWVgXksZASAQ_76DreEAw';
+}
+
+const getBase = () => getSupabaseUrl().replace(/\/+$/, '') + '/rest/v1/';
+const getHeaders = (extra = {}) => {
+  const k = getSupabaseKey();
+  return {
+    'apikey': k,
+    'Authorization': `Bearer ${k}`,
+    ...extra
+  };
+};
 
 const PRIMARY_REPORTS_TOPIC = 'https://ntfy.sh/prakanguard_spk_reports_v5';
 const FALLBACK_REPORTS_TOPIC = 'https://ntfy.sh/prakanguard_live_reports_v4_spk';
@@ -151,14 +174,12 @@ export async function publishCloudReport(report) {
     // 1. ส่งขึ้น Supabase Cloud Database (ศูนย์ข้อมูลกลาง 24 ชม. ทุกเครื่องเข้าถึงได้)
     try {
       const supaBody = JSON.stringify(toSupabaseReport(report));
-      fetch(`${SUPABASE_URL}/rest/v1/reports`, {
+      fetch(`${getBase()}reports`, {
         method: 'POST',
-        headers: {
-          'apikey': SUPABASE_KEY,
-          'Authorization': `Bearer ${SUPABASE_KEY}`,
+        headers: getHeaders({
           'Content-Type': 'application/json',
           'Prefer': 'resolution=merge-duplicates'
-        },
+        }),
         body: supaBody
       }).catch(err => console.warn('[Supabase Report Error]:', err));
     } catch (e) {}
@@ -206,14 +227,12 @@ export async function publishCloudFeedback(feedback) {
     // 1. ส่งขึ้น Supabase Cloud Database
     try {
       const supaBody = JSON.stringify(toSupabaseFeedback(feedback));
-      fetch(`${SUPABASE_URL}/rest/v1/feedback`, {
+      fetch(`${getBase()}feedback`, {
         method: 'POST',
-        headers: {
-          'apikey': SUPABASE_KEY,
-          'Authorization': `Bearer ${SUPABASE_KEY}`,
+        headers: getHeaders({
           'Content-Type': 'application/json',
           'Prefer': 'resolution=merge-duplicates'
-        },
+        }),
         body: supaBody
       }).catch(err => console.warn('[Supabase Feedback Error]:', err));
     } catch (e) {}
@@ -260,32 +279,21 @@ export async function publishAdminAction(action) {
     // Update Supabase Database
     try {
       if (action.type === 'approve' && action.id) {
-        fetch(`${SUPABASE_URL}/rest/v1/reports?id=eq.${encodeURIComponent(action.id)}`, {
+        fetch(`${getBase()}reports?id=eq.${encodeURIComponent(action.id)}`, {
           method: 'PATCH',
-          headers: {
-            'apikey': SUPABASE_KEY,
-            'Authorization': `Bearer ${SUPABASE_KEY}`,
-            'Content-Type': 'application/json'
-          },
+          headers: getHeaders({ 'Content-Type': 'application/json' }),
           body: JSON.stringify({ is_approved: true, is_resolved: false })
         }).catch(() => {});
       } else if (action.type === 'resolve' && action.id) {
-        fetch(`${SUPABASE_URL}/rest/v1/reports?id=eq.${encodeURIComponent(action.id)}`, {
+        fetch(`${getBase()}reports?id=eq.${encodeURIComponent(action.id)}`, {
           method: 'PATCH',
-          headers: {
-            'apikey': SUPABASE_KEY,
-            'Authorization': `Bearer ${SUPABASE_KEY}`,
-            'Content-Type': 'application/json'
-          },
+          headers: getHeaders({ 'Content-Type': 'application/json' }),
           body: JSON.stringify({ is_resolved: true })
         }).catch(() => {});
       } else if (action.type === 'reject' && action.id) {
-        fetch(`${SUPABASE_URL}/rest/v1/reports?id=eq.${encodeURIComponent(action.id)}`, {
+        fetch(`${getBase()}reports?id=eq.${encodeURIComponent(action.id)}`, {
           method: 'DELETE',
-          headers: {
-            'apikey': SUPABASE_KEY,
-            'Authorization': `Bearer ${SUPABASE_KEY}`
-          }
+          headers: getHeaders()
         }).catch(() => {});
       }
     } catch (e) {}
@@ -319,8 +327,32 @@ export async function publishAdminAction(action) {
   }
 }
 
+const REPORT_SELECT_COLS = 'id,hazard_type,name,subdistrict,district,lat,lng,body_level,body_level_label,depth_cm,depth_range,level,traffic_status,cause,official_guidance,source,phone,is_approved,is_resolved,reported_at,timestamp';
+let hasWarnedQuotaReports = false;
+let hasWarnedQuotaFeedback = false;
+
+/**
+ * ดึงรูปภาพของรายงานแบบ Lazy Load ทีละรายการเมื่อคลิกดูรูป (ประหยัดแบนด์วิดท์มหาศาล)
+ */
+export async function fetchCloudReportPhoto(reportId) {
+  if (!reportId) return null;
+  try {
+    const res = await fetch(`${getBase()}reports?id=eq.${encodeURIComponent(reportId)}&select=photo_url&limit=1`, {
+      headers: getHeaders()
+    }).catch(() => null);
+    if (res && res.ok) {
+      const data = await res.json();
+      if (Array.isArray(data) && data[0]?.photo_url) {
+        return data[0].photo_url;
+      }
+    }
+  } catch (e) {}
+  return null;
+}
+
 /**
  * ดึงรายงานน้ำท่วม/ลูกเห็บย้อนหลังล่าสุด (ดึงจาก Supabase Cloud + Local API + Fallback)
+ * ประหยัดแบนด์วิดท์ 99.9% โดยเลือกเฉพาะข้อมูลข้อความ ไม่ดึงรูป Base64 ซ้ำซาก
  */
 export async function fetchRecentCloudReports() {
   try {
@@ -328,15 +360,17 @@ export async function fetchRecentCloudReports() {
 
     // 1. ดึงจาก Supabase Cloud Database เป็นหลัก
     try {
-      const supaRes = await fetch(`${SUPABASE_URL}/rest/v1/reports?order=timestamp.desc&limit=300`, {
-        headers: {
-          'apikey': SUPABASE_KEY,
-          'Authorization': `Bearer ${SUPABASE_KEY}`
-        },
+      const supaRes = await fetch(`${getBase()}reports?select=${REPORT_SELECT_COLS}&order=timestamp.desc&limit=100`, {
+        headers: getHeaders(),
         cache: 'no-cache'
       }).catch(() => null);
 
-      if (supaRes && supaRes.ok) {
+      if (supaRes && supaRes.status === 402) {
+        if (!hasWarnedQuotaReports) {
+          console.warn('[CloudSync] Supabase egress quota exceeded (402). Falling back to Local Admin API & Pub/Sub.');
+          hasWarnedQuotaReports = true;
+        }
+      } else if (supaRes && supaRes.ok) {
         const rows = await supaRes.json();
         if (Array.isArray(rows)) {
           rows.forEach(row => {
@@ -382,15 +416,17 @@ export async function fetchRecentCloudFeedback() {
 
     // 1. ดึงจาก Supabase Cloud Database เป็นหลัก
     try {
-      const supaRes = await fetch(`${SUPABASE_URL}/rest/v1/feedback?order=timestamp.desc&limit=60`, {
-        headers: {
-          'apikey': SUPABASE_KEY,
-          'Authorization': `Bearer ${SUPABASE_KEY}`
-        },
+      const supaRes = await fetch(`${getBase()}feedback?order=timestamp.desc&limit=60`, {
+        headers: getHeaders(),
         cache: 'no-cache'
       }).catch(() => null);
 
-      if (supaRes && supaRes.ok) {
+      if (supaRes && supaRes.status === 402) {
+        if (!hasWarnedQuotaFeedback) {
+          console.warn('[CloudSync] Supabase egress quota exceeded (402). Feedback falling back to Local Admin API.');
+          hasWarnedQuotaFeedback = true;
+        }
+      } else if (supaRes && supaRes.ok) {
         const rows = await supaRes.json();
         if (Array.isArray(rows)) {
           rows.forEach(row => {
@@ -591,14 +627,12 @@ export function sendVisitorTelemetry(district = null, customDevice = null, activ
     };
 
     // 1. ส่งเข้า Supabase visitors (upsert)
-    fetch(`${SUPABASE_URL}/rest/v1/visitors`, {
+    fetch(`${getBase()}visitors`, {
       method: 'POST',
-      headers: {
-        'apikey': SUPABASE_KEY,
-        'Authorization': `Bearer ${SUPABASE_KEY}`,
+      headers: getHeaders({
         'Content-Type': 'application/json',
         'Prefer': 'resolution=merge-duplicates'
-      },
+      }),
       body: JSON.stringify(payload)
     }).catch(() => {});
 

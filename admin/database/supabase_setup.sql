@@ -9,6 +9,68 @@
 create extension if not exists pgcrypto with schema extensions;
 
 -- ---------------------------------------------------------------------
+-- 0) ฐานข้อมูลหลัก (สร้างตารางถ้ายังไม่มี สำหรับโปรเจกต์ใหม่)
+-- ---------------------------------------------------------------------
+create table if not exists public.reports (
+  id                 text primary key,
+  hazard_type        text default 'flood',
+  name               text,
+  subdistrict        text,
+  district           text,
+  lat                double precision,
+  lng                double precision,
+  body_level         text,
+  body_level_label   text,
+  depth_cm           integer,
+  depth_range        text,
+  level              integer default 2,
+  traffic_status     text,
+  cause              text,
+  official_guidance  text,
+  source             text default 'รายงานจากประชาชน',
+  phone              text,
+  photo_url          text,
+  is_approved        boolean default false,
+  is_resolved        boolean default false,
+  reported_at        timestamptz default now(),
+  timestamp          bigint,
+  created_at         timestamptz default now()
+);
+alter table public.reports enable row level security;
+drop policy if exists reports_all on public.reports;
+create policy reports_all on public.reports for all to anon, authenticated using (true) with check (true);
+
+create table if not exists public.feedback (
+  id             text primary key,
+  category       text default 'suggestion',
+  category_label text default 'ทั่วไป',
+  rating         integer default 5,
+  message        text not null,
+  sender_name    text,
+  contact        text,
+  admin_note     text,
+  is_read        boolean default false,
+  submitted_at   timestamptz default now(),
+  timestamp      bigint,
+  created_at     timestamptz default now()
+);
+alter table public.feedback enable row level security;
+drop policy if exists feedback_all on public.feedback;
+create policy feedback_all on public.feedback for all to anon, authenticated using (true) with check (true);
+
+create table if not exists public.visitors (
+  session_id     text primary key,
+  device         text,
+  district       text,
+  page           text,
+  last_ping      timestamptz default now(),
+  created_at     timestamptz default now()
+);
+alter table public.visitors enable row level security;
+drop policy if exists visitors_all on public.visitors;
+create policy visitors_all on public.visitors for all to anon, authenticated using (true) with check (true);
+
+-- ---------------------------------------------------------------------
 -- 1) visitors : เก็บข้อมูลผู้ใช้จริงละเอียดขึ้น + เวลาจากเซิร์ฟเวอร์ (เที่ยงตรง)
 -- ---------------------------------------------------------------------
 alter table public.visitors add column if not exists device_id  text;   -- รหัสอุปกรณ์ (กันนับซ้ำ)

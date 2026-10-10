@@ -196,7 +196,7 @@ export default function CitizenReportModal({
 
     setPhotoFile(file);
     try {
-      const optimized = await compressImage(file, 1200, 1200, 0.8);
+      const optimized = await compressImage(file, 640, 640, 0.55);
       if (optimized) {
         setPhotoPreview(optimized);
       }
