@@ -4,10 +4,17 @@
 import { isPointInSamutPrakan } from '../data/samutPrakanBoundary';
 
 
+import { sanitizeReportPayload, sanitizeFeedbackPayload } from './securityService';
+
 export function getSupabaseUrl() {
   if (typeof localStorage !== 'undefined') {
     const custom = localStorage.getItem('pg_supabase_url');
-    if (custom && custom.trim().startsWith('http')) return custom.trim().replace(/\/+$/, '');
+    if (custom && custom.includes('cnjufleeibbgmpvuvrpg')) {
+      localStorage.removeItem('pg_supabase_url');
+      localStorage.removeItem('pg_supabase_key');
+    } else if (custom && custom.trim().startsWith('http')) {
+      return custom.trim().replace(/\/+$/, '');
+    }
   }
   return 'https://uyszfmcumloxwuojmndy.supabase.co';
 }
@@ -15,7 +22,12 @@ export function getSupabaseUrl() {
 export function getSupabaseKey() {
   if (typeof localStorage !== 'undefined') {
     const custom = localStorage.getItem('pg_supabase_key');
-    if (custom && custom.trim()) return custom.trim();
+    const customUrl = localStorage.getItem('pg_supabase_url');
+    if (customUrl && customUrl.includes('cnjufleeibbgmpvuvrpg')) {
+      localStorage.removeItem('pg_supabase_key');
+    } else if (custom && custom.trim()) {
+      return custom.trim();
+    }
   }
   return 'sb_publishable_Y73zrfwvP8NnXyjJ5q6bSA_xYqU0jF7';
 }
@@ -163,17 +175,18 @@ export function isValidFeedback(f) {
  */
 export async function publishCloudReport(report) {
   try {
-    if (!isValidReport(report)) {
-      console.warn('[CloudSync] Report missing valid coordinates, skipping publish:', report);
+    const safeReport = sanitizeReportPayload(report) || report;
+    if (!isValidReport(safeReport)) {
+      console.warn('[CloudSync] Report missing valid coordinates, skipping publish:', safeReport);
       return false;
     }
-    const isHail = report.hazardType === 'hail';
+    const isHail = safeReport.hazardType === 'hail';
     const asciiTitle = isHail ? 'PrakanGuard Hail Report' : 'PrakanGuard Flood Report';
-    const payload = JSON.stringify(report);
+    const payload = JSON.stringify(safeReport);
 
     // 1. ส่งขึ้น Supabase Cloud Database (ศูนย์ข้อมูลกลาง 24 ชม. ทุกเครื่องเข้าถึงได้)
     try {
-      const supaBody = JSON.stringify(toSupabaseReport(report));
+      const supaBody = JSON.stringify(toSupabaseReport(safeReport));
       fetch(`${getBase()}reports`, {
         method: 'POST',
         headers: getHeaders({
@@ -201,7 +214,7 @@ export async function publishCloudReport(report) {
         headers: {
           'Content-Type': 'application/json; charset=utf-8',
           'Title': asciiTitle,
-          'Priority': report.level === 3 ? 'urgent' : 'high',
+          'Priority': safeReport.level === 3 ? 'urgent' : 'high',
           'Tags': isHail ? 'ice_cube,cloud_with_rain' : 'droplet,warning'
         },
         body: payload
@@ -220,13 +233,14 @@ export async function publishCloudReport(report) {
  */
 export async function publishCloudFeedback(feedback) {
   try {
-    if (!isValidFeedback(feedback)) return false;
+    const safeFeedback = sanitizeFeedbackPayload(feedback) || feedback;
+    if (!isValidFeedback(safeFeedback)) return false;
     const asciiTitle = 'PrakanGuard Citizen Feedback';
-    const payload = JSON.stringify(feedback);
+    const payload = JSON.stringify(safeFeedback);
 
     // 1. ส่งขึ้น Supabase Cloud Database
     try {
-      const supaBody = JSON.stringify(toSupabaseFeedback(feedback));
+      const supaBody = JSON.stringify(toSupabaseFeedback(safeFeedback));
       fetch(`${getBase()}feedback`, {
         method: 'POST',
         headers: getHeaders({

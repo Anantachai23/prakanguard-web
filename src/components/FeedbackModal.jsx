@@ -12,8 +12,8 @@ import {
   User,
   Phone,
   HelpCircle,
-  Lightbulb
 } from 'lucide-react';
+import { checkRateLimit, sanitizeFeedbackPayload } from '../services/securityService';
 
 export const FEEDBACK_CATEGORIES = [
   { id: 'suggestion', label: '💡 ข้อเสนอแนะฟีเจอร์ใหม่', desc: 'อยากให้มีฟังก์ชันหรือการแสดงผลเพิ่มเติม' },
@@ -42,6 +42,14 @@ export default function FeedbackModal({ isOpen, onClose, theme = 'light', onFeed
       setErrorMsg('กรุณากรอกข้อความข้อเสนอแนะหรือข้อติชมของคุณ');
       return;
     }
+
+    // Security Gate: Rate Limiting
+    const rateCheck = checkRateLimit('citizen_feedback', 25);
+    if (!rateCheck.allowed) {
+      setErrorMsg(`คุณส่งข้อเสนอแนะเร็วเกินไป เพื่อความปลอดภัยกรุณารออีก ${rateCheck.waitSeconds} วินาที`);
+      return;
+    }
+
     setErrorMsg('');
     setIsSubmitting(true);
 
@@ -54,7 +62,7 @@ export default function FeedbackModal({ isOpen, onClose, theme = 'light', onFeed
 
     const catMeta = FEEDBACK_CATEGORIES.find(c => c.id === category) || FEEDBACK_CATEGORIES[0];
 
-    const newFeedback = {
+    const rawFeedback = {
       id: 'fb-' + Date.now(),
       category: category,
       categoryLabel: catMeta.label,
@@ -66,6 +74,8 @@ export default function FeedbackModal({ isOpen, onClose, theme = 'light', onFeed
       timestamp: Date.now(),
       isRead: false
     };
+
+    const newFeedback = sanitizeFeedbackPayload(rawFeedback) || rawFeedback;
 
     try {
       const existingStr = localStorage.getItem('prakanguard_feedback_items');

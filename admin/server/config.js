@@ -12,8 +12,8 @@ const VISITORS_FILE = path.join(DATA_DIR, 'visitors.json');
 const TRASH_FILE = path.join(DATA_DIR, 'trash.json');
 
 // Supabase Cloud Database Configuration
-const SUPABASE_URL = 'https://cnjufleeibbgmpvuvrpg.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_cwxpTPIFXkyWVgXksZASAQ_76DreEAw';
+const SUPABASE_URL = 'https://uyszfmcumloxwuojmndy.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_Y73zrfwvP8NnXyjJ5q6bSA_xYqU0jF7';
 
 // Cloud ntfy.sh Topics (Multi-Topic with Fallbacks)
 const CLOUD_REPORTS_TOPICS = [

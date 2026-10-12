@@ -15,6 +15,7 @@ import {
 import { SAMUT_PRAKAN_DISTRICTS_DATA } from '../data/samutPrakanDistricts';
 import { detectDistrictForCoordinates, isPointInSamutPrakan, detectSubdistrictForLocation } from '../data/samutPrakanBoundary';
 import { getDetailedDeviceInfo } from '../services/cloudSyncService';
+import { checkRateLimit, sanitizeReportPayload } from '../services/securityService';
 
 // ระดับน้ำตามส่วนของร่างกาย (อวัยวะ) ตามความต้องการของผู้ใช้งาน
 export const BODY_WATER_LEVELS = [
@@ -229,6 +230,13 @@ export default function CitizenReportModal({
       return;
     }
 
+    // Security Gate: Rate Limiting (ป้องกันการส่งรัว/สแปมบอท)
+    const rateCheck = checkRateLimit('citizen_report', 30);
+    if (!rateCheck.allowed) {
+      alert(`คุณส่งรายงานเร็วเกินไป เพื่อความปลอดภัยของระบบ กรุณารออีก ${rateCheck.waitSeconds} วินาที`);
+      return;
+    }
+
     setIsSubmitting(true);
 
     const bodyPartObj = BODY_WATER_LEVELS.find(l => l.id === selectedBodyPartId) || BODY_WATER_LEVELS[1];
@@ -288,8 +296,10 @@ export default function CitizenReportModal({
       source: 'รายงานจากประชาชนในพื้นที่'
     };
 
+    const sanitizedReport = sanitizeReportPayload(newReport) || newReport;
+
     if (onSubmitReport) {
-      onSubmitReport(newReport);
+      onSubmitReport(sanitizedReport);
     }
 
     setIsSubmitting(false);

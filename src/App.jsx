@@ -41,7 +41,9 @@ import {
   isValidReport,
   isValidFeedback,
   sendVisitorTelemetry,
-  getDetailedDeviceInfo
+  getDetailedDeviceInfo,
+  getSupabaseUrl,
+  getSupabaseKey
 } from './services/cloudSyncService';
 import { 
   Phone, 
@@ -770,8 +772,8 @@ export default function App() {
   });
   const [isAnnouncementModalOpen, setIsAnnouncementModalOpen] = useState(false);
 
-  const SUPABASE_URL_ANN = 'https://cnjufleeibbgmpvuvrpg.supabase.co';
-  const SUPABASE_KEY_ANN = 'sb_publishable_cwxpTPIFXkyWVgXksZASAQ_76DreEAw';
+  const SUPABASE_URL_ANN = getSupabaseUrl();
+  const SUPABASE_KEY_ANN = getSupabaseKey();
   const LS_ANN_DISMISSED = 'pg_dismissed_announcements_v2';
   const lsAnnDismissed = () => { try { return new Set(JSON.parse(localStorage.getItem(LS_ANN_DISMISSED) || '[]')); } catch { return new Set(); } };
   const lsAnnAddDismiss = (id) => { try { const s = lsAnnDismissed(); s.add(id); localStorage.setItem(LS_ANN_DISMISSED, JSON.stringify([...s])); } catch {} };
@@ -1315,11 +1317,11 @@ export default function App() {
             if (lifecycleResult.newlyClearedPoints && lifecycleResult.newlyClearedPoints.length > 0) {
               lifecycleResult.newlyClearedPoints.forEach(p => {
                 if (p.id && (p.id.startsWith('citizen') || p.id.startsWith('c_'))) {
-                  fetch(`${SUPABASE_URL}/rest/v1/reports?id=eq.${encodeURIComponent(p.id)}`, {
+                  fetch(`${getSupabaseUrl()}/rest/v1/reports?id=eq.${encodeURIComponent(p.id)}`, {
                     method: 'PATCH',
                     headers: {
-                      'apikey': SUPABASE_KEY,
-                      'Authorization': `Bearer ${SUPABASE_KEY}`,
+                      'apikey': getSupabaseKey(),
+                      'Authorization': `Bearer ${getSupabaseKey()}`,
                       'Content-Type': 'application/json',
                       'Prefer': 'return=minimal'
                     },
