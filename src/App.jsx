@@ -143,8 +143,9 @@ export default function App() {
       localStorage.removeItem('prakanguard_points_state_v6');
       localStorage.removeItem('prakanguard_points_state_v7');
       localStorage.removeItem('prakanguard_points_state_v8');
+      localStorage.removeItem('prakanguard_points_state_v9');
       
-      const saved = localStorage.getItem('prakanguard_points_state_v9');
+      const saved = localStorage.getItem('prakanguard_points_state_v10');
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
@@ -203,7 +204,7 @@ export default function App() {
             .map(realignPointLocation)
             .filter(p => p && typeof p.lat === 'number' && typeof p.lng === 'number' && isPointInSamutPrakan(p.lat, p.lng));
           try {
-            localStorage.setItem('prakanguard_points_state_v9', JSON.stringify(cleanedList));
+            localStorage.setItem('prakanguard_points_state_v10', JSON.stringify(cleanedList));
           } catch (e) {}
 
           return cleanedList;
@@ -247,7 +248,7 @@ export default function App() {
   useEffect(() => {
     pointsRef.current = points;
     try {
-      localStorage.setItem('prakanguard_points_state_v9', JSON.stringify(points));
+      localStorage.setItem('prakanguard_points_state_v10', JSON.stringify(points));
     } catch (e) {}
   }, [points]);
 
@@ -2046,7 +2047,7 @@ export default function App() {
       const filtered = prev.filter(p => p.id !== newPoint.id);
       const updated = [newPoint, ...filtered];
       try {
-        localStorage.setItem('prakanguard_points_state_v9', JSON.stringify(updated));
+        localStorage.setItem('prakanguard_points_state_v10', JSON.stringify(updated));
       } catch (e) {}
       return updated;
     });
@@ -2073,7 +2074,7 @@ export default function App() {
         return merged;
       });
       try {
-        localStorage.setItem('prakanguard_points_state_v9', JSON.stringify(updated));
+        localStorage.setItem('prakanguard_points_state_v10', JSON.stringify(updated));
       } catch (e) {}
       return updated;
     });
@@ -2090,7 +2091,7 @@ export default function App() {
     setPoints(prev => {
       const updated = prev.filter(p => p.id !== pointId);
       try {
-        localStorage.setItem('prakanguard_points_state_v9', JSON.stringify(updated));
+        localStorage.setItem('prakanguard_points_state_v10', JSON.stringify(updated));
       } catch (e) {}
       return updated;
     });
@@ -2110,7 +2111,7 @@ export default function App() {
       const newItems = pointsToImport.filter(p => !existingIds.has(p.id) && !existingNames.has(p.name));
       const updated = [...newItems, ...prev];
       try {
-        localStorage.setItem('prakanguard_points_state_v9', JSON.stringify(updated));
+        localStorage.setItem('prakanguard_points_state_v10', JSON.stringify(updated));
       } catch (e) {}
       return updated;
     });
@@ -2133,7 +2134,7 @@ export default function App() {
     });
     setPoints(defaultPoints);
     try {
-      localStorage.setItem('prakanguard_points_state_v9', JSON.stringify(defaultPoints));
+      localStorage.setItem('prakanguard_points_state_v10', JSON.stringify(defaultPoints));
     } catch (e) {}
   };
 
