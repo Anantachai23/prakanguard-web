@@ -219,9 +219,11 @@ export default function RainForecast24hCard({
                 ? 'bg-rose-50 text-rose-700 dark:bg-rose-950/80 dark:text-rose-300 border-rose-300 dark:border-rose-800'
                 : maxProb >= 60
                 ? 'bg-amber-50 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300 border-amber-300 dark:border-amber-800'
+                : maxProb >= 40
+                ? 'bg-blue-50 text-blue-800 dark:bg-blue-950/80 dark:text-cyan-300 border-blue-200 dark:border-blue-800'
                 : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border-slate-200 dark:border-slate-700'
             }`}>
-              โอกาส {maxProb}%
+              {isRainingNow ? '🌧️ ฝนตกขณะนี้' : `โอกาส ${maxProb}%`}
             </span>
 
             {collapsible && (
@@ -322,6 +324,11 @@ export default function RainForecast24hCard({
                             {d.rainIntensityText}
                           </span>
                         )}
+                        {!d.isRainingNow && !d.hasForecastRain && d.precipitationMm > 0 && (
+                          <span className="text-[9px] px-1 py-0.2 rounded text-blue-500 dark:text-cyan-400 font-medium">
+                            ละอองฝนโปรยปราย
+                          </span>
+                        )}
                       </div>
                       <div className="text-[10px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
                         ⏱️ {d.timeWindow || 'ไม่มีแนวโน้มฝนตกหนัก'} {d.durationText ? `(${d.durationText})` : ''}
@@ -332,11 +339,15 @@ export default function RainForecast24hCard({
                   {/* Right: Rain Probability Badge */}
                   <div className="flex items-center gap-1.5 shrink-0 self-center">
                     <span className={`text-[10.5px] px-2 py-0.5 rounded-md font-bold border shrink-0 ${
-                      d.probability >= 60 
+                      d.isRainingNow
+                        ? (isDark ? 'bg-rose-950/80 text-rose-300 border-rose-800' : 'bg-rose-50 text-rose-900 border-rose-300')
+                        : d.probability >= 60 
                         ? (isDark ? 'bg-amber-950/80 text-amber-300 border-amber-800' : 'bg-amber-50 text-amber-900 border-amber-300')
+                        : d.probability >= 40
+                        ? (isDark ? 'bg-blue-950/80 text-cyan-300 border-blue-800' : 'bg-blue-50 text-blue-800 border-blue-200')
                         : (isDark ? 'bg-slate-800 text-slate-300 border-slate-700' : 'bg-slate-100 text-slate-700 border-slate-200')
                     }`}>
-                      ฝน {d.probability}%
+                      {d.isRainingNow ? 'ตกขณะนี้' : `ฝน ${d.probability}%`}
                     </span>
                   </div>
                 </div>

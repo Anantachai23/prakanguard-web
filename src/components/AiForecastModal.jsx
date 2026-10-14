@@ -53,7 +53,7 @@ export default function AiForecastModal({ isOpen, onClose, userDistrict, theme =
   const todayTitle = `วัน${thaiDays[todayDate.getDay()]}ที่ ${todayDate.getDate()} ${thaiMonths[todayDate.getMonth()]}`;
 
   const isRainingNow = weather?.forecast24h?.isRainingNow;
-  const maxProb = weather?.rainProbabilityToday ?? 50;
+  const maxProb = weather?.forecast24h?.maxProbability ?? weather?.rainProbabilityToday ?? 50;
 
   let rainTimeToday = "ไม่มีแนวโน้มฝนตกหนัก";
   if (weather?.forecast24h?.startTimeText && weather.forecast24h.startTimeText !== 'ไม่มีแนวโน้มฝนตกหนัก') {
@@ -183,9 +183,11 @@ export default function AiForecastModal({ isOpen, onClose, userDistrict, theme =
                     ? 'bg-rose-500 text-white'
                     : (userDistrictProb || maxProb) >= 60
                     ? 'bg-amber-500 text-white'
-                    : 'bg-blue-600 text-white'
+                    : (userDistrictProb || maxProb) >= 40
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-slate-600 text-white'
                 }`}>
-                  โอกาส {userDistrictProb || maxProb}%
+                  {isRainingNow || matchedDistrict?.isRainingNow ? '🌧️ ฝนตกขณะนี้' : `โอกาส ${userDistrictProb || maxProb}%`}
                 </span>
               </div>
               <div className={`text-lg sm:text-xl font-black break-words leading-snug ${isDark ? 'text-cyan-300' : 'text-blue-700'}`}>
@@ -227,18 +229,27 @@ export default function AiForecastModal({ isOpen, onClose, userDistrict, theme =
                               ตกขณะนี้
                             </span>
                           )}
-                          {d.rainIntensityText && !d.isRainingNow && (
+                          {d.rainIntensityText && !d.isRainingNow && d.hasForecastRain && (
                             <span className="text-[9.5px] px-1.5 py-0.2 rounded-md font-medium bg-blue-500/10 text-blue-600 dark:text-cyan-400">
                               {d.rainIntensityText}
                             </span>
                           )}
+                          {!d.isRainingNow && !d.hasForecastRain && d.precipitationMm > 0 && (
+                            <span className="text-[9.5px] px-1.5 py-0.2 rounded-md font-medium bg-slate-500/10 text-slate-600 dark:text-slate-400">
+                              ละอองฝนโปรยปราย
+                            </span>
+                          )}
                         </div>
                         <span className={`px-2 py-0.5 rounded-lg font-bold text-[11px] border shrink-0 ${
-                          d.probability >= 60 
+                          d.isRainingNow
+                            ? (isDark ? 'bg-rose-950/90 text-rose-300 border-rose-800' : 'bg-rose-100 text-rose-900 border-rose-300')
+                            : d.probability >= 60 
                             ? (isDark ? 'bg-amber-950/90 text-amber-300 border-amber-800' : 'bg-amber-100 text-amber-900 border-amber-300')
+                            : d.probability >= 40
+                            ? (isDark ? 'bg-blue-950/80 text-cyan-300 border-blue-800' : 'bg-blue-50 text-blue-800 border-blue-200')
                             : (isDark ? 'bg-slate-800 text-slate-300 border-slate-700' : 'bg-slate-200 text-slate-700 border-slate-300')
                         }`}>
-                          โอกาส {d.probability}%
+                          {d.isRainingNow ? 'ตกขณะนี้' : `โอกาส ${d.probability}%`}
                         </span>
                       </div>
 
