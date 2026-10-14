@@ -14,7 +14,7 @@ import {
   restoreFromTrash, purgeTrash, fetchReportPhoto, fetchAnnouncements, 
   createAnnouncement, setAnnouncementActive, deleteAnnouncement, 
   fetchAdminSessions, buildBackup, serverNow, fetchPublicIp, rest,
-  fetchSupabasePing, fetchTableSample
+  fetchSupabasePing, fetchTableSample, fetchOfficialPoints
 } from './api.js';
 import { currentAdmin, login, logout, changePassword, adminDeviceLabel } from './auth.js';
 
@@ -87,6 +87,7 @@ const state = {
   reportsDistrict: 'all',
   reportsSearch: '',
   selectedReports: new Set(),
+  officialPoints: [],
 
   // Interactive Leaflet Map State
   reportsMap: null,
@@ -327,15 +328,16 @@ export async function refreshAllData(forceCharts = false, isUserTriggered = fals
       } catch (e) {}
     }
 
-    // 1. Fetch live visitors & reports in parallel
-    const [online, today, rep, fb, tr, ann, logs] = await Promise.all([
+    // 1. Fetch live visitors, reports & official telemetry points in parallel
+    const [online, today, rep, fb, tr, ann, logs, offPoints] = await Promise.all([
       fetchOnlineSessions(ONLINE_WINDOW_MS).catch(() => []),
       fetchTodaySessions(startOfBangkokDay()).catch(() => []),
       fetchReports().catch(() => []),
       fetchFeedback().catch(() => []),
       fetchTrash().catch(() => []),
       fetchAnnouncements().catch(() => []),
-      fetchAdminSessions().catch(() => [])
+      fetchAdminSessions().catch(() => []),
+      fetchOfficialPoints().catch(() => [])
     ]);
 
     // Detect incoming submissions and alert immediately
@@ -360,6 +362,7 @@ export async function refreshAllData(forceCharts = false, isUserTriggered = fals
     state.trash = tr;
     state.announcements = ann;
     state.adminSessions = logs;
+    state.officialPoints = offPoints;
     state.lastLiveRefresh = Date.now();
 
     // Actively delete any remaining work PC session rows from database
@@ -680,14 +683,28 @@ function renderOverviewAutoCleared() {
   const subEl = $('#stat-auto-cleared-sub');
   const badgeEl = $('#badge-overview-auto-cleared');
 
-  const autoClearedList = state.reports.filter(r => 
+  const autoClearedReports = (state.reports || []).filter(r => 
     r.autoRemovedBecauseDry === true || 
     r.is_resolved === true || 
     r.isResolved === true || 
     (r.depth_cm !== undefined && r.depth_cm <= 0) || 
     (r.depthCm !== undefined && r.depthCm <= 0)
-  );
+  ).map(r => ({ ...r, isOfficial: false }));
 
+  const autoClearedOfficial = (state.officialPoints || []).filter(p => 
+    p.autoRemovedBecauseDry === true || 
+    p.isResolved === true || 
+    p.isActive === false || 
+    (p.depthCm !== undefined && p.depthCm <= 0)
+  ).map(p => ({
+    ...p,
+    isOfficial: true,
+    autoRemovedBecauseDry: p.autoRemovedBecauseDry !== undefined ? p.autoRemovedBecauseDry : true,
+    dry_reason: p.dryReason || 'จุดตรวจวัดหลัก 24 ชม. ระดับน้ำลดเหลือ 0 ซม. สภาพอากาศแห้งปกติ',
+    linked_point_name: 'สถานีตรวจวัดอัตโนมัติ Open-Meteo & TMD'
+  }));
+
+  const autoClearedList = [...autoClearedReports, ...autoClearedOfficial];
   const autoAiCount = autoClearedList.filter(r => r.autoRemovedBecauseDry).length;
 
   if (statEl) statEl.textContent = autoClearedList.length;
@@ -708,7 +725,7 @@ function renderOverviewAutoCleared() {
     return;
   }
 
-  autoClearedList.slice(0, 10).forEach(r => {
+  autoClearedList.slice(0, 15).forEach(r => {
     const originalDepth = (r.depth_cm && r.depth_cm > 0) ? r.depth_cm : (r.depthCm && r.depthCm > 0) ? r.depthCm : 20;
     const isAiCleared = !!r.autoRemovedBecauseDry;
     const timeStr = r.cleared_at || r.clearedAt || (r.resolved_at ? dateTime(r.resolved_at) : (r.timestamp ? dateTime(r.timestamp) : 'ล่าสุด'));
@@ -717,8 +734,11 @@ function renderOverviewAutoCleared() {
     const tr = h('tr', {},
       // Name
       h('td', {},
-        h('div', { style: { fontWeight: 600, color: '#ffffff' } }, r.name || 'จุดแจ้งเหตุ'),
-        h('div', { class: 'text-muted', style: { fontSize: '11px', marginTop: '2px' } }, r.cause ? `หมายเหตุเดิม: ${r.cause}` : '')
+        h('div', { style: { fontWeight: 600, color: '#ffffff', display: 'flex', alignItems: 'center', gap: '6px' } },
+          r.name || 'จุดแจ้งเหตุ',
+          r.isOfficial ? h('span', { class: 'badge badge-primary', style: 'font-size: 9.5px; padding: 1px 5px;' }, 'จุดตรวจการณ์') : null
+        ),
+        h('div', { class: 'text-muted', style: { fontSize: '11px', marginTop: '2px' } }, r.cause ? `หมายเหตุเดิม: ${r.cause}` : (r.roadSegment || ''))
       ),
       // District / Subdistrict
       h('td', {},
@@ -754,7 +774,13 @@ function renderOverviewAutoCleared() {
             type: 'button',
             class: 'btn btn-success btn-sm',
             title: 'กู้คืนจุดนี้กลับขึ้นแผนที่หากยังมีน้ำท่วมขังอยู่',
-            onclick: () => handleRestoreDryReportSingle(r),
+            onclick: () => {
+              if (r.isOfficial) {
+                handleRestoreOfficialPoint(r);
+              } else {
+                handleRestoreDryReportSingle(r);
+              }
+            },
             html: '🔄 กู้คืน'
           }),
           r.lat && r.lng ? h('button', {
@@ -763,7 +789,8 @@ function renderOverviewAutoCleared() {
             title: 'ดูพิกัดบนแผนที่',
             onclick: () => {
               switchTab('reports');
-              window.__pgFlyToReport && window.__pgFlyToReport(r.id);
+              const markerId = r.isOfficial ? `official_${r.id}` : r.id;
+              window.__pgFlyToReport && window.__pgFlyToReport(markerId);
             },
             html: icon('pin', 12)
           }) : null
@@ -772,6 +799,39 @@ function renderOverviewAutoCleared() {
     );
     tbody.appendChild(tr);
   });
+}
+
+function handleRestoreOfficialPoint(point) {
+  try {
+    const raw = localStorage.getItem('prakanguard_points_state_v10');
+    let points = raw ? JSON.parse(raw) : state.officialPoints;
+    points = points.map(p => {
+      if (p.id === point.id) {
+        return {
+          ...p,
+          isActive: true,
+          isResolved: false,
+          autoRemovedBecauseDry: false,
+          depthCm: p.originalDepthCm || 15,
+          level: p.originalLevel || 1,
+          statusLabel: 'เฝ้าระวังน้ำขัง (กู้คืนโดยแอดมิน)',
+          waterTrend: 'stable'
+        };
+      }
+      return p;
+    });
+    localStorage.setItem('prakanguard_points_state_v10', JSON.stringify(points));
+    state.officialPoints = points;
+    toast(`🔄 กู้คืนจุดตรวจการณ์ "${point.name}" กลับขึ้นแผนที่เรียบร้อยแล้ว`, 'success');
+    renderOverviewAutoCleared();
+    if (state.reportsMap) updateReportsMapMarkers(state.reports);
+    try {
+      const bc = new BroadcastChannel('pg_points_sync');
+      bc.postMessage({ type: 'POINTS_UPDATED' });
+    } catch (e) {}
+  } catch (err) {
+    toast('ไม่สามารถกู้คืนจุดตรวจการณ์ได้', 'error');
+  }
 }
 
 /* ------------------------------------------------------------- 2. CHARTS (Futuristic Obsidian Visuals) */
@@ -1210,18 +1270,19 @@ function initReportsMap() {
 
   // Global helper for flying to report from table
   window.__pgFlyToReport = (reportId) => {
-    const marker = state.markerMap.get(reportId);
-    const rep = state.reports.find(x => x.id === reportId);
+    const marker = state.markerMap.get(reportId) || state.markerMap.get(`official_${reportId}`);
+    const rep = state.reports.find(x => x.id === reportId) || (state.officialPoints || []).find(x => `official_${x.id}` === reportId || x.id === reportId);
     if (marker && rep) {
-      const coords = getReportCoordinates(rep);
+      const lat = marker.getLatLng().lat;
+      const lng = marker.getLatLng().lng;
       container.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      map.flyTo(marker.getLatLng(), 16, { animate: true, duration: 0.85 });
+      map.flyTo([lat, lng], 16, { animate: true, duration: 0.85 });
       
       // Highlight Beacon Pulse Ring
       if (state.activePulseCircle) {
         state.reportsMap.removeLayer(state.activePulseCircle);
       }
-      state.activePulseCircle = L.circleMarker(marker.getLatLng(), {
+      state.activePulseCircle = L.circleMarker([lat, lng], {
         radius: 20,
         color: '#38bdf8',
         fillColor: '#38bdf8',
@@ -1238,7 +1299,7 @@ function initReportsMap() {
       }, 4000);
 
       setTimeout(() => marker.openPopup(), 750);
-      toast(`📍 โฟกัสพิกัด ${coords.lat.toFixed(4)}, ${coords.lng.toFixed(4)}: ${rep.name || 'จุดแจ้งเหตุ'}`, 'info');
+      toast(`📍 โฟกัสพิกัด ${lat.toFixed(4)}, ${lng.toFixed(4)}: ${rep.name || 'จุดแจ้งเหตุ'}`, 'info');
     } else {
       toast('จุดรายงานนี้ไม่มีพิกัด GPS ที่ระบุได้', 'warning');
     }
@@ -1352,13 +1413,56 @@ function updateReportsMapMarkers(list) {
   state.reportsMarkersLayer.clearLayers();
   state.markerMap.clear();
 
-  let validCount = 0;
+  let validCitizenCount = 0;
+  let validOfficialCount = 0;
 
+  // 1. Filter official points based on state.reportsFilter, state.reportsDistrict, and state.reportsSearch
+  let filteredOfficialPoints = [];
+  if (Array.isArray(state.officialPoints) && state.officialPoints.length > 0) {
+    filteredOfficialPoints = state.officialPoints.filter(p => {
+      if (!p || typeof p.lat !== 'number' || typeof p.lng !== 'number') return false;
+
+      // Filter by status:
+      // 'pending' -> official points are verified/monitoring points, not pending user reports
+      if (state.reportsFilter === 'pending') {
+        return false;
+      } else if (state.reportsFilter === 'approved') {
+        // Active flood points only
+        const isDry = p.autoRemovedBecauseDry === true || p.isResolved === true || p.isActive === false || (p.depthCm !== undefined && p.depthCm <= 0);
+        if (isDry) return false;
+      } else if (state.reportsFilter === 'dry') {
+        // Dry/auto-cleared points only
+        const isDry = p.autoRemovedBecauseDry === true || p.isResolved === true || p.isActive === false || (p.depthCm !== undefined && p.depthCm <= 0);
+        if (!isDry) return false;
+      }
+
+      // Filter by District:
+      if (state.reportsDistrict !== 'all') {
+        const dNorm = (p.district || '').replace(/^อ\./, '').replace(/^อำเภอ/, '').trim();
+        const selNorm = state.reportsDistrict.replace(/^อ\./, '').replace(/^อำเภอ/, '').trim();
+        if (dNorm !== selNorm && !dNorm.includes(selNorm)) return false;
+      }
+
+      // Filter by Search:
+      if (state.reportsSearch) {
+        const q = state.reportsSearch.toLowerCase();
+        const matchesName = (p.name || '').toLowerCase().includes(q);
+        const matchesDist = (p.district || '').toLowerCase().includes(q);
+        const matchesSub = (p.subdistrict || '').toLowerCase().includes(q);
+        const matchesRoad = (p.roadSegment || '').toLowerCase().includes(q);
+        if (!matchesName && !matchesDist && !matchesSub && !matchesRoad) return false;
+      }
+
+      return true;
+    });
+  }
+
+  // 2. Render Citizen Reports
   list.forEach(r => {
     const { lat, lng, isValid } = getReportCoordinates(r);
     if (!isValid) return;
 
-    validCount++;
+    validCitizenCount++;
     const isApproved = !!(r.is_approved || r.isApproved);
     const isPending = !isApproved;
     const lv = levelInfo(r);
@@ -1377,9 +1481,9 @@ function updateReportsMapMarkers(list) {
 
     const customIcon = L.divIcon({
       className: '',
-      html: `<div class="admin-map-pin ${pinClass} ${isPending ? 'is-pending' : ''}" style="width: 32px; height: 32px;" title="${esc(r.name || 'จุดแจ้งเหตุน้ำท่วม')} (${lat.toFixed(4)}, ${lng.toFixed(4)})">${iconEmoji}</div>`,
-      iconSize: [32, 32],
-      iconAnchor: [16, 16],
+      html: `<div class="admin-map-pin ${pinClass} ${isPending ? 'is-pending' : ''}" style="width: 34px; height: 34px;" title="${esc(r.name || 'จุดแจ้งเหตุน้ำท่วม')} (${lat.toFixed(4)}, ${lng.toFixed(4)})">${iconEmoji}</div>`,
+      iconSize: [34, 34],
+      iconAnchor: [17, 17],
       popupAnchor: [0, -18]
     });
 
@@ -1393,6 +1497,7 @@ function updateReportsMapMarkers(list) {
       <div class="admin-popup-card">
         <div class="admin-popup-top">
           <div style="flex: 1; padding-right: 8px;">
+            <div style="font-size: 10px; color: #38bdf8; font-weight: 700; text-transform: uppercase; margin-bottom: 2px;">👥 รายงานจากประชาชน</div>
             <h4 class="admin-popup-title">${esc(r.name || 'จุดแจ้งเหตุน้ำท่วม')}</h4>
             <p class="admin-popup-subtitle">อ.${esc(r.district || 'เมืองสมุทรปราการ')} ${r.subdistrict ? 'ต.' + esc(r.subdistrict) : ''}</p>
           </div>
@@ -1489,20 +1594,146 @@ function updateReportsMapMarkers(list) {
     state.markerMap.set(r.id, marker);
   });
 
+  // 3. Render Official Flood Monitoring Points (จุดตรวจการณ์หลัก 24 ชม. ของเว็บหลัก)
+  filteredOfficialPoints.forEach(p => {
+    const lat = Number(p.lat);
+    const lng = Number(p.lng);
+    if (isNaN(lat) || isNaN(lng)) return;
+
+    validOfficialCount++;
+    const lv = levelInfo(p);
+    const depthNum = Number(p.depthCm || p.depth_cm || 0);
+    const isDry = p.autoRemovedBecauseDry === true || p.isResolved === true || p.isActive === false || depthNum <= 0;
+    const isFalling = p.waterTrend === 'falling' || (p.statusLabel && p.statusLabel.includes('ลด'));
+
+    let pinClass = 'pin-l2';
+    let iconEmoji = '🌊';
+    if (p.level === 3 || depthNum > 50) {
+      pinClass = 'pin-l3';
+      iconEmoji = '⚠️';
+    } else if (p.level === 1 || (depthNum > 0 && depthNum <= 20)) {
+      pinClass = 'pin-l1';
+    }
+
+    if (isDry) {
+      pinClass = 'pin-dry';
+      iconEmoji = '💧';
+    }
+
+    const depthBadge = depthNum > 0 ? `${depthNum}` : (isDry ? '0' : '');
+
+    const customIcon = L.divIcon({
+      className: '',
+      html: `
+        <div class="admin-map-pin pin-official ${pinClass}" style="width: 36px; height: 36px; position: relative;" title="[จุดตรวจการณ์หลัก 24 ชม.] ${esc(p.name)} (${lat.toFixed(4)}, ${lng.toFixed(4)})">
+          <span class="pin-official-tag">หลัก</span>
+          ${isFalling ? '<span class="pin-falling-tag" style="position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%); font-size: 8px; background: #059669; color: #fff; padding: 0 3px; border-radius: 4px; border: 1px solid #fff; white-space: nowrap;">น้ำลด</span>' : ''}
+          <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1;">
+            <span style="font-size: 11px;">${iconEmoji}</span>
+            ${depthBadge ? `<span style="font-size: 9px; font-weight: 800; font-family: var(--font-sans); margin-top: 1px;">${depthBadge}</span>` : ''}
+          </div>
+        </div>
+      `,
+      iconSize: [36, 36],
+      iconAnchor: [18, 18],
+      popupAnchor: [0, -20]
+    });
+
+    const marker = L.marker([lat, lng], { icon: customIcon });
+
+    const agencyText = p.cause && p.cause.includes('น้ำทะเล')
+      ? 'กรมอุทกศาสตร์ กองทัพเรือ (สถานีป้อมพระจุลฯ)'
+      : 'กรมอุตุนิยมวิทยา (เรดาร์สุวรรณภูมิ) & กรมชลประทาน';
+
+    const depthText = isDry 
+      ? '0 ซม. (ระบายแห้งแล้ว)' 
+      : `${depthNum > 0 ? depthNum + ' ซม.' : lv.range} (${lv.label})`;
+
+    const statusBadgeHtml = isDry
+      ? `<span class="badge" style="background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4);">🟢 น้ำแห้งปกติ</span>`
+      : `<span class="badge badge-ok">📡 ตรวจการณ์สด 24 ชม.</span>`;
+
+    const popupContent = `
+      <div class="admin-popup-card">
+        <div class="admin-popup-top">
+          <div style="flex: 1; padding-right: 8px;">
+            <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 3px;">
+              <span class="badge" style="background: rgba(56, 189, 248, 0.2); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.4); font-size: 10px; font-weight: 700;">📡 จุดตรวจการณ์หลัก 24 ชม.</span>
+              ${isFalling ? '<span class="badge badge-ok" style="font-size: 10px;">📉 น้ำกำลังลด</span>' : ''}
+            </div>
+            <h4 class="admin-popup-title">${esc(p.name)}</h4>
+            <p class="admin-popup-subtitle">อ.${esc(p.district || 'เมืองสมุทรปราการ')} ${p.subdistrict ? 'ต.' + esc(p.subdistrict) : ''} · ${esc(p.roadSegment || '')}</p>
+          </div>
+          ${statusBadgeHtml}
+        </div>
+
+        <div class="popup-coord-box">
+          <div class="popup-coord-info">
+            <span style="font-size: 13px;">📍</span>
+            <div>
+              <div style="font-size: 10px; color: var(--text-muted);">พิกัด GPS อ้างอิง</div>
+              <div class="popup-coord-val">${lat.toFixed(5)}, ${lng.toFixed(5)}</div>
+            </div>
+          </div>
+          <button type="button" class="btn-copy-mini" onclick="window.__pgCopyCoords(${lat}, ${lng}, event)" title="คัดลอกพิกัด">
+            📋 คัดลอก
+          </button>
+        </div>
+
+        <div class="admin-popup-details">
+          <div class="admin-popup-row">
+            <span class="text-muted">ระดับน้ำขัง:</span>
+            <strong style="color: ${isDry ? '#34d399' : 'var(--primary)'};">${depthText}</strong>
+          </div>
+          <div class="admin-popup-row">
+            <span class="text-muted">สภาพการจราจร:</span>
+            <span>${p.trafficStatus || 'สัญจรคล่องตัว'}</span>
+          </div>
+          <div class="admin-popup-row">
+            <span class="text-muted">สถานะจุด:</span>
+            <span>${p.statusLabel || (isDry ? 'พื้นผิวจราจรแห้งปกติ' : 'เฝ้าระวังน้ำขัง')}</span>
+          </div>
+          <div class="admin-popup-row">
+            <span class="text-muted">โทรมาตรอ้างอิง:</span>
+            <span style="font-size: 10.5px; color: var(--text-secondary); text-align: right; max-width: 170px;">${agencyText}</span>
+          </div>
+        </div>
+
+        <div class="admin-popup-actions">
+          <a href="https://www.google.com/maps?q=${lat},${lng}" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm" title="เปิด Google Maps นำทาง">
+            ${icon('map', 12)}
+            นำทาง Google Maps
+          </a>
+          <button type="button" class="btn btn-primary btn-sm" onclick="window.__pgCopyCoords(${lat}, ${lng}, event)" title="คัดลอกพิกัด">
+            ${icon('copy', 12)}
+            คัดลอกพิกัด
+          </button>
+        </div>
+      </div>
+    `;
+
+    marker.bindPopup(popupContent, { maxWidth: 330 });
+    marker.addTo(state.reportsMarkersLayer);
+    state.markerMap.set(`official_${p.id}`, marker);
+  });
+
+  const totalValidCount = validCitizenCount + validOfficialCount;
   const counterEl = document.getElementById('reports-map-counter');
   if (counterEl) {
-    counterEl.textContent = `${validCount} จุดพิกัด`;
+    counterEl.textContent = `${totalValidCount} จุดพิกัด (ตรงกับเว็บหลัก)`;
+    counterEl.title = `รวม ${validCitizenCount} รายงานจากประชาชน + ${validOfficialCount} จุดตรวจการณ์หลัก 24 ชม.`;
   }
 
   const filterInfoEl = document.getElementById('reports-map-filter-info');
   if (filterInfoEl) {
     const distText = state.reportsDistrict !== 'all' ? `อ.${state.reportsDistrict}` : '';
     const statusText = state.reportsFilter === 'pending' ? 'รออนุมัติ' : state.reportsFilter === 'approved' ? 'อนุมัติแล้ว' : state.reportsFilter === 'dry' ? 'น้ำแห้งแล้ว' : 'ทั้งหมด';
-    filterInfoEl.textContent = distText ? `${distText} · ${statusText}` : statusText;
+    const detailText = `(ปชช. ${validCitizenCount} + ตรวจการณ์ ${validOfficialCount})`;
+    filterInfoEl.textContent = distText ? `${distText} · ${statusText} ${detailText}` : `${statusText} ${detailText}`;
   }
 
   // Auto fit map to markers or center on Samut Prakan
-  if (validCount > 0) {
+  if (totalValidCount > 0) {
     fitReportsMapBounds();
   } else if (state.reportsMap) {
     state.reportsMap.setView([13.5991, 100.5968], 11);
@@ -3041,4 +3272,38 @@ export function initDashboard() {
       refreshAllData(false);
     }
   }, LIVE_REFRESH_MS);
+
+  // Real-time synchronization between main website and admin map for official flood points
+  if (typeof window !== 'undefined') {
+    window.addEventListener('storage', async (e) => {
+      if (e.key === 'prakanguard_points_state_v10') {
+        try {
+          const raw = e.newValue;
+          if (raw) {
+            state.officialPoints = JSON.parse(raw);
+            if (state.currentTab === 'reports') {
+              renderReports();
+            } else if (state.currentTab === 'overview') {
+              renderOverviewAutoCleared();
+            }
+          }
+        } catch (err) {}
+      }
+    });
+
+    try {
+      const pointsChannel = new BroadcastChannel('pg_points_sync');
+      pointsChannel.onmessage = async (msg) => {
+        if (msg && msg.data && msg.data.type === 'POINTS_UPDATED') {
+          state.officialPoints = await fetchOfficialPoints();
+          if (state.currentTab === 'reports') {
+            renderReports();
+          } else if (state.currentTab === 'overview') {
+            renderOverviewAutoCleared();
+          }
+        }
+      };
+    } catch (err) {}
+  }
 }
+

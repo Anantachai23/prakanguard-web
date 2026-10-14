@@ -501,3 +501,40 @@ export async function buildBackup() {
     announcements
   };
 }
+
+/* ============================================== Official Flood Points */
+export async function fetchOfficialPoints() {
+  // 1. Live synchronized state from localStorage (shared directly with main website & AI Sentry)
+  try {
+    const raw = localStorage.getItem('prakanguard_points_state_v10');
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed;
+      }
+    }
+  } catch (e) {
+    console.warn('[Admin API] Failed to parse prakanguard_points_state_v10 from localStorage:', e);
+  }
+
+  // 2. Fallback: static official points dataset in admin directory
+  try {
+    const res = await fetch('./data/official_points.json');
+    if (res.ok) {
+      const data = await res.json();
+      if (Array.isArray(data) && data.length > 0) return data;
+    }
+  } catch (e) {}
+
+  // 3. Fallback: absolute path /admin/data/official_points.json
+  try {
+    const res = await fetch('/admin/data/official_points.json');
+    if (res.ok) {
+      const data = await res.json();
+      if (Array.isArray(data) && data.length > 0) return data;
+    }
+  } catch (e) {}
+
+  return [];
+}
+

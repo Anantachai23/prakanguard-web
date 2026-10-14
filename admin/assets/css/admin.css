@@ -1211,6 +1211,33 @@ body {
   box-shadow: 0 0 14px rgba(6, 182, 212, 0.5);
 }
 
+.admin-map-pin.pin-dry {
+  background: linear-gradient(135deg, #0284c7, #0369a1);
+  border: 2px solid #7dd3fc;
+  box-shadow: 0 0 12px rgba(2, 132, 199, 0.4);
+}
+
+.admin-map-pin.pin-official {
+  border-width: 2.5px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
+}
+
+.admin-map-pin.pin-official .pin-official-tag {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: #0284c7;
+  color: #ffffff;
+  font-size: 8px;
+  font-weight: 800;
+  padding: 1px 4px;
+  border-radius: 6px;
+  border: 1px solid #ffffff;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+  pointer-events: none;
+  line-height: 1.2;
+}
+
 .admin-map-pin.is-pending::after {
   content: '';
   position: absolute;
