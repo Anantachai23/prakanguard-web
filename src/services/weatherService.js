@@ -40,11 +40,17 @@ export function calibrateRainProbability(rawProb, precipMm, weatherCode) {
 }
 
 // ตรวจสอบว่ากำลังมีฝนตกจริงบนพื้นดินขณะนี้หรือไม่ (Ground-Truth Rain Detector)
-// ฝนตกขณะนี้ต้องเป็นฝนตกจริงที่วัดปริมาณได้ (>= 0.4 มม. หรือ >= 0.2 มม. ในกลุ่มรหัสฝนตกปานกลาง/หนัก/ฟ้าคะนอง)
+// ถ้าฝนตก (มีปริมาณน้ำฝนตกลงมาจริง > 0 มม. หรือมีรหัสฝนตก) ให้ระบุว่า "ฝนตกขณะนี้" ทันที
 export function checkIsRainingNow(currentPrecip, weatherCode) {
   const curP = Number(currentPrecip || 0);
   const curCode = Number(weatherCode !== undefined ? weatherCode : 0);
-  return (curP >= 0.4) || (curP >= 0.2 && [61, 62, 63, 64, 65, 80, 81, 82, 95, 96].includes(curCode));
+  // ถ้ามีปริมาณน้ำฝนตกลงมาจริงบนพื้นดิน (> 0 มม.) ให้ระบุว่าฝนตกขณะนี้
+  if (curP > 0) return true;
+  // ถ้ามีรหัสสภาพอากาศกลุ่มฝนตกชัดเจน (61-65 ฝนปานกลาง, 80-82 ฝนซู่, 95-99 พายุฝนฟ้าคะนอง)
+  if ([61, 62, 63, 64, 65, 80, 81, 82, 95, 96, 99].includes(curCode)) {
+    return true;
+  }
+  return false;
 }
 
 // แปลง WMO Weather Code เป็นภาษาไทย
@@ -313,9 +319,9 @@ export async function getLiveSamutPrakanWeather(forceRefresh = false) {
         if (rainHours.length === 0) {
           let fallbackStatus = 'ไม่มีฝน';
           if (isRaining) {
-            fallbackStatus = 'ฝนตกเล็กน้อย';
-          } else if (curP > 0.05) {
-            fallbackStatus = 'ละอองฝนโปรยปราย';
+            fallbackStatus = curP >= 4.0 || curCode >= 95 
+              ? 'พายุฝนฟ้าคะนอง' 
+              : (curP >= 1.5 ? 'ฝนตกหนัก' : (curP >= 0.5 ? 'ฝนตกปานกลาง' : 'ฝนตกปรอยๆ'));
           } else if (curCode === 3) {
             fallbackStatus = 'มีเมฆมาก ไม่มีฝน';
           } else if (curCode <= 2) {

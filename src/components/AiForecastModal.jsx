@@ -225,8 +225,9 @@ export default function AiForecastModal({ isOpen, onClose, userDistrict, theme =
                             </span>
                           )}
                           {d.isRainingNow && (
-                            <span className="text-[9.5px] px-1.5 py-0.2 rounded-md font-bold bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/30">
-                              ตกขณะนี้
+                            <span className="text-[9.5px] px-1.5 py-0.2 rounded-md font-bold bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/30 flex items-center gap-1">
+                              <span className="inline-block w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
+                              ฝนตกขณะนี้
                             </span>
                           )}
                           {d.rainIntensityText && !d.isRainingNow && d.hasForecastRain && (
