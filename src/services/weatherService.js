@@ -148,6 +148,10 @@ export async function getLiveSamutPrakanWeather(forceRefresh = false) {
     // ประมวลผลพยากรณ์ฝน 24 ชั่วโมงข้างหน้า (โมเดล Open-Meteo & TMD)
     let forecast24h = null;
     let districtRainAnalysis = [];
+    let isRainingRightNow = Boolean(
+      (current.precipitation && current.precipitation > 0) || 
+      (current.weather_code !== undefined && [51, 53, 55, 61, 63, 65, 80, 81, 82, 95].includes(current.weather_code))
+    );
     if (hourly.time && hourly.precipitation && hourly.precipitation_probability) {
       const bkkDatePart = nowDate.toLocaleDateString("en-CA", { timeZone: "Asia/Bangkok" });
       const bkkHourPart = nowDate.toLocaleTimeString("en-GB", { timeZone: "Asia/Bangkok", hour: "2-digit" }).padStart(2, '0');
@@ -396,7 +400,7 @@ export async function getLiveSamutPrakanWeather(forceRefresh = false) {
       const activeRainingDistricts = districtRainAnalysis.filter(d => d.isRainingNow);
       const riskIncomingDistricts = districtRainAnalysis.filter(d => !d.isRainingNow && d.probability >= 60);
 
-      const isRainingRightNow = Boolean(
+      isRainingRightNow = Boolean(
         (current.precipitation && current.precipitation > 0) || 
         (current.weather_code !== undefined && [51, 53, 55, 61, 63, 65, 80, 81, 82, 95].includes(current.weather_code))
       );
@@ -452,6 +456,7 @@ export async function getLiveSamutPrakanWeather(forceRefresh = false) {
       maxCapeJkg: Math.round(maxCapeNow),
       nextRainIn15Min,   // เวลาฝนตกครั้งต่อไปแม่นยำ ±15 นาที
       forecast24h,
+      isRainingNow: isRainingRightNow,
       districtWeather,
       districtList: districtRainAnalysis,
       lastUpdated: nowDate.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) + ' น.',
