@@ -40,16 +40,28 @@ export function calibrateRainProbability(rawProb, precipMm, weatherCode) {
 }
 
 // ตรวจสอบว่ากำลังมีฝนตกจริงบนพื้นดินขณะนี้หรือไม่ (Ground-Truth Rain Detector)
-// ถ้าฝนตก (มีปริมาณน้ำฝนตกลงมาจริง > 0 มม. หรือมีรหัสฝนตก) ให้ระบุว่า "ฝนตกขณะนี้" ทันที
-export function checkIsRainingNow(currentPrecip, weatherCode) {
+// วิเคราะห์จากปริมาณน้ำฝนจริงที่วัดได้บนพื้นดิน ร่วมกับรหัส WMO Weather Code
+// ป้องกันการแจ้งเตือนเท็จจากความชื้นสัมพัทธ์ ละอองหมอก หรือค่าโมเดลตกค้างเพียง 0.1 มม.
+export function checkIsRainingNow(currentPrecip, weatherCode, currentRain = 0) {
   const curP = Number(currentPrecip || 0);
+  const curRain = Number(currentRain || 0);
   const curCode = Number(weatherCode !== undefined ? weatherCode : 0);
-  // ถ้ามีปริมาณน้ำฝนตกลงมาจริงบนพื้นดิน (> 0 มม.) ให้ระบุว่าฝนตกขณะนี้
-  if (curP > 0) return true;
-  // ถ้ามีรหัสสภาพอากาศกลุ่มฝนตกชัดเจน (61-65 ฝนปานกลาง, 80-82 ฝนซู่, 95-99 พายุฝนฟ้าคะนอง)
-  if ([61, 62, 63, 64, 65, 80, 81, 82, 95, 96, 99].includes(curCode)) {
+
+  // 1. ฝนตกจริงบนพื้นดิน: ต้องมีปริมาณน้ำฝนวัดได้ชัดเจน (>= 0.3 มม.) หรือมีหยาดน้ำฝนจริง (rain >= 0.1 มม.)
+  if (curP >= 0.3 || curRain >= 0.1) return true;
+
+  // 2. ถ้าปริมาณน้ำฝน 0.2 - 0.29 มม. ร่วมกับรหัสสภาพอากาศกลุ่มฝนตกหรือฝนปรอยปราย
+  // (53, 55 ละอองฝนหนาแน่น/ปรอยปราย, 61-65 ฝนปานกลาง/หนัก, 80-82 ฝนซู่, 95-99 พายุฝนฟ้าคะนอง)
+  if (curP >= 0.2 && [53, 55, 61, 62, 63, 64, 65, 80, 81, 82, 95, 96, 99].includes(curCode)) {
     return true;
   }
+
+  // 3. รหัสพายุฝนฟ้าคะนองรุนแรงหรือฝนซู่หนัก (81-82, 95-99) ที่เริ่มตกแม้เรดาร์จับได้เพิ่งแตะ 0.15 มม.
+  if ([81, 82, 95, 96, 99].includes(curCode) && curP >= 0.15) {
+    return true;
+  }
+
+  // ค่าละอองหมอกบางเบา/ความชื้นในอากาศตกค้าง (51) หรือปริมาณน้ำฝน < 0.2 มม. ที่ไม่มีหยาดน้ำฝน ยังไม่ถือว่า "ฝนตกขณะนี้" บนพื้นดิน
   return false;
 }
 
@@ -278,26 +290,31 @@ export async function getLiveSamutPrakanWeather(forceRefresh = false) {
       else timeOfDayLabel = "ช่วงค่ำ";
 
       // ฟังก์ชันวิเคราะห์ช่วงเวลาและระยะเวลาตกต่อเนื่องอย่างแม่นยำสูง (High-Precision District Rain Analyzer)
-      const analyzeDistrictRainAccurately = (hourlyObj, fromHour, currentPrecip, currentCode) => {
+      const analyzeDistrictRainAccurately = (hourlyObj, fromHour, currentPrecip, currentCode, currentRain = 0) => {
         const times = hourlyObj?.time || [];
         const precips = hourlyObj?.precipitation || [];
         const probs = hourlyObj?.precipitation_probability || [];
         const codes = hourlyObj?.weather_code || [];
 
         const curP = Number(currentPrecip || 0);
+        const curRain = Number(currentRain || 0);
         const curCode = Number(currentCode !== undefined ? currentCode : (codes[fromHour] || 0));
-        const isRaining = checkIsRainingNow(curP, curCode);
+        const isRaining = checkIsRainingNow(curP, curCode, curRain);
 
-        // ค้นหาช่วงเวลาที่มีฝนตกจริงตามแบบจำลองใน 14 ชั่วโมงข้างหน้า
-        // หากฝนกำลังตกจริงขณะนี้ ให้เริ่มนับตั้งแต่ชั่วโมงปัจจุบัน (fromHour)
-        // หากไม่ได้ตกขณะนี้ ให้เริ่มค้นหาตั้งแต่ชั่วโมงถัดไป (fromHour + 1) เพื่อไม่ให้กลุ่มฝนที่ผ่านไปแล้วมาหลอกว่าเป็นฝนที่จะตก
-        const searchFrom = isRaining ? fromHour : fromHour + 1;
+        // ตรวจสอบเวลาปัจจุบัน: หากผ่านไปเกิน 35 นาทีของชั่วโมงแล้ว (เช่น 14:45 หรือ 14:58) และขณะนี้ไม่ได้มีฝนตกจริง
+        // ฝนของชั่วโมง fromHour ในอดีตได้สิ้นสุดไปแล้ว ให้เริ่มค้นหากลุ่มฝนตั้งแต่ชั่วโมงถัดไป (fromHour + 1)
+        // เพื่อป้องกันไม่ให้ช่วงเวลาในอดีต (เช่น ~14:00 - 15:00 น.) มาแสดงค้างหลอกผู้ใช้ที่เห็นว่าฝนหยุดแล้ว
+        const currentMins = nowDate.getMinutes();
+        const searchFrom = isRaining 
+          ? fromHour 
+          : (currentMins >= 35 ? fromHour + 1 : fromHour);
+
         const rainHours = [];
         for (let i = searchFrom; i < Math.min(fromHour + 14, times.length); i++) {
           const p = Number(precips[i] || 0);
           const prob = Number(probs[i] || 0);
           const code = Number(codes[i] || 0);
-          const isRealRain = p >= 0.4 || (p >= 0.2 && [61, 62, 63, 64, 65, 80, 81, 82, 95, 96].includes(code));
+          const isRealRain = p >= 0.4 || (p >= 0.25 && [61, 62, 63, 64, 65, 80, 81, 82, 95, 96].includes(code));
           if (isRealRain) {
             rainHours.push({
               idx: i,
@@ -326,6 +343,8 @@ export async function getLiveSamutPrakanWeather(forceRefresh = false) {
             fallbackStatus = 'มีเมฆมาก ไม่มีฝน';
           } else if (curCode <= 2) {
             fallbackStatus = 'ท้องฟ้าแจ่มใส/โปร่ง';
+          } else if (curCode >= 51 && curCode <= 55) {
+            fallbackStatus = curP >= 0.1 ? 'ละอองฝนเบาบาง' : 'มีเมฆมาก ไม่มีฝน';
           } else {
             fallbackStatus = translateWeatherCode(curCode, curP);
           }
@@ -412,10 +431,11 @@ export async function getLiveSamutPrakanWeather(forceRefresh = false) {
         const dHourly = dData.hourly || hourly;
         
         const precip = Number(dCur.precipitation || 0);
+        const rain = Number(dCur.rain || 0);
         const code = dCur.weather_code !== undefined ? dCur.weather_code : 2;
         
         // คำนวณช่วงเวลาที่จะตก และระยะเวลาตกต่อเนื่องของอำเภอนี้เฉพาะพิกัด
-        const dRainEpisode = analyzeDistrictRainAccurately(dHourly, startIdx, precip, code);
+        const dRainEpisode = analyzeDistrictRainAccurately(dHourly, startIdx, precip, code, rain);
 
         const temp = dCur.temperature_2m !== undefined ? Math.round(dCur.temperature_2m) : 26;
         
@@ -430,8 +450,8 @@ export async function getLiveSamutPrakanWeather(forceRefresh = false) {
         let icon = "☀️";
         if (code >= 95 || dRainEpisode.rainIntensityText.includes('พายุ')) icon = "⚡";
         else if (dRainEpisode.isRainingNow) icon = "🌧️";
-        else if (distinctProb >= 70) icon = "🌧️";
-        else if (distinctProb >= 40) icon = "🌦️";
+        else if (dRainEpisode.hasForecastRain && distinctProb >= 70) icon = "🌧️";
+        else if (dRainEpisode.hasForecastRain && distinctProb >= 40) icon = "🌦️";
         else if (code >= 3) icon = "☁️";
         else if (code >= 1) icon = "⛅";
         
@@ -439,7 +459,7 @@ export async function getLiveSamutPrakanWeather(forceRefresh = false) {
           ? `ฝนตกขณะนี้ (${dRainEpisode.rainIntensityText})`
           : dRainEpisode.hasForecastRain
             ? `${dRainEpisode.rainIntensityText} (${distinctProb}%)`
-            : (precip > 0.05 ? 'ละอองฝนโปรยปราย' : (code === 3 ? 'มีเมฆมาก ไม่มีฝน' : translateWeatherCode(code, precip)));
+            : (precip >= 0.1 ? 'ละอองฝนเบาบาง' : (code === 3 ? 'มีเมฆมาก ไม่มีฝน' : translateWeatherCode(code, precip)));
 
         return {
           district: dist.name,
@@ -467,9 +487,10 @@ export async function getLiveSamutPrakanWeather(forceRefresh = false) {
       const riskIncomingDistricts = districtRainAnalysis.filter(d => !d.isRainingNow && d.probability >= 60);
 
       // สถานะรวมทั้งจังหวัด: ตกขณะนี้เมื่อมีอำเภอที่ฝนตกจริง หรือสถานีหลักวัดฝนตกจริงได้
-      isRainingRightNow = activeRainingDistricts.length > 0 || checkIsRainingNow(primaryPrecip, primaryCode);
+      const primaryRain = Number(current.rain || 0);
+      isRainingRightNow = activeRainingDistricts.length > 0 || checkIsRainingNow(primaryPrecip, primaryCode, primaryRain);
 
-      const provinceRainEpisode = analyzeDistrictRainAccurately(hourly, startIdx, primaryPrecip, primaryCode);
+      const provinceRainEpisode = analyzeDistrictRainAccurately(hourly, startIdx, primaryPrecip, primaryCode, primaryRain);
       const startTimeText = provinceRainEpisode.hasForecastRain 
         ? provinceRainEpisode.timeWindow 
         : "ไม่มีแนวโน้มฝนตกหนัก";

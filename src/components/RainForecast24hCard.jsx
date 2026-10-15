@@ -273,7 +273,7 @@ export default function RainForecast24hCard({
         {/* COMPACT LIST VIEW แนวตั้ง (แสดงชื่อเต็ม ไม่เบียด ไม่ล้น 'อำเน...') */}
         {/* ========================================================= */}
         <div className="mt-2.5">
-          <div className="flex items-center justify-between mb-1.5">
+          <div className="flex items-center justify-between mb-1">
             <span className={`text-[11px] font-bold block ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
               ความเสี่ยงฝนตกแยก 6 อำเภอ (จ.สมุทรปราการ):
             </span>
@@ -282,6 +282,10 @@ export default function RainForecast24hCard({
                 อัปเดต {lastUpdatedTime}
               </span>
             )}
+          </div>
+          <div className="text-[10px] text-slate-500 dark:text-slate-400 mb-2 flex items-center gap-1">
+            <span>ℹ️</span>
+            <span>กลุ่มฝนอาจเริ่มตกกระจายตัวในบางตำบลก่อน และครอบคลุมทั้งอำเภอตามลำดับ</span>
           </div>
 
           <div className="space-y-1.5">
@@ -293,15 +297,15 @@ export default function RainForecast24hCard({
               return (
                 <div
                   key={idx}
-                  className={`p-2 rounded-md border text-xs transition-colors flex items-center justify-between gap-2 ${
+                  className={`p-2.5 rounded-lg border text-xs transition-colors flex items-start sm:items-center justify-between gap-2.5 ${
                     isMatched
                       ? (isDark ? 'bg-blue-950/60 border-blue-700 text-cyan-200' : 'bg-blue-50/80 border-blue-300 text-blue-950 font-medium')
                       : (isDark ? 'bg-slate-850/50 border-slate-800 text-slate-300 hover:bg-slate-800/60' : 'bg-slate-50/80 border-slate-200 text-slate-700 hover:bg-slate-100/70')
                   }`}
                 >
                   {/* Left: Icon + Full District Name + Temperature + Accurate Time Window */}
-                  <div className="flex items-start gap-1.5 sm:gap-2 min-w-0 flex-1">
-                    <span className="text-sm shrink-0 mt-0.5">{d.icon || '🌦️'}</span>
+                  <div className="flex items-start gap-2 min-w-0 flex-1">
+                    <span className="text-sm sm:text-base shrink-0 mt-0.5">{d.icon || '🌦️'}</span>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-1.5 flex-wrap">
                         <span className={`font-semibold text-xs whitespace-nowrap ${
@@ -315,31 +319,45 @@ export default function RainForecast24hCard({
                           </span>
                         )}
                         {d.isRainingNow && (
-                          <span className="text-[9px] px-1.5 py-0.2 rounded font-bold bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/30 shrink-0 flex items-center gap-1">
+                          <span className="text-[9px] px-1.5 py-0.5 rounded font-bold bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/30 shrink-0 flex items-center gap-1">
                             <span className="inline-block w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
                             ฝนตกขณะนี้
                           </span>
                         )}
                         {d.rainIntensityText && !d.isRainingNow && d.hasForecastRain && (
-                          <span className="text-[9px] px-1 py-0.2 rounded text-slate-500 dark:text-slate-400 font-medium">
+                          <span className="text-[9px] px-1 py-0.5 rounded text-slate-500 dark:text-slate-400 font-medium bg-slate-100 dark:bg-slate-800">
                             {d.rainIntensityText}
                           </span>
                         )}
                         {!d.isRainingNow && !d.hasForecastRain && d.precipitationMm > 0 && (
-                          <span className="text-[9px] px-1 py-0.2 rounded text-blue-500 dark:text-cyan-400 font-medium">
+                          <span className="text-[9px] px-1 py-0.5 rounded text-blue-500 dark:text-cyan-400 font-medium bg-blue-50 dark:bg-blue-950/50">
                             ละอองฝนโปรยปราย
                           </span>
                         )}
                       </div>
-                      <div className="text-[10px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
-                        ⏱️ {d.timeWindow || 'ไม่มีแนวโน้มฝนตกหนัก'} {d.durationText ? `(${d.durationText})` : ''}
+
+                      {/* Time Window & Duration - Fully Readable & Multi-line Capable without Ellipsis */}
+                      <div className="text-[10.5px] text-slate-600 dark:text-slate-400 mt-1 leading-relaxed break-words">
+                        <div className="flex items-start gap-1.5">
+                          <span className="shrink-0 text-xs">⏱️</span>
+                          <div className="break-words leading-snug min-w-0">
+                            <span className="font-semibold text-slate-800 dark:text-slate-200">
+                              {d.timeWindow || 'ไม่มีแนวโน้มฝนตกหนัก'}
+                            </span>
+                            {d.durationText ? (
+                              <span className="text-slate-500 dark:text-slate-400 font-normal">
+                                {' '}({d.durationText})
+                              </span>
+                            ) : null}
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
 
                   {/* Right: Rain Probability Badge */}
-                  <div className="flex items-center gap-1.5 shrink-0 self-center">
-                    <span className={`text-[10.5px] px-2 py-0.5 rounded-md font-bold border shrink-0 ${
+                  <div className="flex items-center gap-1.5 shrink-0 self-start sm:self-center mt-0.5 sm:mt-0">
+                    <span className={`text-[10.5px] px-2.5 py-1 rounded-md font-bold border shrink-0 text-center shadow-xs ${
                       d.isRainingNow
                         ? (isDark ? 'bg-rose-950/80 text-rose-300 border-rose-800' : 'bg-rose-50 text-rose-900 border-rose-300')
                         : d.probability >= 60 
