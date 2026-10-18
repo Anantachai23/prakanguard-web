@@ -39,40 +39,9 @@ async function verifyLocal(username, password) {
   if (!acc) return null;
 
   const cleanP = String(password || '').trim();
-  const lowP = cleanP.toLowerCase();
+  if (!cleanP) return null;
 
-  // Accept designated secure passwords, shortcut passwords, or standard admin passwords
-  if (normUser === 'admin_prakanguard01') {
-    if (
-      cleanP === 'Prakan#Guard2026!Secured001' ||
-      lowP === 'admin01' ||
-      lowP === 'admin 01' ||
-      lowP === 'admin' ||
-      lowP === 'admin1' ||
-      lowP === 'prakanguard' ||
-      lowP === 'admin1234' ||
-      lowP === 'prakanguard2026'
-    ) {
-      return { key: acc.key, label: acc.label, username: normUser, role: acc.role, avatar: acc.avatar };
-    }
-  }
-
-  if (normUser === 'admin_prakanguard02') {
-    if (
-      cleanP === 'Prakan#Guard2026!Secured002' ||
-      lowP === 'admin02' ||
-      lowP === 'admin 02' ||
-      lowP === 'admin' ||
-      lowP === 'admin2' ||
-      lowP === 'prakanguard' ||
-      lowP === 'admin1234' ||
-      lowP === 'prakanguard2026'
-    ) {
-      return { key: acc.key, label: acc.label, username: normUser, role: acc.role, avatar: acc.avatar };
-    }
-  }
-
-  // Fallback to PBKDF2 verification
+  // Cryptographic PBKDF2 verification against salted hash (No plaintext passwords stored in source code)
   try {
     const ref = acc.pbkdf2;
     if (ref && ref.salt && ref.iter) {
@@ -81,7 +50,9 @@ async function verifyLocal(username, password) {
         return { key: acc.key, label: acc.label, username: normUser, role: acc.role, avatar: acc.avatar };
       }
     }
-  } catch (e) {}
+  } catch (e) {
+    console.warn('Crypto verification error:', e);
+  }
 
   return null;
 }

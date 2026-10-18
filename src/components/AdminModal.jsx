@@ -84,10 +84,35 @@ import {
   playAdminTerminalSound
 } from '../services/soundEffects';
 
-// Default Hardened Admin Credentials (เฉพาะ Admin 01 และ Admin 02)
-const DEFAULT_ADMIN_CREDENTIALS = {
+// Helper สำหรับคำนวณ PBKDF2-SHA256 ด้วย Web Crypto API (ไม่มีรหัสผ่าน Plaintext ในโค้ด)
+async function pbkdf2Hex(password, saltHex, iter = 100000) {
+  const enc = new TextEncoder();
+  const salt = new Uint8Array(saltHex.match(/.{2}/g).map((x) => parseInt(x, 16)));
+  const key = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveBits']);
+  const bits = await crypto.subtle.deriveBits({ name: 'PBKDF2', hash: 'SHA-256', salt, iterations: iter }, key, 256);
+  return Array.from(new Uint8Array(bits)).map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+// ข้อมูลแฮชตรวจสอบสิทธิ์แอดมิน (PBKDF2-SHA256 100,000 Iterations) - เก็บเฉพาะ Salt และ Hash เท่านั้น
+const ADMIN_HASH_CONFIG = {
+  admin_prakanguard01: {
+    username: 'admin_prakanguard01',
+    role: 'Admin 01',
+    salt: '590cc5c446cf62f11f492cde6343a6c8',
+    iter: 100000,
+    hash: 'c894bfad3a9fe4e95abfa6cd31ccfe349657c92944dbc5c54fbcaad97277c182'
+  },
+  admin_prakanguard02: {
+    username: 'admin_prakanguard02',
+    role: 'Admin 02',
+    salt: '30a96c146a76fa4aac584ce809da7b20',
+    iter: 100000,
+    hash: '35cb2fecfafb52f6dd15f928fe961d38c89e9540eba00d9843de288b90d1edf0'
+  }
+};
+
+const DEFAULT_ADMIN_CONFIG = {
   username: 'admin_prakanguard01',
-  password: 'Prakan#Guard2026!Secured001',
   role: 'Admin 01'
 };
 
@@ -123,13 +148,13 @@ export default function AdminModal({
   if (!isOpen) return null;
   const isDark = theme === 'dark';
 
-  // Stored Credentials
+  // Stored Credentials Profile (เฉพาะชื่อผู้ใช้และบทบาท - ไม่เก็บรหัสผ่าน)
   const [credentials, setCredentials] = useState(() => {
     try {
       const saved = localStorage.getItem('prakanguard_admin_credentials');
-      return saved ? JSON.parse(saved) : DEFAULT_ADMIN_CREDENTIALS;
+      return saved ? JSON.parse(saved) : DEFAULT_ADMIN_CONFIG;
     } catch (e) {
-      return DEFAULT_ADMIN_CREDENTIALS;
+      return DEFAULT_ADMIN_CONFIG;
     }
   });
 
@@ -738,8 +763,8 @@ export default function AdminModal({
     return validateCoordinatePrecision(newLocationLat, newLocationLng, newLocationDistrict);
   }, [newLocationLat, newLocationLng, newLocationDistrict]);
 
-  // Handle Login Authentication (เฉพาะ Admin 01 และ Admin 02)
-  const handleLogin = (e) => {
+  // Handle Login Authentication (เฉพาะ Admin 01 และ Admin 02 ด้วย Salted PBKDF2 Hash)
+  const handleLogin = async (e) => {
     e.preventDefault();
     const lockCheck = checkLockoutStatus();
     if (lockCheck.isLocked) {
@@ -750,20 +775,52 @@ export default function AdminModal({
 
     const normU = inputUsername.trim().toLowerCase().replace(/[\s_]/g, '');
     const normP = inputPassword.trim();
+    if (!normP) {
+      setLoginError('กรุณากรอกรหัสผ่าน');
+      return;
+    }
 
-    // Check strictly: only Admin 01 and Admin 02 with their dedicated passwords
-    const is01 = (normU === 'admin_prakanguard01' || normU === 'adminprakanguard01' || normU === 'admin01' || normU === 'admin1') && normP === 'Prakan#Guard2026!Secured001';
-    const is02 = (normU === 'admin_prakanguard02' || normU === 'adminprakanguard02' || normU === 'admin02' || normU === 'admin2') && normP === 'Prakan#Guard2026!Secured002';
+    // Check strictly: only Admin 01 and Admin 02
+    const is02 = (normU.includes('02') || normU.includes('admin2') || normU === '2');
+    const is01 = (normU.includes('01') || normU.includes('admin1') || normU === '1' || normU === 'admin' || normU.includes('adminprakanguard'));
 
-    if (is01 || is02) {
-      const activeAdmin = is01 ? {
-        username: 'admin_prakanguard01',
-        password: 'Prakan#Guard2026!Secured001',
-        role: 'Admin 01'
-      } : {
-        username: 'admin_prakanguard02',
-        password: 'Prakan#Guard2026!Secured002',
-        role: 'Admin 02'
+    if (!is01 && !is02) {
+      const result = recordFailedLogin(inputUsername);
+      setFailedAttempts(result.attempts);
+      setLoginError(`ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง (ครั้งที่ ${result.attempts}/5)`);
+      return;
+    }
+
+    const targetAcc = is02 ? ADMIN_HASH_CONFIG.admin_prakanguard02 : ADMIN_HASH_CONFIG.admin_prakanguard01;
+    let authValid = false;
+
+    // 1. ตรวจสอบกับรหัสผ่านที่เปลี่ยนใหม่และบันทึกไว้ใน localStorage (ถ้ามี)
+    try {
+      const savedCred = JSON.parse(localStorage.getItem('prakanguard_admin_credentials') || 'null');
+      if (savedCred && savedCred.salt && savedCred.hash) {
+        const computedSaved = await pbkdf2Hex(normP, savedCred.salt, savedCred.iter || 100000);
+        if (computedSaved === savedCred.hash) {
+          authValid = true;
+        }
+      }
+    } catch (_) {}
+
+    // 2. ตรวจสอบกับค่า Salted PBKDF2 Hash ค่าเริ่มต้น
+    if (!authValid) {
+      try {
+        const computed = await pbkdf2Hex(normP, targetAcc.salt, targetAcc.iter);
+        if (computed === targetAcc.hash) {
+          authValid = true;
+        }
+      } catch (err) {
+        console.warn('Login PBKDF2 error:', err);
+      }
+    }
+
+    if (authValid) {
+      const activeAdmin = {
+        username: targetAcc.username,
+        role: targetAcc.role
       };
 
       setCredentials(activeAdmin);
@@ -1643,10 +1700,36 @@ export default function AdminModal({
     showNotice('🚫 ยกเลิกประกาศและนำออกจากหน้าเว็บหลักเรียบร้อยแล้ว');
   };
 
-  // Change Password
-  const handleUpdateCredentials = (e) => {
+  // Change Password (ปลอดภัยด้วย PBKDF2 Salted Hash - ไม่บันทึกรหัสผ่าน Plaintext)
+  const handleUpdateCredentials = async (e) => {
     e.preventDefault();
-    if (currentPassInput !== credentials.password && currentPassInput !== DEFAULT_ADMIN_CREDENTIALS.password) {
+    const curP = currentPassInput.trim();
+    if (!curP) {
+      setCredentialMessage({ text: 'กรุณากรอกรหัสผ่านปัจจุบัน', type: 'error' });
+      return;
+    }
+
+    // ตรวจสอบรหัสผ่านปัจจุบันผ่าน PBKDF2 Hash
+    let isCurrentMatch = false;
+    const is02 = (credentials.username && (credentials.username.includes('02') || credentials.username.includes('admin2')));
+    const targetAcc = is02 ? ADMIN_HASH_CONFIG.admin_prakanguard02 : ADMIN_HASH_CONFIG.admin_prakanguard01;
+
+    try {
+      const savedAuth = JSON.parse(localStorage.getItem('prakanguard_admin_credentials') || 'null');
+      if (savedAuth && savedAuth.salt && savedAuth.hash) {
+        const checkHash = await pbkdf2Hex(curP, savedAuth.salt, savedAuth.iter || 100000);
+        if (checkHash === savedAuth.hash) isCurrentMatch = true;
+      }
+    } catch (_) {}
+
+    if (!isCurrentMatch) {
+      try {
+        const defaultHash = await pbkdf2Hex(curP, targetAcc.salt, targetAcc.iter);
+        if (defaultHash === targetAcc.hash) isCurrentMatch = true;
+      } catch (_) {}
+    }
+
+    if (!isCurrentMatch) {
       setCredentialMessage({ text: 'รหัสผ่านปัจจุบันไม่ถูกต้อง', type: 'error' });
       return;
     }
@@ -1659,10 +1742,18 @@ export default function AdminModal({
       return;
     }
 
+    // สร้าง Salt สุ่มและแฮชด้วย PBKDF2-SHA256 (100,000 Iterations) - ไม่เก็บรหัสผ่าน Plaintext
+    const saltArray = new Uint8Array(16);
+    crypto.getRandomValues(saltArray);
+    const newSaltHex = Array.from(saltArray).map(b => b.toString(16).padStart(2, '0')).join('');
+    const newHash = await pbkdf2Hex(newPassInput.trim(), newSaltHex, 100000);
+
     const updated = {
       username: newUsernameInput.trim() || credentials.username,
-      password: newPassInput.trim(),
-      role: credentials.role || (credentials.username === 'admin02' ? 'Admin 02' : 'Admin 01')
+      role: credentials.role || (is02 ? 'Admin 02' : 'Admin 01'),
+      salt: newSaltHex,
+      hash: newHash,
+      iter: 100000
     };
 
     setCredentials(updated);
@@ -1671,7 +1762,7 @@ export default function AdminModal({
     } catch (e) {}
 
     setCredentialMessage({ text: 'เปลี่ยนชื่อผู้ใช้และรหัสผ่านสำเร็จเรียบร้อยแล้ว!', type: 'success' });
-    showNotice('🔐 เปลี่ยนรหัสผ่าน ADMIN สำเร็จ');
+    showNotice('🔐 เปลี่ยนรหัสผ่าน ADMIN สำเร็จ (เข้ารหัสปลอดภัย)');
     setCurrentPassInput('');
     setNewPassInput('');
     setConfirmPassInput('');

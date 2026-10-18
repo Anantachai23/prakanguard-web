@@ -69,9 +69,9 @@ export const ADMIN_ACCOUNTS = {
     role: 'ผู้ดูแลระบบ 01',
     avatar: './assets/img/admin01.jpg',
     pbkdf2: {
-      salt: '1eb0e3f213c47656519d799a940330a8',
+      salt: '590cc5c446cf62f11f492cde6343a6c8',
       iter: 100000,
-      hash: '3177f20666a6575fdf7a0b899ee2208bdb15753102d5d0b26aaad757ff4fc407'
+      hash: 'c894bfad3a9fe4e95abfa6cd31ccfe349657c92944dbc5c54fbcaad97277c182'
     }
   },
   admin_prakanguard02: {
@@ -80,9 +80,9 @@ export const ADMIN_ACCOUNTS = {
     role: 'ผู้ดูแลระบบ 02',
     avatar: './assets/img/admin02.jpg',
     pbkdf2: {
-      salt: '1e0f6a9c8410aa9a406bc42e16e3e2f7',
+      salt: '30a96c146a76fa4aac584ce809da7b20',
       iter: 100000,
-      hash: 'ec832f45423ce70af5eb673f2ed4b7de873f19a1738193a026279e577ef6583d'
+      hash: '35cb2fecfafb52f6dd15f928fe961d38c89e9540eba00d9843de288b90d1edf0'
     }
   }
 };

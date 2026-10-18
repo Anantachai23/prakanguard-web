@@ -29,13 +29,12 @@ node server.js
 
 ---
 
-## 🔐 ข้อมูลเข้าสู่ระบบ (Admin Accounts)
-- **Admin 01:**
-  - **ชื่อผู้ใช้ (Username):** `admin_prakanguard01`
-  - **รหัสผ่าน (Password):** `Prakan#Guard2026!Secured001`
-- **Admin 02:**
-  - **ชื่อผู้ใช้ (Username):** `admin_prakanguard02`
-  - **รหัสผ่าน (Password):** `Prakan#Guard2026!Secured002`
+## 🔐 การยืนยันตัวตนแอดมิน (Admin Authentication & Security)
+- **ระบบความปลอดภัย:** ใช้การยืนยันตัวตนผ่าน Server RPC (`admin_verify`) หรือตรวจสอบด้วย **Cryptographic Salted PBKDF2-SHA256 (100,000 Iterations)** 
+- **บัญชีผู้ดูแลระบบมาตรฐาน:**
+  - **Admin 01:** `admin_prakanguard01` (ผู้ดูแลระบบ 01 - ประจำศูนย์ควบคุม)
+  - **Admin 02:** `admin_prakanguard02` (ผู้ดูแลระบบ 02 - ปฏิบัติการภาคสนาม)
+- **นโยบายรหัสผ่าน:** รหัสผ่านจริงจะไม่ถูกบันทึกลงในเอกสารหรือ Source Code สาธารณะเด็ดขาด แอดมินสามารถเปลี่ยนรหัสผ่านได้ผ่านแท็บ *"ตั้งค่า"* บนหน้าแดชบอร์ด หรือผ่านคำสั่ง `admin_change_password` ในฐานข้อมูล
 
 ---
 

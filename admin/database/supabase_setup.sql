@@ -164,14 +164,14 @@ create table if not exists public.admin_accounts (
 alter table public.admin_accounts enable row level security;
 revoke all on public.admin_accounts from anon, authenticated;
 
+-- หมายเหตุความปลอดภัย: ไม่เก็บรหัสผ่านจริงในไฟล์ SQL สาธารณะ
+-- เมื่อรันสคริปต์นี้ครั้งแรก ระบบจะสร้างโครงสร้างบัญชีโดยไม่ทับรหัสผ่านเดิมที่มีอยู่
+-- แอดมินสามารถกำหนดหรือเปลี่ยนรหัสผ่านได้ผ่านฟังก์ชัน:
+-- SELECT public.admin_change_password('admin_prakanguard01', 'รหัสเดิม', 'รหัสใหม่ที่ต้องการ');
 insert into public.admin_accounts (admin_key, username, label, pass_hash) values
-  ('admin01', 'admin_prakanguard01', 'Admin 01', crypt('Prakan#Guard2026!Secured001', gen_salt('bf', 10))),
-  ('admin02', 'admin_prakanguard02', 'Admin 02', crypt('Prakan#Guard2026!Secured002', gen_salt('bf', 10)))
-on conflict (admin_key) do update set
-  username = excluded.username,
-  label = excluded.label,
-  pass_hash = excluded.pass_hash,
-  updated_at = now();
+  ('admin01', 'admin_prakanguard01', 'Admin 01', crypt('INITIAL_SETUP_REQUIRED', gen_salt('bf', 10))),
+  ('admin02', 'admin_prakanguard02', 'Admin 02', crypt('INITIAL_SETUP_REQUIRED', gen_salt('bf', 10)))
+on conflict (admin_key) do nothing;
 
 create or replace function public.admin_verify(p_username text, p_password text) returns jsonb
 language plpgsql security definer set search_path = public, extensions as $$
