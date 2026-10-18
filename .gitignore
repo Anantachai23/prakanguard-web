@@ -137,3 +137,16 @@ dist
 
 # Scratch testing scripts
 scratch/
+
+# Local IDE configuration (keep on local computer, do not commit to Git)
+.vscode/
+
+# Local Windows launcher scripts
+*.bat
+scripts/*.bat
+admin/*.bat
+
+# Local admin runtime data & citizen feedback/reports cache
+admin/data/*.json
+!admin/data/.gitkeep
+
