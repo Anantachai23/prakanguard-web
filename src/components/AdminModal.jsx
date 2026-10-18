@@ -829,6 +829,21 @@ export default function AdminModal({
       try {
         sessionStorage.setItem('prakanguard_admin_auth', 'true');
         sessionStorage.setItem('prakanguard_admin_credentials', JSON.stringify(activeAdmin));
+
+        // Attempt Supabase Auth login to acquire JWT for database RLS policies
+        const supaUrl = getSupabaseUrl();
+        const supaKey = getSupabaseKey();
+        const emailCandidate = inputUsername.includes('@') ? inputUsername.trim() : `${targetAcc.username}@prakanguard.org`;
+        fetch(`${supaUrl}/auth/v1/token?grant_type=password`, {
+          method: 'POST',
+          headers: { 'apikey': supaKey, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: emailCandidate, password: normP })
+        }).then(res => res.ok ? res.json() : null)
+          .then(data => {
+            if (data?.access_token) {
+              sessionStorage.setItem('pg_admin_token', data.access_token);
+            }
+          }).catch(() => {});
       } catch (e) {}
 
       // Security: Clear brute-force counters and generate cryptographic session token
@@ -858,6 +873,10 @@ export default function AdminModal({
     pingAdminPresence(true);
     setIsAuthenticated(false);
     clearAdminSession();
+    try {
+      sessionStorage.removeItem('pg_admin_token');
+      sessionStorage.removeItem('sb_access_token');
+    } catch (_) {}
     if (onAuthChange) onAuthChange(false);
     showNotice('ออกจากระบบ ADMIN เรียบร้อยแล้ว');
   };

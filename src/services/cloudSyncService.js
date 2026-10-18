@@ -35,9 +35,15 @@ export function getSupabaseKey() {
 const getBase = () => getSupabaseUrl().replace(/\/+$/, '') + '/rest/v1/';
 const getHeaders = (extra = {}) => {
   const k = getSupabaseKey();
+  let token = null;
+  try {
+    if (typeof sessionStorage !== 'undefined') {
+      token = sessionStorage.getItem('pg_admin_token') || sessionStorage.getItem('sb_access_token');
+    }
+  } catch (_) {}
   return {
     'apikey': k,
-    'Authorization': `Bearer ${k}`,
+    'Authorization': `Bearer ${token || k}`,
     ...extra
   };
 };

@@ -99,14 +99,12 @@ PrakanGuard/
 │   └── start_website.bat        # สตาร์ท Vite Frontend Dev Server (Port 5173)
 ├── src/                         # 🌐 ซอร์สโค้ดหลักฝั่ง Frontend (React 18 + Tailwind CSS)
 │   ├── components/              # คอมโพเนนต์ UI (MapView, RainForecast24hCard, Modals)
-│   ├── context/                 # React Context State (Auth, Booking, Toast)
 │   ├── data/                    # ข้อมูลภูมิสารสนเทศ (Boundary 6 อำเภอ, จุดเฝ้าระวัง 40 จุด)
 │   ├── services/                # แกนคำนวณหลัก (AI Sentry, Weather, Security, Cloud Sync)
 │   │   ├── aiSentryService.js   # โมเดลประเมินน้ำท่วมและน้ำแห้งคลี่คลาย 24 ชม.
 │   │   ├── weatherService.js    # ระบบตรวจจับฝนตกจริง (Ground-Truth Rain Detector)
 │   │   ├── securityService.js   # ระบบตรวจจับ XSS, Geo-Fencing, Progressive Lockout
 │   │   └── cloudSyncService.js  # Supabase Bridge & EventSource Subscription
-│   ├── views/                   # หน้าหลักของระบบ (Home, Analytics, Facilities, Rooms)
 │   ├── App.jsx                  # Main Application Component & 5-Minute Sync Loop
 │   ├── index.css                # Global Styles & Leaflet Theme Inversions
 │   └── main.jsx                 # React DOM Root Entry Point

@@ -4,8 +4,8 @@
  * - ถ้ายังไม่ติดตั้ง ใช้การตรวจแฮช PBKDF2 ฝั่งเบราว์เซอร์เป็นตัวสำรอง
  * - ไม่มีรหัสผ่านใดๆ ถูกเก็บ/แสดง/ใส่ล่วงหน้าในหน้าเว็บ
  */
-import { ADMIN_ACCOUNTS, SESSION_TTL_MS, ADMIN_PING_MS } from './config.js';
-import { caps, rpcVerify, rpcChangePassword, recordAdminLogin, pingAdminSession, endAdminSession, fetchPublicIp } from './api.js';
+import { ADMIN_ACCOUNTS, SESSION_TTL_MS, ADMIN_PING_MS, getSupabaseUrl, getSupabaseKey } from './config.js';
+import { caps, rpcVerify, rpcChangePassword, recordAdminLogin, pingAdminSession, endAdminSession, fetchPublicIp, setAdminToken } from './api.js';
 
 const KEY = 'pg_admin_session_v2';
 let pingTimer = null;
@@ -95,24 +95,56 @@ export async function login(username, password) {
   const p = String(password || '').trim();
   let admin = null;
 
-  // 1. Try Supabase database RPC first (definitive auth source)
+  // 1. Try Supabase Auth direct login (if admin user is created in Supabase Auth)
   try {
-    const r = await rpcVerify(normUser, p);
-    if (r && r.ok) {
-      const acc = ADMIN_ACCOUNTS[normUser];
-      admin = {
-        key: r.admin_key || normUser,
-        label: acc ? acc.label : (r.label || 'Admin'),
-        username: normUser,
-        role: acc ? acc.role : 'ผู้ดูแลระบบ',
-        avatar: acc ? acc.avatar : `./assets/img/${normUser}.jpg`
-      };
+    const authUrl = `${getSupabaseUrl()}/auth/v1/token?grant_type=password`;
+    const emailCandidate = username.includes('@') ? username.trim() : `${normUser}@prakanguard.org`;
+    const authRes = await fetch(authUrl, {
+      method: 'POST',
+      headers: {
+        'apikey': getSupabaseKey(),
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ email: emailCandidate, password: p })
+    });
+    if (authRes.ok) {
+      const authData = await authRes.json();
+      if (authData && authData.access_token) {
+        setAdminToken(authData.access_token);
+        const acc = ADMIN_ACCOUNTS[normUser];
+        admin = {
+          key: normUser,
+          label: acc ? acc.label : 'Admin',
+          username: normUser,
+          role: acc ? acc.role : 'ผู้ดูแลระบบ',
+          avatar: acc ? acc.avatar : `./assets/img/${normUser}.jpg`
+        };
+      }
     }
   } catch (err) {
-    console.warn('RPC verify attempt failed, trying local fallback:', err);
+    // Continue to database RPC verify
   }
 
-  // 2. If RPC not verified (e.g. offline/network issue), fallback to local PBKDF2
+  // 2. Try Supabase database RPC (admin_verify)
+  if (!admin) {
+    try {
+      const r = await rpcVerify(normUser, p);
+      if (r && r.ok) {
+        const acc = ADMIN_ACCOUNTS[normUser];
+        admin = {
+          key: r.admin_key || normUser,
+          label: acc ? acc.label : (r.label || 'Admin'),
+          username: normUser,
+          role: acc ? acc.role : 'ผู้ดูแลระบบ',
+          avatar: acc ? acc.avatar : `./assets/img/${normUser}.jpg`
+        };
+      }
+    } catch (err) {
+      console.warn('RPC verify attempt failed, trying local fallback:', err);
+    }
+  }
+
+  // 3. If RPC not verified (e.g. offline/network issue), fallback to local PBKDF2
   if (!admin) {
     admin = await verifyLocal(normUser, p);
   }
@@ -155,6 +187,7 @@ export async function logout() {
   const s = currentAdmin();
   stopHeartbeat();
   sessionStorage.removeItem(KEY);
+  setAdminToken(null);
   if (s && s.loginId) await endAdminSession(s.loginId);
 }
 

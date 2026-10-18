@@ -5,9 +5,34 @@
 import { getSupabaseUrl, getSupabaseKey } from './config.js';
 
 const getBase = () => getSupabaseUrl() + '/rest/v1/';
+export function getAdminToken() {
+  try {
+    if (typeof sessionStorage !== 'undefined') {
+      const t = sessionStorage.getItem('pg_admin_token') || sessionStorage.getItem('sb_access_token');
+      if (t) return t;
+    }
+    if (typeof localStorage !== 'undefined') {
+      const t = localStorage.getItem('pg_admin_token') || localStorage.getItem('sb_access_token');
+      if (t) return t;
+    }
+  } catch (_) {}
+  return null;
+}
+
+export function setAdminToken(token) {
+  try {
+    if (token) {
+      sessionStorage.setItem('pg_admin_token', token);
+    } else {
+      sessionStorage.removeItem('pg_admin_token');
+    }
+  } catch (_) {}
+}
+
 const getAuth = () => {
   const k = getSupabaseKey();
-  return { apikey: k, Authorization: 'Bearer ' + k };
+  const token = getAdminToken();
+  return { apikey: k, Authorization: 'Bearer ' + (token || k) };
 };
 
 /** ความสามารถของฐานข้อมูลที่ตรวจพบ (ขึ้นกับการรัน supabase_setup.sql) */

@@ -39,7 +39,6 @@ const requiredDirs = [
   'src/components',
   'src/data',
   'src/services',
-  'src/views',
   'admin',
   'admin/server',
   'admin/assets',

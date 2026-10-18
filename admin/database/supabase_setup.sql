@@ -38,7 +38,13 @@ create table if not exists public.reports (
 );
 alter table public.reports enable row level security;
 drop policy if exists reports_all on public.reports;
-create policy reports_all on public.reports for all to anon, authenticated using (true) with check (true);
+drop policy if exists reports_insert_public on public.reports;
+drop policy if exists reports_select_public on public.reports;
+drop policy if exists reports_admin_all on public.reports;
+
+create policy reports_insert_public on public.reports for insert to anon, authenticated with check (true);
+create policy reports_select_public on public.reports for select to anon using (is_approved = true or is_resolved = false);
+create policy reports_admin_all on public.reports for all to authenticated using (true) with check (true);
 
 create table if not exists public.feedback (
   id             text primary key,
@@ -56,7 +62,11 @@ create table if not exists public.feedback (
 );
 alter table public.feedback enable row level security;
 drop policy if exists feedback_all on public.feedback;
-create policy feedback_all on public.feedback for all to anon, authenticated using (true) with check (true);
+drop policy if exists feedback_insert_public on public.feedback;
+drop policy if exists feedback_admin_all on public.feedback;
+
+create policy feedback_insert_public on public.feedback for insert to anon, authenticated with check (true);
+create policy feedback_admin_all on public.feedback for all to authenticated using (true) with check (true);
 
 create table if not exists public.visitors (
   session_id     text primary key,
@@ -68,7 +78,15 @@ create table if not exists public.visitors (
 );
 alter table public.visitors enable row level security;
 drop policy if exists visitors_all on public.visitors;
-create policy visitors_all on public.visitors for all to anon, authenticated using (true) with check (true);
+drop policy if exists visitors_insert_public on public.visitors;
+drop policy if exists visitors_update_public on public.visitors;
+drop policy if exists visitors_select_public on public.visitors;
+drop policy if exists visitors_admin_all on public.visitors;
+
+create policy visitors_insert_public on public.visitors for insert to anon, authenticated with check (true);
+create policy visitors_update_public on public.visitors for update to anon, authenticated using (true) with check (true);
+create policy visitors_select_public on public.visitors for select to anon using (true);
+create policy visitors_admin_all on public.visitors for all to authenticated using (true) with check (true);
 
 -- ---------------------------------------------------------------------
 -- 1) visitors : เก็บข้อมูลผู้ใช้จริงละเอียดขึ้น + เวลาจากเซิร์ฟเวอร์ (เที่ยงตรง)
@@ -115,7 +133,11 @@ create table if not exists public.announcements (
 );
 alter table public.announcements enable row level security;
 drop policy if exists announcements_all on public.announcements;
-create policy announcements_all on public.announcements for all to anon, authenticated using (true) with check (true);
+drop policy if exists announcements_select_public on public.announcements;
+drop policy if exists announcements_admin_all on public.announcements;
+
+create policy announcements_select_public on public.announcements for select to anon using (is_active = true);
+create policy announcements_admin_all on public.announcements for all to authenticated using (true) with check (true);
 
 -- ---------------------------------------------------------------------
 -- 4) admin_trash : ลบล่าสุด (กู้คืน / ลบถาวร) ใช้ร่วมกันทุกแอดมิน
@@ -130,7 +152,9 @@ create table if not exists public.admin_trash (
 );
 alter table public.admin_trash enable row level security;
 drop policy if exists admin_trash_all on public.admin_trash;
-create policy admin_trash_all on public.admin_trash for all to anon, authenticated using (true) with check (true);
+drop policy if exists admin_trash_admin_only on public.admin_trash;
+revoke all on public.admin_trash from anon;
+create policy admin_trash_admin_only on public.admin_trash for all to authenticated using (true) with check (true);
 
 -- ---------------------------------------------------------------------
 -- 5) admin_sessions : ประวัติเข้าระบบแอดมิน (กำลังใช้งาน)
@@ -148,7 +172,9 @@ create table if not exists public.admin_sessions (
 );
 alter table public.admin_sessions enable row level security;
 drop policy if exists admin_sessions_all on public.admin_sessions;
-create policy admin_sessions_all on public.admin_sessions for all to anon, authenticated using (true) with check (true);
+drop policy if exists admin_sessions_admin_only on public.admin_sessions;
+revoke all on public.admin_sessions from anon;
+create policy admin_sessions_admin_only on public.admin_sessions for all to authenticated using (true) with check (true);
 
 -- ---------------------------------------------------------------------
 -- 6) admin_accounts : บัญชีแอดมิน 2 บัญชี (เก็บเฉพาะ bcrypt hash, ผู้ใช้ภายนอกอ่านตารางนี้ไม่ได้)
