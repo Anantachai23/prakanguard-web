@@ -62,38 +62,51 @@ Located at the mouth of the Chao Phraya River, Samut Prakan Province frequently 
 
 ---
 
-## 📁 โครงสร้างโปรเจกต์ (Project Structure)
+## 📁 โครงสร้างโปรเจกต์ (Full-Stack Project Structure)
 ```
 PrakanGuard/
-├── 📁 admin/                 # ระบบบริหารจัดการแอดมิน (Admin Command Center & Backend Server)
+├── 📁 .vscode/               # การตั้งค่า VS Code สำหรับ Code Review (Settings, Extensions, Launch, Tasks)
+├── 📁 admin/                 # ระบบบริหารจัดการแอดมิน (Admin Command Center & Backend Server พอร์ต 4000)
 │   ├── assets/               # Frontend แอดมิน (CSS, JS, โลโก้, Chart.js)
 │   ├── data/                 # ฐานข้อมูลจัดเก็บ JSON ในเครื่อง (Reports, Feedback, Visitors, Trash)
 │   ├── database/             # สคริปต์ฐานข้อมูล Supabase SQL (Schema, RLS, Functions)
 │   ├── scripts/              # สคริปต์เครื่องมือเสริมและ Client Telemetry (visitor-tracker.js)
 │   ├── server/               # ระบบหลังบ้านแบบแยกโมดูล (Config, Storage, SSE, Sync, Routes, App)
 │   ├── index.html            # หน้า Dashboard แอดมิน (SPA)
-│   ├── server.js             # Entry Point รันเซิร์ฟเวอร์แอดมิน (พอร์ต 4000)
-│   ├── package.json          # Admin package
-│   └── start_admin.bat       # สคริปต์เปิดแอดมิน 1 คลิก
-├── 📁 api/                   # Vercel Serverless API Functions
-│   ├── official-flood.js     # API ซิงก์ข้อมูลน้ำท่วมทางการ (TMD & ทร.)
-│   └── sync.js               # API ซิงก์ข้อมูลทั่วไป
-├── 📁 docs/                  # คู่มือและเอกสารประกอบ
+│   └── server.js             # Entry Point รันเซิร์ฟเวอร์แอดมิน (พอร์ต 4000)
+├── 📁 api/                   # Vercel Serverless API Functions & Backend Proxy
+│   ├── health.js             # System Health & Uptime Status API (/api/health)
+│   ├── official-flood.js     # API ซิงก์ข้อมูลน้ำท่วม Traffy Fondue Open API (SHA-256 Change Detector)
+│   └── sync.js               # API ซิงก์ข้อมูลสภาพอากาศ 6 อำเภอ (แคช 180 วินาที)
+├── 📁 docs/                  # เอกสารสถาปัตยกรรมระบบและคู่มือสำหรับนักพัฒนา
+│   ├── ARCHITECTURE.md       # สถาปัตยกรรมระบบและผังการทำงานฉบับเต็ม (System Architecture & Review Guide)
+│   ├── SECURITY.md           # นโยบายและมาตรการความปลอดภัยของระบบ (Security Blueprint)
+│   ├── API.md                # ข้อมูลจำเพาะของ REST API และ SSE Endpoints
 │   └── DEPLOY_GUIDE.md       # คู่มือการอัพโหลดขึ้น GitHub และขั้นตอน Deploy
 ├── 📁 public/                # Static Assets สำหรับเว็บประชาชน (ไอคอน PWA, สคริปต์ซิงก์)
-├── 📁 src/                   # โค้ดต้นฉบับเว็บประชาชน (React 18 + Tailwind)
-│   ├── components/           # UI Components (แผนที่, สภาพอากาศ, รายงาน, แชทบอท AI ฯลฯ)
-│   ├── context/              # State & Context
-│   ├── data/                 # ข้อมูลพิกัดจุดเสี่ยง 23 พิกัด
-│   ├── services/             # ตัวเชื่อมต่อ API
-│   ├── views/                # หน้าจอหลักและแท็บย่อย
-│   ├── App.jsx               # คอมโพเนนต์หลัก
+├── 📁 scripts/               # สคริปต์เครื่องมือระบบและการตรวจสอบอัตโนมัติ
+│   ├── audit_security.js     # สคริปต์ตรวจสอบความปลอดภัยและ Integrity อัตโนมัติ 100%
+│   ├── start_all.bat         # สตาร์ททั้งเว็บประชาชนและแอดมินพร้อมกัน
+│   ├── start_website.bat     # สตาร์ท Vite Frontend Dev Server
+│   ├── start_admin.bat       # สตาร์ท Admin Server
+│   └── deploy_to_github.bat  # สคริปต์ช่วย Deploy ขึ้น GitHub
+├── 📁 src/                   # โค้ดต้นฉบับเว็บประชาชน (React 18 + Tailwind CSS)
+│   ├── components/           # UI Components (แผนที่ Leaflet, พยากรณ์ฝน, รายงาน, แชทบอท AI ฯลฯ)
+│   ├── context/              # State & Context (Auth, Booking, Toast)
+│   ├── data/                 # ข้อมูลพิกัดและเส้นขอบเขต 6 อำเภอ (Boundary & Points)
+│   ├── services/             # แกนหลัก (AI Sentry, Weather Engine, Security Suite, Cloud Sync)
+│   ├── views/                # หน้าจอหลัก (Home, Analytics, Facilities, Rooms, Registration)
+│   ├── App.jsx               # คอมโพเนนต์หลักและวงจรการซิงก์ 5 นาที
 │   └── main.jsx              # Entry point ของ React
+├── 📁 tests/                 # ชุดทดสอบมาตรฐานและการตรวจสอบระบบ (Test Suite)
+│   ├── e2e/                  # ทดสอบการแสดงผลบนอุปกรณ์และเบราว์เซอร์ต่างๆ
+│   ├── integration/          # ทดสอบการเชื่อมต่อ API สภาพอากาศและ Vercel Live
+│   └── tools/                # เครื่องมือ Geocoding และการตรวจสอบพิกัด
 ├── 📄 index.html             # หน้าเว็บหลักของประชาชน
 ├── 📄 package.json           # การตั้งค่า Dependencies และ Scripts
 ├── 📄 vite.config.js         # การตั้งค่า Vite Build
 ├── 📄 tailwind.config.js     # การตั้งค่า Tailwind CSS
-├── 📄 vercel.json            # การตั้งค่า Vercel Deploy & Rewrites
+├── 📄 vercel.json            # การตั้งค่า Vercel Deploy, Rewrites & Global Security Headers
 ├── ⚙️ start_all.bat           # รันทั้งเว็บประชาชนและแอดมินพร้อมกัน 1 คลิก
 ├── ⚙️ start_website.bat       # รันเฉพาะเว็บประชาชน (Vite พอร์ต 5173) 1 คลิก
 ├── ⚙️ start_admin.bat         # รันเฉพาะระบบแอดมิน (Node พอร์ต 4000) 1 คลิก
@@ -102,22 +115,34 @@ PrakanGuard/
 
 ---
 
-## 🚀 Getting Started
+## 🚀 Getting Started & Developer Tools
 
-### Local Development
+### คำสั่งสำหรับนักพัฒนา (NPM Scripts)
 ```bash
-# 1. Install dependencies
+# 1. ติดตั้ง Dependencies
 npm install
 
-# 2. Run local dev server
+# 2. รันเว็บหลัก (Vite Dev Server: http://localhost:5173)
 npm run dev
 
-# 3. Build production bundle
-npm run build
+# 3. รันศูนย์บัญชาการแอดมิน (Admin Server: http://localhost:4000)
+npm run admin
 
-# 4. Preview production build locally
-npm run preview
+# 4. ตรวจสอบความปลอดภัยและโครงสร้างระบบอัตโนมัติ (Automated Security & Integrity Audit)
+npm run audit:security
+
+# 5. ทดสอบการแสดงผลและการทำงานแบบ End-to-End
+npm run test:e2e
+
+# 6. บิลด์โปรดักชัน
+npm run build
 ```
+
+### การ Review Code ใน VS Code
+* เปิดโปรเจกต์ด้วย VS Code จะตรวจพบโฟลเดอร์ `.vscode` อัตโนมัติ
+* **กด F5** เพื่อรันโหมด Debug ทั้ง Frontend และ Admin Backend พร้อมกัน
+* **กด Ctrl + Shift + B** เพื่อเรียกเมนู Build, Dev หรือ Security Audit ทันที
+* อ่านผังระบบฉบับเต็มได้ที่ [`docs/ARCHITECTURE.md`](file:///c:/Users/User/OneDrive/Desktop/PrakanGuard/docs/ARCHITECTURE.md) และ [`docs/SECURITY.md`](file:///c:/Users/User/OneDrive/Desktop/PrakanGuard/docs/SECURITY.md)
 
 ---
 © 2026 PrakanGuard Project. Built with dedication for the community of Samut Prakan.

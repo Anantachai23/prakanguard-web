@@ -95,6 +95,33 @@ function serveStatic(req, res, pathname) {
   });
 }
 
+// In-memory sliding-window IP rate limiter
+const ipRateLimitMap = new Map();
+const RATE_LIMIT_WINDOW_MS = 60 * 1000;
+const RATE_LIMIT_MAX_REQUESTS = 120; // 120 requests per minute per IP
+
+function checkRateLimit(ip) {
+  const now = Date.now();
+  let record = ipRateLimitMap.get(ip);
+  if (!record || now - record.startTime > RATE_LIMIT_WINDOW_MS) {
+    record = { startTime: now, count: 1 };
+    ipRateLimitMap.set(ip, record);
+    return true;
+  }
+  record.count += 1;
+  return record.count <= RATE_LIMIT_MAX_REQUESTS;
+}
+
+// Clean up stale rate limit records every 5 minutes
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, record] of ipRateLimitMap.entries()) {
+    if (now - record.startTime > RATE_LIMIT_WINDOW_MS * 2) {
+      ipRateLimitMap.delete(ip);
+    }
+  }
+}, 5 * 60 * 1000);
+
 /**
  * Create and configure HTTP Server
  */
@@ -102,6 +129,13 @@ function createServer() {
   const server = http.createServer(async (req, res) => {
     const parsedUrl = url.parse(req.url, true);
     const pathname = parsedUrl.pathname;
+
+    // Hardened Security Headers
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+    res.setHeader('X-XSS-Protection', '1; mode=block');
+    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+    res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=(self)');
 
     // CORS & Private Network Access (PNA) Headers
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -116,7 +150,34 @@ function createServer() {
       return;
     }
 
+    // Rate Limiting Protection for API routes
+    const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '127.0.0.1';
+    if (pathname.startsWith('/api/') && pathname !== '/api/events' && !checkRateLimit(clientIp)) {
+      res.writeHead(429, { 
+        'Content-Type': 'application/json; charset=utf-8',
+        'Retry-After': '60'
+      });
+      res.end(JSON.stringify({ error: 'Too Many Requests', message: 'Rate limit exceeded. Please wait 60 seconds.' }));
+      return;
+    }
+
     // --- API ROUTES ---
+
+    // System Health & Telemetry Status
+    if (pathname === '/api/health' && req.method === 'GET') {
+      res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(JSON.stringify({
+        status: 'healthy',
+        service: 'PrakanGuard Admin Command Center',
+        uptimeSeconds: Math.round(process.uptime()),
+        timestamp: new Date().toISOString(),
+        activeSSE: sseClients ? sseClients.size : 0,
+        activeVisitors: cleanAndCountActiveVisitors(),
+        storagePoints: storage.officialPointsCache ? storage.officialPointsCache.length : 0,
+        storageReports: storage.reportsCache ? storage.reportsCache.length : 0
+      }));
+      return;
+    }
 
     // Server-Sent Events (SSE) Live Feed
     if (pathname === '/api/events' && req.method === 'GET') {

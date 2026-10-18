@@ -1,0 +1,43 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "🚀 Start Full-Stack (Web + Admin)",
+      "type": "shell",
+      "command": "cmd.exe",
+      "args": ["/c", "start_all.bat"],
+      "problemMatcher": [],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "🌐 Start Website (Vite Dev)",
+      "type": "npm",
+      "script": "dev",
+      "problemMatcher": [],
+      "isBackground": true
+    },
+    {
+      "label": "🛡️ Start Admin Server",
+      "type": "shell",
+      "command": "node",
+      "args": ["admin/server.js"],
+      "problemMatcher": []
+    },
+    {
+      "label": "📦 Build Production Website",
+      "type": "npm",
+      "script": "build",
+      "problemMatcher": []
+    },
+    {
+      "label": "🔍 Run Security Audit",
+      "type": "shell",
+      "command": "node",
+      "args": ["scripts/audit_security.js"],
+      "problemMatcher": []
+    }
+  ]
+}
