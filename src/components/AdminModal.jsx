@@ -98,16 +98,16 @@ const ADMIN_HASH_CONFIG = {
   admin_prakanguard01: {
     username: 'admin_prakanguard01',
     role: 'Admin 01',
-    salt: '590cc5c446cf62f11f492cde6343a6c8',
+    salt: '3472bd271dd9cb13257023bcfbaca0bf',
     iter: 100000,
-    hash: 'c894bfad3a9fe4e95abfa6cd31ccfe349657c92944dbc5c54fbcaad97277c182'
+    hash: 'e052780567cd9785616e99eac147035ace62e089455b45a7c431a89fadae68f6'
   },
   admin_prakanguard02: {
     username: 'admin_prakanguard02',
     role: 'Admin 02',
-    salt: '30a96c146a76fa4aac584ce809da7b20',
+    salt: '9f7c91a733a54213f78a337cd165f202',
     iter: 100000,
-    hash: '35cb2fecfafb52f6dd15f928fe961d38c89e9540eba00d9843de288b90d1edf0'
+    hash: '431d735c645532d0b537adec34abd79535d6f7c3234b2d7397d75b419a4080f2'
   }
 };
 
