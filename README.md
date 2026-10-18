@@ -1,6 +1,21 @@
+<div align="center">
+
+<img src="public/logo.png" alt="PrakanGuard logo" width="96"/>
+
 # PrakanGuard (ปราการการ์ด)
-> **ระบบสารสนเทศและเฝ้าระวังอุทกภัยผิวจราจร 6 อำเภอ จังหวัดสมุทรปราการ**  
-> *Samut Prakan Road Flood Monitoring & Telemetry Information Web Application*
+
+**ระบบสารสนเทศและเฝ้าระวังอุทกภัยผิวจราจร 6 อำเภอ จังหวัดสมุทรปราการ**
+<br/>
+Samut Prakan Road Flood Monitoring & Telemetry Information Web Application
+
+[![Live Demo](https://img.shields.io/badge/demo-live-0ea5e9?style=for-the-badge&logo=vercel&logoColor=white)](https://prakanguard-web.vercel.app)
+![React](https://img.shields.io/badge/React_18-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
+![Vite](https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white)
+![Leaflet](https://img.shields.io/badge/Leaflet-199900?style=for-the-badge&logo=leaflet&logoColor=white)
+![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)
+
+</div>
 
 ---
 
@@ -66,7 +81,6 @@ PrakanGuard/
 ├── 📁 docs/                  # คู่มือและเอกสารประกอบ
 │   └── DEPLOY_GUIDE.md       # คู่มือการอัพโหลดขึ้น GitHub และขั้นตอน Deploy
 ├── 📁 public/                # Static Assets สำหรับเว็บประชาชน (ไอคอน PWA, สคริปต์ซิงก์)
-├── 📁 scratch/               # โฟลเดอร์สคริปต์ทดสอบและ Verification
 ├── 📁 src/                   # โค้ดต้นฉบับเว็บประชาชน (React 18 + Tailwind)
 │   ├── components/           # UI Components (แผนที่, สภาพอากาศ, รายงาน, แชทบอท AI ฯลฯ)
 │   ├── context/              # State & Context
