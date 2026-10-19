@@ -1144,13 +1144,10 @@ export default function MapView({
           </div>
           <div style="font-weight:800;font-size:12px;color:#0f172a;line-height:1.25;margin-bottom:3px;">${cam.name}</div>
           <div style="font-size:10px;color:#475569;margin-bottom:8px;line-height:1.3;">📍 ${cam.road}</div>
-          <div style="display:flex;gap:4px;padding-top:6px;border-top:1px solid #e2e8f0;">
-            <button type="button" class="pg-open-cctv-modal-btn" data-cctv-id="${cam.id}" style="flex:1;padding:5px 8px;background:#2563eb;color:#ffffff;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,0.15);">
-              📹 ดูภาพสดขยาย
+          <div style="padding-top:6px;border-top:1px solid #e2e8f0;">
+            <button type="button" class="pg-open-cctv-modal-btn" data-cctv-id="${cam.id}" style="width:100%;padding:6px 10px;background:#2563eb;color:#ffffff;border:none;border-radius:6px;font-size:11.5px;font-weight:700;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,0.15);display:flex;align-items:center;justify-content:center;gap:5px;">
+              📹 ดูภาพกล้องจุดนี้
             </button>
-            <a href="${cam.streamUrl}" target="_blank" rel="noopener noreferrer" style="padding:5px 8px;background:#f1f5f9;color:#334155;border:1px solid #cbd5e1;border-radius:6px;font-size:11px;font-weight:700;text-decoration:none;display:flex;align-items:center;gap:3px;">
-              เว็บทางการ ↗
-            </a>
           </div>
         </div>
       `;
