@@ -20,7 +20,8 @@ import {
   X, 
   BookOpen, 
   Sparkles,
-  ShieldCheck
+  ShieldCheck,
+  Video
 } from 'lucide-react';
 
 export default function MobileBottomNav({
@@ -28,6 +29,7 @@ export default function MobileBottomNav({
   onOpenAiForecast,
   onOpenCitizenReport,
   onOpenPublicUpdates,
+  onOpenCctv,
   onOpenAnnouncement,
   hasAnnouncement = false,
   onOpenFeedback,
@@ -110,6 +112,29 @@ export default function MobileBottomNav({
                 </div>
                 <span className="px-2 py-1 rounded-md bg-white/20 text-white text-xs font-mono font-bold shrink-0">
                   โทรฟรี
+                </span>
+              </button>
+
+              {/* CCTV 24 Hours Live Cameras */}
+              <button
+                type="button"
+                onClick={() => handleMenuAction(onOpenCctv, playModalOpenSound)}
+                className="col-span-2 p-2.5 rounded-md bg-cyan-50 hover:bg-cyan-100 dark:bg-cyan-950/40 dark:hover:bg-cyan-900/50 border border-cyan-300 dark:border-cyan-700/80 text-cyan-900 dark:text-cyan-200 flex items-center justify-between transition-all active:scale-98 text-left cursor-pointer shadow-xs"
+              >
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-md bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-sm">
+                    <Video className="w-4 h-4 text-white animate-pulse" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-xs font-bold block text-slate-900 dark:text-white">กล้องวงจรปิด CCTV 24 ชม.</span>
+                      <span className="px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-emerald-500 text-white">LIVE</span>
+                    </div>
+                    <span className="text-[10px] text-slate-600 dark:text-slate-300 block">ดูสด 18 จุดทั่ว 6 อำเภอ (DOH • EXAT • RID)</span>
+                  </div>
+                </div>
+                <span className="px-2 py-1 rounded-md bg-blue-600 text-white text-xs font-bold shrink-0">
+                  ดูสด ↗
                 </span>
               </button>
 

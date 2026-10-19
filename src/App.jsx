@@ -12,10 +12,12 @@ import FeedbackModal from './components/FeedbackModal';
 import AdminVerificationPrompt from './components/AdminVerificationPrompt';
 import PublicUpdatesModal from './components/PublicUpdatesModal';
 import RainForecast24hCard from './components/RainForecast24hCard';
+import CctvModal from './components/CctvModal';
 import MobileBottomNav from './components/MobileBottomNav';
 import PrivacyPolicyModal from './components/PrivacyPolicyModal';
 import AutoMarquee from './components/AutoMarquee';
 import ChatBot from './components/ChatBot';
+import { CCTV_CAMERAS } from './data/cctvCameras';
 import { INITIAL_FLOOD_POINTS, INITIAL_CITIZEN_REPORTS, DISTRICTS, matchesLocationSearch, scoreLocationSearch, POPULAR_SEARCH_SUGGESTIONS, findCorridorForPoint, MAJOR_FLOOD_CORRIDORS } from './data/samutPrakanPoints';
 import { SAMUT_PRAKAN_DISTRICTS_DATA } from './data/samutPrakanDistricts';
 import { getFloodLevel, FLOOD_STANDARDS } from './data/floodStandards';
@@ -59,6 +61,7 @@ import {
   Navigation2,
   Navigation,
   Camera,
+  Video,
   ShieldAlert,
   CheckCircle2,
   Bell,
@@ -641,6 +644,13 @@ export default function App() {
   const [isStandardsModalOpen, setIsStandardsModalOpen] = useState(false);
   const [isEmergencyModalOpen, setIsEmergencyModalOpen] = useState(false);
   const [isPrivacyPolicyModalOpen, setIsPrivacyPolicyModalOpen] = useState(false);
+  const [isCctvModalOpen, setIsCctvModalOpen] = useState(false);
+  const [selectedCctvCameraId, setSelectedCctvCameraId] = useState(null);
+
+  const handleOpenCctv = (cameraId = null) => {
+    setSelectedCctvCameraId(cameraId);
+    setIsCctvModalOpen(true);
+  };
 
   // Citizen Reports State (บันทึกเฉพาะรายงานจริงจากประชาชนเท่านั้น ไม่สร้างข้อมูลจำลอง)
   const [citizenReports, setCitizenReports] = useState(() => {
@@ -2519,6 +2529,7 @@ export default function App() {
         onOpenFeedback={() => setIsFeedbackModalOpen(true)}
         onOpenAdmin={() => setIsAdminModalOpen(true)}
         onOpenPublicUpdates={() => setIsPublicUpdatesModalOpen(true)}
+        onOpenCctv={() => handleOpenCctv()}
         onOpenAnnouncement={() => setIsAnnouncementModalOpen(true)}
         hasAnnouncement={Boolean(latestAnnouncement)}
         onOpenPrivacyPolicy={() => setIsPrivacyPolicyModalOpen(true)}
@@ -2998,6 +3009,44 @@ export default function App() {
                   lastUpdatedTime={lastUpdatedTime}
                 />
 
+                {/* 24-Hour CCTV Quick Card */}
+                <div className={`p-2.5 rounded-lg border ${isDark ? 'bg-slate-850/60 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-bold flex items-center gap-1.5 text-slate-800 dark:text-slate-200">
+                      <span>📹</span> กล้องวงจรปิด CCTV 24 ชม.
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => handleOpenCctv()}
+                      className="text-[10px] font-bold text-blue-600 dark:text-cyan-400 hover:underline cursor-pointer"
+                    >
+                      ดูทั้งหมด (18 จุด) &rarr;
+                    </button>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleOpenCctv()}
+                    className={`w-full p-2 rounded-md border text-left flex items-center justify-between gap-2 transition-all cursor-pointer active:scale-98 ${
+                      isDark 
+                        ? 'bg-slate-800/80 hover:bg-slate-750 border-slate-700 text-slate-200' 
+                        : 'bg-white hover:bg-slate-50 border-slate-200 text-slate-800'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <div className="w-7 h-7 rounded-md bg-blue-600 text-white flex items-center justify-center shrink-0">
+                        <Video className="w-3.5 h-3.5 animate-pulse" />
+                      </div>
+                      <div className="min-w-0">
+                        <span className="text-xs font-bold block truncate">เปิดดูสัญญาณสด 18 จุด</span>
+                        <span className="text-[10px] text-slate-500 dark:text-slate-400 block truncate">DOH • EXAT • RID ครอบคลุม 6 อำเภอ</span>
+                      </div>
+                    </div>
+                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500 text-white shrink-0">
+                      LIVE
+                    </span>
+                  </button>
+                </div>
+
                 {/* Major Flood Corridors */}
                 <div className={`p-2.5 rounded-lg border ${isDark ? 'bg-slate-850/60 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
                   <div className="flex items-center justify-between mb-2">
@@ -3096,6 +3145,7 @@ export default function App() {
               isTopPanelCollapsed={isTopPanelCollapsed}
               isSidebarOpen={isSidebarOpen}
               refreshCountdown={refreshCountdown}
+              onOpenCctv={handleOpenCctv}
             />
           </div>
 
@@ -4305,12 +4355,21 @@ export default function App() {
         theme={theme} 
       />
 
+      <CctvModal
+        isOpen={isCctvModalOpen}
+        onClose={() => setIsCctvModalOpen(false)}
+        initialCameraId={selectedCctvCameraId}
+        onFlyToMap={setFlyToLocation}
+        theme={theme}
+      />
+
       {/* 4. MOBILE BOTTOM ACTION BAR (สำหรับมือถือ ใช้งานสะดวกด้วยนิ้วโป้ง ไม่ซับซ้อน) */}
       <MobileBottomNav
         onLocateMe={handleLocateMe}
         onOpenAiForecast={() => setIsOfficialModalOpen(true)}
         onOpenCitizenReport={() => setIsCitizenReportModalOpen(true)}
         onOpenPublicUpdates={() => setIsPublicUpdatesModalOpen(true)}
+        onOpenCctv={() => handleOpenCctv()}
         onOpenAnnouncement={() => setIsAnnouncementModalOpen(true)}
         hasAnnouncement={Boolean(latestAnnouncement)}
         onOpenFeedback={() => setIsFeedbackModalOpen(true)}

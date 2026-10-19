@@ -4,6 +4,7 @@ import {
   Sun, 
   Moon, 
   Camera,
+  Video,
   MessageSquare, 
   ShieldCheck, 
   Activity,
@@ -42,6 +43,7 @@ export default function Navbar({
   onOpenFeedback,
   onOpenAdmin,
   onOpenPublicUpdates,
+  onOpenCctv,
   onOpenAnnouncement,
   hasAnnouncement = false,
   onOpenPrivacyPolicy,
@@ -391,6 +393,27 @@ export default function Navbar({
                 <div className={`absolute right-0 top-full mt-1.5 w-56 rounded-lg border shadow-xl p-1 z-50 backdrop-blur-md animate-in zoom-in-95 duration-150 ${
                   isDark ? 'bg-slate-900/95 border-slate-800 text-slate-100 shadow-black/80' : 'bg-white/95 border-slate-200 text-slate-900 shadow-slate-300/40'
                 }`}>
+                  {/* CCTV 24H Live Cameras Option */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      playModalOpenSound();
+                      setIsTabletMenuOpen(false);
+                      if (onOpenCctv) onOpenCctv();
+                    }}
+                    className={`w-full p-2 rounded-md text-xs font-semibold text-left flex items-center justify-between transition-colors cursor-pointer ${
+                      isDark ? 'hover:bg-slate-800 text-cyan-300' : 'hover:bg-slate-100 text-blue-700'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Video className="w-4 h-4 text-cyan-500 shrink-0" />
+                      <span>กล้องวงจรปิด CCTV 24 ชม.</span>
+                    </div>
+                    <span className="px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-emerald-500 text-white">
+                      LIVE
+                    </span>
+                  </button>
+
                   {/* Public Updates Option */}
                   <button
                     type="button"
@@ -502,6 +525,25 @@ export default function Navbar({
               </button>
             )}
 
+            {/* 24-Hour CCTV Live Cameras Button */}
+            <button 
+              type="button"
+              onClick={() => {
+                playModalOpenSound();
+                if (onOpenCctv) onOpenCctv();
+              }}
+              title="ดูกล้องวงจรปิด CCTV สด 24 ชม. ทั่วสมุทรปราการ"
+              className={`px-2.5 py-1.5 rounded-md border text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer shadow-xs active:scale-95 ${
+                isDark 
+                  ? 'bg-cyan-950/40 hover:bg-cyan-900/50 text-cyan-300 border-cyan-700/80 shadow-cyan-950/40' 
+                  : 'bg-blue-50 hover:bg-blue-100 text-blue-800 border-blue-300 shadow-blue-500/10'
+              }`}
+            >
+              <Video className="w-3.5 h-3.5 text-cyan-500 shrink-0 animate-pulse" />
+              <span className="hidden xl:inline">กล้อง CCTV 24 ชม.</span>
+              <span className="xl:hidden">CCTV</span>
+            </button>
+
             {/* Citizen Flood Report Primary Button */}
             <button 
               type="button"
@@ -563,6 +605,27 @@ export default function Navbar({
                 <div className={`absolute right-0 top-full mt-1.5 w-56 rounded-lg border shadow-xl p-1 z-50 backdrop-blur-md animate-in zoom-in-95 duration-150 ${
                   isDark ? 'bg-slate-900/95 border-slate-800 text-slate-100 shadow-black/80' : 'bg-white/95 border-slate-200 text-slate-900 shadow-slate-300/40'
                 }`}>
+                  {/* CCTV 24H Live Cameras Option */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      playModalOpenSound();
+                      setIsDesktopMenuOpen(false);
+                      if (onOpenCctv) onOpenCctv();
+                    }}
+                    className={`w-full p-2 rounded-md text-xs font-semibold text-left flex items-center justify-between transition-colors cursor-pointer ${
+                      isDark ? 'hover:bg-slate-800 text-cyan-300' : 'hover:bg-slate-100 text-blue-700'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Video className="w-4 h-4 text-cyan-500 shrink-0" />
+                      <span>กล้องวงจรปิด CCTV 24 ชม.</span>
+                    </div>
+                    <span className="px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-emerald-500 text-white">
+                      LIVE
+                    </span>
+                  </button>
+
                   {/* Public Updates Option */}
                   <button
                     type="button"
