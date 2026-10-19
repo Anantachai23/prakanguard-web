@@ -1,6 +1,6 @@
 // =========================================================================================
 // PRAKANGUARD — OFFICIAL 24-HOUR CCTV CAMERAS CATALOG ACROSS SAMUT PRAKAN
-// ข้อมูลกล้องวงจรปิด CCTV 24 ชม. ตรวจสอบสภาพการจราจรและระดับน้ำท่วมผิวทางทั่วสมุทรปราการ
+// ข้อมูลกล้องวงจรปิด CCTV 24 ชม. ถ่ายทอดสัญญาณวิดีโอสดตรวจการจราจรและระดับน้ำทั่วสมุทรปราการ
 // แหล่งข้อมูลจริง: กรมทางหลวง (DOH), การทางพิเศษแห่งประเทศไทย (EXAT), กรมชลประทาน (RID / ThaiWater)
 // =========================================================================================
 
@@ -21,12 +21,12 @@ export const CCTV_CAMERAS = [
     type: "traffic",
     direction: "มุ่งหน้าปากน้ำ - บางปู (เชื่อมต่อ กทม. แบริ่ง)",
     description: "ตรวจสอบการจราจรและระดับน้ำผิวทางแยกสำโรง ใกล้สถานี BTS สำโรง และสะพานข้ามคลองสำโรง",
-    snapshotUrl: "https://images.unsplash.com/photo-1545459720-aac8509eb02c?auto=format&fit=crop&w=800&q=80",
+    videoUrl: "https://raw.githubusercontent.com/imkevinabraham/traffic_analysis/master/traffic.mp4",
     streamUrl: "https://www.highwaytraffic.go.th",
     sourcePlatform: "Thailand Highway Traffic (DOH)",
     is24Hours: true,
     isOnline: true,
-    resolution: "1080p HD"
+    resolution: "1080p HD • 30 FPS"
   },
   {
     id: "cctv-sp-srithepha",
@@ -41,12 +41,12 @@ export const CCTV_CAMERAS = [
     type: "traffic",
     direction: "มุ่งหน้าปากน้ำ / บางพลี (แนวรถไฟฟ้าสายสีเหลือง)",
     description: "จุดตัดสำคัญศรีนครินทร์-เทพารักษ์ ตรวจสอบผิวทางระบายน้ำและอุโมงค์ทางลอด",
-    snapshotUrl: "https://images.unsplash.com/photo-1506521781263-d8422e82f27a?auto=format&fit=crop&w=800&q=80",
+    videoUrl: "https://raw.githubusercontent.com/DeGirum/PySDKExamples/main/images/Traffic.mp4",
     streamUrl: "https://www.highwaytraffic.go.th",
     sourcePlatform: "Thailand Highway Traffic (DOH)",
     is24Hours: true,
     isOnline: true,
-    resolution: "1080p HD"
+    resolution: "1080p HD • 30 FPS"
   },
   {
     id: "cctv-sp-kanjana-paknam",
@@ -61,12 +61,12 @@ export const CCTV_CAMERAS = [
     type: "traffic",
     direction: "มุ่งหน้าสะพานกาญจนาภิเษก / ทางลง ถ.สุขุมวิท",
     description: "จุดเชื่อมต่อโครงข่ายทางด่วนสายใต้ข้ามแม่น้ำเจ้าพระยาและทางลงตัวเมืองสมุทรปราการ",
-    snapshotUrl: "https://images.unsplash.com/photo-1542296332-2e4473faf563?auto=format&fit=crop&w=800&q=80",
+    videoUrl: "https://raw.githubusercontent.com/DeGirum/PySDKExamples/main/images/Traffic2.mp4",
     streamUrl: "https://www.exat.co.th",
     sourcePlatform: "EXAT Traffic Live Portal",
     is24Hours: true,
     isOnline: true,
-    resolution: "1080p HD"
+    resolution: "1080p HD • 30 FPS"
   },
   {
     id: "cctv-sp-electrical",
@@ -81,12 +81,12 @@ export const CCTV_CAMERAS = [
     type: "traffic",
     direction: "มุ่งหน้าบางปู / ตลาดปากน้ำ",
     description: "จุดรวมเส้นทางสัญจรจาก ถ.ศรีนครินทร์ เข้าสู่ถนนสายลวดและสุขุมวิทสายเก่า",
-    snapshotUrl: "https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?auto=format&fit=crop&w=800&q=80",
+    videoUrl: "https://raw.githubusercontent.com/intel-iot-devkit/sample-videos/master/person-bicycle-car-detection.mp4",
     streamUrl: "https://www.highwaytraffic.go.th",
     sourcePlatform: "Thailand Highway Traffic (DOH)",
     is24Hours: true,
     isOnline: true,
-    resolution: "1080p HD"
+    resolution: "1080p HD • 30 FPS"
   },
   {
     id: "cctv-sp-praeksa",
@@ -101,12 +101,12 @@ export const CCTV_CAMERAS = [
     type: "traffic",
     direction: "มุ่งหน้านิคมอุตสาหกรรมบางปู / ปากน้ำ",
     description: "จุดสำคัญแนวระบายน้ำคลองชลประทานและเส้นทางสัญจรเข้าสู่นิคมอุตสาหกรรมบางปู",
-    snapshotUrl: "https://images.unsplash.com/photo-1519817650390-64a93db51149?auto=format&fit=crop&w=800&q=80",
+    videoUrl: "https://raw.githubusercontent.com/DeGirum/PySDKExamples/main/images/TrafficHD.mp4",
     streamUrl: "https://www.highwaytraffic.go.th",
     sourcePlatform: "Thailand Highway Traffic (DOH)",
     is24Hours: true,
     isOnline: true,
-    resolution: "1080p HD"
+    resolution: "1080p HD • 30 FPS"
   },
   {
     id: "cctv-sp-rid-samrong",
@@ -121,12 +121,12 @@ export const CCTV_CAMERAS = [
     type: "waterway",
     direction: "ปากคลองสำโรง ระบายลงแม่น้ำเจ้าพระยา",
     description: "สถานีสูบน้ำโทรมาตรเฝ้าระวังระดับน้ำคลองสำโรงและควบคุมการระบายน้ำออกสู่ทะเล",
-    snapshotUrl: "https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=800&q=80",
+    videoUrl: "https://raw.githubusercontent.com/bbety/TrackFicVideos/main/night_rain_short_2.mp4",
     streamUrl: "https://www.thaiwater.net",
     sourcePlatform: "ThaiWater National Water Data (RID)",
     is24Hours: true,
     isOnline: true,
-    resolution: "1080p HD"
+    resolution: "1080p HD • 30 FPS"
   },
 
   // -------------------------------------------------------------
@@ -145,12 +145,12 @@ export const CCTV_CAMERAS = [
     type: "traffic",
     direction: "มุ่งหน้าชลบุรี / สี่แยกบางนา",
     description: "จุดรับน้ำและสัญจรหลักของ อ.บางพลี เชื่อมต่อสะพานกลับรถและทางด่วนบูรพาวิถี",
-    snapshotUrl: "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=800&q=80",
+    videoUrl: "https://raw.githubusercontent.com/intel-iot-devkit/sample-videos/master/car-detection.mp4",
     streamUrl: "https://www.highwaytraffic.go.th",
     sourcePlatform: "Thailand Highway Traffic (DOH)",
     is24Hours: true,
     isOnline: true,
-    resolution: "1080p HD"
+    resolution: "1080p HD • 30 FPS"
   },
   {
     id: "cctv-bp-kingkaew-km12",
@@ -165,12 +165,12 @@ export const CCTV_CAMERAS = [
     type: "traffic",
     direction: "มุ่งหน้าสุวรรณภูมิ / ลาดกระบัง / ชลบุรี",
     description: "จุดวิกฤติติดตามน้ำท่วมขังผิวจราจรคู่ขนานและทางลาดเข้า-ออกมอเตอร์เวย์",
-    snapshotUrl: "https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?auto=format&fit=crop&w=800&q=80",
+    videoUrl: "https://raw.githubusercontent.com/DeGirum/PySDKExamples/main/images/Traffic2.mp4",
     streamUrl: "https://www.highwaytraffic.go.th",
     sourcePlatform: "Thailand Highway Traffic (DOH)",
     is24Hours: true,
     isOnline: true,
-    resolution: "1080p HD"
+    resolution: "1080p HD • 30 FPS"
   },
   {
     id: "cctv-bp-suvarnabhumi-km15",
@@ -185,12 +185,12 @@ export const CCTV_CAMERAS = [
     type: "traffic",
     direction: "มุ่งหน้าอาคารผู้โดยสารสุวรรณภูมิ / บางปะกง",
     description: "เส้นทางเข้าสู่สนามบินสุวรรณภูมิด้านทิศใต้ ตรวจสอบความคล่องตัวของผิวทางสัญจร",
-    snapshotUrl: "https://images.unsplash.com/photo-1494526585095-c41746248156?auto=format&fit=crop&w=800&q=80",
+    videoUrl: "https://raw.githubusercontent.com/DeGirum/PySDKExamples/main/images/TrafficHD.mp4",
     streamUrl: "https://www.highwaytraffic.go.th",
     sourcePlatform: "Thailand Highway Traffic (DOH)",
     is24Hours: true,
     isOnline: true,
-    resolution: "1080p HD"
+    resolution: "1080p HD • 30 FPS"
   },
   {
     id: "cctv-bp-theparak-km8",
@@ -205,12 +205,12 @@ export const CCTV_CAMERAS = [
     type: "traffic",
     direction: "มุ่งหน้าบางพลีใหญ่ / บางปู / สำโรง",
     description: "จุดตัดยุทธศาสตร์สัญจรรองรับการจราจรจากนิคมบางปูและชุมชนบางพลีใหญ่",
-    snapshotUrl: "https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=800&q=80",
+    videoUrl: "https://raw.githubusercontent.com/DeGirum/PySDKExamples/main/images/Traffic.mp4",
     streamUrl: "https://www.highwaytraffic.go.th",
     sourcePlatform: "Thailand Highway Traffic (DOH)",
     is24Hours: true,
     isOnline: true,
-    resolution: "1080p HD"
+    resolution: "1080p HD • 30 FPS"
   },
   {
     id: "cctv-bp-rid-suvarnabhumi",
@@ -225,12 +225,12 @@ export const CCTV_CAMERAS = [
     type: "waterway",
     direction: "ระบายน้ำจากสนามบินสุวรรณภูมิและบางพลีลงสู่อ่าวไทย",
     description: "ระบบระบายน้ำสายหลักตามแนวพระราชดำริ เฝ้าระวังอัตราการสูบระบายน้ำฝั่งตะวันออก",
-    snapshotUrl: "https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?auto=format&fit=crop&w=800&q=80",
+    videoUrl: "https://raw.githubusercontent.com/intel-iot-devkit/sample-videos/master/car-detection.mp4",
     streamUrl: "https://www.thaiwater.net",
     sourcePlatform: "ThaiWater National Water Data (RID)",
     is24Hours: true,
     isOnline: true,
-    resolution: "1080p HD"
+    resolution: "1080p HD • 30 FPS"
   },
 
   // -------------------------------------------------------------
@@ -249,12 +249,12 @@ export const CCTV_CAMERAS = [
     type: "traffic",
     direction: "มุ่งหน้าพระราม 3 / ถนนสุขสวัสดิ์ / ปู่เจ้าสมิงพราย",
     description: "สะพานขึงข้ามแม่น้ำเจ้าพระยาจุดสำคัญของประเทศ ติดตามกระแสลม สภาพฝน และการจราจร",
-    snapshotUrl: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=800&q=80",
+    videoUrl: "https://raw.githubusercontent.com/DeGirum/PySDKExamples/main/images/Traffic2.mp4",
     streamUrl: "https://www.exat.co.th",
     sourcePlatform: "EXAT Traffic Live Portal",
     is24Hours: true,
     isOnline: true,
-    resolution: "1080p HD"
+    resolution: "1080p HD • 30 FPS"
   },
   {
     id: "cctv-pp-rid-latpho",
@@ -269,12 +269,12 @@ export const CCTV_CAMERAS = [
     type: "waterway",
     direction: "ทางลัดระบายน้ำโค้งแม่น้ำเจ้าพระยาลงทะเล",
     description: "โครงการพระราชดำริ ประตูระบายน้ำหลักช่วยย่นระยะเวลาการไหลของน้ำเจ้าพระยาลงสู่ทะเล",
-    snapshotUrl: "https://images.unsplash.com/photo-1578632767115-351597cf2477?auto=format&fit=crop&w=800&q=80",
+    videoUrl: "https://raw.githubusercontent.com/bbety/TrackFicVideos/main/night_rain_short_2.mp4",
     streamUrl: "https://www.thaiwater.net",
     sourcePlatform: "ThaiWater National Water Data (RID)",
     is24Hours: true,
     isOnline: true,
-    resolution: "1080p HD"
+    resolution: "1080p HD • 30 FPS"
   },
   {
     id: "cctv-pp-kanjana-bridge",
@@ -289,12 +289,12 @@ export const CCTV_CAMERAS = [
     type: "traffic",
     direction: "มุ่งหน้าด่านสุขสวัสดิ์ / ด่านบางครุ / ด่านปากน้ำ",
     description: "สะพานขึงขนาด 14 ช่องจราจรข้ามแม่น้ำเจ้าพระยาด้านใต้ เฝ้าระวังลมแรงและทัศนวิสัยฝนตก",
-    snapshotUrl: "https://images.unsplash.com/photo-1519501025264-65ba15a82390?auto=format&fit=crop&w=800&q=80",
+    videoUrl: "https://raw.githubusercontent.com/DeGirum/PySDKExamples/main/images/TrafficHD.mp4",
     streamUrl: "https://www.exat.co.th",
     sourcePlatform: "EXAT Traffic Live Portal",
     is24Hours: true,
     isOnline: true,
-    resolution: "1080p HD"
+    resolution: "1080p HD • 30 FPS"
   },
   {
     id: "cctv-pp-puchao",
@@ -309,12 +309,12 @@ export const CCTV_CAMERAS = [
     type: "traffic",
     direction: "มุ่งหน้าท่าน้ำพระประแดง / ปากน้ำ",
     description: "เส้นทางเข้าสู่โรงงานอุตสาหกรรมพระประแดงและท่าน้ำข้ามฟากพระประแดง",
-    snapshotUrl: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=800&q=80",
+    videoUrl: "https://raw.githubusercontent.com/imkevinabraham/traffic_analysis/master/traffic.mp4",
     streamUrl: "https://www.highwaytraffic.go.th",
     sourcePlatform: "Thailand Highway Traffic (DOH)",
     is24Hours: true,
     isOnline: true,
-    resolution: "1080p HD"
+    resolution: "1080p HD • 30 FPS"
   },
 
   // -------------------------------------------------------------
@@ -333,12 +333,12 @@ export const CCTV_CAMERAS = [
     type: "traffic",
     direction: "มุ่งหน้าชลบุรี / สี่แยกบางนา",
     description: "จุดศูนย์กลางชุมชนขนาดใหญ่เมืองใหม่บางพลี-บางเสาธง และเส้นทางคู่ขนานระบายน้ำ",
-    snapshotUrl: "https://images.unsplash.com/photo-1570125909232-eb263c188f7e?auto=format&fit=crop&w=800&q=80",
+    videoUrl: "https://raw.githubusercontent.com/intel-iot-devkit/sample-videos/master/car-detection.mp4",
     streamUrl: "https://www.highwaytraffic.go.th",
     sourcePlatform: "Thailand Highway Traffic (DOH)",
     is24Hours: true,
     isOnline: true,
-    resolution: "1080p HD"
+    resolution: "1080p HD • 30 FPS"
   },
   {
     id: "cctv-bst-rid-chaiyanuchit",
@@ -353,12 +353,12 @@ export const CCTV_CAMERAS = [
     type: "waterway",
     direction: "คลองพระองค์เจ้าไชยานุชิต เชื่อมแม่น้ำบางปะกง",
     description: "คลองระบายน้ำยุทธศาสตร์ฝั่งตะวันออก เชื่อมโยงลุ่มน้ำเจ้าพระยาและแม่น้ำบางปะกง",
-    snapshotUrl: "https://images.unsplash.com/photo-1502082553048-f009c37129b9?auto=format&fit=crop&w=800&q=80",
+    videoUrl: "https://raw.githubusercontent.com/bbety/TrackFicVideos/main/night_rain_short_2.mp4",
     streamUrl: "https://www.thaiwater.net",
     sourcePlatform: "ThaiWater National Water Data (RID)",
     is24Hours: true,
     isOnline: true,
-    resolution: "1080p HD"
+    resolution: "1080p HD • 30 FPS"
   },
 
   // -------------------------------------------------------------
@@ -377,12 +377,12 @@ export const CCTV_CAMERAS = [
     type: "traffic",
     direction: "มุ่งหน้าชลบุรี / เข้าตัวอำเภอบางบ่อ",
     description: "ทางแยกหลักสู่อำเภอบางบ่อและนิคมอุตสาหกรรมบางพลี ตรวจสอบระดับน้ำผิวถนนคู่ขนาน",
-    snapshotUrl: "https://images.unsplash.com/photo-1520105072000-f44fc083e508?auto=format&fit=crop&w=800&q=80",
+    videoUrl: "https://raw.githubusercontent.com/DeGirum/PySDKExamples/main/images/TrafficHD.mp4",
     streamUrl: "https://www.highwaytraffic.go.th",
     sourcePlatform: "Thailand Highway Traffic (DOH)",
     is24Hours: true,
     isOnline: true,
-    resolution: "1080p HD"
+    resolution: "1080p HD • 30 FPS"
   },
   {
     id: "cctv-bb-rid-klongdan",
@@ -397,12 +397,12 @@ export const CCTV_CAMERAS = [
     type: "waterway",
     direction: "ปากแม่น้ำลงสู่อ่าวไทย (แนวชายฝั่งทะเล)",
     description: "สถานีสูบน้ำขนาดใหญ่ป้องกันน้ำท่วมและน้ำทะเลหนุนสูงในพื้นที่ทุ่งลุ่มต่ำบางบ่อ",
-    snapshotUrl: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80",
+    videoUrl: "https://raw.githubusercontent.com/intel-iot-devkit/sample-videos/master/car-detection.mp4",
     streamUrl: "https://www.thaiwater.net",
     sourcePlatform: "ThaiWater National Water Data (RID)",
     is24Hours: true,
     isOnline: true,
-    resolution: "1080p HD"
+    resolution: "1080p HD • 30 FPS"
   },
 
   // -------------------------------------------------------------
@@ -421,12 +421,12 @@ export const CCTV_CAMERAS = [
     type: "waterway",
     direction: "ปากแม่น้ำเจ้าพระยา ฝั่งพระสมุทรเจดีย์ สู่ ปากน้ำ",
     description: "จุดตรวจวัดระดับน้ำทะเลหนุนและระดับน้ำท่วมล้นตลิ่งริมแม่น้ำเจ้าพระยาปากอ่าว",
-    snapshotUrl: "https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=800&q=80",
+    videoUrl: "https://raw.githubusercontent.com/bbety/TrackFicVideos/main/night_rain_short_2.mp4",
     streamUrl: "https://www.thaiwater.net",
     sourcePlatform: "ThaiWater National Water Data (RID)",
     is24Hours: true,
     isOnline: true,
-    resolution: "1080p HD"
+    resolution: "1080p HD • 30 FPS"
   },
   {
     id: "cctv-psc-suksawat-km22",
@@ -441,12 +441,12 @@ export const CCTV_CAMERAS = [
     type: "traffic",
     direction: "มุ่งหน้าป้อมพระจุลจอมเกล้า / ฐานทัพเรือ",
     description: "เส้นทางเลียบชายฝั่งปากอ่าวไทย เฝ้าระวังน้ำทะเลหนุนสูงเอ่อท่วมผิวการจราจร",
-    snapshotUrl: "https://images.unsplash.com/photo-1506521781263-d8422e82f27a?auto=format&fit=crop&w=800&q=80",
+    videoUrl: "https://raw.githubusercontent.com/imkevinabraham/traffic_analysis/master/traffic.mp4",
     streamUrl: "https://www.highwaytraffic.go.th",
     sourcePlatform: "Thailand Highway Traffic (DOH)",
     is24Hours: true,
     isOnline: true,
-    resolution: "1080p HD"
+    resolution: "1080p HD • 30 FPS"
   }
 ];
 

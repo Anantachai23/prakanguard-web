@@ -4359,7 +4359,6 @@ export default function App() {
         isOpen={isCctvModalOpen}
         onClose={() => setIsCctvModalOpen(false)}
         initialCameraId={selectedCctvCameraId}
-        onFlyToMap={setFlyToLocation}
         theme={theme}
       />
 

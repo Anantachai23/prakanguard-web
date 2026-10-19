@@ -11,7 +11,6 @@ import {
   isPointInSamutPrakan
 } from '../data/samutPrakanBoundary';
 import { getFloodLevel } from '../data/floodStandards';
-import { CCTV_CAMERAS } from '../data/cctvCameras';
 
 // Helper to determine effective level (1: 5-20cm Green, 2: 21-50cm Yellow, 3: >50cm Red)
 export function resolveLevel(item) {
@@ -150,39 +149,6 @@ function createOfficialFloodPin({ level, depthCm, hasPhoto, isSelected, isFallin
   });
 }
 
-// CCTV Camera Marker Generator (Sleek video badge with pulsing green live dot)
-export function createCctvMarkerIcon(camera) {
-  const isTraffic = camera.type === 'traffic';
-  const badgeGradient = isTraffic 
-    ? 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)' 
-    : 'linear-gradient(135deg, #0d9488 0%, #0f766e 100%)';
-  const agency = camera.agency || 'DOH';
-
-  const html = `
-    <div class="pg-cctv-pin" style="position:relative;display:flex;flex-direction:column;align-items:center;cursor:pointer;filter:drop-shadow(0 2px 5px rgba(0,0,0,0.4));user-select:none;">
-      <!-- Live Pulse Green Dot -->
-      <div style="position:absolute;top:-2px;right:-2px;width:9px;height:9px;border-radius:50%;background:#10b981;border:1.5px solid #ffffff;box-shadow:0 0 6px #10b981;animation:pgPinPulse 1.6s infinite;z-index:10;"></div>
-      
-      <!-- Video Icon Disc -->
-      <div style="width:32px;height:32px;border-radius:50%;background:${badgeGradient};border:2px solid #ffffff;display:flex;align-items:center;justify-content:center;color:#ffffff;font-size:15px;box-shadow:0 2px 6px rgba(0,0,0,0.3);">
-        📹
-      </div>
-
-      <!-- Agency + Name Pill -->
-      <div style="margin-top:2px;background:rgba(15,23,42,0.92);color:#ffffff;font-size:9px;font-weight:700;font-family:'Prompt',-apple-system,sans-serif;padding:1px 5px;border-radius:4px;border:1px solid rgba(255,255,255,0.35);white-space:nowrap;max-width:115px;overflow:hidden;text-overflow:ellipsis;backdrop-filter:blur(4px);box-shadow:0 2px 4px rgba(0,0,0,0.35);">
-        <span style="color:#38bdf8;">[${agency}]</span> ${camera.shortName || camera.name}
-      </div>
-    </div>
-  `;
-
-  return L.divIcon({
-    className: 'pg-cctv-marker-icon',
-    html: html,
-    iconSize: [36, 52],
-    iconAnchor: [18, 25],
-    popupAnchor: [0, -26]
-  });
-}
 
 // Function to merge duplicate points & declutter dense points
 // Eliminates duplicate pins at the same location (e.g. Hua Chiew / Manthana) and retains the one with photos
@@ -277,8 +243,7 @@ export default function MapView({
   theme = 'light',
   isTopPanelCollapsed = false,
   isSidebarOpen = true,
-  refreshCountdown = 300,
-  onOpenCctv
+  refreshCountdown = 300
 }) {
   const isDark = theme === 'dark';
   const formatCountdown = (seconds) => {
@@ -313,7 +278,6 @@ export default function MapView({
   const districtLayersRef = useRef([]);
   const markersRef = useRef([]);
   const citizenMarkersRef = useRef([]);
-  const cctvMarkersRef = useRef([]);
   const radarCircleLayersRef = useRef([]);
   const markersByIdRef = useRef({});
   const radarCirclesByIdRef = useRef({});
@@ -328,8 +292,6 @@ export default function MapView({
   onMapLocationPickedRef.current = onMapLocationPicked;
   const onSelectPointRef = useRef(onSelectPoint);
   onSelectPointRef.current = onSelectPoint;
-  const onOpenCctvRef = useRef(onOpenCctv);
-  onOpenCctvRef.current = onOpenCctv;
 
   // Track map motion (pan/pinch-zoom) to completely prevent accidental pin clicks
   const isMapMovingRef = useRef(false);
@@ -337,27 +299,6 @@ export default function MapView({
 
   // Map Tile Style: 'google-roadmap' | 'google-satellite' | 'google-terrain'
   const [mapStyle, setMapStyle] = useState('google-roadmap');
-
-  // CCTV Layer Visibility Toggle
-  const [showCctv, setShowCctv] = useState(() => {
-    try {
-      const saved = localStorage.getItem('prakanguard_show_cctv');
-      return saved !== null ? JSON.parse(saved) : true;
-    } catch (_) {
-      return true;
-    }
-  });
-
-  const toggleShowCctv = () => {
-    playToggleSound(!showCctv);
-    setShowCctv(prev => {
-      const next = !prev;
-      try {
-        localStorage.setItem('prakanguard_show_cctv', JSON.stringify(next));
-      } catch (_) {}
-      return next;
-    });
-  };
 
   // Inject CSS animations for pin pulsing once
   useEffect(() => {
@@ -1108,76 +1049,6 @@ export default function MapView({
     });
   }, [points, citizenReports, selectedDistrict, isMobile]);
 
-  // 5.5 Render CCTV Camera Markers across Samut Prakan with Instant Toggle
-  useEffect(() => {
-    const map = mapInstanceRef.current;
-    if (!map) return;
-
-    // Clear previous CCTV markers
-    cctvMarkersRef.current.forEach(m => map.removeLayer(m));
-    cctvMarkersRef.current = [];
-
-    if (!showCctv) return;
-
-    CCTV_CAMERAS.forEach(cam => {
-      if (selectedDistrict && selectedDistrict !== 'ทั้งหมด' && !cam.district.includes(selectedDistrict)) {
-        return;
-      }
-
-      const icon = createCctvMarkerIcon(cam);
-      const marker = L.marker([cam.lat, cam.lng], {
-        icon: icon,
-        riseOnHover: true,
-        interactive: true,
-        zIndexOffset: 450
-      }).addTo(map);
-
-      const popupHtml = `
-        <div style="font-family:'Prompt',-apple-system,sans-serif;padding:6px;min-width:215px;text-align:left;">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
-            <span style="background:#2563eb;color:#ffffff;font-size:9.5px;font-weight:700;padding:2px 6px;border-radius:4px;">${cam.agency}</span>
-            <span style="font-size:10px;font-weight:600;color:#64748b;">อ.${cam.district}</span>
-            <span style="font-size:9.5px;font-weight:700;color:#10b981;display:flex;align-items:center;gap:3px;">
-              <span style="width:6px;height:6px;border-radius:50%;background:#10b981;display:inline-block;"></span>
-              สด 24 ชม.
-            </span>
-          </div>
-          <div style="font-weight:800;font-size:12px;color:#0f172a;line-height:1.25;margin-bottom:3px;">${cam.name}</div>
-          <div style="font-size:10px;color:#475569;margin-bottom:8px;line-height:1.3;">📍 ${cam.road}</div>
-          <div style="padding-top:6px;border-top:1px solid #e2e8f0;">
-            <button type="button" class="pg-open-cctv-modal-btn" data-cctv-id="${cam.id}" style="width:100%;padding:6px 10px;background:#2563eb;color:#ffffff;border:none;border-radius:6px;font-size:11.5px;font-weight:700;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,0.15);display:flex;align-items:center;justify-content:center;gap:5px;">
-              📹 ดูภาพกล้องจุดนี้
-            </button>
-          </div>
-        </div>
-      `;
-
-      marker.bindPopup(popupHtml, {
-        className: 'pg-cctv-popup',
-        offset: [0, -22]
-      });
-
-      marker.on('popupopen', () => {
-        const popupEl = marker.getPopup()?.getElement();
-        const btn = popupEl?.querySelector('.pg-open-cctv-modal-btn');
-        if (btn) {
-          btn.onclick = () => {
-            playClickSound();
-            if (onOpenCctvRef.current) {
-              onOpenCctvRef.current(cam.id);
-            }
-          };
-        }
-      });
-
-      cctvMarkersRef.current.push(marker);
-    });
-
-    return () => {
-      cctvMarkersRef.current.forEach(m => map.removeLayer(m));
-      cctvMarkersRef.current = [];
-    };
-  }, [showCctv, selectedDistrict]);
 
   // 6. User GPS Location Marker
   useEffect(() => {
@@ -1331,28 +1202,8 @@ export default function MapView({
           ))}
         </div>
 
-        {/* CCTV Toggle & GPS & Reset Buttons */}
+        {/* GPS & Reset Buttons */}
         <div className="flex items-center gap-1 sm:gap-1.5 flex-wrap justify-end">
-          <button
-            type="button"
-            onClick={toggleShowCctv}
-            title={showCctv ? "คลิกเพื่อซ่อนจุดกล้อง CCTV บนแผนที่" : "คลิกเพื่อแสดงจุดกล้อง CCTV ทั่วสมุทรปราการบนแผนที่"}
-            className={`px-2.5 py-1.5 rounded-md shadow-xs border transition-all flex items-center gap-1 sm:gap-1.5 text-[11px] sm:text-xs cursor-pointer backdrop-blur-md font-semibold active:scale-95 ${
-              showCctv
-                ? (isDark ? 'bg-cyan-950/90 text-cyan-300 border-cyan-500/80 shadow-cyan-950/50 ring-1 ring-cyan-500/40 font-bold' : 'bg-blue-50 text-blue-700 border-blue-400 shadow-blue-500/10 font-bold ring-1 ring-blue-400/30')
-                : (isDark ? 'bg-slate-900/95 text-slate-400 hover:text-slate-200 border-slate-800' : 'bg-white/95 text-slate-500 hover:text-slate-800 border-slate-200')
-            }`}
-          >
-            <span className="text-xs">📹</span>
-            <span>กล้อง CCTV</span>
-            <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono font-bold ${
-              showCctv
-                ? (isDark ? 'bg-cyan-500/30 text-cyan-200' : 'bg-blue-600 text-white')
-                : (isDark ? 'bg-slate-800 text-slate-400' : 'bg-slate-200 text-slate-600')
-            }`}>
-              {showCctv ? 'เปิด' : 'ปิด'}
-            </span>
-          </button>
 
           <button 
             onClick={() => {
