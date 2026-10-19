@@ -2987,6 +2987,7 @@ export default function App() {
                   forecast={weather?.forecast24h}
                   userDistrict={userDistrict}
                   userLocation={userLocation}
+                  onRequestGps={() => handleLocateMe(false)}
                   onOpenRadar={() => setIsOfficialModalOpen(true)}
                   theme={theme}
                   collapsible={true}
