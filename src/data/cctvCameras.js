@@ -1,6 +1,6 @@
 // =========================================================================================
 // PRAKANGUARD — OFFICIAL 24-HOUR CCTV CAMERAS CATALOG ACROSS SAMUT PRAKAN
-// ข้อมูลกล้องวงจรปิด CCTV 24 ชม. ตรวจสอบการจราจรและระดับน้ำทั่วสมุทรปราการจากแหล่งข้อมูลจริง
+// ข้อมูลจุดติดตั้งกล้องวงจรปิด CCTV ตรวจสอบการจราจรและระดับน้ำทั่วสมุทรปราการจากแหล่งข้อมูลจริง
 // แหล่งข้อมูลจริง: กรมทางหลวง (DOH), การทางพิเศษแห่งประเทศไทย (EXAT), กรมชลประทาน (RID / ThaiWater)
 // =========================================================================================
 
@@ -20,12 +20,11 @@ export const CCTV_CAMERAS = [
     agencyFull: "สำนักอำนวยความปลอดภัย กรมทางหลวง",
     type: "traffic",
     direction: "มุ่งหน้าปากน้ำ - บางปู (เชื่อมต่อ กทม. แบริ่ง)",
-    description: "ตรวจสอบการจราจรและระดับน้ำผิวทางแยกสำโรง เชื่อมต่อ ถ.สุขุมวิท และแนวคลองสำโรง",
+    description: "ตรวจสอบสภาพการจราจรและระดับน้ำท่วมผิวทางแยกสำโรง เชื่อมต่อ ถ.สุขุมวิท และสะพานข้ามคลองสำโรง",
+    directCameraUrl: null,
     streamUrl: "https://www.highwaytraffic.go.th",
     sourcePlatform: "กรมทางหลวง (Thailand Highway Traffic)",
-    isLiveViewable: false,
-    resolution: "1080p HD",
-    statusMessage: "NO SIGNAL (สัญญาณสดสงวนสิทธิ์เฉพาะพอร์ทัลทางการ DOH)"
+    resolution: "1080p HD"
   },
   {
     id: "cctv-sp-srithepha",
@@ -39,12 +38,11 @@ export const CCTV_CAMERAS = [
     agencyFull: "สำนักอำนวยความปลอดภัย กรมทางหลวง",
     type: "traffic",
     direction: "มุ่งหน้าปากน้ำ / บางพลี (แนวรถไฟฟ้าสายสีเหลือง)",
-    description: "จุดตัดสำคัญศรีนครินทร์-เทพารักษ์ ตรวจสอบผิวทางระบายน้ำและอุโมงค์ทางลอด",
+    description: "จุดตัดสำคัญศรีนครินทร์-เทพารักษ์ เฝ้าระวังผิวทางระบายน้ำและอุโมงค์ทางลอด",
+    directCameraUrl: null,
     streamUrl: "https://www.highwaytraffic.go.th",
     sourcePlatform: "กรมทางหลวง (Thailand Highway Traffic)",
-    isLiveViewable: false,
-    resolution: "1080p HD",
-    statusMessage: "NO SIGNAL (สัญญาณสดสงวนสิทธิ์เฉพาะพอร์ทัลทางการ DOH)"
+    resolution: "1080p HD"
   },
   {
     id: "cctv-sp-kanjana-paknam",
@@ -59,11 +57,10 @@ export const CCTV_CAMERAS = [
     type: "traffic",
     direction: "มุ่งหน้าสะพานกาญจนาภิเษก / ทางลง ถ.สุขุมวิท",
     description: "จุดเชื่อมต่อโครงข่ายทางด่วนสายใต้ข้ามแม่น้ำเจ้าพระยาและทางลงตัวเมืองสมุทรปราการ",
+    directCameraUrl: null,
     streamUrl: "https://www.exat.co.th",
-    sourcePlatform: "การทางพิเศษแห่งประเทศไทย (EXAT Portal)",
-    isLiveViewable: false,
-    resolution: "1080p HD",
-    statusMessage: "NO SIGNAL (สัญญาณสดสงวนสิทธิ์เฉพาะพอร์ทัลทางการ EXAT)"
+    sourcePlatform: "การทางพิเศษแห่งประเทศไทย (EXAT Traffic Portal)",
+    resolution: "1080p HD"
   },
   {
     id: "cctv-sp-electrical",
@@ -78,11 +75,10 @@ export const CCTV_CAMERAS = [
     type: "traffic",
     direction: "มุ่งหน้าบางปู / ตลาดปากน้ำ",
     description: "จุดรวมเส้นทางสัญจรจาก ถ.ศรีนครินทร์ เข้าสู่ถนนสายลวดและสุขุมวิทสายเก่า",
+    directCameraUrl: null,
     streamUrl: "https://www.highwaytraffic.go.th",
     sourcePlatform: "กรมทางหลวง (แขวงทางหลวงสมุทรปราการ)",
-    isLiveViewable: false,
-    resolution: "1080p HD",
-    statusMessage: "NO SIGNAL (สัญญาณสดสงวนสิทธิ์เฉพาะพอร์ทัลทางการ DOH)"
+    resolution: "1080p HD"
   },
   {
     id: "cctv-sp-praeksa",
@@ -97,11 +93,10 @@ export const CCTV_CAMERAS = [
     type: "traffic",
     direction: "มุ่งหน้านิคมอุตสาหกรรมบางปู / ปากน้ำ",
     description: "จุดสำคัญแนวระบายน้ำคลองชลประทานและเส้นทางสัญจรเข้าสู่นิคมอุตสาหกรรมบางปู",
+    directCameraUrl: null,
     streamUrl: "https://www.highwaytraffic.go.th",
     sourcePlatform: "กรมทางหลวง (Thailand Highway Traffic)",
-    isLiveViewable: false,
-    resolution: "1080p HD",
-    statusMessage: "NO SIGNAL (สัญญาณสดสงวนสิทธิ์เฉพาะพอร์ทัลทางการ DOH)"
+    resolution: "1080p HD"
   },
   {
     id: "cctv-sp-rid-samrong",
@@ -116,11 +111,10 @@ export const CCTV_CAMERAS = [
     type: "waterway",
     direction: "ปากคลองสำโรง ระบายลงแม่น้ำเจ้าพระยา",
     description: "สถานีสูบน้ำโทรมาตรเฝ้าระวังระดับน้ำคลองสำโรงและควบคุมการระบายน้ำออกสู่ทะเล",
+    directCameraUrl: null,
     streamUrl: "https://www.thaiwater.net",
-    sourcePlatform: "คลังข้อมูลน้ำแห่งชาติ ThaiWater (กรมชลประทาน)",
-    isLiveViewable: true,
-    resolution: "1080p HD",
-    statusMessage: "LIVE (สัญญาณออนไลน์ผ่านพอร์ทัล ThaiWater)"
+    sourcePlatform: "คลังข้อมูลน้ำแห่งชาติ (ThaiWater / กรมชลประทาน)",
+    resolution: "1080p HD"
   },
 
   // -------------------------------------------------------------
@@ -139,11 +133,10 @@ export const CCTV_CAMERAS = [
     type: "traffic",
     direction: "มุ่งหน้าชลบุรี / สี่แยกบางนา",
     description: "จุดรับน้ำและสัญจรหลักของ อ.บางพลี เชื่อมต่อสะพานกลับรถและทางด่วนบูรพาวิถี",
+    directCameraUrl: null,
     streamUrl: "https://www.highwaytraffic.go.th",
     sourcePlatform: "กรมทางหลวง (Thailand Highway Traffic)",
-    isLiveViewable: false,
-    resolution: "1080p HD",
-    statusMessage: "NO SIGNAL (สัญญาณสดสงวนสิทธิ์เฉพาะพอร์ทัลทางการ DOH)"
+    resolution: "1080p HD"
   },
   {
     id: "cctv-bp-kingkaew-km12",
@@ -158,11 +151,10 @@ export const CCTV_CAMERAS = [
     type: "traffic",
     direction: "มุ่งหน้าสุวรรณภูมิ / ลาดกระบัง / ชลบุรี",
     description: "จุดวิกฤติติดตามน้ำท่วมขังผิวจราจรคู่ขนานและทางลาดเข้า-ออกมอเตอร์เวย์",
+    directCameraUrl: null,
     streamUrl: "https://www.highwaytraffic.go.th",
     sourcePlatform: "กรมทางหลวง (Thailand Highway Traffic)",
-    isLiveViewable: false,
-    resolution: "1080p HD",
-    statusMessage: "NO SIGNAL (สัญญาณสดสงวนสิทธิ์เฉพาะพอร์ทัลทางการ DOH)"
+    resolution: "1080p HD"
   },
   {
     id: "cctv-bp-suvarnabhumi-km15",
@@ -177,11 +169,10 @@ export const CCTV_CAMERAS = [
     type: "traffic",
     direction: "มุ่งหน้าอาคารผู้โดยสารสุวรรณภูมิ / บางปะกง",
     description: "เส้นทางเข้าสู่สนามบินสุวรรณภูมิด้านทิศใต้ ตรวจสอบความคล่องตัวของผิวทางสัญจร",
+    directCameraUrl: null,
     streamUrl: "https://www.highwaytraffic.go.th",
     sourcePlatform: "กรมทางหลวง (Thailand Highway Traffic)",
-    isLiveViewable: false,
-    resolution: "1080p HD",
-    statusMessage: "NO SIGNAL (สัญญาณสดสงวนสิทธิ์เฉพาะพอร์ทัลทางการ DOH)"
+    resolution: "1080p HD"
   },
   {
     id: "cctv-bp-theparak-km8",
@@ -196,11 +187,10 @@ export const CCTV_CAMERAS = [
     type: "traffic",
     direction: "มุ่งหน้าบางพลีใหญ่ / บางปู / สำโรง",
     description: "จุดตัดยุทธศาสตร์สัญจรรองรับการจราจรจากนิคมบางปูและชุมชนบางพลีใหญ่",
+    directCameraUrl: null,
     streamUrl: "https://www.highwaytraffic.go.th",
     sourcePlatform: "กรมทางหลวง (แขวงทางหลวงสมุทรปราการ)",
-    isLiveViewable: false,
-    resolution: "1080p HD",
-    statusMessage: "NO SIGNAL (สัญญาณสดสงวนสิทธิ์เฉพาะพอร์ทัลทางการ DOH)"
+    resolution: "1080p HD"
   },
   {
     id: "cctv-bp-rid-suvarnabhumi",
@@ -215,11 +205,10 @@ export const CCTV_CAMERAS = [
     type: "waterway",
     direction: "ระบายน้ำจากสนามบินสุวรรณภูมิและบางพลีลงสู่อ่าวไทย",
     description: "ระบบระบายน้ำสายหลักตามแนวพระราชดำริ เฝ้าระวังอัตราการสูบระบายน้ำฝั่งตะวันออก",
+    directCameraUrl: null,
     streamUrl: "https://www.thaiwater.net",
-    sourcePlatform: "คลังข้อมูลน้ำแห่งชาติ ThaiWater (กรมชลประทาน)",
-    isLiveViewable: true,
-    resolution: "1080p HD",
-    statusMessage: "LIVE (สัญญาณออนไลน์ผ่านพอร์ทัล ThaiWater)"
+    sourcePlatform: "คลังข้อมูลน้ำแห่งชาติ (ThaiWater / กรมชลประทาน)",
+    resolution: "1080p HD"
   },
 
   // -------------------------------------------------------------
@@ -238,11 +227,10 @@ export const CCTV_CAMERAS = [
     type: "traffic",
     direction: "มุ่งหน้าพระราม 3 / ถนนสุขสวัสดิ์ / ปู่เจ้าสมิงพราย",
     description: "สะพานขึงข้ามแม่น้ำเจ้าพระยาจุดสำคัญของประเทศ ติดตามกระแสลม สภาพฝน และการจราจร",
+    directCameraUrl: null,
     streamUrl: "https://www.exat.co.th",
-    sourcePlatform: "การทางพิเศษแห่งประเทศไทย (EXAT Portal)",
-    isLiveViewable: false,
-    resolution: "1080p HD",
-    statusMessage: "NO SIGNAL (สัญญาณสดสงวนสิทธิ์เฉพาะพอร์ทัลทางการ EXAT)"
+    sourcePlatform: "การทางพิเศษแห่งประเทศไทย (EXAT Traffic Portal)",
+    resolution: "1080p HD"
   },
   {
     id: "cctv-pp-rid-latpho",
@@ -257,11 +245,10 @@ export const CCTV_CAMERAS = [
     type: "waterway",
     direction: "ทางลัดระบายน้ำโค้งแม่น้ำเจ้าพระยาลงทะเล",
     description: "โครงการพระราชดำริ ประตูระบายน้ำหลักช่วยย่นระยะเวลาการไหลของน้ำเจ้าพระยาลงสู่ทะเล",
+    directCameraUrl: null,
     streamUrl: "https://www.thaiwater.net",
-    sourcePlatform: "คลังข้อมูลน้ำแห่งชาติ ThaiWater (กรมชลประทาน)",
-    isLiveViewable: true,
-    resolution: "1080p HD",
-    statusMessage: "LIVE (สัญญาณออนไลน์ผ่านพอร์ทัล ThaiWater)"
+    sourcePlatform: "คลังข้อมูลน้ำแห่งชาติ (ThaiWater / กรมชลประทาน)",
+    resolution: "1080p HD"
   },
   {
     id: "cctv-pp-kanjana-bridge",
@@ -276,11 +263,10 @@ export const CCTV_CAMERAS = [
     type: "traffic",
     direction: "มุ่งหน้าด่านสุขสวัสดิ์ / ด่านบางครุ / ด่านปากน้ำ",
     description: "สะพานขึงขนาด 14 ช่องจราจรข้ามแม่น้ำเจ้าพระยาด้านใต้ เฝ้าระวังลมแรงและทัศนวิสัยฝนตก",
+    directCameraUrl: null,
     streamUrl: "https://www.exat.co.th",
-    sourcePlatform: "การทางพิเศษแห่งประเทศไทย (EXAT Portal)",
-    isLiveViewable: false,
-    resolution: "1080p HD",
-    statusMessage: "NO SIGNAL (สัญญาณสดสงวนสิทธิ์เฉพาะพอร์ทัลทางการ EXAT)"
+    sourcePlatform: "การทางพิเศษแห่งประเทศไทย (EXAT Traffic Portal)",
+    resolution: "1080p HD"
   },
   {
     id: "cctv-pp-puchao",
@@ -295,11 +281,10 @@ export const CCTV_CAMERAS = [
     type: "traffic",
     direction: "มุ่งหน้าท่าน้ำพระประแดง / ปากน้ำ",
     description: "เส้นทางเข้าสู่โรงงานอุตสาหกรรมพระประแดงและท่าน้ำข้ามฟากพระประแดง",
+    directCameraUrl: null,
     streamUrl: "https://www.highwaytraffic.go.th",
     sourcePlatform: "กรมทางหลวง (Thailand Highway Traffic)",
-    isLiveViewable: false,
-    resolution: "1080p HD",
-    statusMessage: "NO SIGNAL (สัญญาณสดสงวนสิทธิ์เฉพาะพอร์ทัลทางการ DOH)"
+    resolution: "1080p HD"
   },
 
   // -------------------------------------------------------------
@@ -318,11 +303,10 @@ export const CCTV_CAMERAS = [
     type: "traffic",
     direction: "มุ่งหน้าชลบุรี / สี่แยกบางนา",
     description: "จุดศูนย์กลางชุมชนขนาดใหญ่เมืองใหม่บางพลี-บางเสาธง และเส้นทางคู่ขนานระบายน้ำ",
+    directCameraUrl: null,
     streamUrl: "https://www.highwaytraffic.go.th",
     sourcePlatform: "กรมทางหลวง (Thailand Highway Traffic)",
-    isLiveViewable: false,
-    resolution: "1080p HD",
-    statusMessage: "NO SIGNAL (สัญญาณสดสงวนสิทธิ์เฉพาะพอร์ทัลทางการ DOH)"
+    resolution: "1080p HD"
   },
   {
     id: "cctv-bst-rid-chaiyanuchit",
@@ -337,11 +321,10 @@ export const CCTV_CAMERAS = [
     type: "waterway",
     direction: "คลองพระองค์เจ้าไชยานุชิต เชื่อมแม่น้ำบางปะกง",
     description: "คลองระบายน้ำยุทธศาสตร์ฝั่งตะวันออก เชื่อมโยงลุ่มน้ำเจ้าพระยาและแม่น้ำบางปะกง",
+    directCameraUrl: null,
     streamUrl: "https://www.thaiwater.net",
-    sourcePlatform: "คลังข้อมูลน้ำแห่งชาติ ThaiWater (กรมชลประทาน)",
-    isLiveViewable: true,
-    resolution: "1080p HD",
-    statusMessage: "LIVE (สัญญาณออนไลน์ผ่านพอร์ทัล ThaiWater)"
+    sourcePlatform: "คลังข้อมูลน้ำแห่งชาติ (ThaiWater / กรมชลประทาน)",
+    resolution: "1080p HD"
   },
 
   // -------------------------------------------------------------
@@ -360,11 +343,10 @@ export const CCTV_CAMERAS = [
     type: "traffic",
     direction: "มุ่งหน้าชลบุรี / เข้าตัวอำเภอบางบ่อ",
     description: "ทางแยกหลักสู่อำเภอบางบ่อและนิคมอุตสาหกรรมบางพลี ตรวจสอบระดับน้ำผิวถนนคู่ขนาน",
+    directCameraUrl: null,
     streamUrl: "https://www.highwaytraffic.go.th",
     sourcePlatform: "กรมทางหลวง (Thailand Highway Traffic)",
-    isLiveViewable: false,
-    resolution: "1080p HD",
-    statusMessage: "NO SIGNAL (สัญญาณสดสงวนสิทธิ์เฉพาะพอร์ทัลทางการ DOH)"
+    resolution: "1080p HD"
   },
   {
     id: "cctv-bb-rid-klongdan",
@@ -379,11 +361,10 @@ export const CCTV_CAMERAS = [
     type: "waterway",
     direction: "ปากแม่น้ำลงสู่อ่าวไทย (แนวชายฝั่งทะเล)",
     description: "สถานีสูบน้ำขนาดใหญ่ป้องกันน้ำท่วมและน้ำทะเลหนุนสูงในพื้นที่ทุ่งลุ่มต่ำบางบ่อ",
+    directCameraUrl: null,
     streamUrl: "https://www.thaiwater.net",
-    sourcePlatform: "คลังข้อมูลน้ำแห่งชาติ ThaiWater (กรมชลประทาน)",
-    isLiveViewable: true,
-    resolution: "1080p HD",
-    statusMessage: "LIVE (สัญญาณออนไลน์ผ่านพอร์ทัล ThaiWater)"
+    sourcePlatform: "คลังข้อมูลน้ำแห่งชาติ (ThaiWater / กรมชลประทาน)",
+    resolution: "1080p HD"
   },
 
   // -------------------------------------------------------------
@@ -402,11 +383,10 @@ export const CCTV_CAMERAS = [
     type: "waterway",
     direction: "ปากแม่น้ำเจ้าพระยา ฝั่งพระสมุทรเจดีย์ สู่ ปากน้ำ",
     description: "จุดตรวจวัดระดับน้ำทะเลหนุนและระดับน้ำท่วมล้นตลิ่งริมแม่น้ำเจ้าพระยาปากอ่าว",
+    directCameraUrl: null,
     streamUrl: "https://www.thaiwater.net",
-    sourcePlatform: "คลังข้อมูลน้ำแห่งชาติ ThaiWater (กรมชลประทาน)",
-    isLiveViewable: true,
-    resolution: "1080p HD",
-    statusMessage: "LIVE (สัญญาณออนไลน์ผ่านพอร์ทัล ThaiWater)"
+    sourcePlatform: "คลังข้อมูลน้ำแห่งชาติ (ThaiWater / กรมชลประทาน)",
+    resolution: "1080p HD"
   },
   {
     id: "cctv-psc-suksawat-km22",
@@ -421,11 +401,10 @@ export const CCTV_CAMERAS = [
     type: "traffic",
     direction: "มุ่งหน้าป้อมพระจุลจอมเกล้า / ฐานทัพเรือ",
     description: "เส้นทางเลียบชายฝั่งปากอ่าวไทย เฝ้าระวังน้ำทะเลหนุนสูงเอ่อท่วมผิวการจราจร",
+    directCameraUrl: null,
     streamUrl: "https://www.highwaytraffic.go.th",
     sourcePlatform: "กรมทางหลวง (Thailand Highway Traffic)",
-    isLiveViewable: false,
-    resolution: "1080p HD",
-    statusMessage: "NO SIGNAL (สัญญาณสดสงวนสิทธิ์เฉพาะพอร์ทัลทางการ DOH)"
+    resolution: "1080p HD"
   }
 ];
 

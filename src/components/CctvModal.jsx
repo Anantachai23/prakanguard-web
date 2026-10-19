@@ -11,9 +11,8 @@ import {
   ShieldCheck,
   AlertTriangle,
   Radio,
-  SlidersHorizontal,
-  CheckCircle2,
-  Tv
+  Tv,
+  Info
 } from 'lucide-react';
 import { playClickSound, playCloseSound, playSelectSound } from '../services/soundEffects';
 import { CCTV_CAMERAS } from '../data/cctvCameras';
@@ -26,13 +25,14 @@ export default function CctvModal({
 }) {
   const isDark = theme === 'dark';
   const [selectedDistrict, setSelectedDistrict] = useState('ทั้งหมด');
-  const [statusFilter, setStatusFilter] = useState('all'); // 'all' | 'live' | 'no-signal'
+  const [selectedAgency, setSelectedAgency] = useState('ทั้งหมด'); // 'ทั้งหมด' | 'DOH' | 'EXAT' | 'RID'
   const [searchQuery, setSearchQuery] = useState('');
   const [focusedCamera, setFocusedCamera] = useState(null);
   const [liveClock, setLiveClock] = useState(() => new Date());
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [failedImageIds, setFailedImageIds] = useState(new Set());
 
-  // Live 1-second ticking clock for authentic real-time surveillance
+  // Live 1-second surveillance clock
   useEffect(() => {
     if (!isOpen) return;
     const interval = setInterval(() => {
@@ -48,6 +48,7 @@ export default function CctvModal({
       if (cam) {
         setFocusedCamera(cam);
         setSelectedDistrict('ทั้งหมด');
+        setSelectedAgency('ทั้งหมด');
       }
     }
   }, [initialCameraId, isOpen]);
@@ -76,12 +77,16 @@ export default function CctvModal({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, focusedCamera]);
 
-  // Filtered cameras based on Status, District, and Search query
+  // Mark an image as failed so it gracefully renders NO SIGNAL
+  const handleImageError = useCallback((camId) => {
+    setFailedImageIds(prev => new Set(prev).add(camId));
+  }, []);
+
+  // Filtered cameras based on Agency, District, and Search query
   const filteredCameras = useMemo(() => {
     return CCTV_CAMERAS.filter(c => {
-      // Status filter
-      if (statusFilter === 'live' && !c.isLiveViewable) return false;
-      if (statusFilter === 'no-signal' && c.isLiveViewable) return false;
+      // Agency filter
+      if (selectedAgency !== 'ทั้งหมด' && c.agency !== selectedAgency) return false;
 
       // District filter
       if (selectedDistrict !== 'ทั้งหมด') {
@@ -100,11 +105,12 @@ export default function CctvModal({
       }
       return true;
     });
-  }, [statusFilter, selectedDistrict, searchQuery]);
+  }, [selectedAgency, selectedDistrict, searchQuery]);
 
-  // Count summaries
-  const liveCount = useMemo(() => CCTV_CAMERAS.filter(c => c.isLiveViewable).length, []);
-  const noSignalCount = useMemo(() => CCTV_CAMERAS.filter(c => !c.isLiveViewable).length, []);
+  // Agency Counts
+  const dohCount = useMemo(() => CCTV_CAMERAS.filter(c => c.agency === 'DOH').length, []);
+  const exatCount = useMemo(() => CCTV_CAMERAS.filter(c => c.agency === 'EXAT').length, []);
+  const ridCount = useMemo(() => CCTV_CAMERAS.filter(c => c.agency === 'RID').length, []);
 
   // Previous & Next navigation in Theater Mode
   const currentCameraIndex = useMemo(() => {
@@ -129,6 +135,7 @@ export default function CctvModal({
   const handleManualRefresh = () => {
     playClickSound();
     setIsRefreshing(true);
+    setFailedImageIds(new Set());
     setTimeout(() => {
       setIsRefreshing(false);
       setLiveClock(new Date());
@@ -177,13 +184,13 @@ export default function CctvModal({
                 </span>
               </div>
               <p className={`text-[11px] truncate mt-0.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                กรมทางหลวง (DOH) • การทางพิเศษ (EXAT) • คลังข้อมูลน้ำแห่งชาติ (ThaiWater)
+                จุดตรวจการณ์จราจรและประตูระบายน้ำ สมุทรปราการ (DOH • EXAT • RID)
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-1.5 shrink-0">
-            {/* Live Clock */}
+            {/* Live Clock with Ticking Seconds */}
             <div className={`hidden sm:flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-mono font-semibold border ${
               isDark ? 'bg-slate-800 border-slate-700 text-cyan-300' : 'bg-white border-slate-200 text-blue-700'
             }`}>
@@ -197,7 +204,7 @@ export default function CctvModal({
               className={`p-1.5 sm:px-2.5 sm:py-1 rounded-md border flex items-center gap-1 text-xs font-medium transition-all cursor-pointer active:scale-95 ${
                 isDark ? 'bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-300' : 'bg-white hover:bg-slate-100 border-slate-200 text-slate-700'
               }`}
-              title="ตรวจสอบสัญญาณกล้องสด"
+              title="ตรวจสอบสัญญาณกล้อง"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-blue-500' : ''}`} />
               <span className="hidden sm:inline">รีเฟรช</span>
@@ -220,21 +227,21 @@ export default function CctvModal({
         </div>
 
         {/* ========================================================= */}
-        {/* STATUS FILTER TABS & SEARCH BAR                           */}
+        {/* AGENCY FILTER TABS & SEARCH BAR                           */}
         {/* ========================================================= */}
         <div className={`p-2.5 sm:p-3 border-b space-y-2.5 shrink-0 ${
           isDark ? 'border-slate-800 bg-slate-900/60' : 'border-slate-200 bg-white'
         }`}>
-          {/* Signal Status Tabs: แสดงเฉพาะกล้องที่ดูได้จริง หรือกล้อง No Signal */}
+          {/* Agency Filter Tabs: กรมทางหลวง / การทางพิเศษ / กรมชลประทาน */}
           <div className="flex items-center gap-1.5 flex-wrap">
             <button
               type="button"
               onClick={() => {
                 playClickSound();
-                setStatusFilter('all');
+                setSelectedAgency('ทั้งหมด');
               }}
               className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-all cursor-pointer active:scale-95 flex items-center gap-1.5 ${
-                statusFilter === 'all'
+                selectedAgency === 'ทั้งหมด'
                   ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
                   : isDark
                   ? 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-750'
@@ -251,22 +258,19 @@ export default function CctvModal({
               type="button"
               onClick={() => {
                 playClickSound();
-                setStatusFilter('live');
+                setSelectedAgency('DOH');
               }}
               className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-all cursor-pointer active:scale-95 flex items-center gap-1.5 ${
-                statusFilter === 'live'
-                  ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
+                selectedAgency === 'DOH'
+                  ? 'bg-blue-700 text-white border-blue-700 shadow-xs'
                   : isDark
-                  ? 'bg-emerald-950/40 border-emerald-800 text-emerald-300 hover:bg-emerald-950/70'
-                  : 'bg-emerald-50 border-emerald-200 text-emerald-800 hover:bg-emerald-100'
+                  ? 'bg-blue-950/40 border-blue-800 text-blue-300 hover:bg-blue-950/70'
+                  : 'bg-blue-50 border-blue-200 text-blue-800 hover:bg-blue-100'
               }`}
             >
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping inline-block" />
-              <span>แสดงเฉพาะกล้องที่ดูสดได้ในระบบ</span>
-              <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono font-bold ${
-                statusFilter === 'live' ? 'bg-black/20 text-white' : 'bg-emerald-600 text-white'
-              }`}>
-                {liveCount}
+              <span>กรมทางหลวง (DOH)</span>
+              <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-black/20 text-white font-mono">
+                {dohCount}
               </span>
             </button>
 
@@ -274,22 +278,39 @@ export default function CctvModal({
               type="button"
               onClick={() => {
                 playClickSound();
-                setStatusFilter('no-signal');
+                setSelectedAgency('EXAT');
               }}
               className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-all cursor-pointer active:scale-95 flex items-center gap-1.5 ${
-                statusFilter === 'no-signal'
-                  ? 'bg-rose-700 text-white border-rose-700 shadow-xs'
+                selectedAgency === 'EXAT'
+                  ? 'bg-amber-600 text-white border-amber-600 shadow-xs'
                   : isDark
-                  ? 'bg-rose-950/40 border-rose-900 text-rose-300 hover:bg-rose-950/70'
-                  : 'bg-rose-50 border-rose-200 text-rose-800 hover:bg-rose-100'
+                  ? 'bg-amber-950/40 border-amber-800 text-amber-300 hover:bg-amber-950/70'
+                  : 'bg-amber-50 border-amber-200 text-amber-800 hover:bg-amber-100'
               }`}
             >
-              <span className="w-2 h-2 rounded-full bg-rose-500 inline-block" />
-              <span>กล้องที่สงวนสิทธิ์พอร์ทัลทางการ (No Signal)</span>
-              <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono font-bold ${
-                statusFilter === 'no-signal' ? 'bg-black/20 text-white' : 'bg-rose-600 text-white'
-              }`}>
-                {noSignalCount}
+              <span>การทางพิเศษ (EXAT)</span>
+              <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-black/20 text-white font-mono">
+                {exatCount}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                playClickSound();
+                setSelectedAgency('RID');
+              }}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-all cursor-pointer active:scale-95 flex items-center gap-1.5 ${
+                selectedAgency === 'RID'
+                  ? 'bg-emerald-700 text-white border-emerald-700 shadow-xs'
+                  : isDark
+                  ? 'bg-emerald-950/40 border-emerald-800 text-emerald-300 hover:bg-emerald-950/70'
+                  : 'bg-emerald-50 border-emerald-200 text-emerald-800 hover:bg-emerald-100'
+              }`}
+            >
+              <span>กรมชลประทาน (RID)</span>
+              <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-black/20 text-white font-mono">
+                {ridCount}
               </span>
             </button>
           </div>
@@ -355,16 +376,24 @@ export default function CctvModal({
         {/* ========================================================= */}
         <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3">
           
-          <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 px-1">
-            <span>แสดง {filteredCameras.length} จุดกล้องจริง (ไม่มีภาพปลอม • ข้อมูลซื่อตรงต่อระบบราชการ)</span>
-            <span className="font-mono text-[11px] text-cyan-500">
+          {/* Transparency info banner */}
+          <div className={`p-2.5 rounded-lg border text-xs flex items-center justify-between gap-2 ${
+            isDark ? 'bg-slate-850/80 border-slate-800 text-slate-300' : 'bg-slate-50 border-slate-200 text-slate-700'
+          }`}>
+            <div className="flex items-center gap-2">
+              <Info className="w-4 h-4 text-blue-500 shrink-0" />
+              <span>
+                แสดง <strong>{filteredCameras.length}</strong> จุดตรวจการณ์จริง • สัญญาณสดจากกล้องภาครัฐสงวนสิทธิ์เฉพาะพอร์ทัลทางการของหน่วยงาน
+              </span>
+            </div>
+            <span className="font-mono text-[11px] text-cyan-500 hidden sm:inline shrink-0">
               {formattedDate} {formattedTime} น.
             </span>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {filteredCameras.map((cam) => {
-              const isLive = cam.isLiveViewable;
+              const hasDirectFeed = Boolean(cam.directCameraUrl) && !failedImageIds.has(cam.id);
 
               return (
                 <div
@@ -380,27 +409,48 @@ export default function CctvModal({
                   }`}
                   role="button"
                   tabIndex={0}
-                  title={isLive ? "คลิกเพื่อดูถ่ายทอดสดเต็มจอ" : "คลิกเพื่อดูรายละเอียดและลิงก์ไปยังพอร์ทัลต้นทาง"}
+                  title="คลิกเพื่อขยายจอใหญ่ (Esc ปิด)"
                 >
-                  {/* Camera Monitor Display: LIVE Stream OR Genuine NO SIGNAL Screen */}
+                  {/* Camera Monitor Screen: Genuine direct feed OR Authentic NO SIGNAL Screen */}
                   <div className="relative aspect-video w-full bg-slate-950 overflow-hidden select-none">
                     
-                    {isLive ? (
-                      /* LIVE STREAMABLE CAMERA (ThaiWater Telemetry Portal Integration) */
-                      <div className="w-full h-full relative bg-slate-900 flex flex-col justify-between p-3 select-none">
-                        <div className="absolute inset-0 bg-blue-950/20 pointer-events-none" />
-                        <iframe
-                          src={cam.streamUrl}
-                          title={cam.name}
-                          className="w-full h-full border-0 pointer-events-none opacity-85 scale-100"
+                    {hasDirectFeed ? (
+                      /* GENUINE DIRECT CAMERA IMAGE FEED */
+                      <div className="w-full h-full relative bg-black flex items-center justify-center">
+                        <img
+                          src={cam.directCameraUrl}
+                          alt={cam.name}
+                          onError={() => handleImageError(cam.id)}
+                          className="w-full h-full object-cover"
                           loading="lazy"
                         />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-black/60 pointer-events-none" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/50 pointer-events-none" />
+                        
+                        {/* Top OSD */}
+                        <div className="absolute top-2 left-2 right-2 flex items-center justify-between text-[10px] font-mono text-white z-10 pointer-events-none">
+                          <span className="px-1.5 py-0.5 rounded bg-emerald-600 text-white font-bold flex items-center gap-1 shadow-xs">
+                            <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                            LIVE
+                          </span>
+                          <span className="px-1.5 py-0.5 rounded bg-black/70 backdrop-blur-xs text-slate-200 font-semibold border border-white/10">
+                            {cam.agency} • ออนไลน์
+                          </span>
+                        </div>
+
+                        {/* Bottom OSD */}
+                        <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between text-[10px] font-mono text-white/90 z-10 pointer-events-none">
+                          <span className="text-cyan-300 font-semibold truncate max-w-[60%]">
+                            {cam.id.toUpperCase()}
+                          </span>
+                          <span className="bg-black/60 px-1.5 py-0.5 rounded backdrop-blur-xs font-bold text-emerald-400">
+                            {formattedTime} น.
+                          </span>
+                        </div>
                       </div>
                     ) : (
-                      /* GENUINE NO SIGNAL CCTV SCREEN (SMPTE Bars + Static OSD) */
-                      <div className="w-full h-full relative bg-slate-950 flex flex-col justify-between p-2 select-none overflow-hidden">
-                        {/* Realistic SMPTE Television Color Bars Header Strip */}
+                      /* AUTHENTIC CCTV NO SIGNAL SCREEN (Broadcast SMPTE Bars + Static OSD) */
+                      <div className="w-full h-full relative bg-slate-950 flex flex-col justify-between p-2.5 select-none overflow-hidden">
+                        {/* SMPTE Broadcast Color Bars */}
                         <div className="absolute top-0 left-0 right-0 h-1.5 flex">
                           <div className="flex-1 bg-slate-200" />
                           <div className="flex-1 bg-yellow-400" />
@@ -411,7 +461,7 @@ export default function CctvModal({
                           <div className="flex-1 bg-blue-700" />
                         </div>
 
-                        {/* Scanline CRT Pattern */}
+                        {/* CRT Scanline Effect */}
                         <div className="absolute inset-0 opacity-15 pointer-events-none bg-[repeating-linear-gradient(0deg,#000,#000_2px,transparent_2px,transparent_4px)]" />
 
                         {/* Top OSD Bar */}
@@ -450,35 +500,10 @@ export default function CctvModal({
                       </div>
                     )}
 
-                    {/* Top OSD for Live Cameras */}
-                    {isLive && (
-                      <div className="absolute top-2 left-2 right-2 flex items-center justify-between text-[10px] font-mono text-white z-10 pointer-events-none">
-                        <span className="px-1.5 py-0.5 rounded bg-emerald-600 text-white font-bold flex items-center gap-1 shadow-xs">
-                          <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-                          LIVE สด 24H
-                        </span>
-                        <span className="px-1.5 py-0.5 rounded bg-black/70 backdrop-blur-xs text-slate-200 font-semibold border border-white/10">
-                          {cam.agency} • ออนไลน์
-                        </span>
-                      </div>
-                    )}
-
-                    {/* Bottom OSD for Live Cameras */}
-                    {isLive && (
-                      <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between text-[10px] font-mono text-white/90 z-10 pointer-events-none">
-                        <span className="text-cyan-300 font-semibold truncate max-w-[60%]">
-                          {cam.id.toUpperCase()}
-                        </span>
-                        <span className="bg-black/60 px-1.5 py-0.5 rounded backdrop-blur-xs font-bold text-emerald-400">
-                          {formattedTime} น.
-                        </span>
-                      </div>
-                    )}
-
                     {/* Hover Expand Hint */}
                     <div className="absolute inset-0 bg-blue-950/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1.5 text-white text-xs font-bold pointer-events-none z-20 backdrop-blur-[2px]">
                       <Maximize2 className="w-4 h-4 text-cyan-300 animate-pulse" />
-                      <span>{isLive ? 'คลิกเพื่อดูสดจอใหญ่' : 'คลิกเพื่อดูรายละเอียดและลิงก์ต้นทาง'}</span>
+                      <span>คลิกเพื่อขยายจอใหญ่</span>
                     </div>
                   </div>
 
@@ -509,12 +534,12 @@ export default function CctvModal({
                       </p>
                     </div>
 
-                    {/* Action Row: Direct Link to Original Data Source */}
+                    {/* Action Row: Status badge & THE ONLY EXTERNAL LINK BUTTON PER CARD */}
                     <div className="mt-2.5 pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-1">
                       <span className={`text-[10.5px] font-medium flex items-center gap-1 ${
-                        isLive ? 'text-emerald-600 dark:text-emerald-400 font-bold' : 'text-slate-400'
+                        hasDirectFeed ? 'text-emerald-600 dark:text-emerald-400 font-bold' : 'text-slate-400'
                       }`}>
-                        {isLive ? '🟢 สัญญาณสดออนไลน์' : '🔴 No Signal'}
+                        {hasDirectFeed ? '🟢 มีสัญญาณภาพ' : '🔴 NO SIGNAL'}
                       </span>
 
                       {/* Direct link button to official data source */}
@@ -523,10 +548,10 @@ export default function CctvModal({
                         target="_blank"
                         rel="noopener noreferrer"
                         onClick={(e) => e.stopPropagation()}
-                        className="py-1 px-2 rounded text-[11px] font-semibold bg-slate-100 hover:bg-blue-600 hover:text-white text-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-blue-600 dark:hover:text-white flex items-center gap-1 transition-all cursor-pointer active:scale-95"
+                        className="py-1 px-2.5 rounded text-[11px] font-semibold bg-slate-100 hover:bg-blue-600 hover:text-white text-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-blue-600 dark:hover:text-white flex items-center gap-1 transition-all cursor-pointer active:scale-95 shadow-2xs"
                         title={`เปิดดูสัญญาณสดที่แหล่งข้อมูลต้นทาง (${cam.agency})`}
                       >
-                        <span>แหล่งต้นทาง</span>
+                        <span>แหล่งข้อมูลต้นทาง</span>
                         <ExternalLink className="w-3 h-3" />
                       </a>
                     </div>
@@ -545,7 +570,7 @@ export default function CctvModal({
               <button
                 type="button"
                 onClick={() => {
-                  setStatusFilter('all');
+                  setSelectedAgency('ทั้งหมด');
                   setSelectedDistrict('ทั้งหมด');
                   setSearchQuery('');
                 }}
@@ -614,7 +639,7 @@ export default function CctvModal({
                   <span className="text-xs font-semibold text-slate-400">
                     อ.{focusedCamera.district}
                   </span>
-                  {focusedCamera.isLiveViewable ? (
+                  {Boolean(focusedCamera.directCameraUrl) && !failedImageIds.has(focusedCamera.id) ? (
                     <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 flex items-center gap-1">
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping inline-block" />
                       สัญญาณออนไลน์
@@ -648,15 +673,37 @@ export default function CctvModal({
             {/* Theater Big Screen with Controls */}
             <div className="relative aspect-video w-full bg-black overflow-hidden select-none flex items-center justify-center">
               
-              {focusedCamera.isLiveViewable ? (
-                /* LIVE PORTAL / FEED EMBED */
-                <div className="w-full h-full relative bg-slate-950 flex flex-col justify-between">
-                  <iframe
-                    src={focusedCamera.streamUrl}
-                    title={focusedCamera.name}
-                    className="w-full h-full border-0"
-                    loading="lazy"
+              {Boolean(focusedCamera.directCameraUrl) && !failedImageIds.has(focusedCamera.id) ? (
+                /* DIRECT LIVE CAMERA FEED */
+                <div className="w-full h-full relative bg-slate-950 flex items-center justify-center">
+                  <img
+                    src={focusedCamera.directCameraUrl}
+                    alt={focusedCamera.name}
+                    onError={() => handleImageError(focusedCamera.id)}
+                    className="w-full h-full object-cover"
                   />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/50 pointer-events-none" />
+                  
+                  {/* Top OSD */}
+                  <div className="absolute top-3 left-3 right-3 flex items-center justify-between text-xs font-mono text-white pointer-events-none">
+                    <span className="px-2 py-0.5 rounded bg-emerald-600 text-white font-bold flex items-center gap-1.5 shadow-md">
+                      <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
+                      LIVE
+                    </span>
+                    <span className="bg-black/70 px-2 py-0.5 rounded text-cyan-300 border border-white/10">
+                      {formattedDate} {formattedTime} น.
+                    </span>
+                  </div>
+
+                  {/* Bottom OSD */}
+                  <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between text-xs font-mono text-white/90 pointer-events-none">
+                    <span className="text-cyan-300 font-bold">
+                      {focusedCamera.id.toUpperCase()}
+                    </span>
+                    <span className="bg-black/60 px-2 py-0.5 rounded text-slate-300">
+                      {focusedCamera.resolution}
+                    </span>
+                  </div>
                 </div>
               ) : (
                 /* AUTHENTIC NO SIGNAL TEST SCREEN */
@@ -716,7 +763,7 @@ export default function CctvModal({
                       CAM ID: {focusedCamera.id.toUpperCase()}
                     </span>
                     <span className="text-slate-300">
-                      STATUS: OFFLINE_ENCRYPTED
+                      STATUS: OFFLINE_PORTAL_ENCRYPTED
                     </span>
                   </div>
                 </div>
@@ -770,16 +817,6 @@ export default function CctvModal({
                     <ExternalLink className="w-3.5 h-3.5" />
                   </a>
                 </div>
-              </div>
-
-              {/* Quick Jump Bar across cameras */}
-              <div className="flex items-center justify-between text-[11px] text-slate-400 pt-1 border-t border-slate-800/80">
-                <span className="font-mono">
-                  กล้องที่ {currentCameraIndex + 1} จากทั้งหมด {CCTV_CAMERAS.length} จุด
-                </span>
-                <span className="text-[10px] text-slate-500">
-                  (กดลูกศร ◀ ▶ เพื่อสลับดูกล้องอื่นได้อย่างรวดเร็ว)
-                </span>
               </div>
             </div>
 
