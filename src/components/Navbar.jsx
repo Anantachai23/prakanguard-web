@@ -97,41 +97,67 @@ export default function Navbar({
       <div className="w-full max-w-full px-2 sm:px-4 py-1.5 sm:py-2 flex items-center justify-between gap-1.5 sm:gap-2.5 relative">
         
         {/* ========================================================= */}
-        {/* 1. BRAND AREA (LEFT) — Clean Official Style               */}
+        {/* 1. BRAND AREA (LEFT) — Official Civic Command Center       */}
         {/* ========================================================= */}
-        <div className="flex items-center space-x-2 sm:space-x-2.5 shrink-0 min-w-0">
-          {/* PrakanGuard Emblem */}
-          <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-md p-0.5 border shadow-xs shrink-0 flex items-center justify-center overflow-hidden ${
-            isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200'
+        <div className="flex items-center space-x-2.5 sm:space-x-3 shrink-0 min-w-0">
+          {/* Official Provincial Crest Emblem */}
+          <div className={`relative w-8 h-8 sm:w-9 sm:h-9 rounded-lg p-0.5 border shadow-xs shrink-0 flex items-center justify-center overflow-hidden ${
+            isDark ? 'bg-slate-900 border-amber-500/40' : 'bg-white border-amber-600/30'
           }`}>
             <img 
               src="/logo.png" 
-              alt="PrakanGuard Logo" 
-              className="w-full h-full rounded-[3px] object-cover" 
+              alt="ตราสัญลักษณ์ จ.สมุทรปราการ" 
+              className="w-full h-full rounded-[6px] object-cover" 
             />
           </div>
 
           <div className="flex flex-col justify-center min-w-0">
-            <div className="flex items-center gap-1.5">
-              <span className={`text-xs sm:text-base font-black tracking-tight leading-none shrink-0 ${
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className={`text-xs sm:text-sm font-extrabold tracking-tight leading-none shrink-0 ${
                 isDark ? 'text-white' : 'text-slate-900'
               }`}>
-                PrakanGuard
+                ศูนย์เฝ้าระวังอุทกภัย
               </span>
-              <span className={`text-[8.5px] sm:text-[10px] px-1.5 py-0.5 rounded-md font-bold shrink-0 border ${
-                isDark ? 'bg-slate-850 text-cyan-300 border-slate-700' : 'bg-slate-100 text-blue-700 border-slate-200'
+              <span className={`text-[8.5px] sm:text-[9.5px] px-1.5 py-0.5 rounded font-bold shrink-0 border ${
+                isDark ? 'bg-blue-950/80 text-blue-300 border-blue-800' : 'bg-blue-50 text-blue-800 border-blue-200'
               }`}>
-                สมุทรปราการ
+                จ.สมุทรปราการ
               </span>
+            </div>
+            <div className="hidden sm:flex items-center gap-1 text-[9.5px] font-medium text-slate-500 dark:text-slate-400 mt-0.5 leading-none">
+              <span className="font-bold text-amber-600 dark:text-amber-400 tracking-wider">PRAKANGUARD GIS</span>
+              <span>•</span>
+              <span className="truncate">ระบบข้อมูลเตือนภัย ปภ. 6 อำเภอ</span>
             </div>
           </div>
         </div>
 
         {/* ========================================================= */}
-        {/* 2. CENTER AREA: STATS FILTER BAR & WEATHER (Desktop only) */}
+        {/* 2. CENTER AREA: EXECUTIVE TELEMETRY STATUS (Desktop only) */}
         {/* ========================================================= */}
         <div className="hidden lg:flex items-center gap-1.5 sm:gap-2 shrink-0">
           
+          {/* Executive Situation Status Badge */}
+          <div className={`hidden 2xl:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold border select-none tabular-nums ${
+            severe > 0 
+              ? (isDark ? 'bg-rose-950/80 text-rose-300 border-rose-800' : 'bg-rose-50 text-rose-800 border-rose-200')
+              : moderate > 0
+              ? (isDark ? 'bg-amber-950/80 text-amber-300 border-amber-800' : 'bg-amber-50 text-amber-800 border-amber-200')
+              : (isDark ? 'bg-emerald-950/80 text-emerald-300 border-emerald-800' : 'bg-emerald-50 text-emerald-800 border-emerald-200')
+          }`}>
+            <span className={`w-2 h-2 rounded-full ${
+              severe > 0 ? 'bg-rose-500 animate-pulse' : moderate > 0 ? 'bg-amber-500' : 'bg-emerald-500'
+            }`} />
+            <span>
+              {severe > 0 
+                ? `วิกฤต: ${severe} จุด` 
+                : moderate > 0 
+                ? `เฝ้าระวัง: ${moderate} จุด` 
+                : 'สถานการณ์ปกติ'
+              }
+            </span>
+          </div>
+
           {/* Segmented Compact Status Bar (แท่งเดียว เรียบหรู ไม่ล้นจอ) */}
           <div className={`inline-flex items-center p-0.5 rounded-lg border backdrop-blur-md shadow-xs select-none gap-0.5 ${
             isDark ? 'bg-slate-900/90 border-slate-800' : 'bg-slate-100/90 border-slate-200'

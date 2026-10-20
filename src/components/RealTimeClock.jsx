@@ -51,37 +51,38 @@ export default function RealTimeClock({ theme = 'light' }) {
 
   return (
     <div 
-      className={`inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1 rounded-xl border text-[11px] sm:text-xs font-mono font-medium shadow-2xs select-none transition-colors max-w-full shrink-0 ${
+      className={`inline-flex items-center gap-1 sm:gap-1.5 px-2.5 py-1 rounded-lg border text-[11px] sm:text-xs font-mono font-medium shadow-2xs select-none transition-colors max-w-full shrink-0 tabular-nums ${
         isDark 
-          ? 'bg-slate-900/90 border-slate-700 text-slate-200' 
-          : 'bg-slate-50 border-slate-200 text-slate-700'
+          ? 'bg-slate-900/95 border-slate-700/80 text-slate-200' 
+          : 'bg-white/95 border-slate-200 text-slate-800'
       }`}
-      title={`วัน${dayNameFull}ที่ ${date} ${monthNameFull} พ.ศ. ${yearBE} เวลา ${hours}:${minutes}:${seconds} น.`}
+      title={`วัน${dayNameFull}ที่ ${date} ${monthNameFull} พ.ศ. ${yearBE} เวลา ${hours}:${minutes}:${seconds} น. (เวลามาตรฐานประเทศไทย ICT)`}
     >
-      <div className="hidden sm:flex items-center gap-1 text-blue-500 shrink-0">
-        <Calendar className="w-3.5 h-3.5" />
+      <div className="hidden sm:flex items-center gap-1 text-blue-600 dark:text-cyan-400 shrink-0">
+        <Clock className="w-3.5 h-3.5" />
       </div>
 
-      {/* Date display (Only on wide screens >= 1280px to guarantee zero navbar overflow) */}
+      {/* Date display */}
       <div className="flex items-center gap-1 shrink-0">
-        {/* Compact Date for XL and 2XL screens */}
         <span className="hidden xl:inline font-sans font-semibold text-slate-600 dark:text-slate-300">
-          {dayNameShort} {date} {monthNameShort}
+          {dayNameShort} {date} {monthNameShort} {yearBEShort}
         </span>
 
         <span className="hidden xl:inline text-slate-400 font-sans">•</span>
 
-        {/* Real-time Digital Clock with Blinking Colon and Ticking Seconds */}
-        <span className="flex items-center font-bold text-blue-600 dark:text-cyan-400 shrink-0">
-          <Clock className="w-3 h-3 mr-0.5 inline shrink-0 text-blue-500" />
+        {/* Real-time Digital Clock with Seconds */}
+        <span className="flex items-center font-bold text-blue-700 dark:text-cyan-300 shrink-0 tracking-tight">
           <span>{hours}:{minutes}</span>
-          <span className="hidden sm:inline text-[10px] text-slate-400 dark:text-slate-500">:{seconds}</span>
+          <span className="hidden sm:inline text-[10.5px] text-slate-400 dark:text-slate-500 font-semibold">:{seconds}</span>
           <span className="ml-0.5 text-[10px] font-sans">น.</span>
         </span>
       </div>
 
-      {/* Live Indicator Dot */}
-      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse ml-0.5 shrink-0"></span>
+      {/* Live Sync Status */}
+      <span className="flex items-center gap-1 pl-1 border-l border-slate-200 dark:border-slate-700 text-[9.5px] font-sans text-emerald-600 dark:text-emerald-400 font-bold shrink-0">
+        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse inline-block"></span>
+        <span className="hidden sm:inline">ICT</span>
+      </span>
     </div>
   );
 }

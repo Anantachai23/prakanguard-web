@@ -13,13 +13,13 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
     <meta http-equiv="Pragma" content="no-cache" />
     <meta http-equiv="Expires" content="0" />
-    <title>PrakanGuard | ระบบสารสนเทศและเฝ้าระวังอุทกภัย จ.สมุทรปราการ</title>
-    <meta name="description" content="ระบบติดตามจุดเสี่ยงน้ำท่วมผิวจราจร 6 อำเภอ จังหวัดสมุทรปราการ อ้างอิงเกณฑ์มาตรฐาน ปภ. กรมทางหลวง และกรมอุทกศาสตร์ กองทัพเรือ เพื่อสาธารณประโยชน์" />
+    <title>ศูนย์ปฏิบัติการและเฝ้าระวังอุทกภัย จ.สมุทรปราการ | PrakanGuard GIS</title>
+    <meta name="description" content="ศูนย์ข้อมูลและระบบสารสนเทศภูมิศาสตร์ (GIS) เฝ้าระวังอุทกภัยและน้ำท่วมผิวจราจร 6 อำเภอ จังหวัดสมุทรปราการ บูรณาการ ปภ. กรมทางหลวง การทางพิเศษ และกรมชลประทาน" />
     
-    <!-- Google Fonts: Prompt & Plus Jakarta Sans -->
+    <!-- Google Fonts: Official Civic Typography (IBM Plex Sans Thai, Sarabun, Prompt, Plus Jakarta Sans) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Prompt:wght@300;400;500;600;700&family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -41,38 +41,39 @@
   </head>
   <body class="h-full w-full fixed inset-0 overflow-hidden select-none overscroll-none bg-slate-900 text-slate-100 font-prompt antialiased selection:bg-blue-600 selection:text-white">
     <div id="root" class="h-full w-full fixed inset-0 overflow-hidden">
-      <!-- Pre-rendered Updating & Initial Loading Screen (Prevents White Screen during Deployments / Asset Loading) -->
-      <div id="prakanguard-splash-loader" style="position: fixed; inset: 0; z-index: 99999; display: flex; flex-direction: column; align-items: center; justify-content: center; background: radial-gradient(circle at 50% 35%, #0f2744 0%, #071224 55%, #030712 100%); color: #f8fafc; font-family: 'Prompt', -apple-system, BlinkMacSystemFont, sans-serif; padding: 24px; text-align: center; box-sizing: border-box;">
+      <!-- Official Command Center Initial Loading Screen -->
+      <div id="prakanguard-splash-loader" style="position: fixed; inset: 0; z-index: 99999; display: flex; flex-direction: column; align-items: center; justify-content: center; background: radial-gradient(circle at 50% 38%, #0f1f38 0%, #080f1e 55%, #030712 100%); color: #f8fafc; font-family: 'IBM Plex Sans Thai', 'Prompt', -apple-system, BlinkMacSystemFont, sans-serif; padding: 24px; text-align: center; box-sizing: border-box;">
         
-        <!-- Animated Mascot Logo with Pulse Halo -->
-        <div style="position: relative; width: 92px; height: 92px; margin-bottom: 24px;">
-          <div style="position: absolute; inset: -8px; border-radius: 50%; background: rgba(14, 165, 233, 0.28); animation: pg-pulse-ring 2.2s cubic-bezier(0, 0, 0.2, 1) infinite;"></div>
-          <img src="/logo.png" alt="PrakanGuard Mascot" style="position: relative; width: 100%; height: 100%; border-radius: 50%; object-fit: cover; box-shadow: 0 16px 36px -6px rgba(2, 132, 199, 0.6); border: 2.5px solid rgba(255,255,255,0.35);" />
+        <!-- Official Crest Emblem with Gold/Navy Border Ring -->
+        <div style="position: relative; width: 88px; height: 88px; margin-bottom: 20px;">
+          <div style="position: absolute; inset: -6px; border-radius: 50%; border: 1.5px solid rgba(217, 119, 6, 0.4); animation: pg-pulse-ring 2.5s cubic-bezier(0, 0, 0.2, 1) infinite;"></div>
+          <div style="position: absolute; inset: -2px; border-radius: 50%; background: rgba(30, 64, 175, 0.3);"></div>
+          <img src="/logo.png" alt="ตราสัญลักษณ์จังหวัดสมุทรปราการ" style="position: relative; width: 100%; height: 100%; border-radius: 50%; object-fit: cover; box-shadow: 0 12px 30px -4px rgba(15, 23, 42, 0.8); border: 2.5px solid rgba(255, 255, 255, 0.85);" />
         </div>
 
-        <!-- Project Badge -->
-        <div style="display: inline-flex; align-items: center; gap: 8px; padding: 6px 16px; background: rgba(56, 189, 248, 0.12); border: 1px solid rgba(56, 189, 248, 0.35); border-radius: 9999px; font-size: 13px; font-weight: 600; color: #38bdf8; margin-bottom: 16px; letter-spacing: 0.02em;">
-          <span style="width: 8px; height: 8px; border-radius: 50%; background: #38bdf8; box-shadow: 0 0 10px #38bdf8; animation: pg-glow 1.5s infinite alternate;"></span>
-          PrakanGuard • สมุทรปราการ
+        <!-- Official Accreditation Badge -->
+        <div style="display: inline-flex; align-items: center; gap: 8px; padding: 5px 16px; background: rgba(30, 58, 138, 0.35); border: 1px solid rgba(59, 130, 246, 0.4); border-radius: 9999px; font-size: 12px; font-weight: 600; color: #93c5fd; margin-bottom: 14px; letter-spacing: 0.03em;">
+          <span style="width: 7px; height: 7px; border-radius: 50%; background: #10b981; box-shadow: 0 0 8px #10b981; animation: pg-glow 1.5s infinite alternate;"></span>
+          ศูนย์ปฏิบัติการข้อมูลและเฝ้าระวังอุทกภัย • จ.สมุทรปราการ
         </div>
 
-        <!-- Main Status Heading -->
-        <h1 style="font-size: 22px; font-weight: 700; margin: 0 0 8px 0; color: #ffffff; letter-spacing: -0.01em;">
-          กำลังโหลดข้อมูลสถานการณ์น้ำ...
+        <!-- Main Official Heading -->
+        <h1 style="font-size: 20px; font-weight: 700; margin: 0 0 6px 0; color: #ffffff; letter-spacing: -0.01em;">
+          ระบบสารสนเทศภูมิศาสตร์ (GIS) เฝ้าระวังน้ำท่วม
         </h1>
 
         <!-- Explanatory Subtext for Users -->
-        <p style="font-size: 13px; color: #94a3b8; max-width: 420px; line-height: 1.6; margin: 0 0 20px 0; font-weight: 400;">
-          ระบบเฝ้าระวังน้ำท่วมผิวจราจร 6 อำเภอ จังหวัดสมุทรปราการ
+        <p style="font-size: 13px; color: #94a3b8; max-width: 440px; line-height: 1.6; margin: 0 0 20px 0; font-weight: 400;">
+          เชื่อมโยงข้อมูลโทรมาตรระดับน้ำ เรดาร์ตรวจสภาพอากาศ และจุดเฝ้าระวัง 6 อำเภอ
         </p>
 
         <!-- Shimmering Progress Bar -->
-        <div style="width: 200px; height: 4px; background: rgba(255, 255, 255, 0.12); border-radius: 9999px; overflow: hidden; margin-bottom: 16px;">
-          <div style="width: 100%; height: 100%; background: linear-gradient(90deg, #38bdf8, #60a5fa, #38bdf8); background-size: 200% 100%; animation: pg-shimmer 1.8s infinite linear;"></div>
+        <div style="width: 220px; height: 4px; background: rgba(255, 255, 255, 0.12); border-radius: 9999px; overflow: hidden; margin-bottom: 14px;">
+          <div style="width: 100%; height: 100%; background: linear-gradient(90deg, #1d4ed8, #60a5fa, #1d4ed8); background-size: 200% 100%; animation: pg-shimmer 1.8s infinite linear;"></div>
         </div>
 
-        <span style="font-size: 12px; color: #64748b;">
-          อัปเดตข้อมูลเรดาร์และระดับน้ำอัตโนมัติ
+        <span style="font-size: 11.5px; color: #64748b; letter-spacing: 0.02em;">
+          บูรณาการ ปภ. • กรมทางหลวง • กรมชลประทาน • ทร.
         </span>
 
         <style>

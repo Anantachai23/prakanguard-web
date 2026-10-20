@@ -1173,9 +1173,9 @@ export default function MapView({
       {/* FLOATING MAP CONTROLS (TOP RIGHT - CLEAN, UNCLUTTERED, COMPACT) */}
       <div className="absolute top-14 right-2 sm:top-4 sm:right-4 z-25 flex flex-col items-end gap-1.5 sm:gap-2 pointer-events-auto">
         
-        {/* Map Tile Switcher */}
-        <div className={`p-0.5 rounded-md flex items-center gap-1 border shadow-xs text-xs backdrop-blur-md transition-colors ${
-          isDark ? 'bg-slate-900/95 border-slate-800' : 'bg-white/95 border-slate-200'
+        {/* Map Tile Switcher (Official GIS Style) */}
+        <div className={`p-1 rounded-lg flex items-center gap-1 border shadow-xs text-xs backdrop-blur-md transition-colors ${
+          isDark ? 'bg-slate-900/95 border-slate-700/80 text-slate-100' : 'bg-white/95 border-slate-200 text-slate-800'
         }`}>
           {[
             { style: 'google-roadmap',    emoji: '🗺️', label: 'ถนน' },
@@ -1187,17 +1187,17 @@ export default function MapView({
                 playToggleSound(style === 'google-satellite');
                 setMapStyle(style);
               }}
-              className={`px-2.5 py-1.5 rounded-md font-semibold transition-all cursor-pointer flex items-center gap-1.5 text-[11.5px] sm:text-xs active:scale-95 ${
+              className={`px-2.5 py-1.5 rounded-md font-bold transition-all cursor-pointer flex items-center gap-1.5 text-[11px] sm:text-xs active:scale-95 ${
                 mapStyle === style
                   ? 'bg-blue-600 text-white shadow-xs'
                   : isDark 
                     ? 'text-slate-400 hover:text-slate-100 hover:bg-slate-800' 
                     : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
               }`}
-              title={`สลับเป็นแผนที่ ${label}`}
+              title={`สลับชั้นข้อมูลแผนที่ ${label}`}
             >
               <span>{emoji}</span>
-              <span className="inline font-bold">{label}</span>
+              <span className="inline">{label}</span>
             </button>
           ))}
         </div>
@@ -1210,10 +1210,10 @@ export default function MapView({
               playGpsSound();
               if (onLocateMe) onLocateMe();
             }}
-            title="ค้นหาพิกัดตำแหน่งปัจจุบันของคุณ"
-            className={`px-2.5 py-1.5 sm:px-3 sm:py-1.5 rounded-md shadow-xs border transition-all flex items-center gap-1 sm:gap-1.5 text-[11px] sm:text-xs cursor-pointer backdrop-blur-md font-semibold active:scale-95 ${
+            title="ค้นหาพิกัดตำแหน่งปัจจุบันของคุณ (GPS)"
+            className={`px-2.5 py-1.5 sm:px-3 sm:py-1.5 rounded-lg shadow-xs border transition-all flex items-center gap-1 sm:gap-1.5 text-[11px] sm:text-xs cursor-pointer backdrop-blur-md font-bold active:scale-95 ${
               isDark 
-                ? 'bg-slate-900/95 text-slate-200 hover:text-cyan-400 hover:bg-slate-800 border-slate-800' 
+                ? 'bg-slate-900/95 text-slate-200 hover:text-cyan-400 hover:bg-slate-800 border-slate-700/80' 
                 : 'bg-white/95 text-slate-700 hover:text-blue-700 hover:bg-slate-50 border-slate-200'
             }`}
           >
@@ -1227,13 +1227,13 @@ export default function MapView({
               resetView();
             }}
             title="รีเซ็ตมุมมองขอบเขตจังหวัดสมุทรปราการ"
-            className={`p-1.5 sm:p-2 rounded-md shadow-xs border transition-all cursor-pointer backdrop-blur-md active:scale-95 ${
+            className={`p-1.5 sm:p-2 rounded-lg shadow-xs border transition-all cursor-pointer backdrop-blur-md active:scale-95 ${
               isDark 
-                ? 'bg-slate-900/95 text-slate-200 hover:text-cyan-400 hover:bg-slate-800 border-slate-800' 
+                ? 'bg-slate-900/95 text-slate-200 hover:text-cyan-400 hover:bg-slate-800 border-slate-700/80' 
                 : 'bg-white/95 text-slate-700 hover:text-blue-700 hover:bg-slate-50 border-slate-200'
             }`}
           >
-            <Crosshair className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            <Crosshair className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-500" />
           </button>
         </div>
 

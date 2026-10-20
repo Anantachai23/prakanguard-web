@@ -2574,8 +2574,8 @@ export default function App() {
             <div className="flex items-center gap-2 min-w-0">
               <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
               <div className="min-w-0">
-                <h2 className="text-xs sm:text-sm font-bold tracking-tight truncate">ศูนย์ข้อมูล & ควบคุม GIS</h2>
-                <span className="text-[10px] text-slate-500 dark:text-slate-400 block truncate">จ.สมุทรปราการ (6 อำเภอ)</span>
+                <h2 className="text-xs sm:text-sm font-extrabold tracking-tight truncate">ศูนย์ปฏิบัติการสารสนเทศภูมิศาสตร์ (GIS)</h2>
+                <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 block truncate">เฝ้าระวังอุทกภัย 6 อำเภอ จังหวัดสมุทรปราการ</span>
               </div>
             </div>
             
@@ -2774,7 +2774,7 @@ export default function App() {
                   title="คลิกเพื่อเลือกดูตามอำเภอ"
                 >
                   <option value="ทั้งหมด" className={isDark ? 'bg-slate-900 text-white' : 'bg-white text-slate-900'}>
-                    🏛️ ทุกอำเภอ (จ.สมุทรปราการ)
+                    🏛️ ครอบคลุมทั้งจังหวัด (6 อำเภอ)
                   </option>
                   {DISTRICTS.filter(d => d !== "ทั้งหมด").map(dist => (
                     <option 
@@ -2782,7 +2782,7 @@ export default function App() {
                       value={dist}
                       className={isDark ? 'bg-slate-900 text-white' : 'bg-white text-slate-900'}
                     >
-                      📍 อ.{dist}
+                      📍 อำเภอ{dist}
                     </option>
                   ))}
                 </select>
@@ -2801,7 +2801,7 @@ export default function App() {
                 >
                   <Compass className="w-3.5 h-3.5 text-blue-500 animate-spin-slow shrink-0" />
                   <span className="truncate max-w-[110px]">
-                    {userDistrict && typeof userDistrict === 'string' ? `คุณอยู่: อ.${userDistrict.replace('เมืองสมุทรปราการ', 'เมือง')}` : 'อยู่นอกสมุทรปราการ'}
+                    {userDistrict && typeof userDistrict === 'string' ? `อ.${userDistrict.replace('เมืองสมุทรปราการ', 'เมือง')}` : 'นอกสมุทรปราการ'}
                   </span>
                 </div>
               ) : (
@@ -2814,7 +2814,7 @@ export default function App() {
                   title="คลิกเพื่อเปิดตำแหน่งและระบุพิกัด GPS"
                 >
                   <Compass className="w-3.5 h-3.5 text-blue-500 shrink-0" />
-                  <span className="underline decoration-slate-400 dark:decoration-slate-500 underline-offset-2 hover:decoration-blue-500 font-medium">
+                  <span className="font-semibold text-blue-600 dark:text-cyan-400">
                     เปิด GPS
                   </span>
                 </button>
@@ -2822,7 +2822,7 @@ export default function App() {
             </div>
 
             {/* 3. Desktop & Tablet GIS Sidebar Tab Switcher */}
-            <div className="grid grid-cols-2 gap-1 p-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-xs">
+            <div className="grid grid-cols-2 gap-1 p-1 rounded-lg bg-slate-100 dark:bg-slate-800/90 text-xs">
               <button
                 type="button"
                 onClick={() => {
@@ -2831,12 +2831,12 @@ export default function App() {
                 }}
                 className={`py-1.5 px-2 rounded-md font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                   desktopSidebarTab === 'points'
-                    ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-cyan-300 shadow-xs'
+                    ? 'bg-white dark:bg-slate-700 text-blue-700 dark:text-cyan-300 shadow-xs border border-slate-200 dark:border-slate-600'
                     : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
-                <MapPin className="w-3.5 h-3.5 text-blue-500" />
-                <span className="truncate">จุดเฝ้าระวัง ({displayPoints.length})</span>
+                <MapPin className="w-3.5 h-3.5 text-blue-600 dark:text-cyan-400" />
+                <span className="truncate">จุดตรวจการณ์ GIS ({displayPoints.length})</span>
               </button>
               <button
                 type="button"
@@ -2846,12 +2846,12 @@ export default function App() {
                 }}
                 className={`py-1.5 px-2 rounded-md font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                   desktopSidebarTab === 'weather'
-                    ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-cyan-300 shadow-xs'
+                    ? 'bg-white dark:bg-slate-700 text-blue-700 dark:text-cyan-300 shadow-xs border border-slate-200 dark:border-slate-600'
                     : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
-                <CloudRain className="w-3.5 h-3.5 text-cyan-500" />
-                <span className="truncate">พยากรณ์สภาพอากาศ</span>
+                <CloudRain className="w-3.5 h-3.5 text-blue-500 dark:text-cyan-400" />
+                <span className="truncate">พยากรณ์ฝน & เรดาร์ ปภ.</span>
               </button>
             </div>
 

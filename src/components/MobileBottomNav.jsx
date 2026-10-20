@@ -128,9 +128,9 @@ export default function MobileBottomNav({
                   <div>
                     <div className="flex items-center gap-1.5">
                       <span className="text-xs font-bold block text-slate-900 dark:text-white">กล้องวงจรปิด CCTV 24 ชม.</span>
-                      <span className="px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-emerald-500 text-white">LIVE</span>
+                      <span className="px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-blue-600 text-white">21 จุด</span>
                     </div>
-                    <span className="text-[10px] text-slate-600 dark:text-slate-300 block">ดูสด 18 จุดทั่ว 6 อำเภอ (DOH • EXAT • RID)</span>
+                    <span className="text-[10px] text-slate-600 dark:text-slate-300 block">จุดตรวจการณ์จริงทั่ว 6 อำเภอ (DOH • EXAT • RID)</span>
                   </div>
                 </div>
                 <span className="px-2 py-1 rounded-md bg-blue-600 text-white text-xs font-bold shrink-0">
