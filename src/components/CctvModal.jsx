@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { playClickSound, playCloseSound, playSelectSound } from '../services/soundEffects';
 import { CCTV_CAMERAS } from '../data/cctvCameras';
+import { CivicCctv, CivicStationPin } from './CivicIcons';
 
 export default function CctvModal({
   isOpen,
@@ -336,7 +337,7 @@ export default function CctvModal({
                   onClick={() => setSearchQuery('')}
                   className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs cursor-pointer"
                 >
-                  ✕
+                  <X className="w-3.5 h-3.5" />
                 </button>
               )}
             </div>
@@ -529,17 +530,19 @@ export default function CctvModal({
                       <h3 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white leading-snug line-clamp-1 group-hover:text-blue-500 transition-colors">
                         {cam.name}
                       </h3>
-                      <p className={`text-[11px] mt-0.5 line-clamp-1 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
-                        📍 {cam.road}
+                      <p className={`text-[11px] mt-0.5 line-clamp-1 flex items-center gap-1 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+                        <CivicStationPin className="w-3 h-3 shrink-0 text-blue-500" />
+                        <span className="truncate">{cam.road}</span>
                       </p>
                     </div>
 
                     {/* Action Row: Status badge & THE ONLY EXTERNAL LINK BUTTON PER CARD */}
                     <div className="mt-2.5 pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-1">
-                      <span className={`text-[10.5px] font-medium flex items-center gap-1 ${
+                      <span className={`text-[10.5px] font-medium flex items-center gap-1.5 ${
                         hasDirectFeed ? 'text-emerald-600 dark:text-emerald-400 font-bold' : 'text-slate-400'
                       }`}>
-                        {hasDirectFeed ? '🟢 มีสัญญาณภาพ' : '🔴 NO SIGNAL'}
+                        <span className={`w-2 h-2 rounded-full shrink-0 ${hasDirectFeed ? 'bg-emerald-500' : 'bg-rose-500'}`} />
+                        <span>{hasDirectFeed ? 'มีสัญญาณภาพ' : 'NO SIGNAL'}</span>
                       </span>
 
                       {/* Direct link button to official data source */}
@@ -796,8 +799,9 @@ export default function CctvModal({
                   <div className="text-slate-300 font-medium">
                     {focusedCamera.description}
                   </div>
-                  <div className="text-slate-400 text-[11px] font-mono">
-                    📍 {focusedCamera.road} • {focusedCamera.direction}
+                  <div className="text-slate-400 text-[11px] font-mono flex items-center gap-1">
+                    <CivicStationPin className="w-3 h-3 shrink-0 text-cyan-400" />
+                    <span>{focusedCamera.road} • {focusedCamera.direction}</span>
                   </div>
                   <div className="text-cyan-400 text-[11px] font-mono">
                     แหล่งข้อมูลต้นทาง: {focusedCamera.sourcePlatform}

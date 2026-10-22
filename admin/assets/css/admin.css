@@ -1,73 +1,73 @@
 /* ==========================================================================
-   PrakanGuard Admin Command Center — Futuristic Obsidian Design System
-   Inspired by ultra-modern dark glassmorphism fintech & command dashboards
+   PrakanGuard Admin Command Center — Official Civic Design System
+   Minimalist, high-density institutional GIS & hydrological operations interface
    ========================================================================== */
 
 :root {
-  --font-sans: 'Prompt', 'Sarabun', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-sans: 'Sarabun', 'IBM Plex Sans Thai', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-mono: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
 
-  /* Obsidian Neon Palette */
-  --bg-app: #070a12;
-  --bg-surface: rgba(14, 20, 36, 0.75);
-  --bg-surface-solid: #0d1424;
-  --bg-surface-elevated: rgba(20, 29, 51, 0.82);
-  --bg-subtle: rgba(255, 255, 255, 0.04);
-  --bg-input: rgba(11, 16, 29, 0.8);
-  --border-subtle: rgba(255, 255, 255, 0.08);
-  --border-strong: rgba(255, 255, 255, 0.16);
-  --border-focus: #3b82f6;
+  /* Official Civic Dark Slate Palette */
+  --bg-app: #0b1120;
+  --bg-surface: #0f172a;
+  --bg-surface-solid: #0f172a;
+  --bg-surface-elevated: #1e293b;
+  --bg-subtle: rgba(255, 255, 255, 0.03);
+  --bg-input: #0b1120;
+  --border-subtle: #1e293b;
+  --border-strong: #334155;
+  --border-focus: #2563eb;
 
   --text-main: #f8fafc;
-  --text-secondary: #94a3b8;
+  --text-secondary: #cbd5e1;
   --text-muted: #64748b;
-  --text-inverse: #070a12;
+  --text-inverse: #0b1120;
 
-  --primary: #3b82f6;
-  --primary-hover: #60a5fa;
-  --primary-gradient: linear-gradient(135deg, #2563eb, #3b82f6);
-  --primary-glow: 0 0 25px rgba(59, 130, 246, 0.35);
-  --primary-subtle: rgba(59, 130, 246, 0.12);
-  --primary-border: rgba(59, 130, 246, 0.3);
+  --primary: #2563eb;
+  --primary-hover: #3b82f6;
+  --primary-gradient: #2563eb;
+  --primary-glow: 0 1px 2px rgba(15, 23, 42, 0.25);
+  --primary-subtle: rgba(37, 99, 235, 0.12);
+  --primary-border: rgba(37, 99, 235, 0.35);
   --primary-text: #93c5fd;
 
-  --accent: #38bdf8;
-  --accent-purple: #a855f7;
-  --accent-subtle: rgba(56, 189, 248, 0.12);
+  --accent: #0284c7;
+  --accent-purple: #0284c7;
+  --accent-subtle: rgba(2, 132, 199, 0.12);
 
-  --success: #10b981;
-  --success-subtle: rgba(16, 185, 129, 0.12);
-  --success-border: rgba(16, 185, 129, 0.28);
+  --success: #059669;
+  --success-subtle: rgba(5, 150, 105, 0.12);
+  --success-border: rgba(5, 150, 105, 0.3);
   --success-text: #6ee7b7;
 
-  --warning: #f59e0b;
-  --warning-subtle: rgba(245, 158, 11, 0.12);
-  --warning-border: rgba(245, 158, 11, 0.28);
+  --warning: #d97706;
+  --warning-subtle: rgba(217, 119, 6, 0.12);
+  --warning-border: rgba(217, 119, 6, 0.3);
   --warning-text: #fcd34d;
 
-  --danger: #ef4444;
-  --danger-hover: #f87171;
-  --danger-subtle: rgba(239, 68, 68, 0.12);
-  --danger-border: rgba(239, 68, 68, 0.28);
+  --danger: #dc2626;
+  --danger-hover: #ef4444;
+  --danger-subtle: rgba(220, 38, 38, 0.12);
+  --danger-border: rgba(220, 38, 38, 0.3);
   --danger-text: #fca5a5;
 
-  --sidebar-w: 260px;
-  --header-h: 70px;
-  --radius-sm: 8px;
-  --radius-md: 14px;
-  --radius-lg: 20px;
-  --radius-xl: 26px;
+  --sidebar-w: 256px;
+  --header-h: 64px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 10px;
+  --radius-xl: 12px;
   --radius-pill: 9999px;
 
-  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.25);
-  --shadow-md: 0 8px 20px -4px rgba(0, 0, 0, 0.45);
-  --shadow-lg: 0 16px 36px -6px rgba(0, 0, 0, 0.6);
-  --shadow-xl: 0 24px 50px -10px rgba(0, 0, 0, 0.75);
-  --glow-card: 0 10px 30px -5px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08);
-  --overlay-bg: rgba(4, 7, 14, 0.82);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 4px 10px rgba(0, 0, 0, 0.25);
+  --shadow-lg: 0 10px 24px rgba(0, 0, 0, 0.35);
+  --shadow-xl: 0 16px 36px rgba(0, 0, 0, 0.45);
+  --glow-card: 0 1px 3px rgba(0, 0, 0, 0.2);
+  --overlay-bg: rgba(11, 17, 32, 0.8);
 }
 
-/* Light Theme Mode (Crisp High-Contrast Modern Pro Dashboard) */
+/* Light Theme Mode (Crisp Official Civic Light Dashboard) */
 [data-theme="light"] {
   --bg-app: #f8fafc;
   --bg-surface: #ffffff;
@@ -77,49 +77,49 @@
   --bg-input: #ffffff;
   --border-subtle: #e2e8f0;
   --border-strong: #cbd5e1;
-  --border-focus: #2563eb;
+  --border-focus: #1d4ed8;
 
   --text-main: #0f172a;
   --text-secondary: #334155;
   --text-muted: #64748b;
   --text-inverse: #ffffff;
 
-  --primary: #2563eb;
-  --primary-hover: #1d4ed8;
-  --primary-gradient: linear-gradient(135deg, #2563eb, #1d4ed8);
-  --primary-glow: 0 4px 18px rgba(37, 99, 235, 0.2);
+  --primary: #1d4ed8;
+  --primary-hover: #1e40af;
+  --primary-gradient: #1d4ed8;
+  --primary-glow: 0 1px 2px rgba(15, 23, 42, 0.08);
   --primary-subtle: #eff6ff;
   --primary-border: #bfdbfe;
   --primary-text: #1d4ed8;
 
   --accent: #0284c7;
-  --accent-purple: #7c3aed;
+  --accent-purple: #0284c7;
   --accent-subtle: #e0f2fe;
 
-  --success: #16a34a;
-  --success-subtle: #dcfce7;
-  --success-border: #86efac;
-  --success-text: #15803d;
+  --success: #059669;
+  --success-subtle: #ecfdf5;
+  --success-border: #a7f3d0;
+  --success-text: #047857;
 
   --warning: #d97706;
-  --warning-subtle: #fef3c7;
-  --warning-border: #fcd34d;
+  --warning-subtle: #fffbeb;
+  --warning-border: #fde68a;
   --warning-text: #b45309;
 
   --danger: #dc2626;
   --danger-hover: #b91c1c;
-  --danger-subtle: #fee2e2;
-  --danger-border: #fca5a5;
+  --danger-subtle: #fef2f2;
+  --danger-border: #fecaca;
   --danger-text: #b91c1c;
 
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 12px -2px rgba(15, 23, 42, 0.08);
-  --shadow-lg: 0 10px 25px -4px rgba(15, 23, 42, 0.1);
-  --shadow-xl: 0 20px 35px -8px rgba(15, 23, 42, 0.12);
-  --glow-card: 0 2px 8px rgba(15, 23, 42, 0.05), 0 1px 3px rgba(15, 23, 42, 0.04);
+  --shadow-sm: 0 1px 2px 0 rgba(15, 23, 42, 0.04);
+  --shadow-md: 0 2px 6px -1px rgba(15, 23, 42, 0.06);
+  --shadow-lg: 0 6px 16px -3px rgba(15, 23, 42, 0.08);
+  --shadow-xl: 0 12px 24px -6px rgba(15, 23, 42, 0.1);
+  --glow-card: 0 1px 2px rgba(15, 23, 42, 0.04);
 }
 
-/* Base Reset & Ambient Mesh Background */
+/* Base Reset */
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
@@ -137,11 +137,7 @@ html, body {
 }
 
 body {
-  background-image: 
-    radial-gradient(at 0% 0%, rgba(37, 99, 235, 0.16) 0px, transparent 45%),
-    radial-gradient(at 100% 0%, rgba(139, 92, 246, 0.12) 0px, transparent 40%),
-    radial-gradient(at 50% 100%, rgba(16, 185, 129, 0.08) 0px, transparent 50%);
-  background-attachment: fixed;
+  background-image: none;
   overflow-x: hidden;
 }
 
@@ -732,57 +728,51 @@ body {
 }
 
 /* ==========================================================================
-   Hero AI Insights Glow Card (Matching Blue Gradient Box in Mockup)
+   Hydrological Summary Banner Card
    ========================================================================== */
 .ai-insights-hero {
-  background: linear-gradient(135deg, rgba(15, 23, 42, 0.9), rgba(30, 58, 138, 0.45));
-  border: 1px solid rgba(59, 130, 246, 0.35);
-  box-shadow: 0 16px 40px -10px rgba(30, 58, 138, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-left: 3px solid var(--primary);
+  box-shadow: var(--shadow-sm);
   border-radius: var(--radius-lg);
-  padding: 22px 26px;
+  padding: 16px 20px;
   position: relative;
   overflow: hidden;
-  margin-bottom: 22px;
+  margin-bottom: 18px;
 }
 
 .ai-insights-hero::after {
-  content: '';
-  position: absolute;
-  right: -60px;
-  bottom: -60px;
-  width: 240px;
-  height: 240px;
-  background: radial-gradient(circle, rgba(59, 130, 246, 0.38) 0%, transparent 70%);
-  pointer-events: none;
+  display: none;
 }
 
 .ai-insights-header {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-bottom: 10px;
+  margin-bottom: 6px;
 }
 
 .ai-badge {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: rgba(59, 130, 246, 0.25);
-  border: 1px solid rgba(59, 130, 246, 0.4);
-  color: #93c5fd;
-  padding: 3px 10px;
-  border-radius: var(--radius-pill);
+  background: var(--primary-subtle);
+  border: 1px solid var(--primary-border);
+  color: var(--primary-text);
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
   font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.4px;
 }
 
 .ai-insights-text {
-  font-size: 14.5px;
-  color: #e2e8f0;
-  line-height: 1.6;
-  max-width: 900px;
+  font-size: 13.5px;
+  color: var(--text-secondary);
+  line-height: 1.55;
+  max-width: 960px;
 }
 
 /* ==========================================================================

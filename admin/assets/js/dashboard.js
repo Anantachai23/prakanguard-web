@@ -343,12 +343,12 @@ export async function refreshAllData(forceCharts = false, isUserTriggered = fals
     // Detect incoming submissions and alert immediately
     if (prevReportCount !== null && rep.length > prevReportCount) {
       const diffRep = rep.length - prevReportCount;
-      toast(`🚨 มีการแจ้งรายงานน้ำท่วมใหม่เข้ามา +${diffRep} รายการ!`, 'warning', 7000);
+      toast(`มีการแจ้งรายงานน้ำท่วมใหม่เข้ามา +${diffRep} รายการ`, 'warning', 7000);
       playNotificationAlertSound();
     }
     if (prevFeedbackCount !== null && fb.length > prevFeedbackCount) {
       const diffFb = fb.length - prevFeedbackCount;
-      toast(`💬 มีข้อเสนอแนะใหม่จากประชาชนเข้ามา +${diffFb} รายการ!`, 'info', 7000);
+      toast(`มีข้อเสนอแนะใหม่จากประชาชนเข้ามา +${diffFb} รายการ`, 'info', 7000);
       playNotificationAlertSound();
     }
     prevReportCount = rep.length;
@@ -367,6 +367,9 @@ export async function refreshAllData(forceCharts = false, isUserTriggered = fals
 
     // Actively delete any remaining work PC session rows from database
     purgeWorkPcSessionsFromDb(online);
+
+    // Measure live Supabase latency on each refresh
+    measureAndDisplayPing().catch(() => {});
 
     // Update Badges
     updateNavBadges();
@@ -398,11 +401,11 @@ export async function refreshAllData(forceCharts = false, isUserTriggered = fals
         refreshBtn.classList.remove('is-refreshing', 'spinning');
         refreshBtn.classList.add('is-success');
       }
-      if (refreshLabel) refreshLabel.textContent = 'ซิงค์สำเร็จ!';
+      if (refreshLabel) refreshLabel.textContent = 'ซิงค์สำเร็จ';
       if (refreshIconSlot) {
         refreshIconSlot.innerHTML = `<svg class="ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>`;
       }
-      toast(`⚡ ซิงค์ข้อมูลโทรมาตรล่าสุดสำเร็จ (${syncTimeStr} น.)`, 'success');
+      toast(`ซิงค์ข้อมูลโทรมาตรล่าสุดสำเร็จ (${syncTimeStr} น.)`, 'success');
 
       setTimeout(() => {
         if (refreshBtn) refreshBtn.classList.remove('is-success');
@@ -550,7 +553,7 @@ function renderOverview() {
     elApproved.textContent = nf(aCount);
   }
 
-  // Render Monitored Districts list, AI advisory, and charts
+  // Render Monitored Districts list, advisory, and charts
   renderMonitoredDistricts();
   renderAIAdvisory();
   updateCharts();
@@ -586,7 +589,7 @@ function renderMonitoredDistricts() {
     row.className = 'district-stat-row';
     row.innerHTML = `
       <div class="district-stat-name">
-        <span>📍 อ.${d}</span>
+        <span>อ.${d}</span>
       </div>
       <div class="district-stat-meta">
         ${statusBadge}
@@ -610,7 +613,6 @@ function renderAIAdvisory() {
   const aiTextEl = $('#ai-insight-text');
   if (!aiTextEl) return;
 
-  const total = state.reports.length;
   const pending = state.reports.filter(r => !r.is_approved && !r.isApproved).length;
   const l3Count = state.reports.filter(r => r.level === 3).length;
   const l2Count = state.reports.filter(r => r.level === 2).length;
@@ -619,27 +621,27 @@ function renderAIAdvisory() {
 
   const parts = [];
   if (l3Count > 0) {
-    parts.push(`⚠️ ตรวจพบจุดวิกฤตระดับน้ำเกิน 50 ซม. รวม ${l3Count} จุด ในเขตพื้นที่จังหวัด ต้องเร่งผลักดันเครื่องสูบน้ำและประสานเจ้าหน้าที่ภาคสนาม`);
+    parts.push(`ตรวจพบจุดวิกฤตระดับน้ำเกิน 50 ซม. รวม ${l3Count} จุด เร่งประสานเครื่องสูบน้ำและเจ้าหน้าที่ภาคสนาม`);
   } else if (l2Count > 0) {
-    parts.push(`🌊 มีรายงานจุดน้ำท่วมขังปานกลาง (21-50 ซม.) รวม ${l2Count} จุด สภาพการจราจรยังเคลื่อนตัวได้ช้า`);
+    parts.push(`มีรายงานจุดน้ำท่วมขังปานกลาง (21-50 ซม.) รวม ${l2Count} จุด การจราจรเคลื่อนตัวช้า`);
   } else {
-    parts.push(`✅ สภาพรวมของแม่น้ำเจ้าพระยาและพื้นที่ 6 อำเภอส่วนใหญ่ยังอยู่ในเกณฑ์ปกติ การระบายน้ำยังคล่องตัว`);
+    parts.push(`สภาพรวมของแม่น้ำเจ้าพระยาและพื้นที่ 6 อำเภออยู่ในเกณฑ์ปกติ การระบายน้ำคล่องตัว`);
   }
 
   if (pending > 0) {
-    parts.push(`มีรายงานใหม่จากประชาชนรอการตรวจสอบ ${pending} จุด แนะนำให้รีบตรวจสอบและกดอนุมัติขึ้นแผนที่`);
+    parts.push(`มีรายงานใหม่จากประชาชนรอตรวจสอบ ${pending} จุด`);
   }
 
   if (hailCount > 0) {
-    parts.push(`❄️ มีรายงานลูกเห็บตก ${hailCount} จุด แจ้งเตือนประชาชนหลีกเลี่ยงพื้นที่โล่งแจ้ง`);
+    parts.push(`มีรายงานลูกเห็บตก ${hailCount} จุด`);
   }
 
   const autoDryCount = state.reports.filter(r => r.autoRemovedBecauseDry === true || r.is_resolved === true || r.isResolved === true || (r.depth_cm !== undefined && r.depth_cm <= 0) || (r.depthCm !== undefined && r.depthCm <= 0)).length;
   if (autoDryCount > 0) {
-    parts.push(`💧 ระบบนำจุดที่น้ำแห้งแล้วออกจากแผนที่อัตโนมัติแล้ว ${autoDryCount} จุด เพื่อคงความแม่นยำของข้อมูลสด`);
+    parts.push(`นำจุดที่น้ำแห้งแล้วออกจากแผนที่อัตโนมัติแล้ว ${autoDryCount} จุด`);
   }
 
-  parts.push(`โทรมาตรสดตรวจพบผู้ใช้งาน ${activeVis} เซสชัน กำลังเข้าถึงแผนที่อย่างต่อเนื่อง`);
+  parts.push(`ผู้ใช้งานออนไลน์สด ${activeVis} เซสชัน`);
 
   aiTextEl.textContent = parts.join(' · ');
 }
@@ -1218,11 +1220,11 @@ function initReportsMap() {
 
   // Real-time Coordinate Tracker HUD
   map.on('mousemove', (e) => {
-    updateCoordHUD(e.latlng.lat, e.latlng.lng, '📍 พิกัดเคอร์เซอร์');
+    updateCoordHUD(e.latlng.lat, e.latlng.lng, 'พิกัดเคอร์เซอร์');
   });
 
   map.on('click', (e) => {
-    updateCoordHUD(e.latlng.lat, e.latlng.lng, '📍 พิกัดที่คลิก');
+    updateCoordHUD(e.latlng.lat, e.latlng.lng, 'พิกัดที่คลิก');
   });
 
   $('#btn-copy-map-hud')?.addEventListener('click', (e) => {
@@ -1246,7 +1248,7 @@ function initReportsMap() {
     const text = `${Number(lat).toFixed(6)}, ${Number(lng).toFixed(6)}`;
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(text).then(() => {
-        toast(`📋 คัดลอกพิกัด ${text} เรียบร้อยแล้ว`, 'success');
+        toast(`คัดลอกพิกัด ${text} เรียบร้อยแล้ว`, 'success');
       }).catch(() => fallbackCopy(text));
     } else {
       fallbackCopy(text);
@@ -1260,7 +1262,7 @@ function initReportsMap() {
     ta.select();
     document.execCommand('copy');
     ta.remove();
-    toast(`📋 คัดลอกพิกัด ${text} เรียบร้อยแล้ว`, 'success');
+    toast(`คัดลอกพิกัด ${text} เรียบร้อยแล้ว`, 'success');
   }
 
   // Global helper for inspecting coordinates in detailed modal
@@ -1299,7 +1301,7 @@ function initReportsMap() {
       }, 4000);
 
       setTimeout(() => marker.openPopup(), 750);
-      toast(`📍 โฟกัสพิกัด ${lat.toFixed(4)}, ${lng.toFixed(4)}: ${rep.name || 'จุดแจ้งเหตุ'}`, 'info');
+      toast(`โฟกัสพิกัด ${lat.toFixed(4)}, ${lng.toFixed(4)}: ${rep.name || 'จุดแจ้งเหตุ'}`, 'info');
     } else {
       toast('จุดรายงานนี้ไม่มีพิกัด GPS ที่ระบุได้', 'warning');
     }
@@ -1320,7 +1322,7 @@ function showCoordinateModal(reportId) {
   const lv = levelInfo(r);
 
   openModal({
-    title: '📍 รายละเอียดพิกัด GPS จุดรายงานน้ำท่วม',
+    title: 'รายละเอียดพิกัด GPS จุดรายงานน้ำท่วม',
     subtitle: `${r.name || 'จุดแจ้งเหตุ'} · อ.${r.district || ''} ${r.subdistrict ? 'ต.' + r.subdistrict : ''}`,
     body: h('div', {},
       h('div', { class: 'coord-modal-grid' },
@@ -1422,28 +1424,22 @@ function updateReportsMapMarkers(list) {
     filteredOfficialPoints = state.officialPoints.filter(p => {
       if (!p || typeof p.lat !== 'number' || typeof p.lng !== 'number') return false;
 
-      // Filter by status:
-      // 'pending' -> official points are verified/monitoring points, not pending user reports
       if (state.reportsFilter === 'pending') {
         return false;
       } else if (state.reportsFilter === 'approved') {
-        // Active flood points only
         const isDry = p.autoRemovedBecauseDry === true || p.isResolved === true || p.isActive === false || (p.depthCm !== undefined && p.depthCm <= 0);
         if (isDry) return false;
       } else if (state.reportsFilter === 'dry') {
-        // Dry/auto-cleared points only
         const isDry = p.autoRemovedBecauseDry === true || p.isResolved === true || p.isActive === false || (p.depthCm !== undefined && p.depthCm <= 0);
         if (!isDry) return false;
       }
 
-      // Filter by District:
       if (state.reportsDistrict !== 'all') {
         const dNorm = (p.district || '').replace(/^อ\./, '').replace(/^อำเภอ/, '').trim();
         const selNorm = state.reportsDistrict.replace(/^อ\./, '').replace(/^อำเภอ/, '').trim();
         if (dNorm !== selNorm && !dNorm.includes(selNorm)) return false;
       }
 
-      // Filter by Search:
       if (state.reportsSearch) {
         const q = state.reportsSearch.toLowerCase();
         const matchesName = (p.name || '').toLowerCase().includes(q);
@@ -1468,20 +1464,19 @@ function updateReportsMapMarkers(list) {
     const lv = levelInfo(r);
 
     let pinClass = 'pin-l2';
-    let iconEmoji = '🌊';
+    let pinText = `${r.depth_cm || r.depthCm || 25}`;
     if (r.hazard_type === 'hail' || r.hazardType === 'hail') {
       pinClass = 'pin-hail';
-      iconEmoji = '❄️';
+      pinText = 'HL';
     } else if (r.level === 1) {
       pinClass = 'pin-l1';
     } else if (r.level === 3) {
       pinClass = 'pin-l3';
-      iconEmoji = '⚠️';
     }
 
     const customIcon = L.divIcon({
       className: '',
-      html: `<div class="admin-map-pin ${pinClass} ${isPending ? 'is-pending' : ''}" style="width: 34px; height: 34px;" title="${esc(r.name || 'จุดแจ้งเหตุน้ำท่วม')} (${lat.toFixed(4)}, ${lng.toFixed(4)})">${iconEmoji}</div>`,
+      html: `<div class="admin-map-pin ${pinClass} ${isPending ? 'is-pending' : ''}" style="width: 34px; height: 34px; font-size: 11px; font-weight: 800;" title="${esc(r.name || 'จุดแจ้งเหตุน้ำท่วม')} (${lat.toFixed(4)}, ${lng.toFixed(4)})">${pinText}</div>`,
       iconSize: [34, 34],
       iconAnchor: [17, 17],
       popupAnchor: [0, -18]
@@ -1497,7 +1492,7 @@ function updateReportsMapMarkers(list) {
       <div class="admin-popup-card">
         <div class="admin-popup-top">
           <div style="flex: 1; padding-right: 8px;">
-            <div style="font-size: 10px; color: #38bdf8; font-weight: 700; text-transform: uppercase; margin-bottom: 2px;">👥 รายงานจากประชาชน</div>
+            <div style="font-size: 10px; color: #38bdf8; font-weight: 700; text-transform: uppercase; margin-bottom: 2px;">รายงานจากประชาชน</div>
             <h4 class="admin-popup-title">${esc(r.name || 'จุดแจ้งเหตุน้ำท่วม')}</h4>
             <p class="admin-popup-subtitle">อ.${esc(r.district || 'เมืองสมุทรปราการ')} ${r.subdistrict ? 'ต.' + esc(r.subdistrict) : ''}</p>
           </div>
@@ -1506,14 +1501,13 @@ function updateReportsMapMarkers(list) {
 
         <div class="popup-coord-box">
           <div class="popup-coord-info">
-            <span style="font-size: 13px;">📍</span>
             <div>
               <div style="font-size: 10px; color: var(--text-muted);">พิกัด GPS</div>
               <div class="popup-coord-val">${lat.toFixed(5)}, ${lng.toFixed(5)}</div>
             </div>
           </div>
           <button type="button" class="btn-copy-mini" onclick="window.__pgCopyCoords(${lat}, ${lng}, event)" title="คัดลอกพิกัด">
-            📋 คัดลอก
+            คัดลอก
           </button>
         </div>
 
@@ -1594,7 +1588,7 @@ function updateReportsMapMarkers(list) {
     state.markerMap.set(r.id, marker);
   });
 
-  // 3. Render Official Flood Monitoring Points (จุดตรวจการณ์หลัก 24 ชม. ของเว็บหลัก)
+  // 3. Render Official Flood Monitoring Points
   filteredOfficialPoints.forEach(p => {
     const lat = Number(p.lat);
     const lng = Number(p.lng);
@@ -1607,20 +1601,17 @@ function updateReportsMapMarkers(list) {
     const isFalling = p.waterTrend === 'falling' || (p.statusLabel && p.statusLabel.includes('ลด'));
 
     let pinClass = 'pin-l2';
-    let iconEmoji = '🌊';
     if (p.level === 3 || depthNum > 50) {
       pinClass = 'pin-l3';
-      iconEmoji = '⚠️';
     } else if (p.level === 1 || (depthNum > 0 && depthNum <= 20)) {
       pinClass = 'pin-l1';
     }
 
     if (isDry) {
       pinClass = 'pin-dry';
-      iconEmoji = '💧';
     }
 
-    const depthBadge = depthNum > 0 ? `${depthNum}` : (isDry ? '0' : '');
+    const depthBadge = depthNum > 0 ? `${depthNum}` : '0';
 
     const customIcon = L.divIcon({
       className: '',
@@ -1629,8 +1620,8 @@ function updateReportsMapMarkers(list) {
           <span class="pin-official-tag">หลัก</span>
           ${isFalling ? '<span class="pin-falling-tag" style="position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%); font-size: 8px; background: #059669; color: #fff; padding: 0 3px; border-radius: 4px; border: 1px solid #fff; white-space: nowrap;">น้ำลด</span>' : ''}
           <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1;">
-            <span style="font-size: 11px;">${iconEmoji}</span>
-            ${depthBadge ? `<span style="font-size: 9px; font-weight: 800; font-family: var(--font-sans); margin-top: 1px;">${depthBadge}</span>` : ''}
+            <span style="font-size: 10px; font-weight: 800; font-family: var(--font-sans);">${depthBadge}</span>
+            <span style="font-size: 7.5px; opacity: 0.85;">ซม.</span>
           </div>
         </div>
       `,
@@ -1650,16 +1641,16 @@ function updateReportsMapMarkers(list) {
       : `${depthNum > 0 ? depthNum + ' ซม.' : lv.range} (${lv.label})`;
 
     const statusBadgeHtml = isDry
-      ? `<span class="badge" style="background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4);">🟢 น้ำแห้งปกติ</span>`
-      : `<span class="badge badge-ok">📡 ตรวจการณ์สด 24 ชม.</span>`;
+      ? `<span class="badge" style="background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4);">น้ำแห้งปกติ</span>`
+      : `<span class="badge badge-ok">ตรวจการณ์สด 24 ชม.</span>`;
 
     const popupContent = `
       <div class="admin-popup-card">
         <div class="admin-popup-top">
           <div style="flex: 1; padding-right: 8px;">
             <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 3px;">
-              <span class="badge" style="background: rgba(56, 189, 248, 0.2); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.4); font-size: 10px; font-weight: 700;">📡 จุดตรวจการณ์หลัก 24 ชม.</span>
-              ${isFalling ? '<span class="badge badge-ok" style="font-size: 10px;">📉 น้ำกำลังลด</span>' : ''}
+              <span class="badge" style="background: rgba(56, 189, 248, 0.2); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.4); font-size: 10px; font-weight: 700;">จุดตรวจการณ์หลัก 24 ชม.</span>
+              ${isFalling ? '<span class="badge badge-ok" style="font-size: 10px;">น้ำกำลังลด</span>' : ''}
             </div>
             <h4 class="admin-popup-title">${esc(p.name)}</h4>
             <p class="admin-popup-subtitle">อ.${esc(p.district || 'เมืองสมุทรปราการ')} ${p.subdistrict ? 'ต.' + esc(p.subdistrict) : ''} · ${esc(p.roadSegment || '')}</p>
@@ -1669,14 +1660,13 @@ function updateReportsMapMarkers(list) {
 
         <div class="popup-coord-box">
           <div class="popup-coord-info">
-            <span style="font-size: 13px;">📍</span>
             <div>
               <div style="font-size: 10px; color: var(--text-muted);">พิกัด GPS อ้างอิง</div>
               <div class="popup-coord-val">${lat.toFixed(5)}, ${lng.toFixed(5)}</div>
             </div>
           </div>
           <button type="button" class="btn-copy-mini" onclick="window.__pgCopyCoords(${lat}, ${lng}, event)" title="คัดลอกพิกัด">
-            📋 คัดลอก
+            คัดลอก
           </button>
         </div>
 
@@ -2760,6 +2750,7 @@ async function measureAndDisplayPing() {
   const pingMs = pingRes.latency || 28;
   const pingEl = $('#sp-ping-ms'); if (pingEl) pingEl.textContent = pingMs;
   const overPingEl = $('#overview-sp-latency'); if (overPingEl) overPingEl.textContent = `${pingMs}ms`;
+  const kpiLatEl = $('#supaLatencyValue'); if (kpiLatEl) kpiLatEl.textContent = `${pingMs} ms`;
   
   const quotaBanner = $('#sp-quota-banner');
   const headerStatus = $('#sp-header-status-badge');
@@ -3169,10 +3160,10 @@ export function initDashboard() {
 
   // Supabase Ping & Reload
   $('#btn-sp-test-ping')?.addEventListener('click', async () => {
-    toast('⚡ กำลังวัดความเร็ว Supabase Latency...', 'info');
+    toast('กำลังวัดความเร็ว Supabase Latency...', 'info');
     await measureAndDisplayPing();
     const pingVal = $('#sp-ping-ms')?.textContent || '28';
-    toast(`🟢 การตอบสนอง Supabase Cloud สมบูรณ์ (${pingVal} ms)`, 'success');
+    toast(`การตอบสนอง Supabase Cloud สมบูรณ์ (${pingVal} ms)`, 'success');
   });
 
   $('#btn-sp-refresh-all')?.addEventListener('click', async () => {
@@ -3182,7 +3173,7 @@ export function initDashboard() {
 
   $('#btn-sp-reload-table')?.addEventListener('click', () => {
     loadTableInspector(currentSpTable);
-    toast(`🔄 โหลดข้อมูลตาราง ${currentSpTable} สดใหม่แล้ว`, 'info');
+    toast(`โหลดข้อมูลตาราง ${currentSpTable} สดใหม่แล้ว`, 'info');
   });
 
   // Supabase Custom Config & Project Switcher Handlers
@@ -3204,7 +3195,7 @@ export function initDashboard() {
       }
       await navigator.clipboard.writeText(sqlText);
       playApprovalChime();
-      toast('📋 คัดลอกคำสั่ง SQL Setup สำเร็จ! นำไปวางใน Supabase Dashboard > SQL Editor แล้วกด Run ได้ทันที', 'success');
+      toast('คัดลอกคำสั่ง SQL Setup สำเร็จ นำไปวางใน Supabase Dashboard > SQL Editor แล้วกด Run ได้ทันที', 'success');
     } catch (err) {
       toast('คัดลอกไม่สำเร็จ สามารถเปิดไฟล์ admin/database/supabase_setup.sql เพื่อคัดลอกด้วยตนเองได้', 'warning');
     }
@@ -3220,7 +3211,7 @@ export function initDashboard() {
     }
     setCustomSupabaseConfig(url, key);
     playSyncSuccessChime();
-    toast('💾 บันทึกและสลับโปรเจกต์ Supabase สำเร็จ กำลังเชื่อมต่อข้อมูล...', 'success');
+    toast('บันทึกและสลับโปรเจกต์ Supabase สำเร็จ กำลังเชื่อมต่อข้อมูล...', 'success');
     await detectCaps();
     await refreshAllData(true, true);
     renderSupabase();
@@ -3238,7 +3229,7 @@ export function initDashboard() {
         if (inUrl) inUrl.value = DEFAULT_SUPABASE_URL;
         if (inKey) inKey.value = DEFAULT_SUPABASE_KEY;
         playWarningSound();
-        toast('🔄 คืนค่า Supabase เป็นโปรเจกต์เริ่มต้นแล้ว', 'info');
+        toast('คืนค่า Supabase เป็นโปรเจกต์เริ่มต้นแล้ว', 'info');
         await detectCaps();
         await refreshAllData(true, true);
         renderSupabase();

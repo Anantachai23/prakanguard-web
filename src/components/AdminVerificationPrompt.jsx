@@ -11,6 +11,12 @@ import {
   ExternalLink,
   Shield
 } from 'lucide-react';
+import {
+  CivicShield,
+  CivicReportCamera,
+  CivicCompass,
+  CivicHailCrystal
+} from './CivicIcons';
 
 export default function AdminVerificationPrompt({
   pendingReports = [],
@@ -46,7 +52,7 @@ export default function AdminVerificationPrompt({
         >
           <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping"></span>
           <span className="text-xs font-bold flex items-center gap-1">
-            <span>🚨 มีรายงานรอคุณอนุมัติ</span>
+            <span>มีรายงานรอคุณอนุมัติ</span>
             <span className="px-1.5 py-0.2 rounded-full bg-rose-600 text-white text-[10px]">
               {pendingCount}
             </span>
@@ -62,7 +68,7 @@ export default function AdminVerificationPrompt({
       {/* Full Interactive Verification Dialog Asking the Admin */}
       <div className="fixed inset-0 z-50 flex items-start justify-center pt-[7vh] pb-20 sm:items-center sm:pt-4 sm:pb-4 bg-slate-950/60 backdrop-blur-sm animate-in fade-in duration-200">
         <div 
-          className={`w-[92vw] max-w-[390px] sm:max-w-lg rounded-2xl sm:rounded-3xl border shadow-2xl overflow-hidden backdrop-blur-2xl flex flex-col max-h-[74vh] sm:max-h-[92vh] ${
+          className={`w-[92vw] max-w-[390px] sm:max-w-lg rounded-xl border shadow-2xl overflow-hidden backdrop-blur-2xl flex flex-col max-h-[74vh] sm:max-h-[92vh] ${
             isDark 
               ? 'bg-slate-900/98 border-amber-600/70 text-slate-100 shadow-amber-500/10' 
               : 'bg-white border-amber-300 text-slate-800 shadow-xl'
@@ -73,14 +79,14 @@ export default function AdminVerificationPrompt({
             isDark ? 'bg-amber-950/60 border-slate-800' : 'bg-amber-50/80 border-amber-100'
           }`}>
             <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
-              <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-xl sm:rounded-2xl bg-amber-500 text-slate-950 flex items-center justify-center font-bold shadow-md shrink-0">
-                <ShieldAlert className="w-4 h-4 sm:w-5 sm:h-5 text-slate-950" />
+              <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-lg bg-amber-500 text-slate-950 flex items-center justify-center font-bold shadow-md shrink-0">
+                <CivicShield className="w-4 h-4 sm:w-5 sm:h-5 text-slate-950" />
               </div>
               <div>
                 <h3 className={`text-xs sm:text-sm font-bold flex items-center gap-1.5 ${
                   isDark ? 'text-amber-300' : 'text-amber-950'
                 }`}>
-                  <span>🚨 มีผู้รายงานสถานการณ์ใหม่เข้ามา!</span>
+                  <span>มีผู้รายงานสถานการณ์ใหม่เข้ามา</span>
                   {pendingCount > 1 && (
                     <span className="text-[9px] sm:text-[10px] px-1.5 py-0.2 rounded-full bg-rose-600 text-white font-bold">
                       +{pendingCount - 1} รายการในคิว
@@ -88,7 +94,7 @@ export default function AdminVerificationPrompt({
                   )}
                 </h3>
                 <p className={`text-[10px] sm:text-[11px] ${isDark ? 'text-amber-400/80' : 'text-amber-800'}`}>
-                  ระบบส่งให้คุณพิจารณาอนุมัติก่อนขึ้นแสดงบนแผนที่สาธารณะ
+                  ระบบส่งให้พิจารณาอนุมัติก่อนขึ้นแสดงบนแผนที่สาธารณะ
                 </p>
               </div>
             </div>
@@ -139,10 +145,13 @@ export default function AdminVerificationPrompt({
                 <span className="text-[11px] text-slate-400 block mb-0.5">
                   {currentReport.hazardType === 'hail' ? 'ขนาดลูกเห็บ:' : 'ระดับน้ำที่แจ้ง:'}
                 </span>
-                <span className="font-bold text-sm text-blue-600 dark:text-cyan-400 block">
-                  {currentReport.hazardType === 'hail' 
-                    ? `🧊 ${currentReport.hailSizeLabel || 'ลูกเห็บตก'}` 
-                    : (currentReport.bodyLevelLabel ? `${currentReport.bodyLevelLabel}` : `ระดับ ${currentReport.levelLabel || 'เฝ้าระวัง'}`)}
+                <span className="font-bold text-sm text-blue-600 dark:text-cyan-400 flex items-center gap-1">
+                  {currentReport.hazardType === 'hail' ? (
+                    <>
+                      <CivicHailCrystal className="w-3.5 h-3.5 shrink-0" />
+                      <span>{currentReport.hailSizeLabel || 'ลูกเห็บตก'}</span>
+                    </>
+                  ) : (currentReport.bodyLevelLabel ? `${currentReport.bodyLevelLabel}` : `ระดับ ${currentReport.levelLabel || 'เฝ้าระวัง'}`)}
                 </span>
                 <span className="text-[10px] text-slate-500 block">
                   {currentReport.hazardType === 'hail' 
@@ -151,16 +160,22 @@ export default function AdminVerificationPrompt({
                 </span>
               </div>
 
-              <div className={`p-3 rounded-2xl border ${
+              <div className={`p-3 rounded-lg border ${
                 isDark ? 'bg-slate-800/60 border-slate-700' : 'bg-slate-50 border-slate-200'
               }`}>
                 <span className="text-[11px] text-slate-400 block mb-0.5">ระดับความเสี่ยง:</span>
-                <span className={`font-bold text-sm block ${
+                <span className={`font-bold text-sm flex items-center gap-1.5 ${
                   currentReport.level === 3 ? 'text-rose-500' :
                   currentReport.level === 2 ? 'text-amber-500' : 'text-emerald-500'
                 }`}>
-                  {currentReport.level === 3 ? '🔴 วิกฤต (ห้ามผ่าน/อันตราย)' :
-                   currentReport.level === 2 ? '🟠 เฝ้าระวังสูง/เสี่ยง' : '🟢 ปกติ/เฝ้าระวัง'}
+                  <span className={`w-2 h-2 rounded-full shrink-0 ${
+                    currentReport.level === 3 ? 'bg-rose-500' :
+                    currentReport.level === 2 ? 'bg-amber-500' : 'bg-emerald-500'
+                  }`} />
+                  <span>
+                    {currentReport.level === 3 ? 'วิกฤต (ห้ามผ่าน/อันตราย)' :
+                     currentReport.level === 2 ? 'เฝ้าระวังสูง/เสี่ยง' : 'ปกติ/เฝ้าระวัง'}
+                  </span>
                 </span>
                 <span className="text-[10px] text-slate-500 block">
                   {currentReport.hazardType === 'hail' ? 'เกณฑ์ขนาดพายุลูกเห็บ' : 'เกณฑ์ระดับน้ำมาตรฐาน'}
@@ -170,7 +185,7 @@ export default function AdminVerificationPrompt({
 
             {/* Traffic Guidance / Comments */}
             {currentReport.trafficStatus && (
-              <div className={`p-3 rounded-2xl border ${
+              <div className={`p-3 rounded-lg border ${
                 isDark ? 'bg-slate-800/60 border-slate-700' : 'bg-slate-50 border-slate-200'
               }`}>
                 <span className="text-[11px] font-semibold text-slate-400 block mb-1">
@@ -184,7 +199,7 @@ export default function AdminVerificationPrompt({
 
             {/* Photo Preview if uploaded */}
             {currentReport.photoUrl && (
-              <div className="rounded-2xl border overflow-hidden">
+              <div className="rounded-lg border overflow-hidden">
                 <div className="relative group cursor-pointer" onClick={() => setSelectedPhoto(currentReport.photoUrl)}>
                   <img 
                     src={currentReport.photoUrl} 
@@ -192,14 +207,15 @@ export default function AdminVerificationPrompt({
                     className="w-full h-44 object-cover"
                   />
                   <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-white text-xs font-bold gap-1">
-                    <Camera className="w-4 h-4" />
+                    <CivicReportCamera className="w-4 h-4" />
                     <span>คลิกเพื่อดูรูปขนาดเต็ม</span>
                   </div>
                 </div>
-                <div className={`p-2 text-[11px] text-center font-medium ${
+                <div className={`p-2 text-[11px] text-center font-medium flex items-center justify-center gap-1.5 ${
                   isDark ? 'bg-slate-800 text-slate-300' : 'bg-slate-100 text-slate-600'
                 }`}>
-                  📷 มีภาพถ่ายสถานที่จริงยืนยัน (เพิ่มความน่าเชื่อถือ)
+                  <CivicReportCamera className="w-3.5 h-3.5 shrink-0" />
+                  <span>มีภาพถ่ายสถานที่จริงยืนยัน</span>
                 </div>
               </div>
             )}
@@ -209,11 +225,11 @@ export default function AdminVerificationPrompt({
               <button
                 type="button"
                 onClick={() => onFlyToCoords(currentReport.lat, currentReport.lng)}
-                className={`w-full py-2 px-3 rounded-xl border text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer ${
+                className={`w-full py-2 px-3 rounded-lg border text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer ${
                   isDark ? 'bg-slate-800 hover:bg-slate-700 border-slate-700 text-cyan-300' : 'bg-slate-100 hover:bg-slate-200 border-slate-200 text-blue-700'
                 }`}
               >
-                <Compass className="w-4 h-4 text-blue-500" />
+                <CivicCompass className="w-4 h-4 text-blue-500" />
                 <span>ส่องดูตำแหน่งนี้บนแผนที่</span>
               </button>
             )}
@@ -231,9 +247,9 @@ export default function AdminVerificationPrompt({
                   onRejectReport(currentReport.id);
                 }
               }}
-              className="w-full sm:w-auto px-4 py-2.5 rounded-xl border border-rose-300 dark:border-rose-800 bg-rose-50 dark:bg-rose-950/60 hover:bg-rose-100 dark:hover:bg-rose-900/60 text-rose-600 dark:text-rose-300 text-xs font-bold transition-colors cursor-pointer"
+              className="w-full sm:w-auto px-4 py-2.5 rounded-lg border border-rose-300 dark:border-rose-800 bg-rose-50 dark:bg-rose-950/60 hover:bg-rose-100 dark:hover:bg-rose-900/60 text-rose-600 dark:text-rose-300 text-xs font-bold transition-colors cursor-pointer"
             >
-              ✕ ไม่อนุมัติ / ปฏิเสธ
+              ไม่อนุมัติ / ปฏิเสธ
             </button>
 
             <div className="w-full sm:w-auto flex items-center gap-2">

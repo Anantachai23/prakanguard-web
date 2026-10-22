@@ -14,12 +14,13 @@ import {
   HelpCircle,
 } from 'lucide-react';
 import { checkRateLimit, sanitizeFeedbackPayload } from '../services/securityService';
+import { CivicFeedback, CivicShield } from './CivicIcons';
 
 export const FEEDBACK_CATEGORIES = [
-  { id: 'suggestion', label: '💡 ข้อเสนอแนะฟีเจอร์ใหม่', desc: 'อยากให้มีฟังก์ชันหรือการแสดงผลเพิ่มเติม' },
-  { id: 'issue', label: '⚠️ แจ้งปัญหาการใช้งาน / ระบบ', desc: 'พบข้อผิดพลาดหรือการแสดงผลติดขัด' },
-  { id: 'compliment', label: '💖 ติชม / ให้กำลังใจทีมงาน', desc: 'ความประทับใจและความพึงพอใจ' },
-  { id: 'other', label: '📝 อื่นๆ', desc: 'ข้อคิดเห็นหรือคำถามทั่วไป' }
+  { id: 'suggestion', label: 'ข้อเสนอแนะฟีเจอร์ใหม่', desc: 'อยากให้มีฟังก์ชันหรือการแสดงผลเพิ่มเติม' },
+  { id: 'issue', label: 'แจ้งปัญหาการใช้งาน / ระบบ', desc: 'พบข้อผิดพลาดหรือการแสดงผลติดขัด' },
+  { id: 'compliment', label: 'ติชม / ให้กำลังใจทีมงาน', desc: 'ความประทับใจและความพึงพอใจ' },
+  { id: 'other', label: 'อื่นๆ', desc: 'ข้อคิดเห็นหรือคำถามทั่วไป' }
 ];
 
 export default function FeedbackModal({ isOpen, onClose, theme = 'light', onFeedbackSubmitted }) {
@@ -114,25 +115,25 @@ export default function FeedbackModal({ isOpen, onClose, theme = 'light', onFeed
         isDark ? 'bg-slate-900 border-slate-700 text-slate-100' : 'bg-white border-slate-200 text-slate-800'
       }`}>
         
-        {/* Top Gradient Ribbon */}
-        <div className="h-1.5 w-full bg-gradient-to-r from-teal-500 via-emerald-500 to-cyan-500 shrink-0"></div>
+        {/* Top Accent Line */}
+        <div className="h-[2px] w-full bg-teal-600 shrink-0"></div>
 
         {/* Header */}
         <div className={`px-3.5 py-2.5 sm:px-4 sm:py-3 border-b flex items-center justify-between gap-2 shrink-0 ${
           isDark ? 'border-slate-800 bg-slate-900/80' : 'border-slate-100 bg-slate-50/80'
         }`}>
           <div className="flex items-center gap-2 min-w-0">
-            <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg sm:rounded-xl flex items-center justify-center shadow-inner shrink-0 ${
+            <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-md flex items-center justify-center shadow-inner shrink-0 ${
               isDark ? 'bg-teal-950/80 text-teal-400 border border-teal-800' : 'bg-teal-50 text-teal-600 border border-teal-200'
             }`}>
-              <MessageSquare className="w-4 h-4" />
+              <CivicFeedback className="w-4 h-4" />
             </div>
             <div className="min-w-0">
               <h2 className={`text-sm sm:text-lg font-bold leading-tight break-words ${isDark ? 'text-white' : 'text-slate-900'}`}>
                 ข้อเสนอแนะ
               </h2>
               <p className={`text-[10.5px] sm:text-xs mt-0.5 break-words whitespace-normal leading-tight ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                ร่วมแสดงความคิดเห็นหรือข้อเสนอแนะเพื่อร่วมพัฒนาเว็บไซต์รายงานน้ำท่วม
+                ส่งข้อคิดเห็นหรือแจ้งปัญหาการใช้งานระบบ
               </p>
             </div>
           </div>
@@ -218,7 +219,7 @@ export default function FeedbackModal({ isOpen, onClose, theme = 'light', onFeed
                     ระดับความพึงพอใจการใช้งาน
                   </span>
                   <span className={`text-[10px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                    {rating === 5 ? '⭐ ยอดเยี่ยมมาก' : rating === 4 ? '⭐ ดีมาก' : rating === 3 ? '⭐ ปานกลาง' : rating === 2 ? '⭐ ควรปรับปรุง' : '⭐ ต้องแก้ไขด่วน'}
+                    {rating === 5 ? 'ดีเยี่ยม (5/5)' : rating === 4 ? 'ดีมาก (4/5)' : rating === 3 ? 'ปานกลาง (3/5)' : rating === 2 ? 'ควรปรับปรุง (2/5)' : 'ต้องแก้ไขด่วน (1/5)'}
                   </span>
                 </div>
                 <div className="flex items-center gap-1">
@@ -317,18 +318,8 @@ export default function FeedbackModal({ isOpen, onClose, theme = 'light', onFeed
                 </div>
               </div>
 
-              {/* Quality & Value Notice */}
-              <div className={`p-2.5 rounded-xl border text-[11px] leading-relaxed flex items-center gap-2 ${
-                isDark ? 'bg-slate-950/60 border-slate-800 text-slate-400' : 'bg-slate-100 border-slate-200 text-slate-600'
-              }`}>
-                <ShieldCheck className="w-4 h-4 text-teal-500 shrink-0" />
-                <span>
-                  💡 ทุกข้อคิดเห็นมีคุณค่าอย่างยิ่งในการพัฒนาปรับปรุงระบบรายงานน้ำท่วมให้ดียิ่งขึ้น
-                </span>
-              </div>
-
               {errorMsg && (
-                <div className="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-500 text-xs flex items-center gap-2">
+                <div className="p-2.5 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-500 text-xs flex items-center gap-2">
                   <AlertCircle className="w-4 h-4 shrink-0" />
                   <span>{errorMsg}</span>
                 </div>
@@ -338,7 +329,7 @@ export default function FeedbackModal({ isOpen, onClose, theme = 'light', onFeed
               <button
                 type="submit"
                 disabled={isSubmitting || !message.trim()}
-                className="w-full py-3 rounded-xl bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-500 hover:to-cyan-500 active:scale-[0.99] text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md shadow-teal-600/25 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full py-2.5 rounded-lg bg-teal-600 hover:bg-teal-500 active:scale-[0.99] text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all cursor-pointer shadow-xs disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Send className="w-4 h-4" />
                 <span>{isSubmitting ? 'กำลังส่งข้อมูล...' : 'ส่งข้อเสนอแนะ'}</span>

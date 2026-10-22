@@ -11,6 +11,7 @@ import {
   RefreshCw,
   Activity
 } from 'lucide-react';
+import { CivicWeather, CivicCompass, CivicStationPin, CivicRadar } from './CivicIcons';
 
 export default function RainForecast24hCard({
   forecast,
@@ -161,29 +162,29 @@ export default function RainForecast24hCard({
             <div className={`p-1.5 rounded-md shrink-0 border ${
               isDark ? 'bg-slate-850 text-cyan-400 border-slate-700' : 'bg-blue-50 text-blue-600 border-blue-200'
             }`}>
-              <CloudRain className="w-4 h-4 animate-pulse shrink-0" />
+              <CivicWeather className="w-4 h-4 shrink-0" />
             </div>
             <div className="min-w-0 truncate">
               {!hasGpsLocation ? (
                 <span className="font-bold text-xs truncate block text-amber-700 dark:text-amber-300">
-                  📍 ท่านไม่ได้เปิดตำแหน่ง <span className="text-[11px] font-normal opacity-85 text-slate-500 dark:text-slate-400">• แตะเพื่อดูคาดการณ์</span>
+                  ท่านไม่ได้เปิดตำแหน่ง <span className="text-[11px] font-normal opacity-85 text-slate-500 dark:text-slate-400">• แตะเพื่อดูคาดการณ์</span>
                 </span>
               ) : isLocatedInDistrict ? (
                 <span className="font-bold text-xs truncate block text-slate-900 dark:text-white">
-                  📍 {displayDistrictLabel}: {isUserAreaRaining ? (
-                    <span className="text-rose-600 dark:text-rose-400 font-extrabold">🌧️ ฝนตกขณะนี้</span>
+                  {displayDistrictLabel}: {isUserAreaRaining ? (
+                    <span className="text-rose-600 dark:text-rose-400 font-extrabold">ฝนตกขณะนี้</span>
                   ) : (
-                    <span className="text-emerald-600 dark:text-emerald-400 font-extrabold">☀️ ขณะนี้ฝนไม่ตก</span>
+                    <span className="text-emerald-600 dark:text-emerald-400 font-extrabold">ขณะนี้ฝนไม่ตก</span>
                   )}
                   {(matchedDistrict?.temperature || forecast?.temp) && (
                     <span className="ml-1.5 px-1.5 py-0.2 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-mono text-[10px] font-bold border border-slate-200 dark:border-slate-700">
-                      🌡️ {matchedDistrict?.temperature || forecast?.temp}°C
+                      {matchedDistrict?.temperature || forecast?.temp}°C
                     </span>
                   )}
                 </span>
               ) : (
                 <span className="font-bold text-xs truncate block text-slate-900 dark:text-white">
-                  📍 อยู่นอกพื้นที่สมุทรปราการ <span className="text-[11px] font-normal opacity-85 text-slate-500 dark:text-slate-400">• แตะเพื่อดู 6 อำเภอ</span>
+                  อยู่นอกพื้นที่สมุทรปราการ <span className="text-[11px] font-normal opacity-85 text-slate-500 dark:text-slate-400">• แตะเพื่อดู 6 อำเภอ</span>
                 </span>
               )}
               <span className={`text-[10px] block truncate ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
@@ -227,7 +228,7 @@ export default function RainForecast24hCard({
             <div className={`p-1.5 rounded-md shrink-0 border ${
               isDark ? 'bg-slate-850 text-cyan-400 border-slate-700' : 'bg-blue-50 text-blue-600 border-blue-200'
             }`}>
-              <CloudRain className="w-4 h-4 text-blue-600 dark:text-cyan-400 animate-pulse shrink-0" />
+              <CivicWeather className="w-4 h-4 text-blue-600 dark:text-cyan-400 shrink-0" />
             </div>
             <div className="min-w-0">
               <span className={`font-bold text-xs sm:text-sm block leading-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>
@@ -256,7 +257,8 @@ export default function RainForecast24hCard({
                 }`}
                 title={onRequestGps ? 'แตะเพื่อเปิดระบุตำแหน่ง GPS' : 'ท่านไม่ได้เปิดตำแหน่ง'}
               >
-                <span>📍 ท่านไม่ได้เปิดตำแหน่ง</span>
+                <CivicStationPin className="w-3 h-3 shrink-0" />
+                <span>ท่านไม่ได้เปิดตำแหน่ง</span>
               </button>
             ) : isLocatedInDistrict ? (
               isUserAreaRaining ? (
@@ -266,7 +268,7 @@ export default function RainForecast24hCard({
                     : 'bg-rose-50 text-rose-700 border-rose-300'
                 }`}>
                   <span className="inline-block w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
-                  <span>🌧️ ฝนตกในพื้นที่ท่าน</span>
+                  <span>ฝนตกในพื้นที่ท่าน</span>
                 </span>
               ) : (
                 <span className={`px-2.5 py-0.5 rounded-md text-xs font-bold border flex items-center gap-1.5 ${
@@ -274,16 +276,18 @@ export default function RainForecast24hCard({
                     ? 'bg-emerald-950/60 text-emerald-300 border-emerald-800' 
                     : 'bg-emerald-50 text-emerald-700 border-emerald-300'
                 }`}>
-                  <span>☀️ ฝนไม่ตกในพื้นที่ท่าน</span>
+                  <span className="inline-block w-2 h-2 rounded-full bg-emerald-500" />
+                  <span>ฝนไม่ตกในพื้นที่ท่าน</span>
                 </span>
               )
             ) : (
-              <span className={`px-2.5 py-0.5 rounded-md text-xs font-medium border ${
+              <span className={`px-2.5 py-0.5 rounded-md text-xs font-medium border flex items-center gap-1 ${
                 isDark 
                   ? 'bg-slate-800 text-slate-300 border-slate-700' 
                   : 'bg-slate-100 text-slate-700 border-slate-200'
               }`}>
-                📍 อยู่นอกพื้นที่สมุทรปราการ
+                <CivicStationPin className="w-3 h-3 shrink-0" />
+                <span>อยู่นอกพื้นที่สมุทรปราการ</span>
               </span>
             )}
 
@@ -317,15 +321,15 @@ export default function RainForecast24hCard({
         }`}>
           <div className="min-w-0">
             <span className="text-[10.5px] font-medium flex items-center gap-1.5 opacity-85">
-              <Compass className={`w-3.5 h-3.5 shrink-0 ${!hasGpsLocation ? 'text-amber-500' : 'text-blue-500'}`} />
+              <CivicCompass className={`w-3.5 h-3.5 shrink-0 ${!hasGpsLocation ? 'text-amber-500' : 'text-blue-500'}`} />
               <span>ตำแหน่งปัจจุบัน:</span>
             </span>
             <span className="text-xs sm:text-sm font-bold mt-0.5 block leading-tight text-slate-900 dark:text-white">
               {!hasGpsLocation 
-                ? '📍 ท่านไม่ได้เปิดตำแหน่ง' 
+                ? 'ท่านไม่ได้เปิดตำแหน่ง' 
                 : isLocatedInDistrict 
                   ? `ตำแหน่งของท่าน: ${displayDistrictLabel}`
-                  : '📍 อยู่นอกพื้นที่สมุทรปราการ (แสดงภาพรวม)'}
+                  : 'อยู่นอกพื้นที่สมุทรปราการ (แสดงภาพรวม)'}
             </span>
           </div>
           <div className="text-right shrink-0">
@@ -352,15 +356,15 @@ export default function RainForecast24hCard({
                     ? 'text-rose-600 dark:text-rose-400' 
                     : (isDark ? 'text-emerald-400' : 'text-emerald-700')
                 }`}>
-                  {isUserAreaRaining ? '🌧️ ฝนตกขณะนี้' : '☀️ ฝนไม่ตก'}
-                  {(matchedDistrict?.temperature || forecast?.temp) && ` • 🌡️ ${matchedDistrict?.temperature || forecast?.temp}°C`}
+                  {isUserAreaRaining ? 'ฝนตกขณะนี้' : 'ฝนไม่ตก'}
+                  {(matchedDistrict?.temperature || forecast?.temp) && ` • ${matchedDistrict?.temperature || forecast?.temp}°C`}
                 </span>
               </>
             ) : (
               <>
                 <span className={`text-[10px] block ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>อุณหภูมิภาพรวม</span>
                 <span className={`text-xs sm:text-sm font-black ${isDark ? 'text-cyan-300' : 'text-blue-700'}`}>
-                  🌡️ {forecast?.temp || 28}°C <span className="text-[10px] font-semibold opacity-85">({status})</span>
+                  {forecast?.temp || 28}°C <span className="text-[10px] font-semibold opacity-85">({status})</span>
                 </span>
               </>
             )}
@@ -371,7 +375,7 @@ export default function RainForecast24hCard({
         {/* COMPACT LIST VIEW แนวตั้ง (แสดงชื่อเต็ม ไม่เบียด ไม่ล้น 'อำเน...') */}
         {/* ========================================================= */}
         <div className="mt-2.5">
-          <div className="flex items-center justify-between mb-1">
+          <div className="flex items-center justify-between mb-1.5">
             <span className={`text-[11px] font-bold block ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
               ความเสี่ยงฝนตกแยก 6 อำเภอ (จ.สมุทรปราการ):
             </span>
@@ -380,10 +384,6 @@ export default function RainForecast24hCard({
                 อัปเดต {lastUpdatedTime}
               </span>
             )}
-          </div>
-          <div className="text-[10px] text-slate-500 dark:text-slate-400 mb-2 flex items-center gap-1">
-            <span>ℹ️</span>
-            <span>กลุ่มฝนอาจเริ่มตกกระจายตัวในบางตำบลก่อน และครอบคลุมทั้งอำเภอตามลำดับ</span>
           </div>
 
           <div className="space-y-1.5">
@@ -403,7 +403,7 @@ export default function RainForecast24hCard({
                 >
                   {/* Left: Icon + Full District Name + Temperature + Accurate Time Window */}
                   <div className="flex items-start gap-2 min-w-0 flex-1">
-                    <span className="text-sm sm:text-base shrink-0 mt-0.5">{d.icon || '🌦️'}</span>
+                    <CivicWeather className="w-4 h-4 text-blue-500 dark:text-cyan-400 shrink-0 mt-0.5" />
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-1.5 flex-wrap">
                         <span className={`font-semibold text-xs whitespace-nowrap ${

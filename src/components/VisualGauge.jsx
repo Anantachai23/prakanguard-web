@@ -1,5 +1,5 @@
 import React from 'react';
-import { Activity } from 'lucide-react';
+import { CivicGauge } from './CivicIcons';
 import { FLOOD_STANDARDS, getFloodLevel } from '../data/floodStandards';
 
 export default function VisualGauge({ depthCm = 0, level, theme = 'light' }) {
@@ -18,28 +18,31 @@ export default function VisualGauge({ depthCm = 0, level, theme = 'light' }) {
   let levelTheme = {
     badge: isDark ? "bg-emerald-950 text-emerald-300 border-emerald-700" : "bg-emerald-50 text-emerald-800 border-emerald-300",
     waterFill: "url(#waterGradEmerald)",
-    tag: "🟢 ระดับ 1: น้ำท่วมปกติ (5 - 20 cm) • รถทุกชนิดผ่านได้",
-    tagStyle: isDark ? "bg-emerald-950 text-emerald-300 border-emerald-700" : "bg-emerald-100 text-emerald-800 border-emerald-300"
+    tag: "ระดับ 1: น้ำท่วมปกติ (5 - 20 cm) • รถทุกชนิดผ่านได้",
+    tagStyle: isDark ? "bg-emerald-950 text-emerald-300 border-emerald-700" : "bg-emerald-100 text-emerald-800 border-emerald-300",
+    dotColor: "bg-emerald-500"
   };
 
   if (activeLevel === 2) {
     levelTheme = {
       badge: isDark ? "bg-amber-950 text-amber-300 border-amber-700" : "bg-amber-50 text-amber-800 border-amber-300",
       waterFill: "url(#waterGradAmber)",
-      tag: "🟠 ระดับ 2: น้ำท่วมปานกลาง (21 - 50 cm) • รถเล็กควรเลี่ยง",
-      tagStyle: isDark ? "bg-amber-950 text-amber-300 border-amber-700" : "bg-amber-100 text-amber-800 border-amber-300"
+      tag: "ระดับ 2: น้ำท่วมปานกลาง (21 - 50 cm) • รถเล็กควรเลี่ยง",
+      tagStyle: isDark ? "bg-amber-950 text-amber-300 border-amber-700" : "bg-amber-100 text-amber-800 border-amber-300",
+      dotColor: "bg-amber-500"
     };
   } else if (activeLevel === 3) {
     levelTheme = {
       badge: isDark ? "bg-rose-950 text-rose-300 border-rose-700" : "bg-rose-50 text-rose-800 border-rose-300",
       waterFill: "url(#waterGradRose)",
-      tag: "🔴 ระดับ 3: น้ำท่วมวิกฤต (มากกว่า 50 cm) • ห้ามรถเล็กผ่านเด็ดขาด",
-      tagStyle: isDark ? "bg-rose-950 text-rose-300 border-rose-700" : "bg-rose-100 text-rose-800 border-rose-300"
+      tag: "ระดับ 3: น้ำท่วมวิกฤต (มากกว่า 50 cm) • ห้ามรถเล็กผ่านเด็ดขาด",
+      tagStyle: isDark ? "bg-rose-950 text-rose-300 border-rose-700" : "bg-rose-100 text-rose-800 border-rose-300",
+      dotColor: "bg-rose-500"
     };
   }
 
   return (
-    <div className={`border rounded-xl sm:rounded-2xl p-1.5 sm:p-4 shadow-sm transition-colors ${
+    <div className={`border rounded-lg p-1.5 sm:p-4 shadow-sm transition-colors ${
       isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'
     }`}>
       
@@ -48,8 +51,8 @@ export default function VisualGauge({ depthCm = 0, level, theme = 'light' }) {
         isDark ? 'border-slate-700/80' : 'border-slate-200'
       }`}>
         <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
-          <div className={`w-5 h-5 sm:w-8 sm:h-8 rounded-lg sm:rounded-xl flex items-center justify-center border shadow-inner shrink-0 ${levelTheme.badge}`}>
-            <Activity className="w-3 h-3 sm:w-4 sm:h-4" />
+          <div className={`w-5 h-5 sm:w-8 sm:h-8 rounded-md flex items-center justify-center border shadow-inner shrink-0 ${levelTheme.badge}`}>
+            <CivicGauge className="w-3 h-3 sm:w-4 sm:h-4" />
           </div>
           <div className="min-w-0">
             <span className={`text-[9px] sm:text-xs font-bold px-1.5 sm:px-2 py-0.5 rounded-md border inline-block ${levelTheme.badge}`}>
@@ -132,16 +135,16 @@ export default function VisualGauge({ depthCm = 0, level, theme = 'light' }) {
           <text x="270" y="83" fill={isDark ? "#94a3b8" : "#64748b"} fontSize="7.5" fontFamily="monospace">100cm ระดับเอว</text>
 
           <line x1="0" y1="130" x2="265" y2="130" stroke="#f43f5e" strokeWidth="1.5" strokeDasharray="4 2" />
-          <text x="270" y="133" fill="#e11d48" fontSize="8" fontFamily="monospace" fontWeight="bold">50cm 🔴 วิกฤต</text>
+          <text x="270" y="133" fill="#e11d48" fontSize="8" fontFamily="monospace" fontWeight="bold">50cm วิกฤต</text>
 
           <line x1="8" y1="145" x2="265" y2="145" stroke={isDark ? "#475569" : "#94a3b8"} strokeWidth="0.8" strokeDasharray="3 3" />
           <text x="270" y="148" fill={isDark ? "#fbbf24" : "#b45309"} fontSize="7.5" fontFamily="monospace">35cm ครึ่งล้อรถ</text>
 
           <line x1="0" y1="160" x2="265" y2="160" stroke="#f59e0b" strokeWidth="1.5" strokeDasharray="4 2" />
-          <text x="270" y="163" fill="#d97706" fontSize="8" fontFamily="monospace" fontWeight="bold">20cm 🟠 ปานกลาง</text>
+          <text x="270" y="163" fill="#d97706" fontSize="8" fontFamily="monospace" fontWeight="bold">20cm ปานกลาง</text>
 
           <line x1="8" y1="175" x2="265" y2="175" stroke="#10b981" strokeWidth="0.8" strokeDasharray="2 2" />
-          <text x="270" y="177.5" fill="#059669" fontSize="7.5" fontFamily="monospace">5cm 🟢 ปกติ</text>
+          <text x="270" y="177.5" fill="#059669" fontSize="7.5" fontFamily="monospace">5cm ปกติ</text>
 
           {/* Ground Line */}
           <line x1="0" y1="180" x2="350" y2="180" stroke={isDark ? "#64748b" : "#334155"} strokeWidth="2.5" />

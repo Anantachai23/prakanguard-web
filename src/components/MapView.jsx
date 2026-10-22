@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Crosshair, Navigation } from 'lucide-react';
+import { CivicRouteCorridor, CivicRadar, CivicNavigationArrow } from './CivicIcons';
 import { playClickSound, playPinClickSound, playToggleSound, playGpsSound } from '../services/soundEffects';
 import { 
   SAMUT_PRAKAN_DISTRICTS_GEOJSON, 
@@ -83,19 +84,19 @@ function createOfficialFloodPin({ level, depthCm, hasPhoto, isSelected, isFallin
   // สัญลักษณ์น้ำลดที่เห็นได้ชัดเจนบนแผนที่ตามที่ระบุ
   const fallingBadgeHtml = isFalling
     ? `
-      <div class="pg-pin-falling-tag" style="position:absolute;top:-20px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg, #0d9488 0%, #059669 100%);color:#ffffff;font-size:9.5px;font-weight:900;font-family:'Prompt',-apple-system,sans-serif;padding:1px 6px;border-radius:12px;border:1.5px solid #ffffff;box-shadow:0 2px 6px rgba(0,0,0,0.4);white-space:nowrap;display:flex;align-items:center;gap:2px;pointer-events:none;z-index:30;">
-        <span style="font-size:10px;line-height:1;">📉</span>
+      <div class="pg-pin-falling-tag" style="position:absolute;top:-20px;left:50%;transform:translateX(-50%);background:#0d9488;color:#ffffff;font-size:9.5px;font-weight:900;font-family:'Prompt',-apple-system,sans-serif;padding:1px 6px;border-radius:6px;border:1.5px solid #ffffff;box-shadow:0 2px 6px rgba(0,0,0,0.4);white-space:nowrap;display:flex;align-items:center;gap:2px;pointer-events:none;z-index:30;">
+        <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>
         <span>น้ำลด</span>
       </div>
-      <div style="position:absolute;bottom:0px;right:-5px;width:17px;height:17px;background:#0d9488;border:1.5px solid #ffffff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:900;color:#ffffff;box-shadow:0 2px 4px rgba(0,0,0,0.3);z-index:15;pointer-events:none;" title="น้ำกำลังลด">💧↓</div>
+      <div style="position:absolute;bottom:0px;right:-5px;width:17px;height:17px;background:#0d9488;border:1.5px solid #ffffff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:900;color:#ffffff;box-shadow:0 2px 4px rgba(0,0,0,0.3);z-index:15;pointer-events:none;" title="น้ำกำลังลด">↓</div>
     `
     : '';
 
-  // สัญลักษณ์รูปกล้อง 📷 สำหรับจุดที่มีรูปภาพจากประชาชนรายงานหรือเจ้าหน้าที่
+  // สัญลักษณ์รูปกล้องสำหรับจุดที่มีรูปภาพจากประชาชนรายงานหรือเจ้าหน้าที่
   const photoBadgeHtml = hasPhoto
     ? `
-      <div class="pg-pin-photo-tag" style="position:absolute;top:-8px;right:-9px;background:#1d4ed8;color:#ffffff;font-size:10px;line-height:1;width:20px;height:20px;border-radius:50%;border:1.5px solid #ffffff;box-shadow:0 2px 6px rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;z-index:25;pointer-events:none;" title="มีรูปภาพสถานที่จริง">
-        📷
+      <div class="pg-pin-photo-tag" style="position:absolute;top:-8px;right:-9px;background:#1d4ed8;color:#ffffff;width:20px;height:20px;border-radius:50%;border:1.5px solid #ffffff;box-shadow:0 2px 6px rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;z-index:25;pointer-events:none;" title="มีรูปภาพสถานที่จริง">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2"><rect x="3" y="6" width="18" height="14" rx="2"/><circle cx="12" cy="13" r="3.5"/></svg>
       </div>
     `
     : '';
@@ -540,9 +541,9 @@ export default function MapView({
         } else {
           const pinIcon = L.divIcon({
             className: 'picked-pin',
-            html: `<div style="font-size:28px;line-height:1;filter:drop-shadow(0 4px 6px rgba(0,0,0,0.4));">📍</div>`,
-            iconSize: [32, 32],
-            iconAnchor: [16, 32]
+            html: `<div style="width:28px;height:28px;display:flex;align-items:center;justify-content:center;filter:drop-shadow(0 4px 6px rgba(0,0,0,0.4));"><svg width="26" height="26" viewBox="0 0 24 24" fill="#2563eb" stroke="#ffffff" stroke-width="2"><path d="M12 2.5C7.86 2.5 4.5 5.86 4.5 10c0 5.25 7.5 11.5 7.5 11.5s7.5-6.25 7.5-11.5c0-4.14-3.36-7.5-7.5-7.5z"/><circle cx="12" cy="10" r="3" fill="#ffffff"/></svg></div>`,
+            iconSize: [28, 28],
+            iconAnchor: [14, 28]
           });
           temporaryPickMarkerRef.current = L.marker([e.latlng.lat, e.latlng.lng], { icon: pinIcon }).addTo(map);
         }
@@ -1084,7 +1085,7 @@ export default function MapView({
     });
 
     const userMarker = L.marker([userLocation.lat, userLocation.lng], { icon: userIcon, zIndexOffset: 1000 }).addTo(map);
-    userMarker.bindTooltip("📍 ตำแหน่งปัจจุบันของคุณ", { permanent: false, direction: 'top', className: 'font-bold text-xs' });
+    userMarker.bindTooltip("ตำแหน่งปัจจุบันของคุณ", { permanent: false, direction: 'top', className: 'font-bold text-xs' });
     userMarkerRef.current = userMarker;
 
     map.setView([userLocation.lat, userLocation.lng], 13.5, { animate: true });
@@ -1178,9 +1179,9 @@ export default function MapView({
           isDark ? 'bg-slate-900/95 border-slate-700/80 text-slate-100' : 'bg-white/95 border-slate-200 text-slate-800'
         }`}>
           {[
-            { style: 'google-roadmap',    emoji: '🗺️', label: 'ถนน' },
-            { style: 'google-satellite',  emoji: '🛰️', label: 'ดาวเทียม' },
-          ].map(({ style, emoji, label }) => (
+            { style: 'google-roadmap',   Icon: CivicRouteCorridor, label: 'ถนน' },
+            { style: 'google-satellite', Icon: CivicRadar,         label: 'ดาวเทียม' },
+          ].map(({ style, Icon, label }) => (
             <button
               key={style}
               onClick={() => {
@@ -1196,7 +1197,7 @@ export default function MapView({
               }`}
               title={`สลับชั้นข้อมูลแผนที่ ${label}`}
             >
-              <span>{emoji}</span>
+              <Icon className="w-3.5 h-3.5 shrink-0" />
               <span className="inline">{label}</span>
             </button>
           ))}
@@ -1217,7 +1218,7 @@ export default function MapView({
                 : 'bg-white/95 text-slate-700 hover:text-blue-700 hover:bg-slate-50 border-slate-200'
             }`}
           >
-            <Navigation className={`w-3 h-3 sm:w-3.5 sm:h-3.5 ${isDark ? 'text-cyan-400' : 'text-blue-600'}`} />
+            <CivicNavigationArrow className={`w-3 h-3 sm:w-3.5 sm:h-3.5 ${isDark ? 'text-cyan-400' : 'text-blue-600'}`} />
             <span className="hidden sm:inline">พิกัดฉัน</span>
           </button>
           

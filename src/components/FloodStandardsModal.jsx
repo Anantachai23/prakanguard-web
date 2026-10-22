@@ -118,11 +118,11 @@ export default function FloodStandardsModal({ isOpen, onClose, theme = 'light' }
             </div>
             <div className="space-y-1 mt-1.5">
               <div className="flex items-start gap-1.5 text-[11px] sm:text-xs">
-                <span className="font-bold shrink-0 text-blue-600 dark:text-cyan-400">🚶 ระดับร่างกายมนุษย์:</span>
+                <span className="font-bold shrink-0 text-blue-600 dark:text-cyan-400">ระดับร่างกายมนุษย์:</span>
                 <span className={isDark ? 'text-slate-200' : 'text-slate-800'}>{currentStandard.humanLevel}</span>
               </div>
               <div className="flex items-start gap-1.5 text-[11px] sm:text-xs">
-                <span className="font-bold shrink-0 text-amber-600 dark:text-amber-400">🚗 ระดับส่วนของรถยนต์:</span>
+                <span className="font-bold shrink-0 text-amber-600 dark:text-amber-400">ระดับส่วนของรถยนต์:</span>
                 <span className={isDark ? 'text-slate-200' : 'text-slate-800'}>{currentStandard.vehicleLevel}</span>
               </div>
             </div>
