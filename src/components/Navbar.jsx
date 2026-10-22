@@ -1,22 +1,27 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { 
-  PhoneCall, 
   Sun, 
   Moon, 
-  Camera,
-  Video,
-  MessageSquare, 
-  ShieldCheck, 
-  Activity,
-  Bell,
   MoreVertical,
-  BookOpen,
-  CloudRain,
-  Shield,
   ChevronDown,
-  PanelLeftClose,
-  PanelLeftOpen
+  Activity
 } from 'lucide-react';
+import {
+  CivicCrest,
+  CivicCctv,
+  CivicRadar,
+  CivicGauge,
+  CivicReportCamera,
+  CivicFeedback,
+  CivicDatabase,
+  CivicShield,
+  CivicBroadcast,
+  CivicCompass,
+  CivicWeather,
+  CivicEmergencyPhone,
+  CivicStandards,
+  CivicDrawerToggle
+} from './CivicIcons';
 import RealTimeClock from './RealTimeClock';
 import { 
   playToggleSound, 
@@ -24,7 +29,7 @@ import {
   playReportSound, 
   playEmergencySound, 
   playModalOpenSound,
-  playCloseSound,
+  playCloseSound, 
   playTabSound
 } from '../services/soundEffects';
 
@@ -254,7 +259,7 @@ export default function Navbar({
                 }`}
                 title="คลิกเพื่อกรองแสดงเฉพาะจุดที่น้ำกำลังลด"
               >
-                <span className="text-xs shrink-0">📉</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-teal-500 shrink-0"></span>
                 <span className="hidden lg:inline">น้ำลด</span>
                 <span className={`px-1.5 py-0.2 rounded-md text-[10px] font-bold ${
                   severityFilter === 'falling'
@@ -293,11 +298,9 @@ export default function Navbar({
                   ? 'bg-slate-900/90 hover:bg-slate-800 border-slate-800 text-slate-200 hover:text-cyan-300' 
                   : 'bg-white/90 hover:bg-slate-50 border-slate-200 text-slate-800 hover:text-blue-600'
               }`}
-              title={`สภาพอากาศจริง จ.สมุทรปราการ: ${weather.weatherDesc || 'มีเมฆบางส่วน'} • ${weather.temp}°C (คลิกดูพยากรณ์อากาศและเรดาร์ฝน AI)`}
+              title={`สภาพอากาศจริง จ.สมุทรปราการ: ${weather.weatherDesc || 'มีเมฆบางส่วน'} • ${weather.temp}°C (คลิกดูพยากรณ์อากาศและเรดาร์ฝน)`}
             >
-              <span className="text-sm shrink-0">
-                {weather.forecast24h?.isRainingNow ? '🌧️' : (weather.temp >= 33 ? '☀️' : (weather.temp <= 26 ? '🌦️' : '⛅'))}
-              </span>
+              <CivicWeather className="w-3.5 h-3.5 text-blue-500 dark:text-cyan-400 shrink-0" />
               <span className="font-mono font-bold text-xs">
                 {weather.temp}°C
               </span>
@@ -357,7 +360,7 @@ export default function Navbar({
               }`}
               title={isSidebarOpen ? "ปิดแถบข้อมูลและพยากรณ์" : "เปิดแถบข้อมูลและพยากรณ์"}
             >
-              <PanelLeftOpen className="w-3.5 h-3.5" />
+              <CivicDrawerToggle className="w-3.5 h-3.5" isOpen={isSidebarOpen} />
               <span>แผงข้อมูล</span>
             </button>
 
@@ -371,7 +374,7 @@ export default function Navbar({
               title="รายงานจุดน้ำท่วม"
               className="px-2.5 py-1.5 rounded-md bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer border border-blue-700/50 shadow-xs active:scale-95"
             >
-              <Camera className="w-3.5 h-3.5 shrink-0" />
+              <CivicReportCamera className="w-3.5 h-3.5 shrink-0" />
               <span>แจ้งท่วม</span>
             </button>
 
@@ -389,7 +392,7 @@ export default function Navbar({
                   : 'bg-teal-50 hover:bg-teal-100 text-teal-800 border-teal-300'
               }`}
             >
-              <MessageSquare className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400 shrink-0" />
+              <CivicFeedback className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400 shrink-0" />
               <span>ข้อเสนอแนะ</span>
             </button>
 
@@ -432,7 +435,7 @@ export default function Navbar({
                     }`}
                   >
                     <div className="flex items-center gap-2">
-                      <Video className="w-4 h-4 text-cyan-500 shrink-0" />
+                      <CivicCctv className="w-4 h-4 text-cyan-500 shrink-0" />
                       <span>กล้องวงจรปิด CCTV 24 ชม.</span>
                     </div>
                     <span className="px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-emerald-500 text-white">
@@ -456,7 +459,7 @@ export default function Navbar({
                     <span>อัปเดตสถานการณ์สดรายวัน</span>
                   </button>
 
-                  {/* Emergency Hotline Option (นำเบอร์ฉุกเฉินเข้ามาในเมนู) */}
+                  {/* Emergency Hotline Option */}
                   <button
                     type="button"
                     onClick={() => {
@@ -469,7 +472,7 @@ export default function Navbar({
                     }`}
                   >
                     <div className="flex items-center gap-2">
-                      <PhoneCall className="w-4 h-4 text-rose-500 shrink-0" />
+                      <CivicEmergencyPhone className="w-4 h-4 text-rose-500 shrink-0" />
                       <span>สายด่วนฉุกเฉิน 1784</span>
                     </div>
                     <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-700 dark:bg-rose-950/80 dark:text-rose-300 border border-rose-200 dark:border-rose-800">
@@ -488,7 +491,7 @@ export default function Navbar({
                       isDark ? 'hover:bg-slate-800 text-slate-200' : 'hover:bg-slate-100 text-slate-800'
                     }`}
                   >
-                    <BookOpen className="w-4 h-4 text-blue-500 shrink-0" />
+                    <CivicStandards className="w-4 h-4 text-blue-500 shrink-0" />
                     <span>เกณฑ์วัดระดับน้ำ & ยานพาหนะ</span>
                   </button>
 
@@ -503,7 +506,7 @@ export default function Navbar({
                       isDark ? 'hover:bg-slate-800 text-slate-200' : 'hover:bg-slate-100 text-slate-800'
                     }`}
                   >
-                    <ShieldCheck className="w-4 h-4 text-sky-500 shrink-0" />
+                    <CivicShield className="w-4 h-4 text-sky-500 shrink-0" />
                     <span>นโยบาย & ข้อมูลอ้างอิง</span>
                   </button>
                 </div>
@@ -545,7 +548,7 @@ export default function Navbar({
                 }`}
                 title="ดูประกาศล่าสุดจากเจ้าหน้าที่แอดมิน"
               >
-                <Bell className="w-3.5 h-3.5 text-amber-500 shrink-0 animate-pulse" />
+                <CivicBroadcast className="w-3.5 h-3.5 text-amber-500 shrink-0 animate-pulse" />
                 <span className="hidden xl:inline">ประกาศแอดมิน</span>
                 <span className="xl:hidden">ประกาศ</span>
               </button>
@@ -565,7 +568,7 @@ export default function Navbar({
                   : 'bg-blue-50 hover:bg-blue-100 text-blue-800 border-blue-300 shadow-blue-500/10'
               }`}
             >
-              <Video className="w-3.5 h-3.5 text-cyan-500 shrink-0 animate-pulse" />
+              <CivicCctv className="w-3.5 h-3.5 text-cyan-500 shrink-0 animate-pulse" />
               <span className="hidden xl:inline">กล้อง CCTV 24 ชม.</span>
               <span className="xl:hidden">CCTV</span>
             </button>
@@ -580,7 +583,7 @@ export default function Navbar({
               title="รายงานจุดน้ำท่วม"
               className="px-2.5 py-1.5 rounded-md bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer border border-blue-700/50 shadow-xs active:scale-95"
             >
-              <Camera className="w-3.5 h-3.5 shrink-0" />
+              <CivicReportCamera className="w-3.5 h-3.5 shrink-0" />
               <span className="hidden xl:inline">แจ้งจุดท่วม</span>
               <span className="xl:hidden">แจ้งท่วม</span>
             </button>
@@ -599,7 +602,7 @@ export default function Navbar({
                   : 'bg-teal-50 hover:bg-teal-100 text-teal-800 border-teal-300 shadow-teal-500/10'
               }`}
             >
-              <MessageSquare className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400 shrink-0" />
+              <CivicFeedback className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400 shrink-0" />
               <span className="hidden xl:inline">กล่องข้อเสนอแนะ</span>
               <span className="xl:hidden">ข้อเสนอแนะ</span>
             </button>
@@ -644,7 +647,7 @@ export default function Navbar({
                     }`}
                   >
                     <div className="flex items-center gap-2">
-                      <Video className="w-4 h-4 text-cyan-500 shrink-0" />
+                      <CivicCctv className="w-4 h-4 text-cyan-500 shrink-0" />
                       <span>กล้องวงจรปิด CCTV 24 ชม.</span>
                     </div>
                     <span className="px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-emerald-500 text-white">
@@ -668,7 +671,7 @@ export default function Navbar({
                     <span>อัปเดตสถานการณ์สดรายวัน</span>
                   </button>
 
-                  {/* Emergency Hotline Option (นำเบอร์ฉุกเฉินเข้ามาในเมนู) */}
+                  {/* Emergency Hotline Option */}
                   <button
                     type="button"
                     onClick={() => {
@@ -681,7 +684,7 @@ export default function Navbar({
                     }`}
                   >
                     <div className="flex items-center gap-2">
-                      <PhoneCall className="w-4 h-4 text-rose-500 shrink-0" />
+                      <CivicEmergencyPhone className="w-4 h-4 text-rose-500 shrink-0" />
                       <span>สายด่วนฉุกเฉิน 1784</span>
                     </div>
                     <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-700 dark:bg-rose-950/80 dark:text-rose-300 border border-rose-200 dark:border-rose-800">
@@ -701,7 +704,7 @@ export default function Navbar({
                       isDark ? 'hover:bg-slate-800 text-slate-200' : 'hover:bg-slate-100 text-slate-800'
                     }`}
                   >
-                    <BookOpen className="w-4 h-4 text-blue-500 shrink-0" />
+                    <CivicStandards className="w-4 h-4 text-blue-500 shrink-0" />
                     <span>เกณฑ์วัดระดับน้ำ & ยานพาหนะ</span>
                   </button>
 
@@ -717,7 +720,7 @@ export default function Navbar({
                       isDark ? 'hover:bg-slate-800 text-slate-200' : 'hover:bg-slate-100 text-slate-800'
                     }`}
                   >
-                    <ShieldCheck className="w-4 h-4 text-sky-500 shrink-0" />
+                    <CivicShield className="w-4 h-4 text-sky-500 shrink-0" />
                     <span>นโยบาย & ข้อมูลอ้างอิง</span>
                   </button>
                 </div>

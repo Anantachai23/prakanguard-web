@@ -9,20 +9,20 @@ import {
   playTabSound
 } from '../services/soundEffects';
 import { 
-  Navigation, 
-  CloudRain, 
-  Camera, 
   Activity, 
-  PhoneCall, 
-  MessageSquare, 
   Search, 
   Grid, 
-  X, 
-  BookOpen, 
-  Sparkles,
-  ShieldCheck,
-  Video
+  X
 } from 'lucide-react';
+import {
+  CivicCctv,
+  CivicReportCamera,
+  CivicFeedback,
+  CivicWeather,
+  CivicEmergencyPhone,
+  CivicStandards,
+  CivicShield
+} from './CivicIcons';
 
 export default function MobileBottomNav({
   onLocateMe,
@@ -95,7 +95,7 @@ export default function MobileBottomNav({
             {/* Quick Actions Grid (Enterprise shadcn style - Unique features only) */}
             <div className="grid grid-cols-2 gap-2">
               
-              {/* 1. Emergency Hotline 1784 (Polite Crimson/Rose - เข้าถึงง่ายชิดบนเมนู) */}
+              {/* 1. Emergency Hotline 1784 */}
               <button
                 type="button"
                 onClick={() => handleMenuAction(onOpenEmergency, playEmergencySound)}
@@ -103,7 +103,7 @@ export default function MobileBottomNav({
               >
                 <div className="flex items-center gap-2.5">
                   <div className="w-8 h-8 rounded-md bg-white/20 flex items-center justify-center shrink-0">
-                    <PhoneCall className="w-4 h-4 text-white" />
+                    <CivicEmergencyPhone className="w-4 h-4 text-white" />
                   </div>
                   <div>
                     <span className="text-xs font-bold block text-white">สายด่วนสาธารณภัย 1784</span>
@@ -123,7 +123,7 @@ export default function MobileBottomNav({
               >
                 <div className="flex items-center gap-2.5">
                   <div className="w-8 h-8 rounded-md bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-sm">
-                    <Video className="w-4 h-4 text-white animate-pulse" />
+                    <CivicCctv className="w-4 h-4 text-white animate-pulse" />
                   </div>
                   <div>
                     <div className="flex items-center gap-1.5">
@@ -145,7 +145,7 @@ export default function MobileBottomNav({
                 className="p-2.5 rounded-md bg-slate-50 hover:bg-slate-100 dark:bg-slate-800/80 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 flex items-center gap-2 transition-all active:scale-95 text-left cursor-pointer"
               >
                 <div className="w-7 h-7 rounded-md bg-blue-600 text-white flex items-center justify-center shrink-0">
-                  <BookOpen className="w-3.5 h-3.5" />
+                  <CivicStandards className="w-3.5 h-3.5" />
                 </div>
                 <div>
                   <span className="text-xs font-semibold block text-slate-900 dark:text-white">เกณฑ์ระดับน้ำ</span>
@@ -175,7 +175,7 @@ export default function MobileBottomNav({
                 className="col-span-2 p-2.5 rounded-md bg-slate-50 hover:bg-slate-100 dark:bg-slate-800/80 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 flex items-center gap-2.5 transition-all active:scale-98 text-left cursor-pointer"
               >
                 <div className="w-7 h-7 rounded-md bg-slate-700 text-white flex items-center justify-center shrink-0">
-                  <ShieldCheck className="w-3.5 h-3.5" />
+                  <CivicShield className="w-3.5 h-3.5" />
                 </div>
                 <span className="text-xs font-medium text-slate-900 dark:text-white">
                   นโยบายข้อกำหนดความเป็นส่วนตัวและแหล่งข้อมูล
@@ -210,7 +210,7 @@ export default function MobileBottomNav({
             }`}
             title="ข้อเสนอแนะ"
           >
-            <MessageSquare className="w-4 h-4 text-teal-600 dark:text-teal-400" />
+            <CivicFeedback className="w-4 h-4 text-teal-600 dark:text-teal-400" />
             <span className="text-[10px] font-medium leading-none">ข้อเสนอแนะ</span>
           </button>
 
@@ -240,7 +240,7 @@ export default function MobileBottomNav({
               className="flex flex-col items-center justify-center w-[46px] h-[46px] rounded-lg bg-blue-600 hover:bg-blue-700 text-white shadow-md border-2 border-white dark:border-slate-900 active:scale-90 transition-transform cursor-pointer"
               title="แตะเพื่อแจ้งจุดน้ำท่วม"
             >
-              <Camera className="w-4 h-4" />
+              <CivicReportCamera className="w-4 h-4" />
               <span className="text-[8.5px] font-bold mt-0.5 leading-none">แจ้งท่วม</span>
             </button>
           </div>
@@ -256,7 +256,7 @@ export default function MobileBottomNav({
               isDark ? 'text-slate-300 hover:text-white' : 'text-slate-700 hover:text-slate-950'
             }`}
           >
-            <CloudRain className="w-4 h-4 text-cyan-600 dark:text-cyan-400" />
+            <CivicWeather className="w-4 h-4 text-cyan-600 dark:text-cyan-400" />
             <span className="text-[10px] font-medium leading-none">ฝนวันนี้</span>
           </button>
 

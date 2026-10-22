@@ -48,6 +48,22 @@ import {
   XCircle,
   Droplets
 } from 'lucide-react';
+import {
+  CivicCrest,
+  CivicCctv,
+  CivicRadar,
+  CivicGauge,
+  CivicReportCamera,
+  CivicFeedback,
+  CivicDatabase,
+  CivicShield,
+  CivicBroadcast,
+  CivicCompass,
+  CivicWeather,
+  CivicEmergencyPhone,
+  CivicStandards,
+  CivicStationPin
+} from './CivicIcons';
 import { BODY_WATER_LEVELS } from './CitizenReportModal';
 import { DISTRICTS } from '../data/samutPrakanPoints';
 import { OFFICIAL_LOCATION_CATALOG, formatPointForTracking, parseAndValidateExternalData } from '../data/officialLocationCatalog';
@@ -240,6 +256,25 @@ export default function AdminModal({
 
   // Manual Cloud Sync State & Refresh Toast
   const [isManualSyncing, setIsManualSyncing] = useState(false);
+  const [supabasePingMs, setSupabasePingMs] = useState(null);
+
+  const pingSupabaseLatency = async () => {
+    const start = performance.now();
+    try {
+      const res = await fetch(`${getSupabaseUrl()}/rest/v1/visitors?select=id&limit=1`, {
+        headers: {
+          'apikey': getSupabaseKey(),
+          'Authorization': `Bearer ${getSupabaseKey()}`
+        },
+        signal: AbortSignal.timeout(4000)
+      });
+      if (res.ok) {
+        setSupabasePingMs(Math.round(performance.now() - start));
+      }
+    } catch (_) {
+      setSupabasePingMs(null);
+    }
+  };
   const [showRefreshToast, setShowRefreshToast] = useState(false);
   
   const handleManualSyncNow = async () => {
@@ -551,6 +586,7 @@ export default function AdminModal({
     if (!isAuthenticated) return;
     fetchLiveVisitors();
     fetchCloudAdminSessions();
+    pingSupabaseLatency();
     const timer = setInterval(() => {
       fetchLiveVisitors();
       fetchCloudAdminSessions();
@@ -1935,13 +1971,13 @@ export default function AdminModal({
       }`}>
         
         {/* Accent Bar */}
-        <div className="h-1.5 w-full bg-gradient-to-r from-amber-500 via-rose-500 to-indigo-600 shrink-0"></div>
+        <div className="h-[2px] w-full bg-blue-600 shrink-0"></div>
 
         {/* Refresh Toast Popup */}
         {showRefreshToast && (
           <div className="fixed top-5 left-1/2 -translate-x-1/2 z-[100] px-4 py-2 rounded-2xl bg-emerald-600 text-white font-bold text-xs shadow-2xl backdrop-blur-md flex items-center gap-2 border border-emerald-400/40 animate-in fade-in zoom-in-95 duration-200">
             <CheckCircle2 className="w-4 h-4 text-emerald-200 animate-pulse shrink-0" />
-            <span>🔄 รีเฟรชข้อมูลเรียบร้อยแล้ว</span>
+            <span>รีเฟรชข้อมูลเรียบร้อยแล้ว</span>
           </div>
         )}
 
@@ -2003,6 +2039,7 @@ export default function AdminModal({
                     handleManualSyncNow();
                     fetchLiveVisitors();
                     fetchCloudAdminSessions();
+                    pingSupabaseLatency();
                   }}
                   disabled={isManualSyncing}
                   className={`px-2.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer border active:scale-95 ${
@@ -2207,7 +2244,7 @@ export default function AdminModal({
                       : 'border-transparent text-slate-400 hover:text-slate-200'
                   }`}
                 >
-                  <span>🚨 แจ้งเตือนน้ำท่วม</span>
+                  <CivicReportCamera className="w-3.5 h-3.5 text-rose-500" /><span>รายงานแจ้งท่วม</span>
                   {pendingReports.length > 0 && (
                     <span className="px-1.5 py-0.2 rounded-full text-[10px] font-extrabold bg-rose-500 text-white animate-pulse">
                       {pendingReports.length}
@@ -2224,7 +2261,7 @@ export default function AdminModal({
                       : 'border-transparent text-slate-400 hover:text-slate-200'
                   }`}
                 >
-                  <span>📍 แสดงบนแผนที่ ({approvedReports.length})</span>
+                  <CivicStationPin className="w-3.5 h-3.5 text-emerald-500" /><span>แสดงบนแผนที่ ({approvedReports.length})</span>
                 </button>
 
                 <button
@@ -2237,7 +2274,7 @@ export default function AdminModal({
                   }`}
                 >
                   <Droplets className="w-3.5 h-3.5 text-cyan-400" />
-                  <span>💧 น้ำแห้งแล้ว/นำออก ({clearedDryReports.length})</span>
+                  <span>น้ำแห้งแล้ว ({clearedDryReports.length})</span>
                   {clearedDryReports.filter(r => r.autoRemovedBecauseDry).length > 0 && (
                     <span className="px-1.5 py-0.2 rounded-full text-[10px] font-extrabold bg-cyan-500 text-white animate-pulse">
                       {clearedDryReports.filter(r => r.autoRemovedBecauseDry).length} Auto
@@ -2255,7 +2292,7 @@ export default function AdminModal({
                   }`}
                 >
                   <MapPin className="w-3.5 h-3.5 text-blue-500" />
-                  <span>จุดเฝ้าระวัง 6 อำเภอ ({points.length})</span>
+                  <CivicCompass className="w-3.5 h-3.5 text-blue-500" /><span>จุดเฝ้าระวัง ({points.length})</span>
                 </button>
 
                 <button
@@ -2285,8 +2322,7 @@ export default function AdminModal({
                       : 'border-transparent text-slate-400 hover:text-slate-200'
                   }`}
                 >
-                  <Megaphone className="w-3.5 h-3.5 text-blue-500" />
-                  <span>ประกาศด่วน</span>
+                  <CivicBroadcast className="w-3.5 h-3.5 text-amber-500" /><span>ประกาศ ปภ.</span>
                 </button>
 
                 <button
@@ -2329,8 +2365,7 @@ export default function AdminModal({
                       : 'border-transparent text-slate-400 hover:text-slate-200'
                   }`}
                 >
-                  <KeyRound className="w-3.5 h-3.5 text-amber-500" />
-                  <span>ความปลอดภัย</span>
+                  <CivicShield className="w-3.5 h-3.5 text-indigo-400" /><span>ความปลอดภัย & Cloud</span>
                 </button>
               </div>
 
@@ -2429,7 +2464,7 @@ export default function AdminModal({
                         title="ดึงรายงานและข้อเสนอแนะล่าสุดจากคลาวด์"
                       >
                         <RefreshCw className={`w-3.5 h-3.5 ${isManualSyncing ? 'animate-spin' : ''}`} />
-                        <span>{isManualSyncing ? 'กำลังดึงข้อมูลสด...' : '🔄 ซิงก์ดึงข้อมูลจาก Cloud'}</span>
+                        <span>{isManualSyncing ? 'กำลังดึงข้อมูลสด...' : 'ซิงก์ดึงข้อมูลจาก Cloud'}</span>
                       </button>
                     )}
                   </div>
@@ -2729,7 +2764,7 @@ export default function AdminModal({
                       }`}
                     >
                       <span className="w-2 h-2 rounded-full bg-emerald-300 animate-pulse"></span>
-                      <span>🚨 ยังคงท่วมอยู่ ({approvedReports.length} จุด)</span>
+                      <span>ยังคงท่วมอยู่ ({approvedReports.length} จุด)</span>
                     </button>
                     <button
                       type="button"
@@ -2740,7 +2775,7 @@ export default function AdminModal({
                       className="flex-1 py-1.5 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 text-cyan-600 dark:text-cyan-400 hover:bg-cyan-50 dark:hover:bg-cyan-950/40"
                     >
                       <Droplets className="w-3.5 h-3.5" />
-                      <span>💧 น้ำแห้งแล้ว / นำออก ({clearedDryReports.length} จุด)</span>
+                      <span>น้ำแห้งแล้ว / นำออก ({clearedDryReports.length} จุด)</span>
                     </button>
                   </div>
 
@@ -2748,7 +2783,7 @@ export default function AdminModal({
                     isDark ? 'bg-slate-850 border-slate-700 text-slate-300' : 'bg-emerald-50/60 border-emerald-200 text-slate-700'
                   }`}>
                     <strong className="block text-slate-900 dark:text-white mb-0.5">
-                      📍 จุดที่กำลังแสดงบนแผนที่สาธารณะ ({approvedReports.length} จุด)
+                      จุดที่กำลังแสดงบนแผนที่สาธารณะ ({approvedReports.length} จุด)
                     </strong>
                     <span>เมื่อสถานการณ์น้ำลดระดับแห้งแล้ว สามารถกด <strong>"น้ำแห้งแล้ว / ปิดจุด"</strong> เพื่ออัปเดตแจ้งเตือนประชาชนให้ทราบว่าปลอดภัย</span>
                   </div>
@@ -2976,7 +3011,7 @@ export default function AdminModal({
                             className="px-3 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 dark:bg-blue-950 dark:hover:bg-blue-900 dark:text-cyan-300 text-xs font-bold cursor-pointer transition-colors border border-blue-200 dark:border-blue-800 flex items-center gap-1 active:scale-95 shadow-xs"
                             title="ทำเครื่องหมายว่าน้ำแห้งแล้ว"
                           >
-                            <span>💧 น้ำแห้งแล้ว / ปิดจุด</span>
+                            <span>น้ำแห้งแล้ว / ปิดจุด</span>
                           </button>
                           
                           <button
@@ -3280,12 +3315,12 @@ export default function AdminModal({
                                     {report.itemType === 'official' ? (
                                       <span className="px-2 py-0.5 rounded-lg bg-blue-500/20 text-blue-400 border border-blue-500/30 text-[10px] font-bold flex items-center gap-1">
                                         <MapPin className="w-3 h-3 text-blue-400" />
-                                        <span>🏢 จุดเฝ้าระวังทางการ (ถนนหลัก)</span>
+                                        <span>จุดเฝ้าระวังทางการ (ถนนหลัก)</span>
                                       </span>
                                     ) : (
                                       <span className="px-2 py-0.5 rounded-lg bg-purple-500/20 text-purple-400 border border-purple-500/30 text-[10px] font-bold flex items-center gap-1">
                                         <User className="w-3 h-3 text-purple-400" />
-                                        <span>👥 รายงานจากประชาชน</span>
+                                        <span>รายงานจากประชาชน</span>
                                       </span>
                                     )}
 
@@ -5035,7 +5070,7 @@ export default function AdminModal({
                       className="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow-md shadow-indigo-600/30 cursor-pointer disabled:opacity-50 shrink-0"
                     >
                       <RefreshCw className={`w-3.5 h-3.5 ${isAuditingSecurity ? 'animate-spin' : ''}`} />
-                      <span>{isAuditingSecurity ? 'กำลังตรวจสอบ...' : '🔄 ทดสอบเชื่อมต่อสด (Live Ping)'}</span>
+                      <span>{isAuditingSecurity ? 'กำลังตรวจสอบ...' : 'ทดสอบเชื่อมต่อสด (Live Ping)'}</span>
                     </button>
                   </div>
 
@@ -5071,7 +5106,7 @@ export default function AdminModal({
                           <span className="text-[10px] text-slate-400">latency</span>
                         </div>
                         <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold mt-1">
-                          🟢 เชื่อมต่อเสถียร 100%
+                          เชื่อมต่อเสถียร 100%
                         </span>
                       </div>
 
