@@ -679,22 +679,27 @@ export default function App() {
       const parsed = saved ? JSON.parse(saved) : null;
       let rawList = (Array.isArray(parsed) && parsed.length > 0) ? parsed : [];
       const realigned = rawList.map(realignPointLocation);
-      const cleaned = realigned.filter(r => 
-        r && 
-        r.id && 
-        !r.id.includes('test') &&
-        !r.id.includes('verify') &&
-        !r.id.includes('seed') &&
-        !r.id.startsWith('node-') &&
-        !r.id.startsWith('zz-sec-probe-') &&
-        !r.isAiGenerated && 
-        !r.id?.startsWith('ai-alert-') &&
-        typeof r.lat === 'number' &&
-        !isNaN(r.lat) &&
-        typeof r.lng === 'number' &&
-        !isNaN(r.lng) &&
-        isPointInSamutPrakan(r.lat, r.lng)
-      );
+      const cleaned = realigned.filter(r => {
+        if (!r || !r.id) return false;
+        const checkId = String(r.id).toLowerCase();
+        const checkName = String(r.name || '').toLowerCase();
+        const checkDist = String(r.district || '');
+        const checkSub = String(r.subdistrict || '');
+
+        if (checkId.includes('test') || checkId.includes('verify') || checkId.includes('seed')) return false;
+        if (checkId.startsWith('node-') || checkId.startsWith('zz-sec-probe-') || checkId.includes('probe')) return false;
+        if (checkName.includes('security-probe') || checkName.includes('auto-deleted') || checkName.includes('probe') || checkName.includes('ทดสอบ')) return false;
+        if (checkName.includes('????') || checkDist.includes('????') || checkSub.includes('????')) return false;
+        if (r.isAiGenerated || checkId.startsWith('ai-alert-')) return false;
+
+        return (
+          typeof r.lat === 'number' &&
+          !isNaN(r.lat) &&
+          typeof r.lng === 'number' &&
+          !isNaN(r.lng) &&
+          isPointInSamutPrakan(r.lat, r.lng)
+        );
+      });
       const sanitized = cleaned.map(r => {
         const smartCheck = detectSubdistrictForLocation(r.lat, r.lng, `${r.name || ''} ${r.notes || ''}`, r.district);
         let dist = r.district;
@@ -1468,6 +1473,19 @@ export default function App() {
           // ซิงก์ประวัติอัปเดตสถานการณ์น้ำรายวันข้ามทุกอุปกรณ์ ไม่ล้างประราวดังกล่าวจนกว่าจะเที่ยงคืน
           cloudReports.forEach(cr => {
             if (cr.isApproved && isValidReport(cr)) {
+              let formattedTime = cr.reportedAt;
+              if (typeof formattedTime === 'string' && formattedTime.includes('T')) {
+                try {
+                  const d = new Date(formattedTime);
+                  if (!isNaN(d.getTime())) {
+                    formattedTime = d.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Bangkok' }) + ' น.';
+                  }
+                } catch (_) {}
+              }
+              if (!formattedTime || !formattedTime.includes('น.')) {
+                formattedTime = formatBangkokTime(new Date(cr.timestamp || Date.now()));
+              }
+
               setDailyUpdates(prev => mergeDailyUpdateEvent(prev, {
                 id: `upd_report_${cr.id}`,
                 locationKey: cr.id,
@@ -1477,7 +1495,7 @@ export default function App() {
                 statusType: cr.isResolved ? 'dry' : 'rising',
                 statusLabel: cr.isResolved ? 'แห้งแล้ว' : 'เริ่มท่วมแล้ว',
                 depthCm: cr.depthCm || (cr.level === 3 ? 55 : cr.level === 2 ? 30 : 15),
-                itemTime: cr.reportedAt || formatBangkokTime(new Date(cr.timestamp || Date.now())),
+                itemTime: formattedTime,
                 timestamp: cr.timestamp || Date.now(),
                 source: cr.source || 'รายงานจากประชาชน',
                 lat: cr.lat,
@@ -1553,6 +1571,19 @@ export default function App() {
           return updated;
         });
         window.dispatchEvent(new CustomEvent('prakanguard_feedback_updated', { detail: incomingFeedback }));
+
+        // Alert Admin immediately when new feedback arrives
+        if (isAdminAuthenticated) {
+          setAdminAlertToast({
+            id: incomingFeedback.id,
+            type: 'feedback',
+            name: `ข้อเสนอแนะ: ${incomingFeedback.categoryLabel || 'ทั่วไป'}`,
+            levelLabel: `⭐ ${incomingFeedback.rating || 5}/5 ดาว • ${incomingFeedback.senderName || 'ประชาชน'}`,
+            district: incomingFeedback.message ? `"${incomingFeedback.message.substring(0, 35)}..."` : 'ข้อเสนอแนะใหม่',
+            time: incomingFeedback.submittedAt || 'เมื่อสักครู่'
+          });
+          playNotificationChime();
+        }
       },
       onAdminAction: (action) => {
         if (action.type === 'approve') {
@@ -1815,6 +1846,18 @@ export default function App() {
     publishCloudFeedback(newFeedback);
     playNotificationChime();
     window.dispatchEvent(new CustomEvent('prakanguard_feedback_updated', { detail: newFeedback }));
+
+    // Immediate Alert for Admin session
+    if (isAdminAuthenticated) {
+      setAdminAlertToast({
+        id: newFeedback.id,
+        type: 'feedback',
+        name: `ข้อเสนอแนะ: ${newFeedback.categoryLabel || 'ทั่วไป'}`,
+        levelLabel: `⭐ ${newFeedback.rating || 5}/5 ดาว • ${newFeedback.senderName || 'ประชาชน'}`,
+        district: newFeedback.message ? `"${newFeedback.message.substring(0, 35)}..."` : 'ข้อเสนอแนะใหม่',
+        time: 'เมื่อสักครู่'
+      });
+    }
   };
 
   // Feedback Management Handlers (Admin Only)
@@ -4140,6 +4183,7 @@ export default function App() {
       {isAdminAuthenticated && (
         <AdminVerificationPrompt 
           pendingReports={pendingCitizenReports}
+          unreadFeedbackCount={feedbackItems.filter(f => !f.isRead).length}
           onApproveReport={handleApproveReport}
           onRejectReport={handleRejectReport}
           onFlyToCoords={handleFlyToCoords}
@@ -4299,18 +4343,22 @@ export default function App() {
             isDark ? 'bg-slate-900/98 border-amber-500 text-white shadow-amber-500/20' : 'bg-white border-amber-400 text-slate-900 shadow-xl'
           }`}>
             <div className="flex items-center gap-2.5 min-w-0">
-              <div className="w-9 h-9 rounded-xl bg-amber-500 text-slate-950 flex items-center justify-center font-bold shrink-0 animate-bounce">
-                <ShieldAlert className="w-5 h-5" />
+              <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold shrink-0 animate-bounce ${
+                adminAlertToast.type === 'feedback' ? 'bg-teal-500 text-slate-950' : 'bg-amber-500 text-slate-950'
+              }`}>
+                {adminAlertToast.type === 'feedback' ? <CivicFeedback className="w-5 h-5" /> : <ShieldAlert className="w-5 h-5" />}
               </div>
               <div className="min-w-0">
-                <span className="text-[10px] font-bold text-amber-500 block uppercase tracking-wider">
-                  มีรายงานสถานการณ์ใหม่เข้ามา
+                <span className={`text-[10px] font-bold block uppercase tracking-wider ${
+                  adminAlertToast.type === 'feedback' ? 'text-teal-400' : 'text-amber-500'
+                }`}>
+                  {adminAlertToast.type === 'feedback' ? 'ข้อเสนอแนะใหม่จากประชาชน' : 'มีรายงานสถานการณ์ใหม่เข้ามา'}
                 </span>
                 <h4 className="text-xs sm:text-sm font-bold truncate">
                   {adminAlertToast.name}
                 </h4>
                 <span className="text-[10px] text-slate-400 block truncate">
-                  อ.{adminAlertToast.district} • {adminAlertToast.levelLabel} ({adminAlertToast.time})
+                  {adminAlertToast.district} • {adminAlertToast.levelLabel} ({adminAlertToast.time})
                 </span>
               </div>
             </div>
@@ -4319,9 +4367,16 @@ export default function App() {
                 type="button"
                 onClick={() => {
                   setIsAdminModalOpen(true);
+                  if (adminAlertToast.type === 'feedback') {
+                    window.dispatchEvent(new CustomEvent('prakanguard_open_admin_tab', { detail: 'feedback' }));
+                  }
                   setAdminAlertToast(null);
                 }}
-                className="px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs shadow-md cursor-pointer transition-all"
+                className={`px-3 py-1.5 rounded-xl font-bold text-xs shadow-md cursor-pointer transition-all ${
+                  adminAlertToast.type === 'feedback'
+                    ? 'bg-teal-500 hover:bg-teal-400 text-slate-950'
+                    : 'bg-amber-500 hover:bg-amber-400 text-slate-950'
+                }`}
               >
                 ตรวจสอบ
               </button>

@@ -324,18 +324,47 @@ export function loadDailyUpdatesFromStorage() {
     if (raw) {
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed)) {
-        return parsed.map(item => {
-          const locStr = `${item.locationName || ''} ${item.locationKey || ''}`.toLowerCase();
-          if (locStr.includes('ศรีเทพา') || (item.lat && Math.abs(item.lat - 13.627) < 0.015 && Math.abs(item.lng - 100.626) < 0.015)) {
+        const cleaned = parsed
+          .filter(item => {
+            if (!item) return false;
+            const locStr = `${item.locationName || ''} ${item.locationKey || ''} ${item.id || ''}`.toLowerCase();
+            const subStr = String(item.locationSub || '');
+            const distStr = String(item.district || '');
+            if (locStr.includes('security-probe') || locStr.includes('auto-deleted') || locStr.includes('probe') || locStr.includes('ทดสอบ')) return false;
+            if (locStr.includes('????') || subStr.includes('????') || distStr.includes('????')) return false;
+            return true;
+          })
+          .map(item => {
+            const locStr = `${item.locationName || ''} ${item.locationKey || ''}`.toLowerCase();
+            let resolvedTime = item.itemTime;
+            if (typeof resolvedTime === 'string' && resolvedTime.includes('T')) {
+              try {
+                const d = new Date(resolvedTime);
+                if (!isNaN(d.getTime())) {
+                  resolvedTime = d.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Bangkok' }) + ' น.';
+                }
+              } catch (_) {}
+            }
+            if (locStr.includes('ศรีเทพา') || (item.lat && Math.abs(item.lat - 13.627) < 0.015 && Math.abs(item.lng - 100.626) < 0.015)) {
+              return {
+                ...item,
+                itemTime: resolvedTime,
+                district: 'เมืองสมุทรปราการ',
+                subdistrict: 'ต.สำโรงเหนือ',
+                locationSub: 'เมือง • ต.สำโรงเหนือ'
+              };
+            }
             return {
               ...item,
-              district: 'เมืองสมุทรปราการ',
-              subdistrict: 'ต.สำโรงเหนือ',
-              locationSub: 'เมือง • ต.สำโรงเหนือ'
+              itemTime: resolvedTime
             };
-          }
-          return item;
-        });
+          });
+
+        try {
+          localStorage.setItem('prakanguard_daily_updates_feed', JSON.stringify(cleaned));
+        } catch (_) {}
+
+        return cleaned;
       }
     }
   } catch (_) {}
@@ -354,9 +383,38 @@ export function loadDailyUpdatesFromStorage() {
 export function mergeDailyUpdateEvent(prevList = [], newEvent = {}) {
   if (!newEvent || !newEvent.locationName) return prevList;
 
+  // กรองข้อมูลทดสอบ หรือข้อมูลไม่จริงออกโดยเด็ดขาด
+  const checkName = String(newEvent.locationName || '').toLowerCase();
+  const checkSub = String(newEvent.locationSub || '');
+  const checkDist = String(newEvent.district || '');
+  const checkId = String(newEvent.id || '').toLowerCase();
+  if (checkName.includes('security-probe') || checkName.includes('auto-deleted') || checkName.includes('probe') || checkName.includes('ทดสอบ')) {
+    return prevList;
+  }
+  if (checkId.includes('probe') || checkId.includes('test-inspect') || checkId.includes('test-check')) {
+    return prevList;
+  }
+  if (checkName.includes('????') || checkSub.includes('????') || checkDist.includes('????')) {
+    return prevList;
+  }
+
   const todayKey = getBangkokDateKey();
   const key = (newEvent.locationKey || newEvent.locationName || '').trim().toLowerCase();
-  const eventTime = newEvent.itemTime || formatBangkokTime();
+  
+  // Format event time so raw ISO timestamps are NEVER used
+  let eventTime = newEvent.itemTime;
+  if (!eventTime || (typeof eventTime === 'string' && eventTime.includes('T'))) {
+    try {
+      const d = eventTime ? new Date(eventTime) : new Date(newEvent.timestamp || Date.now());
+      if (!isNaN(d.getTime())) {
+        eventTime = d.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Bangkok' }) + ' น.';
+      } else {
+        eventTime = formatBangkokTime();
+      }
+    } catch (_) {
+      eventTime = formatBangkokTime();
+    }
+  }
 
   // ตรวจสอบความถูกต้องของตำบล โดยเฉพาะแยกศรีเทพา -> สำโรงเหนือ
   let resolvedDistrict = newEvent.district || 'สมุทรปราการ';

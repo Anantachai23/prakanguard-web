@@ -104,9 +104,9 @@ export default function Navbar({
         {/* ========================================================= */}
         {/* 1. BRAND AREA (LEFT) — Official Civic Command Center       */}
         {/* ========================================================= */}
-        <div className="flex items-center space-x-2 sm:space-x-3 shrink-0 min-w-0">
+        <div className="flex items-center space-x-2 sm:space-x-2.5 shrink-0 min-w-0">
           {/* Official Provincial Crest Emblem */}
-          <div className={`relative w-7 h-7 sm:w-9 sm:h-9 rounded-md sm:rounded-lg p-0.5 border shadow-xs shrink-0 flex items-center justify-center overflow-hidden ${
+          <div className={`relative w-7 h-7 sm:w-8 sm:h-8 rounded-md sm:rounded-lg p-0.5 border shadow-xs shrink-0 flex items-center justify-center overflow-hidden ${
             isDark ? 'bg-slate-900 border-amber-500/40' : 'bg-white border-amber-600/30'
           }`}>
             <img 
@@ -116,24 +116,17 @@ export default function Navbar({
             />
           </div>
 
-          <div className="flex flex-col justify-center min-w-0">
-            <div className="flex items-center gap-1 sm:gap-1.5 flex-wrap">
-              <span className={`text-[11.5px] sm:text-sm font-extrabold tracking-tight leading-none shrink-0 ${
-                isDark ? 'text-white' : 'text-slate-900'
-              }`}>
-                ศูนย์เฝ้าระวังอุทกภัย
-              </span>
-              <span className={`text-[8px] sm:text-[9.5px] px-1 sm:px-1.5 py-0.5 rounded font-bold shrink-0 border ${
-                isDark ? 'bg-blue-950/80 text-blue-300 border-blue-800' : 'bg-blue-50 text-blue-800 border-blue-200'
-              }`}>
-                จ.สมุทรปราการ
-              </span>
-            </div>
-            <div className="hidden sm:flex items-center gap-1 text-[9.5px] font-medium text-slate-500 dark:text-slate-400 mt-0.5 leading-none">
-              <span className="font-bold text-amber-600 dark:text-amber-400 tracking-wider">PRAKANGUARD GIS</span>
-              <span>•</span>
-              <span className="truncate">ระบบข้อมูลเตือนภัย ปภ. 6 อำเภอ</span>
-            </div>
+          <div className="flex items-center gap-1.5 min-w-0">
+            <span className={`text-[12px] sm:text-sm font-extrabold tracking-tight leading-none shrink-0 ${
+              isDark ? 'text-white' : 'text-slate-900'
+            }`}>
+              ศูนย์เฝ้าระวังอุทกภัย
+            </span>
+            <span className={`text-[8.5px] sm:text-[9.5px] px-1.5 py-0.5 rounded font-bold shrink-0 border ${
+              isDark ? 'bg-blue-950/80 text-blue-300 border-blue-800' : 'bg-blue-50 text-blue-800 border-blue-200'
+            }`}>
+              จ.สมุทรปราการ
+            </span>
           </div>
         </div>
 

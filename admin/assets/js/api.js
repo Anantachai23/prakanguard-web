@@ -307,27 +307,83 @@ export async function purgeTrash(entryIds) {
 
 /* ========================================================== Feedback */
 export async function fetchFeedback() {
+  const fbMap = new Map();
+
+  // 1. Fetch from Supabase Cloud
   try {
-    const data = await restAll('feedback?select=*&order=timestamp.desc');
-    if (Array.isArray(data) && data.length > 0) return data;
+    const data = await restAll('feedback?select=*&order=created_at.desc');
+    if (Array.isArray(data) && data.length > 0) {
+      data.forEach(item => {
+        if (item && item.id) {
+          fbMap.set(item.id, {
+            id: item.id,
+            category: item.category,
+            categoryLabel: item.category_label || 'ทั่วไป',
+            rating: item.rating || 5,
+            message: item.message,
+            senderName: item.sender_name || 'ประชาชนทั่วไป',
+            contact: item.contact || '-',
+            adminNote: item.admin_note || '',
+            isRead: !!item.is_read,
+            submittedAt: item.submitted_at || '',
+            timestamp: item.timestamp || (item.submitted_at ? new Date(item.submitted_at).getTime() : Date.now())
+          });
+        }
+      });
+    }
   } catch (err) {
-    console.warn('[Admin API] Supabase fetchFeedback failed, using local fallback:', err);
+    console.warn('[Admin API] Supabase fetchFeedback failed, using local/ntfy fallback:', err);
   }
+
+  // 2. Fetch from Local Admin API
   try {
     const res = await fetch('/api/feedback');
     if (res.ok) {
       const data = await res.json();
-      if (Array.isArray(data) && data.length > 0) return data;
+      if (Array.isArray(data) && data.length > 0) {
+        data.forEach(item => {
+          if (item && item.id && !fbMap.has(item.id)) fbMap.set(item.id, item);
+        });
+      }
     }
   } catch {}
+
+  // 3. Fallback: Fetch from Live Cloud Topics (ntfy)
+  try {
+    const topicRes = await fetch('https://ntfy.sh/prakanguard_spk_feedback_v5/json?poll=1&since=all', { cache: 'no-cache' }).catch(() => null);
+    if (topicRes && topicRes.ok) {
+      const text = await topicRes.text();
+      const lines = text.trim().split('\n');
+      for (const line of lines) {
+        if (!line) continue;
+        try {
+          const entry = JSON.parse(line);
+          if (entry.event === 'message' && entry.message) {
+            const parsed = JSON.parse(entry.message);
+            if (parsed && parsed.id && !fbMap.has(parsed.id)) {
+              fbMap.set(parsed.id, parsed);
+            }
+          }
+        } catch (_) {}
+      }
+    }
+  } catch {}
+
   try {
     const res = await fetch('./data/feedback.json');
     if (res.ok) {
       const data = await res.json();
-      if (Array.isArray(data)) return data;
+      if (Array.isArray(data)) {
+        data.forEach(item => {
+          if (item && item.id && !fbMap.has(item.id)) fbMap.set(item.id, item);
+        });
+      }
     }
   } catch {}
-  return [];
+
+  const results = Array.from(fbMap.values());
+  results.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+  return results;
 }
 export async function setFeedbackRead(id, isRead) {
   const r = await rest(`feedback?id=eq.${encodeURIComponent(id)}`, { method: 'PATCH', body: { is_read: isRead }, prefer: 'return=minimal' });

@@ -25,12 +25,44 @@ export default function PublicUpdatesModal({
   if (!isOpen) return null;
   const isDark = theme === 'dark';
 
-  const items = [...(dailyUpdates || [])].sort((a, b) => {
-    const timeA = Number(a.timestamp) || 0;
-    const timeB = Number(b.timestamp) || 0;
-    if (timeB !== timeA) return timeB - timeA;
-    return String(b.itemTime || '').localeCompare(String(a.itemTime || ''));
-  });
+  const formatDisplayTime = (timeStr, timestamp) => {
+    if (!timeStr && !timestamp) return 'เมื่อสักครู่';
+    if (typeof timeStr === 'string' && timeStr.includes('น.') && !timeStr.includes('T')) {
+      return timeStr;
+    }
+    try {
+      const d = timeStr ? new Date(timeStr) : new Date(Number(timestamp) || Date.now());
+      if (!isNaN(d.getTime())) {
+        return d.toLocaleTimeString('th-TH', { 
+          hour: '2-digit', 
+          minute: '2-digit', 
+          timeZone: 'Asia/Bangkok' 
+        }) + ' น.';
+      }
+    } catch (_) {}
+    return 'เมื่อสักครู่';
+  };
+
+  const isRealUpdateItem = (item) => {
+    if (!item) return false;
+    const name = String(item.locationName || '').toLowerCase();
+    const sub = String(item.locationSub || '');
+    const dist = String(item.district || '');
+    const id = String(item.id || '').toLowerCase();
+    if (name.includes('security-probe') || name.includes('auto-deleted') || name.includes('probe') || name.includes('ทดสอบ')) return false;
+    if (id.includes('probe') || id.includes('test-inspect') || id.includes('test-check')) return false;
+    if (name.includes('????') || sub.includes('????') || dist.includes('????')) return false;
+    return true;
+  };
+
+  const items = [...(dailyUpdates || [])]
+    .filter(isRealUpdateItem)
+    .sort((a, b) => {
+      const timeA = Number(a.timestamp) || 0;
+      const timeB = Number(b.timestamp) || 0;
+      if (timeB !== timeA) return timeB - timeA;
+      return String(b.itemTime || '').localeCompare(String(a.itemTime || ''));
+    });
 
   const dryCount = items.filter(i => i.statusType === 'dry').length;
   const recedingCount = items.filter(i => i.statusType === 'receding').length;
@@ -255,7 +287,7 @@ export default function PublicUpdatesModal({
                         isDark ? 'text-slate-400' : 'text-slate-500'
                       }`}>
                         <Clock className="w-3 h-3 text-blue-600 dark:text-blue-400 shrink-0" />
-                        <span>{item.itemTime}</span>
+                        <span>{formatDisplayTime(item.itemTime, item.timestamp)}</span>
                       </span>
                     </div>
                   </div>

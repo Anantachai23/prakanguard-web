@@ -20,6 +20,7 @@ import {
 
 export default function AdminVerificationPrompt({
   pendingReports = [],
+  unreadFeedbackCount = 0,
   onApproveReport,
   onRejectReport,
   onFlyToCoords,
@@ -30,8 +31,39 @@ export default function AdminVerificationPrompt({
   const [isDismissed, setIsDismissed] = useState(false);
   const [selectedPhoto, setSelectedPhoto] = useState(null);
 
-  // If no pending reports, nothing to ask
-  if (!pendingReports || pendingReports.length === 0) return null;
+  const hasPendingReports = Array.isArray(pendingReports) && pendingReports.length > 0;
+  const hasUnreadFeedback = unreadFeedbackCount > 0;
+
+  // If nothing pending and no unread feedback, nothing to prompt
+  if (!hasPendingReports && !hasUnreadFeedback) return null;
+
+  // If no pending reports but has unread feedback, show compact feedback alert banner
+  if (!hasPendingReports && hasUnreadFeedback) {
+    return (
+      <div className="fixed top-14 sm:top-16 right-3 sm:right-6 z-50">
+        <button
+          onClick={() => {
+            window.dispatchEvent(new CustomEvent('prakanguard_open_admin_tab', { detail: 'feedback' }));
+            if (onOpenFullAdmin) onOpenFullAdmin();
+          }}
+          className={`px-3.5 py-2 rounded-lg shadow-xl border flex items-center gap-2.5 cursor-pointer transition-colors ${
+            isDark 
+              ? 'bg-slate-900 border-teal-500/80 text-teal-200 hover:bg-slate-800' 
+              : 'bg-white border-teal-300 text-teal-900 hover:bg-teal-50'
+          }`}
+          title="มีข้อเสนอแนะใหม่จากประชาชนรอตรวจสอบ"
+        >
+          <span className="w-2 h-2 rounded-full bg-teal-500 animate-pulse" />
+          <span className="text-xs font-bold flex items-center gap-1.5">
+            <span>ข้อเสนอแนะใหม่</span>
+            <span className="px-1.5 py-0.2 rounded bg-teal-600 text-white text-[10px] font-mono">
+              +{unreadFeedbackCount}
+            </span>
+          </span>
+        </button>
+      </div>
+    );
+  }
 
   // Active report being reviewed (first pending in queue)
   const currentReport = pendingReports[0];
@@ -40,7 +72,7 @@ export default function AdminVerificationPrompt({
   // Minimized floating banner if user dismissed the prompt temporarily
   if (isDismissed) {
     return (
-      <div className="fixed top-14 sm:top-16 right-3 sm:right-6 z-50">
+      <div className="fixed top-14 sm:top-16 right-3 sm:right-6 z-50 flex items-center gap-2">
         <button
           onClick={() => setIsDismissed(false)}
           className={`px-3.5 py-2 rounded-lg shadow-xl border flex items-center gap-2.5 cursor-pointer transition-colors ${
@@ -58,6 +90,26 @@ export default function AdminVerificationPrompt({
             </span>
           </span>
         </button>
+
+        {hasUnreadFeedback && (
+          <button
+            onClick={() => {
+              window.dispatchEvent(new CustomEvent('prakanguard_open_admin_tab', { detail: 'feedback' }));
+              if (onOpenFullAdmin) onOpenFullAdmin();
+            }}
+            className={`px-2.5 py-2 rounded-lg shadow-xl border flex items-center gap-1.5 cursor-pointer transition-colors ${
+              isDark 
+                ? 'bg-slate-900 border-teal-500/80 text-teal-200 hover:bg-slate-800' 
+                : 'bg-white border-teal-300 text-teal-900 hover:bg-teal-50'
+            }`}
+            title="ดูข้อเสนอแนะจากประชาชน"
+          >
+            <span className="w-2 h-2 rounded-full bg-teal-500 animate-pulse" />
+            <span className="text-xs font-bold">
+              +{unreadFeedbackCount} ข้อเสนอแนะ
+            </span>
+          </button>
+        )}
       </div>
     );
   }

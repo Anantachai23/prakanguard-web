@@ -92,6 +92,16 @@ function toSupabaseReport(r, isAdminVerified = false) {
 }
 
 function fromSupabaseReport(row) {
+  let timeStr = row.reported_at;
+  if (typeof timeStr === 'string' && timeStr.includes('T')) {
+    try {
+      const d = new Date(timeStr);
+      if (!isNaN(d.getTime())) {
+        timeStr = d.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Bangkok' }) + ' น.';
+      }
+    } catch (_) {}
+  }
+
   return {
     id: row.id,
     hazardType: row.hazard_type || 'flood',
@@ -113,12 +123,19 @@ function fromSupabaseReport(row) {
     photoUrl: row.photo_url || row.photoUrl || row.photo || row.image || null,
     isApproved: !!row.is_approved,
     isResolved: !!row.is_resolved,
-    reportedAt: row.reported_at || '',
+    reportedAt: timeStr || '',
     timestamp: Number(row.timestamp) || Date.now()
   };
 }
 
 function toSupabaseFeedback(f) {
+  let subAtIso;
+  try {
+    subAtIso = new Date(f.timestamp || Date.now()).toISOString();
+  } catch (_) {
+    subAtIso = new Date().toISOString();
+  }
+
   return {
     id: f.id,
     category: f.category || 'suggestion',
@@ -129,24 +146,35 @@ function toSupabaseFeedback(f) {
     contact: f.contact || '-',
     admin_note: f.adminNote || '',
     is_read: !!f.isRead,
-    submitted_at: f.submittedAt || '',
-    timestamp: Number(f.timestamp) || Date.now()
+    submitted_at: subAtIso
   };
 }
 
 function fromSupabaseFeedback(row) {
+  let timeStr = row.submitted_at;
+  let ts = Number(row.timestamp) || Date.now();
+  if (row.submitted_at) {
+    try {
+      const d = new Date(row.submitted_at);
+      if (!isNaN(d.getTime())) {
+        ts = d.getTime();
+        timeStr = d.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' }) + ' ' + d.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) + ' น.';
+      }
+    } catch (_) {}
+  }
+
   return {
     id: row.id,
     category: row.category,
-    categoryLabel: row.category_label,
-    rating: row.rating,
+    categoryLabel: row.category_label || 'ทั่วไป',
+    rating: row.rating ? parseInt(row.rating, 10) : 5,
     message: row.message,
-    senderName: row.sender_name,
-    contact: row.contact,
+    senderName: row.sender_name || 'ประชาชนทั่วไป',
+    contact: row.contact || '-',
     adminNote: row.admin_note || '',
     isRead: !!row.is_read,
-    submittedAt: row.submitted_at,
-    timestamp: Number(row.timestamp) || Date.now()
+    submittedAt: timeStr || 'เมื่อสักครู่',
+    timestamp: ts
   };
 }
 
@@ -154,18 +182,19 @@ function fromSupabaseFeedback(row) {
  * ตรวจสอบความถูกต้องของพิกัดและข้อมูลรายงาน เพื่อป้องกันข้อผิดพลาดแผนที่
  */
 export function isValidReport(r) {
-  return (
-    r &&
-    typeof r === 'object' &&
-    typeof r.id === 'string' &&
-    r.id.trim().length > 0 &&
-    !r.id.startsWith('zz-sec-probe-') &&
-    typeof r.lat === 'number' &&
-    !isNaN(r.lat) &&
-    typeof r.lng === 'number' &&
-    !isNaN(r.lng) &&
-    isPointInSamutPrakan(r.lat, r.lng)
-  );
+  if (!r || typeof r !== 'object') return false;
+  const id = String(r.id || '').toLowerCase();
+  const name = String(r.name || '').toLowerCase();
+  const dist = String(r.district || '').toLowerCase();
+  const sub = String(r.subdistrict || '').toLowerCase();
+
+  // กรองข้อมูลทดสอบ หรือคำหยาบ/สัญลักษณ์ผิดปกติออกทั้งหมด
+  if (id.startsWith('zz-') || id.includes('probe') || id.includes('test-inspect') || id.includes('test-check')) return false;
+  if (name.includes('security-probe') || name.includes('auto-deleted') || name.includes('probe') || name.includes('ทดสอบ')) return false;
+  if (name.includes('????') || dist.includes('????') || sub.includes('????')) return false;
+  if (typeof r.lat !== 'number' || isNaN(r.lat) || typeof r.lng !== 'number' || isNaN(r.lng)) return false;
+
+  return isPointInSamutPrakan(r.lat, r.lng);
 }
 
 export function isValidFeedback(f) {
@@ -260,7 +289,16 @@ export async function publishCloudFeedback(feedback) {
       }).catch(err => console.warn('[Supabase Feedback Error]:', err));
     } catch (e) {}
 
-    // 2. Direct Local Admin API Push
+    // 2. Relative Serverless API Push (/api/feedback)
+    try {
+      fetch('/api/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: payload
+      }).catch(() => {});
+    } catch (_) {}
+
+    // 3. Direct Local Admin API Push (localhost:4000)
     try {
       fetch(`${LOCAL_ADMIN_API}/api/feedback`, {
         method: 'POST',
@@ -270,19 +308,21 @@ export async function publishCloudFeedback(feedback) {
       }).catch(() => {});
     } catch (e) {}
 
-    // 3. Publish to Cloud Topics (Fallback Pub/Sub)
-    try {
-      fetch(PRIMARY_FEEDBACK_TOPIC, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json; charset=utf-8',
-          'Title': asciiTitle,
-          'Priority': 'default',
-          'Tags': 'speech_balloon,star'
-        },
-        body: payload
-      }).catch(() => {});
-    } catch (e) {}
+    // 4. Publish to Cloud Topics (Multi-Topic Pub/Sub)
+    [PRIMARY_FEEDBACK_TOPIC, FALLBACK_FEEDBACK_TOPIC].forEach(topic => {
+      try {
+        fetch(topic, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json; charset=utf-8',
+            'Title': asciiTitle,
+            'Priority': 'default',
+            'Tags': 'speech_balloon,star'
+          },
+          body: payload
+        }).catch(() => {});
+      } catch (e) {}
+    });
 
     return true;
   } catch (err) {
@@ -476,7 +516,21 @@ export async function fetchRecentCloudFeedback() {
       }
     } catch (e) {}
 
-    // 2. ดึงจาก Local Admin API เสริม
+    // 2. ดึงจาก Serverless API (/api/feedback) และ Local Admin API
+    try {
+      const serverlessRes = await fetch('/api/feedback', { cache: 'no-cache' }).catch(() => null);
+      if (serverlessRes && serverlessRes.ok) {
+        const data = await serverlessRes.json();
+        if (Array.isArray(data)) {
+          data.forEach(f => {
+            if (isValidFeedback(f) && !feedbackMap.has(f.id)) {
+              feedbackMap.set(f.id, f);
+            }
+          });
+        }
+      }
+    } catch (_) {}
+
     try {
       const localRes = await fetch(`${LOCAL_ADMIN_API}/api/feedback`, { cache: 'no-cache' }).catch(() => null);
       if (localRes && localRes.ok) {
@@ -490,6 +544,29 @@ export async function fetchRecentCloudFeedback() {
         }
       }
     } catch (e) {}
+
+    // 3. Fallback: ดึงจาก Cloud Ntfy Topic สำรอง
+    if (feedbackMap.size === 0) {
+      try {
+        const topicRes = await fetch(`${PRIMARY_FEEDBACK_TOPIC}/json?poll=1&since=all`, { cache: 'no-cache' }).catch(() => null);
+        if (topicRes && topicRes.ok) {
+          const text = await topicRes.text();
+          const lines = text.trim().split('\n');
+          for (const line of lines) {
+            if (!line) continue;
+            try {
+              const entry = JSON.parse(line);
+              if (entry.event === 'message' && entry.message) {
+                const parsed = JSON.parse(entry.message);
+                if (isValidFeedback(parsed) && !feedbackMap.has(parsed.id)) {
+                  feedbackMap.set(parsed.id, parsed);
+                }
+              }
+            } catch (_) {}
+          }
+        }
+      } catch (_) {}
+    }
 
     const results = Array.from(feedbackMap.values());
     results.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));

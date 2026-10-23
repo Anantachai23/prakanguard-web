@@ -199,6 +199,16 @@ export default function AdminModal({
   const [activeTab, setActiveTab] = useState('pending');
   const [selectedPhotoModal, setSelectedPhotoModal] = useState(null);
 
+  useEffect(() => {
+    const handleOpenTab = (e) => {
+      if (e.detail && typeof e.detail === 'string') {
+        setActiveTab(e.detail);
+      }
+    };
+    window.addEventListener('prakanguard_open_admin_tab', handleOpenTab);
+    return () => window.removeEventListener('prakanguard_open_admin_tab', handleOpenTab);
+  }, []);
+
   // Admin Tabs horizontal scroll controllers
   const adminTabsRef = React.useRef(null);
   const [canScrollTabsLeft, setCanScrollTabsLeft] = useState(false);
