@@ -81,7 +81,7 @@ export default function WelcomeModal({
       }}
     >
       <div 
-        className={`w-[92vw] max-w-[440px] sm:max-w-lg my-auto m-auto max-h-[84vh] sm:max-h-[86vh] border rounded-xl shadow-2xl overflow-hidden flex flex-col relative transition-all ${
+        className={`w-[88vw] max-w-[345px] sm:max-w-lg my-auto m-auto max-h-[74vh] sm:max-h-[85vh] border rounded-xl shadow-2xl overflow-hidden flex flex-col relative transition-all ${
           isDark 
             ? 'bg-slate-900 border-slate-800 text-slate-100' 
             : 'bg-white border-slate-200 text-slate-900'
@@ -103,33 +103,33 @@ export default function WelcomeModal({
         <div className="h-1 w-full bg-blue-700 shrink-0" />
 
         {/* Header */}
-        <div className={`px-4 py-3.5 sm:px-5 sm:py-4 border-b flex items-center justify-between gap-3 shrink-0 ${
+        <div className={`px-3.5 py-2.5 sm:px-5 sm:py-3.5 border-b flex items-center justify-between gap-2.5 shrink-0 ${
           isDark ? 'bg-slate-950/50 border-slate-800' : 'bg-slate-50/80 border-slate-200'
         }`}>
-          <div className="flex items-center gap-3 min-w-0">
-            <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-lg border flex items-center justify-center shrink-0 ${
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+            <div className={`w-7 h-7 sm:w-9 sm:h-9 rounded-lg border flex items-center justify-center shrink-0 ${
               isDark ? 'bg-slate-800 border-slate-700 text-blue-400' : 'bg-white border-slate-200 text-blue-700 shadow-2xs'
             }`}>
-              <CivicCrest className="w-5 h-5 sm:w-6 sm:h-6" />
+              <CivicCrest className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
 
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1.5">
-                <span className={`text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded border ${
+                <span className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.2 rounded border ${
                   isDark 
                     ? 'bg-slate-800 text-slate-300 border-slate-700' 
                     : 'bg-slate-100 text-slate-700 border-slate-200'
                 }`}>
                   PRAKANGUARD GIS
                 </span>
-                <span className={`text-[10px] font-medium ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                <span className={`text-[9.5px] sm:text-[10px] font-medium ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
                   จ.สมุทรปราการ
                 </span>
               </div>
-              <h2 className={`text-sm sm:text-base font-bold mt-0.5 leading-snug tracking-tight ${
+              <h2 className={`text-xs sm:text-sm font-bold mt-0.5 leading-snug tracking-tight truncate ${
                 isDark ? 'text-white' : 'text-slate-900'
               }`}>
-                ระบบสารสนเทศเฝ้าระวังอุทกภัยและสภาพจราจร
+                ระบบสารสนเทศเฝ้าระวังอุทกภัยและจราจร
               </h2>
             </div>
           </div>
@@ -137,40 +137,40 @@ export default function WelcomeModal({
           <button 
             type="button"
             onClick={handleEnter} 
-            className={`w-8 h-8 rounded-lg border flex items-center justify-center transition-colors cursor-pointer shrink-0 ${
+            className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg border flex items-center justify-center transition-colors cursor-pointer shrink-0 ${
               isDark 
                 ? 'bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white border-slate-700' 
                 : 'bg-white hover:bg-slate-100 text-slate-500 hover:text-slate-800 border-slate-200'
             }`}
             title="ปิดหน้าต่าง"
           >
-            <X className="w-4 h-4" />
+            <X className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
           </button>
         </div>
 
         {/* Body */}
-        <div className="flex-1 overflow-y-auto px-4 sm:px-5 py-3.5 sm:py-4 space-y-3 text-xs sm:text-sm">
-          <p className={`text-xs leading-relaxed ${
+        <div className="flex-1 overflow-y-auto px-3.5 sm:px-5 py-3 sm:py-4 space-y-2.5 sm:space-y-3 text-xs">
+          <p className={`text-[11px] sm:text-xs leading-relaxed ${
             isDark ? 'text-slate-300' : 'text-slate-600'
           }`}>
-            ศูนย์ข้อมูลสารสนเทศภูมิศาสตร์เพื่อการติดตามระดับน้ำท่วมขังผิวจราจรในพื้นที่ <strong className={isDark ? 'text-white font-semibold' : 'text-slate-900 font-semibold'}>6 อำเภอ จังหวัดสมุทรปราการ</strong> แบบเรียลไทม์ สำหรับวางแผนการเดินทางและแจ้งเตือนภัยล่วงหน้า
+            ศูนย์ข้อมูลสารสนเทศภูมิศาสตร์เพื่อการติดตามระดับน้ำท่วมขังผิวจราจรในพื้นที่ <strong className={isDark ? 'text-white font-semibold' : 'text-slate-900 font-semibold'}>6 อำเภอ จังหวัดสมุทรปราการ</strong> แบบเรียลไทม์
           </p>
 
           <div className={`rounded-lg border divide-y ${
             isDark ? 'bg-slate-950/40 border-slate-800 divide-slate-800' : 'bg-slate-50/60 border-slate-200 divide-slate-200'
           }`}>
             {capabilities.map((item, idx) => (
-              <div key={idx} className="p-3 flex items-start gap-3">
-                <div className={`w-7 h-7 rounded-md border flex items-center justify-center shrink-0 mt-0.5 ${
+              <div key={idx} className="p-2.5 sm:p-3 flex items-start gap-2.5">
+                <div className={`w-6 h-6 sm:w-7 sm:h-7 rounded-md border flex items-center justify-center shrink-0 mt-0.5 ${
                   isDark ? 'bg-slate-800 border-slate-700 text-blue-400' : 'bg-white border-slate-200 text-blue-700'
                 }`}>
                   {item.icon}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <h3 className={`text-xs font-bold ${isDark ? 'text-slate-100' : 'text-slate-900'}`}>
+                  <h3 className={`text-[11.5px] sm:text-xs font-bold ${isDark ? 'text-slate-100' : 'text-slate-900'}`}>
                     {item.title}
                   </h3>
-                  <p className={`text-[11px] leading-relaxed mt-0.5 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+                  <p className={`text-[10.5px] sm:text-[11px] leading-relaxed mt-0.5 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
                     {item.desc}
                   </p>
                 </div>
@@ -180,7 +180,7 @@ export default function WelcomeModal({
         </div>
 
         {/* Footer */}
-        <div className={`px-4 py-3 sm:px-5 sm:py-3.5 border-t flex flex-col sm:flex-row items-center justify-between gap-2.5 shrink-0 ${
+        <div className={`px-3.5 py-2.5 sm:px-5 sm:py-3 border-t flex flex-col sm:flex-row items-center justify-between gap-2 shrink-0 ${
           isDark ? 'border-slate-800 bg-slate-950/60' : 'border-slate-200 bg-slate-50/80'
         }`}>
           <div className="hidden sm:flex items-center gap-1.5 text-[11px] font-medium text-slate-500 dark:text-slate-400">
@@ -191,10 +191,10 @@ export default function WelcomeModal({
           <button
             type="button"
             onClick={handleEnter}
-            className="w-full sm:w-auto px-5 py-2.5 rounded-lg bg-blue-700 hover:bg-blue-800 text-white font-semibold text-xs sm:text-sm transition-colors cursor-pointer flex items-center justify-center gap-2"
+            className="w-full sm:w-auto px-4 py-2 sm:px-5 sm:py-2.5 rounded-lg bg-blue-700 hover:bg-blue-800 text-white font-semibold text-xs transition-colors cursor-pointer flex items-center justify-center gap-1.5"
           >
             <span>เข้าสู่แผนที่สถานการณ์</span>
-            <ArrowRight className="w-4 h-4" />
+            <ArrowRight className="w-3.5 h-3.5" />
           </button>
         </div>
       </div>

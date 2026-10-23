@@ -50,7 +50,7 @@ export function isWaterReceding(item) {
 }
 
 // Unified Official Flood Pin Icon Generator for ALL points and citizen reports
-function createOfficialFloodPin({ level, depthCm, hasPhoto, isSelected, isFalling, name, id }) {
+function createOfficialFloodPin({ level, depthCm, hasPhoto, isSelected, isFalling, name, id, isMobile = false }) {
   // Colors strictly conforming to standard:
   // Level 1: Green #16a34a (5-20 cm)
   // Level 2: Amber/Yellow #eab308 (21-50 cm)
@@ -77,32 +77,35 @@ function createOfficialFloodPin({ level, depthCm, hasPhoto, isSelected, isFallin
     : '';
 
   const isL3 = level === 3;
+  const pinW = isMobile ? 28 : 34;
+  const pinH = isMobile ? 36 : 44;
+
   const pulseHtml = isL3 
-    ? `<div style="position:absolute;left:50%;bottom:2px;transform:translateX(-50%);width:28px;height:28px;border-radius:50%;background:rgba(220,38,38,0.35);animation:pgPinPulse 1.8s ease-out infinite;pointer-events:none;z-index:0;"></div>`
+    ? `<div style="position:absolute;left:50%;bottom:2px;transform:translateX(-50%);width:${isMobile ? 22 : 28}px;height:${isMobile ? 22 : 28}px;border-radius:50%;background:rgba(220,38,38,0.35);animation:pgPinPulse 1.8s ease-out infinite;pointer-events:none;z-index:0;"></div>`
     : '';
 
   // สัญลักษณ์น้ำลดที่เห็นได้ชัดเจนบนแผนที่ตามที่ระบุ
   const fallingBadgeHtml = isFalling
     ? `
-      <div class="pg-pin-falling-tag" style="position:absolute;top:-20px;left:50%;transform:translateX(-50%);background:#0d9488;color:#ffffff;font-size:9.5px;font-weight:900;font-family:'Prompt',-apple-system,sans-serif;padding:1px 6px;border-radius:6px;border:1.5px solid #ffffff;box-shadow:0 2px 6px rgba(0,0,0,0.4);white-space:nowrap;display:flex;align-items:center;gap:2px;pointer-events:none;z-index:30;">
-        <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>
+      <div class="pg-pin-falling-tag" style="position:absolute;top:${isMobile ? '-16px' : '-20px'};left:50%;transform:translateX(-50%);background:#0d9488;color:#ffffff;font-size:${isMobile ? '8.5px' : '9.5px'};font-weight:900;font-family:'Prompt',-apple-system,sans-serif;padding:1px ${isMobile ? '4px' : '6px'};border-radius:5px;border:1.5px solid #ffffff;box-shadow:0 2px 6px rgba(0,0,0,0.4);white-space:nowrap;display:flex;align-items:center;gap:2px;pointer-events:none;z-index:30;">
+        <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>
         <span>น้ำลด</span>
       </div>
-      <div style="position:absolute;bottom:0px;right:-5px;width:17px;height:17px;background:#0d9488;border:1.5px solid #ffffff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:900;color:#ffffff;box-shadow:0 2px 4px rgba(0,0,0,0.3);z-index:15;pointer-events:none;" title="น้ำกำลังลด">↓</div>
+      <div style="position:absolute;bottom:0px;right:-4px;width:${isMobile ? 14 : 17}px;height:${isMobile ? 14 : 17}px;background:#0d9488;border:1.5px solid #ffffff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:900;color:#ffffff;box-shadow:0 2px 4px rgba(0,0,0,0.3);z-index:15;pointer-events:none;" title="น้ำกำลังลด">↓</div>
     `
     : '';
 
   // สัญลักษณ์รูปกล้องสำหรับจุดที่มีรูปภาพจากประชาชนรายงานหรือเจ้าหน้าที่
   const photoBadgeHtml = hasPhoto
     ? `
-      <div class="pg-pin-photo-tag" style="position:absolute;top:-8px;right:-9px;background:#1d4ed8;color:#ffffff;width:20px;height:20px;border-radius:50%;border:1.5px solid #ffffff;box-shadow:0 2px 6px rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;z-index:25;pointer-events:none;" title="มีรูปภาพสถานที่จริง">
-        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2"><rect x="3" y="6" width="18" height="14" rx="2"/><circle cx="12" cy="13" r="3.5"/></svg>
+      <div class="pg-pin-photo-tag" style="position:absolute;top:-6px;right:-7px;background:#1d4ed8;color:#ffffff;width:${isMobile ? 17 : 20}px;height:${isMobile ? 17 : 20}px;border-radius:50%;border:1.5px solid #ffffff;box-shadow:0 2px 6px rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;z-index:25;pointer-events:none;" title="มีรูปภาพสถานที่จริง">
+        <svg width="${isMobile ? 9 : 11}" height="${isMobile ? 9 : 11}" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2"><rect x="3" y="6" width="18" height="14" rx="2"/><circle cx="12" cy="13" r="3.5"/></svg>
       </div>
     `
     : '';
 
   const selectedRingHtml = isSelected
-    ? `<div style="position:absolute;inset:-6px;border-radius:24px;border:2.5px solid #0284c7;box-shadow:0 0 12px rgba(2,132,199,0.8);animation:pgSelectedGlow 1.5s ease-in-out infinite alternate;pointer-events:none;z-index:1;"></div>`
+    ? `<div style="position:absolute;inset:-5px;border-radius:20px;border:2px solid #0284c7;box-shadow:0 0 10px rgba(2,132,199,0.8);animation:pgSelectedGlow 1.5s ease-in-out infinite alternate;pointer-events:none;z-index:1;"></div>`
     : '';
 
   const fontSize = depthText.length >= 3 ? '8' : (depthText.length === 2 ? '9.5' : '11');
@@ -120,12 +123,12 @@ function createOfficialFloodPin({ level, depthCm, hasPhoto, isSelected, isFallin
          role="button"
          tabindex="0"
          title="${safeTitle ? `${safeTitle} (คลิกดูข้อมูล)` : 'คลิกดูข้อมูลน้ำท่วม'}"
-         style="position:relative;width:34px;height:44px;display:flex;align-items:center;justify-content:center;cursor:pointer;transform-origin:bottom center;touch-action:manipulation;user-select:none;-webkit-user-select:none;">
+         style="position:relative;width:${pinW}px;height:${pinH}px;display:flex;align-items:center;justify-content:center;cursor:pointer;transform-origin:bottom center;touch-action:manipulation;user-select:none;-webkit-user-select:none;">
       ${pulseHtml}
       ${selectedRingHtml}
       ${fallingBadgeHtml}
       ${photoBadgeHtml}
-      <svg width="34" height="44" viewBox="0 0 34 44" fill="none" xmlns="http://www.w3.org/2000/svg" style="position:relative;z-index:2;filter:drop-shadow(0 4px 6px rgba(0,0,0,0.38));pointer-events:auto;cursor:pointer;">
+      <svg width="${pinW}" height="${pinH}" viewBox="0 0 34 44" fill="none" xmlns="http://www.w3.org/2000/svg" style="position:relative;z-index:2;filter:drop-shadow(0 3px 5px rgba(0,0,0,0.35));pointer-events:auto;cursor:pointer;">
         <defs>
           <linearGradient id="pgGrad-${level}" x1="17" y1="2" x2="17" y2="43" gradientUnits="userSpaceOnUse">
             <stop offset="0%" stop-color="${gradientStart}" />
@@ -144,9 +147,9 @@ function createOfficialFloodPin({ level, depthCm, hasPhoto, isSelected, isFallin
   return L.divIcon({
     className: 'pg-unified-flood-marker',
     html: html,
-    iconSize: [34, 44],
-    iconAnchor: [17, 43],
-    popupAnchor: [0, -44]
+    iconSize: [pinW, pinH],
+    iconAnchor: [Math.round(pinW / 2), pinH - 1],
+    popupAnchor: [0, -pinH]
   });
 }
 
@@ -903,7 +906,8 @@ export default function MapView({
         isFalling,
         isSelected,
         name: point.name,
-        id: point.id
+        id: point.id,
+        isMobile
       });
 
       const marker = L.marker([point.lat, point.lng], { 
@@ -1157,8 +1161,8 @@ export default function MapView({
       ></div>
 
       {/* 5-MIN AUTO-REFRESH READ-ONLY BADGE (TOP CENTER OF MAP - STRICTLY NON-CLICKABLE AS REQUESTED) */}
-      <div className="absolute top-2 sm:top-3 left-1/2 -translate-x-1/2 z-20 pointer-events-none select-none max-w-[90vw]">
-        <div className={`px-2.5 sm:px-3 py-1 sm:py-1 rounded-md border shadow-xs backdrop-blur-md flex items-center gap-1.5 text-[10px] sm:text-xs font-semibold transition-colors ${
+      <div className="absolute top-1.5 sm:top-3 left-1/2 -translate-x-1/2 z-20 pointer-events-none select-none max-w-[88vw]">
+        <div className={`px-2 sm:px-3 py-0.5 sm:py-1 rounded-md border shadow-xs backdrop-blur-md flex items-center gap-1 sm:gap-1.5 text-[9.5px] sm:text-xs font-semibold transition-colors ${
           isDark 
             ? 'bg-slate-900/90 border-slate-800 text-slate-200' 
             : 'bg-white/95 border-slate-200 text-slate-700'
@@ -1172,10 +1176,10 @@ export default function MapView({
       </div>
 
       {/* FLOATING MAP CONTROLS (TOP RIGHT - CLEAN, UNCLUTTERED, COMPACT) */}
-      <div className="absolute top-14 right-2 sm:top-4 sm:right-4 z-25 flex flex-col items-end gap-1.5 sm:gap-2 pointer-events-auto">
+      <div className="absolute top-10 right-2 sm:top-4 sm:right-4 z-25 flex flex-col items-end gap-1 sm:gap-2 pointer-events-auto">
         
         {/* Map Tile Switcher (Official GIS Style) */}
-        <div className={`p-1 rounded-lg flex items-center gap-1 border shadow-xs text-xs backdrop-blur-md transition-colors ${
+        <div className={`p-0.5 sm:p-1 rounded-lg flex items-center gap-0.5 sm:gap-1 border shadow-xs text-xs backdrop-blur-md transition-colors ${
           isDark ? 'bg-slate-900/95 border-slate-700/80 text-slate-100' : 'bg-white/95 border-slate-200 text-slate-800'
         }`}>
           {[
@@ -1188,16 +1192,16 @@ export default function MapView({
                 playToggleSound(style === 'google-satellite');
                 setMapStyle(style);
               }}
-              className={`px-2.5 py-1.5 rounded-md font-bold transition-all cursor-pointer flex items-center gap-1.5 text-[11px] sm:text-xs active:scale-95 ${
+              className={`px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-md font-bold transition-all cursor-pointer flex items-center gap-1 sm:gap-1.5 text-[10px] sm:text-xs active:scale-95 ${
                 mapStyle === style
-                  ? 'bg-blue-600 text-white shadow-xs'
+                  ? 'bg-blue-700 text-white shadow-xs'
                   : isDark 
                     ? 'text-slate-400 hover:text-slate-100 hover:bg-slate-800' 
                     : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
               }`}
               title={`สลับชั้นข้อมูลแผนที่ ${label}`}
             >
-              <Icon className="w-3.5 h-3.5 shrink-0" />
+              <Icon className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
               <span className="inline">{label}</span>
             </button>
           ))}
@@ -1212,7 +1216,7 @@ export default function MapView({
               if (onLocateMe) onLocateMe();
             }}
             title="ค้นหาพิกัดตำแหน่งปัจจุบันของคุณ (GPS)"
-            className={`px-2.5 py-1.5 sm:px-3 sm:py-1.5 rounded-lg shadow-xs border transition-all flex items-center gap-1 sm:gap-1.5 text-[11px] sm:text-xs cursor-pointer backdrop-blur-md font-bold active:scale-95 ${
+            className={`px-2 py-1 sm:px-3 sm:py-1.5 rounded-lg shadow-xs border transition-all flex items-center gap-1 sm:gap-1.5 text-[10px] sm:text-xs cursor-pointer backdrop-blur-md font-bold active:scale-95 ${
               isDark 
                 ? 'bg-slate-900/95 text-slate-200 hover:text-cyan-400 hover:bg-slate-800 border-slate-700/80' 
                 : 'bg-white/95 text-slate-700 hover:text-blue-700 hover:bg-slate-50 border-slate-200'
@@ -1228,7 +1232,7 @@ export default function MapView({
               resetView();
             }}
             title="รีเซ็ตมุมมองขอบเขตจังหวัดสมุทรปราการ"
-            className={`p-1.5 sm:p-2 rounded-lg shadow-xs border transition-all cursor-pointer backdrop-blur-md active:scale-95 ${
+            className={`p-1 sm:p-2 rounded-lg shadow-xs border transition-all cursor-pointer backdrop-blur-md active:scale-95 ${
               isDark 
                 ? 'bg-slate-900/95 text-slate-200 hover:text-cyan-400 hover:bg-slate-800 border-slate-700/80' 
                 : 'bg-white/95 text-slate-700 hover:text-blue-700 hover:bg-slate-50 border-slate-200'

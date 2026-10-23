@@ -109,29 +109,29 @@ export default function AiForecastModal({ isOpen, onClose, userDistrict, theme =
   return (
     <div 
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
-      className="fixed inset-0 z-50 bg-slate-950/65 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto"
+      className="fixed inset-0 z-50 bg-slate-950/65 backdrop-blur-xs flex items-center justify-center p-2.5 sm:p-4 overflow-y-auto"
     >
-      <div className={`w-[92vw] max-w-[440px] sm:max-w-lg my-auto m-auto border rounded-xl shadow-2xl relative max-h-[84vh] sm:max-h-[86vh] flex flex-col overflow-hidden transition-colors ${
+      <div className={`w-[88vw] max-w-[345px] sm:max-w-lg my-auto m-auto border rounded-xl shadow-2xl relative max-h-[75vh] sm:max-h-[85vh] flex flex-col overflow-hidden transition-colors ${
         isDark ? 'bg-slate-900 border-slate-800 text-slate-100' : 'bg-white border-slate-200 text-slate-900'
       }`}>
         {/* Top Institutional Bar */}
         <div className="h-1 w-full bg-blue-700 shrink-0" />
         
         {/* Header */}
-        <div className={`flex items-center justify-between gap-3 px-4 py-3 sm:px-5 sm:py-3.5 border-b shrink-0 ${
+        <div className={`flex items-center justify-between gap-2.5 px-3.5 py-2.5 sm:px-5 sm:py-3.5 border-b shrink-0 ${
           isDark ? 'border-slate-800 bg-slate-950/50' : 'border-slate-200 bg-slate-50/80'
         }`}>
-          <div className="flex items-center gap-3 min-w-0">
-            <div className={`w-8 h-8 sm:w-9 sm:h-9 rounded-lg border flex items-center justify-center shrink-0 ${
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className={`w-7 h-7 sm:w-9 sm:h-9 rounded-lg border flex items-center justify-center shrink-0 ${
               isDark ? 'bg-slate-800 text-blue-400 border-slate-700' : 'bg-white text-blue-700 border-slate-200 shadow-2xs'
             }`}>
-              <CivicWeather className="w-4 h-4 sm:w-5 sm:h-5" />
+              <CivicWeather className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
             </div>
             <div className="min-w-0">
-              <h3 className={`text-sm sm:text-base font-bold leading-tight tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>
+              <h3 className={`text-[13px] sm:text-base font-bold leading-tight tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>
                 พยากรณ์ฝนและสภาพอากาศรายอำเภอ
               </h3>
-              <p className={`text-[11px] sm:text-xs leading-tight mt-0.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+              <p className={`text-[10.5px] sm:text-xs leading-tight mt-0.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
                 {todayTitle} • จ.สมุทรปราการ (Open-Meteo API)
               </p>
             </div>
@@ -139,17 +139,17 @@ export default function AiForecastModal({ isOpen, onClose, userDistrict, theme =
           <button 
             type="button"
             onClick={onClose} 
-            className={`w-8 h-8 rounded-lg border flex items-center justify-center transition-colors cursor-pointer shrink-0 ${
+            className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg border flex items-center justify-center transition-colors cursor-pointer shrink-0 ${
               isDark ? 'bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white border-slate-700' : 'bg-white hover:bg-slate-100 text-slate-500 hover:text-slate-800 border-slate-200'
             }`}
             title="ปิดหน้าต่าง"
           >
-            <X className="w-4 h-4" />
+            <X className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
           </button>
         </div>
 
         {/* Body */}
-        <div className="flex-1 overflow-y-auto px-4 sm:px-5 py-3.5 sm:py-4">
+        <div className="flex-1 overflow-y-auto px-3.5 sm:px-5 py-3 sm:py-4">
           {loadingWeather ? (
             <div className="py-12 flex flex-col items-center justify-center gap-2 text-xs text-slate-500">
               <span className="w-2.5 h-2.5 rounded-full bg-blue-600 animate-pulse" />

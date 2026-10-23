@@ -99,31 +99,31 @@ export default function Navbar({
     <header className={`sticky top-0 z-[1001] w-full border-b backdrop-blur-md transition-colors select-none ${
       isDark ? 'bg-slate-950/90 border-slate-800 text-slate-100' : 'bg-white/90 border-slate-200 text-slate-900'
     }`}>
-      <div className="w-full max-w-full px-2 sm:px-4 py-1.5 sm:py-2 flex items-center justify-between gap-1.5 sm:gap-2.5 relative">
+      <div className="w-full max-w-full px-2 sm:px-4 py-1 sm:py-2 flex items-center justify-between gap-1.5 sm:gap-2.5 relative">
         
         {/* ========================================================= */}
         {/* 1. BRAND AREA (LEFT) — Official Civic Command Center       */}
         {/* ========================================================= */}
-        <div className="flex items-center space-x-2.5 sm:space-x-3 shrink-0 min-w-0">
+        <div className="flex items-center space-x-2 sm:space-x-3 shrink-0 min-w-0">
           {/* Official Provincial Crest Emblem */}
-          <div className={`relative w-8 h-8 sm:w-9 sm:h-9 rounded-lg p-0.5 border shadow-xs shrink-0 flex items-center justify-center overflow-hidden ${
+          <div className={`relative w-7 h-7 sm:w-9 sm:h-9 rounded-md sm:rounded-lg p-0.5 border shadow-xs shrink-0 flex items-center justify-center overflow-hidden ${
             isDark ? 'bg-slate-900 border-amber-500/40' : 'bg-white border-amber-600/30'
           }`}>
             <img 
               src="/logo.png" 
               alt="ตราสัญลักษณ์ จ.สมุทรปราการ" 
-              className="w-full h-full rounded-[6px] object-cover" 
+              className="w-full h-full rounded-[5px] object-cover" 
             />
           </div>
 
           <div className="flex flex-col justify-center min-w-0">
-            <div className="flex items-center gap-1.5 flex-wrap">
-              <span className={`text-xs sm:text-sm font-extrabold tracking-tight leading-none shrink-0 ${
+            <div className="flex items-center gap-1 sm:gap-1.5 flex-wrap">
+              <span className={`text-[11.5px] sm:text-sm font-extrabold tracking-tight leading-none shrink-0 ${
                 isDark ? 'text-white' : 'text-slate-900'
               }`}>
                 ศูนย์เฝ้าระวังอุทกภัย
               </span>
-              <span className={`text-[8.5px] sm:text-[9.5px] px-1.5 py-0.5 rounded font-bold shrink-0 border ${
+              <span className={`text-[8px] sm:text-[9.5px] px-1 sm:px-1.5 py-0.5 rounded font-bold shrink-0 border ${
                 isDark ? 'bg-blue-950/80 text-blue-300 border-blue-800' : 'bg-blue-50 text-blue-800 border-blue-200'
               }`}>
                 จ.สมุทรปราการ
@@ -319,7 +319,7 @@ export default function Navbar({
         <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
           
           {/* --- MOBILE (Screen < 768px): Minimal, Clean, 0 Horizontal Overflow --- */}
-          <div className="flex md:hidden items-center gap-1 sm:gap-1.5 shrink-0">
+          <div className="flex md:hidden items-center gap-1 shrink-0">
             <RealTimeClock theme={theme} />
 
             {/* Theme Switcher Button */}
@@ -329,14 +329,14 @@ export default function Navbar({
                 playToggleSound(!isDark);
                 if (onToggleTheme) onToggleTheme();
               }}
-              className={`p-1.5 rounded-md border text-xs font-semibold flex items-center justify-center transition-all cursor-pointer shadow-xs active:scale-95 shrink-0 ${
+              className={`w-7 h-7 rounded-md border text-xs font-semibold flex items-center justify-center transition-all cursor-pointer shadow-xs active:scale-95 shrink-0 ${
                 isDark 
                   ? 'bg-slate-900 hover:bg-slate-800 text-amber-300 border-slate-800' 
                   : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-200'
               }`}
               title={isDark ? "เปลี่ยนเป็นธีมสว่าง" : "เปลี่ยนเป็นธีมมืด"}
             >
-              {isDark ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-slate-700" />}
+              {isDark ? <Sun className="w-3.5 h-3.5 text-amber-400" /> : <Moon className="w-3.5 h-3.5 text-slate-700" />}
             </button>
           </div>
 

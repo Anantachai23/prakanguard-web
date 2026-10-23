@@ -3451,10 +3451,10 @@ export default function App() {
                 setSelectedPoint(null);
               }
             }}
-            className="fixed inset-0 z-[100] bg-slate-950/65 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 pointer-events-auto overflow-y-auto"
+            className="fixed inset-0 z-[100] bg-slate-950/65 backdrop-blur-xs flex items-center justify-center p-2.5 sm:p-4 pointer-events-auto overflow-y-auto"
           >
             <div 
-              className={`w-[92vw] max-w-[420px] sm:max-w-md my-auto m-auto border rounded-xl shadow-2xl relative max-h-[82vh] sm:max-h-[86vh] flex flex-col overflow-hidden transition-colors ${
+              className={`w-[88vw] max-w-[340px] sm:max-w-md my-auto m-auto border rounded-xl shadow-2xl relative max-h-[74vh] sm:max-h-[85vh] flex flex-col overflow-hidden transition-colors ${
                 isDark 
                   ? 'bg-slate-900 border-slate-800 text-slate-100' 
                   : 'bg-white border-slate-200 text-slate-900'
@@ -3468,16 +3468,16 @@ export default function App() {
               }`} />
 
               {/* Header: District Badge + Severity Badge + Close Button */}
-              <div className={`flex items-center justify-between gap-2 px-4 py-3 border-b shrink-0 ${
+              <div className={`flex items-center justify-between gap-2 px-3.5 py-2.5 sm:px-4 sm:py-3 border-b shrink-0 ${
                 isDark ? 'border-slate-800 bg-slate-950/50' : 'border-slate-200 bg-slate-50/80'
               }`}>
                 <div className="flex flex-wrap items-center gap-1.5 min-w-0 flex-1">
-                  <span className={`text-[11px] font-bold px-2 py-0.5 rounded border ${
+                  <span className={`text-[10.5px] sm:text-[11px] font-bold px-2 py-0.5 rounded border ${
                     isDark ? 'bg-slate-800 text-blue-400 border-slate-700' : 'bg-white text-blue-700 border-slate-200'
                   }`}>
                     อ.{selectedPoint.district}
                   </span>
-                  <span className={`text-[11px] font-semibold px-2 py-0.5 rounded border inline-flex items-center gap-1.5 leading-tight ${
+                  <span className={`text-[10.5px] sm:text-[11px] font-semibold px-2 py-0.5 rounded border inline-flex items-center gap-1.5 leading-tight ${
                     selectedPoint.hazardType === 'hail' ? (isDark ? 'bg-cyan-950 text-cyan-300 border-cyan-800' : 'bg-cyan-50 text-cyan-700 border-cyan-200') :
                     getFloodLevel(selectedPoint.depthCm) === 3 ? (isDark ? 'bg-rose-950 text-rose-300 border-rose-800' : 'bg-rose-50 text-rose-700 border-rose-200') :
                     getFloodLevel(selectedPoint.depthCm) === 2 ? (isDark ? 'bg-amber-950 text-amber-300 border-amber-800' : 'bg-amber-50 text-amber-700 border-amber-200') :
@@ -3502,13 +3502,13 @@ export default function App() {
                     )}
                   </span>
                   {isWaterReceding(selectedPoint) && (
-                    <span className="text-[10.5px] font-semibold px-1.5 py-0.5 rounded bg-teal-50 text-teal-800 border border-teal-200 dark:bg-teal-950 dark:text-teal-300 dark:border-teal-800 flex items-center gap-1">
+                    <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-teal-50 text-teal-800 border border-teal-200 dark:bg-teal-950 dark:text-teal-300 dark:border-teal-800 flex items-center gap-1">
                       <CivicWaterTrend className="w-3 h-3 shrink-0" direction="falling" />
                       <span>น้ำลด</span>
                     </span>
                   )}
                   {selectedPoint.waterTrend === 'rising' && !isWaterReceding(selectedPoint) && (
-                    <span className="text-[10.5px] font-semibold px-1.5 py-0.5 rounded bg-rose-50 text-rose-800 border border-rose-200 dark:bg-rose-950 dark:text-rose-300 dark:border-rose-800 flex items-center gap-1">
+                    <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-rose-50 text-rose-800 border border-rose-200 dark:bg-rose-950 dark:text-rose-300 dark:border-rose-800 flex items-center gap-1">
                       <CivicWaterTrend className="w-3 h-3 shrink-0" direction="rising" />
                       <span>น้ำขึ้น</span>
                     </span>
@@ -3522,22 +3522,22 @@ export default function App() {
                     playCloseSound();
                     setSelectedPoint(null);
                   }}
-                  className={`w-8 h-8 rounded-lg border flex items-center justify-center transition-colors cursor-pointer shrink-0 ${
+                  className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg border flex items-center justify-center transition-colors cursor-pointer shrink-0 ${
                     isDark 
                       ? 'bg-slate-800 hover:bg-slate-700 text-slate-300 border-slate-700' 
                       : 'bg-white hover:bg-slate-100 text-slate-600 border-slate-200'
                   }`}
                   title="ปิดหน้าต่างข้อมูล"
                 >
-                  <X className="w-4 h-4" />
+                  <X className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 </button>
               </div>
 
               {/* Scrollable Body */}
-              <div className="flex-1 overflow-y-auto px-4 py-3.5 space-y-3 overscroll-contain custom-scrollbar-thin">
+              <div className="flex-1 overflow-y-auto px-3.5 sm:px-4 py-3 sm:py-3.5 space-y-2.5 sm:space-y-3 overscroll-contain custom-scrollbar-thin">
                 {/* Point Title & Clean Location Subtitle */}
                 <div>
-                  <h3 className={`text-sm sm:text-base font-bold leading-snug ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                  <h3 className={`text-[13px] sm:text-base font-bold leading-snug ${isDark ? 'text-white' : 'text-slate-900'}`}>
                     {selectedPoint.name}
                   </h3>
                   {(selectedPoint.district || selectedPoint.subdistrict) && (
@@ -3837,8 +3837,8 @@ export default function App() {
       {/* ========================================================================= */}
       {/* 1. Collapsed Mode: Clean Floating Status Bar anchored right above MobileBottomNav (Not expandable) */}
       {!isMobileSheetOpen && (
-        <div className="md:hidden fixed bottom-[58px] inset-x-2.5 z-30 pointer-events-auto select-none">
-          <div className={`p-1.5 rounded-xl border backdrop-blur-md shadow-lg transition-all ${
+        <div className="md:hidden fixed bottom-[50px] inset-x-3 z-30 pointer-events-auto select-none">
+          <div className={`p-1 rounded-lg border backdrop-blur-md shadow-md transition-all ${
             isDark 
               ? 'bg-slate-900/95 border-slate-800 text-slate-100' 
               : 'bg-white/95 border-slate-200 text-slate-800'
@@ -3852,15 +3852,15 @@ export default function App() {
                   try { playSelectSound(); } catch (_) {}
                   setSeverityFilter(severityFilter === 'falling' ? 'all' : 'falling');
                 }}
-                className={`py-1 px-1 rounded-lg border text-center transition-all cursor-pointer ${
+                className={`py-0.5 px-1 rounded-md border text-center transition-all cursor-pointer ${
                   severityFilter === 'falling'
-                    ? 'bg-emerald-500 text-white border-emerald-500 shadow-xs'
+                    ? 'bg-emerald-500 text-white border-emerald-500 shadow-2xs'
                     : isDark ? 'bg-slate-850 border-slate-800 hover:bg-slate-800 text-slate-300' : 'bg-slate-50 border-slate-200 hover:bg-slate-100 text-slate-700'
                 }`}
                 title="กรองเฉพาะจุดที่ระดับน้ำเริ่มลดลง"
               >
-                <div className="text-[10px] font-medium leading-none text-slate-400 dark:text-slate-500">ปกติ/ลด</div>
-                <div className="text-xs font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">{falling}</div>
+                <div className="text-[9px] font-medium leading-none text-slate-400 dark:text-slate-500">ปกติ/ลด</div>
+                <div className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 mt-0.5 leading-none">{falling}</div>
               </button>
 
               {/* เฝ้าระวัง */}
@@ -3870,15 +3870,15 @@ export default function App() {
                   try { playSelectSound(); } catch (_) {}
                   setSeverityFilter((severityFilter === '1' || severityFilter === 'minor') ? 'all' : '1');
                 }}
-                className={`py-1 px-1 rounded-lg border text-center transition-all cursor-pointer ${
+                className={`py-0.5 px-1 rounded-md border text-center transition-all cursor-pointer ${
                   (severityFilter === '1' || severityFilter === 'minor')
-                    ? 'bg-amber-500 text-white border-amber-500 shadow-xs'
+                    ? 'bg-amber-500 text-white border-amber-500 shadow-2xs'
                     : isDark ? 'bg-slate-850 border-slate-800 hover:bg-slate-800 text-slate-300' : 'bg-slate-50 border-slate-200 hover:bg-slate-100 text-slate-700'
                 }`}
                 title="ระดับ 1: เฝ้าระวัง ผิวจราจร (<15 ซม.)"
               >
-                <div className="text-[10px] font-medium leading-none text-slate-400 dark:text-slate-500">เฝ้าระวัง</div>
-                <div className="text-xs font-bold text-amber-600 dark:text-amber-400 mt-0.5">{minor}</div>
+                <div className="text-[9px] font-medium leading-none text-slate-400 dark:text-slate-500">เฝ้าระวัง</div>
+                <div className="text-[11px] font-bold text-amber-600 dark:text-amber-400 mt-0.5 leading-none">{minor}</div>
               </button>
 
               {/* ปานกลาง */}
@@ -3888,15 +3888,15 @@ export default function App() {
                   try { playSelectSound(); } catch (_) {}
                   setSeverityFilter((severityFilter === '2' || severityFilter === 'moderate') ? 'all' : '2');
                 }}
-                className={`py-1 px-1 rounded-lg border text-center transition-all cursor-pointer ${
+                className={`py-0.5 px-1 rounded-md border text-center transition-all cursor-pointer ${
                   (severityFilter === '2' || severityFilter === 'moderate')
-                    ? 'bg-orange-500 text-white border-orange-500 shadow-xs'
+                    ? 'bg-orange-500 text-white border-orange-500 shadow-2xs'
                     : isDark ? 'bg-slate-850 border-slate-800 hover:bg-slate-800 text-slate-300' : 'bg-slate-50 border-slate-200 hover:bg-slate-100 text-slate-700'
                 }`}
                 title="ระดับ 2: ปานกลาง (15-30 ซม.)"
               >
-                <div className="text-[10px] font-medium leading-none text-slate-400 dark:text-slate-500">ปานกลาง</div>
-                <div className="text-xs font-bold text-orange-600 dark:text-orange-400 mt-0.5">{moderate}</div>
+                <div className="text-[9px] font-medium leading-none text-slate-400 dark:text-slate-500">ปานกลาง</div>
+                <div className="text-[11px] font-bold text-orange-600 dark:text-orange-400 mt-0.5 leading-none">{moderate}</div>
               </button>
 
               {/* วิกฤต */}
@@ -3906,15 +3906,15 @@ export default function App() {
                   try { playSelectSound(); } catch (_) {}
                   setSeverityFilter((severityFilter === '3' || severityFilter === 'severe') ? 'all' : '3');
                 }}
-                className={`py-1 px-1 rounded-lg border text-center transition-all cursor-pointer ${
+                className={`py-0.5 px-1 rounded-md border text-center transition-all cursor-pointer ${
                   (severityFilter === '3' || severityFilter === 'severe')
-                    ? 'bg-rose-600 text-white border-rose-600 shadow-xs'
+                    ? 'bg-rose-600 text-white border-rose-600 shadow-2xs'
                     : isDark ? 'bg-slate-850 border-slate-800 hover:bg-slate-800 text-slate-300' : 'bg-slate-50 border-slate-200 hover:bg-slate-100 text-slate-700'
                 }`}
                 title="ระดับ 3: วิกฤต (>30 ซม.)"
               >
-                <div className="text-[10px] font-medium leading-none text-slate-400 dark:text-slate-500">วิกฤต</div>
-                <div className="text-xs font-bold text-rose-600 dark:text-rose-400 mt-0.5">{severe}</div>
+                <div className="text-[9px] font-medium leading-none text-slate-400 dark:text-slate-500">วิกฤต</div>
+                <div className="text-[11px] font-bold text-rose-600 dark:text-rose-400 mt-0.5 leading-none">{severe}</div>
               </button>
             </div>
           </div>
@@ -3928,7 +3928,7 @@ export default function App() {
           onClick={() => setIsMobileSheetOpen(false)}
         >
           <div 
-            className={`fixed inset-x-0 bottom-0 z-50 max-h-[64vh] h-[58vh] flex flex-col rounded-t-xl border-t shadow-2xl select-none pb-[calc(env(safe-area-inset-bottom,0px)+8px)] ${
+            className={`fixed inset-x-0 bottom-0 z-50 max-h-[54vh] h-[48vh] flex flex-col rounded-t-xl border-t shadow-2xl select-none pb-[calc(env(safe-area-inset-bottom,0px)+8px)] ${
               isDark 
                 ? 'bg-slate-900 border-slate-800 text-slate-100' 
                 : 'bg-white border-slate-200 text-slate-900'
@@ -3937,18 +3937,18 @@ export default function App() {
           >
             <div className="h-1 w-full bg-blue-700 shrink-0" />
             {/* Sheet Header */}
-            <div className={`px-4 py-3 border-b flex items-center justify-between gap-2 shrink-0 ${
+            <div className={`px-3.5 py-2.5 border-b flex items-center justify-between gap-2 shrink-0 ${
               isDark ? 'border-slate-800 bg-slate-950/50' : 'border-slate-200 bg-slate-50/80'
             }`}>
-              <div className="flex items-center gap-2.5 min-w-0">
-                <div className={`w-8 h-8 rounded-lg border flex items-center justify-center shrink-0 ${
+              <div className="flex items-center gap-2 min-w-0">
+                <div className={`w-7 h-7 rounded-lg border flex items-center justify-center shrink-0 ${
                   isDark ? 'bg-slate-800 text-blue-400 border-slate-700' : 'bg-white text-blue-700 border-slate-200'
                 }`}>
-                  <CivicStationPin className="w-4 h-4" />
+                  <CivicStationPin className="w-3.5 h-3.5" />
                 </div>
                 <div className="min-w-0">
-                  <h3 className="text-sm font-bold truncate">ค้นหาจุดเฝ้าระวังน้ำท่วมขัง</h3>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                  <h3 className="text-[13px] font-bold truncate">ค้นหาจุดเฝ้าระวังน้ำท่วมขัง</h3>
+                  <p className="text-[10.5px] text-slate-500 dark:text-slate-400 truncate">
                     จ.สมุทรปราการ (พบ {displayPoints.length} จุด)
                   </p>
                 </div>
@@ -3956,17 +3956,17 @@ export default function App() {
               <button
                 type="button"
                 onClick={() => setIsMobileSheetOpen(false)}
-                className={`w-8 h-8 rounded-lg border flex items-center justify-center transition-colors ${
+                className={`w-7 h-7 rounded-lg border flex items-center justify-center transition-colors ${
                   isDark ? 'bg-slate-800 text-slate-400 border-slate-700' : 'bg-white text-slate-500 border-slate-200'
                 }`}
                 aria-label="ปิดการค้นหา"
               >
-                <X className="w-4 h-4" />
+                <X className="w-3.5 h-3.5" />
               </button>
             </div>
 
             {/* Drawer Body */}
-            <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2.5 custom-scrollbar-thin">
+            <div className="flex-1 overflow-y-auto px-3.5 py-2.5 space-y-2 custom-scrollbar-thin">
               {/* Search Input */}
               <div className="relative shrink-0">
                 <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -4169,29 +4169,29 @@ export default function App() {
       {isAnnouncementModalOpen && latestAnnouncement && (
         <div 
           onClick={(e) => { if (e.target === e.currentTarget) { playCloseSound(); setIsAnnouncementModalOpen(false); } }}
-          className="fixed inset-0 z-[105] bg-slate-950/65 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 pointer-events-auto overflow-y-auto"
+          className="fixed inset-0 z-[105] bg-slate-950/65 backdrop-blur-xs flex items-center justify-center p-2.5 sm:p-4 pointer-events-auto overflow-y-auto"
         >
-          <div className={`w-[92vw] max-w-[440px] sm:max-w-md my-auto m-auto border rounded-xl shadow-2xl flex flex-col max-h-[82vh] overflow-hidden transition-colors ${
+          <div className={`w-[88vw] max-w-[345px] sm:max-w-md my-auto m-auto border rounded-xl shadow-2xl flex flex-col max-h-[74vh] sm:max-h-[82vh] overflow-hidden transition-colors ${
             isDark 
               ? 'bg-slate-900 border-slate-800 text-slate-100' 
               : 'bg-white border-slate-200 text-slate-900'
           }`}>
             <div className="h-1 w-full bg-amber-500 shrink-0" />
             {/* Header */}
-            <div className={`flex items-center justify-between gap-3 px-4 py-3 border-b shrink-0 ${
+            <div className={`flex items-center justify-between gap-2.5 px-3.5 py-2.5 sm:px-4 sm:py-3 border-b shrink-0 ${
               isDark ? 'border-slate-800 bg-slate-950/50' : 'border-slate-200 bg-slate-50/80'
             }`}>
               <div className="flex items-center gap-2.5 min-w-0">
-                <div className={`w-8 h-8 rounded-lg border flex items-center justify-center shrink-0 ${
+                <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg border flex items-center justify-center shrink-0 ${
                   isDark ? 'bg-amber-950/60 text-amber-400 border-amber-800/80' : 'bg-amber-50 text-amber-700 border-amber-200'
                 }`}>
-                  <CivicBroadcast className="w-4 h-4" />
+                  <CivicBroadcast className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 </div>
                 <div className="min-w-0">
-                  <h3 className={`text-sm sm:text-base font-bold leading-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                  <h3 className={`text-[13px] sm:text-base font-bold leading-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>
                     ประกาศแจ้งเตือนจากศูนย์ควบคุม
                   </h3>
-                  <span className="text-[11px] text-slate-400 block">
+                  <span className="text-[10.5px] sm:text-[11px] text-slate-400 block">
                     ศูนย์ข้อมูลอุทกภัยจังหวัดสมุทรปราการ
                   </span>
                 </div>
@@ -4202,16 +4202,16 @@ export default function App() {
                   playCloseSound();
                   setIsAnnouncementModalOpen(false);
                 }}
-                className={`w-8 h-8 rounded-lg border flex items-center justify-center cursor-pointer transition-colors ${
+                className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg border flex items-center justify-center cursor-pointer transition-colors ${
                   isDark ? 'bg-slate-800 text-slate-400 border-slate-700 hover:text-white' : 'bg-white text-slate-500 border-slate-200 hover:text-slate-800'
                 }`}
               >
-                <X className="w-4 h-4" />
+                <X className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </button>
             </div>
 
             {/* Body */}
-            <div className="flex-1 overflow-y-auto px-4 py-3.5 space-y-2.5 text-xs">
+            <div className="flex-1 overflow-y-auto px-3.5 py-3 sm:px-4 sm:py-3.5 space-y-2.5 text-xs">
               <div className="flex items-center justify-between text-[11px] text-slate-400">
                 <span className="truncate">
                   พื้นที่แจ้งเตือน: <strong className={isDark ? 'text-slate-200' : 'text-slate-800'}>

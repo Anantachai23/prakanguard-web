@@ -64,9 +64,9 @@ export default function AdminVerificationPrompt({
 
   return (
     <>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/65 backdrop-blur-xs overflow-y-auto">
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-2.5 sm:p-4 bg-slate-950/65 backdrop-blur-xs overflow-y-auto">
         <div 
-          className={`w-[92vw] max-w-[440px] sm:max-w-lg my-auto m-auto rounded-xl border shadow-2xl overflow-hidden flex flex-col max-h-[84vh] sm:max-h-[86vh] transition-colors ${
+          className={`w-[88vw] max-w-[345px] sm:max-w-lg my-auto m-auto rounded-xl border shadow-2xl overflow-hidden flex flex-col max-h-[75vh] sm:max-h-[85vh] transition-colors ${
             isDark 
               ? 'bg-slate-900 border-slate-800 text-slate-100' 
               : 'bg-white border-slate-200 text-slate-900'
@@ -76,17 +76,17 @@ export default function AdminVerificationPrompt({
           <div className="h-1 w-full bg-amber-500 shrink-0" />
 
           {/* Header */}
-          <div className={`px-4 py-3 sm:px-5 sm:py-3.5 border-b flex items-center justify-between gap-3 shrink-0 ${
+          <div className={`px-3.5 py-2.5 sm:px-5 sm:py-3.5 border-b flex items-center justify-between gap-2.5 shrink-0 ${
             isDark ? 'bg-slate-950/50 border-slate-800' : 'bg-slate-50/80 border-slate-200'
           }`}>
-            <div className="flex items-center gap-3 min-w-0">
-              <div className={`w-8 h-8 sm:w-9 sm:h-9 rounded-lg border flex items-center justify-center shrink-0 ${
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className={`w-7 h-7 sm:w-9 sm:h-9 rounded-lg border flex items-center justify-center shrink-0 ${
                 isDark ? 'bg-amber-950/60 text-amber-400 border-amber-800/80' : 'bg-amber-50 text-amber-700 border-amber-200'
               }`}>
-                <CivicShield className="w-4 h-4 sm:w-5 sm:h-5" />
+                <CivicShield className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
               </div>
               <div className="min-w-0">
-                <h3 className={`text-sm sm:text-base font-bold flex items-center gap-2 ${
+                <h3 className={`text-[13px] sm:text-base font-bold flex items-center gap-2 ${
                   isDark ? 'text-white' : 'text-slate-900'
                 }`}>
                   <span>ตรวจสอบรายงานภาคประชาชน</span>
@@ -96,7 +96,7 @@ export default function AdminVerificationPrompt({
                     </span>
                   )}
                 </h3>
-                <p className={`text-[11px] sm:text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                <p className={`text-[10.5px] sm:text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
                   พิจารณาอนุมัติข้อมูลเพื่อแสดงบนแผนที่สาธารณะ
                 </p>
               </div>
@@ -105,17 +105,17 @@ export default function AdminVerificationPrompt({
             <button
               type="button"
               onClick={() => setIsDismissed(true)}
-              className={`w-8 h-8 rounded-lg border flex items-center justify-center transition-colors cursor-pointer shrink-0 ${
+              className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg border flex items-center justify-center transition-colors cursor-pointer shrink-0 ${
                 isDark ? 'bg-slate-800 hover:bg-slate-700 text-slate-400 border-slate-700' : 'bg-white hover:bg-slate-100 text-slate-500 border-slate-200'
               }`}
               title="ย่อหน้าต่าง"
             >
-              <X className="w-4 h-4" />
+              <X className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </button>
           </div>
 
           {/* Report Details Content */}
-          <div className="px-4 sm:px-5 py-3.5 sm:py-4 overflow-y-auto space-y-3 text-xs sm:text-sm">
+          <div className="px-3.5 sm:px-5 py-3 sm:py-4 overflow-y-auto space-y-2.5 text-xs sm:text-sm">
             
             {/* Location & District Badge */}
             <div className={`p-3.5 rounded-lg border ${

@@ -1969,8 +1969,8 @@ export default function AdminModal({
   }, [activeFeedbackList]);
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/65 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
-      <div className={`w-[92vw] max-w-[440px] sm:max-w-4xl my-auto m-auto border rounded-xl shadow-2xl flex flex-col max-h-[88vh] sm:max-h-[92vh] overflow-hidden transition-all ${
+    <div className="fixed inset-0 z-50 bg-slate-950/65 backdrop-blur-xs flex items-center justify-center p-2.5 sm:p-4 overflow-y-auto">
+      <div className={`w-[88vw] max-w-[355px] sm:max-w-4xl my-auto m-auto border rounded-xl shadow-2xl flex flex-col max-h-[78vh] sm:max-h-[90vh] overflow-hidden transition-all ${
         isDark ? 'bg-slate-900 border-slate-800 text-slate-100' : 'bg-white border-slate-200 text-slate-900'
       }`}>
         
@@ -1986,14 +1986,14 @@ export default function AdminModal({
         )}
 
         {/* Modal Header */}
-        <div className={`px-4 sm:px-5 py-3 sm:py-3.5 border-b flex items-center justify-between shrink-0 ${
+        <div className={`px-3.5 sm:px-5 py-2.5 sm:py-3.5 border-b flex items-center justify-between shrink-0 ${
           isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
         }`}>
-          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
-            <div className={`w-8 h-8 sm:w-9 sm:h-9 rounded-lg flex items-center justify-center shrink-0 border ${
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            <div className={`w-7 h-7 sm:w-9 sm:h-9 rounded-lg flex items-center justify-center shrink-0 border ${
               isDark ? 'bg-slate-800 border-slate-700 text-blue-400' : 'bg-slate-50 border-slate-200 text-blue-700'
             }`}>
-              <CivicCrest className="w-4 h-4 sm:w-5 sm:h-5" />
+              <CivicCrest className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">

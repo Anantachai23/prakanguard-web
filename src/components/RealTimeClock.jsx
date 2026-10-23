@@ -51,7 +51,7 @@ export default function RealTimeClock({ theme = 'light' }) {
 
   return (
     <div 
-      className={`inline-flex items-center gap-1 sm:gap-1.5 px-2.5 py-1 rounded-lg border text-[11px] sm:text-xs font-mono font-medium shadow-2xs select-none transition-colors max-w-full shrink-0 tabular-nums ${
+      className={`inline-flex items-center gap-1 sm:gap-1.5 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md sm:rounded-lg border text-[10px] sm:text-xs font-mono font-medium shadow-2xs select-none transition-colors max-w-full shrink-0 tabular-nums ${
         isDark 
           ? 'bg-slate-900/95 border-slate-700/80 text-slate-200' 
           : 'bg-white/95 border-slate-200 text-slate-800'
