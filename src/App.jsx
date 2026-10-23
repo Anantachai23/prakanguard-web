@@ -686,6 +686,7 @@ export default function App() {
         !r.id.includes('verify') &&
         !r.id.includes('seed') &&
         !r.id.startsWith('node-') &&
+        !r.id.startsWith('zz-sec-probe-') &&
         !r.isAiGenerated && 
         !r.id?.startsWith('ai-alert-') &&
         typeof r.lat === 'number' &&
@@ -932,7 +933,7 @@ export default function App() {
   const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(() => {
     try {
-      return sessionStorage.getItem('prakanguard_admin_auth') === 'true';
+      return sessionStorage.getItem('prakanguard_admin_auth') === 'true' && !!sessionStorage.getItem('pg_sec_session_token');
     } catch (e) {
       return false;
     }

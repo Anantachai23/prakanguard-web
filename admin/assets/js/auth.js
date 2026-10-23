@@ -8,7 +8,44 @@ import { ADMIN_ACCOUNTS, SESSION_TTL_MS, ADMIN_PING_MS, getSupabaseUrl, getSupab
 import { caps, rpcVerify, rpcChangePassword, recordAdminLogin, pingAdminSession, endAdminSession, fetchPublicIp, setAdminToken } from './api.js';
 
 const KEY = 'pg_admin_session_v2';
+const LS_LOCKOUT_UNTIL = 'pg_sec_lockout_until';
+const LS_FAILED_ATTEMPTS = 'pg_sec_failed_attempts';
 let pingTimer = null;
+
+function checkAdminLockout() {
+  try {
+    const until = parseInt(localStorage.getItem(LS_LOCKOUT_UNTIL) || '0', 10);
+    const now = Date.now();
+    if (until > now) {
+      return { locked: true, remainingSeconds: Math.ceil((until - now) / 1000) };
+    }
+  } catch {}
+  return { locked: false, remainingSeconds: 0 };
+}
+
+function recordAdminFailedAttempt() {
+  try {
+    const attempts = parseInt(localStorage.getItem(LS_FAILED_ATTEMPTS) || '0', 10) + 1;
+    localStorage.setItem(LS_FAILED_ATTEMPTS, String(attempts));
+    let lockSec = 0;
+    if (attempts >= 10) lockSec = 600;
+    else if (attempts >= 7) lockSec = 180;
+    else if (attempts >= 5) lockSec = 60;
+    if (lockSec > 0) {
+      localStorage.setItem(LS_LOCKOUT_UNTIL, String(Date.now() + lockSec * 1000));
+    }
+    return { attempts, lockSec };
+  } catch {
+    return { attempts: 1, lockSec: 0 };
+  }
+}
+
+function resetAdminFailedAttempts() {
+  try {
+    localStorage.removeItem(LS_FAILED_ATTEMPTS);
+    localStorage.removeItem(LS_LOCKOUT_UNTIL);
+  } catch {}
+}
 
 const toHex = (buf) => Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, '0')).join('');
 
@@ -23,13 +60,13 @@ async function pbkdf2Hex(password, saltHex, iter) {
 function normalizeAdminUser(u) {
   const s = String(u || '').trim().toLowerCase().replace(/[\s_]/g, '');
   if (!s) return null;
-  if (s.includes('02') || s.includes('admin2') || s === '2') {
+  if (s === 'adminprakanguard02' || s === 'admin02' || s === 'admin2') {
     return 'admin_prakanguard02';
   }
-  if (s === 'admin' || s === 'admin01' || s === 'admin1' || s.includes('01') || s.includes('adminprakanguard') || s === 'prakanguard') {
+  if (s === 'adminprakanguard01' || s === 'admin01' || s === 'admin1') {
     return 'admin_prakanguard01';
   }
-  return 'admin_prakanguard01'; // Default gracefully to admin01
+  return null;
 }
 
 async function verifyLocal(username, password) {
@@ -89,10 +126,24 @@ export function currentAdmin() {
 }
 
 export async function login(username, password) {
+  const lock = checkAdminLockout();
+  if (lock.locked) {
+    return { ok: false, reason: 'locked', remainingSeconds: lock.remainingSeconds };
+  }
+
   const normUser = normalizeAdminUser(username);
-  if (!normUser) return { ok: false, reason: 'invalid' };
+  if (!normUser) {
+    const fail = recordAdminFailedAttempt();
+    if (fail.lockSec > 0) return { ok: false, reason: 'locked', remainingSeconds: fail.lockSec };
+    return { ok: false, reason: 'invalid' };
+  }
 
   const p = String(password || '').trim();
+  if (!p) {
+    const fail = recordAdminFailedAttempt();
+    if (fail.lockSec > 0) return { ok: false, reason: 'locked', remainingSeconds: fail.lockSec };
+    return { ok: false, reason: 'invalid' };
+  }
   let admin = null;
 
   // 1. Try Supabase Auth direct login (if admin user is created in Supabase Auth)
@@ -149,7 +200,15 @@ export async function login(username, password) {
     admin = await verifyLocal(normUser, p);
   }
 
-  if (!admin) return { ok: false, reason: 'invalid' };
+  if (!admin) {
+    const fail = recordAdminFailedAttempt();
+    if (fail.lockSec > 0) {
+      return { ok: false, reason: 'locked', remainingSeconds: fail.lockSec };
+    }
+    return { ok: false, reason: 'invalid' };
+  }
+
+  resetAdminFailedAttempts();
 
   let ip = null;
   try {

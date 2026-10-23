@@ -12,6 +12,9 @@
 --  กด "New query" > วางโค้ดทั้งหมดนี้ลงไป > กด "Run"
 -- =====================================================================
 
+-- ล้างข้อมูลทดสอบระบบ (Security Probe) ถ้ามีค้างอยู่
+delete from public.reports where id like 'zz-sec-probe-%';
+
 -- ---------------------------------------------------------------------
 -- 1. ตาราง reports (รายงานน้ำท่วมและสถานการณ์ฉุกเฉิน)
 -- ---------------------------------------------------------------------
@@ -23,13 +26,13 @@ drop policy if exists reports_insert_public on public.reports;
 drop policy if exists reports_select_public on public.reports;
 drop policy if exists reports_admin_all on public.reports;
 
--- 1.1 ประชาชนทั่วไป (anon) และแอดมิน สามารถส่งรายงานน้ำท่วมเข้ามาได้
+-- 1.1 ประชาชนทั่วไป (anon) สามารถส่งรายงานน้ำท่วมเข้ามาได้ แต่ต้องมีสถานะรออนุมัติ (is_approved = false) เท่านั้น!
+--     ป้องกันผู้ไม่หวังดีส่ง API ตรงเพื่ออนุมัติรายงานตัวเองโดยไม่ผ่านแอดมิน
 create policy reports_insert_public on public.reports
-  for insert to anon, authenticated
-  with check (true);
+  for insert to anon
+  with check (coalesce(is_approved, false) = false and coalesce(is_resolved, false) = false);
 
 -- 1.2 ประชาชนทั่วไป (anon) สามารถอ่านได้เฉพาะรายงานที่อนุมัติแล้ว หรือจุดที่สถานะยังไม่คลี่คลาย
---     (ป้องกันการดึงประวัติที่ไม่ได้รับอนุญาต)
 create policy reports_select_public on public.reports
   for select to anon
   using (is_approved = true or is_resolved = false);
@@ -188,9 +191,10 @@ begin
   select * into r from public.admin_accounts where username = lower(trim(p_username));
   if not found then return false; end if;
   if r.pass_hash <> crypt(p_old, r.pass_hash) and r.pass_hash <> 'INITIAL_SETUP_REQUIRED' then
+    perform pg_sleep(0.6);
     return false;
   end if;
-  if length(p_new) < 8 then return false; end if;
+  if length(coalesce(p_new, '')) < 12 then return false; end if;
   update public.admin_accounts
      set pass_hash = crypt(p_new, gen_salt('bf', 10)),
          updated_at = now()

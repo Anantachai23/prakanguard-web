@@ -142,10 +142,20 @@ const REPORT_BASE_COLS = 'id,hazard_type,name,subdistrict,district,lat,lng,body_
 const REPORT_EXT_COLS = 'reporter_device,reporter_district,reporter_gps,reporter_ip';
 
 export async function fetchReports() {
+  const filterProbe = (arr) => {
+    if (!Array.isArray(arr)) return [];
+    return arr.filter((item) => {
+      if (item && typeof item.id === 'string' && item.id.startsWith('zz-sec-probe-')) {
+        rest(`reports?id=eq.${encodeURIComponent(item.id)}`, { method: 'DELETE' }).catch(() => {});
+        return false;
+      }
+      return true;
+    });
+  };
   try {
     const cols = REPORT_BASE_COLS + (caps.reportExt ? ',' + REPORT_EXT_COLS : '');
     const data = await restAll(`reports?select=${cols}&order=timestamp.desc`);
-    if (Array.isArray(data) && data.length > 0) return data;
+    if (Array.isArray(data) && data.length > 0) return filterProbe(data);
   } catch (err) {
     console.warn('[Admin API] Supabase fetchReports failed, using local fallback:', err);
   }
@@ -154,7 +164,7 @@ export async function fetchReports() {
     const res = await fetch('/api/reports');
     if (res.ok) {
       const data = await res.json();
-      if (Array.isArray(data) && data.length > 0) return data;
+      if (Array.isArray(data) && data.length > 0) return filterProbe(data);
     }
   } catch {}
   // Fallback 2: Static ./data/reports.json
@@ -162,7 +172,7 @@ export async function fetchReports() {
     const res = await fetch('./data/reports.json');
     if (res.ok) {
       const data = await res.json();
-      if (Array.isArray(data)) return data;
+      if (Array.isArray(data)) return filterProbe(data);
     }
   } catch {}
   return [];

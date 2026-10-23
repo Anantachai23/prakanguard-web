@@ -42,7 +42,7 @@ drop policy if exists reports_insert_public on public.reports;
 drop policy if exists reports_select_public on public.reports;
 drop policy if exists reports_admin_all on public.reports;
 
-create policy reports_insert_public on public.reports for insert to anon, authenticated with check (true);
+create policy reports_insert_public on public.reports for insert to anon with check (coalesce(is_approved, false) = false and coalesce(is_resolved, false) = false);
 create policy reports_select_public on public.reports for select to anon using (is_approved = true or is_resolved = false);
 create policy reports_admin_all on public.reports for all to authenticated using (true) with check (true);
 

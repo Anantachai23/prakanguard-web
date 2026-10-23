@@ -80,6 +80,8 @@ try {
     assertCheck('Header X-XSS-Protection present', headerKeys.includes('X-XSS-Protection'));
     assertCheck('Header Referrer-Policy present', headerKeys.includes('Referrer-Policy'));
     assertCheck('Header Permissions-Policy present', headerKeys.includes('Permissions-Policy'));
+    assertCheck('Header Strict-Transport-Security (HSTS) present', headerKeys.includes('Strict-Transport-Security'));
+    assertCheck('Header Cross-Origin-Opener-Policy present', headerKeys.includes('Cross-Origin-Opener-Policy'));
   }
 } catch (e) {
   assertCheck('Read vercel.json headers', false, e.message);
@@ -96,6 +98,8 @@ try {
   assertCheck('Admin server sets X-Frame-Options', adminAppCode.includes("res.setHeader('X-Frame-Options', 'SAMEORIGIN')"));
   assertCheck('Admin server has /api/health endpoint', adminAppCode.includes("pathname === '/api/health'"));
   assertCheck('Directory traversal prevention exists', adminAppCode.includes('!filePath.startsWith(ADMIN_DIR)'));
+  assertCheck('Admin server blocks static serving of /data/ and /server/', adminAppCode.includes("normPath.startsWith('/data/')") && adminAppCode.includes("normPath.startsWith('/server/')"));
+  assertCheck('Admin server binds to loopback 127.0.0.1 by default', adminAppCode.includes("'127.0.0.1'"));
 } catch (e) {
   assertCheck('Read admin server code', false, e.message);
 }
@@ -105,6 +109,22 @@ console.log('\n--- 5. SYSTEM HEALTH CHECK APIS ---');
 assertCheck('Serverless Health API (/api/health.js) exists', fs.existsSync(path.join(ROOT_DIR, 'api/health.js')));
 assertCheck('Official Flood Sync API (/api/official-flood.js) exists', fs.existsSync(path.join(ROOT_DIR, 'api/official-flood.js')));
 assertCheck('Real-Time Sync API (/api/sync.js) exists', fs.existsSync(path.join(ROOT_DIR, 'api/sync.js')));
+
+// 6. Zero Secret, Personal IP & Bundle Data Leak Verification
+console.log('\n--- 6. PRIVACY, SECRET & BUILD BUNDLE PROTECTION ---');
+try {
+  const dashCode = fs.readFileSync(path.join(ROOT_DIR, 'admin/assets/js/dashboard.js'), 'utf8');
+  const cloudSyncCode = fs.readFileSync(path.join(ROOT_DIR, 'src/services/cloudSyncService.js'), 'utf8');
+  const viteConfigCode = fs.readFileSync(path.join(ROOT_DIR, 'vite.config.js'), 'utf8');
+
+  assertCheck('No hardcoded personal IP address in admin dashboard', !dashCode.includes('171.96.89.22'));
+  assertCheck('Map popup photo URL is sanitized with safePhotoUrl()', dashCode.includes('safePhotoUrl('));
+  assertCheck('Public report fetch excludes citizen phone numbers for anonymous users', cloudSyncCode.includes('REPORT_PUBLIC_SELECT_COLS') && !cloudSyncCode.match(/REPORT_PUBLIC_SELECT_COLS\s*=\s*['"][^'"]*phone/));
+  assertCheck('Admin action publisher enforces session token verification', cloudSyncCode.includes('verifyAdminSessionToken()'));
+  assertCheck('Vite build plugin isolates admin static assets (no data/server leak)', viteConfigCode.includes("copyDirSync(assetsSrc, resolve(dest, 'assets'))") && !fs.existsSync(path.join(ROOT_DIR, 'dist/admin/data')) && !fs.existsSync(path.join(ROOT_DIR, 'dist/admin/server')));
+} catch (e) {
+  assertCheck('Privacy & secret verification checks', false, e.message);
+}
 
 // Summary
 console.log('\n================================================================');

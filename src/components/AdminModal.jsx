@@ -174,13 +174,17 @@ export default function AdminModal({
     }
   });
 
-  // Authentication State (Synced with App.jsx & sessionStorage)
+  // Authentication State (Synced with App.jsx & Cryptographic Session Token verification)
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
-    return isAdminAuthenticated || sessionStorage.getItem('prakanguard_admin_auth') === 'true';
+    return verifyAdminSessionToken();
   });
 
   useEffect(() => {
-    setIsAuthenticated(isAdminAuthenticated || sessionStorage.getItem('prakanguard_admin_auth') === 'true');
+    const valid = verifyAdminSessionToken();
+    setIsAuthenticated(valid);
+    if (!valid && isAdminAuthenticated && onAuthChange) {
+      onAuthChange(false);
+    }
   }, [isAdminAuthenticated, isOpen]);
 
   // Login Form States
@@ -817,8 +821,8 @@ export default function AdminModal({
     }
 
     // Check strictly: only Admin 01 and Admin 02
-    const is02 = (normU.includes('02') || normU.includes('admin2') || normU === '2');
-    const is01 = (normU.includes('01') || normU.includes('admin1') || normU === '1' || normU === 'admin' || normU.includes('adminprakanguard'));
+    const is02 = (normU === 'adminprakanguard02' || normU === 'admin02' || normU === 'admin2');
+    const is01 = (normU === 'adminprakanguard01' || normU === 'admin01' || normU === 'admin1');
 
     if (!is01 && !is02) {
       const result = recordFailedLogin(inputUsername);

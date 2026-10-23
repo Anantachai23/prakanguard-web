@@ -4,7 +4,7 @@
 import { isPointInSamutPrakan } from '../data/samutPrakanBoundary';
 
 
-import { sanitizeReportPayload, sanitizeFeedbackPayload } from './securityService';
+import { sanitizeReportPayload, sanitizeFeedbackPayload, verifyAdminSessionToken } from './securityService';
 
 export function getSupabaseUrl() {
   if (typeof localStorage !== 'undefined') {
@@ -60,8 +60,9 @@ const LOCAL_ADMIN_API = 'http://localhost:4000';
 
 /**
  * แปลง CamelCase เป็น Snake_Case สำหรับ Supabase Reports
+ * บังคับ is_approved = false เสมอสำหรับการส่งรายงานจากฝั่งประชาชน (เว้นแต่มีเซสชันแอดมินที่ถูกต้อง)
  */
-function toSupabaseReport(r) {
+function toSupabaseReport(r, isAdminVerified = false) {
   return {
     id: r.id,
     hazard_type: r.hazardType || 'flood',
@@ -83,8 +84,8 @@ function toSupabaseReport(r) {
     photo_url: r.photoUrl || r.photo_url || null,
     reporter_device: r.reporter_device || r.reporterDevice || null,
     reporter_district: r.reporter_district || r.reporterDistrict || null,
-    is_approved: !!r.isApproved,
-    is_resolved: !!r.isResolved,
+    is_approved: isAdminVerified ? !!r.isApproved : false,
+    is_resolved: isAdminVerified ? !!r.isResolved : false,
     reported_at: r.reportedAt || null,
     timestamp: Number(r.timestamp) || Date.now()
   };
@@ -158,6 +159,7 @@ export function isValidReport(r) {
     typeof r === 'object' &&
     typeof r.id === 'string' &&
     r.id.trim().length > 0 &&
+    !r.id.startsWith('zz-sec-probe-') &&
     typeof r.lat === 'number' &&
     !isNaN(r.lat) &&
     typeof r.lng === 'number' &&
@@ -192,7 +194,8 @@ export async function publishCloudReport(report) {
 
     // 1. ส่งขึ้น Supabase Cloud Database (ศูนย์ข้อมูลกลาง 24 ชม. ทุกเครื่องเข้าถึงได้)
     try {
-      const supaBody = JSON.stringify(toSupabaseReport(safeReport));
+      const isAdmin = verifyAdminSessionToken();
+      const supaBody = JSON.stringify(toSupabaseReport(safeReport, isAdmin));
       fetch(`${getBase()}reports`, {
         method: 'POST',
         headers: getHeaders({
@@ -290,9 +293,15 @@ export async function publishCloudFeedback(feedback) {
 
 /**
  * ส่งคำสั่ง Admin Action (เช่น อนุมัติ / ปิดงาน / ลบจุด) เพื่อให้อุปกรณ์อื่นอัปเดตตาม
+ * บังคับตรวจสอบ Cryptographic Admin Session Token ก่อนทำงานเสมอ
  */
 export async function publishAdminAction(action) {
   try {
+    const hasAdminAuth = verifyAdminSessionToken() || (typeof sessionStorage !== 'undefined' && !!sessionStorage.getItem('pg_admin_session_v2'));
+    if (!hasAdminAuth) {
+      console.warn('[CloudSync] Unauthorized publishAdminAction blocked.');
+      return false;
+    }
     const payload = JSON.stringify(action);
     const asciiTitle = `Admin Action: ${action.type || 'update'}`;
 
@@ -347,7 +356,8 @@ export async function publishAdminAction(action) {
   }
 }
 
-const REPORT_SELECT_COLS = 'id,hazard_type,name,subdistrict,district,lat,lng,body_level,body_level_label,depth_cm,depth_range,level,traffic_status,cause,official_guidance,source,phone,is_approved,is_resolved,reported_at,timestamp';
+const REPORT_PUBLIC_SELECT_COLS = 'id,hazard_type,name,subdistrict,district,lat,lng,body_level,body_level_label,depth_cm,depth_range,level,traffic_status,cause,official_guidance,source,is_approved,is_resolved,reported_at,timestamp';
+const REPORT_ADMIN_SELECT_COLS = 'id,hazard_type,name,subdistrict,district,lat,lng,body_level,body_level_label,depth_cm,depth_range,level,traffic_status,cause,official_guidance,source,phone,is_approved,is_resolved,reported_at,timestamp';
 let hasWarnedQuotaReports = false;
 let hasWarnedQuotaFeedback = false;
 
@@ -378,9 +388,11 @@ export async function fetchRecentCloudReports() {
   try {
     const reportMap = new Map();
 
-    // 1. ดึงจาก Supabase Cloud Database เป็นหลัก
+    // 1. ดึงจาก Supabase Cloud Database เป็นหลัก (ซ่อนเบอร์โทรศัพท์หากไม่ใช่เซสชันแอดมิน)
     try {
-      const supaRes = await fetch(`${getBase()}reports?select=${REPORT_SELECT_COLS}&order=timestamp.desc&limit=100`, {
+      const isAdmin = verifyAdminSessionToken() || (typeof sessionStorage !== 'undefined' && !!sessionStorage.getItem('pg_admin_session_v2'));
+      const selectCols = isAdmin ? REPORT_ADMIN_SELECT_COLS : REPORT_PUBLIC_SELECT_COLS;
+      const supaRes = await fetch(`${getBase()}reports?select=${selectCols}&order=timestamp.desc&limit=100`, {
         headers: getHeaders(),
         cache: 'no-cache'
       }).catch(() => null);
@@ -394,7 +406,12 @@ export async function fetchRecentCloudReports() {
         const rows = await supaRes.json();
         if (Array.isArray(rows)) {
           rows.forEach(row => {
+            if (row && typeof row.id === 'string' && row.id.startsWith('zz-sec-probe-')) {
+              fetch(`${getBase()}reports?id=eq.${encodeURIComponent(row.id)}`, { method: 'DELETE', headers: getHeaders() }).catch(() => {});
+              return;
+            }
             const parsed = fromSupabaseReport(row);
+            if (!isAdmin) parsed.phone = '';
             if (isValidReport(parsed)) {
               reportMap.set(parsed.id, parsed);
             }
@@ -725,7 +742,7 @@ export function subscribeToCloudEvents({ onNewReport, onNewFeedback, onAdminActi
     });
   }
 
-  // 3. Subscribe to Admin Actions
+  // 3. Subscribe to Admin Actions (Verified against Supabase to prevent unauthenticated Pub/Sub spoofing)
   if (onAdminAction && typeof window !== 'undefined' && 'EventSource' in window) {
     try {
       const actionsSource = new EventSource(`${PRIMARY_ACTIONS_TOPIC}/sse`);
@@ -737,7 +754,21 @@ export function subscribeToCloudEvents({ onNewReport, onNewFeedback, onAdminActi
             if (data.message) {
               try { action = JSON.parse(data.message); } catch (e) {}
             }
-            if (action && action.type) {
+            if (action && action.type && action.id) {
+              // Verify against Supabase source of truth before mutating client state
+              try {
+                const checkRes = await fetch(`${getBase()}reports?id=eq.${encodeURIComponent(action.id)}&select=id,is_approved,is_resolved&limit=1`, {
+                  headers: getHeaders(),
+                  cache: 'no-store'
+                });
+                if (checkRes.ok) {
+                  const rows = await checkRes.json();
+                  const row = Array.isArray(rows) ? rows[0] : null;
+                  if (action.type === 'approve' && (!row || !row.is_approved)) return;
+                  if (action.type === 'resolve' && (!row || !row.is_resolved)) return;
+                  if (action.type === 'reject' && row && row.is_approved) return;
+                }
+              } catch (_) {}
               onAdminAction(action);
             }
           }

@@ -25,6 +25,14 @@ const { handleTrashRoute } = require('./routes/trash');
 const { handleVisitorsRoute } = require('./routes/visitors');
 const { handleStatsRoute } = require('./routes/stats');
 
+const ALLOWED_ORIGINS = new Set([
+  'http://localhost:3000',
+  'http://localhost:4000',
+  'http://127.0.0.1:3000',
+  'http://127.0.0.1:4000',
+  'https://prakanguard-web.vercel.app'
+]);
+
 /**
  * Helper to parse JSON request body
  * @param {http.IncomingMessage} req 
@@ -51,13 +59,34 @@ function parseBody(req) {
 }
 
 /**
- * Serve static files with SPA fallback
+ * Serve static files with SPA fallback & strict sensitive directory blocking
  * @param {http.IncomingMessage} req 
  * @param {http.ServerResponse} res 
  * @param {string} pathname 
  */
 function serveStatic(req, res, pathname) {
-  let filePath = path.join(ADMIN_DIR, pathname === '/' ? 'index.html' : pathname);
+  const normPath = String(pathname || '/').replace(/\\/g, '/');
+
+  // Block direct HTTP access to backend code, local JSON databases, SQL scripts, and batch files
+  if (
+    normPath.startsWith('/data/') ||
+    normPath === '/data' ||
+    normPath.startsWith('/server/') ||
+    normPath === '/server' ||
+    normPath.startsWith('/database/') ||
+    normPath === '/database' ||
+    normPath === '/server.js' ||
+    normPath === '/package.json' ||
+    normPath.endsWith('.sql') ||
+    normPath.endsWith('.bat') ||
+    normPath.endsWith('.md')
+  ) {
+    res.writeHead(403, { 'Content-Type': 'text/plain; charset=utf-8' });
+    res.end('Access Denied');
+    return;
+  }
+
+  let filePath = path.join(ADMIN_DIR, normPath === '/' ? 'index.html' : normPath);
 
   // Security check: prevent directory traversal
   if (!filePath.startsWith(ADMIN_DIR)) {
@@ -67,7 +96,7 @@ function serveStatic(req, res, pathname) {
   }
 
   // Handle compatibility alias for visitor-tracker.js moved to scripts/
-  if (pathname === '/visitor-tracker.js' && !fs.existsSync(filePath)) {
+  if (normPath === '/visitor-tracker.js' && !fs.existsSync(filePath)) {
     const scriptsPath = path.join(ADMIN_DIR, 'scripts', 'visitor-tracker.js');
     if (fs.existsSync(scriptsPath)) {
       filePath = scriptsPath;
@@ -137,8 +166,11 @@ function createServer() {
     res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
     res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=(self)');
 
-    // CORS & Private Network Access (PNA) Headers
-    res.setHeader('Access-Control-Allow-Origin', '*');
+    // Restricted CORS & Private Network Access (PNA) Headers
+    const reqOrigin = req.headers.origin;
+    const allowedOrigin = (reqOrigin && ALLOWED_ORIGINS.has(reqOrigin)) ? reqOrigin : 'http://localhost:4000';
+    res.setHeader('Access-Control-Allow-Origin', allowedOrigin);
+    res.setHeader('Vary', 'Origin');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, PUT, DELETE, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
     res.setHeader('Access-Control-Allow-Private-Network', 'true');
@@ -185,7 +217,7 @@ function createServer() {
         'Content-Type': 'text/event-stream',
         'Cache-Control': 'no-cache',
         'Connection': 'keep-alive',
-        'Access-Control-Allow-Origin': '*'
+        'Access-Control-Allow-Origin': allowedOrigin
       });
       res.write('retry: 5000\n\n');
       res.write(`event: connected\ndata: {"message": "Admin SSE stream established", "timestamp": ${Date.now()}}\n\n`);
@@ -216,7 +248,7 @@ function createServer() {
     } catch (routeErr) {
       console.error('[Admin Server] Route error:', routeErr);
       res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
-      res.end(JSON.stringify({ error: 'Internal Server Error', message: routeErr.message }));
+      res.end(JSON.stringify({ error: 'Internal Server Error', message: 'An unexpected error occurred' }));
       return;
     }
 
@@ -248,17 +280,18 @@ function startServer() {
     });
   }, 15000);
 
-  // 4. Create and Listen HTTP Server
+  // 4. Create and Listen HTTP Server (Bound to loopback 127.0.0.1 by default for LAN security)
   const server = createServer();
+  const bindHost = process.env.HOST || '127.0.0.1';
 
-  server.listen(PORT, '0.0.0.0', () => {
+  server.listen(PORT, bindHost, () => {
     console.log('========================================================');
     console.log('  🛡️ PRAKANGUARD ADMIN COMMAND CENTER SERVER');
     console.log('  ระบบบริหารจัดการแอดมิน ศูนย์ข้อมูลอุทกภัยสมุทรปราการ');
     console.log('========================================================');
-    console.log(`  🌐 Server running at: http://localhost:${PORT}`);
+    console.log(`  🌐 Server running at: http://localhost:${PORT} (${bindHost})`);
     console.log(`  📡 Cloud Sync Bridge: Active (Supabase & ntfy.sh)`);
-    console.log(`  📁 Storage: Persistent JSON in ./data/`);
+    console.log(`  📁 Storage: Persistent JSON in ./data/ (Protected)`);
     console.log('========================================================');
   });
 
@@ -266,7 +299,7 @@ function startServer() {
     if (err.code === 'EADDRINUSE') {
       const nextPort = PORT + 1;
       console.warn(`[Admin Server] Port ${PORT} is in use, trying port ${nextPort}...`);
-      server.listen(nextPort, '0.0.0.0');
+      server.listen(nextPort, bindHost);
     } else {
       console.error('[Admin Server] Server error:', err);
     }

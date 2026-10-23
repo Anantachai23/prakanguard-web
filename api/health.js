@@ -16,7 +16,7 @@ export default async function handler(req, res) {
     timestamp: new Date().toISOString(),
     uptimeSeconds: uptime,
     environment: process.env.NODE_ENV || 'production',
-    nodeVersion: process.version,
+    runtime: 'Node.js Serverless',
     security: {
       hardenedHeaders: true,
       xssSanitization: 'active',

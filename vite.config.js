@@ -3,7 +3,8 @@ import react from '@vitejs/plugin-react';
 import { resolve } from 'path';
 import fs from 'fs';
 
-// Custom Vite plugin: copies the standalone admin/ folder into dist/admin/ after build
+// Custom Vite plugin: copies only safe static frontend assets of admin/ into dist/admin/ after build
+// (Never copies admin/data/, admin/server/, admin/database/, or backend scripts into the public bundle)
 function copyAdminPlugin() {
   return {
     name: 'copy-admin-panel',
@@ -11,8 +12,22 @@ function copyAdminPlugin() {
       const src = resolve(__dirname, 'admin');
       const dest = resolve(__dirname, 'dist', 'admin');
       if (!fs.existsSync(src)) return;
-      copyDirSync(src, dest);
-      console.log('[copy-admin-panel] ✅ admin/ → dist/admin/');
+      if (fs.existsSync(dest)) {
+        fs.rmSync(dest, { recursive: true, force: true });
+      }
+      fs.mkdirSync(dest, { recursive: true });
+
+      const indexHtml = resolve(src, 'index.html');
+      if (fs.existsSync(indexHtml)) {
+        fs.copyFileSync(indexHtml, resolve(dest, 'index.html'));
+      }
+
+      const assetsSrc = resolve(src, 'assets');
+      if (fs.existsSync(assetsSrc)) {
+        copyDirSync(assetsSrc, resolve(dest, 'assets'));
+      }
+
+      console.log('[copy-admin-panel] ✅ admin/{index.html,assets} → dist/admin/ (hardened: no backend/data leak)');
     }
   };
 }
