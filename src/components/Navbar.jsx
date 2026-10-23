@@ -120,7 +120,7 @@ export default function Navbar({
             <span className={`text-[13px] sm:text-[15px] font-extrabold tracking-tight leading-none shrink-0 ${
               isDark ? 'text-white' : 'text-slate-900'
             }`}>
-              Prakan Guard
+              PrakanGuard
             </span>
             <span className={`text-[8.5px] sm:text-[9.5px] px-1.5 py-0.5 rounded font-bold shrink-0 border ${
               isDark ? 'bg-blue-950/80 text-blue-300 border-blue-800' : 'bg-blue-50 text-blue-800 border-blue-200'
