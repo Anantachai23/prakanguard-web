@@ -23,7 +23,9 @@ import {
   Maximize2,
   Minimize2,
   ChevronUp,
-  ChevronDown
+  ChevronDown,
+  Copy,
+  Check
 } from 'lucide-react';
 import { INITIAL_FLOOD_POINTS } from '../data/samutPrakanPoints';
 import { FLOOD_STANDARDS } from '../data/floodStandards';
@@ -37,26 +39,33 @@ import {
   FAQS_OFFICIAL 
 } from '../data/chatKnowledgeBase';
 
-// โลโก้ทางการ PrakanGuard AI (Governmental / Civic Shield Emblem)
+// โลโก้ทางการ PrakanBOT (Modern Civic Shield & AI Pulse Emblem)
 function AiOfficialEmblem({ size = 32, className = "" }) {
   return (
     <div 
-      className={`relative flex items-center justify-center shrink-0 rounded-2xl overflow-hidden shadow-md select-none ${className}`}
+      className={`relative flex items-center justify-center shrink-0 rounded-2xl overflow-hidden shadow-sm select-none ${className}`}
       style={{ width: size, height: size }}
     >
       <svg width={size} height={size} viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
         <defs>
           <linearGradient id="pgAiShieldGrad" x1="18" y1="2" x2="18" y2="34" gradientUnits="userSpaceOnUse">
             <stop offset="0%" stopColor="#0284c7" />
-            <stop offset="60%" stopColor="#1e3a8a" />
+            <stop offset="50%" stopColor="#1d4ed8" />
             <stop offset="100%" stopColor="#0f172a" />
           </linearGradient>
           <linearGradient id="pgAiGoldRim" x1="6" y1="2" x2="30" y2="34" gradientUnits="userSpaceOnUse">
             <stop offset="0%" stopColor="#38bdf8" />
-            <stop offset="50%" stopColor="#93c5fd" />
+            <stop offset="50%" stopColor="#818cf8" />
             <stop offset="100%" stopColor="#0284c7" />
           </linearGradient>
+          <radialGradient id="pgAiGlow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.8" />
+            <stop offset="100%" stopColor="#0284c7" stopOpacity="0" />
+          </radialGradient>
         </defs>
+
+        {/* Ambient glow */}
+        <circle cx="18" cy="18" r="14" fill="url(#pgAiGlow)" opacity="0.25" />
 
         {/* Civic Defense Shield Frame */}
         <path 
@@ -69,14 +78,14 @@ function AiOfficialEmblem({ size = 32, className = "" }) {
 
         {/* Inner Water Droplet */}
         <path 
-          d="M18 9C18 9 12.5 16 12.5 19.5C12.5 22.5 15 25 18 25C21 25 23.5 22.5 23.5 19.5C23.5 16 18 9 18 9Z" 
+          d="M18 9.5C18 9.5 13 16 13 19.5C13 22.3 15.2 24.5 18 24.5C20.8 24.5 23 22.3 23 19.5C23 16 18 9.5 18 9.5Z" 
           fill="#38bdf8" 
-          fillOpacity="0.25"
+          fillOpacity="0.3"
           stroke="#38bdf8"
-          strokeWidth="1.3"
+          strokeWidth="1.2"
         />
 
-        {/* Hydro Wave */}
+        {/* Modern Wave Pulse */}
         <path 
           d="M14.5 20C15.6 19 16.8 21 18 20C19.2 19 20.4 21 21.5 20" 
           stroke="#ffffff" 
@@ -84,9 +93,9 @@ function AiOfficialEmblem({ size = 32, className = "" }) {
           strokeLinecap="round"
         />
 
-        {/* Central AI Node */}
+        {/* Central AI Node Spark */}
         <circle cx="18" cy="15" r="1.8" fill="#ffffff" />
-        <circle cx="18" cy="15" r="3" stroke="#67e8f9" strokeWidth="0.8" strokeDasharray="1.5 1.5" />
+        <circle cx="18" cy="15" r="3.2" stroke="#67e8f9" strokeWidth="0.8" strokeDasharray="1.5 1.5" />
       </svg>
     </div>
   );
@@ -757,13 +766,15 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
     };
   }, [isOpen, isMinimized]);
 
+  const [copiedMessageId, setCopiedMessageId] = useState(null);
+
   const [messages, setMessages] = useState([
     {
       id: 'welcome',
       sender: 'bot',
-      text: `สวัสดีครับ ยินดีต้อนรับสู่ **ระบบตอบข้อซักถามสารสนเทศอุทกภัยและเส้นทางสัญจร จังหวัดสมุทรปราการ (PrakanGuard AI)**
+      text: `สวัสดีครับ ผมคือ **PrakanBOT** ผู้ช่วยสารสนเทศอุทกภัยและเส้นทางสัญจรอัจฉริยะ จังหวัดสมุทรปราการ
 
-💡 ท่านสามารถพิมพ์สอบถามได้อย่างอิสระทุกเรื่องเกี่ยวกับน้ำท่วม ไม่จำกัดเฉพาะคำถามตัวอย่าง เช่น:
+💡 ท่านสามารถพิมพ์สอบถามได้อย่างอิสระทุกเรื่องเกี่ยวกับน้ำท่วม เช่น:
 • 📍 **ความเสี่ยงรายพิกัด:** *"ซอยทรัพย์บุญชัย / วัดด่าน / ปากน้ำ มีโอกาสท่วมไหม"*
 • 🚗 **เกณฑ์รถยนต์:** *"รถเก๋งลุยน้ำได้กี่เซน / รถดับกลางน้ำทำอย่างไร"*
 • 🛡️ **การเตรียมตัว & บ้าน:** *"น้ำจะเข้าบ้านเตรียมตัวอย่างไร / กั้นกระสอบทรายแบบไหน"*
@@ -772,8 +783,8 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
 • 🐍 **สัตว์มีพิษ & สุขภาพ:** *"ป้องกันงูและสัตว์มีพิษ / วิธีรักษาโรคน้ำกัดเท้า"*
 • 🌧️ **สภาพอากาศสด:** *"วันนี้ฝนตกกี่โมง / กี่เปอร์เซ็นต์"*
 
-⏱️ ระบบรายงานสภาพอากาศและอุณหภูมิอัปเดตสดตลอดเวลา และท่านสามารถกด **[⏹️ หยุดตอบ]** หรือกด **[-] ย่อขนาด** ได้ตลอดเวลาครับ!`,
-      time: 'ระบบพร้อมให้บริการตลอด 24 ชม.'
+⏱️ รายงานสภาพอากาศสดตลอดเวลา และท่านสามารถกด **[⏹️ หยุด]** หรือเริ่มบทสนทนาใหม่ได้ตลอดเวลาครับ!`,
+      time: 'ระบบพร้อมให้บริการ 24 ชม.'
     }
   ]);
 
@@ -1958,7 +1969,7 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
     }
 
     // 29. คำถามทั่วไป / สนทนานอกกรอบอย่างชาญฉลาด (Intelligent Conversational Responder)
-    return `🤖 **PrakanGuard AI ยินดีตอบข้อซักถามและให้ข้อมูลครับ:**\n\n` +
+    return `🤖 **PrakanBOT ยินดีตอบข้อซักถามและให้ข้อมูลครับ:**\n\n` +
       `ขณะนี้ในพื้นที่ **จังหวัดสมุทรปราการ** มีข้อมูลสภาพอากาศและสถานการณ์สดดังนี้:\n` +
       `• 🌡️ **อุณหภูมิปัจจุบัน:** **${weather.temp}°C** (สถานะ: ${weather.weatherDesc})\n` +
       `• 🌧️ **โอกาสเกิดฝนตกวันนี้:** **${rainChance}%** (ปริมาณฝนสะสมคาดการณ์ ~**${rainSum} มม.**)\n` +
@@ -2029,6 +2040,30 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
     }, 280);
   };
 
+  const handleResetChat = () => {
+    handleStopResponse();
+    playClickSound();
+    setMessages([
+      {
+        id: `welcome-${Date.now()}`,
+        sender: 'bot',
+        text: `สวัสดีครับ ผมคือ **PrakanBOT** ผู้ช่วยสารสนเทศอุทกภัยและเส้นทางสัญจรอัจฉริยะ จังหวัดสมุทรปราการ\n\n💡 ท่านสามารถพิมพ์สอบถามข้อมูลน้ำท่วม สภาพอากาศ หรือเส้นทางสัญจรได้ตลอด 24 ชั่วโมงครับ`,
+        time: 'ระบบพร้อมให้บริการ 24 ชม.'
+      }
+    ]);
+  };
+
+  const handleCopyMessage = (msgId, text) => {
+    if (!text) return;
+    try {
+      navigator.clipboard?.writeText(text);
+      setCopiedMessageId(msgId);
+      setTimeout(() => setCopiedMessageId(null), 2000);
+    } catch {
+      // Ignore clipboard fallback
+    }
+  };
+
   // Smart Formatter for Message Text (Highlighting Government Agency Citations Prominently)
   const renderFormattedMessage = (rawText) => {
     if (!rawText) return null;
@@ -2096,7 +2131,7 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
 
   return (
     <>
-      {/* Floating Helpdesk Launcher Button - Theme-Adaptive & Draggable on PC and Tablet */}
+      {/* Floating Helpdesk Launcher Button - Modern Sleek Capsule, Theme-Adaptive & Draggable */}
       {!isOpen && (
         <div
           ref={launcherRef}
@@ -2119,23 +2154,44 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
             right: 'auto',
             touchAction: 'none'
           } : undefined}
-          className={`fixed bottom-[calc(5.8rem+env(safe-area-inset-bottom,0px))] right-2.5 sm:bottom-6 sm:right-6 z-40 px-2 sm:px-3.5 py-1 sm:py-2.5 rounded-lg sm:rounded-xl font-semibold text-[10px] sm:text-xs shadow-lg items-center gap-1.5 sm:gap-2 border cursor-grab active:cursor-grabbing transition-shadow select-none backdrop-blur-md group ${
+          className={`fixed bottom-[calc(5.8rem+env(safe-area-inset-bottom,0px))] right-2.5 sm:bottom-6 sm:right-6 z-40 px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-full font-medium text-[11px] sm:text-xs shadow-xl items-center gap-2 border cursor-grab active:cursor-grabbing select-none backdrop-blur-xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] group ${
             isPointSelected ? 'hidden' : 'flex'
           } ${
             isDark 
-              ? 'bg-slate-900/95 hover:bg-slate-800 text-slate-100 border-slate-700 hover:border-blue-500' 
-              : 'bg-white/95 hover:bg-slate-50 text-slate-800 border-slate-200 hover:border-blue-400'
+              ? 'bg-slate-900/90 hover:bg-slate-800/95 text-slate-100 border-slate-700/80 hover:border-sky-500/60 shadow-sky-950/40 ring-1 ring-sky-500/20 hover:ring-sky-500/40' 
+              : 'bg-white/95 hover:bg-slate-50 text-slate-800 border-slate-200/90 hover:border-blue-400 shadow-blue-900/10 ring-1 ring-blue-500/15 hover:ring-blue-500/30'
           }`}
-          title="ผู้ช่วยถาม-ตอบข้อมูลน้ำท่วม (คลิกเพื่อเปิด หรือลากย้ายได้)"
+          title="PrakanBOT - ผู้ช่วยข้อมูลน้ำท่วมและเส้นทางอัจฉริยะ (คลิกเพื่อเปิด หรือลากย้ายได้)"
         >
-          <AiOfficialEmblem size={20} />
-          <div className="text-left pointer-events-none">
-            <div className="flex items-center gap-1 sm:gap-1.5">
-              <span className={`block text-[10.5px] sm:text-xs font-bold leading-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>ศูนย์ข้อมูล AI</span>
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
-            </div>
-            <span className={`hidden sm:block text-[10px] font-medium ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>ถาม-ตอบเส้นทาง 24 ชม.</span>
+          <div className="relative shrink-0 flex items-center justify-center">
+            <AiOfficialEmblem size={24} className="sm:w-[26px] sm:h-[26px]" />
+            <span className="absolute -top-0.5 -right-0.5 flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500 border border-white dark:border-slate-900"></span>
+            </span>
           </div>
+
+          <div className="text-left pointer-events-none">
+            <div className="flex items-center gap-1.5">
+              <span className="font-black text-[11.5px] sm:text-[13px] tracking-tight bg-gradient-to-r from-blue-600 via-sky-500 to-indigo-600 dark:from-sky-400 dark:via-cyan-300 dark:to-blue-400 bg-clip-text text-transparent">
+                PrakanBOT
+              </span>
+              <span className={`text-[8.5px] sm:text-[9px] font-bold px-1.5 py-0.2 rounded-full border shrink-0 ${
+                isDark 
+                  ? 'bg-sky-950/70 text-cyan-300 border-sky-800/80' 
+                  : 'bg-blue-50 text-blue-700 border-blue-200'
+              }`}>
+                24h
+              </span>
+            </div>
+            <span className={`hidden sm:block text-[9.5px] font-normal leading-tight ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+              ถามข้อมูลน้ำท่วม & เส้นทาง
+            </span>
+          </div>
+
+          <Sparkles className={`w-3.5 h-3.5 ml-0.5 transition-transform duration-300 group-hover:rotate-12 group-hover:scale-110 ${
+            isDark ? 'text-sky-400' : 'text-blue-500'
+          }`} />
         </div>
       )}
 
@@ -2148,34 +2204,44 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
             right: 'auto',
             bottom: 'auto'
           } : undefined}
-          className={`fixed z-50 bottom-[calc(5.8rem+env(safe-area-inset-bottom,0px))] right-2.5 sm:bottom-6 sm:right-6 w-auto max-w-[240px] sm:w-[340px] border rounded-xl shadow-xl flex items-center justify-between gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-2 backdrop-blur-md transition-all duration-200 ${
+          className={`fixed z-50 bottom-[calc(5.8rem+env(safe-area-inset-bottom,0px))] right-2.5 sm:bottom-6 sm:right-6 w-auto max-w-[270px] sm:w-[340px] border rounded-2xl shadow-xl flex items-center justify-between gap-1.5 px-3 py-2 backdrop-blur-xl transition-all duration-200 ${
             isDark 
-              ? 'bg-slate-900/95 border-slate-700 text-slate-100' 
-              : 'bg-white/95 border-slate-200 text-slate-800'
+              ? 'bg-slate-900/95 border-slate-700/80 text-slate-100 ring-1 ring-sky-500/20' 
+              : 'bg-white/95 border-slate-200/90 text-slate-800 ring-1 ring-blue-500/15'
           }`}
         >
           {/* Clickable Area to Restore */}
           <div 
             onClick={() => setIsMinimized(false)}
-            className="flex items-center gap-2 cursor-pointer select-none flex-1 min-w-0"
-            title="คลิกเพื่อขยายหน้าต่างแชท AI กลับขึ้นมา"
+            className="flex items-center gap-2 cursor-pointer select-none flex-1 min-w-0 group"
+            title="คลิกเพื่อขยายหน้าต่าง PrakanBOT กลับขึ้นมา"
           >
-            <AiOfficialEmblem size={22} />
+            <div className="relative shrink-0">
+              <AiOfficialEmblem size={22} />
+              <span className="absolute -top-0.5 -right-0.5 flex h-1.5 w-1.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
+              </span>
+            </div>
             <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-1">
-                <span className="font-bold text-[11px] sm:text-xs truncate">PrakanGuard AI</span>
-                <span className={`text-[8px] sm:text-[9px] px-1 py-0.2 rounded font-bold shrink-0 ${
-                  isDark ? 'bg-blue-950/80 text-cyan-300 border border-blue-800' : 'bg-blue-50 text-blue-700 border border-blue-200'
-                }`}>ย่อขนาด</span>
+              <div className="flex items-center gap-1.5">
+                <span className="font-black text-xs sm:text-[13px] tracking-tight bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-sky-400 dark:to-cyan-300 bg-clip-text text-transparent truncate">
+                  PrakanBOT
+                </span>
+                <span className={`text-[8.5px] px-1.5 py-0.2 rounded-full font-semibold shrink-0 ${
+                  isDark ? 'bg-sky-950/80 text-cyan-300 border border-sky-800' : 'bg-blue-50 text-blue-700 border border-blue-200'
+                }`}>
+                  ย่อขนาด
+                </span>
               </div>
               <p className="text-[9.5px] text-slate-400 truncate flex items-center gap-1">
                 {(isThinking || streamingMessageId) ? (
-                  <span className="text-amber-400 font-semibold flex items-center gap-1">
+                  <span className="text-amber-500 dark:text-amber-400 font-semibold flex items-center gap-1 animate-pulse">
                     <span className="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
                     กำลังตอบคำถาม...
                   </span>
                 ) : (
-                  <span>แตะเพื่อขยายหน้าต่าง</span>
+                  <span className="group-hover:text-blue-500 transition-colors">แตะเพื่อขยายหน้าต่าง</span>
                 )}
               </p>
             </div>
@@ -2188,8 +2254,8 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
               <button
                 type="button"
                 onClick={handleStopResponse}
-                className="px-2 py-1 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-[10px] font-bold flex items-center gap-1 transition-all cursor-pointer"
-                title="หยุดการตอบคำถามของ AI ทันที"
+                className="px-2 py-1 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-[10px] font-bold flex items-center gap-1 transition-all cursor-pointer shadow-xs"
+                title="หยุดการตอบคำถามทันที"
               >
                 <Square className="w-2.5 h-2.5 fill-current" />
                 <span>หยุด</span>
@@ -2203,7 +2269,7 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
                 playToggleSound(true);
                 setIsMinimized(false);
               }}
-              className={`p-1 rounded-lg transition-all cursor-pointer ${
+              className={`p-1.5 rounded-lg transition-all cursor-pointer ${
                 isDark ? 'bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
               }`}
               title="ขยายหน้าต่างขึ้น"
@@ -2219,7 +2285,7 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
                 setIsOpen(false);
                 setIsMinimized(false);
               }}
-              className={`p-1 rounded-lg transition-all cursor-pointer ${
+              className={`p-1.5 rounded-lg transition-all cursor-pointer ${
                 isDark ? 'bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white' : 'bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800'
               }`}
               title="ปิดแชท"
@@ -2250,16 +2316,16 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
               : isExpanded 
               ? 'sm:w-[560px] h-[440px] sm:h-[620px] max-h-[75vh] sm:max-h-[86vh]' 
               : 'sm:w-[420px] h-[360px] max-h-[68vh] sm:h-[540px] sm:max-h-[84vh]'
-          } border rounded-xl shadow-2xl flex flex-col overflow-hidden transition-[box-shadow,border-color] duration-150 ${
+          } border rounded-2xl sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden transition-[box-shadow,border-color] duration-150 backdrop-blur-2xl ${
             !position ? 'bottom-[calc(3.5rem+env(safe-area-inset-bottom,0px))] left-1/2 -translate-x-1/2 sm:translate-x-0 sm:left-auto sm:bottom-6 sm:right-6' : ''
           } ${
-            isDraggingModal || isResizingModal ? 'ring-2 ring-blue-500/60' : ''
+            isDraggingModal || isResizingModal ? 'ring-2 ring-sky-500/60' : 'ring-1 ring-slate-900/5 dark:ring-white/10'
           } ${
-            isDark ? 'bg-slate-900 border-slate-800 text-slate-100' : 'bg-white border-slate-200 text-slate-900'
+            isDark ? 'bg-slate-900/95 border-slate-700/80 text-slate-100 shadow-slate-950/60' : 'bg-white/95 border-slate-200/90 text-slate-900 shadow-blue-950/20'
           }`}
         >
-          {/* Top Institutional Bar */}
-          <div className="h-1 w-full bg-blue-700 shrink-0" />
+          {/* Top Institutional Accent Line */}
+          <div className="h-1 w-full bg-gradient-to-r from-blue-600 via-sky-400 to-indigo-600 shrink-0" />
 
           {/* Mouse & Touch Resize Corner */}
           <div
@@ -2268,7 +2334,7 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
             className="absolute top-1 left-0 w-6 h-6 cursor-nwse-resize z-50 flex items-start justify-start p-1 select-none touch-none group"
             title="ลากมุมนี้เพื่อย่อหรือขยายขนาด"
           >
-            <div className="w-2.5 h-2.5 border-t-2 border-l-2 border-slate-400 group-hover:border-blue-500 rounded-tl transition-colors" />
+            <div className="w-2.5 h-2.5 border-t-2 border-l-2 border-slate-400 group-hover:border-sky-500 rounded-tl transition-colors" />
           </div>
 
           {/* Mobile Ergonomic Touch Handle Bar */}
@@ -2287,7 +2353,7 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
                 setCustomSize({ width: null, height: Math.min(window.innerHeight - 110, 520) });
               }
             }}
-            className="w-full py-1 px-3 flex items-center justify-between cursor-ns-resize touch-none select-none sm:hidden border-b border-slate-200 dark:border-slate-800 transition-colors"
+            className="w-full py-1 px-3 flex items-center justify-between cursor-ns-resize touch-none select-none sm:hidden border-b border-slate-200/80 dark:border-slate-800/80 transition-colors"
             title="แตะเพื่อสลับย่อ/ขยาย"
           >
             <div className="flex items-center gap-1 text-[9.5px] font-semibold text-slate-400">
@@ -2297,7 +2363,7 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
 
             <div className="w-10 h-1 rounded-full bg-slate-300 dark:bg-slate-700" />
 
-            <div className="flex items-center gap-1 text-[9.5px] font-semibold text-blue-600 dark:text-blue-400">
+            <div className="flex items-center gap-1 text-[9.5px] font-semibold text-blue-600 dark:text-sky-400">
               <span>ขยาย</span>
               <ChevronUp className="w-3 h-3" />
             </div>
@@ -2307,70 +2373,130 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
           <div 
             onMouseDown={handleMouseDownHeader}
             onTouchStart={handleTouchStartHeader}
-            className={`px-3 py-2 sm:px-4 sm:py-3 border-b flex items-center justify-between cursor-grab active:cursor-grabbing select-none transition-colors ${
+            className={`px-3 py-2.5 sm:px-4 sm:py-3 border-b flex items-center justify-between cursor-grab active:cursor-grabbing select-none transition-colors ${
               isDraggingModal 
-                ? (isDark ? 'bg-slate-800 border-blue-700' : 'bg-blue-50/60 border-blue-200')
-                : (isDark ? 'bg-slate-950/50 border-slate-800' : 'bg-slate-50/80 border-slate-200')
+                ? (isDark ? 'bg-slate-800/95 border-sky-600' : 'bg-blue-50/90 border-blue-300')
+                : (isDark ? 'bg-slate-900/90 border-slate-800' : 'bg-white/90 border-slate-200/80')
             }`}
             title="กดค้างที่แถบนี้เพื่อลากย้ายหน้าต่าง"
           >
-            <div className="flex items-center gap-2 min-w-0 pointer-events-none">
-              <AiOfficialEmblem size={24} />
+            <div className="flex items-center gap-2.5 min-w-0 pointer-events-none">
+              <div className="relative shrink-0">
+                <AiOfficialEmblem size={28} />
+                <span className="absolute -bottom-0.5 -right-0.5 flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500 border border-white dark:border-slate-900"></span>
+                </span>
+              </div>
               <div className="min-w-0">
-                <h4 className={`text-xs sm:text-sm font-bold flex items-center gap-1.5 truncate ${
-                  isDark ? 'text-white' : 'text-slate-900'
-                }`}>
-                  <span>ศูนย์บริการข้อมูลอัตโนมัติ</span>
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
-                </h4>
-                <p className={`text-[10px] sm:text-[11px] truncate ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                  สอบถามจุดน้ำท่วมขัง เส้นทางเลี่ยง และสายด่วน
+                <div className="flex items-center gap-1.5">
+                  <h4 className="text-xs sm:text-sm font-black tracking-tight text-slate-900 dark:text-white">
+                    PrakanBOT
+                  </h4>
+                  <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded-full text-[8.5px] sm:text-[9px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                    AI 24h
+                  </span>
+                </div>
+                <p className={`text-[9.5px] sm:text-[10.5px] truncate font-normal ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                  ผู้ช่วยข้อมูลน้ำท่วมและเส้นทางสัญจร
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-1 shrink-0 ml-2">
+            <div className="flex items-center gap-1 shrink-0 ml-1.5">
+              {/* Reset / New Chat */}
+              <button
+                type="button"
+                onClick={handleResetChat}
+                className={`w-7 h-7 sm:w-7.5 sm:h-7.5 rounded-lg flex items-center justify-center transition-colors cursor-pointer border ${
+                  isDark 
+                    ? 'bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border-slate-700' 
+                    : 'bg-slate-50 hover:bg-slate-100 text-slate-600 hover:text-slate-900 border-slate-200'
+                }`}
+                title="เริ่มบทสนทนาใหม่"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+              </button>
+
+              {/* Drag Handle */}
               <div 
-                className={`flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-lg select-none border transition-colors cursor-grab active:cursor-grabbing ${
+                className={`flex items-center justify-center w-7 h-7 sm:w-7.5 sm:h-7.5 rounded-lg select-none border transition-colors cursor-grab active:cursor-grabbing ${
                   isDark 
                     ? 'bg-slate-800 text-slate-400 border-slate-700' 
-                    : 'bg-white text-slate-500 border-slate-200'
+                    : 'bg-slate-50 text-slate-500 border-slate-200'
                 }`}
                 title="ลากย้ายหน้าต่าง"
               >
-                <GripHorizontal className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                <GripHorizontal className="w-3.5 h-3.5" />
               </div>
 
+              {/* Minimize to Dock */}
+              <button
+                type="button"
+                onClick={() => {
+                  playToggleSound(false);
+                  setIsMinimized(true);
+                }}
+                className={`w-7 h-7 sm:w-7.5 sm:h-7.5 rounded-lg flex items-center justify-center transition-colors cursor-pointer border ${
+                  isDark 
+                    ? 'bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border-slate-700' 
+                    : 'bg-slate-50 hover:bg-slate-100 text-slate-600 hover:text-slate-900 border-slate-200'
+                }`}
+                title="ย่อหน้าต่าง"
+              >
+                <Minus className="w-3.5 h-3.5" />
+              </button>
+
+              {/* Expand/Restore Size (on desktop) */}
+              <button
+                type="button"
+                onClick={() => {
+                  setIsExpanded(!isExpanded);
+                  setCustomSize({ width: null, height: null });
+                }}
+                className={`hidden sm:flex w-7.5 h-7.5 rounded-lg items-center justify-center transition-colors cursor-pointer border ${
+                  isDark 
+                    ? 'bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border-slate-700' 
+                    : 'bg-slate-50 hover:bg-slate-100 text-slate-600 hover:text-slate-900 border-slate-200'
+                }`}
+                title={isExpanded ? "คืนขนาดหน้าต่าง" : "ขยายหน้าต่าง"}
+              >
+                {isExpanded ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
+              </button>
+
+              {/* Close Button */}
               <button
                 type="button"
                 onClick={() => {
                   playCloseSound();
                   setIsOpen(false);
                 }}
-                className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center transition-colors cursor-pointer ${
+                className={`w-7 h-7 sm:w-7.5 sm:h-7.5 rounded-lg flex items-center justify-center transition-colors cursor-pointer border ${
                   isDark 
-                    ? 'bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white border border-slate-700' 
-                    : 'bg-white hover:bg-slate-100 text-slate-500 hover:text-slate-800 border border-slate-200'
+                    ? 'bg-slate-800 hover:bg-rose-900/50 hover:border-rose-700 text-slate-400 hover:text-rose-300 border-slate-700' 
+                    : 'bg-slate-50 hover:bg-rose-50 hover:border-rose-200 text-slate-500 hover:text-rose-600 border-slate-200'
                 }`}
                 title="ปิดหน้าต่าง"
               >
-                <X className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                <X className="w-3.5 h-3.5" />
               </button>
             </div>
           </div>
 
           {/* Live Meteorological Telemetry Status Bar */}
-          <div className={`px-3.5 py-1.5 border-b flex items-center justify-between text-[11px] ${
-            isDark ? 'bg-slate-950/60 border-slate-800 text-slate-300' : 'bg-slate-50/70 border-slate-200 text-slate-700'
+          <div className={`px-3 py-1.5 sm:px-4 sm:py-2 border-b flex items-center justify-between text-[11px] ${
+            isDark ? 'bg-slate-950/40 border-slate-800 text-slate-300' : 'bg-slate-50/70 border-slate-200/80 text-slate-700'
           }`}>
             <div className="flex items-center gap-1.5 truncate">
-              <CloudRain className={`w-3.5 h-3.5 shrink-0 ${isDark ? 'text-blue-400' : 'text-blue-600'}`} />
-              <span className="truncate">
-                สมุทรปราการ: <strong className="font-bold">{weather.temp}°C</strong> • โอกาสฝน: <strong className="font-bold">{weather.rainProbabilityToday}%</strong>
+              <span className="flex items-center justify-center w-5 h-5 rounded-md bg-sky-500/10 text-sky-500 dark:text-cyan-400 shrink-0">
+                <CloudRain className="w-3.5 h-3.5" />
+              </span>
+              <span className="truncate text-[10.5px] sm:text-xs">
+                สมุทรปราการ: <strong className="font-bold text-slate-900 dark:text-white">{weather.temp}°C</strong> • ฝนวันนี้: <strong className="font-bold text-blue-600 dark:text-sky-400">{weather.rainProbabilityToday}%</strong>
               </span>
             </div>
-            <span className={`text-[10px] font-semibold shrink-0 ml-2 px-2 py-0.5 rounded border ${
-              isDark ? 'bg-slate-800 text-slate-300 border-slate-700' : 'bg-white text-slate-700 border-slate-200'
+            <span className={`text-[9.5px] sm:text-[10px] font-semibold shrink-0 ml-2 px-2 py-0.5 rounded-full border ${
+              isDark ? 'bg-slate-800/80 text-cyan-300 border-slate-700' : 'bg-white text-blue-700 border-blue-200 shadow-2xs'
             }`}>
               {weather.peakHour}
             </span>
@@ -2378,15 +2504,15 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
 
           {/* Quick Inquiry Chips */}
           <div className={`relative px-2 py-1.5 border-b flex items-center ${
-            isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
+            isDark ? 'bg-slate-900/90 border-slate-800' : 'bg-white border-slate-200/80'
           }`}>
             <button
               type="button"
               onClick={() => scrollChips('left')}
-              className={`w-7 h-7 rounded-lg flex items-center justify-center transition-colors cursor-pointer shrink-0 mr-1 border ${
+              className={`w-6 h-6 sm:w-7 sm:h-7 rounded-full flex items-center justify-center transition-colors cursor-pointer shrink-0 mr-1 border ${
                 isDark 
                   ? 'bg-slate-800 hover:bg-slate-700 text-slate-300 border-slate-700' 
-                  : 'bg-slate-50 hover:bg-slate-100 text-slate-600 border-slate-200'
+                  : 'bg-slate-100 hover:bg-slate-200 text-slate-600 border-slate-200'
               }`}
               title="เลื่อนซ้าย"
             >
@@ -2402,24 +2528,25 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
               className="flex-1 flex items-center gap-1.5 overflow-x-auto smooth-slider no-scrollbar text-xs py-0.5 touch-pan-x cursor-grab active:cursor-grabbing select-none"
             >
               {[
-                { label: 'สรุปจุดน้ำท่วมล่าสุด', q: 'ตอนนี้ในสมุทรปราการมีน้ำท่วมตรงไหนบ้าง?' },
-                { label: 'เกณฑ์ระดับน้ำรถเก๋ง/กระบะ', q: 'รถเก๋งลุยน้ำได้กี่เซนติเมตร และระดับไหนห้ามผ่านเด็ดขาด?' },
-                { label: 'สายด่วนฉุกเฉิน 24 ชม.', q: 'ขอเบอร์โทรศัพท์สายด่วนฉุกเฉินหน่วยงานช่วยเหลือในสมุทรปราการ' },
-                { label: 'วิธีป้องกันไฟดูดช่วงน้ำท่วม', q: 'วิธีตัดไฟและป้องกันไฟดูดช่วงน้ำท่วมต้องทำอย่างไร?' },
-                { label: 'พยากรณ์เวลาฝนตกวันนี้', q: 'วันนี้ในสมุทรปราการมีโอกาสฝนตกช่วงกี่โมง?' },
-                { label: 'จุดจอดรถสำรองหนีน้ำท่วม', q: 'ในสมุทรปราการมีจุดจอดรถที่สูงหรือลานจอดหนีน้ำท่วมที่ไหนบ้าง?' }
+                { emoji: '🌊', label: 'สรุปจุดน้ำท่วมล่าสุด', q: 'ตอนนี้ในสมุทรปราการมีน้ำท่วมตรงไหนบ้าง?' },
+                { emoji: '🚗', label: 'เกณฑ์ระดับน้ำรถเก๋ง/กระบะ', q: 'รถเก๋งลุยน้ำได้กี่เซนติเมตร และระดับไหนห้ามผ่านเด็ดขาด?' },
+                { emoji: '📞', label: 'สายด่วนฉุกเฉิน 24 ชม.', q: 'ขอเบอร์โทรศัพท์สายด่วนฉุกเฉินหน่วยงานช่วยเหลือในสมุทรปราการ' },
+                { emoji: '⚡', label: 'วิธีป้องกันไฟดูด', q: 'วิธีตัดไฟและป้องกันไฟดูดช่วงน้ำท่วมต้องทำอย่างไร?' },
+                { emoji: '🌧️', label: 'เวลาฝนตกวันนี้', q: 'วันนี้ในสมุทรปราการมีโอกาสฝนตกช่วงกี่โมง?' },
+                { emoji: '🅿️', label: 'จุดจอดรถหนีน้ำท่วม', q: 'ในสมุทรปราการมีจุดจอดรถที่สูงหรือลานจอดหนีน้ำท่วมที่ไหนบ้าง?' }
               ].map((chip, idx) => (
                 <button 
                   key={idx}
                   type="button"
                   onClick={() => { if (!chipsHasDraggedRef.current) handleSend(chip.q); }}
-                  className={`smooth-slider-item px-2.5 py-1 rounded-md whitespace-nowrap transition-colors cursor-pointer font-semibold text-[11px] border shrink-0 select-none ${
+                  className={`smooth-slider-item inline-flex items-center gap-1 px-2.5 py-1 rounded-full whitespace-nowrap transition-all duration-200 cursor-pointer font-medium text-[10.5px] sm:text-[11px] border shrink-0 select-none shadow-2xs ${
                     isDark 
-                      ? 'bg-slate-800/90 text-slate-200 border-slate-700 hover:bg-slate-700 hover:border-slate-600' 
-                      : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100 hover:border-slate-300'
+                      ? 'bg-slate-800/90 text-slate-200 border-slate-700/80 hover:bg-slate-700 hover:border-sky-500/50 hover:text-white' 
+                      : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700'
                   }`}
                 >
-                  {chip.label}
+                  <span>{chip.emoji}</span>
+                  <span>{chip.label}</span>
                 </button>
               ))}
             </div>
@@ -2427,10 +2554,10 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
             <button
               type="button"
               onClick={() => scrollChips('right')}
-              className={`w-7 h-7 rounded-lg flex items-center justify-center transition-colors cursor-pointer shrink-0 ml-1 border ${
+              className={`w-6 h-6 sm:w-7 sm:h-7 rounded-full flex items-center justify-center transition-colors cursor-pointer shrink-0 ml-1 border ${
                 isDark 
                   ? 'bg-slate-800 hover:bg-slate-700 text-slate-300 border-slate-700' 
-                  : 'bg-slate-50 hover:bg-slate-100 text-slate-600 border-slate-200'
+                  : 'bg-slate-100 hover:bg-slate-200 text-slate-600 border-slate-200'
               }`}
               title="เลื่อนขวา"
             >
@@ -2439,49 +2566,73 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
           </div>
 
           {/* Message History Feed */}
-          <div className={`flex-1 p-2.5 sm:p-4 space-y-2.5 overflow-y-auto text-[11.5px] sm:text-xs ${
+          <div className={`flex-1 p-2.5 sm:p-4 space-y-3 overflow-y-auto text-[11.5px] sm:text-xs ${
             isDark ? 'bg-slate-950/40' : 'bg-slate-50/40'
           }`}>
             {messages.map((m) => (
               <div 
                 key={m.id} 
-                className={`flex gap-2 ${m.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+                className={`flex gap-2 group ${m.sender === 'user' ? 'justify-end' : 'justify-start'}`}
               >
                 {m.sender === 'bot' && (
-                  <div className={`w-6 h-6 sm:w-7 sm:h-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5 border ${
-                    isDark ? 'bg-blue-950 text-cyan-400 border-blue-800' : 'bg-blue-100 text-blue-700 border border-blue-200'
-                  }`}>
-                    <ShieldCheck className="w-3.5 h-3.5" />
+                  <div className="shrink-0 mt-0.5">
+                    <AiOfficialEmblem size={24} />
                   </div>
                 )}
                 
-                <div 
-                  className={`max-w-[88%] rounded-xl px-3 py-2 sm:px-3.5 sm:py-2.5 leading-relaxed shadow-xs ${
-                    m.sender === 'user' 
-                      ? 'bg-blue-700 text-white rounded-br-xs font-medium' 
-                      : isDark
-                        ? 'bg-slate-800/90 border border-slate-700 text-slate-100 rounded-bl-xs'
-                        : 'bg-white border border-slate-200 text-slate-800 rounded-bl-xs'
-                  }`}
-                >
-                  {renderFormattedMessage(m.text)}
-                  
-                  {streamingMessageId === m.id && (
-                    <span className="inline-block w-1.5 h-3 bg-blue-500 ml-1 animate-pulse align-middle"></span>
-                  )}
+                <div className={`max-w-[88%] flex flex-col ${m.sender === 'user' ? 'items-end' : 'items-start'}`}>
+                  <div 
+                    className={`rounded-2xl px-3 py-2 sm:px-3.5 sm:py-2.5 leading-relaxed shadow-xs text-xs sm:text-[12.5px] ${
+                      m.sender === 'user' 
+                        ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-tr-xs font-normal shadow-blue-500/10' 
+                        : isDark
+                          ? 'bg-slate-800/90 border border-slate-700/70 text-slate-100 rounded-tl-xs shadow-black/20'
+                          : 'bg-white border border-slate-200/90 text-slate-800 rounded-tl-xs shadow-slate-100'
+                    }`}
+                  >
+                    {m.sender === 'bot' && (
+                      <div className="flex items-center justify-between gap-2 mb-1.5 pb-1 border-b border-slate-200/40 dark:border-slate-700/50">
+                        <span className="text-[10px] font-bold text-blue-600 dark:text-cyan-400">PrakanBOT</span>
+                        <button
+                          type="button"
+                          onClick={() => handleCopyMessage(m.id, m.text)}
+                          className="opacity-70 hover:opacity-100 transition-opacity text-[10px] flex items-center gap-1 cursor-pointer text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                          title="คัดลอกข้อความ"
+                        >
+                          {copiedMessageId === m.id ? (
+                            <>
+                              <Check className="w-3 h-3 text-emerald-500" />
+                              <span className="text-emerald-500 font-medium">คัดลอกแล้ว</span>
+                            </>
+                          ) : (
+                            <>
+                              <Copy className="w-3 h-3" />
+                              <span className="hidden sm:inline">คัดลอก</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    )}
 
-                  <span className={`block text-[9.5px] mt-1 ${
-                    m.sender === 'user' ? 'text-blue-100 text-right' : (isDark ? 'text-slate-400' : 'text-slate-500')
+                    {renderFormattedMessage(m.text)}
+                    
+                    {streamingMessageId === m.id && (
+                      <span className="inline-block w-1.5 h-3.5 bg-sky-500 ml-1 animate-pulse align-middle rounded-full"></span>
+                    )}
+                  </div>
+
+                  <span className={`block text-[9px] mt-0.5 px-1 ${
+                    m.sender === 'user' ? 'text-slate-400 text-right' : (isDark ? 'text-slate-500' : 'text-slate-400')
                   }`}>
                     {m.time}
                   </span>
                 </div>
 
                 {m.sender === 'user' && (
-                  <div className={`w-6 h-6 sm:w-7 sm:h-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5 border ${
+                  <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-0.5 border text-xs ${
                     isDark ? 'bg-slate-800 text-slate-300 border-slate-700' : 'bg-slate-200 text-slate-700 border-slate-300'
                   }`}>
-                    <User className="w-3.5 h-3.5" />
+                    <User className="w-3 h-3" />
                   </div>
                 )}
               </div>
@@ -2490,18 +2641,20 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
             {/* Thinking Indicator */}
             {isThinking && (
               <div className="flex gap-2 justify-start animate-in fade-in duration-200">
-                <div className={`w-6 h-6 sm:w-7 sm:h-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5 border ${
-                  isDark ? 'bg-blue-950 text-cyan-400 border-blue-800' : 'bg-blue-100 text-blue-700 border border-blue-200'
-                }`}>
-                  <ShieldCheck className="w-3.5 h-3.5" />
+                <div className="shrink-0 mt-0.5">
+                  <AiOfficialEmblem size={24} />
                 </div>
-                <div className={`border rounded-xl rounded-bl-xs px-3 py-2 flex items-center gap-1.5 shadow-xs ${
-                  isDark ? 'bg-slate-800 border-slate-700 text-slate-300' : 'bg-white border-slate-200 text-slate-600'
+                <div className={`border rounded-2xl rounded-tl-xs px-3.5 py-2 flex items-center gap-2 shadow-xs ${
+                  isDark ? 'bg-slate-800/90 border-slate-700/70 text-slate-300' : 'bg-white border-slate-200 text-slate-600'
                 }`}>
-                  <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-bounce" style={{ animationDelay: '0ms' }}></span>
-                  <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-bounce" style={{ animationDelay: '150ms' }}></span>
-                  <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-bounce" style={{ animationDelay: '300ms' }}></span>
-                  <span className="text-[11px] ml-1 font-medium">กำลังประมวลผลข้อมูล...</span>
+                  <span className="flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-bounce" style={{ animationDelay: '0ms' }}></span>
+                    <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-bounce" style={{ animationDelay: '150ms' }}></span>
+                    <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-bounce" style={{ animationDelay: '300ms' }}></span>
+                  </span>
+                  <span className="text-[11px] font-medium bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-sky-400 dark:to-cyan-300 bg-clip-text text-transparent">
+                    PrakanBOT กำลังวิเคราะห์ข้อมูล...
+                  </span>
                 </div>
               </div>
             )}
@@ -2510,45 +2663,64 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
           </div>
 
           {/* Input Bar */}
-          <form 
-            onSubmit={(e) => { e.preventDefault(); handleSend(); }}
-            className={`p-2 sm:p-3 border-t flex items-center gap-1.5 sm:gap-2 ${
-              isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
-            }`}
-          >
-            <input
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              disabled={Boolean(streamingMessageId)}
-              placeholder={isThinking || streamingMessageId ? "กำลังตอบคำถาม..." : "พิมพ์คำถาม เช่น ซอยทรัพย์บุญชัยท่วมไหม..."}
-              className={`flex-1 rounded-lg px-3 py-1.5 sm:py-2 text-xs focus:outline-none transition-colors ${
+          <div className={`p-2.5 sm:p-3 border-t ${
+            isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200/80'
+          }`}>
+            <form 
+              onSubmit={(e) => { e.preventDefault(); handleSend(); }}
+              className={`flex items-center gap-1.5 sm:gap-2 rounded-2xl px-2.5 py-1 sm:py-1.5 border transition-all ${
                 isDark 
-                  ? 'bg-slate-800 border border-slate-700 text-slate-100 placeholder-slate-500 focus:border-blue-400' 
-                  : 'bg-slate-50 border border-slate-300 text-slate-800 placeholder-slate-400 focus:border-blue-500 focus:bg-white'
+                  ? 'bg-slate-800/80 border-slate-700/80 focus-within:border-sky-500/80 focus-within:ring-2 focus-within:ring-sky-500/20' 
+                  : 'bg-slate-50 border-slate-200 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/15 focus-within:bg-white'
               }`}
-            />
-            {isThinking || Boolean(streamingMessageId) ? (
-              <button
-                type="button"
-                onClick={handleStopResponse}
-                className="px-2.5 py-1.5 sm:py-2 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-bold text-[11px] sm:text-xs transition-all cursor-pointer flex items-center gap-1 shrink-0"
-                title="หยุดการตอบของ AI ทันที"
-              >
-                <Square className="w-3 h-3 fill-current" />
-                <span>หยุด</span>
-              </button>
-            ) : (
-              <button
-                type="submit"
-                disabled={!input.trim()}
-                className="p-2 rounded-lg bg-blue-700 hover:bg-blue-800 disabled:opacity-40 text-white transition-all cursor-pointer shrink-0"
-                title="ส่งข้อความ"
-              >
-                <Send className="w-3.5 h-3.5" />
-              </button>
-            )}
-          </form>
+            >
+              <input
+                type="text"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                disabled={Boolean(streamingMessageId)}
+                placeholder={isThinking || streamingMessageId ? "PrakanBOT กำลังตอบ..." : "พิมพ์คำถาม เช่น ทรัพย์บุญชัยท่วมไหม, สายด่วน..."}
+                className={`flex-1 text-xs sm:text-[13px] bg-transparent focus:outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500 py-1 ${
+                  isDark ? 'text-slate-100' : 'text-slate-800'
+                }`}
+              />
+
+              {input.trim() && !isThinking && !streamingMessageId && (
+                <button
+                  type="button"
+                  onClick={() => setInput('')}
+                  className="p-1 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+                  title="ล้างข้อความ"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+
+              {isThinking || Boolean(streamingMessageId) ? (
+                <button
+                  type="button"
+                  onClick={handleStopResponse}
+                  className="px-2.5 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-[10.5px] sm:text-xs transition-all cursor-pointer flex items-center gap-1 shrink-0 shadow-xs active:scale-95"
+                  title="หยุดการตอบคำถามทันที"
+                >
+                  <Square className="w-3 h-3 fill-current" />
+                  <span>หยุด</span>
+                </button>
+              ) : (
+                <button
+                  type="submit"
+                  disabled={!input.trim()}
+                  className="p-2 sm:p-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 disabled:opacity-30 disabled:pointer-events-none text-white transition-all cursor-pointer shrink-0 shadow-sm shadow-blue-500/20 active:scale-95"
+                  title="ส่งคำถาม"
+                >
+                  <Send className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </form>
+            <p className="text-[9.5px] text-center text-slate-400 dark:text-slate-500 mt-1 select-none">
+              PrakanBOT • บริการข้อมูลเปิดและการสัญจรตลอด 24 ชั่วโมง
+            </p>
+          </div>
 
         </div>
       )}
