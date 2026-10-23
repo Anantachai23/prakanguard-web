@@ -40,24 +40,23 @@ export default function AdminVerificationPrompt({
   // Minimized floating banner if user dismissed the prompt temporarily
   if (isDismissed) {
     return (
-      <div className="fixed top-14 sm:top-16 right-3 sm:right-6 z-50 animate-in slide-in-from-top-4 duration-300">
+      <div className="fixed top-14 sm:top-16 right-3 sm:right-6 z-50">
         <button
           onClick={() => setIsDismissed(false)}
-          className={`px-3.5 py-2 rounded-2xl shadow-xl border flex items-center gap-2.5 cursor-pointer backdrop-blur-xl transition-transform hover:scale-105 active:scale-95 ${
+          className={`px-3.5 py-2 rounded-lg shadow-xl border flex items-center gap-2.5 cursor-pointer transition-colors ${
             isDark 
-              ? 'bg-amber-950/95 border-amber-600 text-amber-200' 
-              : 'bg-amber-50 border-amber-300 text-amber-900'
+              ? 'bg-slate-900 border-amber-600/80 text-amber-200 hover:bg-slate-800' 
+              : 'bg-white border-amber-300 text-amber-900 hover:bg-amber-50'
           }`}
           title="มีรายงานน้ำท่วมจากประชาชนรอแอดมินตรวจสอบ"
         >
-          <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping"></span>
-          <span className="text-xs font-bold flex items-center gap-1">
-            <span>มีรายงานรอคุณอนุมัติ</span>
-            <span className="px-1.5 py-0.2 rounded-full bg-rose-600 text-white text-[10px]">
+          <span className="w-2 h-2 rounded-full bg-amber-500" />
+          <span className="text-xs font-bold flex items-center gap-1.5">
+            <span>รอตรวจสอบ</span>
+            <span className="px-1.5 py-0.2 rounded bg-amber-600 text-white text-[10px] font-mono">
               {pendingCount}
             </span>
           </span>
-          <span className="text-[11px] underline font-medium">กดตรวจสอบ</span>
         </button>
       </div>
     );
@@ -65,87 +64,92 @@ export default function AdminVerificationPrompt({
 
   return (
     <>
-      {/* Full Interactive Verification Dialog Asking the Admin */}
-      <div className="fixed inset-0 z-50 flex items-start justify-center pt-[7vh] pb-20 sm:items-center sm:pt-4 sm:pb-4 bg-slate-950/60 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/65 backdrop-blur-xs overflow-y-auto">
         <div 
-          className={`w-[92vw] max-w-[390px] sm:max-w-lg rounded-xl border shadow-2xl overflow-hidden backdrop-blur-2xl flex flex-col max-h-[74vh] sm:max-h-[92vh] ${
+          className={`w-[92vw] max-w-[440px] sm:max-w-lg my-auto m-auto rounded-xl border shadow-2xl overflow-hidden flex flex-col max-h-[84vh] sm:max-h-[86vh] transition-colors ${
             isDark 
-              ? 'bg-slate-900/98 border-amber-600/70 text-slate-100 shadow-amber-500/10' 
-              : 'bg-white border-amber-300 text-slate-800 shadow-xl'
+              ? 'bg-slate-900 border-slate-800 text-slate-100' 
+              : 'bg-white border-slate-200 text-slate-900'
           }`}
         >
+          {/* Top Institutional Bar */}
+          <div className="h-1 w-full bg-amber-500 shrink-0" />
+
           {/* Header */}
-          <div className={`px-3 sm:px-5 py-2.5 sm:py-3.5 border-b flex items-center justify-between ${
-            isDark ? 'bg-amber-950/60 border-slate-800' : 'bg-amber-50/80 border-amber-100'
+          <div className={`px-4 py-3 sm:px-5 sm:py-3.5 border-b flex items-center justify-between gap-3 shrink-0 ${
+            isDark ? 'bg-slate-950/50 border-slate-800' : 'bg-slate-50/80 border-slate-200'
           }`}>
-            <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
-              <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-lg bg-amber-500 text-slate-950 flex items-center justify-center font-bold shadow-md shrink-0">
-                <CivicShield className="w-4 h-4 sm:w-5 sm:h-5 text-slate-950" />
+            <div className="flex items-center gap-3 min-w-0">
+              <div className={`w-8 h-8 sm:w-9 sm:h-9 rounded-lg border flex items-center justify-center shrink-0 ${
+                isDark ? 'bg-amber-950/60 text-amber-400 border-amber-800/80' : 'bg-amber-50 text-amber-700 border-amber-200'
+              }`}>
+                <CivicShield className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
-              <div>
-                <h3 className={`text-xs sm:text-sm font-bold flex items-center gap-1.5 ${
-                  isDark ? 'text-amber-300' : 'text-amber-950'
+              <div className="min-w-0">
+                <h3 className={`text-sm sm:text-base font-bold flex items-center gap-2 ${
+                  isDark ? 'text-white' : 'text-slate-900'
                 }`}>
-                  <span>มีผู้รายงานสถานการณ์ใหม่เข้ามา</span>
+                  <span>ตรวจสอบรายงานภาคประชาชน</span>
                   {pendingCount > 1 && (
-                    <span className="text-[9px] sm:text-[10px] px-1.5 py-0.2 rounded-full bg-rose-600 text-white font-bold">
-                      +{pendingCount - 1} รายการในคิว
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-600 text-white font-mono font-bold">
+                      +{pendingCount - 1} คิว
                     </span>
                   )}
                 </h3>
-                <p className={`text-[10px] sm:text-[11px] ${isDark ? 'text-amber-400/80' : 'text-amber-800'}`}>
-                  ระบบส่งให้พิจารณาอนุมัติก่อนขึ้นแสดงบนแผนที่สาธารณะ
+                <p className={`text-[11px] sm:text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                  พิจารณาอนุมัติข้อมูลเพื่อแสดงบนแผนที่สาธารณะ
                 </p>
               </div>
             </div>
 
             <button
+              type="button"
               onClick={() => setIsDismissed(true)}
-              className={`p-1 sm:p-1.5 rounded-xl transition-all cursor-pointer ${
-                isDark ? 'hover:bg-slate-800 text-slate-400' : 'hover:bg-slate-200 text-slate-500'
+              className={`w-8 h-8 rounded-lg border flex items-center justify-center transition-colors cursor-pointer shrink-0 ${
+                isDark ? 'bg-slate-800 hover:bg-slate-700 text-slate-400 border-slate-700' : 'bg-white hover:bg-slate-100 text-slate-500 border-slate-200'
               }`}
-              title="ย่อหน้านี้ไว้ก่อน"
+              title="ย่อหน้าต่าง"
             >
-              <X className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
+              <X className="w-4 h-4" />
             </button>
           </div>
 
           {/* Report Details Content */}
-          <div className="p-2.5 sm:p-5 overflow-y-auto space-y-2.5 sm:space-y-3.5 text-xs sm:text-sm">
+          <div className="px-4 sm:px-5 py-3.5 sm:py-4 overflow-y-auto space-y-3 text-xs sm:text-sm">
             
             {/* Location & District Badge */}
-            <div className={`p-3.5 rounded-2xl border ${
-              isDark ? 'bg-slate-800/80 border-slate-700' : 'bg-slate-50 border-slate-200'
+            <div className={`p-3.5 rounded-lg border ${
+              isDark ? 'bg-slate-950/50 border-slate-800' : 'bg-slate-50/70 border-slate-200'
             }`}>
               <div className="flex items-center justify-between gap-2 mb-1.5">
-                <span className={`text-[11px] font-bold px-2 py-0.5 rounded-md border ${
-                  isDark ? 'bg-blue-950 text-cyan-300 border-blue-800' : 'bg-blue-50 text-blue-700 border-blue-200'
+                <span className={`text-[11px] font-bold px-2 py-0.5 rounded border ${
+                  isDark ? 'bg-slate-800 text-blue-400 border-slate-700' : 'bg-white text-blue-700 border-slate-200'
                 }`}>
                   อ.{currentReport.district}
                 </span>
                 <span className="text-[11px] text-slate-400 flex items-center gap-1 font-mono">
-                  <Clock className="w-3.5 h-3.5" />
-                  <span>แจ้งเมื่อ: {currentReport.reportedAt || 'เมื่อสักครู่'}</span>
+                  <Clock className="w-3 h-3" />
+                  <span>{currentReport.reportedAt || 'เมื่อสักครู่'}</span>
                 </span>
               </div>
 
               <h4 className="font-bold text-sm sm:text-base leading-snug">
                 {currentReport.name}
               </h4>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                พิกัด: {currentReport.subdistrict || `[${currentReport.lat.toFixed(4)}, ${currentReport.lng.toFixed(4)}]`}
+              <p className="text-[11px] font-mono text-slate-500 dark:text-slate-400 mt-0.5">
+                พิกัด: {currentReport.subdistrict || `${currentReport.lat.toFixed(5)}, ${currentReport.lng.toFixed(5)}`}
               </p>
             </div>
 
             {/* Severity & Water Depth / Hail Size */}
             <div className="grid grid-cols-2 gap-2.5">
-              <div className={`p-3 rounded-2xl border ${
-                isDark ? 'bg-slate-800/60 border-slate-700' : 'bg-slate-50 border-slate-200'
+              <div className={`p-3 rounded-lg border ${
+                isDark ? 'bg-slate-950/40 border-slate-800' : 'bg-slate-50/70 border-slate-200'
               }`}>
-                <span className="text-[11px] text-slate-400 block mb-0.5">
-                  {currentReport.hazardType === 'hail' ? 'ขนาดลูกเห็บ:' : 'ระดับน้ำที่แจ้ง:'}
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 block mb-0.5">
+                  {currentReport.hazardType === 'hail' ? 'ขนาดลูกเห็บ' : 'ระดับน้ำที่รายงาน'}
                 </span>
-                <span className="font-bold text-sm text-blue-600 dark:text-cyan-400 flex items-center gap-1">
+                <span className="font-bold text-xs sm:text-sm text-blue-600 dark:text-blue-400 flex items-center gap-1">
                   {currentReport.hazardType === 'hail' ? (
                     <>
                       <CivicHailCrystal className="w-3.5 h-3.5 shrink-0" />
@@ -153,18 +157,20 @@ export default function AdminVerificationPrompt({
                     </>
                   ) : (currentReport.bodyLevelLabel ? `${currentReport.bodyLevelLabel}` : `ระดับ ${currentReport.levelLabel || 'เฝ้าระวัง'}`)}
                 </span>
-                <span className="text-[10px] text-slate-500 block">
+                <span className="text-[11px] text-slate-500 block mt-0.5 font-mono">
                   {currentReport.hazardType === 'hail' 
-                    ? 'พายุลูกเห็บ/ลมกระโชกแรง' 
-                    : `ความลึกประมาณ ${currentReport.depthCm ? `${currentReport.depthCm} ซม.` : (currentReport.depthRange || 'เฝ้าระวัง')}`}
+                    ? 'พายุลูกเห็บ' 
+                    : `ประมาณ ${currentReport.depthCm ? `${currentReport.depthCm} ซม.` : (currentReport.depthRange || 'เฝ้าระวัง')}`}
                 </span>
               </div>
 
               <div className={`p-3 rounded-lg border ${
-                isDark ? 'bg-slate-800/60 border-slate-700' : 'bg-slate-50 border-slate-200'
+                isDark ? 'bg-slate-950/40 border-slate-800' : 'bg-slate-50/70 border-slate-200'
               }`}>
-                <span className="text-[11px] text-slate-400 block mb-0.5">ระดับความเสี่ยง:</span>
-                <span className={`font-bold text-sm flex items-center gap-1.5 ${
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 block mb-0.5">
+                  การจำแนกความรุนแรง
+                </span>
+                <span className={`font-bold text-xs sm:text-sm flex items-center gap-1.5 ${
                   currentReport.level === 3 ? 'text-rose-500' :
                   currentReport.level === 2 ? 'text-amber-500' : 'text-emerald-500'
                 }`}>
@@ -173,12 +179,12 @@ export default function AdminVerificationPrompt({
                     currentReport.level === 2 ? 'bg-amber-500' : 'bg-emerald-500'
                   }`} />
                   <span>
-                    {currentReport.level === 3 ? 'วิกฤต (ห้ามผ่าน/อันตราย)' :
-                     currentReport.level === 2 ? 'เฝ้าระวังสูง/เสี่ยง' : 'ปกติ/เฝ้าระวัง'}
+                    {currentReport.level === 3 ? 'ระดับ 3 (วิกฤต)' :
+                     currentReport.level === 2 ? 'ระดับ 2 (ปานกลาง)' : 'ระดับ 1 (ปกติ)'}
                   </span>
                 </span>
-                <span className="text-[10px] text-slate-500 block">
-                  {currentReport.hazardType === 'hail' ? 'เกณฑ์ขนาดพายุลูกเห็บ' : 'เกณฑ์ระดับน้ำมาตรฐาน'}
+                <span className="text-[11px] text-slate-500 block mt-0.5">
+                  เกณฑ์ประเมินมาตรฐาน
                 </span>
               </div>
             </div>
@@ -186,12 +192,12 @@ export default function AdminVerificationPrompt({
             {/* Traffic Guidance / Comments */}
             {currentReport.trafficStatus && (
               <div className={`p-3 rounded-lg border ${
-                isDark ? 'bg-slate-800/60 border-slate-700' : 'bg-slate-50 border-slate-200'
+                isDark ? 'bg-slate-950/40 border-slate-800' : 'bg-slate-50/70 border-slate-200'
               }`}>
-                <span className="text-[11px] font-semibold text-slate-400 block mb-1">
-                  คำอธิบายสภาพการจราจรจากผู้แจ้ง:
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 block mb-0.5">
+                  รายละเอียดสภาพจราจร
                 </span>
-                <p className="leading-relaxed font-medium">
+                <p className="text-xs leading-relaxed">
                   {currentReport.trafficStatus}
                 </p>
               </div>
@@ -199,23 +205,17 @@ export default function AdminVerificationPrompt({
 
             {/* Photo Preview if uploaded */}
             {currentReport.photoUrl && (
-              <div className="rounded-lg border overflow-hidden">
+              <div className={`rounded-lg border overflow-hidden ${isDark ? 'border-slate-800' : 'border-slate-200'}`}>
                 <div className="relative group cursor-pointer" onClick={() => setSelectedPhoto(currentReport.photoUrl)}>
                   <img 
                     src={currentReport.photoUrl} 
                     alt="ภาพถ่ายจากประชาชน" 
-                    className="w-full h-44 object-cover"
+                    className="w-full h-40 object-cover"
                   />
-                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-white text-xs font-bold gap-1">
+                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-white text-xs font-semibold gap-1.5">
                     <CivicReportCamera className="w-4 h-4" />
-                    <span>คลิกเพื่อดูรูปขนาดเต็ม</span>
+                    <span>ดูภาพขนาดเต็ม</span>
                   </div>
-                </div>
-                <div className={`p-2 text-[11px] text-center font-medium flex items-center justify-center gap-1.5 ${
-                  isDark ? 'bg-slate-800 text-slate-300' : 'bg-slate-100 text-slate-600'
-                }`}>
-                  <CivicReportCamera className="w-3.5 h-3.5 shrink-0" />
-                  <span>มีภาพถ่ายสถานที่จริงยืนยัน</span>
                 </div>
               </div>
             )}
@@ -226,19 +226,19 @@ export default function AdminVerificationPrompt({
                 type="button"
                 onClick={() => onFlyToCoords(currentReport.lat, currentReport.lng)}
                 className={`w-full py-2 px-3 rounded-lg border text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer ${
-                  isDark ? 'bg-slate-800 hover:bg-slate-700 border-slate-700 text-cyan-300' : 'bg-slate-100 hover:bg-slate-200 border-slate-200 text-blue-700'
+                  isDark ? 'bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-200' : 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-700'
                 }`}
               >
-                <CivicCompass className="w-4 h-4 text-blue-500" />
-                <span>ส่องดูตำแหน่งนี้บนแผนที่</span>
+                <CivicCompass className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+                <span>ตรวจสอบตำแหน่งบนแผนที่</span>
               </button>
             )}
 
           </div>
 
           {/* Action Decision Buttons */}
-          <div className={`p-3.5 sm:p-4 border-t flex flex-col sm:flex-row items-center justify-between gap-2.5 ${
-            isDark ? 'bg-slate-950/80 border-slate-800' : 'bg-slate-50 border-slate-200'
+          <div className={`px-4 py-3 sm:px-5 sm:py-3.5 border-t flex flex-col sm:flex-row items-center justify-between gap-2 shrink-0 ${
+            isDark ? 'bg-slate-950/60 border-slate-800' : 'bg-slate-50/80 border-slate-200'
           }`}>
             <button
               type="button"
@@ -247,9 +247,9 @@ export default function AdminVerificationPrompt({
                   onRejectReport(currentReport.id);
                 }
               }}
-              className="w-full sm:w-auto px-4 py-2.5 rounded-lg border border-rose-300 dark:border-rose-800 bg-rose-50 dark:bg-rose-950/60 hover:bg-rose-100 dark:hover:bg-rose-900/60 text-rose-600 dark:text-rose-300 text-xs font-bold transition-colors cursor-pointer"
+              className="w-full sm:w-auto px-3.5 py-2 rounded-lg border border-rose-300 dark:border-rose-800/80 bg-rose-50 dark:bg-rose-950/50 hover:bg-rose-100 dark:hover:bg-rose-900/60 text-rose-600 dark:text-rose-300 text-xs font-semibold transition-colors cursor-pointer"
             >
-              ไม่อนุมัติ / ปฏิเสธ
+              ปฏิเสธรายการ
             </button>
 
             <div className="w-full sm:w-auto flex items-center gap-2">
@@ -257,21 +257,21 @@ export default function AdminVerificationPrompt({
                 <button
                   type="button"
                   onClick={onOpenFullAdmin}
-                  className={`flex-1 sm:flex-none px-3.5 py-2.5 rounded-xl border text-xs font-bold transition-colors cursor-pointer ${
-                    isDark ? 'bg-slate-800 hover:bg-slate-700 text-slate-300 border-slate-700' : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-200'
+                  className={`flex-1 sm:flex-none px-3.5 py-2 rounded-lg border text-xs font-semibold transition-colors cursor-pointer ${
+                    isDark ? 'bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700' : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-200'
                   }`}
                 >
-                  เปิดแผง ADMIN
+                  ศูนย์ควบคุม
                 </button>
               )}
 
               <button
                 type="button"
                 onClick={() => onApproveReport(currentReport.id)}
-                className="flex-1 sm:flex-none px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs sm:text-sm shadow-lg shadow-emerald-600/30 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                className="flex-1 sm:flex-none px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
               >
-                <CheckCircle2 className="w-4 h-4" />
-                <span>อนุมัติขึ้นเว็บทันที</span>
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                <span>อนุมัติแสดงผล</span>
               </button>
             </div>
           </div>

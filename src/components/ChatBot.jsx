@@ -2244,31 +2244,34 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
             ...(customSize.width ? { width: `${customSize.width}px`, maxWidth: '98vw' } : {}),
             ...(customSize.height ? { height: `${customSize.height}px`, maxHeight: '94vh' } : {})
           }}
-          className={`fixed z-50 w-[88vw] xs:max-w-[340px] sm:max-w-none ${
+          className={`fixed z-50 w-[92vw] max-w-[420px] sm:max-w-none ${
             customSize.width || customSize.height
               ? ''
               : isExpanded 
-              ? 'sm:w-[620px] h-[520px] sm:h-[660px] max-h-[85vh] sm:max-h-[90vh]' 
-              : 'sm:w-[460px] h-[390px] max-h-[calc(100dvh-7.5rem)] sm:h-[600px] sm:max-h-[88vh]'
-          } border rounded-2xl sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden backdrop-blur-2xl transition-[box-shadow,border-color] duration-150 ${
+              ? 'sm:w-[600px] h-[520px] sm:h-[640px] max-h-[84vh] sm:max-h-[88vh]' 
+              : 'sm:w-[440px] h-[420px] max-h-[calc(100dvh-7rem)] sm:h-[560px] sm:max-h-[86vh]'
+          } border rounded-xl shadow-2xl flex flex-col overflow-hidden transition-[box-shadow,border-color] duration-150 ${
             !position ? 'bottom-[calc(4.25rem+env(safe-area-inset-bottom,0px))] left-1/2 -translate-x-1/2 sm:translate-x-0 sm:left-auto sm:bottom-6 sm:right-6' : ''
           } ${
-            isDraggingModal || isResizingModal ? 'ring-2 ring-blue-500/60 shadow-blue-500/30' : ''
+            isDraggingModal || isResizingModal ? 'ring-2 ring-blue-500/60' : ''
           } ${
-            isDark ? 'bg-slate-900/95 border-slate-700 text-slate-100' : 'bg-white border-slate-200 text-slate-800'
+            isDark ? 'bg-slate-900 border-slate-800 text-slate-100' : 'bg-white border-slate-200 text-slate-900'
           }`}
         >
-          {/* Mouse & Touch Resize Corner (มุมสำหรับใช้นิ้วหรือเมาส์ลากขอบเพื่อย่อหรือขยาย) */}
+          {/* Top Institutional Bar */}
+          <div className="h-1 w-full bg-blue-700 shrink-0" />
+
+          {/* Mouse & Touch Resize Corner */}
           <div
             onMouseDown={handleMouseDownResizeCorner}
             onTouchStart={handleTouchStartResizeCorner}
-            className="absolute top-0 left-0 w-8 h-8 cursor-nwse-resize z-50 flex items-start justify-start p-1.5 select-none touch-none group"
-            title="ลากมุมนี้ด้วยเมาส์หรือใช้นิ้วลากขอบเพื่อย่อหรือขยายขนาด"
+            className="absolute top-1 left-0 w-7 h-7 cursor-nwse-resize z-50 flex items-start justify-start p-1.5 select-none touch-none group"
+            title="ลากมุมนี้เพื่อย่อหรือขยายขนาด"
           >
-            <div className="w-3.5 h-3.5 border-t-2 border-l-2 border-blue-500 group-hover:border-cyan-400 rounded-tl transition-colors shadow-xs" />
+            <div className="w-3 h-3 border-t-2 border-l-2 border-slate-400 group-hover:border-blue-500 rounded-tl transition-colors" />
           </div>
 
-          {/* Mobile Ergonomic Touch Handle Bar (แตะเพื่อสลับ ย่อ/ขยาย หรือใช้นิ้วลากขึ้น-ลง) */}
+          {/* Mobile Ergonomic Touch Handle Bar */}
           <div 
             onTouchStart={handleTouchStartResizeTop}
             onClick={() => {
@@ -2284,121 +2287,112 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
                 setCustomSize({ width: null, height: Math.min(window.innerHeight - 80, 680) });
               }
             }}
-            className="w-full py-2 px-3 flex items-center justify-between cursor-ns-resize touch-none select-none sm:hidden border-b border-slate-200/60 dark:border-slate-800/80 active:bg-blue-500/10 transition-colors"
-            title="แตะเพื่อสลับย่อ/ขยาย หรือใช้นิ้วลากขึ้นลงได้อย่างอิสระ"
+            className="w-full py-1.5 px-3 flex items-center justify-between cursor-ns-resize touch-none select-none sm:hidden border-b border-slate-200 dark:border-slate-800 transition-colors"
+            title="แตะเพื่อสลับย่อ/ขยาย"
           >
-            <div className="flex items-center gap-1 text-[10px] font-bold text-slate-400">
+            <div className="flex items-center gap-1 text-[10px] font-semibold text-slate-400">
               <ChevronDown className="w-3.5 h-3.5" />
               <span>ย่อ</span>
             </div>
 
-            <div className="flex flex-col items-center gap-0.5">
-              <div className="w-14 h-1.5 rounded-full bg-slate-400/80 dark:bg-slate-500 active:bg-blue-500 transition-colors" />
-              <span className="text-[9px] text-slate-400 font-medium">ลากมุมหรือแถบนี้เพื่อปรับขนาด</span>
-            </div>
+            <div className="w-12 h-1 rounded-full bg-slate-300 dark:bg-slate-700" />
 
-            <div className="flex items-center gap-1 text-[10px] font-bold text-blue-500">
+            <div className="flex items-center gap-1 text-[10px] font-semibold text-blue-600 dark:text-blue-400">
               <span>ขยาย</span>
               <ChevronUp className="w-3.5 h-3.5" />
             </div>
           </div>
           
-          {/* Header (Freely Draggable Handle for PC Mouse & Mobile Touch) */}
+          {/* Header */}
           <div 
             onMouseDown={handleMouseDownHeader}
             onTouchStart={handleTouchStartHeader}
-            className={`px-4 py-2.5 border-b flex items-center justify-between cursor-grab active:cursor-grabbing select-none transition-colors ${
+            className={`px-4 py-3 border-b flex items-center justify-between cursor-grab active:cursor-grabbing select-none transition-colors ${
               isDraggingModal 
-                ? (isDark ? 'bg-blue-950/90 border-blue-700' : 'bg-blue-50/90 border-blue-300')
-                : (isDark ? 'bg-slate-950/90 border-slate-800' : 'bg-slate-50 border-slate-200')
+                ? (isDark ? 'bg-slate-800 border-blue-700' : 'bg-blue-50/60 border-blue-200')
+                : (isDark ? 'bg-slate-950/50 border-slate-800' : 'bg-slate-50/80 border-slate-200')
             }`}
-            title="กดค้างที่แถบนี้เพื่อลากย้ายหน้าต่าง AI ChatBot ได้อย่างอิสระ"
+            title="กดค้างที่แถบนี้เพื่อลากย้ายหน้าต่าง"
           >
-            <div className="flex items-center space-x-2.5 min-w-0 pointer-events-none">
-              <AiOfficialEmblem size={32} />
+            <div className="flex items-center gap-2.5 min-w-0 pointer-events-none">
+              <AiOfficialEmblem size={30} />
               <div className="min-w-0">
                 <h4 className={`text-xs sm:text-sm font-bold flex items-center gap-1.5 truncate ${
                   isDark ? 'text-white' : 'text-slate-900'
                 }`}>
-                  <span>PrakanGuard AI</span>
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
-                  <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">ออนไลน์</span>
+                  <span>ศูนย์บริการข้อมูลอัตโนมัติ (PrakanGuard)</span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
                 </h4>
                 <p className={`text-[11px] truncate ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                  ผู้ช่วยข้อมูลน้ำท่วมและเส้นทาง จ.สมุทรปราการ
+                  สอบถามจุดน้ำท่วมขัง เส้นทางเลี่ยง และสายด่วนฉุกเฉิน
                 </p>
               </div>
             </div>
 
-            {/* Drag Handle Badge & Close Button Only (ทุกอุปกรณ์มีแค่สัญลักษณ์การย้ายและปุ่มกดปิด) */}
             <div className="flex items-center gap-1.5 shrink-0 ml-2">
-              {/* Drag symbol only */}
               <div 
-                className={`flex items-center justify-center p-1.5 rounded-xl select-none border transition-colors cursor-grab active:cursor-grabbing ${
+                className={`flex items-center justify-center w-8 h-8 rounded-lg select-none border transition-colors cursor-grab active:cursor-grabbing ${
                   isDark 
-                    ? 'bg-slate-800/80 text-slate-400 border-slate-700' 
-                    : 'bg-white/90 text-slate-500 border-slate-200 shadow-xs'
+                    ? 'bg-slate-800 text-slate-400 border-slate-700' 
+                    : 'bg-white text-slate-500 border-slate-200'
                 }`}
-                title="คลิกหรือแตะค้างเพื่อลากย้ายหน้าต่างได้อย่างอิสระ"
+                title="ลากย้ายหน้าต่าง"
               >
-                <GripHorizontal className="w-4 h-4 text-blue-500" />
+                <GripHorizontal className="w-4 h-4" />
               </div>
 
-              {/* Close Button */}
               <button
                 type="button"
                 onClick={() => {
                   playCloseSound();
                   setIsOpen(false);
                 }}
-                className={`p-1.5 rounded-xl transition-all cursor-pointer active:scale-95 ${
+                className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors cursor-pointer ${
                   isDark 
                     ? 'bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white border border-slate-700' 
-                    : 'bg-white hover:bg-slate-100 text-slate-500 hover:text-slate-800 border border-slate-200 shadow-xs'
+                    : 'bg-white hover:bg-slate-100 text-slate-500 hover:text-slate-800 border border-slate-200'
                 }`}
                 title="ปิดหน้าต่าง"
               >
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4" />
               </button>
             </div>
           </div>
 
           {/* Live Meteorological Telemetry Status Bar */}
           <div className={`px-3.5 py-1.5 border-b flex items-center justify-between text-[11px] ${
-            isDark ? 'bg-blue-950/70 border-blue-900 text-blue-200' : 'bg-blue-50/90 border-blue-100 text-blue-900'
+            isDark ? 'bg-slate-950/60 border-slate-800 text-slate-300' : 'bg-slate-50/70 border-slate-200 text-slate-700'
           }`}>
             <div className="flex items-center gap-1.5 truncate">
-              <CloudRain className={`w-3.5 h-3.5 shrink-0 ${isDark ? 'text-cyan-400' : 'text-blue-600'}`} />
+              <CloudRain className={`w-3.5 h-3.5 shrink-0 ${isDark ? 'text-blue-400' : 'text-blue-600'}`} />
               <span className="truncate">
-                อากาศสมุทรปราการ: <strong className={`font-bold ${isDark ? 'text-cyan-300' : 'text-blue-950'}`}>{weather.temp}°C</strong> • โอกาสฝน: <strong className={`font-bold ${isDark ? 'text-cyan-400' : 'text-blue-700'}`}>{weather.rainProbabilityToday}%</strong>
+                สมุทรปราการ: <strong className="font-bold">{weather.temp}°C</strong> • โอกาสฝน: <strong className="font-bold">{weather.rainProbabilityToday}%</strong>
               </span>
             </div>
-            <span className={`text-[10px] font-bold shrink-0 ml-2 px-2 py-0.5 rounded-md border ${
-              isDark ? 'bg-amber-950/80 text-amber-300 border-amber-800' : 'bg-amber-100/90 text-amber-800 border-amber-300'
+            <span className={`text-[10px] font-semibold shrink-0 ml-2 px-2 py-0.5 rounded border ${
+              isDark ? 'bg-slate-800 text-slate-300 border-slate-700' : 'bg-white text-slate-700 border-slate-200'
             }`}>
-              เฝ้าระวัง: {weather.peakHour}
+              {weather.peakHour}
             </span>
           </div>
 
-          {/* Quick Smart Inquiry Chips (With Left & Right Slider Controls) */}
+          {/* Quick Inquiry Chips */}
           <div className={`relative px-2 py-1.5 border-b flex items-center ${
-            isDark ? 'bg-slate-950/80 border-slate-800' : 'bg-slate-50 border-slate-200'
+            isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
           }`}>
-            {/* Left Scroll Button */}
             <button
               type="button"
               onClick={() => scrollChips('left')}
-              className={`p-1.5 rounded-xl transition-all cursor-pointer shadow-sm shrink-0 mr-1 border ${
+              className={`w-7 h-7 rounded-lg flex items-center justify-center transition-colors cursor-pointer shrink-0 mr-1 border ${
                 isDark 
                   ? 'bg-slate-800 hover:bg-slate-700 text-slate-300 border-slate-700' 
-                  : 'bg-white hover:bg-slate-100 text-slate-600 border-slate-200'
+                  : 'bg-slate-50 hover:bg-slate-100 text-slate-600 border-slate-200'
               }`}
-              title="เลื่อนดูคำถามก่อนหน้า"
+              title="เลื่อนซ้าย"
             >
-              <ChevronLeft className="w-4 h-4" />
+              <ChevronLeft className="w-3.5 h-3.5" />
             </button>
 
-            {/* Scrollable Chips Strip (Touch, Wheel & Drag with Butter-Smooth Gliding) */}
             <div 
               ref={chipsRef}
               onMouseDown={handleChipsMouseDown}
@@ -2407,83 +2401,40 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
               onMouseLeave={handleChipsMouseUp}
               className="flex-1 flex items-center gap-1.5 overflow-x-auto smooth-slider no-scrollbar text-xs py-0.5 touch-pan-x cursor-grab active:cursor-grabbing select-none"
             >
-              <button 
-                onClick={() => { if (!chipsHasDraggedRef.current) handleSend("ตอนนี้ในสมุทรปราการมีน้ำท่วมตรงไหนบ้าง?"); }}
-                className={`smooth-slider-item px-3 py-1.5 rounded-xl whitespace-nowrap transition-all cursor-pointer font-bold flex items-center gap-1 shrink-0 select-none ${
-                  isDark 
-                    ? 'bg-blue-900/90 text-blue-200 border border-blue-700 hover:bg-blue-800' 
-                    : 'bg-blue-100 text-blue-800 border border-blue-300 hover:bg-blue-200'
-                }`}
-                title="สรุปจุดน้ำท่วมขังบนผิวจราจรสดทั่วจังหวัด"
-              >
-                🌊 สรุปจุดท่วมสดตอนนี้
-              </button>
-              <button 
-                onClick={() => { if (!chipsHasDraggedRef.current) handleSend("รถเก๋งลุยน้ำได้กี่เซนติเมตร และระดับไหนห้ามผ่านเด็ดขาด?"); }}
-                className={`smooth-slider-item px-3 py-1.5 rounded-xl whitespace-nowrap transition-all cursor-pointer font-bold flex items-center gap-1 shrink-0 select-none ${
-                  isDark 
-                    ? 'bg-amber-950/90 text-amber-300 border border-amber-700 hover:bg-amber-900' 
-                    : 'bg-amber-50 text-amber-800 border border-amber-300 hover:bg-amber-100'
-                }`}
-                title="เกณฑ์ความปลอดภัยของรถยนต์แต่ละรุ่น"
-              >
-                🚗 รถเก๋ง/กระบะลุยน้ำ
-              </button>
-              <button 
-                onClick={() => { if (!chipsHasDraggedRef.current) handleSend("ขอเบอร์โทรศัพท์สายด่วนฉุกเฉินหน่วยงานช่วยเหลือในสมุทรปราการ"); }}
-                className={`smooth-slider-item px-3 py-1.5 rounded-xl whitespace-nowrap transition-all cursor-pointer font-bold flex items-center gap-1 shrink-0 select-none ${
-                  isDark 
-                    ? 'bg-rose-950/90 text-rose-300 border border-rose-700 hover:bg-rose-900' 
-                    : 'bg-rose-50 text-rose-800 border border-rose-300 hover:bg-rose-100'
-                }`}
-                title="เบอร์สายด่วน ปภ. 1784, กู้ชีพ 1669, ไฟฟ้า 1130"
-              >
-                📞 เบอร์โทรฉุกเฉิน 24 ชม.
-              </button>
-              <button 
-                onClick={() => { if (!chipsHasDraggedRef.current) handleSend("วิธีตัดไฟและป้องกันไฟดูดช่วงน้ำท่วมต้องทำอย่างไร?"); }}
-                className={`smooth-slider-item px-3 py-1.5 rounded-xl whitespace-nowrap transition-all cursor-pointer font-bold flex items-center gap-1 shrink-0 select-none ${
-                  isDark 
-                    ? 'bg-yellow-950/90 text-yellow-300 border border-yellow-700 hover:bg-yellow-900' 
-                    : 'bg-yellow-50 text-yellow-800 border border-yellow-300 hover:bg-yellow-100'
-                }`}
-              >
-                ⚡️ ป้องกันไฟดูด & ตัดไฟ
-              </button>
-              <button 
-                onClick={() => { if (!chipsHasDraggedRef.current) handleSend("วันนี้ในสมุทรปราการมีโอกาสฝนตกช่วงกี่โมง?"); }}
-                className={`smooth-slider-item px-3 py-1.5 rounded-xl whitespace-nowrap transition-all cursor-pointer font-bold flex items-center gap-1 shrink-0 select-none ${
-                  isDark 
-                    ? 'bg-blue-950/90 text-cyan-300 border border-blue-700 hover:bg-blue-900' 
-                    : 'bg-blue-50 text-blue-700 border border-blue-300 hover:bg-blue-100'
-                }`}
-              >
-                🌧️ เวลาฝนตกวันนี้
-              </button>
-              <button 
-                onClick={() => { if (!chipsHasDraggedRef.current) handleSend("ในสมุทรปราการมีจุดจอดรถที่สูงหรือลานจอดหนีน้ำท่วมที่ไหนบ้าง?"); }}
-                className={`smooth-slider-item px-3 py-1.5 rounded-xl whitespace-nowrap transition-all cursor-pointer font-bold flex items-center gap-1 shrink-0 select-none ${
-                  isDark 
-                    ? 'bg-indigo-950/90 text-indigo-300 border border-indigo-700 hover:bg-indigo-900' 
-                    : 'bg-indigo-50 text-indigo-800 border border-indigo-300 hover:bg-indigo-100'
-                }`}
-              >
-                🅿️ จุดจอดรถหนีน้ำ
-              </button>
+              {[
+                { label: 'สรุปจุดน้ำท่วมล่าสุด', q: 'ตอนนี้ในสมุทรปราการมีน้ำท่วมตรงไหนบ้าง?' },
+                { label: 'เกณฑ์ระดับน้ำรถเก๋ง/กระบะ', q: 'รถเก๋งลุยน้ำได้กี่เซนติเมตร และระดับไหนห้ามผ่านเด็ดขาด?' },
+                { label: 'สายด่วนฉุกเฉิน 24 ชม.', q: 'ขอเบอร์โทรศัพท์สายด่วนฉุกเฉินหน่วยงานช่วยเหลือในสมุทรปราการ' },
+                { label: 'วิธีป้องกันไฟดูดช่วงน้ำท่วม', q: 'วิธีตัดไฟและป้องกันไฟดูดช่วงน้ำท่วมต้องทำอย่างไร?' },
+                { label: 'พยากรณ์เวลาฝนตกวันนี้', q: 'วันนี้ในสมุทรปราการมีโอกาสฝนตกช่วงกี่โมง?' },
+                { label: 'จุดจอดรถสำรองหนีน้ำท่วม', q: 'ในสมุทรปราการมีจุดจอดรถที่สูงหรือลานจอดหนีน้ำท่วมที่ไหนบ้าง?' }
+              ].map((chip, idx) => (
+                <button 
+                  key={idx}
+                  type="button"
+                  onClick={() => { if (!chipsHasDraggedRef.current) handleSend(chip.q); }}
+                  className={`smooth-slider-item px-2.5 py-1 rounded-md whitespace-nowrap transition-colors cursor-pointer font-semibold text-[11px] border shrink-0 select-none ${
+                    isDark 
+                      ? 'bg-slate-800/90 text-slate-200 border-slate-700 hover:bg-slate-700 hover:border-slate-600' 
+                      : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100 hover:border-slate-300'
+                  }`}
+                >
+                  {chip.label}
+                </button>
+              ))}
             </div>
 
-            {/* Right Scroll Button */}
             <button
               type="button"
               onClick={() => scrollChips('right')}
-              className={`p-1.5 rounded-xl transition-all cursor-pointer shadow-sm shrink-0 ml-1 border ${
+              className={`w-7 h-7 rounded-lg flex items-center justify-center transition-colors cursor-pointer shrink-0 ml-1 border ${
                 isDark 
                   ? 'bg-slate-800 hover:bg-slate-700 text-slate-300 border-slate-700' 
-                  : 'bg-white hover:bg-slate-100 text-slate-600 border-slate-200'
+                  : 'bg-slate-50 hover:bg-slate-100 text-slate-600 border-slate-200'
               }`}
-              title="เลื่อนดูคำถามถัดไป"
+              title="เลื่อนขวา"
             >
-              <ChevronRight className="w-4 h-4" />
+              <ChevronRight className="w-3.5 h-3.5" />
             </button>
           </div>
 

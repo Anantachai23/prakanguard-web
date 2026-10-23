@@ -2,14 +2,12 @@ import React from 'react';
 import { 
   X, 
   RefreshCw, 
-  MapPin, 
-  Activity,
   CheckCircle2,
   AlertTriangle,
   TrendingDown,
-  Clock,
-  ShieldCheck
+  Clock
 } from 'lucide-react';
+import { CivicBroadcast, CivicShield } from './CivicIcons';
 
 export default function PublicUpdatesModal({ 
   isOpen, 
@@ -27,7 +25,6 @@ export default function PublicUpdatesModal({
   if (!isOpen) return null;
   const isDark = theme === 'dark';
 
-  // เรียงลำดับเวลาจากล่างขึ้นบน: รายงานที่ใหม่กว่าจะดันขึ้นมาอยู่บนสุดเสมอ และเวลาด้านล่างต้องไม่มากกว่าด้านบน
   const items = [...(dailyUpdates || [])].sort((a, b) => {
     const timeA = Number(a.timestamp) || 0;
     const timeB = Number(b.timestamp) || 0;
@@ -40,7 +37,6 @@ export default function PublicUpdatesModal({
   const risingCount = items.filter(i => i.statusType === 'rising').length;
 
   const handleItemClick = (item) => {
-    // 1. ค้นหาจุดข้อมูลเต็มจาก citizenReports และ points (citizenReports ขึ้นก่อนเพื่อให้รูปภาพติดไปด้วย)
     const all = [...(citizenReports || []), ...(points || [])];
     const found = all.find(p => 
       String(p.id) === String(item.locationKey || item.id) ||
@@ -77,106 +73,112 @@ export default function PublicUpdatesModal({
   return (
     <div 
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
-      className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 smooth-backdrop pointer-events-auto overflow-y-auto"
+      className="fixed inset-0 z-50 bg-slate-950/65 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 pointer-events-auto overflow-y-auto"
     >
-      <div className={`w-[90vw] max-w-[360px] sm:max-w-md my-auto m-auto border rounded-2xl shadow-2xl flex flex-col max-h-[75vh] sm:max-h-[82vh] overflow-hidden smooth-pop transition-colors ${
-        isDark ? 'bg-slate-900 border-slate-700 text-slate-100' : 'bg-white border-slate-200 text-slate-900'
+      <div className={`w-[92vw] max-w-[440px] sm:max-w-lg my-auto m-auto border rounded-xl shadow-2xl flex flex-col max-h-[84vh] sm:max-h-[86vh] overflow-hidden transition-colors ${
+        isDark ? 'bg-slate-900 border-slate-800 text-slate-100' : 'bg-white border-slate-200 text-slate-900'
       }`}>
+        {/* Top Institutional Bar */}
+        <div className="h-1 w-full bg-blue-700 shrink-0" />
 
-        {/* Accent Bar */}
-        <div className="h-1.5 w-full bg-gradient-to-r from-emerald-500 via-amber-500 to-rose-500 shrink-0"></div>
-
-        {/* Modal Header */}
-        <div className={`px-3 py-2 sm:px-4 sm:py-3 border-b flex items-center justify-between shrink-0 ${
-          isDark ? 'border-slate-800 bg-slate-950/40' : 'border-slate-100 bg-slate-50/50'
+        {/* Header */}
+        <div className={`px-4 py-3 sm:px-5 sm:py-3.5 border-b flex items-center justify-between gap-3 shrink-0 ${
+          isDark ? 'border-slate-800 bg-slate-950/50' : 'border-slate-200 bg-slate-50/80'
         }`}>
-          <div className="flex items-center space-x-2 sm:space-x-2.5 min-w-0">
-            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full overflow-hidden shrink-0 border border-blue-400/50 shadow-sm bg-blue-500/10 flex items-center justify-center">
-              <img src="/logo.png" alt="PrakanGuard" className="w-full h-full object-cover" />
+          <div className="flex items-center gap-3 min-w-0">
+            <div className={`w-8 h-8 sm:w-9 sm:h-9 rounded-lg border flex items-center justify-center shrink-0 ${
+              isDark ? 'bg-slate-800 text-blue-400 border-slate-700' : 'bg-white text-blue-700 border-slate-200 shadow-2xs'
+            }`}>
+              <CivicBroadcast className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-1.5">
-                <h3 className={`text-xs sm:text-base font-bold leading-tight break-words ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                  อัปเดตสถานการณ์น้ำ
+                <h3 className={`text-sm sm:text-base font-bold leading-tight tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                  บันทึกการเปลี่ยนแปลงสถานการณ์น้ำ
                 </h3>
-                <span className="px-1.5 py-0.2 rounded-full text-[9px] sm:text-[9.5px] font-bold bg-blue-500/15 text-blue-500 border border-blue-500/30 shrink-0">
+                <span className={`px-1.5 py-0.2 rounded text-[10px] font-semibold border shrink-0 ${
+                  isDark ? 'bg-slate-800 text-slate-300 border-slate-700' : 'bg-slate-100 text-slate-600 border-slate-200'
+                }`}>
                   รายวัน
                 </span>
               </div>
-              <p className={`text-[10px] sm:text-xs text-slate-400 break-words whitespace-normal leading-tight mt-0.5`}>
-                รีเซ็ตเที่ยงคืน (00:00 น.) อัตโนมัติ • อัปเดตตามจุดจริง
+              <p className={`text-[11px] sm:text-xs leading-tight mt-0.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                ติดตามความเคลื่อนไหวระดับน้ำประจำวัน (รีเซ็ต 00:00 น.)
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-1 shrink-0">
+
+          <div className="flex items-center gap-1.5 shrink-0">
             {onRefreshData && (
               <button 
                 type="button"
                 onClick={onRefreshData}
                 disabled={isRefreshing}
-                className={`p-1.5 rounded-xl transition-all cursor-pointer ${
-                  isDark ? 'bg-slate-800 hover:bg-slate-700 text-slate-300' : 'bg-slate-100 hover:bg-slate-200 text-slate-600'
+                className={`w-8 h-8 rounded-lg border flex items-center justify-center transition-colors cursor-pointer ${
+                  isDark ? 'bg-slate-800 hover:bg-slate-700 text-slate-300 border-slate-700' : 'bg-white hover:bg-slate-100 text-slate-600 border-slate-200'
                 }`}
                 title="รีเฟรชข้อมูล"
               >
-                <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-blue-500' : ''}`} />
+                <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-blue-600' : ''}`} />
               </button>
             )}
             <button 
               type="button"
               onClick={onClose} 
-              className={`p-1.5 rounded-xl transition-all cursor-pointer ${
-                isDark ? 'bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white' : 'bg-slate-100 hover:bg-slate-200 text-slate-500'
+              className={`w-8 h-8 rounded-lg border flex items-center justify-center transition-colors cursor-pointer ${
+                isDark ? 'bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white border-slate-700' : 'bg-white hover:bg-slate-100 text-slate-500 hover:text-slate-800 border-slate-200'
               }`}
+              title="ปิดหน้าต่าง"
             >
-              <X className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <X className="w-4 h-4" />
             </button>
           </div>
         </div>
 
-        {/* Legend Summary Bar (Counts 100% matched to items in the list) */}
-        <div className={`px-3 py-1.5 sm:px-4 sm:py-2 border-b flex items-center justify-between text-[10.5px] sm:text-xs ${
-          isDark ? 'bg-slate-950/60 border-slate-800 text-slate-400' : 'bg-slate-50 border-slate-100 text-slate-600'
+        {/* Summary Strip */}
+        <div className={`px-4 py-2 sm:px-5 border-b flex items-center justify-between text-xs shrink-0 ${
+          isDark ? 'bg-slate-900 border-slate-800 text-slate-400' : 'bg-slate-50/50 border-slate-200 text-slate-600'
         }`}>
-          <div className="flex items-center gap-1.5 sm:gap-3 text-[9px] sm:text-xs">
-            <span className="flex items-center gap-1 font-medium">
-              <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-emerald-500 inline-block"></span>
-              แห้งแล้ว ({dryCount})
+          <div className="flex items-center gap-3 text-[11px]">
+            <span className="flex items-center gap-1.5 font-medium">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />
+              <span>แห้งปกติ ({dryCount})</span>
             </span>
-            <span className="flex items-center gap-1 font-medium">
-              <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-amber-500 inline-block"></span>
-              น้ำลดแล้ว ({recedingCount})
+            <span className="flex items-center gap-1.5 font-medium">
+              <span className="w-2 h-2 rounded-full bg-amber-500 inline-block" />
+              <span>น้ำลดลง ({recedingCount})</span>
             </span>
-            <span className="flex items-center gap-1 font-medium">
-              <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-rose-500 inline-block"></span>
-              เริ่มท่วมแล้ว ({risingCount})
+            <span className="flex items-center gap-1.5 font-medium">
+              <span className="w-2 h-2 rounded-full bg-rose-500 inline-block" />
+              <span>เฝ้าระวัง ({risingCount})</span>
             </span>
           </div>
-          <span className="font-bold text-[10px] sm:text-xs text-blue-500">{items.length} จุด</span>
+          <span className="font-mono font-bold text-xs text-blue-600 dark:text-blue-400">
+            รวม {items.length} รายการ
+          </span>
         </div>
 
-        {/* List of Real Timestamped Flood Updates */}
-        <div className="flex-1 overflow-y-auto p-2.5 sm:p-4 space-y-2">
-          {/* Pinned Official Admin Announcement (If available) */}
+        {/* Body */}
+        <div className="flex-1 overflow-y-auto px-4 sm:px-5 py-3.5 sm:py-4 space-y-3">
           {latestAnnouncement && (
-            <div className={`p-2.5 sm:p-3 rounded-xl sm:rounded-2xl border flex items-start gap-2.5 shadow-xs ${
-              isDark ? 'bg-amber-950/40 border-amber-800/80 text-amber-200' : 'bg-amber-50/90 border-amber-200 text-amber-900'
+            <div className={`p-3 rounded-lg border flex items-start gap-2.5 ${
+              isDark ? 'bg-amber-950/30 border-amber-800/80 text-amber-200' : 'bg-amber-50/80 border-amber-200 text-amber-900'
             }`}>
-              <div className="p-1.5 rounded-lg bg-amber-500 text-white shrink-0 mt-0.5">
-                <AlertTriangle className="w-4 h-4" />
+              <div className="p-1.5 rounded-md bg-amber-500/20 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5">
+                <CivicBroadcast className="w-4 h-4" />
               </div>
               <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between gap-1">
-                  <span className="text-xs sm:text-xs font-bold text-amber-600 dark:text-amber-400">
-                    📢 ประกาศจากเจ้าหน้าที่แอดมิน
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-xs font-bold text-amber-700 dark:text-amber-300">
+                    ประกาศจากศูนย์ควบคุมระบบ
                   </span>
                   {latestAnnouncement.created_at && (
-                    <span className="text-[9.5px] opacity-75 font-mono">
+                    <span className="text-[10px] opacity-75 font-mono">
                       {new Date(latestAnnouncement.created_at).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })} น.
                     </span>
                   )}
                 </div>
-                <p className="text-xs sm:text-xs mt-1 whitespace-pre-line leading-relaxed font-medium">
+                <p className="text-xs mt-1 whitespace-pre-line leading-relaxed">
                   {latestAnnouncement.message}
                 </p>
               </div>
@@ -184,86 +186,103 @@ export default function PublicUpdatesModal({
           )}
 
           {items.length === 0 ? (
-            <div className="py-8 sm:py-12 text-center text-xs text-slate-500 flex flex-col items-center justify-center gap-1.5 sm:gap-2">
-              <ShieldCheck className="w-7 h-7 sm:w-8 sm:h-8 text-emerald-500 opacity-60" />
-              <span className="text-xs sm:text-xs font-semibold">รีเซ็ตสถานะประจำวันแล้ว ยังไม่มีรายงานน้ำท่วมใหม่หลังเที่ยงคืน</span>
-              <span className="text-[10px] sm:text-[10.5px] text-slate-400">ทุกเส้นทางในจังหวัดสมุทรปราการสัญจรได้ตามปกติ</span>
+            <div className="py-10 text-center text-xs text-slate-500 flex flex-col items-center justify-center gap-2">
+              <CivicShield className="w-7 h-7 text-emerald-500 opacity-75" />
+              <span className="font-semibold text-slate-700 dark:text-slate-300">
+                ยังไม่มีรายงานการเปลี่ยนแปลงระดับน้ำหลังเวลา 00:00 น.
+              </span>
+              <span className="text-[11px] text-slate-400">
+                เส้นทางหลักในจังหวัดสมุทรปราการสามารถสัญจรได้ตามปกติ
+              </span>
             </div>
           ) : (
-            items.map((item) => {
-              const isDry = item.statusType === 'dry';
-              const isReceding = item.statusType === 'receding';
-              const isRising = item.statusType === 'rising';
+            <div className={`rounded-lg border divide-y overflow-hidden ${
+              isDark ? 'border-slate-800 divide-slate-800 bg-slate-950/40' : 'border-slate-200 divide-slate-200 bg-white'
+            }`}>
+              {items.map((item) => {
+                const isDry = item.statusType === 'dry';
+                const isReceding = item.statusType === 'receding';
 
-              let icon = <AlertTriangle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-rose-500" />;
-              let badgeBg = 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/30';
+                let icon = <AlertTriangle className="w-4 h-4 text-rose-500" />;
+                let badgeBg = isDark ? 'bg-rose-950/80 text-rose-300 border-rose-800' : 'bg-rose-50 text-rose-700 border-rose-200';
 
-              if (isDry) {
-                icon = <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-500" />;
-                badgeBg = 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30';
-              } else if (isReceding) {
-                icon = <TrendingDown className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-500" />;
-                badgeBg = 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30';
-              }
+                if (isDry) {
+                  icon = <CheckCircle2 className="w-4 h-4 text-emerald-500" />;
+                  badgeBg = isDark ? 'bg-emerald-950/80 text-emerald-300 border-emerald-800' : 'bg-emerald-50 text-emerald-700 border-emerald-200';
+                } else if (isReceding) {
+                  icon = <TrendingDown className="w-4 h-4 text-amber-500" />;
+                  badgeBg = isDark ? 'bg-amber-950/80 text-amber-300 border-amber-800' : 'bg-amber-50 text-amber-700 border-amber-200';
+                }
 
-              return (
-                <div
-                  key={item.id}
-                  onClick={() => handleItemClick(item)}
-                  className={`p-2.5 sm:p-3 rounded-xl sm:rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-2 sm:gap-3 ${
-                    isDark 
-                      ? 'bg-slate-850/60 hover:bg-slate-800 border-slate-800' 
-                      : 'bg-slate-50/70 hover:bg-slate-100 border-slate-200'
-                  }`}
-                >
-                  {/* Location & Details */}
-                  <div className="flex items-start gap-2 sm:gap-2.5 min-w-0 flex-1">
-                    <div className={`p-1.5 sm:p-2 rounded-lg sm:rounded-xl border shrink-0 mt-0.5 ${badgeBg}`}>
-                      {icon}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <span className={`text-xs sm:text-sm font-bold block line-clamp-2 break-words leading-snug ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                        {item.locationName}
-                      </span>
-                      <div className="flex items-center gap-1 sm:gap-1.5 flex-wrap mt-0.5">
-                        {item.locationSub && (
-                          <span className={`text-[10px] sm:text-[11px] break-words whitespace-normal leading-tight ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                            {item.locationSub}
-                          </span>
-                        )}
-                        {item.depthCm > 0 && (
-                          <span className={`text-[9.5px] sm:text-[10px] font-bold px-1.5 py-0.2 rounded-md ${
-                            item.depthCm > 50 
-                              ? 'bg-rose-500/15 text-rose-500' 
-                              : item.depthCm > 20 
-                                ? 'bg-amber-500/15 text-amber-500' 
-                                : 'bg-emerald-500/15 text-emerald-500'
-                          }`}>
-                            {item.depthCm} ซม.
-                          </span>
-                        )}
+                return (
+                  <div
+                    key={item.id}
+                    onClick={() => handleItemClick(item)}
+                    className={`p-3 transition-colors cursor-pointer flex items-center justify-between gap-3 ${
+                      isDark ? 'hover:bg-slate-800/70' : 'hover:bg-slate-50'
+                    }`}
+                  >
+                    <div className="flex items-start gap-2.5 min-w-0 flex-1">
+                      <div className={`w-7 h-7 rounded-md border flex items-center justify-center shrink-0 mt-0.5 ${badgeBg}`}>
+                        {icon}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <span className={`text-xs font-bold block leading-snug ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                          {item.locationName}
+                        </span>
+                        <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
+                          {item.locationSub && (
+                            <span className={`text-[11px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                              {item.locationSub}
+                            </span>
+                          )}
+                          {item.depthCm > 0 && (
+                            <span className={`text-[10px] font-mono font-bold px-1.5 py-0.2 rounded border ${
+                              isDark ? 'bg-slate-800 text-slate-200 border-slate-700' : 'bg-slate-100 text-slate-700 border-slate-200'
+                            }`}>
+                              {item.depthCm} ซม.
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  {/* Status Badge & Single Exact Event Time */}
-                  <div className="shrink-0 flex flex-col items-end justify-center gap-1 text-right">
-                    <span className={`px-2 sm:px-2.5 py-0.5 rounded-full text-[10px] sm:text-[11px] font-bold border ${badgeBg}`}>
-                      {item.statusLabel}
-                    </span>
-                    <span className={`text-[9.5px] sm:text-[11px] font-medium flex items-center gap-1 ${
-                      isDark ? 'text-slate-400' : 'text-slate-500'
-                    }`}>
-                      <Clock className="w-3 h-3 text-blue-500 shrink-0" />
-                      <span>{item.itemTime}</span>
-                    </span>
+                    <div className="shrink-0 flex flex-col items-end justify-center gap-1 text-right">
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${badgeBg}`}>
+                        {item.statusLabel}
+                      </span>
+                      <span className={`text-[10.5px] font-mono flex items-center gap-1 ${
+                        isDark ? 'text-slate-400' : 'text-slate-500'
+                      }`}>
+                        <Clock className="w-3 h-3 text-blue-600 dark:text-blue-400 shrink-0" />
+                        <span>{item.itemTime}</span>
+                      </span>
+                    </div>
                   </div>
-                </div>
-              );
-            })
+                );
+              })}
+            </div>
           )}
         </div>
 
+        {/* Footer */}
+        <div className={`px-4 py-2.5 sm:px-5 sm:py-3 border-t flex items-center justify-between text-xs shrink-0 ${
+          isDark ? 'border-slate-800 bg-slate-950/60 text-slate-400' : 'border-slate-200 bg-slate-50/80 text-slate-500'
+        }`}>
+          <span className="flex items-center gap-1.5 text-[11px]">
+            <CivicShield className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+            <span>แตะที่รายการเพื่อดูตำแหน่งบนแผนที่</span>
+          </span>
+          <button
+            type="button"
+            onClick={onClose}
+            className={`px-3.5 py-1.5 rounded-lg font-semibold text-xs border transition-colors cursor-pointer ${
+              isDark ? 'bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700' : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-200'
+            }`}
+          >
+            ปิดหน้าต่าง
+          </button>
+        </div>
       </div>
     </div>
   );

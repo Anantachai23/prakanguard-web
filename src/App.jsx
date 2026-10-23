@@ -3451,28 +3451,37 @@ export default function App() {
                 setSelectedPoint(null);
               }
             }}
-            className="fixed inset-0 z-[100] bg-slate-950/70 backdrop-blur-xs flex items-end sm:items-center justify-center p-2.5 pb-20 sm:p-4 smooth-backdrop animate-in fade-in duration-200 pointer-events-auto overflow-y-auto"
+            className="fixed inset-0 z-[100] bg-slate-950/65 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 pointer-events-auto overflow-y-auto"
           >
             <div 
-              className={`w-[90vw] max-w-[335px] sm:max-w-[410px] mb-2 sm:my-auto m-auto border rounded-2xl shadow-2xl relative max-h-[58vh] sm:max-h-[82vh] flex flex-col p-2.5 sm:p-4 overflow-y-auto overscroll-contain transition-all custom-scrollbar-thin ${
+              className={`w-[92vw] max-w-[420px] sm:max-w-md my-auto m-auto border rounded-xl shadow-2xl relative max-h-[82vh] sm:max-h-[86vh] flex flex-col overflow-hidden transition-colors ${
                 isDark 
-                  ? 'bg-slate-900 border-slate-800 text-slate-100 shadow-2xl shadow-black/80' 
-                  : 'bg-white border-slate-200 text-slate-900 shadow-2xl shadow-slate-900/30'
+                  ? 'bg-slate-900 border-slate-800 text-slate-100' 
+                  : 'bg-white border-slate-200 text-slate-900'
               }`}
             >
-              {/* Header: District Badge + Severity Badge + Easy-to-Tap Close Button */}
-              <div className={`flex items-start justify-between gap-1.5 sm:gap-2 pb-2 sm:pb-2.5 border-b shrink-0 ${isDark ? 'border-slate-800' : 'border-slate-200'}`}>
-                <div className="flex flex-wrap items-center gap-1 sm:gap-1.5 min-w-0 flex-1">
-                  <span className={`text-[10.5px] sm:text-xs font-semibold px-2 py-0.5 rounded-md border shadow-xs ${
-                    isDark ? 'bg-slate-850 text-cyan-300 border-slate-700' : 'bg-slate-50 text-blue-700 border-slate-200'
+              {/* Top Institutional Bar */}
+              <div className={`h-1 w-full shrink-0 ${
+                selectedPoint.hazardType === 'hail' ? 'bg-cyan-600' :
+                getFloodLevel(selectedPoint.depthCm) === 3 ? 'bg-rose-600' :
+                getFloodLevel(selectedPoint.depthCm) === 2 ? 'bg-amber-500' : 'bg-emerald-600'
+              }`} />
+
+              {/* Header: District Badge + Severity Badge + Close Button */}
+              <div className={`flex items-center justify-between gap-2 px-4 py-3 border-b shrink-0 ${
+                isDark ? 'border-slate-800 bg-slate-950/50' : 'border-slate-200 bg-slate-50/80'
+              }`}>
+                <div className="flex flex-wrap items-center gap-1.5 min-w-0 flex-1">
+                  <span className={`text-[11px] font-bold px-2 py-0.5 rounded border ${
+                    isDark ? 'bg-slate-800 text-blue-400 border-slate-700' : 'bg-white text-blue-700 border-slate-200'
                   }`}>
                     อ.{selectedPoint.district}
                   </span>
-                  <span className={`text-[10.5px] sm:text-xs font-semibold px-2 py-0.5 rounded-md border shadow-xs inline-flex items-center gap-1.5 break-words whitespace-normal leading-tight ${
-                    selectedPoint.hazardType === 'hail' ? (isDark ? 'bg-cyan-950 text-cyan-300 border-cyan-700' : 'bg-cyan-50 text-cyan-700 border-cyan-200') :
-                    getFloodLevel(selectedPoint.depthCm) === 3 ? (isDark ? 'bg-rose-950 text-rose-300 border-rose-700' : 'bg-rose-50 text-rose-700 border-rose-200') :
-                    getFloodLevel(selectedPoint.depthCm) === 2 ? (isDark ? 'bg-amber-950 text-amber-300 border-amber-700' : 'bg-amber-50 text-amber-700 border-amber-200') :
-                    (isDark ? 'bg-emerald-950 text-emerald-300 border-emerald-700' : 'bg-emerald-50 text-emerald-800 border-emerald-300')
+                  <span className={`text-[11px] font-semibold px-2 py-0.5 rounded border inline-flex items-center gap-1.5 leading-tight ${
+                    selectedPoint.hazardType === 'hail' ? (isDark ? 'bg-cyan-950 text-cyan-300 border-cyan-800' : 'bg-cyan-50 text-cyan-700 border-cyan-200') :
+                    getFloodLevel(selectedPoint.depthCm) === 3 ? (isDark ? 'bg-rose-950 text-rose-300 border-rose-800' : 'bg-rose-50 text-rose-700 border-rose-200') :
+                    getFloodLevel(selectedPoint.depthCm) === 2 ? (isDark ? 'bg-amber-950 text-amber-300 border-amber-800' : 'bg-amber-50 text-amber-700 border-amber-200') :
+                    (isDark ? 'bg-emerald-950 text-emerald-300 border-emerald-800' : 'bg-emerald-50 text-emerald-800 border-emerald-200')
                   }`}>
                     {selectedPoint.hazardType === 'hail' ? (
                       <>
@@ -3481,343 +3490,293 @@ export default function App() {
                       </>
                     ) : (
                       <>
-                        <span className={`w-2 h-2 rounded-full shrink-0 ${
+                        <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${
                           getFloodLevel(selectedPoint.depthCm) === 3 ? 'bg-rose-500' :
                           getFloodLevel(selectedPoint.depthCm) === 2 ? 'bg-amber-500' : 'bg-emerald-500'
                         }`} />
                         <span>
-                          {getFloodLevel(selectedPoint.depthCm) === 3 ? "น้ำท่วมวิกฤต (>50 ซม.)" :
-                           getFloodLevel(selectedPoint.depthCm) === 2 ? "น้ำท่วมปานกลาง (21-50 ซม.)" : "น้ำท่วมปกติ (5-20 ซม.)"}
+                          {getFloodLevel(selectedPoint.depthCm) === 3 ? "ระดับวิกฤต (>50 ซม.)" :
+                           getFloodLevel(selectedPoint.depthCm) === 2 ? "ระดับปานกลาง (21-50 ซม.)" : "ระดับปกติ (5-20 ซม.)"}
                         </span>
                       </>
                     )}
                   </span>
-                  {hasPhoto && (
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        playModalOpenSound();
-                        setLightboxPhoto({
-                          url: pointPhoto,
-                          title: selectedPoint.name,
-                          time: selectedPoint.reportedAt || selectedPoint.time
-                        });
-                      }}
-                      className="text-[10.5px] sm:text-xs font-bold px-2 py-0.5 rounded-md border shadow-xs bg-blue-100 hover:bg-blue-200 text-blue-800 border-blue-300 dark:bg-blue-950 dark:hover:bg-blue-900 dark:text-cyan-300 dark:border-blue-700 flex items-center gap-1 cursor-pointer transition-all active:scale-95 animate-in fade-in duration-200"
-                      title="แตะเพื่อเปิดดูภาพถ่ายขนาดใหญ่"
-                    >
-                      <CivicReportCamera className="w-3 h-3 shrink-0" />
-                      <span>มีภาพถ่าย (แตะเพื่อดู)</span>
-                    </button>
-                  )}
                   {isWaterReceding(selectedPoint) && (
-                    <span className="text-[10.5px] sm:text-xs font-semibold px-1.5 py-0.5 rounded-md bg-teal-50 text-teal-800 border border-teal-300 dark:bg-teal-950 dark:text-teal-300 dark:border-teal-700 flex items-center gap-1">
+                    <span className="text-[10.5px] font-semibold px-1.5 py-0.5 rounded bg-teal-50 text-teal-800 border border-teal-200 dark:bg-teal-950 dark:text-teal-300 dark:border-teal-800 flex items-center gap-1">
                       <CivicWaterTrend className="w-3 h-3 shrink-0" direction="falling" />
                       <span>น้ำลด</span>
                     </span>
                   )}
                   {selectedPoint.waterTrend === 'rising' && !isWaterReceding(selectedPoint) && (
-                    <span className="text-[10.5px] sm:text-xs font-semibold px-1.5 py-0.5 rounded-md bg-rose-50 text-rose-800 border border-rose-300 dark:bg-rose-950 dark:text-rose-300 dark:border-rose-700 flex items-center gap-1">
+                    <span className="text-[10.5px] font-semibold px-1.5 py-0.5 rounded bg-rose-50 text-rose-800 border border-rose-200 dark:bg-rose-950 dark:text-rose-300 dark:border-rose-800 flex items-center gap-1">
                       <CivicWaterTrend className="w-3 h-3 shrink-0" direction="rising" />
                       <span>น้ำขึ้น</span>
                     </span>
                   )}
                 </div>
 
-                {/* Tactile Close Button */}
+                {/* Close Button */}
                 <button 
                   type="button"
                   onClick={() => {
                     playCloseSound();
                     setSelectedPoint(null);
                   }}
-                  className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg border shadow-xs flex items-center justify-center transition-all cursor-pointer shrink-0 active:scale-95 ${
+                  className={`w-8 h-8 rounded-lg border flex items-center justify-center transition-colors cursor-pointer shrink-0 ${
                     isDark 
-                      ? 'bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700' 
-                      : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-200'
+                      ? 'bg-slate-800 hover:bg-slate-700 text-slate-300 border-slate-700' 
+                      : 'bg-white hover:bg-slate-100 text-slate-600 border-slate-200'
                   }`}
                   title="ปิดหน้าต่างข้อมูล"
                 >
-                  <X className="w-4 h-4 font-bold" />
+                  <X className="w-4 h-4" />
                 </button>
               </div>
 
-              {/* Point Title & Clean Location Subtitle */}
-              <div className="pt-2 pb-1 sm:pt-2.5 sm:pb-1 shrink-0">
-                <h3 className={`text-sm sm:text-base font-bold leading-snug break-words whitespace-normal ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                  {selectedPoint.name}
-                </h3>
-                {(selectedPoint.district || selectedPoint.subdistrict) && (
-                  <p className={`text-[11px] sm:text-xs mt-0.5 font-medium leading-relaxed break-words whitespace-normal ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                    {selectedPoint.district ? `อ.${selectedPoint.district.replace(/^อ\./, '')}` : ''}
-                    {selectedPoint.subdistrict ? ` • ${selectedPoint.subdistrict.startsWith('ต.') ? selectedPoint.subdistrict : `ต.${selectedPoint.subdistrict}`}` : ''}
-                    {(typeof selectedPoint.roadSegment === 'string' && selectedPoint.roadSegment.trim() && !/^[0-9.,\s-]+$/.test(selectedPoint.roadSegment.trim())) ? ` • ${selectedPoint.roadSegment}` : ''}
-                  </p>
-                )}
-                {typeof selectedPoint.lat === 'number' && typeof selectedPoint.lng === 'number' && (
-                  <div className="text-[9.5px] sm:text-[10px] font-mono text-slate-400 dark:text-slate-500 mt-0.5 flex items-center gap-1 break-words whitespace-normal">
-                    <CivicStationPin className="w-3 h-3 shrink-0" />
-                    <span>พิกัด: {selectedPoint.lat.toFixed(5)}, {selectedPoint.lng.toFixed(5)}</span>
-                  </div>
-                )}
-              </div>
-
-            {/* Citizen Uploaded Photo Preview (If available) */}
-            {hasPhoto && (
-              <div 
-                className="mt-2 sm:mt-2.5 rounded-lg overflow-hidden border border-blue-200 dark:border-blue-900/60 shadow-sm relative cursor-pointer group bg-slate-950 touch-manipulation active:scale-[0.98] transition-transform shrink-0"
-                onClick={() => {
-                  playModalOpenSound();
-                  setLightboxPhoto({
-                    url: pointPhoto,
-                    title: selectedPoint.name,
-                    time: selectedPoint.reportedAt || selectedPoint.time
-                  });
-                }}
-                title="แตะเพื่อดูภาพขนาดเต็ม"
-              >
-                <div className="relative">
-                  <img 
-                    src={pointPhoto} 
-                    alt="รูปภาพสถานการณ์น้ำท่วม" 
-                    className="w-full h-24 sm:h-40 object-cover group-hover:scale-105 transition-transform duration-200" 
-                    loading="lazy"
-                  />
-                  <div className="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-black/80 backdrop-blur-xs text-cyan-300 text-[10.5px] sm:text-xs font-bold border border-cyan-400/50 flex items-center gap-1 shadow-md">
-                    <CivicReportCamera className="w-3 h-3 shrink-0" />
-                    <span>ภาพถ่ายรายงาน</span>
-                  </div>
-                  <div className="absolute bottom-2 right-2 px-2 py-0.5 rounded-md bg-blue-600/90 text-white text-[10px] sm:text-[11px] font-semibold flex items-center gap-1 shadow-md">
-                    <span>แตะดูเต็มจอ</span>
-                  </div>
-                </div>
-                <div className={`p-1.5 sm:p-2 text-[10.5px] sm:text-xs text-center font-medium flex items-center justify-between px-2.5 ${
-                  isDark ? 'bg-slate-850 text-slate-300' : 'bg-slate-100 text-slate-700'
-                }`}>
-                  <span className="flex items-center gap-1 font-semibold text-blue-600 dark:text-cyan-400">
-                    <span>คลิกเพื่อเปิดภาพถ่ายความละเอียดสูง</span>
-                  </span>
-                  {(selectedPoint.reportedAt || selectedPoint.time) && (
-                    <span className="opacity-75 text-[9.5px] sm:text-[10px] font-mono">
-                      {selectedPoint.reportedAt || selectedPoint.time}
-                    </span>
+              {/* Scrollable Body */}
+              <div className="flex-1 overflow-y-auto px-4 py-3.5 space-y-3 overscroll-contain custom-scrollbar-thin">
+                {/* Point Title & Clean Location Subtitle */}
+                <div>
+                  <h3 className={`text-sm sm:text-base font-bold leading-snug ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                    {selectedPoint.name}
+                  </h3>
+                  {(selectedPoint.district || selectedPoint.subdistrict) && (
+                    <p className={`text-xs mt-0.5 font-medium ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                      {selectedPoint.district ? `อ.${selectedPoint.district.replace(/^อ\./, '')}` : ''}
+                      {selectedPoint.subdistrict ? ` • ${selectedPoint.subdistrict.startsWith('ต.') ? selectedPoint.subdistrict : `ต.${selectedPoint.subdistrict}`}` : ''}
+                      {(typeof selectedPoint.roadSegment === 'string' && selectedPoint.roadSegment.trim() && !/^[0-9.,\s-]+$/.test(selectedPoint.roadSegment.trim())) ? ` • ${selectedPoint.roadSegment}` : ''}
+                    </p>
+                  )}
+                  {typeof selectedPoint.lat === 'number' && typeof selectedPoint.lng === 'number' && (
+                    <div className="text-[10.5px] font-mono text-slate-400 dark:text-slate-500 mt-0.5 flex items-center gap-1">
+                      <CivicStationPin className="w-3 h-3 shrink-0" />
+                      <span>พิกัด: {selectedPoint.lat.toFixed(5)}, {selectedPoint.lng.toFixed(5)}</span>
+                    </div>
                   )}
                 </div>
-              </div>
-            )}
 
-            {/* Visual Gauge with Standard Waterline & Sleek Vehicle Silhouettes (100% Solid & High Contrast) */}
-            <div className="mt-2 sm:mt-2.5">
-              <VisualGauge 
-                depthCm={selectedPoint.depthCm} 
-                level={getFloodLevel(selectedPoint.depthCm)} 
-                impactText={selectedPoint.trafficStatus}
-                theme={theme}
-              />
-            </div>
+                {/* Citizen Uploaded Photo Preview (If available) */}
+                {hasPhoto && (
+                  <div 
+                    className={`rounded-lg overflow-hidden border relative cursor-pointer group bg-slate-950 ${
+                      isDark ? 'border-slate-800' : 'border-slate-200'
+                    }`}
+                    onClick={() => {
+                      playModalOpenSound();
+                      setLightboxPhoto({
+                        url: pointPhoto,
+                        title: selectedPoint.name,
+                        time: selectedPoint.reportedAt || selectedPoint.time
+                      });
+                    }}
+                    title="แตะเพื่อดูภาพขนาดเต็ม"
+                  >
+                    <div className="relative">
+                      <img 
+                        src={pointPhoto} 
+                        alt="รูปภาพสถานการณ์น้ำท่วม" 
+                        className="w-full h-36 sm:h-40 object-cover" 
+                        loading="lazy"
+                      />
+                      <div className="absolute top-2 left-2 px-2 py-0.5 rounded bg-slate-950/80 text-white text-[10px] font-semibold border border-white/15 flex items-center gap-1">
+                        <CivicReportCamera className="w-3 h-3 shrink-0" />
+                        <span>ภาพถ่ายหน้างานจริง</span>
+                      </div>
+                      <div className="absolute bottom-2 right-2 px-2 py-0.5 rounded bg-blue-700 text-white text-[10px] font-semibold">
+                        ดูภาพขยาย
+                      </div>
+                    </div>
+                  </div>
+                )}
 
-            {/* Vehicle Passability Guidance Matrix */}
-            {(() => {
-              const standard = FLOOD_STANDARDS.find(s => s.level === getFloodLevel(selectedPoint.depthCm)) || FLOOD_STANDARDS[0];
-              const vi = standard.vehicleImpact || {};
-              return (
-                <div className={`mt-2 p-2 sm:p-2.5 rounded-lg border ${isDark ? 'bg-slate-850/70 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-[10.5px] sm:text-[11px] font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5 break-words whitespace-normal">
-                      <CivicVehicleSedan className="w-3.5 h-3.5 text-blue-600 dark:text-cyan-400 shrink-0" />
-                      <span>คำแนะนำความปลอดภัยต่อยานพาหนะ</span>
+                {/* Visual Gauge */}
+                <div>
+                  <VisualGauge 
+                    depthCm={selectedPoint.depthCm} 
+                    level={getFloodLevel(selectedPoint.depthCm)} 
+                    impactText={selectedPoint.trafficStatus}
+                    theme={theme}
+                  />
+                </div>
+
+                {/* Vehicle Passability Guidance Matrix */}
+                {(() => {
+                  const standard = FLOOD_STANDARDS.find(s => s.level === getFloodLevel(selectedPoint.depthCm)) || FLOOD_STANDARDS[0];
+                  const vi = standard.vehicleImpact || {};
+                  return (
+                    <div className={`p-2.5 rounded-lg border ${isDark ? 'bg-slate-950/40 border-slate-800' : 'bg-slate-50/70 border-slate-200'}`}>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="text-[11px] font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                          <CivicVehicleSedan className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 shrink-0" />
+                          <span>การประเมินสัญจรตามประเภทรถ</span>
+                        </span>
+                        <span className="text-[10px] text-slate-400 shrink-0">มาตรฐาน ปภ.</span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-1.5 text-xs">
+                        <div className={`p-1.5 rounded border flex items-center justify-between gap-1 ${
+                          vi.sedan?.status === 'danger' ? (isDark ? 'bg-rose-950/60 border-rose-800 text-rose-300' : 'bg-rose-50 border-rose-200 text-rose-800') :
+                          vi.sedan?.status === 'warning' ? (isDark ? 'bg-amber-950/60 border-amber-800 text-amber-300' : 'bg-amber-50 border-amber-200 text-amber-800') :
+                          (isDark ? 'bg-emerald-950/60 border-emerald-800 text-emerald-300' : 'bg-emerald-50 border-emerald-200 text-emerald-800')
+                        }`}>
+                          <span className="text-[11px] font-semibold flex items-center gap-1">
+                            <CivicVehicleSedan className="w-3.5 h-3.5 shrink-0" />
+                            <span>รถเก๋ง/เล็ก</span>
+                          </span>
+                          <span className="text-[10px] font-bold shrink-0">{vi.sedan?.status === 'danger' ? 'ห้ามผ่าน' : vi.sedan?.status === 'warning' ? 'ควรเลี่ยง' : 'ผ่านได้'}</span>
+                        </div>
+
+                        <div className={`p-1.5 rounded border flex items-center justify-between gap-1 ${
+                          vi.motorcycle?.status === 'danger' ? (isDark ? 'bg-rose-950/60 border-rose-800 text-rose-300' : 'bg-rose-50 border-rose-200 text-rose-800') :
+                          vi.motorcycle?.status === 'warning' ? (isDark ? 'bg-amber-950/60 border-amber-800 text-amber-300' : 'bg-amber-50 border-amber-200 text-amber-800') :
+                          (isDark ? 'bg-emerald-950/60 border-emerald-800 text-emerald-300' : 'bg-emerald-50 border-emerald-200 text-emerald-800')
+                        }`}>
+                          <span className="text-[11px] font-semibold flex items-center gap-1">
+                            <CivicVehicleMoto className="w-3.5 h-3.5 shrink-0" />
+                            <span>มอเตอร์ไซค์</span>
+                          </span>
+                          <span className="text-[10px] font-bold shrink-0">{vi.motorcycle?.status === 'danger' ? 'ห้ามผ่าน' : vi.motorcycle?.status === 'warning' ? 'ควรเลี่ยง' : 'ผ่านได้'}</span>
+                        </div>
+
+                        <div className={`p-1.5 rounded border flex items-center justify-between gap-1 ${
+                          vi.suv?.status === 'danger' ? (isDark ? 'bg-rose-950/60 border-rose-800 text-rose-300' : 'bg-rose-50 border-rose-200 text-rose-800') :
+                          vi.suv?.status === 'warning' ? (isDark ? 'bg-amber-950/60 border-amber-800 text-amber-300' : 'bg-amber-50 border-amber-200 text-amber-800') :
+                          (isDark ? 'bg-emerald-950/60 border-emerald-800 text-emerald-300' : 'bg-emerald-50 border-emerald-200 text-emerald-800')
+                        }`}>
+                          <span className="text-[11px] font-semibold flex items-center gap-1">
+                            <CivicVehicleSuv className="w-3.5 h-3.5 shrink-0" />
+                            <span>กระบะ/SUV</span>
+                          </span>
+                          <span className="text-[10px] font-bold shrink-0">{vi.suv?.status === 'danger' ? 'ห้ามผ่าน' : vi.suv?.status === 'warning' ? 'ระวังคลื่น' : 'ผ่านได้'}</span>
+                        </div>
+
+                        <div className={`p-1.5 rounded border flex items-center justify-between gap-1 ${
+                          vi.truck?.status === 'danger' ? (isDark ? 'bg-rose-950/60 border-rose-800 text-rose-300' : 'bg-rose-50 border-rose-200 text-rose-800') :
+                          vi.truck?.status === 'warning' ? (isDark ? 'bg-amber-950/60 border-amber-800 text-amber-300' : 'bg-amber-50 border-amber-200 text-amber-800') :
+                          (isDark ? 'bg-emerald-950/60 border-emerald-800 text-emerald-300' : 'bg-emerald-50 border-emerald-200 text-emerald-800')
+                        }`}>
+                          <span className="text-[11px] font-semibold flex items-center gap-1">
+                            <CivicVehicleTruck className="w-3.5 h-3.5 shrink-0" />
+                            <span>รถบรรทุก</span>
+                          </span>
+                          <span className="text-[10px] font-bold shrink-0">{vi.truck?.status === 'danger' ? 'ห้ามผ่าน' : vi.truck?.status === 'warning' ? 'ระวังสูง' : 'ผ่านได้'}</span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {/* Fact-based Summary Details */}
+                <div className="space-y-2 text-xs">
+                  {selectedPoint.cause && (
+                    <div className={`p-2.5 rounded-lg border ${
+                      isDark ? 'bg-slate-950/40 border-slate-800' : 'bg-slate-50/70 border-slate-200'
+                    }`}>
+                      <span className={`block text-[10px] font-semibold uppercase tracking-wider ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>สาเหตุ:</span>
+                      <span className={`mt-0.5 block leading-relaxed font-medium ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>
+                        {selectedPoint.cause}
+                      </span>
+                    </div>
+                  )}
+
+                  {(selectedPoint.officialGuidance || selectedPoint.trafficStatus) && (
+                    <div className={`p-2.5 rounded-lg border ${
+                      isDark ? 'bg-slate-950/40 border-slate-800' : 'bg-slate-50/70 border-slate-200'
+                    }`}>
+                      <span className={`block text-[10px] font-semibold uppercase tracking-wider ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>คำแนะนำการสัญจร:</span>
+                      <span className={`mt-0.5 block leading-relaxed font-medium ${isDark ? 'text-blue-400' : 'text-blue-700'}`}>
+                        {selectedPoint.officialGuidance || selectedPoint.trafficStatus}
+                      </span>
+                    </div>
+                  )}
+
+                  <div className={`p-2 rounded-lg border text-[11px] flex items-center justify-between gap-2 ${
+                    isDark ? 'bg-slate-950/40 border-slate-800 text-slate-300' : 'bg-white border-slate-200 text-slate-700'
+                  }`}>
+                    <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                      <CivicShield className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 shrink-0" />
+                      <span className="truncate">
+                        แหล่งข้อมูล: <strong className={isDark ? 'text-slate-100' : 'text-slate-900'}>
+                          {selectedPoint.isCitizen || (selectedPoint.source && selectedPoint.source.includes('ประชาชน')) 
+                            ? 'รายงานภาคประชาชน' 
+                            : (selectedPoint.source || 'Traffy Fondue Open API')}
+                        </strong>
+                      </span>
+                    </div>
+                    {(selectedPoint.reportedAt || selectedPoint.time) && (
+                      <span className="text-[10px] font-mono text-slate-400 shrink-0">
+                        {selectedPoint.reportedAt || selectedPoint.time}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Admin Broadcast Direct Delete Action */}
+                {isAdminAuthenticated && (selectedPoint.isAdminBroadcast || selectedPoint.isAiGenerated) && (
+                  <div className="p-2 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center justify-between gap-2">
+                    <span className="text-xs font-semibold text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
+                      <Megaphone className="w-3.5 h-3.5 shrink-0" />
+                      <span>ประกาศฉุกเฉินผู้ดูแลระบบ</span>
                     </span>
-                    <span className="text-[9.5px] sm:text-[10px] text-slate-400 shrink-0">อิง ปภ./กรมทางหลวง</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (window.confirm(`ยืนยันการลบข้อความประกาศ "${selectedPoint.name}" ออกจากระบบ?`)) {
+                          handleRejectReport(selectedPoint.id);
+                        }
+                      }}
+                      className="px-2.5 py-1 rounded bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold transition-colors flex items-center gap-1 cursor-pointer"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>ลบ</span>
+                    </button>
                   </div>
-                  <div className="grid grid-cols-2 gap-1.5 text-xs">
-                    {/* รถเก๋ง */}
-                    <div className={`p-1.5 rounded-md border flex items-center justify-between gap-1 ${
-                      vi.sedan?.status === 'danger' ? (isDark ? 'bg-rose-950/60 border-rose-800 text-rose-300' : 'bg-rose-50 border-rose-200 text-rose-800') :
-                      vi.sedan?.status === 'warning' ? (isDark ? 'bg-amber-950/60 border-amber-800 text-amber-300' : 'bg-amber-50 border-amber-200 text-amber-800') :
-                      (isDark ? 'bg-emerald-950/60 border-emerald-800 text-emerald-300' : 'bg-emerald-50 border-emerald-200 text-emerald-800')
-                    }`}>
-                      <span className="text-[10.5px] sm:text-[11px] font-semibold flex items-center gap-1 leading-tight">
-                        <CivicVehicleSedan className="w-3.5 h-3.5 shrink-0" />
-                        <span>รถเก๋ง/เล็ก</span>
-                      </span>
-                      <span className="text-[9.5px] sm:text-[10px] font-bold shrink-0">{vi.sedan?.status === 'danger' ? 'ห้ามผ่าน' : vi.sedan?.status === 'warning' ? 'ควรเลี่ยง' : 'ผ่านได้'}</span>
-                    </div>
-
-                    {/* มอเตอร์ไซค์ */}
-                    <div className={`p-1.5 rounded-md border flex items-center justify-between gap-1 ${
-                      vi.motorcycle?.status === 'danger' ? (isDark ? 'bg-rose-950/60 border-rose-800 text-rose-300' : 'bg-rose-50 border-rose-200 text-rose-800') :
-                      vi.motorcycle?.status === 'warning' ? (isDark ? 'bg-amber-950/60 border-amber-800 text-amber-300' : 'bg-amber-50 border-amber-200 text-amber-800') :
-                      (isDark ? 'bg-emerald-950/60 border-emerald-800 text-emerald-300' : 'bg-emerald-50 border-emerald-200 text-emerald-800')
-                    }`}>
-                      <span className="text-[10.5px] sm:text-[11px] font-semibold flex items-center gap-1 leading-tight">
-                        <CivicVehicleMoto className="w-3.5 h-3.5 shrink-0" />
-                        <span>มอเตอร์ไซค์</span>
-                      </span>
-                      <span className="text-[9.5px] sm:text-[10px] font-bold shrink-0">{vi.motorcycle?.status === 'danger' ? 'ห้ามผ่าน' : vi.motorcycle?.status === 'warning' ? 'ควรเลี่ยง' : 'ผ่านได้'}</span>
-                    </div>
-
-                    {/* รถกระบะ/SUV */}
-                    <div className={`p-1.5 rounded-md border flex items-center justify-between gap-1 ${
-                      vi.suv?.status === 'danger' ? (isDark ? 'bg-rose-950/60 border-rose-800 text-rose-300' : 'bg-rose-50 border-rose-200 text-rose-800') :
-                      vi.suv?.status === 'warning' ? (isDark ? 'bg-amber-950/60 border-amber-800 text-amber-300' : 'bg-amber-50 border-amber-200 text-amber-800') :
-                      (isDark ? 'bg-emerald-950/60 border-emerald-800 text-emerald-300' : 'bg-emerald-50 border-emerald-200 text-emerald-800')
-                    }`}>
-                      <span className="text-[10.5px] sm:text-[11px] font-semibold flex items-center gap-1 leading-tight">
-                        <CivicVehicleSuv className="w-3.5 h-3.5 shrink-0" />
-                        <span>กระบะ/SUV</span>
-                      </span>
-                      <span className="text-[9.5px] sm:text-[10px] font-bold shrink-0">{vi.suv?.status === 'danger' ? 'ห้ามผ่าน' : vi.suv?.status === 'warning' ? 'ระวังคลื่น' : 'ผ่านได้'}</span>
-                    </div>
-
-                    {/* รถบรรทุก */}
-                    <div className={`p-1.5 rounded-md border flex items-center justify-between gap-1 ${
-                      vi.truck?.status === 'danger' ? (isDark ? 'bg-rose-950/60 border-rose-800 text-rose-300' : 'bg-rose-50 border-rose-200 text-rose-800') :
-                      vi.truck?.status === 'warning' ? (isDark ? 'bg-amber-950/60 border-amber-800 text-amber-300' : 'bg-amber-50 border-amber-200 text-amber-800') :
-                      (isDark ? 'bg-emerald-950/60 border-emerald-800 text-emerald-300' : 'bg-emerald-50 border-emerald-200 text-emerald-800')
-                    }`}>
-                      <span className="text-[10.5px] sm:text-[11px] font-semibold flex items-center gap-1 leading-tight">
-                        <CivicVehicleTruck className="w-3.5 h-3.5 shrink-0" />
-                        <span>รถบรรทุก</span>
-                      </span>
-                      <span className="text-[9.5px] sm:text-[10px] font-bold shrink-0">{vi.truck?.status === 'danger' ? 'ห้ามผ่าน' : vi.truck?.status === 'warning' ? 'ระวังสูง' : 'ผ่านได้'}</span>
-                    </div>
-                  </div>
-                </div>
-              );
-            })()}
-
-            {/* Fact-based Summary Details with Citations */}
-            <div className="space-y-1.5 mt-2 text-xs sm:text-sm">
-              {selectedPoint.cause && (
-                <div className={`p-2 sm:p-2.5 rounded-lg border ${
-                  isDark ? 'bg-slate-850 border-slate-800' : 'bg-slate-50 border-slate-200'
-                }`}>
-                  <span className={`block text-[10.5px] sm:text-[11px] font-semibold ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>สาเหตุสำคัญ:</span>
-                  <span className={`mt-0.5 block leading-relaxed font-medium text-[11px] sm:text-xs break-words whitespace-normal ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>
-                    {selectedPoint.cause}
-                  </span>
-                </div>
-              )}
-
-              {(selectedPoint.officialGuidance || selectedPoint.trafficStatus) && (
-                <div className={`p-2 sm:p-2.5 rounded-lg border ${
-                  isDark ? 'bg-slate-850 border-slate-800' : 'bg-slate-50 border-slate-200'
-                }`}>
-                  <span className={`block text-[10.5px] sm:text-[11px] font-semibold ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>คำแนะนำการสัญจร:</span>
-                  <span className={`mt-0.5 block leading-relaxed font-medium text-[11px] sm:text-xs break-words whitespace-normal ${isDark ? 'text-cyan-400' : 'text-blue-700'}`}>
-                    {selectedPoint.officialGuidance || selectedPoint.trafficStatus}
-                  </span>
-                </div>
-              )}
-
-              {/* Source info (Clean reference line as requested) */}
-              <div className={`p-1.5 sm:p-2 rounded-lg border text-[10.5px] sm:text-[11px] flex items-center justify-between gap-1.5 shadow-xs ${
-                isDark ? 'bg-slate-850 border-slate-800 text-slate-300' : 'bg-white border-slate-200 text-slate-800'
-              }`}>
-                <div className="flex items-start gap-1.5 min-w-0 flex-1">
-                  <CivicShield className="w-3.5 h-3.5 text-blue-500 shrink-0 mt-0.5" />
-                  <span className="break-words whitespace-normal leading-tight">
-                    อ้างอิง: <strong className={isDark ? 'text-slate-100' : 'text-slate-900'}>
-                      {selectedPoint.isCitizen || (selectedPoint.source && selectedPoint.source.includes('ประชาชน')) 
-                        ? 'รายงานจากประชาชนในพื้นที่' 
-                        : (selectedPoint.source || 'Traffy Fondue Open API')}
-                    </strong>
-                  </span>
-                </div>
-                {(selectedPoint.reportedAt || selectedPoint.time) && (
-                  <span className="text-[9.5px] sm:text-[10px] text-slate-400 shrink-0">
-                    {selectedPoint.reportedAt || selectedPoint.time}
-                  </span>
                 )}
               </div>
-            </div>
 
-            {/* Quick Action Buttons: Direct Navigation & Standards & Helpline */}
-            <div className="mt-2.5 sm:mt-3 pt-2 sm:pt-2.5 border-t border-slate-200 dark:border-slate-800 space-y-2">
-              {/* Row 1: Google Maps Navigation Link */}
-              {typeof selectedPoint.lat === 'number' && typeof selectedPoint.lng === 'number' && (
-                <a 
-                  href={`https://www.google.com/maps/dir/?api=1&destination=${selectedPoint.lat},${selectedPoint.lng}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full py-1.5 sm:py-2 px-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition-all text-center cursor-pointer shadow-xs active:scale-95 break-words whitespace-normal leading-tight"
-                  title="เปิดแผนที่นำทางไปยังจุดนี้ด้วย Google Maps"
-                >
-                  <CivicNavigationArrow className="w-3.5 h-3.5 shrink-0" />
-                  <span className="break-words whitespace-normal leading-tight">นำทางด้วย Google Maps</span>
-                </a>
-              )}
+              {/* Footer Actions */}
+              <div className={`px-4 py-3 border-t space-y-2 shrink-0 ${
+                isDark ? 'border-slate-800 bg-slate-950/60' : 'border-slate-200 bg-slate-50/80'
+              }`}>
+                <div className="grid grid-cols-3 gap-2">
+                  {typeof selectedPoint.lat === 'number' && typeof selectedPoint.lng === 'number' && (
+                    <a 
+                      href={`https://www.google.com/maps/dir/?api=1&destination=${selectedPoint.lat},${selectedPoint.lng}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="py-2 px-2 rounded-lg bg-blue-700 hover:bg-blue-800 text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors text-center cursor-pointer"
+                      title="นำทางด้วย Google Maps"
+                    >
+                      <CivicNavigationArrow className="w-3.5 h-3.5 shrink-0" />
+                      <span>นำทาง</span>
+                    </a>
+                  )}
 
-              {/* Row 2: Standards Guide + Phone Hotline */}
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    try { playModalOpenSound(); } catch (_) {}
-                    setIsStandardsModalOpen(true);
-                  }}
-                  className={`py-1.5 sm:py-2 px-2 rounded-lg border text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-xs active:scale-95 ${
-                    isDark 
-                      ? 'bg-slate-850 hover:bg-slate-800 text-slate-200 border-slate-800' 
-                      : 'bg-white hover:bg-slate-100 text-slate-800 border-slate-200'
-                  }`}
-                >
-                  <CivicStandards className="w-3.5 h-3.5 text-blue-500 shrink-0" />
-                  <span className="break-words whitespace-normal leading-tight">เกณฑ์ระดับน้ำ</span>
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      try { playModalOpenSound(); } catch (_) {}
+                      setIsStandardsModalOpen(true);
+                    }}
+                    className={`py-2 px-2 rounded-lg border text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer ${
+                      isDark 
+                        ? 'bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700' 
+                        : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-200'
+                    }`}
+                  >
+                    <CivicStandards className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 shrink-0" />
+                    <span>เกณฑ์น้ำ</span>
+                  </button>
 
-                <a 
-                  href={`tel:${selectedPoint.phone ? selectedPoint.phone.replace(/-/g, '') : '1784'}`}
-                  onClick={() => playClickSound()}
-                  className="py-1.5 sm:py-2 px-2 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition-all text-center cursor-pointer border border-rose-700/60 shadow-xs active:scale-95"
-                >
-                  <CivicEmergencyPhone className="w-3.5 h-3.5 shrink-0" />
-                  <span className="break-words whitespace-normal leading-tight">โทร {selectedPoint.district ? `อ.${selectedPoint.district.replace(/^อ\./, '')}` : '1784'}</span>
-                </a>
+                  <a 
+                    href={`tel:${selectedPoint.phone ? selectedPoint.phone.replace(/-/g, '') : '1784'}`}
+                    onClick={() => playClickSound()}
+                    className="py-2 px-2 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors text-center cursor-pointer"
+                  >
+                    <CivicEmergencyPhone className="w-3.5 h-3.5 shrink-0" />
+                    <span>สายด่วน</span>
+                  </a>
+                </div>
               </div>
-            </div>
-
-            {/* Admin Broadcast & AI Alert Direct Delete Action (Visible ONLY to Logged-in Admin) */}
-            {isAdminAuthenticated && (selectedPoint.isAdminBroadcast || selectedPoint.isAiGenerated) && (
-              <div className="mt-2 p-1.5 sm:p-2 rounded-md bg-amber-500/10 border border-amber-500/30 flex items-center justify-between gap-1.5">
-                <span className="text-[10px] sm:text-xs font-semibold text-amber-600 dark:text-amber-400 flex items-center gap-1">
-                  <Megaphone className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
-                  <span>ประกาศฉุกเฉิน</span>
-                </span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (window.confirm(`ยืนยันการลบข้อความประกาศ "${selectedPoint.name}" ออกจากระบบ?`)) {
-                      handleRejectReport(selectedPoint.id);
-                    }
-                  }}
-                  className="px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md bg-rose-600 hover:bg-rose-700 text-white text-[10px] sm:text-xs font-bold transition-all flex items-center gap-1 cursor-pointer"
-                  title="ลบข้อความประกาศนี้"
-                >
-                  <Trash2 className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                  <span>ลบ</span>
-                </button>
-              </div>
-            )}
-
-            {/* Quick Exit Button at Bottom of Card */}
-            <button
-              type="button"
-              onClick={() => {
-                playCloseSound();
-                setSelectedPoint(null);
-              }}
-              className={`w-full mt-1.5 sm:mt-2.5 py-1.5 sm:py-2 rounded-md border text-xs font-semibold flex items-center justify-center gap-1 transition-colors cursor-pointer shadow-xs active:scale-95 ${
-                isDark 
-                  ? 'bg-slate-850 hover:bg-slate-800 text-slate-300 border-slate-800' 
-                  : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200'
-              }`}
-            >
-              <X className="w-3.5 h-3.5" />
-              <span>ปิดหน้าต่าง</span>
-            </button>
-
             </div>
           </div>
           );
@@ -3962,55 +3921,64 @@ export default function App() {
         </div>
       )}
 
-      {/* 2. Compact Mobile Search Drawer (Uncluttered, No duplicate weather/emergency) */}
+      {/* 2. Compact Mobile Search Drawer */}
       {isMobileSheetOpen && (
         <div 
-          className="md:hidden fixed inset-0 z-45 bg-black/50 backdrop-blur-xs transition-opacity animate-in fade-in duration-200"
+          className="md:hidden fixed inset-0 z-45 bg-slate-950/65 backdrop-blur-xs transition-opacity"
           onClick={() => setIsMobileSheetOpen(false)}
         >
           <div 
-            className={`fixed inset-x-0 bottom-0 z-50 max-h-[58vh] h-[54vh] flex flex-col rounded-t-2xl border-t shadow-2xl backdrop-blur-xl animate-in slide-in-from-bottom duration-300 select-none pb-[calc(env(safe-area-inset-bottom,0px)+8px)] ${
+            className={`fixed inset-x-0 bottom-0 z-50 max-h-[64vh] h-[58vh] flex flex-col rounded-t-xl border-t shadow-2xl select-none pb-[calc(env(safe-area-inset-bottom,0px)+8px)] ${
               isDark 
                 ? 'bg-slate-900 border-slate-800 text-slate-100' 
                 : 'bg-white border-slate-200 text-slate-900'
             }`}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Sheet Handle & Header */}
-            <div className="p-3 pb-2 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between gap-2 shrink-0">
-              <div className="flex items-center gap-2 min-w-0">
-                <span className="w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse shrink-0"></span>
+            <div className="h-1 w-full bg-blue-700 shrink-0" />
+            {/* Sheet Header */}
+            <div className={`px-4 py-3 border-b flex items-center justify-between gap-2 shrink-0 ${
+              isDark ? 'border-slate-800 bg-slate-950/50' : 'border-slate-200 bg-slate-50/80'
+            }`}>
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className={`w-8 h-8 rounded-lg border flex items-center justify-center shrink-0 ${
+                  isDark ? 'bg-slate-800 text-blue-400 border-slate-700' : 'bg-white text-blue-700 border-slate-200'
+                }`}>
+                  <CivicStationPin className="w-4 h-4" />
+                </div>
                 <div className="min-w-0">
-                  <h3 className="text-sm font-bold truncate">ค้นหาจุดน้ำท่วม</h3>
-                  <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate">
-                    สมุทรปราการ ({displayPoints.length} จุดที่พบ)
+                  <h3 className="text-sm font-bold truncate">ค้นหาจุดเฝ้าระวังน้ำท่วมขัง</h3>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                    จ.สมุทรปราการ (พบ {displayPoints.length} จุด)
                   </p>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setIsMobileSheetOpen(false)}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 bg-slate-100 dark:bg-slate-800 transition-colors"
+                className={`w-8 h-8 rounded-lg border flex items-center justify-center transition-colors ${
+                  isDark ? 'bg-slate-800 text-slate-400 border-slate-700' : 'bg-white text-slate-500 border-slate-200'
+                }`}
                 aria-label="ปิดการค้นหา"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            {/* Drawer Body (Search Input + District Filter + Results) */}
-            <div className="flex-1 overflow-y-auto p-3 space-y-2.5 custom-scrollbar-thin">
+            {/* Drawer Body */}
+            <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2.5 custom-scrollbar-thin">
               {/* Search Input */}
               <div className="relative shrink-0">
-                <Search className="w-4 h-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="พิมพ์ชื่อจุดน้ำท่วม, ซอย, ถนน..."
-                  className={`w-full pl-8 pr-8 py-2 rounded-xl border text-xs focus:outline-hidden focus:ring-1 focus:ring-blue-500 ${
+                  placeholder="ระบุชื่อถนน, ซอย หรือจุดสังเกต..."
+                  className={`w-full pl-9 pr-8 py-2 rounded-lg border text-xs outline-none ${
                     isDark 
-                      ? 'bg-slate-850 border-slate-750 text-white placeholder-slate-500' 
-                      : 'bg-slate-50 border-slate-200 text-slate-800 placeholder-slate-400'
+                      ? 'bg-slate-950 border-slate-800 text-white placeholder-slate-500 focus:border-blue-500' 
+                      : 'bg-white border-slate-300 text-slate-800 placeholder-slate-400 focus:border-blue-600'
                   }`}
                 />
                 {searchQuery && (
@@ -4046,12 +4014,12 @@ export default function App() {
                             }
                           }
                         }}
-                        className={`px-2.5 py-1 rounded-full text-xs font-semibold whitespace-nowrap shrink-0 transition-all cursor-pointer border ${
+                        className={`px-2.5 py-1 rounded-md text-xs font-semibold whitespace-nowrap shrink-0 transition-colors cursor-pointer border ${
                           isSelected
-                            ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
+                            ? 'bg-blue-700 text-white border-blue-700'
                             : isDark
-                              ? 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-750'
-                              : 'bg-slate-100 border-slate-200 text-slate-700 hover:bg-slate-200'
+                              ? 'bg-slate-800 border-slate-700 text-slate-300'
+                              : 'bg-slate-50 border-slate-200 text-slate-700'
                         }`}
                       >
                         {dist === 'ทั้งหมด' ? 'ทุกอำเภอ' : dist.replace(/^อ\./, '')}
@@ -4072,7 +4040,7 @@ export default function App() {
                         setSelectedDistrict('ทั้งหมด');
                         setSearchQuery('');
                       }}
-                      className="text-blue-500 hover:underline cursor-pointer"
+                      className="text-blue-600 dark:text-blue-400 hover:underline cursor-pointer"
                     >
                       ล้างตัวกรอง
                     </button>
@@ -4094,76 +4062,64 @@ export default function App() {
                     </button>
                   </div>
                 ) : (
-                  displayPoints.map(pt => {
-                    const lvl = resolveLevel(pt);
-                    const isReceding = isWaterReceding(pt);
-                    const hasPtPhoto = Boolean(pt.photoUrl || pt.photo_url || pt.photo || pt.image || pt.imageUrl);
-                    return (
-                      <div
-                        key={pt.id}
-                        onClick={() => {
-                          handleSelectLocation(pt);
-                          setIsMobileSheetOpen(false);
-                        }}
-                        className={`p-2.5 rounded-xl border transition-all flex flex-col gap-1.5 cursor-pointer active:scale-[0.99] ${
-                          isDark ? 'bg-slate-850/70 border-slate-800 hover:bg-slate-800' : 'bg-slate-50 border-slate-200 hover:bg-slate-100'
-                        }`}
-                      >
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-1.5">
-                              <span className={`w-2 h-2 rounded-full shrink-0 ${
-                                lvl === 3 ? 'bg-rose-500 animate-pulse ring-2 ring-rose-500/20' :
-                                lvl === 2 ? 'bg-orange-500 ring-2 ring-orange-500/20' :
-                                lvl === 1 ? 'bg-amber-500' : 'bg-emerald-500'
-                              }`} />
-                              <h4 className="text-xs font-bold truncate text-slate-900 dark:text-white">{pt.name}</h4>
-                              {hasPtPhoto && (
-                                <span className="inline-flex items-center px-1 py-0.5 rounded bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-cyan-300 shrink-0">
-                                  <CivicReportCamera className="w-3 h-3" />
+                  <div className={`rounded-lg border divide-y overflow-hidden ${
+                    isDark ? 'border-slate-800 divide-slate-800 bg-slate-950/40' : 'border-slate-200 divide-slate-200 bg-white'
+                  }`}>
+                    {displayPoints.map(pt => {
+                      const lvl = resolveLevel(pt);
+                      const isReceding = isWaterReceding(pt);
+                      const hasPtPhoto = Boolean(pt.photoUrl || pt.photo_url || pt.photo || pt.image || pt.imageUrl);
+                      return (
+                        <div
+                          key={pt.id}
+                          onClick={() => {
+                            handleSelectLocation(pt);
+                            setIsMobileSheetOpen(false);
+                          }}
+                          className={`p-3 transition-colors flex flex-col gap-1 cursor-pointer ${
+                            isDark ? 'hover:bg-slate-800/70' : 'hover:bg-slate-50'
+                          }`}
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-1.5">
+                                <span className={`w-2 h-2 rounded-full shrink-0 ${
+                                  lvl === 3 ? 'bg-rose-500' :
+                                  lvl === 2 ? 'bg-amber-500' : 'bg-emerald-500'
+                                }`} />
+                                <h4 className="text-xs font-bold truncate text-slate-900 dark:text-white">{pt.name}</h4>
+                                {hasPtPhoto && (
+                                  <span className="inline-flex items-center px-1 py-0.5 rounded bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300 shrink-0">
+                                    <CivicReportCamera className="w-3 h-3" />
+                                  </span>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 truncate">
+                                <span className="font-medium text-slate-700 dark:text-slate-300">อ.{pt.district?.replace(/^อ\./, '')}</span>
+                                <span>•</span>
+                                <span className="font-mono">
+                                  {pt.depthCm ? `${pt.depthCm} ซม.` : (lvl === 3 ? '>50 ซม.' : lvl === 2 ? '21-50 ซม.' : '5-20 ซม.')}
                                 </span>
-                              )}
+                                {isReceding && (
+                                  <span className="text-emerald-600 dark:text-emerald-400 font-medium">
+                                    • น้ำลด
+                                  </span>
+                                )}
+                              </div>
                             </div>
-                            <div className="flex items-center gap-1.5 text-[10px] text-slate-500 dark:text-slate-400 mt-1 truncate">
-                              <span className="font-medium text-slate-700 dark:text-slate-300">อ.{pt.district?.replace(/^อ\./, '')}</span>
-                              <span>•</span>
-                              <span className={`font-semibold ${
-                                lvl === 3 ? 'text-rose-600 dark:text-rose-400' :
-                                lvl === 2 ? 'text-orange-600 dark:text-orange-400' :
-                                'text-amber-600 dark:text-amber-400'
-                              }`}>
-                                {pt.depthCm ? `ลึก ${pt.depthCm} ซม.` : (lvl === 3 ? 'น้ำท่วมสูง (>30 ซม.)' : lvl === 2 ? 'น้ำท่วมขัง (15-30 ซม.)' : 'ผิวจราจร (<15 ซม.)')}
-                              </span>
-                              {isReceding && (
-                                <span className="text-emerald-600 dark:text-emerald-400 font-medium">
-                                  • น้ำลด
-                                </span>
-                              )}
-                            </div>
+
+                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold shrink-0 border ${
+                              lvl === 3 ? 'bg-rose-500/10 border-rose-500/30 text-rose-600 dark:text-rose-400' :
+                              lvl === 2 ? 'bg-amber-500/10 border-amber-500/30 text-amber-600 dark:text-amber-400' :
+                              'bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400'
+                            }`}>
+                              {lvl === 3 ? 'วิกฤต' : lvl === 2 ? 'ปานกลาง' : 'ปกติ'}
+                            </span>
                           </div>
-
-                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold shrink-0 border ${
-                            lvl === 3 ? 'bg-rose-500/10 border-rose-500/30 text-rose-600 dark:text-rose-400' :
-                            lvl === 2 ? 'bg-orange-500/10 border-orange-500/30 text-orange-600 dark:text-orange-400' :
-                            'bg-amber-500/10 border-amber-500/30 text-amber-600 dark:text-amber-400'
-                          }`}>
-                            {lvl === 3 ? 'วิกฤต' : lvl === 2 ? 'ปานกลาง' : 'เฝ้าระวัง'}
-                          </span>
                         </div>
-
-                        {/* Vehicle Guidance & Navigation Pill */}
-                        <div className="flex items-center justify-between text-[10px] pt-1 border-t border-slate-200/50 dark:border-slate-800/50">
-                          <span className="text-slate-500 dark:text-slate-400 truncate max-w-[200px]">
-                            {lvl === 3 ? 'รถเล็กห้ามผ่าน' : lvl === 2 ? 'รถเล็กควรเลี่ยง' : 'สัญจรได้ระมัดระวัง'}
-                          </span>
-                          <span className="text-blue-600 dark:text-blue-400 font-bold shrink-0 flex items-center gap-1">
-                            <CivicNavigationArrow className="w-3 h-3" />
-                            <span>ดูข้อมูล</span>
-                          </span>
-                        </div>
-                      </div>
-                    );
-                  })
+                      );
+                    })}
+                  </div>
                 )}
               </div>
             </div>
@@ -4181,7 +4137,6 @@ export default function App() {
       />
 
       {/* 4. MODALS */}
-      {/* Interactive Admin Verification Prompt Asking Admin Directly ("แต่หากมีผู้รายงานต้องถามฉัน") - Visible ONLY when logged in as Admin */}
       {isAdminAuthenticated && (
         <AdminVerificationPrompt 
           pendingReports={pendingCitizenReports}
@@ -4210,29 +4165,34 @@ export default function App() {
         theme={theme}
       />
 
-      {/* OFFICIAL ADMIN ANNOUNCEMENT MODAL (สามารถกดดูประกาศทางการอีกครั้งได้ตลอดเวลา) */}
+      {/* OFFICIAL ADMIN ANNOUNCEMENT MODAL */}
       {isAnnouncementModalOpen && latestAnnouncement && (
         <div 
           onClick={(e) => { if (e.target === e.currentTarget) { playCloseSound(); setIsAnnouncementModalOpen(false); } }}
-          className="fixed inset-0 z-[105] bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 smooth-backdrop pointer-events-auto overflow-y-auto"
+          className="fixed inset-0 z-[105] bg-slate-950/65 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 pointer-events-auto overflow-y-auto"
         >
-          <div className={`w-[90vw] max-w-[360px] sm:max-w-md my-auto m-auto border-2 rounded-2xl shadow-2xl p-3 sm:p-4.5 flex flex-col max-h-[75vh] sm:max-h-[82vh] overflow-hidden smooth-pop transition-all ${
+          <div className={`w-[92vw] max-w-[440px] sm:max-w-md my-auto m-auto border rounded-xl shadow-2xl flex flex-col max-h-[82vh] overflow-hidden transition-colors ${
             isDark 
-              ? 'bg-slate-900 border-amber-500/50 text-slate-100 shadow-2xl shadow-black/80' 
-              : 'bg-white border-amber-400 text-slate-900 shadow-2xl shadow-slate-900/30'
+              ? 'bg-slate-900 border-slate-800 text-slate-100' 
+              : 'bg-white border-slate-200 text-slate-900'
           }`}>
-            {/* Modal Header */}
-            <div className="flex items-center justify-between gap-2 pb-2 sm:pb-2.5 border-b border-amber-500/30 shrink-0">
-              <div className="flex items-center gap-2 min-w-0">
-                <span className="flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-amber-500 text-white shrink-0 shadow-sm">
-                  <Bell className="w-4 h-4" />
-                </span>
+            <div className="h-1 w-full bg-amber-500 shrink-0" />
+            {/* Header */}
+            <div className={`flex items-center justify-between gap-3 px-4 py-3 border-b shrink-0 ${
+              isDark ? 'border-slate-800 bg-slate-950/50' : 'border-slate-200 bg-slate-50/80'
+            }`}>
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className={`w-8 h-8 rounded-lg border flex items-center justify-center shrink-0 ${
+                  isDark ? 'bg-amber-950/60 text-amber-400 border-amber-800/80' : 'bg-amber-50 text-amber-700 border-amber-200'
+                }`}>
+                  <CivicBroadcast className="w-4 h-4" />
+                </div>
                 <div className="min-w-0">
-                  <h3 className="text-sm sm:text-base font-bold text-amber-600 dark:text-amber-400 break-words whitespace-normal leading-tight">
-                    ประกาศจากเจ้าหน้าที่
+                  <h3 className={`text-sm sm:text-base font-bold leading-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                    ประกาศแจ้งเตือนจากศูนย์ควบคุม
                   </h3>
-                  <span className="text-[10px] sm:text-[10px] text-slate-400 block">
-                    PrakanGuard Official
+                  <span className="text-[11px] text-slate-400 block">
+                    ศูนย์ข้อมูลอุทกภัยจังหวัดสมุทรปราการ
                   </span>
                 </div>
               </div>
@@ -4242,17 +4202,19 @@ export default function App() {
                   playCloseSound();
                   setIsAnnouncementModalOpen(false);
                 }}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-white cursor-pointer transition-colors active:scale-90"
+                className={`w-8 h-8 rounded-lg border flex items-center justify-center cursor-pointer transition-colors ${
+                  isDark ? 'bg-slate-800 text-slate-400 border-slate-700 hover:text-white' : 'bg-white text-slate-500 border-slate-200 hover:text-slate-800'
+                }`}
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            {/* Content */}
-            <div className="flex-1 overflow-y-auto py-2 px-0.5 space-y-1.5 text-xs">
-              <div className="flex items-center justify-between text-[9px] sm:text-[10px] text-slate-400">
+            {/* Body */}
+            <div className="flex-1 overflow-y-auto px-4 py-3.5 space-y-2.5 text-xs">
+              <div className="flex items-center justify-between text-[11px] text-slate-400">
                 <span className="truncate">
-                  พื้นที่: <strong className={isDark ? 'text-slate-200' : 'text-slate-800'}>
+                  พื้นที่แจ้งเตือน: <strong className={isDark ? 'text-slate-200' : 'text-slate-800'}>
                     {latestAnnouncement.districts?.length ? latestAnnouncement.districts.join(', ') : 'ทุกอำเภอ (จ.สมุทรปราการ)'}
                   </strong>
                 </span>
@@ -4263,24 +4225,28 @@ export default function App() {
                 )}
               </div>
 
-              <div className={`text-xs sm:text-sm font-medium leading-relaxed whitespace-pre-line p-3 sm:p-4 rounded-xl border break-words shadow-2xs ${
-                isDark ? 'bg-slate-850 border-amber-500/40 text-slate-100' : 'bg-amber-50/80 border-amber-300 text-slate-900'
+              <div className={`text-xs sm:text-sm leading-relaxed whitespace-pre-line p-3.5 rounded-lg border break-words ${
+                isDark ? 'bg-slate-950/50 border-slate-800 text-slate-100' : 'bg-slate-50/80 border-slate-200 text-slate-900'
               }`}>
                 {latestAnnouncement.message}
               </div>
             </div>
 
-            {/* Close Button */}
-            <button
-              type="button"
-              onClick={() => {
-                playCloseSound();
-                setIsAnnouncementModalOpen(false);
-              }}
-              className="w-full mt-1.5 py-1.5 sm:py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-[11px] sm:text-xs font-bold transition-all shadow-md shadow-amber-500/20 active:scale-95 shrink-0"
-            >
-              รับทราบ
-            </button>
+            {/* Footer */}
+            <div className={`px-4 py-3 border-t flex items-center justify-end shrink-0 ${
+              isDark ? 'border-slate-800 bg-slate-950/60' : 'border-slate-200 bg-slate-50/80'
+            }`}>
+              <button
+                type="button"
+                onClick={() => {
+                  playCloseSound();
+                  setIsAnnouncementModalOpen(false);
+                }}
+                className="w-full sm:w-auto px-5 py-2 rounded-lg bg-blue-700 hover:bg-blue-800 text-white text-xs font-semibold transition-colors cursor-pointer"
+              >
+                รับทราบและปิดหน้าต่าง
+              </button>
+            </div>
           </div>
         </div>
       )}

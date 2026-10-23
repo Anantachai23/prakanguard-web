@@ -1969,64 +1969,66 @@ export default function AdminModal({
   }, [activeFeedbackList]);
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 smooth-backdrop overflow-y-auto">
-      <div className={`w-[90vw] max-w-[360px] sm:max-w-4xl my-auto m-auto border rounded-2xl shadow-2xl flex flex-col max-h-[75vh] sm:max-h-[94vh] overflow-hidden smooth-pop transition-all ${
-        isDark ? 'bg-slate-900 border-slate-700/80 text-slate-100 shadow-slate-950/90' : 'bg-white border-slate-200 text-slate-800 shadow-xl'
+    <div className="fixed inset-0 z-50 bg-slate-950/65 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+      <div className={`w-[92vw] max-w-[440px] sm:max-w-4xl my-auto m-auto border rounded-xl shadow-2xl flex flex-col max-h-[88vh] sm:max-h-[92vh] overflow-hidden transition-all ${
+        isDark ? 'bg-slate-900 border-slate-800 text-slate-100' : 'bg-white border-slate-200 text-slate-900'
       }`}>
         
-        {/* Accent Bar */}
-        <div className="h-[2px] w-full bg-blue-600 shrink-0"></div>
+        {/* Top Institutional Accent Bar */}
+        <div className="h-1 w-full bg-blue-700 shrink-0" />
 
         {/* Refresh Toast Popup */}
         {showRefreshToast && (
-          <div className="fixed top-5 left-1/2 -translate-x-1/2 z-[100] px-4 py-2 rounded-2xl bg-emerald-600 text-white font-bold text-xs shadow-2xl backdrop-blur-md flex items-center gap-2 border border-emerald-400/40 animate-in fade-in zoom-in-95 duration-200">
-            <CheckCircle2 className="w-4 h-4 text-emerald-200 animate-pulse shrink-0" />
+          <div className="fixed top-5 left-1/2 -translate-x-1/2 z-[100] px-4 py-2 rounded-lg bg-emerald-600 text-white font-semibold text-xs shadow-xl flex items-center gap-2 border border-emerald-500">
+            <CheckCircle2 className="w-4 h-4 text-emerald-100 shrink-0" />
             <span>รีเฟรชข้อมูลเรียบร้อยแล้ว</span>
           </div>
         )}
 
         {/* Modal Header */}
-        <div className={`px-3 sm:px-6 py-2.5 sm:py-3.5 border-b flex items-center justify-between shrink-0 ${
-          isDark ? 'bg-slate-950/90 border-slate-800' : 'bg-slate-50 border-slate-200'
+        <div className={`px-4 sm:px-5 py-3 sm:py-3.5 border-b flex items-center justify-between shrink-0 ${
+          isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
         }`}>
-          <div className="flex items-center space-x-2 sm:space-x-3 min-w-0">
-            <div className="w-7 h-7 sm:w-10 sm:h-10 rounded-full p-[1px] sm:p-[1.5px] bg-gradient-to-tr from-amber-500 to-amber-300 shadow-md shrink-0 flex items-center justify-center">
-              <img src="/logo.png" alt="PrakanGuard Admin" className="w-full h-full rounded-full object-cover" />
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+            <div className={`w-8 h-8 sm:w-9 sm:h-9 rounded-lg flex items-center justify-center shrink-0 border ${
+              isDark ? 'bg-slate-800 border-slate-700 text-blue-400' : 'bg-slate-50 border-slate-200 text-blue-700'
+            }`}>
+              <CivicCrest className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
-                <h3 className={`text-xs sm:text-base font-bold truncate ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                  ระบบจัดการผู้ดูแลระบบ (ADMIN CONTROL)
+                <h3 className={`text-xs sm:text-sm font-bold truncate ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                  ระบบจัดการผู้ดูแลระบบ (Admin Control)
                 </h3>
-                <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold border shrink-0 ${
+                <span className={`text-[10px] px-2 py-0.5 rounded font-semibold border shrink-0 ${
                   isAuthenticated
-                    ? (isDark ? 'bg-emerald-950/80 text-emerald-300 border-emerald-700' : 'bg-emerald-100 text-emerald-800 border-emerald-300')
-                    : (isDark ? 'bg-amber-950/80 text-amber-300 border-amber-800' : 'bg-amber-100 text-amber-800 border-amber-300')
+                    ? (isDark ? 'bg-emerald-950/60 text-emerald-300 border-emerald-800' : 'bg-emerald-50 text-emerald-700 border-emerald-200')
+                    : (isDark ? 'bg-amber-950/60 text-amber-300 border-amber-800' : 'bg-amber-50 text-amber-700 border-amber-200')
                 }`}>
-                  {isAuthenticated ? 'ONLINE • สูงสุด' : 'LOCKED'}
+                  {isAuthenticated ? 'ONLINE' : 'LOCKED'}
                 </span>
                 {isAuthenticated && (
                   <>
-                    <span className={`text-[10px] px-2 py-0.5 rounded-md font-bold border shrink-0 flex items-center gap-1.5 font-mono ${
-                      isDark ? 'bg-slate-900 text-emerald-400 border-slate-700' : 'bg-slate-100 text-emerald-700 border-slate-300'
+                    <span className={`text-[10px] px-2 py-0.5 rounded font-semibold border shrink-0 flex items-center gap-1.5 font-mono ${
+                      isDark ? 'bg-slate-950 text-emerald-400 border-slate-800' : 'bg-slate-50 text-emerald-700 border-slate-200'
                     }`} title="สถานะเชื่อมต่อฐานข้อมูล Supabase Cloud">
                       <CivicDatabase className="w-3 h-3 text-emerald-500" />
                       <span>Supabase {supabasePingMs !== null ? `${supabasePingMs}ms` : 'Connected'}</span>
                     </span>
 
-                    <span className={`text-[10px] px-2 py-0.5 rounded-md font-bold border shrink-0 flex items-center gap-1.5 ${
-                      isDark ? 'bg-cyan-950/80 text-cyan-300 border-cyan-700' : 'bg-cyan-50 text-cyan-800 border-cyan-300'
+                    <span className={`text-[10px] px-2 py-0.5 rounded font-semibold border shrink-0 flex items-center gap-1.5 ${
+                      isDark ? 'bg-slate-950 text-blue-300 border-slate-800' : 'bg-blue-50 text-blue-700 border-blue-200'
                     }`} title="จำนวนผู้ใช้งานที่กำลังเปิดเว็บอยู่ในขณะนี้ (อิงจากเซสชันสด)">
-                      <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse"></span>
+                      <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
                       <span>ออนไลน์: {liveVisitors.length} คน</span>
                     </span>
 
-                    <span className={`text-[10px] px-2 py-0.5 rounded-md font-bold border shrink-0 flex items-center gap-1.5 ${
+                    <span className={`text-[10px] px-2 py-0.5 rounded font-semibold border shrink-0 flex items-center gap-1.5 ${
                       onlineAdminsCount > 0
-                        ? (isDark ? 'bg-emerald-950/80 text-emerald-300 border-emerald-700' : 'bg-emerald-50 text-emerald-800 border-emerald-300')
-                        : (isDark ? 'bg-slate-900 text-slate-400 border-slate-700' : 'bg-slate-100 text-slate-600 border-slate-300')
+                        ? (isDark ? 'bg-emerald-950/60 text-emerald-300 border-emerald-800' : 'bg-emerald-50 text-emerald-700 border-emerald-200')
+                        : (isDark ? 'bg-slate-950 text-slate-400 border-slate-800' : 'bg-slate-50 text-slate-600 border-slate-200')
                     }`} title="จำนวนแอดมินที่กำลังออนไลน์เปิดหน้าแดชบอร์ดอยู่ในขณะนี้">
-                      <span className={`w-1.5 h-1.5 rounded-full ${onlineAdminsCount > 0 ? 'bg-emerald-400 animate-pulse' : 'bg-slate-400'}`}></span>
+                      <span className={`w-1.5 h-1.5 rounded-full ${onlineAdminsCount > 0 ? 'bg-emerald-500' : 'bg-slate-400'}`}></span>
                       <span>แอดมิน: {onlineAdminsCount} ท่าน</span>
                     </span>
                   </>
@@ -2035,7 +2037,7 @@ export default function AdminModal({
               <p className={`text-[11px] truncate ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
                 {isAuthenticated 
                   ? `เข้าสู่ระบบ: ${credentials.role || credentials.username}` 
-                  : 'กรุณายืนยันตัวตนเพื่อเข้าถึงข้อมูลและการจัดการระบบ'}
+                  : 'ยืนยันตัวตนเพื่อเข้าถึงระบบจัดการข้อมูล'}
               </p>
             </div>
           </div>
@@ -2055,8 +2057,8 @@ export default function AdminModal({
                   disabled={isManualSyncing}
                   className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer border active:scale-95 ${
                     isDark 
-                      ? 'bg-slate-800 hover:bg-slate-700 text-amber-300 border-slate-700' 
-                      : 'bg-white hover:bg-slate-100 text-amber-700 border-slate-200 shadow-xs'
+                      ? 'bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700' 
+                      : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
                   }`}
                   title="ซิงก์ข้อมูล Supabase Cloud ทันที"
                 >
@@ -2078,23 +2080,23 @@ export default function AdminModal({
             <button 
               type="button"
               onClick={handleModalClose} 
-              className={`p-1.5 rounded-lg transition-all cursor-pointer ${
-                isDark ? 'bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white' : 'bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800'
+              className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors cursor-pointer border ${
+                isDark ? 'bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white border-slate-700' : 'bg-slate-50 hover:bg-slate-100 text-slate-500 hover:text-slate-900 border-slate-200'
               }`}
             >
-              <X className="w-5 h-5" />
+              <X className="w-4 h-4" />
             </button>
           </div>
         </div>
 
         {/* Internal Admin Notification Banner (Inside Modal Only) */}
         {adminNotice && (
-          <div className={`px-4 sm:px-6 py-2.5 text-xs font-bold border-b flex items-center justify-between gap-2 shrink-0 animate-in fade-in duration-200 ${
+          <div className={`px-4 sm:px-5 py-2.5 text-xs font-semibold border-b flex items-center justify-between gap-2 shrink-0 ${
             adminNotice.type === 'error'
-              ? 'bg-rose-500/20 text-rose-200 border-rose-500/40'
+              ? 'bg-rose-500/15 text-rose-300 border-rose-500/30'
               : adminNotice.type === 'info'
-              ? 'bg-blue-500/20 text-blue-200 border-blue-500/40'
-              : 'bg-emerald-500/20 text-emerald-200 border-emerald-500/40'
+              ? 'bg-blue-500/15 text-blue-300 border-blue-500/30'
+              : 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
           }`}>
             <div className="flex items-center gap-2">
               <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-400" />
@@ -2111,81 +2113,87 @@ export default function AdminModal({
 
         {/* 1. LOGIN SCREEN (WHEN NOT AUTHENTICATED) */}
         {!isAuthenticated ? (
-          <div className="p-6 sm:p-10 flex flex-col items-center justify-center my-auto overflow-y-auto">
-            <div className="w-full max-w-sm space-y-5">
+          <div className="p-5 sm:p-8 flex flex-col items-center justify-center my-auto overflow-y-auto">
+            <div className="w-full max-w-sm space-y-4">
               
               <div className="text-center space-y-1.5">
-                <div className="w-16 h-16 mx-auto rounded-full p-1 bg-gradient-to-tr from-amber-500 via-yellow-400 to-amber-300 shadow-xl border border-amber-400/50 flex items-center justify-center">
-                  <img src="/logo.png" alt="PrakanGuard Admin" className="w-full h-full rounded-full object-cover" />
+                <div className={`w-12 h-12 mx-auto rounded-xl border flex items-center justify-center ${
+                  isDark ? 'bg-slate-800 border-slate-700 text-blue-400' : 'bg-slate-50 border-slate-200 text-blue-700'
+                }`}>
+                  <CivicCrest className="w-6 h-6" />
                 </div>
-                <h4 className={`text-lg font-bold mt-2 ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                  เข้าสู่ระบบแอดมิน (Admin Portal)
+                <h4 className={`text-base font-bold mt-2 ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                  เข้าสู่ระบบผู้ดูแล (Admin Portal)
                 </h4>
                 <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                  ข้อมูลรายงานประชาชนและข้อเสนอแนะจะแสดงต่อเมื่อเข้าสู่ระบบเท่านั้น
+                  สำหรับเจ้าหน้าที่ผู้รับผิดชอบระบบ PrakanGuard เท่านั้น
                 </p>
               </div>
 
               {/* Legal Disclaimer Notice Card */}
-              <div className="p-3 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-700 dark:text-amber-300 text-[11px] leading-relaxed flex items-start gap-2 text-left">
-                <ShieldAlert className="w-4 h-4 shrink-0 text-amber-500 mt-0.5" />
+              <div className={`p-3 rounded-lg border text-[11px] leading-relaxed flex items-start gap-2.5 text-left ${
+                isDark ? 'bg-slate-950/60 border-slate-800 text-slate-300' : 'bg-slate-50 border-slate-200 text-slate-600'
+              }`}>
+                <CivicShield className="w-4 h-4 shrink-0 text-blue-600 dark:text-blue-400 mt-0.5" />
                 <span>
-                  <strong>ประกาศข้อกำหนดสิทธิ์:</strong> สงวนสิทธิ์ลิขสิทธิ์และการเข้าใช้งานศูนย์ควบคุมระบบของเว็บเฉพาะผู้ร่วมพัฒนาเว็บไซต์และคณะทำงานที่ได้รับอนุญาตเท่านั้น ไม่อนุญาตให้บุคคลภายนอกเข้าถึง ทำซ้ำ หรือดัดแปลงระบบโดยไม่ได้รับอนุญาต
+                  สงวนสิทธิ์การเข้าถึงศูนย์ควบคุมข้อมูลเฉพาะเจ้าหน้าที่และผู้ร่วมพัฒนาที่ได้รับอนุญาตเท่านั้น
                 </span>
               </div>
 
               {loginError && (
-                <div className="p-3 rounded-2xl bg-rose-50 dark:bg-rose-950/80 border border-rose-300 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-xs flex items-center gap-2">
+                <div className={`p-3 rounded-lg border text-xs flex items-center gap-2 ${
+                  isDark ? 'bg-rose-950/40 border-rose-900/60 text-rose-300' : 'bg-rose-50 border-rose-200 text-rose-700'
+                }`}>
                   <AlertTriangle className="w-4 h-4 shrink-0 text-rose-500" />
                   <span>{loginError}</span>
                 </div>
               )}
 
-              <form onSubmit={handleLogin} className="space-y-3.5">
+              <form onSubmit={handleLogin} className="space-y-3">
                 <div>
-                  <label className={`block text-xs font-semibold mb-1 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
-                    ชื่อผู้ใช้ (Username)
+                  <label className={`block text-[11px] font-semibold mb-1.5 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
+                    ชื่อผู้ใช้งาน (Username)
                   </label>
                   <div className="relative">
-                    <User className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+                    <User className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
                     <input
                       type="text"
                       value={inputUsername}
                       onChange={(e) => setInputUsername(e.target.value)}
-                      placeholder="Username ผู้ดูแลระบบ"
+                      placeholder="ระบุชื่อผู้ใช้งาน"
                       disabled={lockoutSeconds > 0}
                       autoFocus
-                      className={`w-full text-xs sm:text-sm pl-9 pr-3 py-2.5 rounded-xl border focus:outline-none transition-colors ${
+                      className={`w-full text-xs sm:text-sm pl-9 pr-3 py-2 rounded-lg border focus:outline-none transition-colors ${
                         isDark 
-                          ? 'bg-slate-800 border-slate-700 text-white focus:border-amber-400' 
-                          : 'bg-white border-slate-300 text-slate-900 focus:border-amber-500'
+                          ? 'bg-slate-950 border-slate-800 text-white focus:border-blue-500' 
+                          : 'bg-slate-50 border-slate-200 text-slate-900 focus:border-blue-600'
                       }`}
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className={`block text-xs font-semibold mb-1 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
+                  <label className={`block text-[11px] font-semibold mb-1.5 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
                     รหัสผ่าน (Password)
                   </label>
                   <div className="relative">
-                    <KeyRound className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+                    <KeyRound className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
                     <input
                       type={showPassword ? "text" : "password"}
                       value={inputPassword}
                       onChange={(e) => setInputPassword(e.target.value)}
-                      placeholder="กรอกรหัสผ่านผู้ดูแลระบบ"
+                      placeholder="ระบุรหัสผ่าน"
                       disabled={lockoutSeconds > 0}
-                      className={`w-full text-xs sm:text-sm pl-9 pr-10 py-2.5 rounded-xl border focus:outline-none transition-colors ${
+                      className={`w-full text-xs sm:text-sm pl-9 pr-10 py-2 rounded-lg border focus:outline-none transition-colors ${
                         isDark 
-                          ? 'bg-slate-800 border-slate-700 text-white focus:border-amber-400' 
-                          : 'bg-white border-slate-300 text-slate-900 focus:border-amber-500'
+                          ? 'bg-slate-950 border-slate-800 text-white focus:border-blue-500' 
+                          : 'bg-slate-50 border-slate-200 text-slate-900 focus:border-blue-600'
                       }`}
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-3 text-slate-400 hover:text-slate-200"
+                      className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-200"
                     >
                       {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
@@ -2195,9 +2203,9 @@ export default function AdminModal({
                 <button
                   type="submit"
                   disabled={lockoutSeconds > 0 || !inputUsername.trim() || !inputPassword.trim()}
-                  className="w-full py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 active:scale-[0.98] text-slate-950 font-bold text-xs sm:text-sm transition-all cursor-pointer shadow-md shadow-amber-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full py-2.5 rounded-lg bg-blue-700 hover:bg-blue-800 active:scale-[0.99] text-white font-semibold text-xs sm:text-sm transition-colors cursor-pointer shadow-xs disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {lockoutSeconds > 0 ? `ระงับชั่วคราว (${lockoutSeconds}s)` : 'เข้าสู่ระบบ ADMIN'}
+                  {lockoutSeconds > 0 ? `ระงับชั่วคราว (${lockoutSeconds}s)` : 'เข้าสู่ระบบผู้ดูแล'}
                 </button>
               </form>
 

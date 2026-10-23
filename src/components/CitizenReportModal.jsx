@@ -1,24 +1,15 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { 
   X, 
-  Camera, 
-  MapPin, 
-  Upload, 
   CheckCircle2, 
-  AlertTriangle, 
-  ImageIcon,
-  ArrowRight,
-  ShieldCheck,
-  Trash2,
-  Compass
+  Trash2
 } from 'lucide-react';
-import { SAMUT_PRAKAN_DISTRICTS_DATA } from '../data/samutPrakanDistricts';
 import { detectDistrictForCoordinates, isPointInSamutPrakan, detectSubdistrictForLocation } from '../data/samutPrakanBoundary';
 import { getDetailedDeviceInfo } from '../services/cloudSyncService';
 import { checkRateLimit, sanitizeReportPayload } from '../services/securityService';
-import { CivicGauge, CivicStationPin, CivicCompass, CivicReportCamera } from './CivicIcons';
+import { CivicGauge, CivicStationPin, CivicCompass, CivicReportCamera, CivicShield } from './CivicIcons';
 
-// ระดับน้ำตามส่วนของร่างกาย (อวัยวะ) ตามความต้องการของผู้ใช้งาน
+// ระดับน้ำตามส่วนของร่างกาย (อวัยวะ) ตามมาตรฐานการประเมินภาคสนาม
 export const BODY_WATER_LEVELS = [
   {
     id: 'ankle',
@@ -30,8 +21,8 @@ export const BODY_WATER_LEVELS = [
     level: 1,
     color: 'emerald',
     badgeClass: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30',
-    selectedClass: 'ring-2 ring-emerald-500 bg-emerald-500/10 border-emerald-500',
-    desc: 'น้ำท่วมเสมอตาตุ่ม/ข้อเท้า ผิวถนนเปียกขัง รถทุกชนิดสัญจรได้'
+    selectedClass: 'bg-emerald-50/80 dark:bg-emerald-950/40 border-emerald-500',
+    desc: 'น้ำขังผิวทาง รถทุกชนิดสัญจรได้'
   },
   {
     id: 'shin',
@@ -43,8 +34,8 @@ export const BODY_WATER_LEVELS = [
     level: 2,
     color: 'amber',
     badgeClass: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30',
-    selectedClass: 'ring-2 ring-amber-500 bg-amber-500/10 border-amber-500',
-    desc: 'น้ำท่วมเสมอหน้าแข้ง ปริ่มท่อไอเสีย รถเก๋งและมอเตอร์ไซค์ควรชะลอ'
+    selectedClass: 'bg-amber-50/80 dark:bg-amber-950/40 border-amber-500',
+    desc: 'ปริ่มท่อไอเสีย รถเล็กควรใช้ความระมัดระวัง'
   },
   {
     id: 'knee',
@@ -56,8 +47,8 @@ export const BODY_WATER_LEVELS = [
     level: 2,
     color: 'amber',
     badgeClass: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30',
-    selectedClass: 'ring-2 ring-amber-500 bg-amber-500/10 border-amber-500',
-    desc: 'น้ำท่วมเสมอหัวเข่า ครึ่งล้อรถเก๋ง รถเล็กควรหลีกเลี่ยงเส้นทาง'
+    selectedClass: 'bg-amber-50/80 dark:bg-amber-950/40 border-amber-500',
+    desc: 'ครึ่งล้อรถยนต์ รถเก๋งและมอเตอร์ไซค์ควรเลี่ยง'
   },
   {
     id: 'thigh',
@@ -69,21 +60,21 @@ export const BODY_WATER_LEVELS = [
     level: 3,
     color: 'rose',
     badgeClass: 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/30',
-    selectedClass: 'ring-2 ring-rose-500 bg-rose-500/10 border-rose-500',
-    desc: 'น้ำท่วมมิดล้อรถเก๋ง น้ำเข้าห้องโดยสาร ห้ามรถเล็กผ่านเด็ดขาด'
+    selectedClass: 'bg-rose-50/80 dark:bg-rose-950/40 border-rose-500',
+    desc: 'ท่วมมิดล้อรถเก๋ง ห้ามรถเล็กผ่านเด็ดขาด'
   },
   {
     id: 'waist',
     part: 'ระดับเอวขึ้นไป / อก',
     icon: '85cm+',
-    label: 'ระดับเอวขึ้นไป / อก',
+    label: 'ระดับเอวขึ้นไป',
     defaultCm: 85,
     range: '> 75 ซม.',
     level: 3,
     color: 'rose',
     badgeClass: 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/30',
-    selectedClass: 'ring-2 ring-rose-500 bg-rose-500/10 border-rose-500',
-    desc: 'วิกฤต น้ำท่วมสูงมาก กระแสน้ำเชี่ยว ห้ามยานพาหนะทุกชนิดสัญจร'
+    selectedClass: 'bg-rose-50/80 dark:bg-rose-950/40 border-rose-500',
+    desc: 'วิกฤต น้ำท่วมสูง ห้ามยานพาหนะทุกชนิดสัญจร'
   }
 ];
 
@@ -100,7 +91,6 @@ export default function CitizenReportModal({
 }) {
   const isDark = theme === 'dark';
 
-  // Form States: อำเภอ, ตำบล, จุดสังเกต, ระดับน้ำ, รูปภาพ, พิกัดแผนที่ (วิเคราะห์อัตโนมัติ 100% จากการปักหมุด)
   const [district, setDistrict] = useState('');
   const [subdistrict, setSubdistrict] = useState('');
   const [customCoords, setCustomCoords] = useState(null);
@@ -114,7 +104,6 @@ export default function CitizenReportModal({
 
   const fileInputRef = useRef(null);
 
-  // Sync picked coordinates from map & auto-detect exact district/subdistrict
   useEffect(() => {
     if (pickedCoords && typeof pickedCoords.lat === 'number' && typeof pickedCoords.lng === 'number') {
       setCustomCoords(pickedCoords);
@@ -130,7 +119,6 @@ export default function CitizenReportModal({
     }
   }, [pickedCoords]);
 
-  // Handle notes change with smart subdistrict auto-detection
   const handleNotesChange = (e) => {
     const val = e.target.value;
     setNotes(val);
@@ -141,7 +129,6 @@ export default function CitizenReportModal({
     }
   };
 
-  // Image Compression & Optimization for Mobile Uploads (Safely under 80KB to fit localStorage & Supabase)
   const compressImage = (file, maxWidth = 800, maxHeight = 800, quality = 0.65) => {
     return new Promise((resolve) => {
       const reader = new FileReader();
@@ -172,7 +159,6 @@ export default function CitizenReportModal({
           resolve(rawResult);
         };
         img.onerror = () => {
-          // If image failed to load in canvas, check size before falling back
           if (rawResult && typeof rawResult === 'string' && rawResult.length < 500000) {
             resolve(rawResult);
           } else {
@@ -186,7 +172,6 @@ export default function CitizenReportModal({
     });
   };
 
-  // Image Upload Handler
   const handlePhotoSelect = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -217,24 +202,22 @@ export default function CitizenReportModal({
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  // Submit Handler
   const handleSubmit = (e) => {
     e.preventDefault();
 
     if (!customCoords || typeof customCoords.lat !== 'number' || typeof customCoords.lng !== 'number') {
-      alert("กรุณาแตะปุ่ม 'ปักหมุดบนแผนที่' หรือ 'ใช้พิกัดปัจจุบัน' เพื่อระบุตำแหน่งจุดน้ำท่วมที่แน่นอน");
+      alert("กรุณาแตะปุ่ม 'ปักหมุดบนแผนที่' หรือ 'ใช้พิกัดปัจจุบัน' เพื่อระบุตำแหน่งจุดน้ำท่วม");
       return;
     }
 
     if (!notes.trim()) {
-      alert("กรุณากรอกหมายเหตุหรือจุดที่สังเกต เช่น ชื่อถนน หรือหน้าปากซอย");
+      alert("กรุณากรอกชื่อถนนหรือจุดสังเกต");
       return;
     }
 
-    // Security Gate: Rate Limiting (ป้องกันการส่งรัว/สแปมบอท)
     const rateCheck = checkRateLimit('citizen_report', 30);
     if (!rateCheck.allowed) {
-      alert(`คุณส่งรายงานเร็วเกินไป เพื่อความปลอดภัยของระบบ กรุณารออีก ${rateCheck.waitSeconds} วินาที`);
+      alert(`กรุณารออีก ${rateCheck.waitSeconds} วินาที ก่อนส่งรายงานถัดไป`);
       return;
     }
 
@@ -248,7 +231,7 @@ export default function CitizenReportModal({
     const finalLng = customCoords.lng;
 
     if (!isPointInSamutPrakan(finalLat, finalLng)) {
-      alert("พิกัดที่ระบุอยู่นอกพื้นที่ 6 อำเภอของจังหวัดสมุทรปราการ ระบบรองรับเฉพาะพื้นที่ จ.สมุทรปราการ เท่านั้น");
+      alert("พิกัดที่ระบุอยู่นอกพื้นที่ 6 อำเภอของจังหวัดสมุทรปราการ");
       setIsSubmitting(false);
       return;
     }
@@ -260,7 +243,6 @@ export default function CitizenReportModal({
     }
     const reporterDevice = getDetailedDeviceInfo();
 
-    // Auto-analyze exact district and subdistrict with 100% precision from coordinates & notes
     const smartCheck = detectSubdistrictForLocation(finalLat, finalLng, notes.trim(), district)
       || { district: detectDistrictForCoordinates(finalLat, finalLng) || 'เมืองสมุทรปราการ', subdistrict: '' };
     const finalDistrict = smartCheck.district || detectDistrictForCoordinates(finalLat, finalLng) || 'เมืองสมุทรปราการ';
@@ -318,121 +300,113 @@ export default function CitizenReportModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 smooth-backdrop overflow-y-auto">
-      <div className={`w-[90vw] max-w-[360px] sm:max-w-md my-auto m-auto rounded-2xl border shadow-2xl overflow-hidden flex flex-col max-h-[75vh] sm:max-h-[85vh] smooth-pop transition-colors ${
-        isDark ? 'bg-slate-900 border-slate-700 text-slate-100' : 'bg-white border-slate-200 text-slate-900'
+    <div 
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+      className="fixed inset-0 z-50 bg-slate-950/65 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto"
+    >
+      <div className={`w-[92vw] max-w-[440px] sm:max-w-lg my-auto m-auto rounded-xl border shadow-2xl overflow-hidden flex flex-col max-h-[84vh] sm:max-h-[86vh] transition-colors ${
+        isDark ? 'bg-slate-900 border-slate-800 text-slate-100' : 'bg-white border-slate-200 text-slate-900'
       }`}>
-        
-        {/* Top Accent Stripe */}
-        <div className="h-1.5 w-full bg-gradient-to-r from-blue-600 via-cyan-500 to-teal-500 shrink-0"></div>
+        {/* Top Institutional Bar */}
+        <div className="h-1 w-full bg-blue-700 shrink-0" />
 
-        {/* Modal Header */}
-        <div className={`p-3 sm:p-5 pb-2.5 sm:pb-3 border-b flex items-center justify-between shrink-0 ${
-          isDark ? 'border-slate-800 bg-slate-950/40' : 'border-slate-100 bg-slate-50/50'
+        {/* Header */}
+        <div className={`px-4 py-3 sm:px-5 sm:py-3.5 border-b flex items-center justify-between gap-3 shrink-0 ${
+          isDark ? 'border-slate-800 bg-slate-950/50' : 'border-slate-200 bg-slate-50/80'
         }`}>
-          <div className="flex items-center space-x-2 sm:space-x-2.5 min-w-0">
-            <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-2xl flex items-center justify-center shadow-sm shrink-0 border ${
-              isDark ? 'bg-blue-950 text-cyan-400 border-blue-800' : 'bg-blue-50 text-blue-600 border-blue-200'
+          <div className="flex items-center gap-3 min-w-0">
+            <div className={`w-8 h-8 sm:w-9 sm:h-9 rounded-lg border flex items-center justify-center shrink-0 ${
+              isDark ? 'bg-slate-800 text-blue-400 border-slate-700' : 'bg-white text-blue-700 border-slate-200 shadow-2xs'
             }`}>
-              <Camera className="w-4 h-4 sm:w-5 sm:h-5" />
+              <CivicReportCamera className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
             <div className="min-w-0">
-              <h3 className={`text-sm sm:text-lg font-bold leading-snug break-words ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                แจ้งจุดน้ำท่วม
+              <h3 className={`text-sm sm:text-base font-bold leading-tight tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                รายงานจุดน้ำท่วมขังภาคประชาชน
               </h3>
-              <p className={`text-[10.5px] sm:text-xs break-words whitespace-normal leading-tight mt-0.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                ส่งข้อมูลเตือนภัยเพื่อนร่วมทางใน จ.สมุทรปราการ
+              <p className={`text-[11px] sm:text-xs leading-tight mt-0.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                ระบุพิกัดและระดับน้ำเพื่อแจ้งเตือนผู้ใช้เส้นทางใน จ.สมุทรปราการ
               </p>
             </div>
           </div>
           <button 
             type="button"
             onClick={onClose} 
-            className={`p-1.5 sm:p-2 rounded-xl transition-all cursor-pointer ${
-              isDark ? 'bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white' : 'bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800'
+            className={`w-8 h-8 rounded-lg border flex items-center justify-center transition-colors cursor-pointer shrink-0 ${
+              isDark ? 'bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white border-slate-700' : 'bg-white hover:bg-slate-100 text-slate-500 hover:text-slate-800 border-slate-200'
             }`}
             title="ปิดหน้าต่าง"
           >
-            <X className="w-4 h-4 sm:w-5 sm:h-5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
 
-        {/* Success Confirmation Overlay */}
         {submitSuccess ? (
-          <div className="p-6 sm:p-12 flex flex-col items-center justify-center text-center animate-in zoom-in-95 duration-200">
-            <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl sm:rounded-3xl bg-emerald-500/20 text-emerald-500 flex items-center justify-center mb-3 sm:mb-4 ring-8 ring-emerald-500/10">
-              <CheckCircle2 className="w-7 h-7 sm:w-9 sm:h-9" />
+          <div className="p-8 sm:p-10 flex flex-col items-center justify-center text-center">
+            <div className="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-500 flex items-center justify-center mb-3">
+              <CheckCircle2 className="w-6 h-6" />
             </div>
-            <h4 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white mb-1">
-              ส่งข้อมูลเรียบร้อยแล้ว
+            <h4 className="text-base font-bold text-slate-900 dark:text-white mb-1">
+              ส่งรายงานเข้าสู่ระบบเรียบร้อยแล้ว
             </h4>
-            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 max-w-xs">
-              ขอบคุณที่ร่วมรายงานสถานการณ์เพื่อความปลอดภัยของพี่น้องชาวสมุทรปราการ
+            <p className="text-xs text-slate-500 dark:text-slate-400 max-w-xs leading-relaxed">
+              ขอบคุณสำหรับข้อมูล ระบบได้ส่งพิกัดไปยังศูนย์ควบคุมเพื่อตรวจสอบและแสดงผลบนแผนที่
             </p>
           </div>
         ) : (
-          /* Form Content (Clean & Streamlined) */
-          <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-3 sm:p-5 space-y-3 sm:space-y-4">
-
-            {/* Location & Map Point Picker (No manual dropdowns - strictly pin on map with AI spatial auto-detection) */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <label className={`block text-xs font-bold ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
-                  ตำแหน่งจุดน้ำท่วม <span className="text-rose-500">* (ปักหมุดบนแผนที่)</span>
+          <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto px-4 sm:px-5 py-3.5 sm:py-4 space-y-3.5">
+            {/* Step 1: Map Coordinates */}
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className={`text-xs font-bold ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>
+                  1. พิกัดตำแหน่งที่เกิดเหตุ <span className="text-rose-500">*</span>
                 </label>
-                <span className="text-[10.5px] text-slate-400">
-                  ระบบวิเคราะห์ตำบล/อำเภออัตโนมัติ
-                </span>
+                <span className="text-[10px] text-slate-400">วิเคราะห์อำเภอ/ตำบลอัตโนมัติ</span>
               </div>
 
               {customCoords ? (
-                <div className={`p-3 rounded-2xl border text-xs flex flex-col gap-2 ${
-                  isDark ? 'bg-emerald-950/40 border-emerald-800 text-emerald-200' : 'bg-emerald-50 border-emerald-200 text-emerald-900'
+                <div className={`p-3 rounded-lg border text-xs flex items-center justify-between gap-2 ${
+                  isDark ? 'bg-emerald-950/30 border-emerald-800/80 text-emerald-200' : 'bg-emerald-50/70 border-emerald-200 text-emerald-900'
                 }`}>
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-1.5 min-w-0">
-                      <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-                      <span className="font-bold text-xs truncate">
-                        ปักหมุดตำแหน่งแล้ว
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                      <span className="font-bold text-xs">
+                        อ.{district || 'เมืองสมุทรปราการ'} {subdistrict ? `• ต.${subdistrict}` : ''}
                       </span>
                     </div>
-                    {onStartPickOnMap && (
-                      <button
-                        type="button"
-                        onClick={() => onStartPickOnMap('citizen')}
-                        className="text-[11px] font-bold text-blue-600 dark:text-cyan-400 hover:underline cursor-pointer shrink-0"
-                      >
-                        เปลี่ยนจุดปักหมุด
-                      </button>
-                    )}
-                  </div>
-
-                  <div className="flex items-center gap-1.5 flex-wrap">
-                    <span className="px-2.5 py-0.5 rounded-md bg-emerald-600 text-white font-bold text-xs shadow-xs">
-                      อ.{district || 'บางบ่อ'} {subdistrict ? `• ต.${subdistrict}` : ''}
-                    </span>
-                    <span className="font-mono text-[11px] text-slate-600 dark:text-slate-400 flex items-center gap-1">
-                      <CivicStationPin className="w-3 h-3 shrink-0" />
-                      <span>{customCoords.lat.toFixed(5)}, {customCoords.lng.toFixed(5)}</span>
+                    <span className="font-mono text-[11px] text-slate-500 dark:text-slate-400 block mt-0.5">
+                      พิกัด: {customCoords.lat.toFixed(5)}, {customCoords.lng.toFixed(5)}
                     </span>
                   </div>
+                  {onStartPickOnMap && (
+                    <button
+                      type="button"
+                      onClick={() => onStartPickOnMap('citizen')}
+                      className={`px-2.5 py-1.5 rounded-md border text-[11px] font-semibold cursor-pointer shrink-0 transition-colors ${
+                        isDark ? 'bg-slate-900 border-slate-700 text-slate-200 hover:bg-slate-800' : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-100'
+                      }`}
+                    >
+                      เปลี่ยนพิกัด
+                    </button>
+                  )}
                 </div>
               ) : (
-                <div className={`p-3.5 rounded-xl border flex flex-col items-center justify-center text-center gap-2.5 ${
-                  isDark ? 'bg-slate-800/60 border-slate-700' : 'bg-slate-50 border-slate-200'
+                <div className={`p-3 rounded-lg border flex flex-col sm:flex-row items-center justify-between gap-2.5 ${
+                  isDark ? 'bg-slate-950/40 border-slate-800' : 'bg-slate-50/70 border-slate-200'
                 }`}>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
-                    แตะปุ่มเพื่อเลือกตำแหน่งจุดน้ำท่วมบนแผนที่ให้ตรงจุดจริง
-                  </p>
-                  <div className="flex items-center gap-2 flex-wrap justify-center">
+                  <span className="text-xs text-slate-500 dark:text-slate-400">
+                    ระบุตำแหน่งจุดน้ำท่วมบนแผนที่หรือใช้ GPS
+                  </span>
+                  <div className="flex items-center gap-2 w-full sm:w-auto">
                     {onStartPickOnMap && (
                       <button
                         type="button"
                         onClick={() => onStartPickOnMap('citizen')}
-                        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-xs transition-all cursor-pointer active:scale-95"
+                        className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-blue-700 hover:bg-blue-800 text-white text-xs font-semibold transition-colors cursor-pointer"
                       >
-                        <CivicStationPin className="w-4 h-4 text-white" />
-                        <span>แตะเพื่อปักหมุดบนแผนที่</span>
+                        <CivicStationPin className="w-3.5 h-3.5 text-white" />
+                        <span>ปักหมุดแผนที่</span>
                       </button>
                     )}
                     {userLocation && (
@@ -449,10 +423,12 @@ export default function CitizenReportModal({
                             if (detected) setDistrict(detected);
                           }
                         }}
-                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 text-xs font-bold hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                        className={`flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border text-xs font-semibold transition-colors cursor-pointer ${
+                          isDark ? 'bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700' : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-100'
+                        }`}
                       >
-                        <CivicCompass className="w-3.5 h-3.5 text-blue-500" />
-                        <span>ใช้พิกัดปัจจุบัน (GPS)</span>
+                        <CivicCompass className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+                        <span>ใช้ GPS ปัจจุบัน</span>
                       </button>
                     )}
                   </div>
@@ -460,38 +436,37 @@ export default function CitizenReportModal({
               )}
             </div>
 
-            {/* 2. หมายเหตุจุดที่สังเกต */}
+            {/* Step 2: Location Note */}
             <div>
-              <label className={`block text-xs font-bold mb-1.5 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
-                หมายเหตุจุดที่สังเกต <span className="text-rose-500">*</span>
+              <label className={`block text-xs font-bold mb-1.5 ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>
+                2. ชื่อถนนและจุดสังเกต <span className="text-rose-500">*</span>
               </label>
-              <textarea
-                rows={2}
+              <input
+                type="text"
                 value={notes}
                 onChange={handleNotesChange}
-                placeholder="เช่น ถนนสุขุมวิท หน้าปากซอยวัดด่านสำโรง มุ่งหน้าบางนา"
-                className={`w-full px-3.5 py-2.5 rounded-lg text-xs sm:text-sm border transition-all outline-none focus:ring-2 focus:ring-blue-500 resize-none ${
+                placeholder="เช่น ถ.สุขุมวิท หน้าปากซอยวัดด่านสำโรง มุ่งหน้าแยกเทพารักษ์"
+                className={`w-full px-3 py-2 rounded-lg text-xs sm:text-sm border transition-colors outline-none ${
                   isDark 
-                    ? 'bg-slate-800 border-slate-700 text-white placeholder-slate-500' 
-                    : 'bg-slate-50 border-slate-300 text-slate-900 placeholder-slate-400'
+                    ? 'bg-slate-950 border-slate-800 text-white placeholder-slate-500 focus:border-blue-500' 
+                    : 'bg-white border-slate-300 text-slate-900 placeholder-slate-400 focus:border-blue-600'
                 }`}
                 required
               />
             </div>
 
-            {/* 3. เลือกระดับน้ำตามส่วนของร่างกาย & ระบุความลึกเป็น cm */}
-            <div className="space-y-2.5">
+            {/* Step 3: Water Level Selection */}
+            <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <label className={`block text-xs font-bold ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
-                  ระดับน้ำอยู่ตรงไหนของร่างกาย <span className="text-rose-500">*</span>
+                <label className={`text-xs font-bold ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>
+                  3. ประเมินระดับน้ำท่วมขัง <span className="text-rose-500">*</span>
                 </label>
-                <span className="text-[11px] text-slate-400">
-                  เทียบเกณฑ์มาตรฐาน
-                </span>
+                <span className="text-[10px] text-slate-400">เลือกเกณฑ์เทียบระดับร่างกาย</span>
               </div>
 
-              {/* รายการอวัยวะ 5 ระดับ */}
-              <div className="grid grid-cols-1 gap-2">
+              <div className={`rounded-lg border divide-y overflow-hidden ${
+                isDark ? 'border-slate-800 divide-slate-800 bg-slate-950/40' : 'border-slate-200 divide-slate-200 bg-white'
+              }`}>
                 {BODY_WATER_LEVELS.map((lvl) => {
                   const isSelected = selectedBodyPartId === lvl.id;
                   return (
@@ -501,87 +476,73 @@ export default function CitizenReportModal({
                         setSelectedBodyPartId(lvl.id);
                         setCustomCm(String(lvl.defaultCm));
                       }}
-                      className={`p-2.5 sm:p-3 rounded-lg border transition-all cursor-pointer flex items-center justify-between gap-3 ${
+                      className={`px-3 py-2 transition-colors cursor-pointer flex items-center justify-between gap-2.5 ${
                         isSelected 
                           ? lvl.selectedClass 
-                          : (isDark ? 'bg-slate-850/60 border-slate-800 hover:border-slate-700' : 'bg-slate-50 border-slate-200 hover:border-slate-300')
+                          : (isDark ? 'hover:bg-slate-800/60' : 'hover:bg-slate-50')
                       }`}
                     >
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        <div className={`w-11 h-8 rounded-md flex items-center justify-center text-[10px] font-mono font-bold shrink-0 ${
-                          isSelected
-                            ? (lvl.color === 'emerald' ? 'bg-emerald-500/20 text-emerald-500 ring-1 ring-emerald-500/40' : lvl.color === 'amber' ? 'bg-amber-500/20 text-amber-500 ring-1 ring-amber-500/40' : 'bg-rose-500/20 text-rose-500 ring-1 ring-rose-500/40')
-                            : (isDark ? 'bg-slate-800 text-slate-300' : 'bg-slate-200/70 text-slate-700')
-                        }`}>
+                      <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                        <span className={`w-12 py-1 rounded text-center text-[10px] font-mono font-bold border shrink-0 ${lvl.badgeClass}`}>
                           {lvl.icon}
-                        </div>
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-2">
-                            <span className={`text-xs sm:text-sm font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className={`text-xs font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>
                               {lvl.label}
                             </span>
-                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${lvl.badgeClass}`}>
-                              {lvl.range}
+                            <span className="text-[10px] font-mono text-slate-400">
+                              ({lvl.range})
                             </span>
                           </div>
-                          <p className={`text-[11px] break-words whitespace-normal leading-relaxed mt-0.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                          <p className={`text-[11px] truncate ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
                             {lvl.desc}
                           </p>
                         </div>
                       </div>
 
-                      <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                      <div className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ${
                         isSelected 
-                          ? (lvl.color === 'emerald' ? 'border-emerald-500 bg-emerald-500' : lvl.color === 'amber' ? 'border-amber-500 bg-amber-500' : 'border-rose-500 bg-rose-500')
-                          : (isDark ? 'border-slate-600' : 'border-slate-400')
+                          ? 'border-blue-600 bg-blue-600'
+                          : (isDark ? 'border-slate-600' : 'border-slate-300')
                       }`}>
-                        {isSelected && <span className="w-1.5 h-1.5 rounded-full bg-white"></span>}
+                        {isSelected && <span className="w-1.5 h-1.5 rounded-full bg-white" />}
                       </div>
                     </div>
                   );
                 })}
               </div>
 
-              {/* ช่องให้เขียนระบุระดับน้ำคร่าวๆ หน่วย cm */}
-              <div className={`p-3 rounded-lg border ${
-                isDark ? 'bg-slate-800/80 border-slate-700' : 'bg-blue-50/70 border-blue-200'
+              {/* Numeric Depth Input + Presets */}
+              <div className={`p-2.5 rounded-lg border flex flex-col sm:flex-row sm:items-center justify-between gap-2 ${
+                isDark ? 'bg-slate-950/40 border-slate-800' : 'bg-slate-50/70 border-slate-200'
               }`}>
-                <div className="flex items-center justify-between gap-2 mb-1.5">
-                  <label className={`text-xs font-bold flex items-center gap-1.5 ${
-                    isDark ? 'text-cyan-300' : 'text-blue-900'
-                  }`}>
-                    <CivicGauge className="w-3.5 h-3.5 shrink-0" />
-                    <span>ระบุระดับน้ำคร่าวๆ (หน่วย cm)</span>
-                    <span className="text-rose-500">*</span>
-                  </label>
-                  <span className="text-[11px] text-slate-500 dark:text-slate-400 font-mono">
-                    (เซนติเมตร)
-                  </span>
+                <div className="flex items-center gap-1.5 text-xs font-semibold">
+                  <CivicGauge className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 shrink-0" />
+                  <span>ความลึกประมาณ (ซม.):</span>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <div className="relative flex-1">
+                <div className="flex items-center gap-1.5">
+                  <div className="relative w-24">
                     <input
                       type="number"
                       min="1"
                       max="250"
                       value={customCm}
                       onChange={(e) => setCustomCm(e.target.value)}
-                      placeholder="เช่น 15, 25, 40"
-                      className={`w-full px-3.5 py-2 rounded-lg text-sm font-bold font-mono border outline-none focus:ring-2 focus:ring-blue-500 ${
+                      className={`w-full pl-2.5 pr-7 py-1 rounded border text-xs font-bold font-mono outline-none ${
                         isDark 
-                          ? 'bg-slate-900 border-slate-700 text-white placeholder-slate-500' 
-                          : 'bg-white border-slate-300 text-slate-900 placeholder-slate-400'
+                          ? 'bg-slate-900 border-slate-700 text-white focus:border-blue-500' 
+                          : 'bg-white border-slate-300 text-slate-900 focus:border-blue-600'
                       }`}
                       required
                     />
-                    <span className="absolute right-3 top-2 text-xs font-bold text-slate-400">
+                    <span className="absolute right-2 top-1 text-[10px] font-mono text-slate-400">
                       cm
                     </span>
                   </div>
 
-                  {/* Preset quick buttons */}
-                  <div className="flex items-center gap-1 shrink-0">
+                  <div className="flex items-center gap-1">
                     {[10, 25, 45, 65, 85].map(preset => (
                       <button
                         key={preset}
@@ -591,10 +552,10 @@ export default function CitizenReportModal({
                           const matching = BODY_WATER_LEVELS.find(b => preset >= b.defaultCm - 10 && preset <= b.defaultCm + 10);
                           if (matching) setSelectedBodyPartId(matching.id);
                         }}
-                        className={`px-2 py-1.5 rounded-md text-[10px] font-bold font-mono border transition-colors cursor-pointer ${
+                        className={`px-2 py-1 rounded text-[10px] font-bold font-mono border transition-colors cursor-pointer ${
                           customCm === String(preset)
-                            ? 'bg-blue-600 text-white border-blue-500'
-                            : (isDark ? 'bg-slate-900 text-slate-300 border-slate-700 hover:border-slate-500' : 'bg-white text-slate-700 border-slate-200 hover:border-slate-400')
+                            ? 'bg-blue-700 text-white border-blue-700'
+                            : (isDark ? 'bg-slate-900 text-slate-300 border-slate-700 hover:border-slate-600' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100')
                         }`}
                       >
                         {preset}
@@ -605,10 +566,10 @@ export default function CitizenReportModal({
               </div>
             </div>
 
-            {/* 4. ใส่รูปภาพสถานการณ์จริง */}
+            {/* Step 4: Photo Attachment */}
             <div>
-              <label className={`block text-xs font-bold mb-1.5 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
-                ใส่รูปภาพประกอบ (ถ้ามี)
+              <label className={`block text-xs font-bold mb-1.5 ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>
+                4. ภาพถ่ายประกอบสถานการณ์จริง (ถ้ามี)
               </label>
               
               <input
@@ -622,24 +583,24 @@ export default function CitizenReportModal({
               />
 
               {photoPreview ? (
-                <div className="relative rounded-2xl overflow-hidden border border-slate-300 dark:border-slate-700 aspect-video max-h-48 group">
+                <div className="relative rounded-lg overflow-hidden border border-slate-300 dark:border-slate-700 h-36 group">
                   <img 
                     src={photoPreview} 
                     alt="รูปภาพน้ำท่วม" 
                     className="w-full h-full object-cover"
                   />
-                  <div className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                  <div className="absolute inset-0 bg-slate-950/50 flex items-center justify-center gap-2">
                     <button
                       type="button"
                       onClick={() => fileInputRef.current?.click()}
-                      className="px-3 py-1.5 rounded-xl bg-white text-slate-800 text-xs font-semibold shadow-lg"
+                      className="px-3 py-1.5 rounded-lg bg-white text-slate-900 text-xs font-semibold shadow-sm cursor-pointer"
                     >
-                      เปลี่ยนรูป
+                      เปลี่ยนรูปภาพ
                     </button>
                     <button
                       type="button"
                       onClick={handleRemovePhoto}
-                      className="p-1.5 rounded-xl bg-rose-600 text-white text-xs shadow-lg"
+                      className="p-1.5 rounded-lg bg-rose-600 text-white text-xs shadow-sm cursor-pointer"
                       title="ลบรูป"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -650,40 +611,37 @@ export default function CitizenReportModal({
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className={`w-full py-4 px-3 rounded-2xl border-2 border-dashed flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                  className={`w-full py-3 px-3.5 rounded-lg border border-dashed flex items-center justify-center gap-2.5 transition-colors cursor-pointer ${
                     isDark 
-                      ? 'border-slate-700 hover:border-blue-500 hover:bg-blue-950/20 text-slate-400' 
-                      : 'border-slate-300 hover:border-blue-500 hover:bg-blue-50/50 text-slate-500'
+                      ? 'border-slate-700 hover:border-blue-500 bg-slate-950/30 text-slate-300' 
+                      : 'border-slate-300 hover:border-blue-600 bg-slate-50/60 text-slate-700'
                   }`}
                 >
-                  <div className="w-10 h-10 rounded-2xl bg-blue-500/10 text-blue-500 flex items-center justify-center">
-                    <Camera className="w-5 h-5" />
-                  </div>
-                  <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
-                    แตะเพื่อถ่ายรูป หรือ เลือกรูปภาพจากเครื่อง
-                  </span>
-                  <span className="text-[10px] text-slate-400">
-                    (รองรับ JPG, PNG ไม่เกิน 12 MB)
+                  <CivicReportCamera className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" />
+                  <span className="text-xs font-semibold">
+                    แตะเพื่อถ่ายภาพ หรือ เลือกรูปจากอุปกรณ์
                   </span>
                 </button>
               )}
             </div>
 
-            {/* Bottom Actions */}
-            <div className="pt-2">
+            {/* Submit Footer */}
+            <div className="pt-1 flex items-center justify-between gap-3">
+              <span className="hidden sm:flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400">
+                <CivicShield className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+                <span>ตรวจสอบโดยศูนย์ควบคุมก่อนแสดงผล</span>
+              </span>
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-blue-600 via-cyan-600 to-teal-600 hover:from-blue-500 hover:to-teal-500 text-white font-bold text-sm shadow-lg shadow-blue-500/25 transition-all active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2"
+                className="w-full sm:w-auto px-5 py-2.5 rounded-lg bg-blue-700 hover:bg-blue-800 text-white font-semibold text-xs sm:text-sm transition-colors cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50"
               >
-                <Camera className="w-4 h-4" />
-                <span>{isSubmitting ? 'กำลังส่งข้อมูล...' : 'ส่งรายงานน้ำท่วมทันที'}</span>
+                <CivicReportCamera className="w-4 h-4" />
+                <span>{isSubmitting ? 'กำลังส่งข้อมูล...' : 'ส่งรายงานสถานการณ์'}</span>
               </button>
             </div>
-
           </form>
         )}
-
       </div>
     </div>
   );
