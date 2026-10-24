@@ -25,7 +25,8 @@ import {
   ChevronUp,
   ChevronDown,
   Copy,
-  Check
+  Check,
+  ArrowUp
 } from 'lucide-react';
 import { INITIAL_FLOOD_POINTS } from '../data/samutPrakanPoints';
 import { FLOOD_STANDARDS } from '../data/floodStandards';
@@ -39,63 +40,30 @@ import {
   FAQS_OFFICIAL 
 } from '../data/chatKnowledgeBase';
 
-// โลโก้ทางการ PrakanBOT (Modern Civic Shield & AI Pulse Emblem)
+// PrakanBOT monogram – a clean "P" mark with a subtle water line (no AI clichés)
 function AiOfficialEmblem({ size = 32, className = "" }) {
   return (
-    <div 
-      className={`relative flex items-center justify-center shrink-0 rounded-2xl overflow-hidden shadow-sm select-none ${className}`}
+    <div
+      className={`relative flex items-center justify-center shrink-0 select-none ${className}`}
       style={{ width: size, height: size }}
+      aria-hidden="true"
     >
-      <svg width={size} height={size} viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <linearGradient id="pgAiShieldGrad" x1="18" y1="2" x2="18" y2="34" gradientUnits="userSpaceOnUse">
-            <stop offset="0%" stopColor="#0284c7" />
-            <stop offset="50%" stopColor="#1d4ed8" />
-            <stop offset="100%" stopColor="#0f172a" />
-          </linearGradient>
-          <linearGradient id="pgAiGoldRim" x1="6" y1="2" x2="30" y2="34" gradientUnits="userSpaceOnUse">
-            <stop offset="0%" stopColor="#38bdf8" />
-            <stop offset="50%" stopColor="#818cf8" />
-            <stop offset="100%" stopColor="#0284c7" />
-          </linearGradient>
-          <radialGradient id="pgAiGlow" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.8" />
-            <stop offset="100%" stopColor="#0284c7" stopOpacity="0" />
-          </radialGradient>
-        </defs>
-
-        {/* Ambient glow */}
-        <circle cx="18" cy="18" r="14" fill="url(#pgAiGlow)" opacity="0.25" />
-
-        {/* Civic Defense Shield Frame */}
-        <path 
-          d="M18 3.5L29 7.8V17.5C29 24.2 24.3 29.8 18 32.5C11.7 29.8 7 24.2 7 17.5V7.8L18 3.5Z" 
-          fill="url(#pgAiShieldGrad)" 
-          stroke="url(#pgAiGoldRim)" 
-          strokeWidth="1.8" 
+      <svg width={size} height={size} viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect width="32" height="32" rx="10" fill="#1d4ed8" />
+        <rect x="0.5" y="0.5" width="31" height="31" rx="9.5" stroke="#ffffff" strokeOpacity="0.12" />
+        <path
+          d="M12 23V9h5.2a4.4 4.4 0 0 1 0 8.8H12"
+          stroke="#ffffff"
+          strokeWidth="2.6"
+          strokeLinecap="round"
           strokeLinejoin="round"
         />
-
-        {/* Inner Water Droplet */}
-        <path 
-          d="M18 9.5C18 9.5 13 16 13 19.5C13 22.3 15.2 24.5 18 24.5C20.8 24.5 23 22.3 23 19.5C23 16 18 9.5 18 9.5Z" 
-          fill="#38bdf8" 
-          fillOpacity="0.3"
-          stroke="#38bdf8"
-          strokeWidth="1.2"
-        />
-
-        {/* Modern Wave Pulse */}
-        <path 
-          d="M14.5 20C15.6 19 16.8 21 18 20C19.2 19 20.4 21 21.5 20" 
-          stroke="#ffffff" 
-          strokeWidth="1.6" 
+        <path
+          d="M17.5 23.2c1.1-.8 2.2-.8 3.3 0s2.2.8 3.3 0"
+          stroke="#93c5fd"
+          strokeWidth="1.7"
           strokeLinecap="round"
         />
-
-        {/* Central AI Node Spark */}
-        <circle cx="18" cy="15" r="1.8" fill="#ffffff" />
-        <circle cx="18" cy="15" r="3.2" stroke="#67e8f9" strokeWidth="0.8" strokeDasharray="1.5 1.5" />
       </svg>
     </div>
   );
@@ -772,19 +740,14 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
     {
       id: 'welcome',
       sender: 'bot',
-      text: `สวัสดีครับ ผมคือ **PrakanBOT** ผู้ช่วยสารสนเทศอุทกภัยและเส้นทางสัญจรอัจฉริยะ จังหวัดสมุทรปราการ
+      text: `สวัสดีครับ **PrakanBOT** พร้อมให้ข้อมูลสถานการณ์น้ำท่วมและการเดินทางในจังหวัดสมุทรปราการ
 
-💡 ท่านสามารถพิมพ์สอบถามได้อย่างอิสระทุกเรื่องเกี่ยวกับน้ำท่วม เช่น:
-• 📍 **ความเสี่ยงรายพิกัด:** *"ซอยทรัพย์บุญชัย / วัดด่าน / ปากน้ำ มีโอกาสท่วมไหม"*
-• 🚗 **เกณฑ์รถยนต์:** *"รถเก๋งลุยน้ำได้กี่เซน / รถดับกลางน้ำทำอย่างไร"*
-• 🛡️ **การเตรียมตัว & บ้าน:** *"น้ำจะเข้าบ้านเตรียมตัวอย่างไร / กั้นกระสอบทรายแบบไหน"*
-• ⚡️ **ความปลอดภัยไฟฟ้า:** *"วิธีตัดไฟป้องกันไฟดูดช่วงน้ำท่วม"*
-• 🅿️ **จุดจอดรถที่สูง:** *"ในสมุทรปราการมีที่จอดรถหนีน้ำที่ไหนบ้าง"*
-• 🐍 **สัตว์มีพิษ & สุขภาพ:** *"ป้องกันงูและสัตว์มีพิษ / วิธีรักษาโรคน้ำกัดเท้า"*
-• 🌧️ **สภาพอากาศสด:** *"วันนี้ฝนตกกี่โมง / กี่เปอร์เซ็นต์"*
-
-⏱️ รายงานสภาพอากาศสดตลอดเวลา และท่านสามารถกด **[⏹️ หยุด]** หรือเริ่มบทสนทนาใหม่ได้ตลอดเวลาครับ!`,
-      time: 'ระบบพร้อมให้บริการ 24 ชม.'
+พิมพ์ถามได้เลย เช่น
+• ซอยทรัพย์บุญชัยท่วมไหม
+• รถเก๋งลุยน้ำได้กี่เซนติเมตร
+• วันนี้ฝนจะตกช่วงกี่โมง
+• เบอร์โทรขอความช่วยเหลือ`,
+      time: new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })
     }
   ]);
 
@@ -870,10 +833,12 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
   }, []);
 
   useEffect(() => {
-    if (isOpen) {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (isOpen && !isMinimized) {
+      // Scroll only the message container (avoids jumping the whole page on mobile)
+      const container = messagesEndRef.current?.parentElement;
+      if (container) container.scrollTop = container.scrollHeight;
     }
-  }, [messages, isThinking, isOpen]);
+  }, [messages, isThinking, isOpen, isMinimized]);
 
   // Window resize handler: clamp position within viewport if modal is active
   useEffect(() => {
@@ -2040,6 +2005,14 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
     }, 280);
   };
 
+  const WELCOME_TEXT = `สวัสดีครับ **PrakanBOT** พร้อมให้ข้อมูลสถานการณ์น้ำท่วมและการเดินทางในจังหวัดสมุทรปราการ
+
+พิมพ์ถามได้เลย เช่น
+• ซอยทรัพย์บุญชัยท่วมไหม
+• รถเก๋งลุยน้ำได้กี่เซนติเมตร
+• วันนี้ฝนจะตกช่วงกี่โมง
+• เบอร์โทรขอความช่วยเหลือ`;
+
   const handleResetChat = () => {
     handleStopResponse();
     playClickSound();
@@ -2047,91 +2020,138 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
       {
         id: `welcome-${Date.now()}`,
         sender: 'bot',
-        text: `สวัสดีครับ ผมคือ **PrakanBOT** ผู้ช่วยสารสนเทศอุทกภัยและเส้นทางสัญจรอัจฉริยะ จังหวัดสมุทรปราการ\n\n💡 ท่านสามารถพิมพ์สอบถามข้อมูลน้ำท่วม สภาพอากาศ หรือเส้นทางสัญจรได้ตลอด 24 ชั่วโมงครับ`,
-        time: 'ระบบพร้อมให้บริการ 24 ชม.'
+        text: WELCOME_TEXT,
+        time: new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })
       }
     ]);
   };
 
+  // Remove emoji / pictographs so answers read like a professional service desk
+  const cleanBotText = (raw) => {
+    if (!raw) return '';
+    return raw
+      .replace(/[\p{Extended_Pictographic}\u{1F1E6}-\u{1F1FF}\uFE0F\u20E3\u200D]/gu, '')
+      .replace(/[ \t]{2,}/g, ' ')
+      .replace(/^[ \t]+/gm, '')
+      .replace(/(^|\n)[ \t]*\*\*[ \t]*\*\*/g, '$1');
+  };
+
+  const toPlainText = (raw) =>
+    cleanBotText(raw)
+      .replace(/\*\*(.+?)\*\*/g, '$1')
+      .replace(/\*([^*\n]+)\*/g, '$1')
+      .replace(/\[([^\]]+)\]/g, '$1');
+
   const handleCopyMessage = (msgId, text) => {
     if (!text) return;
     try {
-      navigator.clipboard?.writeText(text);
+      navigator.clipboard?.writeText(toPlainText(text));
       setCopiedMessageId(msgId);
-      setTimeout(() => setCopiedMessageId(null), 2000);
+      setTimeout(() => setCopiedMessageId(null), 1800);
     } catch {
-      // Ignore clipboard fallback
+      // Clipboard unavailable – ignore silently
     }
   };
 
-  // Smart Formatter for Message Text (Highlighting Government Agency Citations Prominently)
-  const renderFormattedMessage = (rawText) => {
+  // Lightweight formatter: bold, quoted examples, agency names, lists and tappable phone numbers
+  const renderInline = (text, keyPrefix) => {
+    const nodes = [];
+    const regex = /(\*\*[^*]+?\*\*)|(\[[^\]]+?\])|(\*[^*\s][^*]*?\*)/g;
+    let lastIndex = 0;
+    let match;
+    let i = 0;
+
+    while ((match = regex.exec(text)) !== null) {
+      if (match.index > lastIndex) {
+        nodes.push(<span key={`${keyPrefix}-t${i++}`}>{text.substring(lastIndex, match.index)}</span>);
+      }
+      if (match[1]) {
+        const inner = match[1].slice(2, -2).trim();
+        const digits = inner.replace(/[^\d]/g, '');
+        if (/^[\d\s-]+$/.test(inner) && digits.length >= 4 && digits.length <= 10) {
+          nodes.push(
+            <a
+              key={`${keyPrefix}-p${i++}`}
+              href={`tel:${digits}`}
+              className={`font-semibold underline decoration-1 underline-offset-2 ${isDark ? 'text-sky-300 decoration-sky-300/40' : 'text-blue-700 decoration-blue-700/30'}`}
+            >
+              {inner}
+            </a>
+          );
+        } else {
+          nodes.push(
+            <strong key={`${keyPrefix}-b${i++}`} className={`font-semibold ${isDark ? 'text-white' : 'text-slate-900'}`}>
+              {inner}
+            </strong>
+          );
+        }
+      } else if (match[2]) {
+        nodes.push(
+          <span key={`${keyPrefix}-a${i++}`} className={`font-medium ${isDark ? 'text-sky-300' : 'text-blue-700'}`}>
+            {match[2].slice(1, -1)}
+          </span>
+        );
+      } else if (match[3]) {
+        nodes.push(
+          <span key={`${keyPrefix}-q${i++}`} className={isDark ? 'text-slate-300' : 'text-slate-600'}>
+            {match[3].slice(1, -1)}
+          </span>
+        );
+      }
+      lastIndex = regex.lastIndex;
+    }
+    if (lastIndex < text.length) {
+      nodes.push(<span key={`${keyPrefix}-t${i++}`}>{text.substring(lastIndex)}</span>);
+    }
+    return nodes;
+  };
+
+  const renderFormattedMessage = (rawText, isBot = true) => {
     if (!rawText) return null;
+    const text = isBot ? cleanBotText(rawText) : rawText;
 
-    const paragraphs = rawText.split('\n');
+    return text.split('\n').map((line, idx) => {
+      const trimmed = line.trim();
+      if (!trimmed) return <div key={idx} className="h-2" />;
 
-    return paragraphs.map((para, pIdx) => {
-      if (!para.trim()) {
-        return <div key={pIdx} className="h-1.5" />;
-      }
-
-      const tokens = [];
-      const regex = /(\[.*?\])|(\*\*.*?\*\*)/g;
-      let lastIndex = 0;
-      let match;
-
-      while ((match = regex.exec(para)) !== null) {
-        if (match.index > lastIndex) {
-          tokens.push({ type: 'text', content: para.substring(lastIndex, match.index) });
-        }
-
-        if (match[1]) {
-          const agencyName = match[1].slice(1, -1);
-          tokens.push({ type: 'agency', content: agencyName });
-        } else if (match[2]) {
-          const boldText = match[2].slice(2, -2);
-          tokens.push({ type: 'bold', content: boldText });
-        }
-
-        lastIndex = regex.lastIndex;
-      }
-
-      if (lastIndex < para.length) {
-        tokens.push({ type: 'text', content: para.substring(lastIndex) });
+      const bullet = trimmed.match(/^(?:[•\-–]|(\d+)\.)\s+(.*)$/);
+      if (bullet) {
+        return (
+          <div key={idx} className="flex gap-2 pl-0.5 my-0.5">
+            <span className={`shrink-0 tabular-nums ${bullet[1] ? 'min-w-[1rem] text-right' : ''} ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+              {bullet[1] ? `${bullet[1]}.` : '•'}
+            </span>
+            <span className="min-w-0">{renderInline(bullet[2], `l${idx}`)}</span>
+          </div>
+        );
       }
 
       return (
-        <p key={pIdx} className="leading-relaxed mb-1 text-xs sm:text-sm">
-          {tokens.map((token, tIdx) => {
-            if (token.type === 'agency') {
-              return (
-                <span 
-                  key={tIdx} 
-                  className={`inline-flex items-center gap-1 px-1.5 py-0.5 my-0.5 mx-0.5 rounded-md text-[11px] font-bold shadow-xs align-baseline ${
-                    isDark 
-                      ? 'bg-blue-950/80 text-cyan-300 border border-blue-800' 
-                      : 'bg-blue-50 text-blue-800 border border-blue-200'
-                  }`}
-                  title="แหล่งอ้างอิงข้อมูลเปิดสาธารณะ"
-                >
-                  <ShieldCheck className={`w-3 h-3 shrink-0 inline ${isDark ? 'text-cyan-400' : 'text-blue-600'}`} />
-                  <span>{token.content}</span>
-                </span>
-              );
-            }
-            if (token.type === 'bold') {
-              return <strong key={tIdx} className={`font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>{token.content}</strong>;
-            }
-            return <span key={tIdx}>{token.content}</span>;
-          })}
+        <p key={idx} className="my-0.5">
+          {renderInline(trimmed, `l${idx}`)}
         </p>
       );
     });
   };
 
+  const QUICK_QUESTIONS = [
+    { label: 'จุดน้ำท่วมตอนนี้', q: 'ตอนนี้ในสมุทรปราการมีน้ำท่วมตรงไหนบ้าง?' },
+    { label: 'ฝนตกช่วงไหนวันนี้', q: 'วันนี้ในสมุทรปราการมีโอกาสฝนตกช่วงกี่โมง?' },
+    { label: 'ระดับน้ำที่รถผ่านได้', q: 'รถเก๋งลุยน้ำได้กี่เซนติเมตร และระดับไหนห้ามผ่านเด็ดขาด?' },
+    { label: 'เบอร์ฉุกเฉิน', q: 'ขอเบอร์โทรศัพท์สายด่วนฉุกเฉินหน่วยงานช่วยเหลือในสมุทรปราการ' },
+    { label: 'ที่จอดรถหนีน้ำ', q: 'ในสมุทรปราการมีจุดจอดรถที่สูงหรือลานจอดหนีน้ำท่วมที่ไหนบ้าง?' },
+    { label: 'ป้องกันไฟดูด', q: 'วิธีตัดไฟและป้องกันไฟดูดช่วงน้ำท่วมต้องทำอย่างไร?' }
+  ];
+
+  const isBusy = isThinking || Boolean(streamingMessageId);
+  const showQuickQuestions = messages.length <= 1 && !isBusy;
+  const ghostBtn = `w-8 h-8 rounded-lg flex items-center justify-center transition-colors cursor-pointer ${
+    isDark ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
+  }`;
+
   return (
     <>
-      {/* Floating Helpdesk Launcher Button - Modern Sleek Capsule, Theme-Adaptive & Draggable */}
+      {/* Floating launcher – compact pill, draggable */}
       {!isOpen && (
         <div
           ref={launcherRef}
@@ -2154,130 +2174,77 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
             right: 'auto',
             touchAction: 'none'
           } : undefined}
-          className={`fixed bottom-[calc(5.8rem+env(safe-area-inset-bottom,0px))] right-2.5 sm:bottom-6 sm:right-6 z-40 px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-full font-medium text-[11px] sm:text-xs shadow-xl items-center gap-2 border cursor-grab active:cursor-grabbing select-none backdrop-blur-xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] group ${
+          role="button"
+          aria-label="เปิด PrakanBOT"
+          className={`fixed bottom-[calc(5.8rem+env(safe-area-inset-bottom,0px))] right-2.5 sm:bottom-6 sm:right-6 z-40 items-center gap-2 pl-1.5 pr-3.5 py-1.5 rounded-full border shadow-lg cursor-pointer select-none transition-[box-shadow,transform,border-color] duration-200 hover:-translate-y-0.5 hover:shadow-xl ${
             isPointSelected ? 'hidden' : 'flex'
           } ${
-            isDark 
-              ? 'bg-slate-900/90 hover:bg-slate-800/95 text-slate-100 border-slate-700/80 hover:border-sky-500/60 shadow-sky-950/40 ring-1 ring-sky-500/20 hover:ring-sky-500/40' 
-              : 'bg-white/95 hover:bg-slate-50 text-slate-800 border-slate-200/90 hover:border-blue-400 shadow-blue-900/10 ring-1 ring-blue-500/15 hover:ring-blue-500/30'
+            isDark
+              ? 'bg-slate-900 border-slate-700/80 text-slate-100 shadow-black/40 hover:border-slate-600'
+              : 'bg-white border-slate-200 text-slate-900 shadow-slate-900/10 hover:border-slate-300'
           }`}
-          title="PrakanBOT - ผู้ช่วยข้อมูลน้ำท่วมและเส้นทางอัจฉริยะ (คลิกเพื่อเปิด หรือลากย้ายได้)"
+          title="PrakanBOT – สอบถามข้อมูลน้ำท่วมและเส้นทาง"
         >
-          <div className="relative shrink-0 flex items-center justify-center">
-            <AiOfficialEmblem size={24} className="sm:w-[26px] sm:h-[26px]" />
-            <span className="absolute -top-0.5 -right-0.5 flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500 border border-white dark:border-slate-900"></span>
+          <div className="relative shrink-0 pointer-events-none">
+            <AiOfficialEmblem size={28} />
+            <span className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 ${isDark ? 'border-slate-900' : 'border-white'}`} />
+          </div>
+          <div className="text-left leading-tight pointer-events-none">
+            <span className="block text-[12.5px] sm:text-[13px] font-semibold tracking-tight">PrakanBOT</span>
+            <span className={`hidden sm:block text-[10.5px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+              สอบถามน้ำท่วมและเส้นทาง
             </span>
           </div>
-
-          <div className="text-left pointer-events-none">
-            <div className="flex items-center gap-1.5">
-              <span className="font-black text-[11.5px] sm:text-[13px] tracking-tight bg-gradient-to-r from-blue-600 via-sky-500 to-indigo-600 dark:from-sky-400 dark:via-cyan-300 dark:to-blue-400 bg-clip-text text-transparent">
-                PrakanBOT
-              </span>
-              <span className={`text-[8.5px] sm:text-[9px] font-bold px-1.5 py-0.2 rounded-full border shrink-0 ${
-                isDark 
-                  ? 'bg-sky-950/70 text-cyan-300 border-sky-800/80' 
-                  : 'bg-blue-50 text-blue-700 border-blue-200'
-              }`}>
-                24h
-              </span>
-            </div>
-            <span className={`hidden sm:block text-[9.5px] font-normal leading-tight ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-              ถามข้อมูลน้ำท่วม & เส้นทาง
-            </span>
-          </div>
-
-          <Sparkles className={`w-3.5 h-3.5 ml-0.5 transition-transform duration-300 group-hover:rotate-12 group-hover:scale-110 ${
-            isDark ? 'text-sky-400' : 'text-blue-500'
-          }`} />
         </div>
       )}
 
-      {/* Minimized Floating Dock Bar (When minimized) */}
+      {/* Minimized dock */}
       {isOpen && isMinimized && (
-        <div 
+        <div
           style={position ? {
             left: `${position.x}px`,
             top: `${position.y}px`,
             right: 'auto',
             bottom: 'auto'
           } : undefined}
-          className={`fixed z-50 bottom-[calc(5.8rem+env(safe-area-inset-bottom,0px))] right-2.5 sm:bottom-6 sm:right-6 w-auto max-w-[270px] sm:w-[340px] border rounded-2xl shadow-xl flex items-center justify-between gap-1.5 px-3 py-2 backdrop-blur-xl transition-all duration-200 ${
-            isDark 
-              ? 'bg-slate-900/95 border-slate-700/80 text-slate-100 ring-1 ring-sky-500/20' 
-              : 'bg-white/95 border-slate-200/90 text-slate-800 ring-1 ring-blue-500/15'
+          className={`smooth-pop fixed z-50 bottom-[calc(5.8rem+env(safe-area-inset-bottom,0px))] right-2.5 sm:bottom-6 sm:right-6 w-[min(280px,88vw)] sm:w-[320px] border rounded-2xl shadow-xl flex items-center justify-between gap-2 pl-2 pr-1.5 py-1.5 ${
+            isDark ? 'bg-slate-900 border-slate-700/80 text-slate-100' : 'bg-white border-slate-200 text-slate-900'
           }`}
         >
-          {/* Clickable Area to Restore */}
-          <div 
-            onClick={() => setIsMinimized(false)}
-            className="flex items-center gap-2 cursor-pointer select-none flex-1 min-w-0 group"
-            title="คลิกเพื่อขยายหน้าต่าง PrakanBOT กลับขึ้นมา"
+          <div
+            onClick={() => {
+              playToggleSound(true);
+              setIsMinimized(false);
+            }}
+            className="flex items-center gap-2 cursor-pointer select-none flex-1 min-w-0"
+            title="ขยายหน้าต่าง"
           >
-            <div className="relative shrink-0">
-              <AiOfficialEmblem size={22} />
-              <span className="absolute -top-0.5 -right-0.5 flex h-1.5 w-1.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
+            <AiOfficialEmblem size={26} />
+            <div className="min-w-0 leading-tight">
+              <span className="block text-[12.5px] font-semibold truncate">PrakanBOT</span>
+              <span className={`block text-[10.5px] truncate ${isBusy ? 'text-amber-600 dark:text-amber-400' : (isDark ? 'text-slate-400' : 'text-slate-500')}`}>
+                {isBusy ? 'กำลังพิมพ์คำตอบ…' : 'แตะเพื่อเปิดต่อ'}
               </span>
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-1.5">
-                <span className="font-black text-xs sm:text-[13px] tracking-tight bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-sky-400 dark:to-cyan-300 bg-clip-text text-transparent truncate">
-                  PrakanBOT
-                </span>
-                <span className={`text-[8.5px] px-1.5 py-0.2 rounded-full font-semibold shrink-0 ${
-                  isDark ? 'bg-sky-950/80 text-cyan-300 border border-sky-800' : 'bg-blue-50 text-blue-700 border border-blue-200'
-                }`}>
-                  ย่อขนาด
-                </span>
-              </div>
-              <p className="text-[9.5px] text-slate-400 truncate flex items-center gap-1">
-                {(isThinking || streamingMessageId) ? (
-                  <span className="text-amber-500 dark:text-amber-400 font-semibold flex items-center gap-1 animate-pulse">
-                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
-                    กำลังตอบคำถาม...
-                  </span>
-                ) : (
-                  <span className="group-hover:text-blue-500 transition-colors">แตะเพื่อขยายหน้าต่าง</span>
-                )}
-              </p>
             </div>
           </div>
 
-          {/* Action buttons inside Minimized Bar */}
-          <div className="flex items-center gap-1 shrink-0">
-            {/* Instant Stop Button if AI is generating */}
-            {(isThinking || streamingMessageId) && (
-              <button
-                type="button"
-                onClick={handleStopResponse}
-                className="px-2 py-1 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-[10px] font-bold flex items-center gap-1 transition-all cursor-pointer shadow-xs"
-                title="หยุดการตอบคำถามทันที"
-              >
-                <Square className="w-2.5 h-2.5 fill-current" />
-                <span>หยุด</span>
+          <div className="flex items-center shrink-0">
+            {isBusy && (
+              <button type="button" onClick={handleStopResponse} className={ghostBtn} title="หยุดตอบ">
+                <Square className="w-3 h-3 fill-current" />
               </button>
             )}
-
-            {/* Restore/Expand Button */}
             <button
               type="button"
               onClick={() => {
                 playToggleSound(true);
                 setIsMinimized(false);
               }}
-              className={`p-1.5 rounded-lg transition-all cursor-pointer ${
-                isDark ? 'bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
-              }`}
-              title="ขยายหน้าต่างขึ้น"
+              className={ghostBtn}
+              title="ขยายหน้าต่าง"
             >
-              <ChevronUp className="w-3.5 h-3.5" />
+              <ChevronUp className="w-4 h-4" />
             </button>
-
-            {/* Close Button */}
             <button
               type="button"
               onClick={() => {
@@ -2285,20 +2252,18 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
                 setIsOpen(false);
                 setIsMinimized(false);
               }}
-              className={`p-1.5 rounded-lg transition-all cursor-pointer ${
-                isDark ? 'bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white' : 'bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800'
-              }`}
-              title="ปิดแชท"
+              className={ghostBtn}
+              title="ปิด"
             >
-              <X className="w-3.5 h-3.5" />
+              <X className="w-4 h-4" />
             </button>
           </div>
         </div>
       )}
 
-      {/* Official Public Information Dialog - Theme-Adaptive & Freely Draggable & Resizable */}
+      {/* Chat window – draggable & resizable */}
       {isOpen && !isMinimized && (
-        <div 
+        <div
           ref={modalRef}
           style={{
             ...(position ? {
@@ -2310,418 +2275,288 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
             ...(customSize.width ? { width: `${customSize.width}px`, maxWidth: '96vw' } : {}),
             ...(customSize.height ? { height: `${customSize.height}px`, maxHeight: '85vh' } : {})
           }}
-          className={`fixed z-50 w-[88vw] max-w-[345px] sm:max-w-none ${
+          className={`smooth-pop fixed z-50 w-[92vw] max-w-[360px] sm:max-w-none ${
             customSize.width || customSize.height
               ? ''
-              : isExpanded 
-              ? 'sm:w-[560px] h-[440px] sm:h-[620px] max-h-[75vh] sm:max-h-[86vh]' 
-              : 'sm:w-[420px] h-[360px] max-h-[68vh] sm:h-[540px] sm:max-h-[84vh]'
-          } border rounded-2xl sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden transition-[box-shadow,border-color] duration-150 backdrop-blur-2xl ${
+              : isExpanded
+                ? 'sm:w-[540px] h-[460px] max-h-[74vh] sm:h-[680px] sm:max-h-[86vh]'
+                : 'sm:w-[400px] h-[400px] max-h-[68vh] sm:h-[580px] sm:max-h-[84vh]'
+          } border rounded-2xl shadow-2xl flex flex-col overflow-hidden ${
             !position ? 'bottom-[calc(3.5rem+env(safe-area-inset-bottom,0px))] left-1/2 -translate-x-1/2 sm:translate-x-0 sm:left-auto sm:bottom-6 sm:right-6' : ''
           } ${
-            isDraggingModal || isResizingModal ? 'ring-2 ring-sky-500/60' : 'ring-1 ring-slate-900/5 dark:ring-white/10'
+            isDraggingModal || isResizingModal ? 'ring-2 ring-blue-500/40' : ''
           } ${
-            isDark ? 'bg-slate-900/95 border-slate-700/80 text-slate-100 shadow-slate-950/60' : 'bg-white/95 border-slate-200/90 text-slate-900 shadow-blue-950/20'
+            isDark
+              ? 'bg-slate-900 border-slate-700/70 text-slate-100 shadow-black/50'
+              : 'bg-white border-slate-200 text-slate-900 shadow-slate-900/15'
           }`}
         >
-          {/* Top Institutional Accent Line */}
-          <div className="h-1 w-full bg-gradient-to-r from-blue-600 via-sky-400 to-indigo-600 shrink-0" />
-
-          {/* Mouse & Touch Resize Corner */}
+          {/* Desktop resize corner */}
           <div
             onMouseDown={handleMouseDownResizeCorner}
             onTouchStart={handleTouchStartResizeCorner}
-            className="absolute top-1 left-0 w-6 h-6 cursor-nwse-resize z-50 flex items-start justify-start p-1 select-none touch-none group"
-            title="ลากมุมนี้เพื่อย่อหรือขยายขนาด"
-          >
-            <div className="w-2.5 h-2.5 border-t-2 border-l-2 border-slate-400 group-hover:border-sky-500 rounded-tl transition-colors" />
-          </div>
+            className="hidden sm:block absolute top-0 left-0 w-4 h-4 cursor-nwse-resize z-50"
+            title="ลากเพื่อปรับขนาด"
+          />
 
-          {/* Mobile Ergonomic Touch Handle Bar */}
-          <div 
+          {/* Mobile grab handle (tap to toggle height) */}
+          <div
             onTouchStart={handleTouchStartResizeTop}
             onClick={() => {
               if (customSize.height && customSize.height > 340) {
-                setCustomSize({ width: null, height: 280 });
+                setCustomSize({ width: null, height: 300 });
               } else if (customSize.height && customSize.height <= 340) {
-                setCustomSize({ width: null, height: Math.min(window.innerHeight - 110, 520) });
+                setCustomSize({ width: null, height: Math.min(window.innerHeight - 110, 540) });
               } else if (isExpanded) {
                 setIsExpanded(false);
-                setCustomSize({ width: null, height: 280 });
+                setCustomSize({ width: null, height: 300 });
               } else {
                 setIsExpanded(true);
-                setCustomSize({ width: null, height: Math.min(window.innerHeight - 110, 520) });
+                setCustomSize({ width: null, height: Math.min(window.innerHeight - 110, 540) });
               }
             }}
-            className="w-full py-1 px-3 flex items-center justify-between cursor-ns-resize touch-none select-none sm:hidden border-b border-slate-200/80 dark:border-slate-800/80 transition-colors"
-            title="แตะเพื่อสลับย่อ/ขยาย"
+            className="sm:hidden w-full pt-1.5 pb-0.5 flex justify-center cursor-ns-resize touch-none select-none"
+            title="แตะเพื่อย่อ/ขยาย"
           >
-            <div className="flex items-center gap-1 text-[9.5px] font-semibold text-slate-400">
-              <ChevronDown className="w-3 h-3" />
-              <span>ย่อ</span>
-            </div>
-
-            <div className="w-10 h-1 rounded-full bg-slate-300 dark:bg-slate-700" />
-
-            <div className="flex items-center gap-1 text-[9.5px] font-semibold text-blue-600 dark:text-sky-400">
-              <span>ขยาย</span>
-              <ChevronUp className="w-3 h-3" />
-            </div>
+            <div className={`w-9 h-1 rounded-full ${isDark ? 'bg-slate-700' : 'bg-slate-300'}`} />
           </div>
-          
+
           {/* Header */}
-          <div 
+          <div
             onMouseDown={handleMouseDownHeader}
             onTouchStart={handleTouchStartHeader}
-            className={`px-3 py-2.5 sm:px-4 sm:py-3 border-b flex items-center justify-between cursor-grab active:cursor-grabbing select-none transition-colors ${
-              isDraggingModal 
-                ? (isDark ? 'bg-slate-800/95 border-sky-600' : 'bg-blue-50/90 border-blue-300')
-                : (isDark ? 'bg-slate-900/90 border-slate-800' : 'bg-white/90 border-slate-200/80')
+            className={`px-3 sm:px-4 py-2 sm:py-3 border-b flex items-center justify-between gap-2 cursor-grab active:cursor-grabbing select-none ${
+              isDark ? 'border-slate-800' : 'border-slate-100'
             }`}
-            title="กดค้างที่แถบนี้เพื่อลากย้ายหน้าต่าง"
+            title="ลากเพื่อย้ายหน้าต่าง"
           >
             <div className="flex items-center gap-2.5 min-w-0 pointer-events-none">
               <div className="relative shrink-0">
-                <AiOfficialEmblem size={28} />
-                <span className="absolute -bottom-0.5 -right-0.5 flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500 border border-white dark:border-slate-900"></span>
-                </span>
+                <AiOfficialEmblem size={32} />
+                <span className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 ${isDark ? 'border-slate-900' : 'border-white'}`} />
               </div>
-              <div className="min-w-0">
-                <div className="flex items-center gap-1.5">
-                  <h4 className="text-xs sm:text-sm font-black tracking-tight text-slate-900 dark:text-white">
-                    PrakanBOT
-                  </h4>
-                  <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded-full text-[8.5px] sm:text-[9px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-                    AI 24h
-                  </span>
-                </div>
-                <p className={`text-[9.5px] sm:text-[10.5px] truncate font-normal ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                  ผู้ช่วยข้อมูลน้ำท่วมและเส้นทางสัญจร
+              <div className="min-w-0 leading-tight">
+                <h4 className="text-[13.5px] sm:text-sm font-semibold tracking-tight">PrakanBOT</h4>
+                <p className={`text-[10.5px] sm:text-[11px] truncate mt-0.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                  {isBusy ? 'กำลังพิมพ์…' : 'ออนไลน์ · ข้อมูลน้ำท่วมและการเดินทาง'}
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-1 shrink-0 ml-1.5">
-              {/* Reset / New Chat */}
-              <button
-                type="button"
-                onClick={handleResetChat}
-                className={`w-7 h-7 sm:w-7.5 sm:h-7.5 rounded-lg flex items-center justify-center transition-colors cursor-pointer border ${
-                  isDark 
-                    ? 'bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border-slate-700' 
-                    : 'bg-slate-50 hover:bg-slate-100 text-slate-600 hover:text-slate-900 border-slate-200'
-                }`}
-                title="เริ่มบทสนทนาใหม่"
-              >
-                <RotateCcw className="w-3.5 h-3.5" />
+            <div className="flex items-center shrink-0 -mr-1">
+              <button type="button" onClick={handleResetChat} className={ghostBtn} title="เริ่มการสนทนาใหม่">
+                <RotateCcw className="w-[15px] h-[15px]" />
               </button>
-
-              {/* Drag Handle */}
-              <div 
-                className={`flex items-center justify-center w-7 h-7 sm:w-7.5 sm:h-7.5 rounded-lg select-none border transition-colors cursor-grab active:cursor-grabbing ${
-                  isDark 
-                    ? 'bg-slate-800 text-slate-400 border-slate-700' 
-                    : 'bg-slate-50 text-slate-500 border-slate-200'
-                }`}
-                title="ลากย้ายหน้าต่าง"
-              >
-                <GripHorizontal className="w-3.5 h-3.5" />
-              </div>
-
-              {/* Minimize to Dock */}
               <button
                 type="button"
                 onClick={() => {
                   playToggleSound(false);
                   setIsMinimized(true);
                 }}
-                className={`w-7 h-7 sm:w-7.5 sm:h-7.5 rounded-lg flex items-center justify-center transition-colors cursor-pointer border ${
-                  isDark 
-                    ? 'bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border-slate-700' 
-                    : 'bg-slate-50 hover:bg-slate-100 text-slate-600 hover:text-slate-900 border-slate-200'
-                }`}
+                className={ghostBtn}
                 title="ย่อหน้าต่าง"
               >
-                <Minus className="w-3.5 h-3.5" />
+                <Minus className="w-4 h-4" />
               </button>
-
-              {/* Expand/Restore Size (on desktop) */}
               <button
                 type="button"
                 onClick={() => {
                   setIsExpanded(!isExpanded);
                   setCustomSize({ width: null, height: null });
                 }}
-                className={`hidden sm:flex w-7.5 h-7.5 rounded-lg items-center justify-center transition-colors cursor-pointer border ${
-                  isDark 
-                    ? 'bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border-slate-700' 
-                    : 'bg-slate-50 hover:bg-slate-100 text-slate-600 hover:text-slate-900 border-slate-200'
-                }`}
-                title={isExpanded ? "คืนขนาดหน้าต่าง" : "ขยายหน้าต่าง"}
+                className={`${ghostBtn} !hidden sm:!flex`}
+                title={isExpanded ? 'คืนขนาดเดิม' : 'ขยายหน้าต่าง'}
               >
-                {isExpanded ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
+                {isExpanded ? <Minimize2 className="w-[15px] h-[15px]" /> : <Maximize2 className="w-[15px] h-[15px]" />}
               </button>
-
-              {/* Close Button */}
               <button
                 type="button"
                 onClick={() => {
                   playCloseSound();
                   setIsOpen(false);
                 }}
-                className={`w-7 h-7 sm:w-7.5 sm:h-7.5 rounded-lg flex items-center justify-center transition-colors cursor-pointer border ${
-                  isDark 
-                    ? 'bg-slate-800 hover:bg-rose-900/50 hover:border-rose-700 text-slate-400 hover:text-rose-300 border-slate-700' 
-                    : 'bg-slate-50 hover:bg-rose-50 hover:border-rose-200 text-slate-500 hover:text-rose-600 border-slate-200'
-                }`}
-                title="ปิดหน้าต่าง"
+                className={ghostBtn}
+                title="ปิด"
               >
-                <X className="w-3.5 h-3.5" />
+                <X className="w-4 h-4" />
               </button>
             </div>
           </div>
 
-          {/* Live Meteorological Telemetry Status Bar */}
-          <div className={`px-3 py-1.5 sm:px-4 sm:py-2 border-b flex items-center justify-between text-[11px] ${
-            isDark ? 'bg-slate-950/40 border-slate-800 text-slate-300' : 'bg-slate-50/70 border-slate-200/80 text-slate-700'
+          {/* Live weather line */}
+          <div className={`px-3 sm:px-4 py-1.5 border-b flex items-center justify-between gap-2 text-[10.5px] sm:text-[11px] tabular-nums ${
+            isDark ? 'border-slate-800 text-slate-400 bg-slate-950/30' : 'border-slate-100 text-slate-500 bg-slate-50/60'
           }`}>
-            <div className="flex items-center gap-1.5 truncate">
-              <span className="flex items-center justify-center w-5 h-5 rounded-md bg-sky-500/10 text-sky-500 dark:text-cyan-400 shrink-0">
-                <CloudRain className="w-3.5 h-3.5" />
-              </span>
-              <span className="truncate text-[10.5px] sm:text-xs">
-                สมุทรปราการ: <strong className="font-bold text-slate-900 dark:text-white">{weather.temp}°C</strong> • ฝนวันนี้: <strong className="font-bold text-blue-600 dark:text-sky-400">{weather.rainProbabilityToday}%</strong>
-              </span>
-            </div>
-            <span className={`text-[9.5px] sm:text-[10px] font-semibold shrink-0 ml-2 px-2 py-0.5 rounded-full border ${
-              isDark ? 'bg-slate-800/80 text-cyan-300 border-slate-700' : 'bg-white text-blue-700 border-blue-200 shadow-2xs'
-            }`}>
-              {weather.peakHour}
+            <span className="truncate">
+              สมุทรปราการ <span className={isDark ? 'text-slate-200' : 'text-slate-800'}>{weather.temp}°C</span>
+              <span className="mx-1.5 opacity-40">|</span>
+              โอกาสฝน <span className={isDark ? 'text-slate-200' : 'text-slate-800'}>{weather.rainProbabilityToday}%</span>
             </span>
+            {weather.peakHour && (
+              <span className="shrink-0 truncate max-w-[45%]">ช่วงฝนหนัก {String(weather.peakHour).split(' (')[0]}</span>
+            )}
           </div>
 
-          {/* Quick Inquiry Chips */}
-          <div className={`relative px-2 py-1.5 border-b flex items-center ${
-            isDark ? 'bg-slate-900/90 border-slate-800' : 'bg-white border-slate-200/80'
+          {/* Messages */}
+          <div className={`pgb-scroll flex-1 overflow-y-auto px-3 sm:px-4 py-3 sm:py-4 space-y-3.5 ${
+            isDark ? 'bg-slate-900' : 'bg-white'
           }`}>
-            <button
-              type="button"
-              onClick={() => scrollChips('left')}
-              className={`w-6 h-6 sm:w-7 sm:h-7 rounded-full flex items-center justify-center transition-colors cursor-pointer shrink-0 mr-1 border ${
-                isDark 
-                  ? 'bg-slate-800 hover:bg-slate-700 text-slate-300 border-slate-700' 
-                  : 'bg-slate-100 hover:bg-slate-200 text-slate-600 border-slate-200'
-              }`}
-              title="เลื่อนซ้าย"
-            >
-              <ChevronLeft className="w-3.5 h-3.5" />
-            </button>
+            {messages.map((m) => {
+              const isBot = m.sender === 'bot';
+              return (
+                <div key={m.id} className={`pgb-msg-in group flex gap-2 ${isBot ? 'justify-start' : 'justify-end'}`}>
+                  {isBot && (
+                    <div className="shrink-0 mt-0.5">
+                      <AiOfficialEmblem size={24} />
+                    </div>
+                  )}
 
-            <div 
-              ref={chipsRef}
-              onMouseDown={handleChipsMouseDown}
-              onMouseMove={handleChipsMouseMove}
-              onMouseUp={handleChipsMouseUp}
-              onMouseLeave={handleChipsMouseUp}
-              className="flex-1 flex items-center gap-1.5 overflow-x-auto smooth-slider no-scrollbar text-xs py-0.5 touch-pan-x cursor-grab active:cursor-grabbing select-none"
-            >
-              {[
-                { emoji: '🌊', label: 'สรุปจุดน้ำท่วมล่าสุด', q: 'ตอนนี้ในสมุทรปราการมีน้ำท่วมตรงไหนบ้าง?' },
-                { emoji: '🚗', label: 'เกณฑ์ระดับน้ำรถเก๋ง/กระบะ', q: 'รถเก๋งลุยน้ำได้กี่เซนติเมตร และระดับไหนห้ามผ่านเด็ดขาด?' },
-                { emoji: '📞', label: 'สายด่วนฉุกเฉิน 24 ชม.', q: 'ขอเบอร์โทรศัพท์สายด่วนฉุกเฉินหน่วยงานช่วยเหลือในสมุทรปราการ' },
-                { emoji: '⚡', label: 'วิธีป้องกันไฟดูด', q: 'วิธีตัดไฟและป้องกันไฟดูดช่วงน้ำท่วมต้องทำอย่างไร?' },
-                { emoji: '🌧️', label: 'เวลาฝนตกวันนี้', q: 'วันนี้ในสมุทรปราการมีโอกาสฝนตกช่วงกี่โมง?' },
-                { emoji: '🅿️', label: 'จุดจอดรถหนีน้ำท่วม', q: 'ในสมุทรปราการมีจุดจอดรถที่สูงหรือลานจอดหนีน้ำท่วมที่ไหนบ้าง?' }
-              ].map((chip, idx) => (
-                <button 
-                  key={idx}
-                  type="button"
-                  onClick={() => { if (!chipsHasDraggedRef.current) handleSend(chip.q); }}
-                  className={`smooth-slider-item inline-flex items-center gap-1 px-2.5 py-1 rounded-full whitespace-nowrap transition-all duration-200 cursor-pointer font-medium text-[10.5px] sm:text-[11px] border shrink-0 select-none shadow-2xs ${
-                    isDark 
-                      ? 'bg-slate-800/90 text-slate-200 border-slate-700/80 hover:bg-slate-700 hover:border-sky-500/50 hover:text-white' 
-                      : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700'
-                  }`}
-                >
-                  <span>{chip.emoji}</span>
-                  <span>{chip.label}</span>
-                </button>
-              ))}
-            </div>
+                  <div className={`max-w-[84%] min-w-0 flex flex-col ${isBot ? 'items-start' : 'items-end'}`}>
+                    <div
+                      className={`px-3 py-2 text-[12.5px] sm:text-[13px] leading-[1.65] break-words ${
+                        isBot
+                          ? `rounded-2xl rounded-tl-md ${isDark ? 'bg-slate-800 text-slate-200' : 'bg-slate-100 text-slate-700'}`
+                          : 'rounded-2xl rounded-tr-md bg-blue-600 text-white'
+                      }`}
+                    >
+                      {isBot ? renderFormattedMessage(m.text, true) : <p className="whitespace-pre-wrap">{m.text}</p>}
+                      {streamingMessageId === m.id && (
+                        <span className={`inline-block w-[2px] h-3.5 ml-0.5 align-[-2px] animate-pulse ${isDark ? 'bg-slate-300' : 'bg-slate-500'}`} />
+                      )}
+                    </div>
 
-            <button
-              type="button"
-              onClick={() => scrollChips('right')}
-              className={`w-6 h-6 sm:w-7 sm:h-7 rounded-full flex items-center justify-center transition-colors cursor-pointer shrink-0 ml-1 border ${
-                isDark 
-                  ? 'bg-slate-800 hover:bg-slate-700 text-slate-300 border-slate-700' 
-                  : 'bg-slate-100 hover:bg-slate-200 text-slate-600 border-slate-200'
-              }`}
-              title="เลื่อนขวา"
-            >
-              <ChevronRight className="w-3.5 h-3.5" />
-            </button>
-          </div>
-
-          {/* Message History Feed */}
-          <div className={`flex-1 p-2.5 sm:p-4 space-y-3 overflow-y-auto text-[11.5px] sm:text-xs ${
-            isDark ? 'bg-slate-950/40' : 'bg-slate-50/40'
-          }`}>
-            {messages.map((m) => (
-              <div 
-                key={m.id} 
-                className={`flex gap-2 group ${m.sender === 'user' ? 'justify-end' : 'justify-start'}`}
-              >
-                {m.sender === 'bot' && (
-                  <div className="shrink-0 mt-0.5">
-                    <AiOfficialEmblem size={24} />
-                  </div>
-                )}
-                
-                <div className={`max-w-[88%] flex flex-col ${m.sender === 'user' ? 'items-end' : 'items-start'}`}>
-                  <div 
-                    className={`rounded-2xl px-3 py-2 sm:px-3.5 sm:py-2.5 leading-relaxed shadow-xs text-xs sm:text-[12.5px] ${
-                      m.sender === 'user' 
-                        ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-tr-xs font-normal shadow-blue-500/10' 
-                        : isDark
-                          ? 'bg-slate-800/90 border border-slate-700/70 text-slate-100 rounded-tl-xs shadow-black/20'
-                          : 'bg-white border border-slate-200/90 text-slate-800 rounded-tl-xs shadow-slate-100'
-                    }`}
-                  >
-                    {m.sender === 'bot' && (
-                      <div className="flex items-center justify-between gap-2 mb-1.5 pb-1 border-b border-slate-200/40 dark:border-slate-700/50">
-                        <span className="text-[10px] font-bold text-blue-600 dark:text-cyan-400">PrakanBOT</span>
+                    <div className={`flex items-center gap-2 mt-1 px-1 text-[10px] ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+                      <span>{m.time}</span>
+                      {isBot && streamingMessageId !== m.id && (
                         <button
                           type="button"
                           onClick={() => handleCopyMessage(m.id, m.text)}
-                          className="opacity-70 hover:opacity-100 transition-opacity text-[10px] flex items-center gap-1 cursor-pointer text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                          className={`flex items-center gap-1 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 ${
+                            copiedMessageId === m.id ? 'text-emerald-600 dark:text-emerald-400 sm:opacity-100' : 'hover:text-slate-600 dark:hover:text-slate-300'
+                          }`}
                           title="คัดลอกข้อความ"
                         >
-                          {copiedMessageId === m.id ? (
-                            <>
-                              <Check className="w-3 h-3 text-emerald-500" />
-                              <span className="text-emerald-500 font-medium">คัดลอกแล้ว</span>
-                            </>
-                          ) : (
-                            <>
-                              <Copy className="w-3 h-3" />
-                              <span className="hidden sm:inline">คัดลอก</span>
-                            </>
-                          )}
+                          {copiedMessageId === m.id ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                          <span>{copiedMessageId === m.id ? 'คัดลอกแล้ว' : 'คัดลอก'}</span>
                         </button>
-                      </div>
-                    )}
-
-                    {renderFormattedMessage(m.text)}
-                    
-                    {streamingMessageId === m.id && (
-                      <span className="inline-block w-1.5 h-3.5 bg-sky-500 ml-1 animate-pulse align-middle rounded-full"></span>
-                    )}
+                      )}
+                    </div>
                   </div>
-
-                  <span className={`block text-[9px] mt-0.5 px-1 ${
-                    m.sender === 'user' ? 'text-slate-400 text-right' : (isDark ? 'text-slate-500' : 'text-slate-400')
-                  }`}>
-                    {m.time}
-                  </span>
                 </div>
+              );
+            })}
 
-                {m.sender === 'user' && (
-                  <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-0.5 border text-xs ${
-                    isDark ? 'bg-slate-800 text-slate-300 border-slate-700' : 'bg-slate-200 text-slate-700 border-slate-300'
-                  }`}>
-                    <User className="w-3 h-3" />
-                  </div>
-                )}
-              </div>
-            ))}
-
-            {/* Thinking Indicator */}
             {isThinking && (
-              <div className="flex gap-2 justify-start animate-in fade-in duration-200">
+              <div className="pgb-msg-in flex gap-2 justify-start">
                 <div className="shrink-0 mt-0.5">
                   <AiOfficialEmblem size={24} />
                 </div>
-                <div className={`border rounded-2xl rounded-tl-xs px-3.5 py-2 flex items-center gap-2 shadow-xs ${
-                  isDark ? 'bg-slate-800/90 border-slate-700/70 text-slate-300' : 'bg-white border-slate-200 text-slate-600'
+                <div className={`rounded-2xl rounded-tl-md px-3.5 py-3 flex items-center gap-1 ${
+                  isDark ? 'bg-slate-800 text-slate-400' : 'bg-slate-100 text-slate-400'
                 }`}>
-                  <span className="flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-bounce" style={{ animationDelay: '0ms' }}></span>
-                    <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-bounce" style={{ animationDelay: '150ms' }}></span>
-                    <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-bounce" style={{ animationDelay: '300ms' }}></span>
-                  </span>
-                  <span className="text-[11px] font-medium bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-sky-400 dark:to-cyan-300 bg-clip-text text-transparent">
-                    PrakanBOT กำลังวิเคราะห์ข้อมูล...
-                  </span>
+                  <span className="pgb-dot" />
+                  <span className="pgb-dot" />
+                  <span className="pgb-dot" />
                 </div>
+              </div>
+            )}
+
+            {showQuickQuestions && (
+              <div className="pgb-msg-in pl-8 flex flex-wrap gap-1.5">
+                {QUICK_QUESTIONS.map((chip) => (
+                  <button
+                    key={chip.label}
+                    type="button"
+                    onClick={() => handleSend(chip.q)}
+                    className={`px-3 py-1.5 rounded-full border text-[11.5px] sm:text-xs transition-colors ${
+                      isDark
+                        ? 'border-slate-700 text-slate-300 hover:bg-slate-800 hover:border-slate-600'
+                        : 'border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300 hover:text-slate-900'
+                    }`}
+                  >
+                    {chip.label}
+                  </button>
+                ))}
               </div>
             )}
 
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Input Bar */}
-          <div className={`p-2.5 sm:p-3 border-t ${
-            isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200/80'
-          }`}>
-            <form 
-              onSubmit={(e) => { e.preventDefault(); handleSend(); }}
-              className={`flex items-center gap-1.5 sm:gap-2 rounded-2xl px-2.5 py-1 sm:py-1.5 border transition-all ${
-                isDark 
-                  ? 'bg-slate-800/80 border-slate-700/80 focus-within:border-sky-500/80 focus-within:ring-2 focus-within:ring-sky-500/20' 
-                  : 'bg-slate-50 border-slate-200 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/15 focus-within:bg-white'
+          {/* Suggestion strip after the conversation has started */}
+          {!showQuickQuestions && (
+            <div
+              ref={chipsRef}
+              onMouseDown={handleChipsMouseDown}
+              onMouseMove={handleChipsMouseMove}
+              onMouseUp={handleChipsMouseUp}
+              onMouseLeave={handleChipsMouseUp}
+              className={`pgb-chips-fade smooth-slider no-scrollbar flex items-center gap-1.5 overflow-x-auto px-3 sm:px-4 pt-2 touch-pan-x cursor-grab active:cursor-grabbing select-none ${
+                isDark ? 'bg-slate-900' : 'bg-white'
               }`}
             >
+              {QUICK_QUESTIONS.map((chip) => (
+                <button
+                  key={chip.label}
+                  type="button"
+                  disabled={isBusy}
+                  onClick={() => { if (!chipsHasDraggedRef.current) handleSend(chip.q); }}
+                  className={`smooth-slider-item shrink-0 whitespace-nowrap px-2.5 py-1 rounded-full border text-[11px] transition-colors disabled:opacity-40 ${
+                    isDark
+                      ? 'border-slate-700 text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+                      : 'border-slate-200 text-slate-500 hover:text-slate-800 hover:bg-slate-50'
+                  }`}
+                >
+                  {chip.label}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Composer */}
+          <form
+            onSubmit={(e) => { e.preventDefault(); handleSend(); }}
+            className={`p-2.5 sm:p-3 ${isDark ? 'bg-slate-900' : 'bg-white'}`}
+          >
+            <div className={`flex items-center gap-1.5 rounded-full border pl-3.5 pr-1 py-1 transition-[border-color,box-shadow] ${
+              isDark
+                ? 'bg-slate-800/60 border-slate-700 focus-within:border-slate-500'
+                : 'bg-slate-50 border-slate-200 focus-within:border-slate-400 focus-within:bg-white'
+            }`}>
               <input
                 type="text"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 disabled={Boolean(streamingMessageId)}
-                placeholder={isThinking || streamingMessageId ? "PrakanBOT กำลังตอบ..." : "พิมพ์คำถาม เช่น ทรัพย์บุญชัยท่วมไหม, สายด่วน..."}
-                className={`flex-1 text-xs sm:text-[13px] bg-transparent focus:outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500 py-1 ${
-                  isDark ? 'text-slate-100' : 'text-slate-800'
+                placeholder={isBusy ? 'กำลังตอบ…' : 'พิมพ์คำถาม…'}
+                aria-label="พิมพ์คำถาม"
+                className={`flex-1 min-w-0 bg-transparent text-[13px] py-1.5 focus:outline-none ${
+                  isDark ? 'text-slate-100 placeholder:text-slate-500' : 'text-slate-900 placeholder:text-slate-400'
                 }`}
               />
-
-              {input.trim() && !isThinking && !streamingMessageId && (
-                <button
-                  type="button"
-                  onClick={() => setInput('')}
-                  className="p-1 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
-                  title="ล้างข้อความ"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              )}
-
-              {isThinking || Boolean(streamingMessageId) ? (
+              {isBusy ? (
                 <button
                   type="button"
                   onClick={handleStopResponse}
-                  className="px-2.5 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-[10.5px] sm:text-xs transition-all cursor-pointer flex items-center gap-1 shrink-0 shadow-xs active:scale-95"
-                  title="หยุดการตอบคำถามทันที"
+                  className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-colors ${
+                    isDark ? 'bg-slate-200 text-slate-900 hover:bg-white' : 'bg-slate-900 text-white hover:bg-slate-700'
+                  }`}
+                  title="หยุดตอบ"
                 >
                   <Square className="w-3 h-3 fill-current" />
-                  <span>หยุด</span>
                 </button>
               ) : (
                 <button
                   type="submit"
                   disabled={!input.trim()}
-                  className="p-2 sm:p-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 disabled:opacity-30 disabled:pointer-events-none text-white transition-all cursor-pointer shrink-0 shadow-sm shadow-blue-500/20 active:scale-95"
-                  title="ส่งคำถาม"
+                  className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 bg-blue-600 hover:bg-blue-700 text-white transition-colors disabled:bg-slate-300 disabled:text-white dark:disabled:bg-slate-700 dark:disabled:text-slate-500"
+                  title="ส่ง"
                 >
-                  <Send className="w-3.5 h-3.5" />
+                  <ArrowUp className="w-4 h-4" />
                 </button>
               )}
-            </form>
-            <p className="text-[9.5px] text-center text-slate-400 dark:text-slate-500 mt-1 select-none">
-              PrakanBOT • บริการข้อมูลเปิดและการสัญจรตลอด 24 ชั่วโมง
-            </p>
-          </div>
-
+            </div>
+          </form>
         </div>
       )}
     </>

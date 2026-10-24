@@ -7,16 +7,128 @@ import {
   ChevronLeft,
   ChevronRight,
   ArrowLeft,
-  Navigation
+  MapPin,
+  VideoOff
 } from 'lucide-react';
 import { playClickSound, playCloseSound, playSelectSound } from '../services/soundEffects';
 import { CCTV_CAMERAS } from '../data/cctvCameras';
-import {
-  CivicCctv,
-  CivicStationPin,
-  CivicShield,
-  CivicRadar
-} from './CivicIcons';
+
+const FEED_TIMEOUT_MS = 12000;
+const FEED_REFRESH_MS = 30000;
+
+const AGENCY_LABELS = {
+  DOH: 'กรมทางหลวง',
+  EXAT: 'การทางพิเศษฯ',
+  RID: 'กรมชลประทาน'
+};
+
+const pad2 = (n) => String(n).padStart(2, '0');
+const formatOsdTime = (d) =>
+  `${pad2(d.getDate())}/${pad2(d.getMonth() + 1)}/${d.getFullYear()} ${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`;
+
+/* --------------------------------------------------------------------------
+ * CameraFeed – renders a live snapshot when available; otherwise (missing URL,
+ * load error, or connection timeout) shows a clean "No signal" screen.
+ * ------------------------------------------------------------------------ */
+function CameraFeed({ camera, clock, resetKey = 0, large = false }) {
+  const baseUrl = camera.directCameraUrl || null;
+  const [status, setStatus] = useState(baseUrl ? 'loading' : 'offline');
+  const [tick, setTick] = useState(0);
+
+  // Reset when camera changes or user forces a refresh
+  useEffect(() => {
+    setStatus(baseUrl ? 'loading' : 'offline');
+    setTick(0);
+  }, [camera.id, baseUrl, resetKey]);
+
+  // Connection timeout → No signal
+  useEffect(() => {
+    if (status !== 'loading') return undefined;
+    const t = setTimeout(() => {
+      setStatus((s) => (s === 'loading' ? 'offline' : s));
+    }, FEED_TIMEOUT_MS);
+    return () => clearTimeout(t);
+  }, [status]);
+
+  // Periodic snapshot refresh while online
+  useEffect(() => {
+    if (status !== 'live') return undefined;
+    const i = setInterval(() => setTick((v) => v + 1), FEED_REFRESH_MS);
+    return () => clearInterval(i);
+  }, [status]);
+
+  const src = baseUrl
+    ? tick > 0
+      ? `${baseUrl}${baseUrl.includes('?') ? '&' : '?'}_t=${tick}`
+      : baseUrl
+    : null;
+
+  const osdText = large ? 'text-[10px] sm:text-[11px]' : 'text-[8.5px] sm:text-[9px]';
+  const camCode = camera.id.replace(/^cctv-/, '').toUpperCase();
+
+  return (
+    <div className="relative aspect-video w-full overflow-hidden bg-[#0b0d10] select-none">
+      {src && status !== 'offline' && (
+        <img
+          src={src}
+          alt={camera.name}
+          loading="lazy"
+          onLoad={() => setStatus('live')}
+          onError={() => setStatus('offline')}
+          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 ${
+            status === 'live' ? 'opacity-100' : 'opacity-0'
+          }`}
+        />
+      )}
+
+      {/* Connecting */}
+      {status === 'loading' && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-white/60">
+          <div className="w-5 h-5 rounded-full border-2 border-white/15 border-t-white/70 animate-spin" />
+          {large && <span className="text-[11px] tracking-wide">กำลังเชื่อมต่อสัญญาณ</span>}
+        </div>
+      )}
+
+      {/* No signal */}
+      {status === 'offline' && (
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="cctv-noise" />
+          <div className="cctv-scanlines" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_40%,rgba(0,0,0,0.55)_100%)]" />
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 sm:gap-2 text-white">
+            <VideoOff className={`${large ? 'w-6 h-6 sm:w-7 sm:h-7' : 'w-4 h-4'} text-white/45`} strokeWidth={1.5} />
+            <span className={`font-mono font-semibold tracking-[0.32em] text-white/85 ${large ? 'text-sm sm:text-base' : 'text-[10px] sm:text-[11px]'}`}>
+              NO SIGNAL
+            </span>
+            {large && (
+              <span className="text-[10.5px] sm:text-xs text-white/45 px-6 text-center">
+                ไม่สามารถรับภาพจากกล้องนี้ได้ในขณะนี้
+              </span>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* On-screen display */}
+      <div className={`absolute top-1.5 left-2 sm:top-2 sm:left-2.5 font-mono text-white/70 ${osdText} drop-shadow`}>
+        CAM {camCode}
+      </div>
+      <div className={`absolute top-1.5 right-2 sm:top-2 sm:right-2.5 flex items-center gap-1 font-mono font-semibold ${osdText}`}>
+        {status === 'live' ? (
+          <>
+            <span className="w-1.5 h-1.5 rounded-full bg-red-500 cctv-blink" />
+            <span className="text-white/90">LIVE</span>
+          </>
+        ) : (
+          <span className="text-white/45">{status === 'loading' ? 'CONNECTING' : 'OFFLINE'}</span>
+        )}
+      </div>
+      <div className={`absolute bottom-1.5 left-2 sm:bottom-2 sm:left-2.5 font-mono text-white/60 tabular-nums ${osdText} drop-shadow`}>
+        {formatOsdTime(clock)}
+      </div>
+    </div>
+  );
+}
 
 export default function CctvModal({
   isOpen,
@@ -31,19 +143,17 @@ export default function CctvModal({
   const [focusedCamera, setFocusedCamera] = useState(null);
   const [liveClock, setLiveClock] = useState(() => new Date());
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [failedImageIds, setFailedImageIds] = useState(new Set());
+  const [resetKey, setResetKey] = useState(0);
 
   useEffect(() => {
-    if (!isOpen) return;
-    const interval = setInterval(() => {
-      setLiveClock(new Date());
-    }, 1000);
+    if (!isOpen) return undefined;
+    const interval = setInterval(() => setLiveClock(new Date()), 1000);
     return () => clearInterval(interval);
   }, [isOpen]);
 
   useEffect(() => {
     if (initialCameraId && isOpen) {
-      const cam = CCTV_CAMERAS.find(c => c.id === initialCameraId);
+      const cam = CCTV_CAMERAS.find((c) => c.id === initialCameraId);
       if (cam) {
         setFocusedCamera(cam);
         setSelectedDistrict('ทั้งหมด');
@@ -54,22 +164,16 @@ export default function CctvModal({
     }
   }, [initialCameraId, isOpen]);
 
-  const handleImageError = useCallback((camId) => {
-    setFailedImageIds(prev => new Set(prev).add(camId));
-  }, []);
-
   const filteredCameras = useMemo(() => {
-    return CCTV_CAMERAS.filter(c => {
+    const q = searchQuery.toLowerCase().trim();
+    return CCTV_CAMERAS.filter((c) => {
       if (selectedAgency !== 'ทั้งหมด' && c.agency !== selectedAgency) return false;
       if (selectedDistrict !== 'ทั้งหมด' && !c.district.includes(selectedDistrict)) return false;
-      if (searchQuery.trim()) {
-        const q = searchQuery.toLowerCase().trim();
-        const matchName = c.name.toLowerCase().includes(q);
-        const matchRoad = c.road.toLowerCase().includes(q);
-        const matchDist = c.district.toLowerCase().includes(q);
-        const matchDesc = (c.description || '').toLowerCase().includes(q);
-        const matchAgency = (c.agency || '').toLowerCase().includes(q);
-        if (!matchName && !matchRoad && !matchDist && !matchDesc && !matchAgency) return false;
+      if (q) {
+        const haystack = [c.name, c.road, c.district, c.description || '', c.agency || '', c.shortName || '']
+          .join(' ')
+          .toLowerCase();
+        if (!haystack.includes(q)) return false;
       }
       return true;
     });
@@ -77,36 +181,30 @@ export default function CctvModal({
 
   const agencyCounts = useMemo(() => ({
     ALL: CCTV_CAMERAS.length,
-    DOH: CCTV_CAMERAS.filter(c => c.agency === 'DOH').length,
-    EXAT: CCTV_CAMERAS.filter(c => c.agency === 'EXAT').length,
-    RID: CCTV_CAMERAS.filter(c => c.agency === 'RID').length
+    DOH: CCTV_CAMERAS.filter((c) => c.agency === 'DOH').length,
+    EXAT: CCTV_CAMERAS.filter((c) => c.agency === 'EXAT').length,
+    RID: CCTV_CAMERAS.filter((c) => c.agency === 'RID').length
   }), []);
 
-  const currentCameraIndex = useMemo(() => {
-    if (!focusedCamera) return -1;
-    return filteredCameras.findIndex(c => c.id === focusedCamera.id);
-  }, [focusedCamera, filteredCameras]);
+  const navList = filteredCameras.length > 0 ? filteredCameras : CCTV_CAMERAS;
+  const currentIndex = focusedCamera ? navList.findIndex((c) => c.id === focusedCamera.id) : -1;
 
   const handlePrevCamera = useCallback(() => {
-    const list = filteredCameras.length > 0 ? filteredCameras : CCTV_CAMERAS;
-    if (!focusedCamera || list.length === 0) return;
+    if (!focusedCamera || navList.length === 0) return;
     playClickSound();
-    const idx = list.findIndex(c => c.id === focusedCamera.id);
-    const prevIdx = idx <= 0 ? list.length - 1 : idx - 1;
-    setFocusedCamera(list[prevIdx]);
-  }, [focusedCamera, filteredCameras]);
+    const idx = navList.findIndex((c) => c.id === focusedCamera.id);
+    setFocusedCamera(navList[idx <= 0 ? navList.length - 1 : idx - 1]);
+  }, [focusedCamera, navList]);
 
   const handleNextCamera = useCallback(() => {
-    const list = filteredCameras.length > 0 ? filteredCameras : CCTV_CAMERAS;
-    if (!focusedCamera || list.length === 0) return;
+    if (!focusedCamera || navList.length === 0) return;
     playClickSound();
-    const idx = list.findIndex(c => c.id === focusedCamera.id);
-    const nextIdx = idx === -1 || idx >= list.length - 1 ? 0 : idx + 1;
-    setFocusedCamera(list[nextIdx]);
-  }, [focusedCamera, filteredCameras]);
+    const idx = navList.findIndex((c) => c.id === focusedCamera.id);
+    setFocusedCamera(navList[idx === -1 || idx >= navList.length - 1 ? 0 : idx + 1]);
+  }, [focusedCamera, navList]);
 
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen) return undefined;
     const handleKeyDown = (e) => {
       if (focusedCamera) {
         if (e.key === 'Escape') {
@@ -129,338 +227,247 @@ export default function CctvModal({
   const handleManualRefresh = () => {
     playClickSound();
     setIsRefreshing(true);
-    setFailedImageIds(new Set());
+    setResetKey((k) => k + 1);
     setTimeout(() => {
       setIsRefreshing(false);
       setLiveClock(new Date());
-    }, 350);
+    }, 500);
   };
 
   if (!isOpen) return null;
 
   const districts = ['ทั้งหมด', 'เมืองสมุทรปราการ', 'บางพลี', 'พระประแดง', 'บางเสาธง', 'บางบ่อ', 'พระสมุทรเจดีย์'];
-  const formattedTime = liveClock.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
-  const getAgencyBadgeStyle = (agency) => {
-    if (agency === 'DOH') {
-      return isDark
-        ? 'bg-blue-950/70 text-blue-300 border-blue-800/80'
-        : 'bg-blue-50 text-blue-700 border-blue-200';
-    }
-    if (agency === 'EXAT') {
-      return isDark
-        ? 'bg-amber-950/70 text-amber-300 border-amber-800/80'
-        : 'bg-amber-50 text-amber-700 border-amber-200';
-    }
-    return isDark
-      ? 'bg-emerald-950/70 text-emerald-300 border-emerald-800/80'
-      : 'bg-emerald-50 text-emerald-700 border-emerald-200';
-  };
-
-  const getAgencyLabel = (agency) => {
-    if (agency === 'DOH') return 'กรมทางหลวง (DOH)';
-    if (agency === 'EXAT') return 'การทางพิเศษฯ (EXAT)';
-    if (agency === 'RID') return 'กรมชลประทาน (RID)';
-    return agency;
+  const ghostBtn = `w-8 h-8 rounded-lg flex items-center justify-center transition-colors cursor-pointer ${
+    isDark ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
+  }`;
+  const mutedText = isDark ? 'text-slate-400' : 'text-slate-500';
+  const agencyTone = (agency) => {
+    if (agency === 'EXAT') return isDark ? 'text-amber-300 bg-amber-400/10' : 'text-amber-700 bg-amber-50';
+    if (agency === 'RID') return isDark ? 'text-emerald-300 bg-emerald-400/10' : 'text-emerald-700 bg-emerald-50';
+    return isDark ? 'text-sky-300 bg-sky-400/10' : 'text-blue-700 bg-blue-50';
   };
 
   return (
     <div
-      className="fixed inset-0 z-[10000] flex items-center justify-center p-2.5 sm:p-4 bg-slate-950/65 backdrop-blur-xs"
+      className="fixed inset-0 z-[10000] flex items-center justify-center p-3 sm:p-6 bg-slate-950/60 backdrop-blur-sm smooth-backdrop"
       onClick={() => {
         playCloseSound();
         onClose();
       }}
     >
       <div
-        className={`w-[88vw] max-w-[355px] sm:max-w-2xl lg:max-w-4xl max-h-[76vh] sm:max-h-[85vh] flex flex-col rounded-xl border shadow-2xl overflow-hidden transition-colors ${
+        className={`smooth-pop w-[92vw] max-w-[380px] sm:max-w-3xl lg:max-w-5xl max-h-[80vh] sm:max-h-[86vh] flex flex-col rounded-2xl border shadow-2xl overflow-hidden ${
           isDark ? 'bg-slate-900 border-slate-800 text-slate-100' : 'bg-white border-slate-200 text-slate-900'
         }`}
         onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-label="กล้อง CCTV"
       >
-        {/* Top Institutional Accent Bar */}
-        <div className="h-1 w-full bg-blue-700 shrink-0" />
-
-        {/* ========================================================= */}
-        {/* MODAL HEADER                                              */}
-        {/* ========================================================= */}
-        <div className={`px-3.5 py-2.5 sm:px-5 sm:py-3.5 border-b flex items-center justify-between gap-2.5 shrink-0 ${
-          isDark ? 'border-slate-800 bg-slate-900' : 'border-slate-200 bg-white'
+        {/* ===================== HEADER ===================== */}
+        <div className={`px-3 py-2.5 sm:px-5 sm:py-3.5 border-b flex items-center justify-between gap-2 shrink-0 ${
+          isDark ? 'border-slate-800' : 'border-slate-200/80'
         }`}>
-          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
-            {focusedCamera ? (
+          <div className="flex items-center gap-2 min-w-0">
+            {focusedCamera && (
               <button
                 type="button"
                 onClick={() => {
                   playClickSound();
                   setFocusedCamera(null);
                 }}
-                className={`w-7 h-7 sm:w-9 sm:h-9 rounded-lg border flex items-center justify-center shrink-0 transition-colors cursor-pointer ${
-                  isDark ? 'bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700' : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
-                }`}
-                title="กลับไปหน้ารายการกล้อง"
+                className={`${ghostBtn} -ml-1 shrink-0`}
+                title="กลับไปหน้ารายการ"
               >
-                <ArrowLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                <ArrowLeft className="w-4 h-4" />
               </button>
-            ) : (
-              <div className={`w-7 h-7 sm:w-9 sm:h-9 rounded-lg border flex items-center justify-center shrink-0 ${
-                isDark ? 'bg-slate-800 text-blue-400 border-slate-700' : 'bg-slate-50 text-blue-700 border-slate-200'
-              }`}>
-                <CivicCctv className="w-4 h-4 sm:w-5 sm:h-5" />
-              </div>
             )}
-
             <div className="min-w-0">
-              <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
-                <h2 className="text-xs sm:text-sm font-bold truncate leading-tight">
-                  {focusedCamera ? focusedCamera.shortName || focusedCamera.name : 'โครงข่ายกล้องโทรทัศน์วงจรปิด (CCTV)'}
-                </h2>
-                <span className={`hidden sm:inline-flex px-1.5 py-0.5 rounded text-[10px] font-semibold border shrink-0 ${
-                  isDark ? 'bg-slate-800 text-slate-300 border-slate-700' : 'bg-slate-50 text-slate-600 border-slate-200'
-                }`}>
-                  {focusedCamera ? focusedCamera.agency : `${CCTV_CAMERAS.length} สถานี`}
-                </span>
-              </div>
-              <p className={`text-[10px] sm:text-[11px] truncate mt-0.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+              <h2 className="text-[13px] sm:text-[15px] font-semibold tracking-tight truncate leading-tight">
+                {focusedCamera ? focusedCamera.shortName || focusedCamera.name : 'กล้อง CCTV'}
+              </h2>
+              <p className={`text-[10.5px] sm:text-xs truncate mt-0.5 ${mutedText}`}>
                 {focusedCamera
-                  ? `${focusedCamera.agencyFull} • อ.${focusedCamera.district}`
-                  : 'จุดตรวจการณ์จราจรและสถานีสูบน้ำหลัก 6 อำเภอ จ.สมุทรปราการ'}
+                  ? `${AGENCY_LABELS[focusedCamera.agency] || focusedCamera.agency} · อ.${focusedCamera.district}`
+                  : `${CCTV_CAMERAS.length} จุด · จังหวัดสมุทรปราการ`}
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-1.5 shrink-0">
-            <div className={`hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-mono font-semibold border ${
-              isDark ? 'bg-slate-950 border-slate-800 text-slate-300' : 'bg-slate-50 border-slate-200 text-slate-700'
-            }`}>
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />
-              <span>{formattedTime} น.</span>
-            </div>
-
-            {!focusedCamera && (
-              <button
-                type="button"
-                onClick={handleManualRefresh}
-                className={`w-7 h-7 sm:w-auto sm:h-8 sm:px-2.5 rounded-lg border flex items-center justify-center gap-1.5 text-xs font-semibold transition-colors cursor-pointer ${
-                  isDark ? 'bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-300' : 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-700'
-                }`}
-                title="รีเฟรชข้อมูลสถานี"
-              >
-                <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-blue-500' : ''}`} />
-                <span className="hidden sm:inline text-[11px]">รีเฟรช</span>
-              </button>
-            )}
-
+          <div className="flex items-center gap-0.5 shrink-0">
+            <span className={`hidden md:inline font-mono text-[11px] tabular-nums mr-2 ${mutedText}`}>
+              {liveClock.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+            </span>
+            <button type="button" onClick={handleManualRefresh} className={ghostBtn} title="รีเฟรชสัญญาณภาพ">
+              <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+            </button>
             <button
               type="button"
               onClick={() => {
                 playCloseSound();
                 onClose();
               }}
-              className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg border flex items-center justify-center transition-colors cursor-pointer ${
-                isDark ? 'bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-400 hover:text-white' : 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-500 hover:text-slate-900'
-              }`}
+              className={ghostBtn}
               aria-label="ปิดหน้าต่าง"
             >
-              <X className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <X className="w-4 h-4" />
             </button>
           </div>
         </div>
 
-        {/* ========================================================= */}
-        {/* VIEW 1: STATION INSPECTOR (WHEN A CAMERA IS SELECTED)      */}
-        {/* ========================================================= */}
         {focusedCamera ? (
-          <div className="flex-1 overflow-y-auto p-3 sm:p-5 space-y-3 sm:space-y-4">
-            {/* Live Image Preview ONLY if directCameraUrl exists and is valid */}
-            {Boolean(focusedCamera.directCameraUrl) && !failedImageIds.has(focusedCamera.id) && (
-              <div className="relative aspect-video w-full rounded-lg overflow-hidden border border-slate-800 bg-slate-950">
-                <img
-                  src={focusedCamera.directCameraUrl}
-                  alt={focusedCamera.name}
-                  onError={() => handleImageError(focusedCamera.id)}
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5 px-2 py-0.5 rounded bg-emerald-600 text-white text-[10px] font-bold font-mono">
-                  <span className="w-1.5 h-1.5 rounded-full bg-white" />
-                  <span>LIVE STREAM</span>
-                </div>
-              </div>
-            )}
-
-            {/* Station Overview Card */}
-            <div className={`p-3 sm:p-4 rounded-lg border ${
-              isDark ? 'bg-slate-950/60 border-slate-800' : 'bg-slate-50/70 border-slate-200'
-            }`}>
-              <div className="flex items-start justify-between gap-2 mb-2">
-                <div className="flex items-center gap-1.5 flex-wrap">
-                  <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${getAgencyBadgeStyle(focusedCamera.agency)}`}>
-                    {getAgencyLabel(focusedCamera.agency)}
-                  </span>
-                  <span className={`px-2 py-0.5 rounded text-[10px] font-semibold border ${
-                    isDark ? 'bg-slate-900 border-slate-800 text-slate-300' : 'bg-white border-slate-200 text-slate-700'
-                  }`}>
-                    อ.{focusedCamera.district}
-                  </span>
-                </div>
-                <span className="font-mono text-[10px] text-slate-400 shrink-0">
-                  {focusedCamera.resolution || '1080p HD'}
-                </span>
-              </div>
-
-              <h3 className={`text-xs sm:text-base font-bold leading-snug ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                {focusedCamera.name}
-              </h3>
-              <p className={`text-[11px] sm:text-xs mt-1 leading-relaxed ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
-                {focusedCamera.description}
-              </p>
-            </div>
-
-            {/* Technical Specifications Divided Table */}
-            <div className={`rounded-lg border divide-y text-[11px] sm:text-xs ${
-              isDark ? 'border-slate-800 divide-slate-800 bg-slate-900' : 'border-slate-200 divide-slate-200 bg-white'
-            }`}>
-              <div className="grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-slate-200 dark:divide-slate-800">
-                <div className="p-2.5 sm:p-3 flex items-center justify-between gap-2">
-                  <span className={isDark ? 'text-slate-400' : 'text-slate-500'}>สายทาง / ตำแหน่ง</span>
-                  <span className="font-semibold text-right truncate max-w-[65%]">{focusedCamera.road}</span>
-                </div>
-                <div className="p-2.5 sm:p-3 flex items-center justify-between gap-2">
-                  <span className={isDark ? 'text-slate-400' : 'text-slate-500'}>มุมกล้องตรวจการณ์</span>
-                  <span className="font-semibold text-right truncate max-w-[65%]">{focusedCamera.direction}</span>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-slate-200 dark:divide-slate-800">
-                <div className="p-2.5 sm:p-3 flex items-center justify-between gap-2">
-                  <span className={isDark ? 'text-slate-400' : 'text-slate-500'}>รหัสอ้างอิงสถานี</span>
-                  <span className="font-mono font-semibold">{focusedCamera.id.toUpperCase()}</span>
-                </div>
-                <div className="p-2.5 sm:p-3 flex items-center justify-between gap-2">
-                  <span className={isDark ? 'text-slate-400' : 'text-slate-500'}>พิกัดภูมิศาสตร์ (GPS)</span>
-                  <span className="font-mono font-semibold">{focusedCamera.lat.toFixed(4)}, {focusedCamera.lng.toFixed(4)}</span>
-                </div>
-              </div>
-
-              <div className="p-2.5 sm:p-3 flex items-center justify-between gap-2">
-                <span className={isDark ? 'text-slate-400' : 'text-slate-500'}>โครงข่ายต้นสังกัด</span>
-                <span className="font-semibold text-right">{focusedCamera.sourcePlatform}</span>
-              </div>
-            </div>
-
-            {/* Official Portal Stream Notice & Primary Action */}
-            <div className={`p-3 sm:p-4 rounded-lg border flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
-              isDark ? 'bg-blue-950/25 border-blue-900/60' : 'bg-blue-50/70 border-blue-200'
-            }`}>
-              <div className="flex items-start gap-2.5 min-w-0">
-                <CivicShield className={`w-4 h-4 shrink-0 mt-0.5 ${isDark ? 'text-blue-400' : 'text-blue-700'}`} />
-                <div className="text-[11px] sm:text-xs leading-relaxed">
-                  <span className={`font-bold block ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                    การเชื่อมต่อสัญญาณภาพสด (Official Portal Stream)
-                  </span>
-                  <span className={isDark ? 'text-slate-300' : 'text-slate-600'}>
-                    ระบบสัญญาณภาพสดของ {focusedCamera.agency} ให้บริการผ่านหน้าพอร์ทัลทางการของหน่วยงานโดยตรงเพื่อความปลอดภัยของโครงข่าย
-                  </span>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2 shrink-0">
-                <a
-                  href={`https://www.google.com/maps/search/?api=1&query=${focusedCamera.lat},${focusedCamera.lng}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={`px-3 py-2 rounded-lg border text-[11px] sm:text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer ${
-                    isDark
-                      ? 'bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700'
-                      : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-200'
-                  }`}
-                >
-                  <Navigation className="w-3.5 h-3.5" />
-                  <span>แผนที่</span>
-                </a>
-
-                <a
-                  href={focusedCamera.streamUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex-1 sm:flex-initial px-3.5 py-2 rounded-lg bg-blue-700 hover:bg-blue-800 text-white text-[11px] sm:text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
-                >
-                  <span>เปิดพอร์ทัล {focusedCamera.agency}</span>
-                  <ExternalLink className="w-3.5 h-3.5" />
-                </a>
-              </div>
-            </div>
-          </div>
-        ) : (
-          /* ========================================================= */
-          /* VIEW 2: FILTER BAR & STATION DIRECTORY GRID               */
-          /* ========================================================= */
+          /* ===================== DETAIL VIEW ===================== */
           <>
-            {/* Filter Controls */}
-            <div className={`px-3.5 py-2.5 sm:px-5 sm:py-3 border-b space-y-2 shrink-0 ${
-              isDark ? 'border-slate-800 bg-slate-950/40' : 'border-slate-200 bg-slate-50/60'
+            <div className="flex-1 overflow-y-auto">
+              <div className="p-3 sm:p-5 lg:grid lg:grid-cols-[1.6fr_1fr] lg:gap-5 space-y-3 lg:space-y-0">
+                <div className="rounded-xl overflow-hidden ring-1 ring-black/10 dark:ring-white/10">
+                  <CameraFeed camera={focusedCamera} clock={liveClock} resetKey={resetKey} large />
+                </div>
+
+                <div className="space-y-3 sm:space-y-4">
+                  <div>
+                    <div className="flex items-center gap-1.5 mb-1.5">
+                      <span className={`px-1.5 py-0.5 rounded-md text-[10px] font-semibold ${agencyTone(focusedCamera.agency)}`}>
+                        {focusedCamera.agency}
+                      </span>
+                      <span className={`text-[10.5px] ${mutedText}`}>
+                        {focusedCamera.type === 'waterway' ? 'สถานีชลประทาน' : 'จุดตรวจการจราจร'}
+                      </span>
+                    </div>
+                    <h3 className="text-sm sm:text-base font-semibold leading-snug">{focusedCamera.name}</h3>
+                    {focusedCamera.description && (
+                      <p className={`text-xs sm:text-[13px] mt-1 leading-relaxed ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
+                        {focusedCamera.description}
+                      </p>
+                    )}
+                  </div>
+
+                  <dl className={`rounded-xl border divide-y text-xs ${
+                    isDark ? 'border-slate-800 divide-slate-800' : 'border-slate-200 divide-slate-100'
+                  }`}>
+                    {[
+                      ['ถนน / ตำแหน่ง', focusedCamera.road],
+                      ['มุมกล้อง', focusedCamera.direction],
+                      ['พิกัด', `${focusedCamera.lat.toFixed(4)}, ${focusedCamera.lng.toFixed(4)}`, true],
+                      ['แหล่งข้อมูล', focusedCamera.sourcePlatform]
+                    ].filter(([, v]) => Boolean(v)).map(([label, value, mono]) => (
+                      <div key={label} className="flex items-start justify-between gap-3 px-3 py-2.5">
+                        <dt className={`shrink-0 ${mutedText}`}>{label}</dt>
+                        <dd className={`text-right font-medium min-w-0 break-words ${mono ? 'font-mono tabular-nums' : ''}`}>{value}</dd>
+                      </div>
+                    ))}
+                  </dl>
+
+                  <div className="flex items-center gap-2">
+                    <a
+                      href={focusedCamera.streamUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-1 h-9 px-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors"
+                    >
+                      <span>ดูภาพสดจาก {focusedCamera.agency}</span>
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </a>
+                    <a
+                      href={`https://www.google.com/maps/search/?api=1&query=${focusedCamera.lat},${focusedCamera.lng}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={`h-9 px-3 rounded-lg border text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors ${
+                        isDark ? 'border-slate-700 text-slate-200 hover:bg-slate-800' : 'border-slate-200 text-slate-700 hover:bg-slate-50'
+                      }`}
+                    >
+                      <MapPin className="w-3.5 h-3.5" />
+                      <span>แผนที่</span>
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className={`px-3 py-2 sm:px-5 sm:py-2.5 border-t flex items-center justify-between gap-2 shrink-0 ${
+              isDark ? 'border-slate-800' : 'border-slate-200/80'
             }`}>
-              {/* Row 1: Search Input + District Select */}
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-                <div className="relative flex-1">
+              <button
+                type="button"
+                onClick={handlePrevCamera}
+                className={`h-8 px-2.5 rounded-lg text-xs font-medium flex items-center gap-1 transition-colors ${
+                  isDark ? 'text-slate-300 hover:bg-slate-800' : 'text-slate-700 hover:bg-slate-100'
+                }`}
+              >
+                <ChevronLeft className="w-4 h-4" />
+                <span>ก่อนหน้า</span>
+              </button>
+              <span className={`font-mono text-[11px] tabular-nums ${mutedText}`}>
+                {currentIndex + 1} / {navList.length}
+              </span>
+              <button
+                type="button"
+                onClick={handleNextCamera}
+                className={`h-8 px-2.5 rounded-lg text-xs font-medium flex items-center gap-1 transition-colors ${
+                  isDark ? 'text-slate-300 hover:bg-slate-800' : 'text-slate-700 hover:bg-slate-100'
+                }`}
+              >
+                <span>ถัดไป</span>
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          </>
+        ) : (
+          /* ===================== GRID VIEW ===================== */
+          <>
+            <div className={`px-3 py-2.5 sm:px-5 sm:py-3 border-b space-y-2 shrink-0 ${
+              isDark ? 'border-slate-800' : 'border-slate-200/80'
+            }`}>
+              <div className="flex items-center gap-2">
+                <div className="relative flex-1 min-w-0">
                   <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                   <input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="ค้นหาชื่อแยก, ถนน หรือสถานีสูบน้ำ (เช่น สำโรง, ศรีเทพา, บางนา)..."
-                    className={`w-full pl-8 pr-7 py-1.5 text-[11px] sm:text-xs rounded-lg border transition-colors focus:outline-none ${
+                    placeholder="ค้นหาแยก ถนน หรือสถานี"
+                    className={`w-full h-9 pl-8 pr-8 text-xs rounded-lg border transition-colors focus:outline-none focus:ring-2 ${
                       isDark
-                        ? 'bg-slate-900 border-slate-800 text-white placeholder-slate-500 focus:border-blue-500'
-                        : 'bg-white border-slate-200 text-slate-900 placeholder-slate-400 focus:border-blue-600'
+                        ? 'bg-slate-950/50 border-slate-800 text-white placeholder-slate-500 focus:border-sky-500 focus:ring-sky-500/20'
+                        : 'bg-slate-50 border-slate-200 text-slate-900 placeholder-slate-400 focus:bg-white focus:border-blue-500 focus:ring-blue-500/15'
                     }`}
                   />
                   {searchQuery && (
                     <button
                       type="button"
                       onClick={() => setSearchQuery('')}
-                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                      aria-label="ล้างคำค้นหา"
                     >
                       <X className="w-3.5 h-3.5" />
                     </button>
                   )}
                 </div>
-
-                {/* District Filter Pills */}
-                <div className="flex items-center gap-1 overflow-x-auto no-scrollbar pb-0.5 sm:pb-0">
-                  {districts.map(dist => {
-                    const active = selectedDistrict === dist;
-                    return (
-                      <button
-                        key={dist}
-                        type="button"
-                        onClick={() => {
-                          playSelectSound();
-                          setSelectedDistrict(dist);
-                        }}
-                        className={`px-2 py-1 rounded-md text-[10px] sm:text-[11px] font-semibold whitespace-nowrap border transition-colors cursor-pointer ${
-                          active
-                            ? 'bg-blue-700 text-white border-blue-700'
-                            : isDark
-                              ? 'bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-200'
-                              : 'bg-white border-slate-200 text-slate-600 hover:text-slate-900'
-                        }`}
-                      >
-                        {dist === 'ทั้งหมด' ? 'ทุกอำเภอ' : dist.replace('เมืองสมุทรปราการ', 'เมืองฯ')}
-                      </button>
-                    );
-                  })}
-                </div>
+                <select
+                  value={selectedDistrict}
+                  onChange={(e) => {
+                    playSelectSound();
+                    setSelectedDistrict(e.target.value);
+                  }}
+                  className={`h-9 pl-2.5 pr-7 text-xs rounded-lg border cursor-pointer focus:outline-none max-w-[42%] sm:max-w-none ${
+                    isDark ? 'bg-slate-950/50 border-slate-800 text-slate-200' : 'bg-slate-50 border-slate-200 text-slate-700'
+                  }`}
+                  aria-label="เลือกอำเภอ"
+                >
+                  {districts.map((d) => (
+                    <option key={d} value={d}>{d === 'ทั้งหมด' ? 'ทุกอำเภอ' : d}</option>
+                  ))}
+                </select>
               </div>
 
-              {/* Row 2: Segmented Agency Selector */}
-              <div className="flex items-center gap-1 overflow-x-auto no-scrollbar">
+              <div className={`inline-flex p-0.5 rounded-lg max-w-full overflow-x-auto no-scrollbar ${isDark ? 'bg-slate-800/70' : 'bg-slate-100'}`}>
                 {[
                   { id: 'ทั้งหมด', label: 'ทั้งหมด', count: agencyCounts.ALL },
-                  { id: 'DOH', label: 'กรมทางหลวง (DOH)', count: agencyCounts.DOH },
-                  { id: 'EXAT', label: 'การทางพิเศษ (EXAT)', count: agencyCounts.EXAT },
-                  { id: 'RID', label: 'กรมชลประทาน (RID)', count: agencyCounts.RID }
-                ].map(tab => {
+                  { id: 'DOH', label: 'กรมทางหลวง', count: agencyCounts.DOH },
+                  { id: 'EXAT', label: 'การทางพิเศษ', count: agencyCounts.EXAT },
+                  { id: 'RID', label: 'ชลประทาน', count: agencyCounts.RID }
+                ].map((tab) => {
                   const active = selectedAgency === tab.id;
                   return (
                     <button
@@ -470,16 +477,14 @@ export default function CctvModal({
                         playClickSound();
                         setSelectedAgency(tab.id);
                       }}
-                      className={`px-2.5 py-1 rounded-md text-[10px] sm:text-[11px] font-semibold whitespace-nowrap border flex items-center gap-1.5 transition-colors cursor-pointer ${
+                      className={`h-7 px-2.5 rounded-md text-[11px] font-medium whitespace-nowrap flex items-center gap-1.5 transition-all ${
                         active
-                          ? (isDark ? 'bg-slate-800 text-white border-slate-600' : 'bg-slate-900 text-white border-slate-900')
-                          : (isDark ? 'bg-slate-900/60 text-slate-400 border-slate-800 hover:text-slate-200' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100')
+                          ? isDark ? 'bg-slate-950 text-white shadow-sm' : 'bg-white text-slate-900 shadow-sm'
+                          : isDark ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-800'
                       }`}
                     >
                       <span>{tab.label}</span>
-                      <span className={`font-mono text-[9.5px] px-1 rounded ${
-                        active ? 'bg-white/20 text-white' : (isDark ? 'bg-slate-800 text-slate-400' : 'bg-slate-100 text-slate-500')
-                      }`}>
+                      <span className={`tabular-nums text-[10px] ${active ? (isDark ? 'text-slate-400' : 'text-slate-500') : 'opacity-60'}`}>
                         {tab.count}
                       </span>
                     </button>
@@ -488,14 +493,10 @@ export default function CctvModal({
               </div>
             </div>
 
-            {/* Station Cards Grid */}
-            <div className="flex-1 overflow-y-auto p-3 sm:p-4">
+            <div className="flex-1 overflow-y-auto p-3 sm:p-5">
               {filteredCameras.length === 0 ? (
-                <div className="text-center py-10 space-y-2">
-                  <CivicCctv className="w-8 h-8 mx-auto text-slate-400 opacity-50" />
-                  <p className="text-xs sm:text-sm font-semibold text-slate-500">
-                    ไม่พบสถานีกล้องวงจรปิดตามเงื่อนไขที่ระบุ
-                  </p>
+                <div className="text-center py-14">
+                  <p className={`text-sm font-medium ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>ไม่พบกล้องที่ตรงกับการค้นหา</p>
                   <button
                     type="button"
                     onClick={() => {
@@ -503,188 +504,53 @@ export default function CctvModal({
                       setSelectedDistrict('ทั้งหมด');
                       setSearchQuery('');
                     }}
-                    className="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline cursor-pointer"
+                    className="mt-2 text-xs font-medium text-blue-600 dark:text-sky-400 hover:underline"
                   >
-                    ล้างตัวกรองทั้งหมด
+                    ล้างตัวกรอง
                   </button>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
-                  {filteredCameras.map((cam) => {
-                    const hasDirectFeed = Boolean(cam.directCameraUrl) && !failedImageIds.has(cam.id);
-
-                    return (
-                      <div
-                        key={cam.id}
-                        onClick={() => {
-                          playClickSound();
-                          setFocusedCamera(cam);
-                        }}
-                        className={`group rounded-lg border p-2.5 sm:p-3.5 flex flex-col justify-between gap-2.5 transition-colors cursor-pointer ${
-                          isDark
-                            ? 'bg-slate-950/50 border-slate-800 hover:border-slate-700 hover:bg-slate-800/40'
-                            : 'bg-white border-slate-200 hover:border-blue-300 hover:bg-slate-50/50'
-                        }`}
-                      >
-                        {/* Optional Live Thumbnail if direct feed exists */}
-                        {hasDirectFeed && (
-                          <div className="relative aspect-video w-full rounded-md overflow-hidden bg-slate-950 border border-slate-800">
-                            <img
-                              src={cam.directCameraUrl}
-                              alt={cam.name}
-                              onError={() => handleImageError(cam.id)}
-                              className="w-full h-full object-cover"
-                              loading="lazy"
-                            />
-                            <span className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded bg-emerald-600 text-white text-[9px] font-mono font-bold">
-                              LIVE
-                            </span>
-                          </div>
-                        )}
-
-                        {/* Card Top Metadata Row */}
-                        <div className="space-y-1.5">
-                          <div className="flex items-center justify-between gap-1.5">
-                            <div className="flex items-center gap-1.5 min-w-0">
-                              <span className={`px-1.5 py-0.5 rounded text-[9.5px] font-bold border shrink-0 ${getAgencyBadgeStyle(cam.agency)}`}>
-                                {cam.agency}
-                              </span>
-                              <span className={`text-[10px] font-semibold truncate ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                                อ.{cam.district}
-                              </span>
-                            </div>
-                            <span className="font-mono text-[9.5px] text-slate-400 shrink-0">
-                              {cam.type === 'waterway' ? 'สถานีชลประทาน' : 'จราจร'}
-                            </span>
-                          </div>
-
-                          {/* Station Name & Road */}
-                          <div className="flex items-start gap-2">
-                            <div className={`w-7 h-7 rounded-md border flex items-center justify-center shrink-0 mt-0.5 ${
-                              isDark ? 'bg-slate-900 border-slate-800 text-blue-400' : 'bg-slate-50 border-slate-200 text-blue-700'
-                            }`}>
-                              <CivicCctv className="w-3.5 h-3.5" />
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <h3 className={`text-xs sm:text-[13px] font-bold leading-snug line-clamp-1 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors ${
-                                isDark ? 'text-white' : 'text-slate-900'
-                              }`}>
-                                {cam.name}
-                              </h3>
-                              <p className={`text-[10.5px] sm:text-[11px] truncate mt-0.5 flex items-center gap-1 ${
-                                isDark ? 'text-slate-400' : 'text-slate-500'
-                              }`}>
-                                <CivicStationPin className="w-3 h-3 shrink-0 text-blue-500" />
-                                <span className="truncate">{cam.road}</span>
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Card Bottom Row: Direction & Actions */}
-                        <div className={`pt-2 border-t flex items-center justify-between gap-2 ${
-                          isDark ? 'border-slate-800/80' : 'border-slate-100'
-                        }`}>
-                          <span className={`text-[10px] truncate ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                            {cam.direction}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+                  {filteredCameras.map((cam) => (
+                    <button
+                      key={cam.id}
+                      type="button"
+                      onClick={() => {
+                        playClickSound();
+                        setFocusedCamera(cam);
+                      }}
+                      className={`group text-left rounded-xl overflow-hidden border transition-all duration-200 hover:-translate-y-0.5 ${
+                        isDark
+                          ? 'bg-slate-950/40 border-slate-800 hover:border-slate-700 hover:shadow-lg hover:shadow-black/30'
+                          : 'bg-white border-slate-200 hover:border-slate-300 hover:shadow-lg hover:shadow-slate-200/70'
+                      }`}
+                    >
+                      <CameraFeed camera={cam} clock={liveClock} resetKey={resetKey} />
+                      <div className="px-3 py-2.5">
+                        <div className="flex items-center justify-between gap-2">
+                          <h3 className="text-[12.5px] sm:text-[13px] font-semibold truncate">{cam.shortName || cam.name}</h3>
+                          <span className={`shrink-0 px-1.5 py-0.5 rounded-md text-[9.5px] font-semibold ${agencyTone(cam.agency)}`}>
+                            {cam.agency}
                           </span>
-
-                          <div className="flex items-center gap-1.5 shrink-0">
-                            <span className={`px-2 py-1 rounded text-[10px] font-semibold border ${
-                              isDark ? 'bg-slate-900 border-slate-800 text-slate-300' : 'bg-slate-50 border-slate-200 text-slate-600'
-                            }`}>
-                              รายละเอียด
-                            </span>
-                            <a
-                              href={cam.streamUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              onClick={(e) => e.stopPropagation()}
-                              className="px-2.5 py-1 rounded bg-blue-700 hover:bg-blue-800 text-white text-[10px] font-semibold flex items-center gap-1 transition-colors cursor-pointer"
-                              title={`เปิดพอร์ทัลทางการ (${cam.agency})`}
-                            >
-                              <span>พอร์ทัลสด</span>
-                              <ExternalLink className="w-2.5 h-2.5" />
-                            </a>
-                          </div>
                         </div>
+                        <p className={`text-[11px] truncate mt-0.5 ${mutedText}`}>
+                          {cam.road} · อ.{cam.district}
+                        </p>
                       </div>
-                    );
-                  })}
+                    </button>
+                  ))}
                 </div>
               )}
             </div>
+
+            <div className={`px-3 py-2 sm:px-5 border-t shrink-0 text-[10.5px] sm:text-[11px] flex items-center justify-between gap-2 ${
+              isDark ? 'border-slate-800 text-slate-500' : 'border-slate-200/80 text-slate-500'
+            }`}>
+              <span>แสดง {filteredCameras.length} จาก {CCTV_CAMERAS.length} จุด</span>
+              <span className="truncate">ข้อมูล: กรมทางหลวง · การทางพิเศษฯ · กรมชลประทาน</span>
+            </div>
           </>
         )}
-
-        {/* ========================================================= */}
-        {/* MODAL FOOTER                                              */}
-        {/* ========================================================= */}
-        <div className={`px-3.5 py-2.5 sm:px-5 sm:py-3 border-t flex items-center justify-between gap-2 shrink-0 text-[11px] sm:text-xs ${
-          isDark ? 'border-slate-800 bg-slate-950/60 text-slate-400' : 'border-slate-200 bg-slate-50/80 text-slate-600'
-        }`}>
-          {focusedCamera ? (
-            <>
-              <div className="flex items-center gap-1.5">
-                <button
-                  type="button"
-                  onClick={handlePrevCamera}
-                  className={`px-2.5 py-1.5 rounded-lg border font-semibold flex items-center gap-1 transition-colors cursor-pointer ${
-                    isDark ? 'bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-200' : 'bg-white hover:bg-slate-100 border-slate-200 text-slate-700'
-                  }`}
-                >
-                  <ChevronLeft className="w-3.5 h-3.5" />
-                  <span>ก่อนหน้า</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={handleNextCamera}
-                  className={`px-2.5 py-1.5 rounded-lg border font-semibold flex items-center gap-1 transition-colors cursor-pointer ${
-                    isDark ? 'bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-200' : 'bg-white hover:bg-slate-100 border-slate-200 text-slate-700'
-                  }`}
-                >
-                  <span>ถัดไป</span>
-                  <ChevronRight className="w-3.5 h-3.5" />
-                </button>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => {
-                  playClickSound();
-                  setFocusedCamera(null);
-                }}
-                className={`px-3 py-1.5 rounded-lg border font-semibold transition-colors cursor-pointer ${
-                  isDark ? 'bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-200' : 'bg-white hover:bg-slate-100 border-slate-200 text-slate-700'
-                }`}
-              >
-                ดูสถานีทั้งหมด
-              </button>
-            </>
-          ) : (
-            <>
-              <div className="flex items-center gap-1.5 truncate">
-                <CivicRadar className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 shrink-0" />
-                <span className="truncate">
-                  แสดง {filteredCameras.length} จาก {CCTV_CAMERAS.length} สถานี (DOH • EXAT • RID)
-                </span>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => {
-                  playCloseSound();
-                  onClose();
-                }}
-                className={`px-3.5 py-1.5 rounded-lg font-semibold border transition-colors cursor-pointer shrink-0 ${
-                  isDark ? 'bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-200' : 'bg-white hover:bg-slate-100 border-slate-200 text-slate-700'
-                }`}
-              >
-                ปิดหน้าต่าง
-              </button>
-            </>
-          )}
-        </div>
       </div>
     </div>
   );
