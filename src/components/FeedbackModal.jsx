@@ -105,27 +105,27 @@ export default function FeedbackModal({ isOpen, onClose, theme = 'light', onFeed
       onClick={(e) => { if (e.target === e.currentTarget) handleResetAndClose(); }}
       className="fixed inset-0 z-50 bg-slate-950/65 backdrop-blur-xs flex items-center justify-center p-2.5 sm:p-4 overflow-y-auto"
     >
-      <div className={`w-[88vw] max-w-[345px] sm:max-w-lg my-auto m-auto border rounded-xl shadow-2xl flex flex-col max-h-[75vh] sm:max-h-[85vh] overflow-hidden transition-colors ${
+      <div className={`w-[88vw] max-w-[335px] sm:max-w-lg my-auto m-auto border rounded-xl shadow-2xl flex flex-col max-h-[72vh] sm:max-h-[84vh] overflow-hidden transition-colors ${
         isDark ? 'bg-slate-900 border-slate-800 text-slate-100' : 'bg-white border-slate-200 text-slate-900'
       }`}>
         {/* Top Institutional Bar */}
         <div className="h-1 w-full bg-blue-700 shrink-0" />
 
         {/* Header */}
-        <div className={`px-3.5 py-2.5 sm:px-5 sm:py-3.5 border-b flex items-center justify-between gap-2.5 shrink-0 ${
+        <div className={`px-3 py-2 sm:px-4 sm:py-3 border-b flex items-center justify-between gap-2 shrink-0 ${
           isDark ? 'border-slate-800 bg-slate-950/50' : 'border-slate-200 bg-slate-50/80'
         }`}>
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div className={`w-7 h-7 sm:w-9 sm:h-9 rounded-lg border flex items-center justify-center shrink-0 ${
+          <div className="flex items-center gap-2 min-w-0">
+            <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg border flex items-center justify-center shrink-0 ${
               isDark ? 'bg-slate-800 text-blue-400 border-slate-700' : 'bg-white text-blue-700 border-slate-200 shadow-2xs'
             }`}>
-              <CivicFeedback className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
+              <CivicFeedback className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </div>
             <div className="min-w-0">
-              <h2 className={`text-[13px] sm:text-base font-bold leading-tight tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>
+              <h2 className={`text-xs sm:text-sm font-bold leading-tight tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>
                 แบบรับฟังความคิดเห็นและแจ้งปัญหา
               </h2>
-              <p className={`text-[10.5px] sm:text-xs mt-0.5 leading-tight ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+              <p className={`text-[9.5px] sm:text-xs mt-0.5 leading-tight ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
                 ส่งข้อมูลถึงผู้ดูแลระบบเพื่อพัฒนาการให้บริการสาธารณะ
               </p>
             </div>
@@ -134,7 +134,7 @@ export default function FeedbackModal({ isOpen, onClose, theme = 'light', onFeed
           <button
             type="button"
             onClick={handleResetAndClose}
-            className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg border flex items-center justify-center transition-colors cursor-pointer shrink-0 ${
+            className={`w-6 h-6 sm:w-7 sm:h-7 rounded-md border flex items-center justify-center transition-colors cursor-pointer shrink-0 ${
               isDark ? 'bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white border-slate-700' : 'bg-white hover:bg-slate-100 text-slate-500 hover:text-slate-900 border-slate-200'
             }`}
             title="ปิดหน้าต่าง"

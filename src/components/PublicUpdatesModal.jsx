@@ -116,25 +116,25 @@ export default function PublicUpdatesModal({
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
       className="fixed inset-0 z-50 bg-slate-950/65 backdrop-blur-xs flex items-center justify-center p-2.5 sm:p-4 pointer-events-auto overflow-y-auto"
     >
-      <div className={`w-[88vw] max-w-[345px] sm:max-w-lg my-auto m-auto border rounded-xl shadow-2xl flex flex-col max-h-[75vh] sm:max-h-[85vh] overflow-hidden transition-colors ${
+      <div className={`w-[88vw] max-w-[335px] sm:max-w-lg my-auto m-auto border rounded-xl shadow-2xl flex flex-col max-h-[72vh] sm:max-h-[84vh] overflow-hidden transition-colors ${
         isDark ? 'bg-slate-900 border-slate-800 text-slate-100' : 'bg-white border-slate-200 text-slate-900'
       }`}>
         {/* Top Institutional Bar */}
         <div className="h-1 w-full bg-blue-700 shrink-0" />
 
         {/* Header */}
-        <div className={`px-3.5 py-2.5 sm:px-5 sm:py-3.5 border-b flex items-center justify-between gap-2.5 shrink-0 ${
+        <div className={`px-3 py-2 sm:px-4 sm:py-3 border-b flex items-center justify-between gap-2 shrink-0 ${
           isDark ? 'border-slate-800 bg-slate-950/50' : 'border-slate-200 bg-slate-50/80'
         }`}>
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div className={`w-7 h-7 sm:w-9 sm:h-9 rounded-lg border flex items-center justify-center shrink-0 ${
+          <div className="flex items-center gap-2 min-w-0">
+            <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg border flex items-center justify-center shrink-0 ${
               isDark ? 'bg-slate-800 text-blue-400 border-slate-700' : 'bg-white text-blue-700 border-slate-200 shadow-2xs'
             }`}>
-              <CivicBroadcast className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
+              <CivicBroadcast className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-1.5">
-                <h3 className={`text-[13px] sm:text-base font-bold leading-tight tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                <h3 className={`text-[12.5px] sm:text-base font-bold leading-tight tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>
                   บันทึกการเปลี่ยนแปลงสถานการณ์น้ำ
                 </h3>
                 <span className={`px-1.5 py-0.2 rounded text-[9.5px] font-semibold border shrink-0 ${
@@ -307,18 +307,18 @@ export default function PublicUpdatesModal({
         </div>
 
         {/* Footer */}
-        <div className={`px-4 py-2.5 sm:px-5 sm:py-3 border-t flex items-center justify-between text-xs shrink-0 ${
+        <div className={`px-3 py-2 sm:px-4 sm:py-2.5 border-t flex items-center justify-between text-xs shrink-0 ${
           isDark ? 'border-slate-800 bg-slate-950/60 text-slate-400' : 'border-slate-200 bg-slate-50/80 text-slate-500'
         }`}>
-          <span className="flex items-center gap-1.5 text-[11px]">
-            <CivicShield className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
-            <span>แตะที่รายการเพื่อดูตำแหน่งบนแผนที่</span>
+          <span className="flex items-center gap-1.5 text-[10.5px] sm:text-[11px]">
+            <CivicShield className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 shrink-0" />
+            <span className="truncate">แตะรายการเพื่อดูบนแผนที่</span>
           </span>
           <button
             type="button"
             onClick={onClose}
-            className={`px-3.5 py-1.5 rounded-lg font-semibold text-xs border transition-colors cursor-pointer ${
-              isDark ? 'bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700' : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-200'
+            className={`px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-lg font-semibold text-[11px] sm:text-xs border transition-colors cursor-pointer shrink-0 ${
+              isDark ? 'bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700' : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-200 shadow-2xs'
             }`}
           >
             ปิดหน้าต่าง

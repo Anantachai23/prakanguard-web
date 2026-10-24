@@ -257,7 +257,7 @@ export default function CctvModal({
       }}
     >
       <div
-        className={`smooth-pop w-[92vw] max-w-[380px] sm:max-w-3xl lg:max-w-5xl max-h-[80vh] sm:max-h-[86vh] flex flex-col rounded-2xl border shadow-2xl overflow-hidden ${
+        className={`smooth-pop w-[88vw] max-w-[340px] sm:max-w-3xl lg:max-w-5xl max-h-[73vh] sm:max-h-[85vh] flex flex-col rounded-xl sm:rounded-2xl border shadow-2xl overflow-hidden ${
           isDark ? 'bg-slate-900 border-slate-800 text-slate-100' : 'bg-white border-slate-200 text-slate-900'
         }`}
         onClick={(e) => e.stopPropagation()}
@@ -266,7 +266,7 @@ export default function CctvModal({
         aria-label="กล้อง CCTV"
       >
         {/* ===================== HEADER ===================== */}
-        <div className={`px-3 py-2.5 sm:px-5 sm:py-3.5 border-b flex items-center justify-between gap-2 shrink-0 ${
+        <div className={`px-3 py-2 sm:px-4 sm:py-3 border-b flex items-center justify-between gap-2 shrink-0 ${
           isDark ? 'border-slate-800' : 'border-slate-200/80'
         }`}>
           <div className="flex items-center gap-2 min-w-0">

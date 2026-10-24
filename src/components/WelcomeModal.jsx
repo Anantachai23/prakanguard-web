@@ -81,7 +81,7 @@ export default function WelcomeModal({
       }}
     >
       <div 
-        className={`w-[88vw] max-w-[345px] sm:max-w-lg my-auto m-auto max-h-[74vh] sm:max-h-[85vh] border rounded-xl shadow-2xl overflow-hidden flex flex-col relative transition-all ${
+        className={`w-[88vw] max-w-[335px] sm:max-w-lg my-auto m-auto max-h-[72vh] sm:max-h-[84vh] border rounded-xl shadow-2xl overflow-hidden flex flex-col relative transition-all ${
           isDark 
             ? 'bg-slate-900 border-slate-800 text-slate-100' 
             : 'bg-white border-slate-200 text-slate-900'
@@ -103,14 +103,14 @@ export default function WelcomeModal({
         <div className="h-1 w-full bg-blue-700 shrink-0" />
 
         {/* Header */}
-        <div className={`px-3.5 py-2.5 sm:px-5 sm:py-3.5 border-b flex items-center justify-between gap-2.5 shrink-0 ${
+        <div className={`px-3 py-2 sm:px-4 sm:py-3 border-b flex items-center justify-between gap-2 shrink-0 ${
           isDark ? 'bg-slate-950/50 border-slate-800' : 'bg-slate-50/80 border-slate-200'
         }`}>
-          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
-            <div className={`w-7 h-7 sm:w-9 sm:h-9 rounded-lg border flex items-center justify-center shrink-0 ${
+          <div className="flex items-center gap-2 min-w-0">
+            <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg border flex items-center justify-center shrink-0 ${
               isDark ? 'bg-slate-800 border-slate-700 text-blue-400' : 'bg-white border-slate-200 text-blue-700 shadow-2xs'
             }`}>
-              <CivicCrest className="w-4 h-4 sm:w-5 sm:h-5" />
+              <CivicCrest className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </div>
 
             <div className="min-w-0 flex-1">
