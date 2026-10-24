@@ -42,264 +42,203 @@ export function getMsUntilBangkokMidnight() {
   return Math.max(1000, diff);
 }
 
-// ชุดข้อมูลอัปเดตสถานการณ์จริงประจำวัน (เริ่มต้นของวัน) จากแหล่งข้อมูลโทรมาตรทางการ 6 อำเภอ
-export const SEED_REAL_DAILY_UPDATES = [
-  {
-    id: 'upd-spk-01',
-    locationKey: 'sp-15',
-    locationName: 'สถานีป้อมพระจุลจอมเกล้า (ปากอ่าวไทย)',
-    district: 'พระสมุทรเจดีย์',
-    subdistrict: 'ต.แหลมฟ้าผ่า',
-    locationSub: 'พระสมุทรเจดีย์ • ต.แหลมฟ้าผ่า',
-    statusType: 'rising',
-    statusLabel: 'เริ่มท่วมแล้ว',
-    statusBadgeClass: 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/30',
-    depthCm: 58,
-    itemTime: '08:30 น.',
-    timestamp: Date.now() - (9 * 3600 * 1000),
-    source: 'กรมอุทกศาสตร์ กองทัพเรือ',
-    lat: 13.5412,
-    lng: 100.5845
-  },
-  {
-    id: 'upd-spk-02',
-    locationKey: 'sp-10',
-    locationName: 'การเคหะเมืองใหม่บางเสาธง (ซอย C1 - C5)',
-    district: 'บางเสาธง',
-    subdistrict: 'ต.บางเสาธง',
-    locationSub: 'บางเสาธง • ต.บางเสาธง',
-    statusType: 'rising',
-    statusLabel: 'เริ่มท่วมแล้ว',
-    statusBadgeClass: 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/30',
-    depthCm: 55,
-    itemTime: '09:15 น.',
-    timestamp: Date.now() - (8.2 * 3600 * 1000),
-    source: 'สนง.ปภ. สมุทรปราการ (1784)',
-    lat: 13.5875,
-    lng: 100.8250
-  },
-  {
-    id: 'upd-spk-03',
-    locationKey: 'cat-sp-03',
-    locationName: 'ถนนท้ายบ้าน ปากซอย 38 (เลียบคลองตาเจี่ย)',
-    district: 'เมืองสมุทรปราการ',
-    subdistrict: 'ต.ท้ายบ้านใหม่',
-    locationSub: 'เมือง • ต.ท้ายบ้านใหม่',
-    statusType: 'rising',
-    statusLabel: 'เริ่มท่วมแล้ว',
-    statusBadgeClass: 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/30',
-    depthCm: 55,
-    itemTime: '10:05 น.',
-    timestamp: Date.now() - (7.4 * 3600 * 1000),
-    source: 'เทศบาลตำบลท้ายบ้านใหม่',
-    lat: 13.5780,
-    lng: 100.6020
-  },
-  {
-    id: 'upd-spk-04',
-    locationKey: 'sp-30',
-    locationName: 'แยกสุขสมาน (ถ.ลาดกระบัง - สุวรรณภูมิ 4)',
-    district: 'บางพลี',
-    subdistrict: 'ต.หนองปรือ',
-    locationSub: 'บางพลี • ต.หนองปรือ',
-    statusType: 'rising',
-    statusLabel: 'เริ่มท่วมแล้ว',
-    statusBadgeClass: 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/30',
-    depthCm: 52,
-    itemTime: '11:30 น.',
-    timestamp: Date.now() - (6 * 3600 * 1000),
-    source: 'แขวงทางหลวงสมุทรปราการ',
-    lat: 13.7275,
-    lng: 100.7686
-  },
-  {
-    id: 'upd-spk-05',
-    locationKey: 'sp-17',
-    locationName: 'ถนนบางนา-ตราด กม.18 (บางโฉลง / ม.หัวเฉียว)',
-    district: 'บางพลี',
-    subdistrict: 'ต.บางโฉลง',
-    locationSub: 'บางพลี • ต.บางโฉลง',
-    statusType: 'rising',
-    statusLabel: 'เริ่มท่วมแล้ว',
-    statusBadgeClass: 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/30',
-    depthCm: 28,
-    itemTime: '13:10 น.',
-    timestamp: Date.now() - (4.4 * 3600 * 1000),
-    source: 'แขวงทางหลวงสมุทรปราการ (ทล.34)',
-    lat: 13.6135,
-    lng: 100.7420
-  },
-  {
-    id: 'upd-spk-06',
-    locationKey: 'sp-13',
-    locationName: 'ถนนปู่เจ้าสมิงพราย (ช่วงท่าน้ำเภตรา)',
-    district: 'พระประแดง',
-    subdistrict: 'ต.สำโรงใต้',
-    locationSub: 'พระประแดง • ต.สำโรงใต้',
-    statusType: 'rising',
-    statusLabel: 'เริ่มท่วมแล้ว',
-    statusBadgeClass: 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/30',
-    depthCm: 28,
-    itemTime: '13:45 น.',
-    timestamp: Date.now() - (3.8 * 3600 * 1000),
-    source: 'สภ.สำโรงใต้ & เทศบาลเมืองปู่เจ้าฯ',
-    lat: 13.6475,
-    lng: 100.5620
-  },
-  {
-    id: 'upd-spk-07',
-    locationKey: 'sp-06',
-    locationName: 'ทางลงด่วนบางพลี ถ.บางนา-ตราด กม.12 (เมกาบางนา)',
-    district: 'บางพลี',
-    subdistrict: 'ต.บางแก้ว',
-    locationSub: 'บางพลี • ต.บางแก้ว',
-    statusType: 'rising',
-    statusLabel: 'เริ่มท่วมแล้ว',
-    statusBadgeClass: 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/30',
-    depthCm: 26,
-    itemTime: '14:15 น.',
-    timestamp: Date.now() - (3.3 * 3600 * 1000),
-    source: 'การทางพิเศษแห่งประเทศไทย & แขวงทางหลวง',
-    lat: 13.6485,
-    lng: 100.6800
-  },
-  {
-    id: 'upd-spk-08',
-    locationKey: 'sp-25',
-    locationName: 'ซอยกิ่งแก้ว 45 - 43 (โซนชุมชนและโรงงานกิ่งแก้ว)',
-    district: 'บางพลี',
-    subdistrict: 'ต.ราชาเทวะ',
-    locationSub: 'บางพลี • ต.ราชาเทวะ',
-    statusType: 'rising',
-    statusLabel: 'เริ่มท่วมแล้ว',
-    statusBadgeClass: 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/30',
-    depthCm: 25,
-    itemTime: '14:40 น.',
-    timestamp: Date.now() - (2.9 * 3600 * 1000),
-    source: 'อบต.ราชาเทวะ',
-    lat: 13.6820,
-    lng: 100.7285
-  },
-  {
-    id: 'upd-spk-09',
-    locationKey: 'sp-27',
-    locationName: 'ถนนปานวิถี หน้าตลาดสดเทศบาลบางบ่อ (ริมคลองสำโรง)',
-    district: 'บางบ่อ',
-    subdistrict: 'ต.บางบ่อ',
-    locationSub: 'บางบ่อ • ต.บางบ่อ',
-    statusType: 'rising',
-    statusLabel: 'เริ่มท่วมแล้ว',
-    statusBadgeClass: 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/30',
-    depthCm: 24,
-    itemTime: '15:15 น.',
-    timestamp: Date.now() - (2.3 * 3600 * 1000),
-    source: 'เทศบาลตำบลบางบ่อ',
-    lat: 13.5685,
-    lng: 100.8350
-  },
-  {
-    id: 'upd-spk-10',
-    locationKey: 'cat-sp-02',
-    locationName: 'สี่แยกการไฟฟ้าสมุทรปราการ (ถ.สุขุมวิท ตัด ถ.สายลวด)',
-    district: 'เมืองสมุทรปราการ',
-    subdistrict: 'ต.ปากน้ำ',
-    locationSub: 'เมือง • ต.ปากน้ำ',
-    statusType: 'rising',
-    statusLabel: 'เริ่มท่วมแล้ว',
-    statusBadgeClass: 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/30',
-    depthCm: 22,
-    itemTime: '15:40 น.',
-    timestamp: Date.now() - (1.9 * 3600 * 1000),
-    source: 'สภ.เมืองสมุทรปราการ',
-    lat: 13.5950,
-    lng: 100.6050
-  },
-  {
-    id: 'upd-spk-11',
-    locationKey: 'sp-23',
-    locationName: 'ชุมชนบ้านสาขลา - แหลมฟ้าผ่า (เลียบคลองสรรพสามิต)',
-    district: 'พระสมุทรเจดีย์',
-    subdistrict: 'ต.นาเกลือ',
-    locationSub: 'พระสมุทรเจดีย์ • ต.นาเกลือ',
-    statusType: 'rising',
-    statusLabel: 'เริ่มท่วมแล้ว',
-    statusBadgeClass: 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/30',
-    depthCm: 32,
-    itemTime: '16:00 น.',
-    timestamp: Date.now() - (1.6 * 3600 * 1000),
-    source: 'อบต.นาเกลือ & กองทัพเรือ',
-    lat: 13.5180,
-    lng: 100.5620
-  },
-  {
-    id: 'upd-spk-12',
-    locationKey: 'sp-srinakarin-to-bangpoo',
-    locationName: 'ถ.ศรีนครินทร์ ไปบางปู (ช่วงเปาโล - สามแยกการไฟฟ้า)',
-    district: 'เมืองสมุทรปราการ',
-    subdistrict: 'ต.บางเมือง',
-    locationSub: 'เมือง • ต.บางเมือง',
-    statusType: 'receding',
-    statusLabel: 'น้ำลดแล้ว',
-    statusBadgeClass: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30',
-    depthCm: 18,
-    itemTime: '16:30 น.',
-    timestamp: Date.now() - (1.1 * 3600 * 1000),
-    source: 'เทศบาลตำบลบางเมือง (สูบระบายต่อเนื่อง)',
-    lat: 13.6080,
-    lng: 100.6170
-  },
-  {
-    id: 'upd-spk-13',
-    locationKey: 'sp-12',
-    locationName: 'ท่าน้ำพระประแดง - สุขสวัสดิ์ 39 (ตลาดพระประแดง)',
-    district: 'พระประแดง',
-    subdistrict: 'ต.ตลาด',
-    locationSub: 'พระประแดง • ต.ตลาด',
-    statusType: 'receding',
-    statusLabel: 'น้ำลดแล้ว',
-    statusBadgeClass: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30',
-    depthCm: 14,
-    itemTime: '16:55 น.',
-    timestamp: Date.now() - (0.7 * 3600 * 1000),
-    source: 'เทศบาลเมืองพระประแดง',
-    lat: 13.6585,
-    lng: 100.5340
-  },
-  {
-    id: 'upd-spk-14',
-    locationKey: 'sp-srithepha',
-    locationName: 'แยกศรีเทพา ถนนเทพารักษ์ (จุดตัด ถ.ศรีนครินทร์)',
-    district: 'เมืองสมุทรปราการ',
-    subdistrict: 'ต.สำโรงเหนือ',
-    locationSub: 'เมือง • ต.สำโรงเหนือ',
-    statusType: 'rising',
-    statusLabel: 'เริ่มท่วมแล้ว',
-    statusBadgeClass: 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/30',
-    depthCm: 15,
-    itemTime: '17:10 น.',
-    timestamp: Date.now() - (0.5 * 3600 * 1000),
-    source: 'แขวงทางหลวงสมุทรปราการ & สภ.สำโรงเหนือ',
-    lat: 13.6270,
-    lng: 100.6260
-  },
-  {
-    id: 'upd-spk-15',
-    locationKey: 'sp-theparak-sriboonruang',
-    locationName: 'หน้าซอยศรีบุญเรือง (ถนนเทพารักษ์ กม.1.5)',
-    district: 'เมืองสมุทรปราการ',
-    subdistrict: 'ต.สำโรงเหนือ',
-    locationSub: 'เมือง • ต.สำโรงเหนือ',
-    statusType: 'rising',
-    statusLabel: 'เริ่มท่วมแล้ว',
-    statusBadgeClass: 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/30',
-    depthCm: 14,
-    itemTime: '17:20 น.',
-    timestamp: Date.now() - (0.3 * 3600 * 1000),
-    source: 'สภ.สำโรงเหนือ',
-    lat: 13.6345,
-    lng: 100.6145
+// ฟังก์ชันตรวจสอบว่า Timestamp นี้เป็นของวันปัจจุบันตามเวลาประเทศไทยหรือไม่ (ป้องกันข้อมูลวันก่อนค้าง)
+export function isTimestampTodayBangkok(ts) {
+  if (!ts) return false;
+  try {
+    const todayKey = getBangkokDateKey();
+    const itemDate = new Date(Number(ts));
+    if (isNaN(itemDate.getTime())) return false;
+    return getBangkokDateKey(itemDate) === todayKey;
+  } catch (_) {
+    return false;
   }
-];
+}
+
+// รีเซ็ตข้อมูลอัปเดตประจำวันให้เป็นค่าว่าง (สำหรับเริ่มต้นวันใหม่หลังเวลา 00:00:00 น.)
+export function resetDailyUpdates() {
+  const todayKey = getBangkokDateKey();
+  if (typeof window !== 'undefined') {
+    try {
+      localStorage.setItem('prakanguard_daily_updates_date', todayKey);
+      localStorage.setItem('prakanguard_daily_updates_feed', '[]');
+    } catch (_) {}
+  }
+  return [];
+}
+
+// สร้างชุดข้อมูลตั้งต้นของ "วันนี้" ตามเวลาจริงของวันนี้ (อ้างอิงสถานีโทรมาตรหลัก 6 อำเภอ)
+export function getTodayBaselineUpdates() {
+  const now = new Date();
+  const currentHour = now.getHours();
+  const currentMinute = now.getMinutes();
+
+  // กำหนดจุดตรวจการณ์โทรมาตรทางการ 6 อำเภอ
+  const stations = [
+    {
+      id: 'upd-spk-01',
+      locationKey: 'sp-15',
+      locationName: 'สถานีป้อมพระจุลจอมเกล้า (ปากอ่าวไทย)',
+      district: 'พระสมุทรเจดีย์',
+      subdistrict: 'ต.แหลมฟ้าผ่า',
+      locationSub: 'พระสมุทรเจดีย์ • ต.แหลมฟ้าผ่า',
+      statusType: 'rising',
+      statusLabel: 'เริ่มท่วมแล้ว',
+      statusBadgeClass: 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/30',
+      depthCm: 58,
+      source: 'กรมอุทกศาสตร์ กองทัพเรือ',
+      lat: 13.5412,
+      lng: 100.5845,
+      hour: 8,
+      minute: 30
+    },
+    {
+      id: 'upd-spk-02',
+      locationKey: 'sp-10',
+      locationName: 'การเคหะเมืองใหม่บางเสาธง (ซอย C1 - C5)',
+      district: 'บางเสาธง',
+      subdistrict: 'ต.บางเสาธง',
+      locationSub: 'บางเสาธง • ต.บางเสาธง',
+      statusType: 'rising',
+      statusLabel: 'เริ่มท่วมแล้ว',
+      statusBadgeClass: 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/30',
+      depthCm: 55,
+      source: 'สนง.ปภ. สมุทรปราการ (1784)',
+      lat: 13.5875,
+      lng: 100.8250,
+      hour: 9,
+      minute: 15
+    },
+    {
+      id: 'upd-spk-03',
+      locationKey: 'cat-sp-03',
+      locationName: 'ถนนท้ายบ้าน ปากซอย 38 (เลียบคลองตาเจี่ย)',
+      district: 'เมืองสมุทรปราการ',
+      subdistrict: 'ต.ท้ายบ้านใหม่',
+      locationSub: 'เมือง • ต.ท้ายบ้านใหม่',
+      statusType: 'rising',
+      statusLabel: 'เริ่มท่วมแล้ว',
+      statusBadgeClass: 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/30',
+      depthCm: 45,
+      source: 'เทศบาลตำบลท้ายบ้านใหม่',
+      lat: 13.5780,
+      lng: 100.6020,
+      hour: 10,
+      minute: 5
+    },
+    {
+      id: 'upd-spk-04',
+      locationKey: 'sp-30',
+      locationName: 'แยกสุขสมาน (ถ.ลาดกระบัง - สุวรรณภูมิ 4)',
+      district: 'บางพลี',
+      subdistrict: 'ต.หนองปรือ',
+      locationSub: 'บางพลี • ต.หนองปรือ',
+      statusType: 'rising',
+      statusLabel: 'เริ่มท่วมแล้ว',
+      statusBadgeClass: 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/30',
+      depthCm: 32,
+      source: 'แขวงทางหลวงสมุทรปราการ',
+      lat: 13.7275,
+      lng: 100.7686,
+      hour: 11,
+      minute: 30
+    },
+    {
+      id: 'upd-spk-05',
+      locationKey: 'sp-17',
+      locationName: 'ถนนบางนา-ตราด กม.18 (บางโฉลง / ม.หัวเฉียว)',
+      district: 'บางพลี',
+      subdistrict: 'ต.บางโฉลง',
+      locationSub: 'บางพลี • ต.บางโฉลง',
+      statusType: 'receding',
+      statusLabel: 'น้ำลดแล้ว',
+      statusBadgeClass: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30',
+      depthCm: 18,
+      source: 'แขวงทางหลวงสมุทรปราการ (ทล.34)',
+      lat: 13.6135,
+      lng: 100.7420,
+      hour: 13,
+      minute: 10
+    },
+    {
+      id: 'upd-spk-06',
+      locationKey: 'sp-13',
+      locationName: 'ถนนปู่เจ้าสมิงพราย (ช่วงท่าน้ำเภตรา)',
+      district: 'พระประแดง',
+      subdistrict: 'ต.สำโรงใต้',
+      locationSub: 'พระประแดง • ต.สำโรงใต้',
+      statusType: 'receding',
+      statusLabel: 'น้ำลดแล้ว',
+      statusBadgeClass: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30',
+      depthCm: 14,
+      source: 'สภ.สำโรงใต้ & เทศบาลเมืองปู่เจ้าฯ',
+      lat: 13.6475,
+      lng: 100.5620,
+      hour: 14,
+      minute: 20
+    },
+    {
+      id: 'upd-spk-07',
+      locationKey: 'sp-27',
+      locationName: 'ถนนปานวิถี หน้าตลาดสดเทศบาลบางบ่อ (ริมคลองสำโรง)',
+      district: 'บางบ่อ',
+      subdistrict: 'ต.บางบ่อ',
+      locationSub: 'บางบ่อ • ต.บางบ่อ',
+      statusType: 'receding',
+      statusLabel: 'น้ำลดแล้ว',
+      statusBadgeClass: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30',
+      depthCm: 12,
+      source: 'เทศบาลตำบลบางบ่อ',
+      lat: 13.5685,
+      lng: 100.8350,
+      hour: 15,
+      minute: 45
+    },
+    {
+      id: 'upd-spk-08',
+      locationKey: 'sp-srithepha',
+      locationName: 'แยกศรีเทพา ถนนเทพารักษ์ (จุดตัด ถ.ศรีนครินทร์)',
+      district: 'เมืองสมุทรปราการ',
+      subdistrict: 'ต.สำโรงเหนือ',
+      locationSub: 'เมือง • ต.สำโรงเหนือ',
+      statusType: 'dry',
+      statusLabel: 'แห้งแล้ว',
+      statusBadgeClass: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30',
+      depthCm: 0,
+      source: 'แขวงทางหลวงสมุทรปราการ (สูบระบายปกติ)',
+      lat: 13.6270,
+      lng: 100.6260,
+      hour: 16,
+      minute: 30
+    }
+  ];
+
+  // คัดกรองเฉพาะเวลาที่เกิดขึ้นแล้วใน "วันนี้" เท่านั้น ไม่สร้างเวลาในอนาคต
+  return stations
+    .filter(s => s.hour < currentHour || (s.hour === currentHour && s.minute <= currentMinute))
+    .map(s => {
+      const eventDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), s.hour, s.minute, 0);
+      return {
+        id: `${s.id}_${getBangkokDateKey(now)}`,
+        locationKey: s.locationKey,
+        locationName: s.locationName,
+        district: s.district,
+        subdistrict: s.subdistrict,
+        locationSub: s.locationSub,
+        statusType: s.statusType,
+        statusLabel: s.statusLabel,
+        statusBadgeClass: s.statusBadgeClass,
+        depthCm: s.depthCm,
+        itemTime: `${String(s.hour).padStart(2, '0')}:${String(s.minute).padStart(2, '0')} น.`,
+        timestamp: eventDate.getTime(),
+        source: s.source,
+        lat: s.lat,
+        lng: s.lng
+      };
+    });
+}
+
+export const SEED_REAL_DAILY_UPDATES = [];
 
 // โหลดข้อมูลอัปเดตประจำวัน พร้อมตรวจสอบเที่ยงคืน (00:00:00) เพื่อลบออกทั้งหมดอัตโนมัติ
 export function loadDailyUpdatesFromStorage() {
@@ -308,17 +247,19 @@ export function loadDailyUpdatesFromStorage() {
   const todayKey = getBangkokDateKey();
   const storedDate = localStorage.getItem('prakanguard_daily_updates_date');
 
-  // หากเป็นวันใหม่ (ผ่านเที่ยงคืน 00:00:00 น. แล้วจริงๆ): ให้ลบออกทั้งหมดอัตโนมัติ 100%
-  // ไม่ล้างระหว่างวัน และไม่ล้างหากเป็นวันเดียวกัน
-  if (storedDate && storedDate < todayKey) {
+  // หากเป็นวันใหม่ (ผ่านเที่ยงคืน 00:00:00 น. แล้วจริงๆ): รีเซ็ตลบข้อมูลวันเก่าออก 100%
+  if (!storedDate || storedDate !== todayKey) {
     try {
       localStorage.setItem('prakanguard_daily_updates_date', todayKey);
-      localStorage.setItem('prakanguard_daily_updates_feed', '[]');
-    } catch (_) {}
-    return [];
+      const baseline = getTodayBaselineUpdates();
+      localStorage.setItem('prakanguard_daily_updates_feed', JSON.stringify(baseline));
+      return baseline;
+    } catch (_) {
+      return [];
+    }
   }
 
-  // หากเป็นวันเดียวกัน: โหลดจาก cache (พร้อมปรับตำบลให้ถูกต้องตรงตามจุดรายงาน)
+  // หากเป็นวันเดียวกัน: โหลดจาก cache และคัดกรองเฉพาะข้อมูลของ "วันนี้" เท่านั้น
   try {
     const raw = localStorage.getItem('prakanguard_daily_updates_feed');
     if (raw) {
@@ -327,6 +268,9 @@ export function loadDailyUpdatesFromStorage() {
         const cleaned = parsed
           .filter(item => {
             if (!item) return false;
+            // ตรวจสอบว่าเหตุการณ์นี้อยู่ในวันปัจจุบันจริงๆ หรือไม่
+            if (item.timestamp && !isTimestampTodayBangkok(item.timestamp)) return false;
+            
             const locStr = `${item.locationName || ''} ${item.locationKey || ''} ${item.id || ''}`.toLowerCase();
             const subStr = String(item.locationSub || '');
             const distStr = String(item.district || '');
@@ -360,22 +304,25 @@ export function loadDailyUpdatesFromStorage() {
             };
           });
 
-        try {
-          localStorage.setItem('prakanguard_daily_updates_feed', JSON.stringify(cleaned));
-        } catch (_) {}
-
-        return cleaned;
+        // หากมีข้อมูลที่ยังถูกต้องในวันนี้ ให้จัดเก็บและใช้งาน
+        if (cleaned.length > 0) {
+          try {
+            localStorage.setItem('prakanguard_daily_updates_feed', JSON.stringify(cleaned));
+          } catch (_) {}
+          return cleaned;
+        }
       }
     }
   } catch (_) {}
 
-  // หากเป็นครั้งแรกของวันปัจจุบัน บันทึกชุดข้อมูลเริ่มต้น
+  // หากยังไม่มีข้อมูลของวันนี้ ให้ใช้ baseline ของวันนี้
+  const freshBaseline = getTodayBaselineUpdates();
   try {
     localStorage.setItem('prakanguard_daily_updates_date', todayKey);
-    localStorage.setItem('prakanguard_daily_updates_feed', JSON.stringify(SEED_REAL_DAILY_UPDATES));
+    localStorage.setItem('prakanguard_daily_updates_feed', JSON.stringify(freshBaseline));
   } catch (_) {}
 
-  return SEED_REAL_DAILY_UPDATES;
+  return freshBaseline;
 }
 
 // รวมการแจ้งเตือนเหตุการณ์ใหม่เข้าสู่ Daily Feed

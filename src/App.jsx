@@ -281,7 +281,7 @@ export default function App() {
       const todayKey = getBangkokDateKey();
       const storedDate = localStorage.getItem('prakanguard_daily_updates_date');
       // ลบเฉพาะเมื่อผ่านเที่ยงคืนของวันใหม่จริงๆ เท่านั้น ห้ามล้างระหว่างวัน
-      if (storedDate && storedDate < todayKey) {
+      if (storedDate && storedDate !== todayKey) {
         setDailyUpdates([]);
         try {
           localStorage.setItem('prakanguard_daily_updates_date', todayKey);
@@ -290,7 +290,16 @@ export default function App() {
       }
     };
 
-    const interval = setInterval(checkMidnight, 30000);
+    const interval = setInterval(checkMidnight, 15000);
+
+    // ตรวจสอบทันทีเมื่อผู้ใช้งานสลับกลับมาที่หน้าเว็บบนมือถือ (Mobile Tab Resume / Wakeup)
+    const handleVisibilityOrFocus = () => {
+      if (typeof document !== 'undefined' && !document.hidden) {
+        checkMidnight();
+      }
+    };
+    window.addEventListener('visibilitychange', handleVisibilityOrFocus);
+    window.addEventListener('focus', handleVisibilityOrFocus);
 
     const msUntilMidnight = getMsUntilBangkokMidnight();
     const midnightTimer = setTimeout(() => {
@@ -330,6 +339,8 @@ export default function App() {
     return () => {
       clearInterval(interval);
       clearTimeout(midnightTimer);
+      window.removeEventListener('visibilitychange', handleVisibilityOrFocus);
+      window.removeEventListener('focus', handleVisibilityOrFocus);
       window.removeEventListener('prakanguard:official-flood-points', handleOfficialFloodPoints);
     };
   }, []);

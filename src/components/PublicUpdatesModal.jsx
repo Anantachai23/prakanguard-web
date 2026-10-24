@@ -8,6 +8,7 @@ import {
   Clock
 } from 'lucide-react';
 import { CivicBroadcast, CivicShield } from './CivicIcons';
+import { isTimestampTodayBangkok, getBangkokDateKey } from '../services/dailyUpdatesService';
 
 export default function PublicUpdatesModal({ 
   isOpen, 
@@ -24,6 +25,10 @@ export default function PublicUpdatesModal({
 }) {
   if (!isOpen) return null;
   const isDark = theme === 'dark';
+
+  const todayDateObj = new Date();
+  const thaiMonths = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+  const todayThaiDate = `${todayDateObj.getDate()} ${thaiMonths[todayDateObj.getMonth()]} ${todayDateObj.getFullYear() + 543}`;
 
   const formatDisplayTime = (timeStr, timestamp) => {
     if (!timeStr && !timestamp) return 'เมื่อสักครู่';
@@ -45,6 +50,10 @@ export default function PublicUpdatesModal({
 
   const isRealUpdateItem = (item) => {
     if (!item) return false;
+    // ป้องกันข้อมูลเก่าข้ามวันบนมือถือ: กรองเฉพาะข้อมูลของวันนี้ตามเวลาประเทศไทยเท่านั้น (รีเซ็ตทุกเที่ยงคืน)
+    if (item.timestamp && !isTimestampTodayBangkok(item.timestamp)) return false;
+    if (item.dateKey && item.dateKey !== getBangkokDateKey()) return false;
+
     const name = String(item.locationName || '').toLowerCase();
     const sub = String(item.locationSub || '');
     const dist = String(item.district || '');
@@ -135,7 +144,7 @@ export default function PublicUpdatesModal({
                 </span>
               </div>
               <p className={`text-[10.5px] sm:text-xs leading-tight mt-0.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                ติดตามความเคลื่อนไหวระดับน้ำประจำวัน (รีเซ็ต 00:00 น.)
+                {todayThaiDate} • รีเซ็ตทุกเที่ยงคืน 00:00 น.
               </p>
             </div>
           </div>
@@ -219,12 +228,12 @@ export default function PublicUpdatesModal({
 
           {items.length === 0 ? (
             <div className="py-10 text-center text-xs text-slate-500 flex flex-col items-center justify-center gap-2">
-              <CivicShield className="w-7 h-7 text-emerald-500 opacity-75" />
+              <CivicShield className="w-8 h-8 text-emerald-500 opacity-80" />
               <span className="font-semibold text-slate-700 dark:text-slate-300">
-                ยังไม่มีรายงานการเปลี่ยนแปลงระดับน้ำหลังเวลา 00:00 น.
+                ยังไม่มีรายงานน้ำท่วมขังของวันนี้ ({todayThaiDate})
               </span>
-              <span className="text-[11px] text-slate-400">
-                เส้นทางหลักในจังหวัดสมุทรปราการสามารถสัญจรได้ตามปกติ
+              <span className="text-[11px] text-slate-400 max-w-xs leading-relaxed">
+                ข้อมูลรีเซ็ตอัตโนมัติทุกเที่ยงคืน (00:00 น.) — เส้นทางหลักทุกสายในจังหวัดสมุทรปราการสัญจรได้ตามปกติ
               </span>
             </div>
           ) : (
