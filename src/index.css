@@ -297,6 +297,26 @@ body {
   background: rgba(245, 158, 11, 0.9);
 }
 
+/* Modern Sleek Horizontal Scrollbar for PC / Desktop Timeline */
+.timeline-scrollbar::-webkit-scrollbar {
+  height: 6px;
+}
+.timeline-scrollbar::-webkit-scrollbar-track {
+  background: rgba(148, 163, 184, 0.12);
+  border-radius: 9999px;
+}
+.dark .timeline-scrollbar::-webkit-scrollbar-track {
+  background: rgba(30, 41, 59, 0.5);
+}
+.timeline-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(59, 130, 246, 0.4);
+  border-radius: 9999px;
+  transition: background 0.2s;
+}
+.timeline-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(59, 130, 246, 0.8);
+}
+
 /* Outside Samut Prakan Province Blur & Vignette Dimming Mask */
 .outside-province-mask {
   filter: drop-shadow(0 0 12px rgba(2, 132, 199, 0.45));

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   X, 
   Clock, 
@@ -14,7 +14,9 @@ import {
   MapPin,
   AlertTriangle,
   CheckCircle2,
-  Zap
+  Zap,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { getLiveSamutPrakanWeather } from '../services/weatherService';
 import { playClickSound, playCloseSound } from '../services/soundEffects';
@@ -24,6 +26,12 @@ export default function AiForecastModal({ isOpen, onClose, userDistrict, theme =
   const [weather, setWeather] = useState(null);
   const [loadingWeather, setLoadingWeather] = useState(true);
   const [currentDate, setCurrentDate] = useState(() => new Date());
+
+  // Ref และสถานะสำหรับเลื่อนไทม์ไลน์บนคอมพิวเตอร์และมือถือ
+  const timelineRef = useRef(null);
+  const [isMouseDown, setIsMouseDown] = useState(false);
+  const [startX, setStartX] = useState(0);
+  const [scrollLeftPos, setScrollLeftPos] = useState(0);
 
   const isDark = theme === 'dark';
 
@@ -66,6 +74,46 @@ export default function AiForecastModal({ isOpen, onClose, userDistrict, theme =
       fetchWeather(false);
     }
   }, [isOpen]);
+
+  // ฟังก์ชันเลื่อนไทม์ไลน์สำหรับ PC (ปุ่มซ้าย-ขวา)
+  const handleScrollTimeline = (direction) => {
+    if (!timelineRef.current) return;
+    try { playClickSound(); } catch (_) {}
+    const distance = 240;
+    timelineRef.current.scrollBy({
+      left: direction === 'left' ? -distance : distance,
+      behavior: 'smooth'
+    });
+  };
+
+  // ฟังก์ชันหมุนลูกกลิ้งเมาส์ (Mouse Wheel) ให้เลื่อนแนวนอนบนคอม
+  const handleTimelineWheel = (e) => {
+    if (!timelineRef.current) return;
+    if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+      e.preventDefault();
+      timelineRef.current.scrollLeft += e.deltaY * 1.2;
+    }
+  };
+
+  // ฟังก์ชันคลิกเมาส์แล้วลากเลื่อน (Mouse Drag to Scroll) สำหรับคอมพิวเตอร์
+  const handleMouseDown = (e) => {
+    if (!timelineRef.current) return;
+    setIsMouseDown(true);
+    setStartX(e.pageX - timelineRef.current.offsetLeft);
+    setScrollLeftPos(timelineRef.current.scrollLeft);
+  };
+
+  const handleMouseMove = (e) => {
+    if (!isMouseDown || !timelineRef.current) return;
+    e.preventDefault();
+    const x = e.pageX - timelineRef.current.offsetLeft;
+    const walk = (x - startX) * 1.5;
+    timelineRef.current.scrollLeft = scrollLeftPos - walk;
+  };
+
+  const handleMouseUpOrLeave = () => {
+    setIsMouseDown(false);
+  };
 
   if (!isOpen) return null;
 
@@ -153,7 +201,7 @@ export default function AiForecastModal({ isOpen, onClose, userDistrict, theme =
       }}
       className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-2.5 sm:p-4 overflow-y-auto"
     >
-      <div className={`w-[88vw] max-w-[340px] sm:max-w-xl md:max-w-2xl my-auto m-auto border rounded-xl sm:rounded-2xl shadow-2xl relative max-h-[73vh] sm:max-h-[84vh] flex flex-col overflow-hidden transition-all ${
+      <div className={`w-[88vw] max-w-[340px] sm:max-w-2xl lg:max-w-3xl my-auto m-auto border rounded-xl sm:rounded-2xl shadow-2xl relative max-h-[73vh] sm:max-h-[85vh] flex flex-col overflow-hidden transition-all ${
         isDark ? 'bg-slate-900 border-slate-800 text-slate-100' : 'bg-white border-slate-200 text-slate-900'
       }`}>
         {/* Top Gradient Stripe */}
@@ -171,7 +219,7 @@ export default function AiForecastModal({ isOpen, onClose, userDistrict, theme =
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-1.5 flex-wrap">
-                <h3 className={`text-[12.5px] sm:text-sm font-bold leading-tight tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                <h3 className={`text-[12.5px] sm:text-base font-bold leading-tight tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>
                   พยากรณ์ฝนและสภาพอากาศ 24 ชม.
                 </h3>
                 <span className="px-1 py-0.2 rounded text-[8.5px] sm:text-[9.5px] font-semibold bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/20 shrink-0">
@@ -216,7 +264,7 @@ export default function AiForecastModal({ isOpen, onClose, userDistrict, theme =
         </div>
 
         {/* Modal Body */}
-        <div className="flex-1 overflow-y-auto px-3 sm:px-4 py-2.5 sm:py-3.5 space-y-2.5 sm:space-y-3.5">
+        <div className="flex-1 overflow-y-auto custom-scrollbar-thin px-3 sm:px-5 py-2.5 sm:py-4 space-y-3 sm:space-y-4">
           {loadingWeather && !weather ? (
             <div className="py-10 flex flex-col items-center justify-center gap-2 text-xs text-slate-500">
               <span className="w-2.5 h-2.5 rounded-full bg-blue-600 animate-ping" />
@@ -225,27 +273,27 @@ export default function AiForecastModal({ isOpen, onClose, userDistrict, theme =
           ) : (
             <>
               {/* 1. HERO WEATHER & RAIN RISK CARD */}
-              <div className={`p-2.5 sm:p-3 rounded-lg sm:rounded-xl border relative overflow-hidden transition-all ${
+              <div className={`p-2.5 sm:p-3.5 rounded-lg sm:rounded-xl border relative overflow-hidden transition-all ${
                 isDark 
                   ? 'bg-gradient-to-br from-slate-900/90 via-slate-900/60 to-blue-950/40 border-slate-800' 
                   : 'bg-gradient-to-br from-blue-50/70 via-sky-50/40 to-indigo-50/30 border-blue-200/70 shadow-2xs'
               }`}>
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-4">
                   {/* Left: Main Temp & Sky */}
-                  <div className="min-w-0">
+                  <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
-                      <span className="text-2xl sm:text-3xl font-extrabold tracking-tight font-mono text-slate-900 dark:text-white">
+                      <span className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight font-mono text-slate-900 dark:text-white">
                         {weather?.temp ?? 29}°C
                       </span>
                       <div className="flex flex-col">
-                        <span className={`text-[10px] sm:text-[11px] font-bold px-1.5 py-0.5 rounded border inline-flex items-center gap-1 ${
+                        <span className={`text-[10px] sm:text-xs font-bold px-1.5 py-0.5 rounded border inline-flex items-center gap-1 ${
                           isDark ? 'bg-slate-800 text-slate-200 border-slate-700' : 'bg-white text-slate-700 border-slate-200 shadow-2xs'
                         }`}>
                           {getWeatherIcon(weather?.weatherCode ?? 2, weather?.precipitation ?? 0)}
-                          <span className="truncate max-w-[130px] sm:max-w-none">{weather?.weatherDesc || 'ท้องฟ้าโปร่ง มีเมฆบางส่วน'}</span>
+                          <span className="truncate max-w-[140px] sm:max-w-none">{weather?.weatherDesc || 'ท้องฟ้าโปร่ง มีเมฆบางส่วน'}</span>
                         </span>
                         {weather?.feelsLike && (
-                          <span className={`text-[9.5px] mt-0.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                          <span className={`text-[9.5px] sm:text-[10px] mt-0.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
                             รู้สึกเหมือน {weather.feelsLike}°C
                           </span>
                         )}
@@ -253,17 +301,17 @@ export default function AiForecastModal({ isOpen, onClose, userDistrict, theme =
                     </div>
 
                     {/* Micro Telemetry Badges */}
-                    <div className="flex items-center gap-1.5 flex-wrap mt-2 text-[9px] sm:text-[10px]">
+                    <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap mt-2 text-[9px] sm:text-[10px]">
                       <span className={`px-1.5 py-0.5 rounded border flex items-center gap-1 ${
                         isDark ? 'bg-slate-850 text-slate-300 border-slate-700' : 'bg-white/90 text-slate-600 border-slate-200'
                       }`}>
-                        <Droplets className="w-2.5 h-2.5 text-sky-500 shrink-0" />
+                        <Droplets className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-sky-500 shrink-0" />
                         <span>ความชื้น {weather?.humidity ?? 72}%</span>
                       </span>
                       <span className={`px-1.5 py-0.5 rounded border flex items-center gap-1 ${
                         isDark ? 'bg-slate-850 text-slate-300 border-slate-700' : 'bg-white/90 text-slate-600 border-slate-200'
                       }`}>
-                        <Wind className="w-2.5 h-2.5 text-cyan-500 shrink-0" />
+                        <Wind className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-cyan-500 shrink-0" />
                         <span>ลม {weather?.windSpeed ?? 14} กม./ชม.</span>
                       </span>
                       {weather?.thunderstormRisk && (
@@ -272,7 +320,7 @@ export default function AiForecastModal({ isOpen, onClose, userDistrict, theme =
                             ? (isDark ? 'bg-amber-950/80 text-amber-300 border-amber-800' : 'bg-amber-50 text-amber-800 border-amber-200')
                             : (isDark ? 'bg-slate-850 text-slate-300 border-slate-700' : 'bg-white/90 text-slate-600 border-slate-200')
                         }`}>
-                          <Zap className="w-2.5 h-2.5 text-amber-500 shrink-0" />
+                          <Zap className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-amber-500 shrink-0" />
                           <span>ฟ้าคะนอง: {weather.thunderstormRisk}</span>
                         </span>
                       )}
@@ -280,7 +328,7 @@ export default function AiForecastModal({ isOpen, onClose, userDistrict, theme =
                   </div>
 
                   {/* Right: Rain Probability & Peak Status */}
-                  <div className={`p-2 sm:p-2.5 rounded-lg border flex flex-col justify-center sm:min-w-[170px] shrink-0 ${
+                  <div className={`p-2 sm:p-3 rounded-lg border flex flex-col justify-center sm:min-w-[190px] shrink-0 ${
                     isRainingNow
                       ? (isDark ? 'bg-rose-950/50 border-rose-800/80' : 'bg-rose-50 border-rose-200')
                       : maxProb >= 60
@@ -304,7 +352,7 @@ export default function AiForecastModal({ isOpen, onClose, userDistrict, theme =
 
                     <div className="flex items-baseline gap-1.5">
                       {isRainingNow ? (
-                        <span className="text-xs sm:text-sm font-black text-rose-600 dark:text-rose-400">
+                        <span className="text-xs sm:text-base font-black text-rose-600 dark:text-rose-400">
                           ฝนตกในพื้นที่ขณะนี้
                         </span>
                       ) : (
@@ -312,7 +360,7 @@ export default function AiForecastModal({ isOpen, onClose, userDistrict, theme =
                           <span className="text-xl sm:text-2xl font-black font-mono tracking-tight text-slate-900 dark:text-white">
                             {maxProb}%
                           </span>
-                          <span className={`text-[10.5px] font-semibold ${
+                          <span className={`text-[10.5px] sm:text-xs font-semibold ${
                             maxProb >= 60 ? 'text-rose-600 dark:text-rose-400' : maxProb >= 30 ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400'
                           }`}>
                             {maxProb >= 60 ? 'เสี่ยงฝนตกหนัก' : maxProb >= 30 ? 'เฝ้าระวังฝนฟ้าคะนอง' : 'โอกาสฝนน้อย'}
@@ -343,7 +391,7 @@ export default function AiForecastModal({ isOpen, onClose, userDistrict, theme =
                 )}
               </div>
 
-              {/* 2. 24-HOUR HOURLY TIMELINE (HORIZONTAL SCROLLER) */}
+              {/* 2. 24-HOUR HOURLY TIMELINE (HORIZONTAL SCROLLER WITH PC ARROWS & WHEEL SUPPORT) */}
               {hourlyData.length > 0 && (
                 <div>
                   <div className="flex items-center justify-between mb-1.5">
@@ -353,13 +401,51 @@ export default function AiForecastModal({ isOpen, onClose, userDistrict, theme =
                         ไทม์ไลน์คาดการณ์ฝน 24 ชั่วโมงข้างหน้า
                       </h4>
                     </div>
-                    <span className="text-[9px] text-slate-400">เลื่อนซ้าย-ขวา</span>
+
+                    {/* Desktop Scroll Controls */}
+                    <div className="flex items-center gap-1">
+                      <span className="text-[9px] text-slate-400 hidden sm:inline">หมุนเมาส์หรือคลิกลาก</span>
+                      <div className="flex items-center gap-0.5 ml-1">
+                        <button
+                          type="button"
+                          onClick={() => handleScrollTimeline('left')}
+                          className={`w-6 h-6 rounded border flex items-center justify-center transition-colors cursor-pointer ${
+                            isDark 
+                              ? 'bg-slate-800 hover:bg-slate-700 text-slate-300 border-slate-700' 
+                              : 'bg-white hover:bg-slate-100 text-slate-600 border-slate-200 shadow-2xs'
+                          }`}
+                          title="เลื่อนไปทางซ้าย"
+                        >
+                          <ChevronLeft className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleScrollTimeline('right')}
+                          className={`w-6 h-6 rounded border flex items-center justify-center transition-colors cursor-pointer ${
+                            isDark 
+                              ? 'bg-slate-800 hover:bg-slate-700 text-slate-300 border-slate-700' 
+                              : 'bg-white hover:bg-slate-100 text-slate-600 border-slate-200 shadow-2xs'
+                          }`}
+                          title="เลื่อนไปทางขวา"
+                        >
+                          <ChevronRight className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
                   </div>
 
-                  <div className="relative">
-                    <div className={`flex gap-1.5 overflow-x-auto pb-1.5 pt-0.5 px-0.5 no-scrollbar snap-x scroll-smooth rounded-lg border p-1.5 ${
-                      isDark ? 'bg-slate-950/40 border-slate-800' : 'bg-slate-50/60 border-slate-200'
-                    }`}>
+                  <div className="relative group">
+                    <div 
+                      ref={timelineRef}
+                      onWheel={handleTimelineWheel}
+                      onMouseDown={handleMouseDown}
+                      onMouseMove={handleMouseMove}
+                      onMouseUp={handleMouseUpOrLeave}
+                      onMouseLeave={handleMouseUpOrLeave}
+                      className={`timeline-scrollbar flex gap-1.5 overflow-x-auto pb-2 pt-0.5 px-0.5 scroll-smooth rounded-lg border p-1.5 cursor-grab active:cursor-grabbing select-none ${
+                        isDark ? 'bg-slate-950/40 border-slate-800' : 'bg-slate-50/60 border-slate-200'
+                      }`}
+                    >
                       {hourlyData.map((h, i) => {
                         const isHighRain = h.probability >= 60;
                         const isModerateRain = h.probability >= 30;
@@ -367,7 +453,7 @@ export default function AiForecastModal({ isOpen, onClose, userDistrict, theme =
                         return (
                           <div
                             key={i}
-                            className={`flex flex-col items-center justify-between min-w-[54px] sm:min-w-[64px] p-1.5 rounded-lg border text-center snap-start transition-all shrink-0 ${
+                            className={`flex flex-col items-center justify-between min-w-[56px] sm:min-w-[66px] p-1.5 rounded-lg border text-center transition-all shrink-0 pointer-events-none select-none ${
                               h.isNow
                                 ? (isDark 
                                     ? 'bg-blue-950/70 border-blue-600 ring-1 ring-blue-500/30 text-white font-bold' 
@@ -519,7 +605,7 @@ export default function AiForecastModal({ isOpen, onClose, userDistrict, theme =
         </div>
 
         {/* Footer */}
-        <div className={`px-3 py-2 sm:px-4 sm:py-2.5 border-t flex items-center justify-between gap-2 text-xs shrink-0 ${
+        <div className={`px-3 py-2 sm:px-5 sm:py-3 border-t flex items-center justify-between gap-2 text-xs shrink-0 ${
           isDark ? 'border-slate-800 bg-slate-950/60' : 'border-slate-200 bg-slate-50/80'
         }`}>
           <a
@@ -535,9 +621,9 @@ export default function AiForecastModal({ isOpen, onClose, userDistrict, theme =
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
               <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500" />
             </span>
-            <CivicRadar className="w-3 h-3 shrink-0" />
+            <CivicRadar className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
             <span className="group-hover:underline">เรดาร์ตรวจฝนสด (กทม.-สมุทรปราการ)</span>
-            <ExternalLink className="w-2.5 h-2.5 shrink-0 opacity-70" />
+            <ExternalLink className="w-2.5 h-2.5 sm:w-3 sm:h-3 shrink-0 opacity-70" />
           </a>
 
           <button
@@ -546,7 +632,7 @@ export default function AiForecastModal({ isOpen, onClose, userDistrict, theme =
               playCloseSound();
               onClose();
             }}
-            className={`px-3 py-1 rounded-md sm:rounded-lg font-semibold text-[11px] sm:text-xs border transition-colors cursor-pointer ${
+            className={`px-3 py-1 sm:px-4 sm:py-1.5 rounded-md sm:rounded-lg font-semibold text-[11px] sm:text-xs border transition-colors cursor-pointer ${
               isDark ? 'bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700' : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-200 shadow-2xs'
             }`}
           >
