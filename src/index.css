@@ -467,3 +467,19 @@ button:not(:disabled):active, [role="button"]:not([aria-disabled="true"]):active
 @media (prefers-reduced-motion: reduce) {
   .cctv-noise, .cctv-blink, .pgb-dot, .pgb-msg-in { animation: none !important; }
 }
+
+/* ==========================================================================
+   Desktop Liquid Water Droplet Cursor & Smooth Interactivity
+   ========================================================================== */
+@media (hover: hover) and (pointer: fine) {
+  body.water-cursor-enabled,
+  body.water-cursor-enabled *:not(input):not(textarea):not([contenteditable="true"]) {
+    cursor: none !important;
+  }
+
+  body.water-cursor-enabled input,
+  body.water-cursor-enabled textarea,
+  body.water-cursor-enabled [contenteditable="true"] {
+    cursor: text !important;
+  }
+}

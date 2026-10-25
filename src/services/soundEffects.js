@@ -552,3 +552,41 @@ export function playAdminTerminalSound() {
 export function playDangerSound() {
   playAdminRejectSound();
 }
+
+/**
+ * Water Droplet Splash (Soft, crisp natural acoustic splash on click)
+ */
+export function playWaterSplashSound() {
+  withAudioContext((ctx, now) => {
+    // Water drop impact "plop"
+    const osc1 = ctx.createOscillator();
+    const gain1 = ctx.createGain();
+    osc1.type = 'sine';
+    osc1.frequency.setValueAtTime(1080, now);
+    osc1.frequency.exponentialRampToValueAtTime(560, now + 0.035);
+    osc1.frequency.exponentialRampToValueAtTime(1380, now + 0.07);
+
+    gain1.gain.setValueAtTime(0.07, now);
+    gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.075);
+
+    osc1.connect(gain1);
+    gain1.connect(ctx.destination);
+    osc1.start(now);
+    osc1.stop(now + 0.08);
+
+    // Secondary subtle water dispersion resonance
+    const osc2 = ctx.createOscillator();
+    const gain2 = ctx.createGain();
+    osc2.type = 'triangle';
+    osc2.frequency.setValueAtTime(840, now + 0.015);
+    osc2.frequency.exponentialRampToValueAtTime(1220, now + 0.07);
+
+    gain2.gain.setValueAtTime(0.035, now + 0.015);
+    gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+
+    osc2.connect(gain2);
+    gain2.connect(ctx.destination);
+    osc2.start(now + 0.015);
+    osc2.stop(now + 0.085);
+  });
+}

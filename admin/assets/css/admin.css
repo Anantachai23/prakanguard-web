@@ -3983,4 +3983,20 @@ input:-moz-autofill-preview,
   border-color: rgba(16, 185, 129, 0.4) !important;
 }
 
+/* ==========================================================================
+   Desktop Liquid Water Droplet Cursor & Smooth Interactivity
+   ========================================================================== */
+@media (hover: hover) and (pointer: fine) {
+  body.water-cursor-enabled,
+  body.water-cursor-enabled *:not(input):not(textarea):not([contenteditable="true"]) {
+    cursor: none !important;
+  }
+
+  body.water-cursor-enabled input,
+  body.water-cursor-enabled textarea,
+  body.water-cursor-enabled [contenteditable="true"] {
+    cursor: text !important;
+  }
+}
+
 

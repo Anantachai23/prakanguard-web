@@ -17,6 +17,7 @@ import MobileBottomNav from './components/MobileBottomNav';
 import PrivacyPolicyModal from './components/PrivacyPolicyModal';
 import AutoMarquee from './components/AutoMarquee';
 import ChatBot from './components/ChatBot';
+import WaterCursor from './components/WaterCursor';
 import { CCTV_CAMERAS } from './data/cctvCameras';
 import { INITIAL_FLOOD_POINTS, INITIAL_CITIZEN_REPORTS, DISTRICTS, matchesLocationSearch, scoreLocationSearch, POPULAR_SEARCH_SUGGESTIONS, findCorridorForPoint, MAJOR_FLOOD_CORRIDORS } from './data/samutPrakanPoints';
 import { SAMUT_PRAKAN_DISTRICTS_DATA } from './data/samutPrakanDistricts';
@@ -4526,6 +4527,9 @@ export default function App() {
         isSearchOpen={isMobileSheetOpen}
       />
 
+
+      {/* 5. LIQUID WATER DROPLET CURSOR & SPLASH ENGINE (บนคอมพิวเตอร์) */}
+      <WaterCursor />
 
     </div>
   );
