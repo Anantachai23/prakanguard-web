@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { X, ArrowRight } from 'lucide-react';
-import {
-  CivicCrest,
-  CivicGauge,
-  CivicRadar,
-  CivicReportCamera,
-  CivicShield
-} from './CivicIcons';
+import { X, ArrowRight, ShieldCheck, MapPin, Radio, Eye } from 'lucide-react';
+import { CivicCrest, CivicShield } from './CivicIcons';
+import { playSelectSound } from '../services/soundEffects';
 
+/**
+ * PrakanGuard Official Welcome & Telemetry Portal Modal
+ * Redesigned for official civic authority aesthetic, minimal elegance, and smooth transitions
+ */
 export default function WelcomeModal({ 
   isOpen, 
   onClose, 
@@ -35,6 +34,9 @@ export default function WelcomeModal({
 
   const handleEnter = () => {
     if (isExiting) return;
+    try {
+      playSelectSound();
+    } catch (_) {}
     setIsExiting(true);
 
     setTimeout(() => {
@@ -45,32 +47,14 @@ export default function WelcomeModal({
 
     setTimeout(() => {
       if (onClose) onClose();
-    }, 650);
+    }, 450);
   };
-
-  const capabilities = [
-    {
-      icon: <CivicGauge className="w-4 h-4" />,
-      title: 'ตรวจวัดและจำแนกระดับน้ำ 3 ระดับ',
-      desc: 'แสดงสถานะจุดน้ำท่วมขัง (ปกติ, ปานกลาง, วิกฤต) พร้อมแนวโน้มระดับน้ำและภาพถ่ายหน้างานจริง'
-    },
-    {
-      icon: <CivicRadar className="w-4 h-4" />,
-      title: 'พยากรณ์ฝนและอุตุนิยมวิทยา 6 อำเภอ',
-      desc: 'เชื่อมโยงข้อมูลสภาพอากาศ อุณหภูมิ และความน่าจะเป็นของฝนรายชั่วโมงตลอด 24 ชั่วโมง'
-    },
-    {
-      icon: <CivicReportCamera className="w-4 h-4" />,
-      title: 'ระบบรายงานสถานการณ์ภาคประชาชน',
-      desc: 'แจ้งพิกัดจุดน้ำท่วมขังพร้อมภาพถ่ายเพื่อให้ศูนย์ควบคุมตรวจสอบและแจ้งเตือนผู้ใช้เส้นทาง'
-    }
-  ];
 
   return (
     <div 
-      className={`fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 overflow-y-auto select-none transition-all duration-500 ${
+      className={`fixed inset-0 z-50 flex items-center justify-center p-3.5 sm:p-5 overflow-y-auto select-none transition-all duration-400 ${
         isEntering && !isExiting 
-          ? 'bg-slate-950/65 backdrop-blur-xs opacity-100 pointer-events-auto' 
+          ? 'bg-slate-950/60 backdrop-blur-sm opacity-100 pointer-events-auto' 
           : 'bg-slate-950/0 backdrop-blur-none opacity-0 pointer-events-none'
       }`}
       onClick={(e) => {
@@ -81,121 +65,147 @@ export default function WelcomeModal({
       }}
     >
       <div 
-        className={`w-[88vw] max-w-[335px] sm:max-w-lg my-auto m-auto max-h-[72vh] sm:max-h-[84vh] border rounded-xl shadow-2xl overflow-hidden flex flex-col relative transition-all ${
+        className={`w-[92vw] max-w-[420px] sm:max-w-md my-auto m-auto border rounded-2xl shadow-2xl overflow-hidden flex flex-col relative transition-all ${
           isDark 
-            ? 'bg-slate-900 border-slate-800 text-slate-100' 
-            : 'bg-white border-slate-200 text-slate-900'
+            ? 'bg-slate-900/95 border-slate-700/80 text-slate-100 shadow-black/60' 
+            : 'bg-white/95 border-slate-200/90 text-slate-900 shadow-slate-900/20'
         }`}
         style={{
           transform: !isEntering 
-            ? 'translate3d(0, 20px, 0) scale(0.98)' 
+            ? 'translate3d(0, 18px, 0) scale(0.97)' 
             : isExiting 
-              ? 'translate3d(0, -40px, 0) scale(0.98)' 
+              ? 'translate3d(0, -20px, 0) scale(0.98)' 
               : 'translate3d(0, 0, 0) scale(1)',
           opacity: !isEntering || isExiting ? 0 : 1,
           transitionProperty: 'transform, opacity',
-          transitionDuration: isExiting ? '500ms' : '450ms',
+          transitionDuration: isExiting ? '400ms' : '380ms',
           transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)',
           willChange: 'transform, opacity'
         }}
       >
-        {/* Top Institutional Bar */}
-        <div className="h-1 w-full bg-blue-700 shrink-0" />
+        {/* Top Institutional Royal Accent Bar */}
+        <div className="h-1 w-full bg-gradient-to-r from-blue-700 via-sky-500 to-blue-700 shrink-0" />
 
-        {/* Header */}
-        <div className={`px-3 py-2 sm:px-4 sm:py-3 border-b flex items-center justify-between gap-2 shrink-0 ${
-          isDark ? 'bg-slate-950/50 border-slate-800' : 'bg-slate-50/80 border-slate-200'
+        {/* Modal Close Icon */}
+        <button 
+          type="button"
+          onClick={handleEnter} 
+          className={`absolute top-3 right-3 w-7 h-7 rounded-lg border flex items-center justify-center transition-all cursor-pointer z-10 ${
+            isDark 
+              ? 'bg-slate-800/80 hover:bg-slate-700 text-slate-400 hover:text-white border-slate-700' 
+              : 'bg-slate-100/80 hover:bg-slate-200 text-slate-500 hover:text-slate-800 border-slate-200'
+          }`}
+          title="เข้าสู่เว็บไซต์"
+        >
+          <X className="w-3.5 h-3.5" />
+        </button>
+
+        {/* Executive Header Banner */}
+        <div className={`px-5 pt-6 pb-4 flex flex-col items-center text-center border-b shrink-0 ${
+          isDark ? 'bg-slate-900 border-slate-800' : 'bg-slate-50/70 border-slate-100'
         }`}>
-          <div className="flex items-center gap-2 min-w-0">
-            <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg border flex items-center justify-center shrink-0 ${
-              isDark ? 'bg-slate-800 border-slate-700 text-blue-400' : 'bg-white border-slate-200 text-blue-700 shadow-2xs'
+          {/* Institutional Crest Icon */}
+          <div className="relative mb-3">
+            <div className={`w-14 h-14 rounded-2xl flex items-center justify-center border shadow-md ${
+              isDark 
+                ? 'bg-gradient-to-b from-slate-800 to-slate-900 border-slate-700 text-blue-400 shadow-blue-950/40' 
+                : 'bg-gradient-to-b from-blue-50 to-white border-blue-100 text-blue-700 shadow-blue-500/10'
             }`}>
-              <CivicCrest className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <CivicCrest className="w-7 h-7" />
             </div>
-
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-1.5">
-                <span className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.2 rounded border ${
-                  isDark 
-                    ? 'bg-slate-800 text-slate-300 border-slate-700' 
-                    : 'bg-slate-100 text-slate-700 border-slate-200'
-                }`}>
-                  PRAKANGUARD GIS
-                </span>
-                <span className={`text-[9.5px] sm:text-[10px] font-medium ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                  จ.สมุทรปราการ
-                </span>
-              </div>
-              <h2 className={`text-xs sm:text-sm font-bold mt-0.5 leading-snug tracking-tight truncate ${
-                isDark ? 'text-white' : 'text-slate-900'
-              }`}>
-                ระบบสารสนเทศเฝ้าระวังอุทกภัยและจราจร
-              </h2>
-            </div>
+            <span className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-emerald-500 border-2 border-white dark:border-slate-900 flex items-center justify-center shadow-xs" title="ระบบเปิดออนไลน์พร้อมใช้งาน">
+              <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+            </span>
           </div>
 
-          <button 
-            type="button"
-            onClick={handleEnter} 
-            className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg border flex items-center justify-center transition-colors cursor-pointer shrink-0 ${
-              isDark 
-                ? 'bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white border-slate-700' 
-                : 'bg-white hover:bg-slate-100 text-slate-500 hover:text-slate-800 border-slate-200'
-            }`}
-            title="ปิดหน้าต่าง"
-          >
-            <X className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-          </button>
+          {/* Department / System Title */}
+          <div className="flex items-center gap-1.5 mb-1.5">
+            <CivicShield className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 shrink-0" />
+            <span className={`text-[10.5px] font-bold uppercase tracking-wider ${
+              isDark ? 'text-slate-300' : 'text-slate-600'
+            }`}>
+              ศูนย์บัญชาการข้อมูล • PRAKANGUARD
+            </span>
+          </div>
+
+          <h2 className={`text-base sm:text-lg font-bold tracking-tight ${
+            isDark ? 'text-white' : 'text-slate-900'
+          }`}>
+            ระบบสารสนเทศเฝ้าระวังอุทกภัย
+          </h2>
+          <p className={`text-xs mt-0.5 font-medium ${
+            isDark ? 'text-blue-400' : 'text-blue-700'
+          }`}>
+            จังหวัดสมุทรปราการ (Real-time GIS Telemetry)
+          </p>
         </div>
 
-        {/* Body */}
-        <div className="flex-1 overflow-y-auto px-3.5 sm:px-5 py-3 sm:py-4 space-y-2.5 sm:space-y-3 text-xs">
-          <p className={`text-[11px] sm:text-xs leading-relaxed ${
+        {/* Modal Body - Official, Clean & Non-Cluttered */}
+        <div className="px-5 py-4 space-y-3.5">
+          {/* Formal Summary Statement */}
+          <p className={`text-xs sm:text-[12.5px] leading-relaxed text-center ${
             isDark ? 'text-slate-300' : 'text-slate-600'
           }`}>
-            ศูนย์ข้อมูลสารสนเทศภูมิศาสตร์เพื่อการติดตามระดับน้ำท่วมขังผิวจราจรในพื้นที่ <strong className={isDark ? 'text-white font-semibold' : 'text-slate-900 font-semibold'}>6 อำเภอ จังหวัดสมุทรปราการ</strong> แบบเรียลไทม์
+            ระบบติดตามสถานการณ์ระดับน้ำท่วมขังผิวจราจร กล้องวงจรปิด CCTV ตรวจจับ และพยากรณ์สภาพอากาศรายชั่วโมง เพื่อความปลอดภัยในการเดินทางของประชาชน
           </p>
 
-          <div className={`rounded-lg border divide-y ${
-            isDark ? 'bg-slate-950/40 border-slate-800 divide-slate-800' : 'bg-slate-50/60 border-slate-200 divide-slate-200'
-          }`}>
-            {capabilities.map((item, idx) => (
-              <div key={idx} className="p-2.5 sm:p-3 flex items-start gap-2.5">
-                <div className={`w-6 h-6 sm:w-7 sm:h-7 rounded-md border flex items-center justify-center shrink-0 mt-0.5 ${
-                  isDark ? 'bg-slate-800 border-slate-700 text-blue-400' : 'bg-white border-slate-200 text-blue-700'
-                }`}>
-                  {item.icon}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <h3 className={`text-[11.5px] sm:text-xs font-bold ${isDark ? 'text-slate-100' : 'text-slate-900'}`}>
-                    {item.title}
-                  </h3>
-                  <p className={`text-[10.5px] sm:text-[11px] leading-relaxed mt-0.5 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
-                    {item.desc}
-                  </p>
-                </div>
-              </div>
-            ))}
+          {/* 3 Compact Official Metric Chips */}
+          <div className="grid grid-cols-3 gap-2 py-0.5">
+            <div className={`p-2.5 rounded-xl border flex flex-col items-center text-center transition-colors ${
+              isDark ? 'bg-slate-800/60 border-slate-700/60' : 'bg-slate-50 border-slate-200/80'
+            }`}>
+              <MapPin className="w-4 h-4 text-blue-500 mb-1 shrink-0" />
+              <span className={`text-[11px] font-bold ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>
+                6 อำเภอ
+              </span>
+              <span className={`text-[9.5px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                ครอบคลุมทั้งจังหวัด
+              </span>
+            </div>
+
+            <div className={`p-2.5 rounded-xl border flex flex-col items-center text-center transition-colors ${
+              isDark ? 'bg-slate-800/60 border-slate-700/60' : 'bg-slate-50 border-slate-200/80'
+            }`}>
+              <Eye className="w-4 h-4 text-sky-500 mb-1 shrink-0" />
+              <span className={`text-[11px] font-bold ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>
+                กล้อง CCTV
+              </span>
+              <span className={`text-[9.5px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                ภาพสดถนนสายหลัก
+              </span>
+            </div>
+
+            <div className={`p-2.5 rounded-xl border flex flex-col items-center text-center transition-colors ${
+              isDark ? 'bg-slate-800/60 border-slate-700/60' : 'bg-slate-50 border-slate-200/80'
+            }`}>
+              <Radio className="w-4 h-4 text-emerald-500 mb-1 shrink-0" />
+              <span className={`text-[11px] font-bold ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>
+                เรียลไทม์
+              </span>
+              <span className={`text-[9.5px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                อัปเดตตลอด 24 ชม.
+              </span>
+            </div>
           </div>
         </div>
 
-        {/* Footer */}
-        <div className={`px-3.5 py-2.5 sm:px-5 sm:py-3 border-t flex flex-col sm:flex-row items-center justify-between gap-2 shrink-0 ${
-          isDark ? 'border-slate-800 bg-slate-950/60' : 'border-slate-200 bg-slate-50/80'
+        {/* Footer Actions */}
+        <div className={`px-5 py-3.5 border-t flex flex-col gap-2.5 shrink-0 ${
+          isDark ? 'border-slate-800 bg-slate-950/40' : 'border-slate-100 bg-slate-50/50'
         }`}>
-          <div className="hidden sm:flex items-center gap-1.5 text-[11px] font-medium text-slate-500 dark:text-slate-400">
-            <CivicShield className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
-            <span>ข้อมูลอ้างอิงมาตรฐาน ปภ. และแขวงทางหลวงสมุทรปราการ</span>
-          </div>
-
           <button
             type="button"
             onClick={handleEnter}
-            className="w-full sm:w-auto px-4 py-2 sm:px-5 sm:py-2.5 rounded-lg bg-blue-700 hover:bg-blue-800 text-white font-semibold text-xs transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+            className="w-full py-2.5 px-4 rounded-xl bg-blue-700 hover:bg-blue-600 active:scale-[0.98] text-white font-bold text-xs sm:text-[13px] shadow-md shadow-blue-700/20 transition-all cursor-pointer flex items-center justify-center gap-2 group"
           >
-            <span>เข้าสู่แผนที่สถานการณ์</span>
-            <ArrowRight className="w-3.5 h-3.5" />
+            <span>เข้าสู่ระบบแผนที่สถานการณ์</span>
+            <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
           </button>
+
+          <div className="flex items-center justify-center gap-1.5 text-[10px] text-slate-500 dark:text-slate-400">
+            <ShieldCheck className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 shrink-0" />
+            <span>มาตรฐานข้อมูล ปภ. และแขวงทางหลวงสมุทรปราการ</span>
+          </div>
         </div>
       </div>
     </div>

@@ -49,13 +49,13 @@ export default function PrivacyPolicyModal({
 
   return (
     <div 
-      className="fixed inset-0 z-50 flex items-center justify-center p-2.5 sm:p-4 overflow-y-auto select-none bg-slate-950/65 backdrop-blur-xs"
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 overflow-y-auto select-none bg-slate-950/65 backdrop-blur-xs"
       onClick={(e) => {
         if (e.target === e.currentTarget) handleClose();
       }}
     >
       <div 
-        className={`w-[88vw] max-w-[335px] sm:max-w-xl my-auto m-auto max-h-[72vh] sm:max-h-[84vh] border rounded-xl shadow-2xl flex flex-col overflow-hidden transition-colors ${
+        className={`w-[92vw] max-w-[420px] sm:max-w-xl my-auto m-auto max-h-[82vh] sm:max-h-[88vh] border rounded-xl shadow-2xl flex flex-col overflow-hidden transition-colors ${
           isDark 
             ? 'bg-slate-900 border-slate-800 text-slate-100' 
             : 'bg-white border-slate-200 text-slate-900'

@@ -49,9 +49,9 @@ export default function FloodStandardsModal({ isOpen, onClose, theme = 'light' }
   return (
     <div 
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
-      className="fixed inset-0 z-[9999] bg-slate-950/65 backdrop-blur-xs flex items-center justify-center p-2.5 sm:p-4 overflow-y-auto"
+      className="fixed inset-0 z-[9999] bg-slate-950/65 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto"
     >
-      <div className={`w-[88vw] max-w-[335px] sm:max-w-lg my-auto m-auto flex flex-col rounded-xl border shadow-2xl overflow-hidden max-h-[72vh] sm:max-h-[84vh] transition-colors ${
+      <div className={`w-[92vw] max-w-[420px] sm:max-w-lg my-auto m-auto flex flex-col rounded-xl border shadow-2xl overflow-hidden max-h-[82vh] sm:max-h-[88vh] transition-colors ${
         isDark ? 'bg-slate-900 border-slate-800 text-slate-100' : 'bg-white border-slate-200 text-slate-900'
       }`}>
         {/* Top Institutional Bar */}

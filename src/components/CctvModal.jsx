@@ -257,7 +257,7 @@ export default function CctvModal({
       }}
     >
       <div
-        className={`smooth-pop w-[88vw] max-w-[340px] sm:max-w-3xl lg:max-w-5xl max-h-[73vh] sm:max-h-[85vh] flex flex-col rounded-xl sm:rounded-2xl border shadow-2xl overflow-hidden ${
+        className={`smooth-pop w-[92vw] max-w-[440px] sm:max-w-3xl lg:max-w-5xl max-h-[82vh] sm:max-h-[88vh] flex flex-col rounded-xl sm:rounded-2xl border shadow-2xl overflow-hidden ${
           isDark ? 'bg-slate-900 border-slate-800 text-slate-100' : 'bg-white border-slate-200 text-slate-900'
         }`}
         onClick={(e) => e.stopPropagation()}

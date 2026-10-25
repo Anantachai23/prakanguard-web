@@ -2275,12 +2275,12 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
             ...(customSize.width ? { width: `${customSize.width}px`, maxWidth: '96vw' } : {}),
             ...(customSize.height ? { height: `${customSize.height}px`, maxHeight: '85vh' } : {})
           }}
-          className={`smooth-pop fixed z-50 w-[88vw] max-w-[330px] sm:max-w-none ${
+          className={`smooth-pop fixed z-50 w-[92vw] max-w-[390px] sm:max-w-none ${
             customSize.width || customSize.height
               ? ''
               : isExpanded
-                ? 'sm:w-[540px] h-[430px] max-h-[70vh] sm:h-[680px] sm:max-h-[86vh]'
-                : 'sm:w-[400px] h-[370px] max-h-[64vh] sm:h-[580px] sm:max-h-[84vh]'
+                ? 'sm:w-[540px] h-[480px] max-h-[76vh] sm:h-[680px] sm:max-h-[86vh]'
+                : 'sm:w-[400px] h-[420px] max-h-[70vh] sm:h-[580px] sm:max-h-[84vh]'
           } border rounded-2xl shadow-2xl flex flex-col overflow-hidden ${
             !position ? 'bottom-[calc(3.5rem+env(safe-area-inset-bottom,0px))] left-1/2 -translate-x-1/2 sm:translate-x-0 sm:left-auto sm:bottom-6 sm:right-6' : ''
           } ${

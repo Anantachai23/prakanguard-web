@@ -199,9 +199,9 @@ export default function AiForecastModal({ isOpen, onClose, userDistrict, theme =
           onClose();
         } 
       }}
-      className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-2.5 sm:p-4 overflow-y-auto"
+      className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto"
     >
-      <div className={`w-[88vw] max-w-[340px] sm:max-w-2xl lg:max-w-3xl my-auto m-auto border rounded-xl sm:rounded-2xl shadow-2xl relative max-h-[73vh] sm:max-h-[85vh] flex flex-col overflow-hidden transition-all ${
+      <div className={`w-[92vw] max-w-[440px] sm:max-w-2xl lg:max-w-3xl my-auto m-auto border rounded-xl sm:rounded-2xl shadow-2xl relative max-h-[82vh] sm:max-h-[88vh] flex flex-col overflow-hidden transition-all ${
         isDark ? 'bg-slate-900 border-slate-800 text-slate-100' : 'bg-white border-slate-200 text-slate-900'
       }`}>
         {/* Top Gradient Stripe */}

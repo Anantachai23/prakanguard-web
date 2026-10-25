@@ -1989,8 +1989,8 @@ export default function AdminModal({
   }, [activeFeedbackList]);
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/65 backdrop-blur-xs flex items-center justify-center p-2.5 sm:p-4 overflow-y-auto">
-      <div className={`w-[88vw] max-w-[355px] sm:max-w-4xl my-auto m-auto border rounded-xl shadow-2xl flex flex-col max-h-[78vh] sm:max-h-[90vh] overflow-hidden transition-all ${
+    <div className="fixed inset-0 z-50 bg-slate-950/65 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+      <div className={`w-[92vw] max-w-[440px] sm:max-w-4xl my-auto m-auto border rounded-xl shadow-2xl flex flex-col max-h-[84vh] sm:max-h-[90vh] overflow-hidden transition-all ${
         isDark ? 'bg-slate-900 border-slate-800 text-slate-100' : 'bg-white border-slate-200 text-slate-900'
       }`}>
         
@@ -5571,7 +5571,7 @@ export default function AdminModal({
             className="fixed inset-0 z-[70] bg-slate-950/75 backdrop-blur-xs flex items-center justify-center p-2.5 sm:p-4 animate-in fade-in"
           >
             <div 
-              className={`w-full max-w-[88vw] xs:max-w-[340px] sm:max-w-md rounded-2xl sm:rounded-3xl border shadow-2xl p-3 sm:p-5 flex flex-col gap-2.5 sm:gap-3.5 smooth-pop ${
+              className={`w-full max-w-[92vw] xs:max-w-[400px] sm:max-w-md rounded-2xl sm:rounded-3xl border shadow-2xl p-3 sm:p-5 flex flex-col gap-2.5 sm:gap-3.5 smooth-pop ${
                 isDark 
                   ? 'bg-slate-900 border-slate-700 text-slate-100 shadow-2xl shadow-black/90' 
                   : 'bg-white border-slate-200 text-slate-900 shadow-2xl shadow-slate-400/40'
