@@ -40,8 +40,8 @@ import {
   FAQS_OFFICIAL 
 } from '../data/chatKnowledgeBase';
 
-// Authentic Google Gemini-inspired sparkle star icon
-function GeminiSparkleIcon({ size = 18, className = "" }) {
+// Civic AI sparkle star icon
+function AiSparkleIcon({ size = 18, className = "" }) {
   return (
     <svg
       width={size}
@@ -53,31 +53,32 @@ function GeminiSparkleIcon({ size = 18, className = "" }) {
     >
       <path
         d="M12 2C12 7.52285 7.52285 12 2 12C7.52285 12 12 16.4771 12 22C12 16.4771 16.4771 12 22 12C16.4771 12 12 7.52285 12 2Z"
-        fill="url(#gemini-star-grad)"
+        fill="url(#ai-star-grad)"
       />
       <defs>
-        <linearGradient id="gemini-star-grad" x1="2" y1="2" x2="22" y2="22" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#4285F4" />
-          <stop offset="50%" stopColor="#9B72CF" />
-          <stop offset="100%" stopColor="#38BDF8" />
+        <linearGradient id="ai-star-grad" x1="2" y1="2" x2="22" y2="22" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#38bdf8" />
+          <stop offset="50%" stopColor="#0284c7" />
+          <stop offset="100%" stopColor="#2563eb" />
         </linearGradient>
       </defs>
     </svg>
   );
 }
 
-// PrakanBOT official emblem with custom Gemini-styled ChatBot circular logo
+// PrakanBOT official emblem with custom ChatBot circular logo
 function AiOfficialEmblem({ size = 32, className = "" }) {
   return (
     <div
       className={`relative flex items-center justify-center shrink-0 rounded-full overflow-hidden border border-blue-400/40 bg-slate-950 shadow-md select-none ${className}`}
-      style={{ width: size, height: size }}
+      style={{ width: `${size}px`, height: `${size}px`, minWidth: `${size}px`, minHeight: `${size}px`, maxWidth: `${size}px`, maxHeight: `${size}px` }}
       aria-hidden="true"
     >
       <img
         src="/chatbot-logo.svg"
         alt="PrakanBOT"
-        className="w-full h-full object-cover rounded-full select-none"
+        className="w-full h-full object-cover rounded-full select-none block"
+        style={{ width: '100%', height: '100%', maxWidth: '100%', maxHeight: '100%' }}
         onError={(e) => {
           e.currentTarget.onerror = null;
           e.currentTarget.src = '/chatbot-logo.png';
@@ -1335,7 +1336,7 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
       (q.includes("prakanbot") && (q.includes("คือ") || q.includes("ทำไม") || q.includes("ทำอะไร")));
 
     if (isIdentityQuery) {
-      return `✨ **กระผมคือ PrakanBOT ผู้ช่วยปัญญาประดิษฐ์สารสนเทศและเฝ้าระวังอุทกภัย (Gemini AI Telemetry) ประจำศูนย์ข้อมูล PrakanGuard จังหวัดสมุทรปราการครับ**\n\n` +
+      return `✨ **กระผมคือ PrakanBOT ผู้ช่วยปัญญาประดิษฐ์สารสนเทศและเฝ้าระวังอุทกภัย (AI Telemetry) ประจำศูนย์ข้อมูล PrakanGuard จังหวัดสมุทรปราการครับ**\n\n` +
         `กระผมได้รับการพัฒนาเพื่อปฏิบัติหน้าที่รายงานข้อมูลสาธารณภัยและการสัญจรแก่ประชาชนตลอด 24 ชั่วโมง โดยมีภารกิจหลักดังนี้ครับ:\n\n` +
         `• 🌊 **รายงานสถานการณ์น้ำท่วมสด:** ตรวจสอบพิกัดน้ำท่วมขังผิวจราจร 6 อำเภอแบบเรียลไทม์\n` +
         `• 🌧️ **พยากรณ์ฝนและเรดาร์:** คาดการณ์กลุ่มฝน ปริมาณน้ำฝนสะสม และช่วงเวลาเสี่ยงฝนตกหนักรายพื้นที่\n` +
@@ -1356,7 +1357,7 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
 
     if (isDeveloperQuery) {
       return `🏛️ **ศูนย์ข้อมูลสารสนเทศอุทกภัย PrakanGuard จังหวัดสมุทรปราการ**\n\n` +
-        `ระบบ **PrakanGuard** และ **PrakanBOT** พัฒนาขึ้นโดยทีมงานวิศวกรรมระบบสารสนเทศเพื่อสาธารณภัย ร่วมกับภาคประชาสังคมและศูนย์ประสานงานข้อมูลอุทกภัย จ.สมุทรปราการ ขับเคลื่อนด้วยขุมพลังโมเดล Google Gemini AI และข้อมูลเซนเซอร์โทรมาตร เพื่อเป็นระบบแจ้งเตือนอุทกภัยและประสานงานความช่วยเหลือแก่พี่น้องประชาชนอย่างแม่นยำและเป็นทางการครับ`;
+        `ระบบ **PrakanGuard** และ **PrakanBOT** พัฒนาขึ้นโดยทีมงานวิศวกรรมระบบสารสนเทศเพื่อสาธารณภัย ร่วมกับภาคประชาสังคมและศูนย์ประสานงานข้อมูลอุทกภัย จ.สมุทรปราการ ขับเคลื่อนด้วยระบบปัญญาประดิษฐ์และการวิเคราะห์ข้อมูลโทรมาตรแบบเรียลไทม์ เพื่อเป็นระบบแจ้งเตือนอุทกภัยและประสานงานความช่วยเหลือแก่พี่น้องประชาชนอย่างแม่นยำและเป็นทางการครับ`;
     }
 
     // 0.2 การทักทายอย่างเป็นทางการ (Official Courteous Greetings)
@@ -2126,7 +2127,7 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
     }, 280);
   };
 
-  const WELCOME_TEXT = `สวัสดีครับ ผม **PrakanBOT** ผู้ช่วยวิเคราะห์อุทกภัยอัจฉริยะ (Gemini Telemetry AI) ประจำจังหวัดสมุทรปราการ
+  const WELCOME_TEXT = `สวัสดีครับ ผม **PrakanBOT** ผู้ช่วยวิเคราะห์อุทกภัยอัจฉริยะ (AI Telemetry) ประจำจังหวัดสมุทรปราการ
 
 พิมพ์สอบถามข้อมูลได้ทันที เช่น:
 • **"น้ำท่วมตรงไหนบ้าง"** (ตรวจสอบจุดน้ำท่วมสด)
@@ -2458,9 +2459,9 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
               <div className="min-w-0 leading-tight">
                 <div className="flex items-center gap-1.5">
                   <h4 className="text-[13px] sm:text-[14px] font-bold tracking-tight">PrakanBOT</h4>
-                  <span className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded-full text-[9px] font-semibold bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-cyan-500/10 text-blue-600 dark:text-cyan-400 border border-blue-500/20">
-                    <GeminiSparkleIcon size={9} />
-                    <span>Gemini AI</span>
+                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-gradient-to-r from-blue-500/15 via-cyan-500/15 to-emerald-500/15 text-blue-600 dark:text-cyan-300 border border-cyan-500/30">
+                    <AiSparkleIcon size={9} />
+                    <span>AI อัจฉริยะ</span>
                   </span>
                 </div>
                 <p className={`text-[10px] sm:text-[10.5px] truncate mt-0.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
@@ -2600,7 +2601,7 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
                         : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300'
                     }`}
                   >
-                    <GeminiSparkleIcon size={10} />
+                    <AiSparkleIcon size={10} />
                     <span>{chip.label}</span>
                   </button>
                 ))}
@@ -2634,14 +2635,14 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
                       : 'border-slate-200/90 bg-slate-50 text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                   }`}
                 >
-                  <GeminiSparkleIcon size={9} />
+                  <AiSparkleIcon size={9} />
                   <span>{chip.label}</span>
                 </button>
               ))}
             </div>
           )}
 
-          {/* Gemini-Inspired Capsule Composer */}
+          {/* Civic AI Capsule Composer */}
           <form
             onSubmit={(e) => { e.preventDefault(); handleSend(); }}
             className={`p-2.5 sm:p-3 border-t shrink-0 ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100'}`}
@@ -2651,7 +2652,7 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
                 ? 'bg-slate-800/70 border-slate-700 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20'
                 : 'bg-slate-50 border-slate-200/90 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/15 focus-within:bg-white'
             }`}>
-              <GeminiSparkleIcon size={14} className="shrink-0 opacity-70" />
+              <AiSparkleIcon size={14} className="shrink-0 opacity-70" />
               <input
                 type="text"
                 value={input}

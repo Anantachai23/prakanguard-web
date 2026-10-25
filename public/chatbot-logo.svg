@@ -1,173 +1,233 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
   <defs>
-    <!-- Background Gradient -->
-    <radialGradient id="bgGrad" cx="50%" cy="40%" r="60%">
-      <stop offset="0%" stopColor="#1e293b" />
-      <stop offset="60%" stopColor="#0f172a" />
-      <stop offset="100%" stopColor="#020617" />
+    <!-- Master Background -->
+    <radialGradient id="spaceBg" cx="50%" cy="45%" r="65%">
+      <stop offset="0%" stopColor="#132347" />
+      <stop offset="50%" stopColor="#0a1329" />
+      <stop offset="100%" stopColor="#030712" />
     </radialGradient>
 
-    <!-- Gemini Outer Ring Gradient -->
-    <linearGradient id="geminiRing" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stopColor="#4285F4" />
-      <stop offset="35%" stopColor="#9B72CF" />
-      <stop offset="70%" stopColor="#D946EF" />
-      <stop offset="100%" stopColor="#38BDF8" />
+    <!-- Outer Tech Halo Gradient -->
+    <linearGradient id="haloGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stopColor="#00f2fe" />
+      <stop offset="30%" stopColor="#38bdf8" />
+      <stop offset="70%" stopColor="#6366f1" />
+      <stop offset="100%" stopColor="#06b6d4" />
     </linearGradient>
 
-    <!-- Water Droplet Body Gradient -->
-    <linearGradient id="dropGrad" x1="20%" y1="10%" x2="80%" y2="90%">
-      <stop offset="0%" stopColor="#7dd3fc" />
-      <stop offset="25%" stopColor="#38bdf8" />
-      <stop offset="65%" stopColor="#2563eb" />
-      <stop offset="100%" stopColor="#1d4ed8" />
-    </linearGradient>
-
-    <!-- Inner Glow for Droplet -->
-    <radialGradient id="dropGlow" cx="40%" cy="30%" r="50%">
-      <stop offset="0%" stopColor="#ffffff" stopOpacity="0.85" />
-      <stop offset="40%" stopColor="#bae6fd" stopOpacity="0.4" />
-      <stop offset="100%" stopColor="#0284c7" stopOpacity="0" />
+    <!-- 3D Liquid Droplet Body Gradient -->
+    <radialGradient id="droplet3D" cx="35%" cy="32%" r="68%">
+      <stop offset="0%" stopColor="#e0f2fe" />
+      <stop offset="18%" stopColor="#7dd3fc" />
+      <stop offset="45%" stopColor="#38bdf8" />
+      <stop offset="75%" stopColor="#2563eb" />
+      <stop offset="100%" stopColor="#1e3a8a" />
     </radialGradient>
 
-    <!-- Sprout Leaves Gradient -->
-    <linearGradient id="leafGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+    <!-- Soft Ambient Light Behind Mascot -->
+    <radialGradient id="backlight" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.45" />
+      <stop offset="60%" stopColor="#6366f1" stopOpacity="0.2" />
+      <stop offset="100%" stopColor="#000000" stopOpacity="0" />
+    </radialGradient>
+
+    <!-- Headset Metallic Gradient -->
+    <linearGradient id="headsetBand" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stopColor="#ffffff" />
+      <stop offset="35%" stopColor="#e2e8f0" />
+      <stop offset="70%" stopColor="#94a3b8" />
+      <stop offset="100%" stopColor="#475569" />
+    </linearGradient>
+
+    <!-- Neon Cyan LED Gradient -->
+    <linearGradient id="cyanNeon" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stopColor="#67e8f9" />
+      <stop offset="100%" stopColor="#06b6d4" />
+    </linearGradient>
+
+    <!-- Eco Vitality Sprout Leaves -->
+    <linearGradient id="sproutLeft" x1="100%" y1="100%" x2="0%" y2="0%">
       <stop offset="0%" stopColor="#15803d" />
-      <stop offset="60%" stopColor="#22c55e" />
+      <stop offset="50%" stopColor="#22c55e" />
       <stop offset="100%" stopColor="#86efac" />
     </linearGradient>
 
-    <!-- Headset Gradient -->
-    <linearGradient id="headsetGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stopColor="#f8fafc" />
-      <stop offset="50%" stopColor="#cbd5e1" />
-      <stop offset="100%" stopColor="#64748b" />
+    <linearGradient id="sproutRight" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stopColor="#166534" />
+      <stop offset="50%" stopColor="#16a34a" />
+      <stop offset="100%" stopColor="#4ade80" />
     </linearGradient>
 
-    <!-- Gemini Sparkle Star Gradient -->
-    <linearGradient id="starGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stopColor="#60a5fa" />
-      <stop offset="50%" stopColor="#c084fc" />
-      <stop offset="100%" stopColor="#38bdf8" />
+    <!-- Glass Specular Highlight Gradient -->
+    <linearGradient id="specularGleam" x1="20%" y1="0%" x2="80%" y2="100%">
+      <stop offset="0%" stopColor="#ffffff" stopOpacity="0.9" />
+      <stop offset="50%" stopColor="#ffffff" stopOpacity="0.3" />
+      <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
     </linearGradient>
 
-    <!-- Water Wave Gradient -->
-    <linearGradient id="waveGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" stopColor="#0284c7" stopOpacity="0.6" />
-      <stop offset="50%" stopColor="#38bdf8" stopOpacity="0.9" />
-      <stop offset="100%" stopColor="#0ea5e9" stopOpacity="0.6" />
+    <!-- Bottom Oceanic Wave Gradient -->
+    <linearGradient id="oceanWave1" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stopColor="#0284c7" stopOpacity="0.7" />
+      <stop offset="50%" stopColor="#38bdf8" stopOpacity="0.85" />
+      <stop offset="100%" stopColor="#0369a1" stopOpacity="0.7" />
     </linearGradient>
 
-    <!-- Filters for Glow Effects -->
-    <filter id="softGlow" x="-20%" y="-20%" width="140%" height="140%">
-      <feGaussianBlur stdDeviation="8" result="blur" />
+    <linearGradient id="oceanWave2" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stopColor="#0c4a6e" stopOpacity="0.9" />
+      <stop offset="50%" stopColor="#0284c7" stopOpacity="0.95" />
+      <stop offset="100%" stopColor="#075985" stopOpacity="0.9" />
+    </linearGradient>
+
+    <!-- Filters -->
+    <filter id="glowSubtle" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="6" result="blur" />
       <feComposite in="SourceGraphic" in2="blur" operator="over" />
     </filter>
 
-    <filter id="ringGlow" x="-30%" y="-30%" width="160%" height="160%">
-      <feGaussianBlur stdDeviation="12" result="blur" />
+    <filter id="ringGlowStrong" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="10" result="blur" />
       <feComposite in="SourceGraphic" in2="blur" operator="over" />
     </filter>
 
     <clipPath id="circleClip">
-      <circle cx="256" cy="256" r="248" />
+      <circle cx="256" cy="256" r="246" />
     </clipPath>
   </defs>
 
-  <!-- Circular Outer Container -->
+  <!-- Circular Masked Graphic -->
   <g clip-path="url(#circleClip)">
-    <!-- Dark Tech Backdrop -->
-    <rect x="0" y="0" width="512" height="512" fill="url(#bgGrad)" />
+    <!-- Deep Space Oceanic Backdrop -->
+    <rect x="0" y="0" width="512" height="512" fill="url(#spaceBg)" />
 
-    <!-- Ambient Glow behind character -->
-    <circle cx="256" cy="260" r="170" fill="#0284c7" opacity="0.25" filter="url(#softGlow)" />
-    <circle cx="256" cy="240" r="120" fill="#9333ea" opacity="0.18" filter="url(#softGlow)" />
+    <!-- Ambient Hydro Halo Glow Behind Mascot -->
+    <circle cx="256" cy="260" r="175" fill="url(#backlight)" filter="url(#glowSubtle)" />
+    <circle cx="256" cy="240" r="125" fill="#38bdf8" opacity="0.15" filter="url(#glowSubtle)" />
 
-    <!-- Sonar Concentric Rings -->
-    <circle cx="256" cy="270" r="185" fill="none" stroke="#38bdf8" stroke-width="1.5" stroke-dasharray="6 8" opacity="0.3" />
-    <circle cx="256" cy="270" r="215" fill="none" stroke="#818cf8" stroke-width="1.5" stroke-dasharray="4 10" opacity="0.2" />
+    <!-- Technical Sonar Grid Rings -->
+    <circle cx="256" cy="270" r="190" fill="none" stroke="#38bdf8" stroke-width="1.2" stroke-dasharray="4 8" opacity="0.25" />
+    <circle cx="256" cy="270" r="220" fill="none" stroke="#60a5fa" stroke-width="1.2" stroke-dasharray="6 12" opacity="0.18" />
 
-    <!-- Waves at bottom -->
-    <path d="M 0 420 Q 128 395 256 420 T 512 420 L 512 512 L 0 512 Z" fill="url(#waveGrad)" />
-    <path d="M 0 445 Q 140 430 256 450 T 512 445 L 512 512 L 0 512 Z" fill="#0369a1" opacity="0.7" />
+    <!-- Crosshair telemetry markers -->
+    <line x1="256" y1="20" x2="256" y2="36" stroke="#38bdf8" stroke-width="2.5" opacity="0.6" stroke-linecap="round" />
+    <line x1="256" y1="476" x2="256" y2="492" stroke="#38bdf8" stroke-width="2.5" opacity="0.6" stroke-linecap="round" />
+    <line x1="20" y1="256" x2="36" y2="256" stroke="#38bdf8" stroke-width="2.5" opacity="0.6" stroke-linecap="round" />
+    <line x1="476" y1="256" x2="492" stroke="#38bdf8" stroke-width="2.5" opacity="0.6" stroke-linecap="round" />
 
-    <!-- Sprout Leaves on top of Droplet Head -->
+    <!-- Water Waves at bottom -->
+    <path d="M 0 425 Q 128 400 256 425 T 512 425 L 512 512 L 0 512 Z" fill="url(#oceanWave1)" />
+    <path d="M 0 452 Q 135 435 256 455 T 512 452 L 512 512 L 0 512 Z" fill="url(#oceanWave2)" />
+
+    <!-- Sprout Leaves on Top of Droplet Head -->
     <!-- Left Leaf -->
-    <path d="M 256 128 C 220 120 205 90 220 72 C 242 80 252 104 256 128 Z" fill="url(#leafGrad)" />
-    <path d="M 256 128 C 238 106 226 88 223 75" fill="none" stroke="#bbf7d0" stroke-width="2" stroke-linecap="round" />
+    <path d="M 256 122 C 215 112 195 80 216 58 C 240 68 252 96 256 122 Z" fill="url(#sproutLeft)" />
+    <path d="M 256 122 C 235 98 222 78 219 63" fill="none" stroke="#bbf7d0" stroke-width="2.5" stroke-linecap="round" opacity="0.9" />
     <!-- Right Leaf -->
-    <path d="M 256 128 C 285 110 305 82 290 66 C 270 76 260 102 256 128 Z" fill="url(#leafGrad)" />
-    <path d="M 256 128 C 270 102 282 82 288 68" fill="none" stroke="#bbf7d0" stroke-width="2" stroke-linecap="round" />
+    <path d="M 256 122 C 290 102 312 72 294 54 C 272 64 260 92 256 122 Z" fill="url(#sproutRight)" />
+    <path d="M 256 122 C 274 96 286 74 292 59" fill="none" stroke="#bbf7d0" stroke-width="2.5" stroke-linecap="round" opacity="0.9" />
 
-    <!-- Main Water Droplet Body -->
-    <path d="M 256 122 C 200 195 136 265 136 330 C 136 396 190 442 256 442 C 322 442 376 396 376 330 C 376 265 312 195 256 122 Z" fill="url(#dropGrad)" />
+    <!-- Main 3D Hydro Droplet Mascot Body -->
+    <!-- Base Shape with smooth organic curves -->
+    <path d="M 256 112 C 196 188 132 260 132 328 C 132 398 188 444 256 444 C 324 444 380 398 380 328 C 380 260 316 188 256 112 Z" fill="url(#droplet3D)" filter="url(#glowSubtle)" />
 
-    <!-- Droplet Highlights & Specular Reflections -->
-    <path d="M 256 130 C 215 195 152 260 152 325 C 152 355 168 390 195 410 C 175 385 165 350 165 320 C 165 265 220 200 256 145 Z" fill="url(#dropGlow)" />
-    <ellipse cx="205" cy="275" rx="28" ry="50" transform="rotate(-26 205 275)" fill="#ffffff" opacity="0.55" />
-    <ellipse cx="220" cy="235" rx="10" ry="16" transform="rotate(-26 220 235)" fill="#ffffff" opacity="0.75" />
+    <!-- Internal Liquid Caustic Reflection Layer -->
+    <path d="M 256 122 C 206 195 148 265 148 328 C 148 375 180 420 226 436 C 180 405 160 365 160 325 C 160 265 212 198 256 135 Z" fill="url(#specularGleam)" opacity="0.85" />
 
-    <!-- Futuristic Headset / Communicator Arc -->
-    <path d="M 148 310 C 144 210 368 210 364 310" fill="none" stroke="url(#headsetGrad)" stroke-width="12" stroke-linecap="round" opacity="0.9" />
-    <path d="M 160 290 C 160 225 352 225 352 290" fill="none" stroke="#38bdf8" stroke-width="3" opacity="0.6" />
+    <!-- Major Specular Curved Highlight (Gives glossy glass bead depth) -->
+    <ellipse cx="204" cy="270" rx="30" ry="56" transform="rotate(-28 204 270)" fill="#ffffff" opacity="0.6" />
+    <ellipse cx="220" cy="226" rx="12" ry="18" transform="rotate(-28 220 226)" fill="#ffffff" opacity="0.85" />
+    <circle cx="236" cy="190" r="6" fill="#ffffff" opacity="0.9" />
 
-    <!-- Left Headset Earpiece -->
-    <rect x="130" y="295" width="26" height="50" rx="12" fill="#0f172a" stroke="#38bdf8" stroke-width="4" />
-    <circle cx="143" cy="320" r="5" fill="#38bdf8" />
-    <!-- Right Headset Earpiece -->
-    <rect x="356" y="295" width="26" height="50" rx="12" fill="#0f172a" stroke="#c084fc" stroke-width="4" />
-    <circle cx="369" cy="320" r="5" fill="#c084fc" />
+    <!-- Right Flank Rim Light -->
+    <path d="M 335 270 C 355 305 358 350 340 385 C 352 355 350 315 335 270 Z" fill="#bae6fd" opacity="0.5" />
 
-    <!-- Communicator Mic Boom -->
-    <path d="M 364 335 Q 350 375 305 380" fill="none" stroke="#cbd5e1" stroke-width="5" stroke-linecap="round" />
-    <circle cx="298" cy="380" r="8" fill="#38bdf8" filter="url(#softGlow)" />
-    <circle cx="298" cy="380" r="4" fill="#ffffff" />
+    <!-- High-Tech Comm Communicator Headset Arc -->
+    <!-- Headset Band with 3D metallic tube shading -->
+    <path d="M 144 315 C 140 205 372 205 368 315" fill="none" stroke="#0f172a" stroke-width="15" stroke-linecap="round" opacity="0.6" />
+    <path d="M 144 312 C 140 202 372 202 368 312" fill="none" stroke="url(#headsetBand)" stroke-width="11" stroke-linecap="round" />
+    <path d="M 158 290 C 158 220 354 220 354 290" fill="none" stroke="#38bdf8" stroke-width="2.5" opacity="0.75" />
 
-    <!-- Cute Smiling Eyes -->
-    <!-- Left Eye -->
-    <ellipse cx="218" cy="305" rx="18" ry="24" fill="#0f172a" />
-    <ellipse cx="223" cy="298" rx="7" ry="10" fill="#ffffff" />
-    <circle cx="212" cy="315" r="4" fill="#38bdf8" opacity="0.8" />
-    <!-- Right Eye -->
-    <ellipse cx="294" cy="305" rx="18" ry="24" fill="#0f172a" />
-    <ellipse cx="299" cy="298" rx="7" ry="10" fill="#ffffff" />
-    <circle cx="288" cy="315" r="4" fill="#38bdf8" opacity="0.8" />
-
-    <!-- Kawaii Cheeks -->
-    <ellipse cx="185" cy="335" rx="15" ry="9" fill="#f43f5e" opacity="0.5" filter="url(#softGlow)" />
-    <ellipse cx="327" cy="335" rx="15" ry="9" fill="#f43f5e" opacity="0.5" filter="url(#softGlow)" />
-
-    <!-- Cute Happy Mouth / Smile -->
-    <path d="M 238 338 Q 256 360 274 338" fill="none" stroke="#0f172a" stroke-width="5.5" stroke-linecap="round" />
-    <path d="M 246 345 Q 256 358 266 345" fill="#f43f5e" opacity="0.85" />
-
-    <!-- Floating Gemini AI Sparkle Stars (✦) -->
-    <!-- Large Star Top-Right -->
-    <g transform="translate(385, 95)" filter="url(#softGlow)">
-      <path d="M 26 0 C 26 14.36 14.36 26 0 26 C 14.36 26 26 37.64 26 52 C 26 37.64 37.64 26 52 26 C 37.64 26 26 14.36 26 0 Z" fill="url(#starGrad1)" />
-      <circle cx="26" cy="26" r="4" fill="#ffffff" />
+    <!-- Left Earpiece (Sleek Futuristic Capsule) -->
+    <g transform="translate(126, 292)">
+      <rect x="0" y="0" width="28" height="52" rx="14" fill="#0f172a" stroke="#38bdf8" stroke-width="3" />
+      <rect x="5" y="6" width="18" height="40" rx="9" fill="#1e293b" />
+      <circle cx="14" cy="26" r="6" fill="url(#cyanNeon)" filter="url(#glowSubtle)" />
+      <circle cx="14" cy="26" r="2.5" fill="#ffffff" />
     </g>
 
-    <!-- Small Star Top-Left -->
-    <g transform="translate(75, 140)">
-      <path d="M 16 0 C 16 8.84 8.84 16 0 16 C 8.84 16 16 23.16 16 32 C 16 23.16 23.16 16 32 16 C 23.16 16 16 8.84 16 0 Z" fill="url(#geminiRing)" opacity="0.9" />
+    <!-- Right Earpiece -->
+    <g transform="translate(358, 292)">
+      <rect x="0" y="0" width="28" height="52" rx="14" fill="#0f172a" stroke="#38bdf8" stroke-width="3" />
+      <rect x="5" y="6" width="18" height="40" rx="9" fill="#1e293b" />
+      <circle cx="14" cy="26" r="6" fill="url(#cyanNeon)" filter="url(#glowSubtle)" />
+      <circle cx="14" cy="26" r="2.5" fill="#ffffff" />
+    </g>
+
+    <!-- Articulated Microphone Boom -->
+    <path d="M 368 335 Q 355 378 306 382" fill="none" stroke="#64748b" stroke-width="6" stroke-linecap="round" />
+    <path d="M 368 335 Q 355 378 306 382" fill="none" stroke="#e2e8f0" stroke-width="3.5" stroke-linecap="round" />
+    <!-- Glowing Microphone Capsule -->
+    <circle cx="300" cy="382" r="9" fill="#0f172a" stroke="#38bdf8" stroke-width="2" />
+    <circle cx="300" cy="382" r="6" fill="url(#cyanNeon)" filter="url(#glowSubtle)" />
+    <circle cx="300" cy="382" r="2.5" fill="#ffffff" />
+
+    <!-- Expressive Adorable Eyes -->
+    <!-- Left Eye -->
+    <g transform="translate(216, 304)">
+      <!-- Outer Dark Eye Sockets -->
+      <ellipse cx="0" cy="0" rx="18" ry="24" fill="#090d16" />
+      <!-- Iris Gradient Base -->
+      <ellipse cx="0" cy="2" rx="15" ry="20" fill="#0369a1" />
+      <ellipse cx="0" cy="6" rx="13" ry="14" fill="#0284c7" />
+      <circle cx="0" cy="8" r="9" fill="#38bdf8" />
+      <!-- Deep Pupil -->
+      <circle cx="0" cy="3" r="10" fill="#020617" />
+      <!-- Large Top Specular Catchlight -->
+      <ellipse cx="4" cy="-7" rx="7" ry="9" fill="#ffffff" />
+      <!-- Small Bottom Specular Catchlight -->
+      <circle cx="-5" cy="9" r="3.5" fill="#ffffff" opacity="0.9" />
+    </g>
+
+    <!-- Right Eye -->
+    <g transform="translate(296, 304)">
+      <ellipse cx="0" cy="0" rx="18" ry="24" fill="#090d16" />
+      <ellipse cx="0" cy="2" rx="15" ry="20" fill="#0369a1" />
+      <ellipse cx="0" cy="6" rx="13" ry="14" fill="#0284c7" />
+      <circle cx="0" cy="8" r="9" fill="#38bdf8" />
+      <circle cx="0" cy="3" r="10" fill="#020617" />
+      <ellipse cx="4" cy="-7" rx="7" ry="9" fill="#ffffff" />
+      <circle cx="-5" cy="9" r="3.5" fill="#ffffff" opacity="0.9" />
+    </g>
+
+    <!-- Soft Blushing Cheeks -->
+    <ellipse cx="180" cy="336" rx="16" ry="10" fill="#fb7185" opacity="0.45" filter="url(#glowSubtle)" />
+    <ellipse cx="332" cy="336" rx="16" ry="10" fill="#fb7185" opacity="0.45" filter="url(#glowSubtle)" />
+
+    <!-- Cheerful Cute Smile -->
+    <path d="M 238 340 Q 256 364 274 340" fill="none" stroke="#090d16" stroke-width="5" stroke-linecap="round" />
+    <path d="M 246 346 Q 256 358 266 346" fill="#f43f5e" opacity="0.85" />
+
+    <!-- Ambient High-Tech Floating Stars -->
+    <!-- Top Right AI Sparkle Star -->
+    <g transform="translate(390, 95)" filter="url(#glowSubtle)">
+      <path d="M 24 0 C 24 13.25 13.25 24 0 24 C 13.25 24 24 34.75 24 48 C 24 34.75 34.75 24 48 24 C 34.75 24 24 13.25 24 0 Z" fill="url(#cyanNeon)" />
+      <circle cx="24" cy="24" r="4" fill="#ffffff" />
+    </g>
+
+    <!-- Top Left AI Sparkle Star -->
+    <g transform="translate(75, 135)" filter="url(#glowSubtle)">
+      <path d="M 16 0 C 16 8.84 8.84 16 0 16 C 8.84 16 16 23.16 16 32 C 16 23.16 23.16 16 32 16 C 23.16 16 16 8.84 16 0 Z" fill="#38bdf8" opacity="0.85" />
       <circle cx="16" cy="16" r="2.5" fill="#ffffff" />
     </g>
 
-    <!-- Tiny Star Lower-Right -->
-    <g transform="translate(415, 380)">
-      <path d="M 12 0 C 12 6.63 6.63 12 0 12 C 6.63 12 12 17.37 12 24 C 12 17.37 17.37 12 24 12 C 17.37 12 12 6.63 12 0 Z" fill="#38bdf8" opacity="0.85" />
-    </g>
-
-    <!-- Bottom Shield / AI Water Ribbon Badge -->
-    <g transform="translate(180, 430)">
-      <rect x="0" y="0" width="152" height="34" rx="17" fill="#0f172a" stroke="url(#geminiRing)" stroke-width="2.5" />
-      <text x="76" y="23" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="14" font-weight="800" fill="#f8fafc" text-anchor="middle" letter-spacing="1.5">PrakanBOT</text>
+    <!-- Bottom Emblem Brand Badge -->
+    <g transform="translate(176, 432)">
+      <rect x="0" y="0" width="160" height="34" rx="17" fill="#090d16" stroke="url(#haloGrad)" stroke-width="2.5" />
+      <text x="80" y="23" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="13" font-weight="800" fill="#f8fafc" text-anchor="middle" letter-spacing="2">PRAKANBOT</text>
     </g>
   </g>
 
-  <!-- Glowing Gemini Border Ring -->
-  <circle cx="256" cy="256" r="248" fill="none" stroke="url(#geminiRing)" stroke-width="12" filter="url(#ringGlow)" opacity="0.75" />
-  <circle cx="256" cy="256" r="248" fill="none" stroke="url(#geminiRing)" stroke-width="8" />
-  <circle cx="256" cy="256" r="243" fill="none" stroke="#ffffff" stroke-width="1.5" opacity="0.4" />
+  <!-- Glowing Outer Shield Halo Ring -->
+  <circle cx="256" cy="256" r="246" fill="none" stroke="url(#haloGrad)" stroke-width="10" filter="url(#ringGlowStrong)" opacity="0.85" />
+  <circle cx="256" cy="256" r="246" fill="none" stroke="url(#haloGrad)" stroke-width="6" />
+  <circle cx="256" cy="256" r="240" fill="none" stroke="#ffffff" stroke-width="1.5" opacity="0.5" />
 </svg>
