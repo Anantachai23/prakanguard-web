@@ -52,9 +52,9 @@ export default function WelcomeModal({
 
   return (
     <div 
-      className={`fixed inset-0 z-50 flex items-center justify-center p-3.5 sm:p-5 overflow-y-auto select-none transition-all duration-400 ${
+      className={`fixed inset-0 z-[2000] flex items-center justify-center p-3 sm:p-5 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))] overflow-y-auto select-none transition-all duration-400 ${
         isEntering && !isExiting 
-          ? 'bg-slate-950/60 backdrop-blur-sm opacity-100 pointer-events-auto' 
+          ? 'bg-slate-950/65 backdrop-blur-sm opacity-100 pointer-events-auto' 
           : 'bg-slate-950/0 backdrop-blur-none opacity-0 pointer-events-none'
       }`}
       onClick={(e) => {
@@ -65,7 +65,7 @@ export default function WelcomeModal({
       }}
     >
       <div 
-        className={`w-[92vw] max-w-[420px] sm:max-w-md my-auto m-auto border rounded-2xl shadow-2xl overflow-hidden flex flex-col relative transition-all ${
+        className={`w-[90vw] max-w-[380px] sm:max-w-md my-auto m-auto max-h-[74vh] sm:max-h-[85vh] shrink-0 border rounded-2xl shadow-2xl overflow-hidden flex flex-col relative transition-all ${
           isDark 
             ? 'bg-slate-900/95 border-slate-700/80 text-slate-100 shadow-black/60' 
             : 'bg-white/95 border-slate-200/90 text-slate-900 shadow-slate-900/20'
@@ -104,14 +104,14 @@ export default function WelcomeModal({
         <div className={`px-5 pt-6 pb-4 flex flex-col items-center text-center border-b shrink-0 ${
           isDark ? 'bg-slate-900 border-slate-800' : 'bg-slate-50/70 border-slate-100'
         }`}>
-          {/* Institutional Crest Icon */}
+          {/* Institutional Crest / Logo */}
           <div className="relative mb-3">
-            <div className={`w-14 h-14 rounded-2xl flex items-center justify-center border shadow-md ${
+            <div className={`w-14 h-14 rounded-2xl p-1.5 flex items-center justify-center border shadow-md ${
               isDark 
                 ? 'bg-gradient-to-b from-slate-800 to-slate-900 border-slate-700 text-blue-400 shadow-blue-950/40' 
                 : 'bg-gradient-to-b from-blue-50 to-white border-blue-100 text-blue-700 shadow-blue-500/10'
             }`}>
-              <CivicCrest className="w-7 h-7" />
+              <img src="/logo.png" alt="PrakanGuard Logo" className="w-full h-full object-contain rounded-xl" />
             </div>
             <span className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-emerald-500 border-2 border-white dark:border-slate-900 flex items-center justify-center shadow-xs" title="ระบบเปิดออนไลน์พร้อมใช้งาน">
               <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />

@@ -1989,8 +1989,8 @@ export default function AdminModal({
   }, [activeFeedbackList]);
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/65 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
-      <div className={`w-[92vw] max-w-[440px] sm:max-w-4xl my-auto m-auto border rounded-xl shadow-2xl flex flex-col max-h-[84vh] sm:max-h-[90vh] overflow-hidden transition-all ${
+    <div className="fixed inset-0 z-[2000] bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))] overflow-y-auto">
+      <div className={`w-[90vw] max-w-[395px] sm:max-w-4xl my-auto m-auto border rounded-xl shadow-2xl flex flex-col max-h-[74vh] sm:max-h-[88vh] shrink-0 overflow-hidden transition-all ${
         isDark ? 'bg-slate-900 border-slate-800 text-slate-100' : 'bg-white border-slate-200 text-slate-900'
       }`}>
         

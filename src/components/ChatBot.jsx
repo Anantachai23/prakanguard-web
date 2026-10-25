@@ -40,31 +40,41 @@ import {
   FAQS_OFFICIAL 
 } from '../data/chatKnowledgeBase';
 
-// PrakanBOT monogram – a clean "P" mark with a subtle water line (no AI clichés)
+// Authentic Google Gemini-inspired sparkle star icon
+function GeminiSparkleIcon({ size = 18, className = "" }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className={className}
+    >
+      <path
+        d="M12 2C12 7.52285 7.52285 12 2 12C7.52285 12 12 16.4771 12 22C12 16.4771 16.4771 12 22 12C16.4771 12 12 7.52285 12 2Z"
+        fill="url(#gemini-star-grad)"
+      />
+      <defs>
+        <linearGradient id="gemini-star-grad" x1="2" y1="2" x2="22" y2="22" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#4285F4" />
+          <stop offset="50%" stopColor="#9B72CF" />
+          <stop offset="100%" stopColor="#38BDF8" />
+        </linearGradient>
+      </defs>
+    </svg>
+  );
+}
+
+// PrakanBOT official emblem with website brand logo
 function AiOfficialEmblem({ size = 32, className = "" }) {
   return (
     <div
-      className={`relative flex items-center justify-center shrink-0 select-none ${className}`}
+      className={`relative flex items-center justify-center shrink-0 rounded-xl overflow-hidden border border-blue-400/30 bg-gradient-to-br from-blue-50 to-white dark:from-slate-800 dark:to-slate-900 shadow-xs select-none ${className}`}
       style={{ width: size, height: size }}
       aria-hidden="true"
     >
-      <svg width={size} height={size} viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect width="32" height="32" rx="10" fill="#1d4ed8" />
-        <rect x="0.5" y="0.5" width="31" height="31" rx="9.5" stroke="#ffffff" strokeOpacity="0.12" />
-        <path
-          d="M12 23V9h5.2a4.4 4.4 0 0 1 0 8.8H12"
-          stroke="#ffffff"
-          strokeWidth="2.6"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-        <path
-          d="M17.5 23.2c1.1-.8 2.2-.8 3.3 0s2.2.8 3.3 0"
-          stroke="#93c5fd"
-          strokeWidth="1.7"
-          strokeLinecap="round"
-        />
-      </svg>
+      <img src="/logo.png" alt="PrakanBOT" className="w-[82%] h-[82%] object-contain" />
     </div>
   );
 }
@@ -1326,11 +1336,11 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
       const activeFloods = points.filter(p => p && !p.isResolved && p.isActive !== false && p.depthCm > 0);
       
       if (activeFloods.length === 0) {
-        return `✅ **รายงานสถานการณ์น้ำท่วม จ.สมุทรปราการ (อัปเดตสดทุก 15 วินาที):**\n\n` +
-          `ขณะนี้ในระบบ **ไม่พบจุดน้ำท่วมขังวิกฤตบนผิวจราจร** ในพื้นที่ 6 อำเภอของจังหวัดสมุทรปราการครับ ทุกเส้นทางหลักสัญจรได้ตามปกติ\n\n` +
-          `• 🌡️ สภาพอากาศ: **${weather.weatherDesc || 'ปกติ'}** (อุณหภูมิ ${weather.temp}°C)\n` +
-          `• 🌧️ โอกาสเกิดฝนตกวันนี้: **${rainChance}%** (ช่วงเฝ้าระวัง: ${peakTime})\n\n` +
-          `💡 ประชาชนสามารถติดตามแผนที่สด หรือกดปุ่ม **แจ้ง** ตรงกลางเมนูด้านล่าง หากพบจุดน้ำท่วมในชุมชนของท่านครับ`;
+        return `🟢 **สถานะน้ำท่วมสมุทรปราการ (อัปเดตสด):**\n\n` +
+          `• **เส้นทางหลัก:** สัญจรได้ตามปกติ ไม่พบจุดน้ำท่วมขังวิกฤต\n` +
+          `• **สภาพอากาศ:** ${weather.weatherDesc || 'ปกติ'} (${weather.temp}°C)\n` +
+          `• **พยากรณ์ฝน:** โอกาสเกิดฝน **${rainChance}%** (ช่วงเฝ้าระวัง ${peakTime})\n\n` +
+          `💡 *แตะหมุดบนแผนที่ หรือกดปุ่ม "แจ้ง" เพื่อรายงานจุดน้ำท่วม*`;
       }
 
       // เรียงลำดับจุดที่ลึกที่สุด 5 อันดับแรก
@@ -1339,14 +1349,12 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
       const listText = sortedFloods.map((p, idx) => {
         const levelBadge = p.level === 3 ? '🔴 วิกฤต' : (p.level === 2 ? '🟡 ปานกลาง' : '🟢 ปกติ');
         return `• **${idx + 1}. ${p.name}** (อ.${p.district})\n` +
-          `  - ระดับน้ำ: **${p.depthCm || p.depthRange} ซม.** [${levelBadge}]\n` +
-          `  - การสัญจร: ${p.trafficStatus || 'โปรดใช้ความระมัดระวัง'}`;
-      }).join('\n\n');
+          `  - ระดับน้ำ: **${p.depthCm || p.depthRange} ซม.** [${levelBadge}] · ${p.trafficStatus || 'ระมัดระวัง'}`;
+      }).join('\n');
 
-      return `🌊 **สรุปรายงานจุดน้ำท่วมขังบนผิวจราจรสด (ทั้งหมด ${activeFloods.length} จุด):**\n\n` +
+      return `🌊 **จุดน้ำท่วมสดบนผิวจราจร (${activeFloods.length} จุด):**\n\n` +
         `${listText}\n\n` +
-        `📊 ข้อมูลดึงจากเซนเซอร์ตรวจวัดและรายงานประชาชนที่ผ่านการอนุมัติ อัปเดตสดทุก 15 วินาที\n` +
-        `💡 แตะดูหมุดสีบนแผนที่หลักเพื่อดูพิกัดและภาพถ่ายจริงได้ทันทีครับ`;
+        `💡 *แตะหมุดบนแผนที่เพื่อดูพิกัด GPS และภาพถ่ายจริง*`;
     }
 
     // B. คำถามเกี่ยวกับสายด่วนและเบอร์โทรฉุกเฉิน (Official Emergency Hotlines)
@@ -1363,13 +1371,13 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
       q.includes("น้ำประปา");
 
     if (isEmergencyQuery) {
-      const contactsText = OFFICIAL_EMERGENCY_CONTACTS.map(c => 
+      const contactsText = OFFICIAL_EMERGENCY_CONTACTS.slice(0, 6).map(c => 
         `• **${c.name}**: โทร. **${c.tel}** (${c.desc})`
       ).join('\n');
 
-      return `📞 **เบอร์โทรสายด่วนฉุกเฉินและหน่วยงานช่วยเหลือ จ.สมุทรปราการ (24 ชั่วโมง):**\n\n` +
+      return `📞 **สายด่วนฉุกเฉิน 24 ชม. (จ.สมุทรปราการ):**\n\n` +
         `${contactsText}\n\n` +
-        `⚠️ กรณีมีผู้ป่วยติดเตียงหรือต้องการอพยพด่วน โทร. **1784** (ปภ. โทรฟรี) หรือ **1669** (กู้ชีพฉุกเฉิน) ได้ทันทีครับ`;
+        `⚠️ *ต้องการความช่วยเหลือด่วน โทร. **1784** (ปภ. โทรฟรี) หรือ **1669** (กู้ชีพ)*`;
     }
 
     // C. คำถามเกี่ยวกับเกณฑ์มาตรฐานระดับน้ำและยานพาหนะ (Vehicle & Water Standards)
@@ -1387,17 +1395,11 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
       q.includes("ระดับน้ำ");
 
     if (isVehicleStandardQuery) {
-      return `🚗 **เกณฑ์มาตรฐานระดับน้ำและความปลอดภัยในการขับขี่ (เกณฑ์ระดับน้ำมาตรฐาน / กรมทางหลวง):**\n\n` +
-        `🟢 **ระดับ 1: ท่วมปกติ (5 - 20 ซม.)**\n` +
-        `• มอเตอร์ไซค์และรถเก๋งสัญจรผ่านได้ ขับช้าๆ ไม่เร่งเครื่อง เว้นระยะห่าง\n\n` +
-        `🟡 **ระดับ 2: ท่วมปานกลาง (21 - 50 ซม.)**\n` +
-        `• **รถเก๋งและอีโคคาร์:** เสี่ยงน้ำเข้าท่อไอเสียและห้องเครื่อง ห้ามลุยเกิน 30 ซม. เด็ดขาด!\n` +
-        `• **มอเตอร์ไซค์:** เสี่ยงเครื่องดับสูง แนะนำเลี่ยงเส้นทาง\n` +
-        `• **รถกระบะ / SUV:** ผ่านได้ด้วยความระมัดระวัง ใช้เกียร์ต่ำ L ปิดแอร์ทันที\n\n` +
-        `🔴 **ระดับ 3: ท่วมวิกฤต (มากกว่า 50 ซม.)**\n` +
-        `• **ห้ามรถยนต์และมอเตอร์ไซค์ทุกชนิดผ่านเด็ดขาด!** รถจะลอยน้ำและสูญเสียการควบคุม\n` +
-        `• สัญจรได้เฉพาะรถบรรทุกยกสูง 6 ล้อขึ้นไป หรือเรือกู้ภัย ปภ.\n\n` +
-        `💡 ข้อควรจำสำคัญ: เมื่อเจอน้ำท่วมทาง ให้ **ปิดแอร์ทันที** เพื่อป้องกันพัดลมตีน้ำเข้าเครื่องยนต์ครับ`;
+      return `🚗 **เกณฑ์มาตรฐานระดับน้ำและความปลอดภัย (ปภ. / กรมทางหลวง):**\n\n` +
+        `• 🟢 **5 - 20 ซม. (ปกติ):** รถทุกชนิดผ่านได้ ขับช้าๆ เว้นระยะห่าง\n` +
+        `• 🟡 **21 - 50 ซม. (ปานกลาง):** รถเก๋ง/อีโคคาร์ห้ามลุยเกิน 30 ซม.! รถกระบะ/SUV ใช้เกียร์ต่ำ ปิดแอร์ทันที\n` +
+        `• 🔴 **เกิน 50 ซม. (วิกฤต):** **ห้ามรถยนต์และมอเตอร์ไซค์ผ่านเด็ดขาด!** รถจะลอยน้ำและสูญเสียการควบคุม\n\n` +
+        `💡 *ข้อควรจำ: เมื่อลุยน้ำ ให้ปิดแอร์ทันทีเพื่อป้องกันใบพัดตีน้ำเข้าเครื่องยนต์*`;
     }
 
     // D. คำถามเกี่ยวกับความปลอดภัย ไฟฟ้า สัตว์มีพิษ โรคระบาด
@@ -1551,51 +1553,22 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
 
       // กรณีถามเจาะจงเรื่องฝน / พยากรณ์ฝนที่สถานที่นี้
       if (isRainQuery) {
-        if (wantsShort) {
-          return `${typoNotice}⚡️ **สรุปคาดการณ์ฝนตกเฉพาะจุด: ${loc.canonical} แบบกระชับ:**\n\n` +
-            `• **โอกาสเกิดฝน:** 🌧️ **${locRainProb}%** (สะสม ~**${rf.accumulationEstimate}**)\n` +
-            `• **ช่วงเวลาฝนตกหนักสุด:** ⏱️ **${rf.peakTime}**\n` +
-            `• **ลักษณะฝน & เรดาร์:** ${rf.intensityDesc} (${rf.radarMovement})\n` +
-            `• **ผลกระทบน้ำท่วมผิวทาง:** ⚠️ ${rf.impactRisk}\n` +
-            `• **การระบายน้ำ:** ⏱️ ${rf.drainageRate}\n\n` +
-            `สั้นกระชับ ตรงใจไหมครับ! หากต้องการทราบจุดอื่น สอบถามได้เลยนะครับ 😊`;
-        }
-
-        return `${typoNotice}🌧️ **รายงานคาดการณ์ฝนตกเฉพาะพื้นที่: ${loc.canonical}**\n` +
-          `📍 **โซนวิเคราะห์:** ${rf.zone}\n` +
-          `อ้างอิงข้อมูล: [กรมอุตุนิยมวิทยา (TMD)] • [ศูนย์เรดาร์ตรวจอากาศหนองจอก-สุวรรณภูมิ] • ${loc.agencies}\n\n` +
-          `📊 **ความน่าจะเป็นและช่วงเวลาฝนตก:**\n` +
-          `• โอกาสเกิดฝนตกในพื้นที่: 🌧️ **${locRainProb}%** (${locRainProb >= 70 ? 'เสี่ยงฝนตกหนัก' : locRainProb >= 50 ? 'มีโอกาสฝนฟ้าคะนองปานกลาง' : 'โอกาสฝนโปรยบางส่วน'})\n` +
-          `• ช่วงเวลาเสี่ยงฝนตกหนักสุด (Peak Rain Window): ⏱️ **${rf.peakTime}**\n` +
-          `• ปริมาณน้ำฝนสะสมคาดการณ์: 📊 **${rf.accumulationEstimate}**\n` +
-          `• ลักษณะฝนและลมกระโชก: ⛈️ **${rf.intensityDesc}**\n\n` +
-          `🧭 **ทิศทางและการเคลื่อนตัวของกลุ่มเมฆฝน (Radar Vector):**\n` +
-          `• ${rf.radarMovement}\n\n` +
-          `🌊 **ผลกระทบต่อน้ำท่วมขังบนผิวถนน (Road Flooding Risk):**\n` +
-          `• ${rf.impactRisk}\n` +
-          `• **อัตราหน่วงการระบายน้ำ:** ${rf.drainageRate}\n` +
-          `• **จุดวิกฤตที่ต้องระวังเป็นพิเศษ:** ${loc.criticalSpots}\n\n` +
-          `🚗 **คำแนะนำยานพาหนะและการเดินทางในพื้นที่:**\n` +
-          `• ${loc.trafficGuidance}\n\n` +
-          `📞 **สายด่วนประสานงานฉุกเฉินและเครื่องสูบน้ำ:**\n` +
-          `• ${loc.phones}`;
+        return `${typoNotice}🌧️ **พยากรณ์ฝน: ${loc.canonical}**\n\n` +
+          `• **โอกาสเกิดฝน:** **${locRainProb}%** (สะสม ~${rf.accumulationEstimate})\n` +
+          `• **ช่วงเวลาเสี่ยงฝนตกหนัก:** ⏱️ **${rf.peakTime}**\n` +
+          `• **ลักษณะฝน & เรดาร์:** ${rf.intensityDesc} (${rf.radarMovement})\n` +
+          `• **ผลกระทบผิวทาง:** ⚠️ ${rf.impactRisk}\n` +
+          `• **การระบายน้ำ:** ⏱️ ${rf.drainageRate}`;
       }
 
-      // กรณีถามเรื่องน้ำท่วมทั่วไปที่สถานที่นี้ (นำข้อมูลคาดการณ์ฝนเฉพาะจุดมาร่วมวิเคราะห์)
-      if (wantsShort) {
-        return `${typoNotice}⚡️ **สรุปสถานการณ์น้ำ ${loc.canonical} แบบกระชับ:**\n\n` +
-          `• **โอกาสท่วม:** ~**${floodProb}%** (ระดับน้ำคาดการณ์ ${loc.depthRange})\n` +
-          `• **ช่วงเฝ้าระวังสูงสุด:** ⏱️ **${rf.peakTime || peakTime}** (หากมีฝนตกหนักสะสม)\n` +
-          `• **โอกาสฝนเฉพาะจุด:** 🌧️ **${locRainProb}%** (สะสม ~${rf.accumulationEstimate})\n` +
-          `• **จุดเปราะบาง:** ${loc.criticalSpots}\n` +
-          `• **ยานพาหนะ:** ${loc.trafficGuidance}\n` +
-          `• **สายด่วน:** ${loc.phones}\n\n` +
-          `สั้นกระชับ ตรงใจไหมครับ! สอบถามจุดอื่นหรือเกณฑ์ความลึกเพิ่มเติมได้ตลอดเลยนะครับ 😊`;
-      }
-
-      return `${typoNotice}🌊 **การวิเคราะห์คาดการณ์โอกาสเกิดน้ำท่วม: ${loc.canonical}**\n` +
-        `อ้างอิงข้อมูล: ${loc.agencies} • [กรมอุตุนิยมวิทยา (TMD)] • [กรมอุทกศาสตร์ กองทัพเรือ]\n\n` +
-        `📊 **ระดับความเสี่ยงคาดการณ์วันนี้:** ${getRiskBadge(floodProb)}\n\n` +
+      // กรณีถามเรื่องน้ำท่วมทั่วไปที่สถานที่นี้
+      return `${typoNotice}🌊 **สถานการณ์น้ำ: ${loc.canonical}**\n\n` +
+        `• **ระดับความเสี่ยง:** ${getRiskBadge(floodProb)}\n` +
+        `• **ระดับน้ำคาดการณ์:** **${loc.depthRange}** (ช่วงเฝ้าระวัง ⏱️ ${rf.peakTime || peakTime})\n` +
+        `• **โอกาสฝน:** 🌧️ **${locRainProb}%** (สะสม ~${rf.accumulationEstimate})\n` +
+        `• **จุดเปราะบาง:** ${loc.criticalSpots}\n` +
+        `• **การสัญจร:** ${loc.trafficGuidance}\n` +
+        `• **สายด่วน:** ${loc.phones}`;
         `🌧️ **1. คาดการณ์ฝนฟ้าคะนองและปริมาณน้ำฝนสะสมเฉพาะพื้นที่ (${rf.zone}):**\n` +
         `• โอกาสเกิดฝนตกเฉพาะจุด: 🌧️ **${locRainProb}%** (ปริมาณฝนสะสมคาดการณ์ ~**${rf.accumulationEstimate}**)\n` +
         `• ช่วงเวลาเสี่ยงฝนตกหนักสูงสุด: ⏱️ **${rf.peakTime}**\n` +
@@ -2005,13 +1978,13 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
     }, 280);
   };
 
-  const WELCOME_TEXT = `สวัสดีครับ **PrakanBOT** พร้อมให้ข้อมูลสถานการณ์น้ำท่วมและการเดินทางในจังหวัดสมุทรปราการ
+  const WELCOME_TEXT = `สวัสดีครับ ผม **PrakanBOT** ผู้ช่วยวิเคราะห์อุทกภัยอัจฉริยะ (Gemini Telemetry AI) ประจำจังหวัดสมุทรปราการ
 
-พิมพ์ถามได้เลย เช่น
-• ซอยทรัพย์บุญชัยท่วมไหม
-• รถเก๋งลุยน้ำได้กี่เซนติเมตร
-• วันนี้ฝนจะตกช่วงกี่โมง
-• เบอร์โทรขอความช่วยเหลือ`;
+พิมพ์สอบถามข้อมูลได้ทันที เช่น:
+• **"น้ำท่วมตรงไหนบ้าง"** (ตรวจสอบจุดน้ำท่วมสด)
+• **"บางพลีฝนตกกี่โมง"** (พยากรณ์เรดาร์รายชั่วโมง)
+• **"รถเก๋งลุยน้ำได้ไหม"** (เกณฑ์ความปลอดภัยยานพาหนะ)
+• **"ขอดูกล้อง CCTV"** (ตรวจสอบภาพสดถนนสายหลัก)`;
 
   const handleResetChat = () => {
     handleStopResponse();
@@ -2026,11 +1999,10 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
     ]);
   };
 
-  // Remove emoji / pictographs so answers read like a professional service desk
+  // Clean bot text formatting (preserving helpful status indicators)
   const cleanBotText = (raw) => {
     if (!raw) return '';
     return raw
-      .replace(/[\p{Extended_Pictographic}\u{1F1E6}-\u{1F1FF}\uFE0F\u20E3\u200D]/gu, '')
       .replace(/[ \t]{2,}/g, ' ')
       .replace(/^[ \t]+/gm, '')
       .replace(/(^|\n)[ \t]*\*\*[ \t]*\*\*/g, '$1');
@@ -2135,12 +2107,12 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
   };
 
   const QUICK_QUESTIONS = [
-    { label: 'จุดน้ำท่วมตอนนี้', q: 'ตอนนี้ในสมุทรปราการมีน้ำท่วมตรงไหนบ้าง?' },
-    { label: 'ฝนตกช่วงไหนวันนี้', q: 'วันนี้ในสมุทรปราการมีโอกาสฝนตกช่วงกี่โมง?' },
-    { label: 'ระดับน้ำที่รถผ่านได้', q: 'รถเก๋งลุยน้ำได้กี่เซนติเมตร และระดับไหนห้ามผ่านเด็ดขาด?' },
-    { label: 'เบอร์ฉุกเฉิน', q: 'ขอเบอร์โทรศัพท์สายด่วนฉุกเฉินหน่วยงานช่วยเหลือในสมุทรปราการ' },
-    { label: 'ที่จอดรถหนีน้ำ', q: 'ในสมุทรปราการมีจุดจอดรถที่สูงหรือลานจอดหนีน้ำท่วมที่ไหนบ้าง?' },
-    { label: 'ป้องกันไฟดูด', q: 'วิธีตัดไฟและป้องกันไฟดูดช่วงน้ำท่วมต้องทำอย่างไร?' }
+    { label: '🌊 จุดน้ำท่วมสด', q: 'ตอนนี้ในสมุทรปราการมีน้ำท่วมตรงไหนบ้าง?' },
+    { label: '🌧️ พยากรณ์ฝนวันนี้', q: 'วันนี้ในสมุทรปราการมีโอกาสฝนตกช่วงกี่โมง?' },
+    { label: '🚗 รถลุยน้ำได้กี่เซน', q: 'รถยนต์ลุยน้ำได้กี่เซนติเมตร และระดับไหนห้ามผ่านเด็ดขาด?' },
+    { label: '📷 กล้อง CCTV', q: 'ขอดูกล้อง CCTV และจุดตรวจวัดระดับน้ำ' },
+    { label: '📞 สายด่วนฉุกเฉิน', q: 'ขอเบอร์โทรศัพท์สายด่วนฉุกเฉินหน่วยงานช่วยเหลือในสมุทรปราการ' },
+    { label: '🅿️ ที่จอดรถหนีน้ำ', q: 'ในสมุทรปราการมีจุดจอดรถที่สูงหรือลานจอดหนีน้ำท่วมที่ไหนบ้าง?' }
   ];
 
   const isBusy = isThinking || Boolean(streamingMessageId);
@@ -2275,14 +2247,14 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
             ...(customSize.width ? { width: `${customSize.width}px`, maxWidth: '96vw' } : {}),
             ...(customSize.height ? { height: `${customSize.height}px`, maxHeight: '85vh' } : {})
           }}
-          className={`smooth-pop fixed z-50 w-[92vw] max-w-[390px] sm:max-w-none ${
+          className={`smooth-pop fixed z-[2000] w-[90vw] max-w-[385px] sm:max-w-none ${
             customSize.width || customSize.height
               ? ''
               : isExpanded
-                ? 'sm:w-[540px] h-[480px] max-h-[76vh] sm:h-[680px] sm:max-h-[86vh]'
-                : 'sm:w-[400px] h-[420px] max-h-[70vh] sm:h-[580px] sm:max-h-[84vh]'
+                ? 'sm:w-[540px] h-[450px] max-h-[72vh] sm:h-[680px] sm:max-h-[86vh]'
+                : 'sm:w-[400px] h-[390px] max-h-[66vh] sm:h-[580px] sm:max-h-[84vh]'
           } border rounded-2xl shadow-2xl flex flex-col overflow-hidden ${
-            !position ? 'bottom-[calc(3.5rem+env(safe-area-inset-bottom,0px))] left-1/2 -translate-x-1/2 sm:translate-x-0 sm:left-auto sm:bottom-6 sm:right-6' : ''
+            !position ? 'bottom-[calc(4.2rem+env(safe-area-inset-bottom,0px))] left-1/2 -translate-x-1/2 sm:translate-x-0 sm:left-auto sm:bottom-6 sm:right-6' : ''
           } ${
             isDraggingModal || isResizingModal ? 'ring-2 ring-blue-500/40' : ''
           } ${
@@ -2306,13 +2278,13 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
               if (customSize.height && customSize.height > 340) {
                 setCustomSize({ width: null, height: 300 });
               } else if (customSize.height && customSize.height <= 340) {
-                setCustomSize({ width: null, height: Math.min(window.innerHeight - 110, 540) });
+                setCustomSize({ width: null, height: Math.min(window.innerHeight - 110, 520) });
               } else if (isExpanded) {
                 setIsExpanded(false);
                 setCustomSize({ width: null, height: 300 });
               } else {
                 setIsExpanded(true);
-                setCustomSize({ width: null, height: Math.min(window.innerHeight - 110, 540) });
+                setCustomSize({ width: null, height: Math.min(window.innerHeight - 110, 520) });
               }
             }}
             className="sm:hidden w-full pt-1.5 pb-0.5 flex justify-center cursor-ns-resize touch-none select-none"
@@ -2325,27 +2297,33 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
           <div
             onMouseDown={handleMouseDownHeader}
             onTouchStart={handleTouchStartHeader}
-            className={`px-3 sm:px-4 py-2 sm:py-3 border-b flex items-center justify-between gap-2 cursor-grab active:cursor-grabbing select-none ${
-              isDark ? 'border-slate-800' : 'border-slate-100'
+            className={`px-3 sm:px-4 py-2 sm:py-2.5 border-b flex items-center justify-between gap-2 cursor-grab active:cursor-grabbing select-none ${
+              isDark ? 'border-slate-800 bg-slate-900' : 'border-slate-100 bg-white'
             }`}
             title="ลากเพื่อย้ายหน้าต่าง"
           >
             <div className="flex items-center gap-2.5 min-w-0 pointer-events-none">
               <div className="relative shrink-0">
                 <AiOfficialEmblem size={32} />
-                <span className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 ${isDark ? 'border-slate-900' : 'border-white'}`} />
+                <span className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 ${isDark ? 'border-slate-900' : 'border-white'} shadow-xs`} />
               </div>
               <div className="min-w-0 leading-tight">
-                <h4 className="text-[13.5px] sm:text-sm font-semibold tracking-tight">PrakanBOT</h4>
-                <p className={`text-[10.5px] sm:text-[11px] truncate mt-0.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                  {isBusy ? 'กำลังพิมพ์…' : 'ออนไลน์ · ข้อมูลน้ำท่วมและการเดินทาง'}
+                <div className="flex items-center gap-1.5">
+                  <h4 className="text-[13px] sm:text-[14px] font-bold tracking-tight">PrakanBOT</h4>
+                  <span className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded-full text-[9px] font-semibold bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-cyan-500/10 text-blue-600 dark:text-cyan-400 border border-blue-500/20">
+                    <GeminiSparkleIcon size={9} />
+                    <span>Gemini AI</span>
+                  </span>
+                </div>
+                <p className={`text-[10px] sm:text-[10.5px] truncate mt-0.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                  {isBusy ? 'กำลังวิเคราะห์คำตอบ…' : 'ระบบวิเคราะห์อุทกภัยอัจฉริยะ 24 ชม.'}
                 </p>
               </div>
             </div>
 
             <div className="flex items-center shrink-0 -mr-1">
               <button type="button" onClick={handleResetChat} className={ghostBtn} title="เริ่มการสนทนาใหม่">
-                <RotateCcw className="w-[15px] h-[15px]" />
+                <RotateCcw className="w-[14px] h-[14px]" />
               </button>
               <button
                 type="button"
@@ -2367,7 +2345,7 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
                 className={`${ghostBtn} !hidden sm:!flex`}
                 title={isExpanded ? 'คืนขนาดเดิม' : 'ขยายหน้าต่าง'}
               >
-                {isExpanded ? <Minimize2 className="w-[15px] h-[15px]" /> : <Maximize2 className="w-[15px] h-[15px]" />}
+                {isExpanded ? <Minimize2 className="w-[14px] h-[14px]" /> : <Maximize2 className="w-[14px] h-[14px]" />}
               </button>
               <button
                 type="button"
@@ -2384,21 +2362,21 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
           </div>
 
           {/* Live weather line */}
-          <div className={`px-3 sm:px-4 py-1.5 border-b flex items-center justify-between gap-2 text-[10.5px] sm:text-[11px] tabular-nums ${
+          <div className={`px-3 sm:px-4 py-1.5 border-b flex items-center justify-between gap-2 text-[10px] sm:text-[11px] tabular-nums ${
             isDark ? 'border-slate-800 text-slate-400 bg-slate-950/30' : 'border-slate-100 text-slate-500 bg-slate-50/60'
           }`}>
             <span className="truncate">
-              สมุทรปราการ <span className={isDark ? 'text-slate-200' : 'text-slate-800'}>{weather.temp}°C</span>
+              สมุทรปราการ <span className={isDark ? 'text-slate-200' : 'text-slate-800 font-semibold'}>{weather.temp}°C</span>
               <span className="mx-1.5 opacity-40">|</span>
-              โอกาสฝน <span className={isDark ? 'text-slate-200' : 'text-slate-800'}>{weather.rainProbabilityToday}%</span>
+              โอกาสฝน <span className={isDark ? 'text-slate-200' : 'text-slate-800 font-semibold'}>{weather.rainProbabilityToday}%</span>
             </span>
             {weather.peakHour && (
-              <span className="shrink-0 truncate max-w-[45%]">ช่วงฝนหนัก {String(weather.peakHour).split(' (')[0]}</span>
+              <span className="shrink-0 truncate max-w-[45%] text-[10px]">ช่วงฝนหนัก {String(weather.peakHour).split(' (')[0]}</span>
             )}
           </div>
 
           {/* Messages */}
-          <div className={`pgb-scroll flex-1 overflow-y-auto px-3 sm:px-4 py-3 sm:py-4 space-y-3.5 ${
+          <div className={`pgb-scroll flex-1 overflow-y-auto px-3 sm:px-4 py-3 sm:py-3.5 space-y-3 ${
             isDark ? 'bg-slate-900' : 'bg-white'
           }`}>
             {messages.map((m) => {
@@ -2407,21 +2385,23 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
                 <div key={m.id} className={`pgb-msg-in group flex gap-2 ${isBot ? 'justify-start' : 'justify-end'}`}>
                   {isBot && (
                     <div className="shrink-0 mt-0.5">
-                      <AiOfficialEmblem size={24} />
+                      <div className="w-6 h-6 rounded-lg flex items-center justify-center bg-blue-50 dark:bg-slate-800 border border-blue-100 dark:border-slate-700 shadow-2xs">
+                        <GeminiSparkleIcon size={13} />
+                      </div>
                     </div>
                   )}
 
-                  <div className={`max-w-[84%] min-w-0 flex flex-col ${isBot ? 'items-start' : 'items-end'}`}>
+                  <div className={`max-w-[85%] min-w-0 flex flex-col ${isBot ? 'items-start' : 'items-end'}`}>
                     <div
-                      className={`px-3 py-2 text-[12.5px] sm:text-[13px] leading-[1.65] break-words ${
+                      className={`px-3.5 py-2 text-[12px] sm:text-[12.5px] leading-[1.65] break-words shadow-2xs ${
                         isBot
-                          ? `rounded-2xl rounded-tl-md ${isDark ? 'bg-slate-800 text-slate-200' : 'bg-slate-100 text-slate-700'}`
-                          : 'rounded-2xl rounded-tr-md bg-blue-600 text-white'
+                          ? `rounded-2xl rounded-tl-sm ${isDark ? 'bg-slate-800/90 text-slate-100 border border-slate-700/50' : 'bg-slate-50 text-slate-800 border border-slate-200/70'}`
+                          : 'rounded-2xl rounded-tr-sm bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-blue-600/15'
                       }`}
                     >
                       {isBot ? renderFormattedMessage(m.text, true) : <p className="whitespace-pre-wrap">{m.text}</p>}
                       {streamingMessageId === m.id && (
-                        <span className={`inline-block w-[2px] h-3.5 ml-0.5 align-[-2px] animate-pulse ${isDark ? 'bg-slate-300' : 'bg-slate-500'}`} />
+                        <span className={`inline-block w-[2px] h-3.5 ml-0.5 align-[-2px] animate-pulse ${isDark ? 'bg-cyan-400' : 'bg-blue-600'}`} />
                       )}
                     </div>
 
@@ -2449,10 +2429,12 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
             {isThinking && (
               <div className="pgb-msg-in flex gap-2 justify-start">
                 <div className="shrink-0 mt-0.5">
-                  <AiOfficialEmblem size={24} />
+                  <div className="w-6 h-6 rounded-lg flex items-center justify-center bg-blue-50 dark:bg-slate-800 border border-blue-100 dark:border-slate-700 shadow-2xs">
+                    <GeminiSparkleIcon size={13} />
+                  </div>
                 </div>
-                <div className={`rounded-2xl rounded-tl-md px-3.5 py-3 flex items-center gap-1 ${
-                  isDark ? 'bg-slate-800 text-slate-400' : 'bg-slate-100 text-slate-400'
+                <div className={`rounded-2xl rounded-tl-sm px-3 py-2 flex items-center gap-1.5 border ${
+                  isDark ? 'bg-slate-800/80 border-slate-700/60 text-slate-400' : 'bg-slate-50 border-slate-200/80 text-slate-400'
                 }`}>
                   <span className="pgb-dot" />
                   <span className="pgb-dot" />
@@ -2468,13 +2450,14 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
                     key={chip.label}
                     type="button"
                     onClick={() => handleSend(chip.q)}
-                    className={`px-3 py-1.5 rounded-full border text-[11.5px] sm:text-xs transition-colors ${
+                    className={`px-3 py-1.5 rounded-full border text-[11px] sm:text-xs font-medium flex items-center gap-1 transition-all shadow-2xs active:scale-95 ${
                       isDark
-                        ? 'border-slate-700 text-slate-300 hover:bg-slate-800 hover:border-slate-600'
-                        : 'border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300 hover:text-slate-900'
+                        ? 'bg-slate-800/80 border-slate-700 text-slate-200 hover:bg-slate-700 hover:border-slate-600'
+                        : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300'
                     }`}
                   >
-                    {chip.label}
+                    <GeminiSparkleIcon size={10} />
+                    <span>{chip.label}</span>
                   </button>
                 ))}
               </div>
@@ -2491,8 +2474,8 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
               onMouseMove={handleChipsMouseMove}
               onMouseUp={handleChipsMouseUp}
               onMouseLeave={handleChipsMouseUp}
-              className={`pgb-chips-fade smooth-slider no-scrollbar flex items-center gap-1.5 overflow-x-auto px-3 sm:px-4 pt-2 touch-pan-x cursor-grab active:cursor-grabbing select-none ${
-                isDark ? 'bg-slate-900' : 'bg-white'
+              className={`pgb-chips-fade smooth-slider no-scrollbar flex items-center gap-1.5 overflow-x-auto px-3 sm:px-4 pt-1.5 pb-1 touch-pan-x cursor-grab active:cursor-grabbing select-none border-t ${
+                isDark ? 'bg-slate-900 border-slate-800/70' : 'bg-white border-slate-100'
               }`}
             >
               {QUICK_QUESTIONS.map((chip) => (
@@ -2501,36 +2484,38 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
                   type="button"
                   disabled={isBusy}
                   onClick={() => { if (!chipsHasDraggedRef.current) handleSend(chip.q); }}
-                  className={`smooth-slider-item shrink-0 whitespace-nowrap px-2.5 py-1 rounded-full border text-[11px] transition-colors disabled:opacity-40 ${
+                  className={`smooth-slider-item shrink-0 whitespace-nowrap px-2.5 py-1 rounded-full border text-[10.5px] font-medium transition-all disabled:opacity-40 active:scale-95 flex items-center gap-1 ${
                     isDark
-                      ? 'border-slate-700 text-slate-400 hover:text-slate-200 hover:bg-slate-800'
-                      : 'border-slate-200 text-slate-500 hover:text-slate-800 hover:bg-slate-50'
+                      ? 'border-slate-700/80 bg-slate-800/70 text-slate-300 hover:text-white hover:bg-slate-700'
+                      : 'border-slate-200/90 bg-slate-50 text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                   }`}
                 >
-                  {chip.label}
+                  <GeminiSparkleIcon size={9} />
+                  <span>{chip.label}</span>
                 </button>
               ))}
             </div>
           )}
 
-          {/* Composer */}
+          {/* Gemini-Inspired Capsule Composer */}
           <form
             onSubmit={(e) => { e.preventDefault(); handleSend(); }}
-            className={`p-2.5 sm:p-3 ${isDark ? 'bg-slate-900' : 'bg-white'}`}
+            className={`p-2.5 sm:p-3 border-t shrink-0 ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100'}`}
           >
-            <div className={`flex items-center gap-1.5 rounded-full border pl-3.5 pr-1 py-1 transition-[border-color,box-shadow] ${
+            <div className={`flex items-center gap-2 rounded-full border pl-3 pr-1 py-1 transition-all shadow-2xs ${
               isDark
-                ? 'bg-slate-800/60 border-slate-700 focus-within:border-slate-500'
-                : 'bg-slate-50 border-slate-200 focus-within:border-slate-400 focus-within:bg-white'
+                ? 'bg-slate-800/70 border-slate-700 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20'
+                : 'bg-slate-50 border-slate-200/90 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/15 focus-within:bg-white'
             }`}>
+              <GeminiSparkleIcon size={14} className="shrink-0 opacity-70" />
               <input
                 type="text"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 disabled={Boolean(streamingMessageId)}
-                placeholder={isBusy ? 'กำลังตอบ…' : 'พิมพ์คำถาม…'}
+                placeholder={isBusy ? 'กำลังประมวลผลคำตอบ…' : 'ถาม PrakanBOT (เช่น น้ำท่วมบางพลีไหม)...'}
                 aria-label="พิมพ์คำถาม"
-                className={`flex-1 min-w-0 bg-transparent text-[13px] py-1.5 focus:outline-none ${
+                className={`flex-1 min-w-0 bg-transparent text-[12px] sm:text-[12.5px] py-1 focus:outline-none ${
                   isDark ? 'text-slate-100 placeholder:text-slate-500' : 'text-slate-900 placeholder:text-slate-400'
                 }`}
               />
@@ -2538,7 +2523,7 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
                 <button
                   type="button"
                   onClick={handleStopResponse}
-                  className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-colors ${
+                  className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center shrink-0 transition-colors ${
                     isDark ? 'bg-slate-200 text-slate-900 hover:bg-white' : 'bg-slate-900 text-white hover:bg-slate-700'
                   }`}
                   title="หยุดตอบ"
@@ -2549,10 +2534,10 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
                 <button
                   type="submit"
                   disabled={!input.trim()}
-                  className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 bg-blue-600 hover:bg-blue-700 text-white transition-colors disabled:bg-slate-300 disabled:text-white dark:disabled:bg-slate-700 dark:disabled:text-slate-500"
+                  className="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center shrink-0 bg-blue-600 hover:bg-blue-500 text-white transition-all disabled:opacity-35 cursor-pointer shadow-xs active:scale-95"
                   title="ส่ง"
                 >
-                  <ArrowUp className="w-4 h-4" />
+                  <ArrowUp className="w-3.5 h-3.5" />
                 </button>
               )}
             </div>

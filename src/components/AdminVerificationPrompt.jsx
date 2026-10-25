@@ -116,9 +116,9 @@ export default function AdminVerificationPrompt({
 
   return (
     <>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/65 backdrop-blur-xs overflow-y-auto">
+      <div className="fixed inset-0 z-[2000] flex items-center justify-center p-3 sm:p-4 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))] bg-slate-950/70 backdrop-blur-xs overflow-y-auto">
         <div 
-          className={`w-[92vw] max-w-[420px] sm:max-w-lg my-auto m-auto rounded-xl border shadow-2xl overflow-hidden flex flex-col max-h-[82vh] sm:max-h-[88vh] transition-colors ${
+          className={`w-[90vw] max-w-[385px] sm:max-w-lg my-auto m-auto rounded-2xl border shadow-2xl overflow-hidden flex flex-col max-h-[74vh] sm:max-h-[85vh] shrink-0 transition-colors ${
             isDark 
               ? 'bg-slate-900 border-slate-800 text-slate-100' 
               : 'bg-white border-slate-200 text-slate-900'
