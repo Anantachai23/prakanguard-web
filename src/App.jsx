@@ -2585,6 +2585,14 @@ export default function App() {
     <div className={`fixed inset-0 h-full w-full flex flex-col font-prompt selection:bg-blue-600 selection:text-white overflow-hidden overscroll-none select-none transition-colors duration-200 ${
       isDark ? 'bg-slate-950 text-slate-100' : 'bg-slate-100 text-slate-800'
     }`}>
+      {/* Official Telemetry Sync Beam (Scanning Laser at top of screen) */}
+      <div 
+        className={`fixed top-0 left-0 right-0 h-[2.5px] z-[99999] pointer-events-none transition-all duration-300 ${
+          isRefreshingData 
+            ? 'opacity-100 bg-gradient-to-r from-blue-600 via-sky-400 to-emerald-400 animate-pulse shadow-[0_0_14px_rgba(56,189,248,0.9)]' 
+            : 'opacity-0'
+        }`} 
+      />
       
       {/* 1. TOP NAVBAR (Theme Switchable & AutoMarquee) */}
       <Navbar 
@@ -3183,20 +3191,41 @@ export default function App() {
             )}
           </div>
 
-          {/* Sidebar Footer */}
+          {/* Sidebar Official Telemetry Status Footer */}
           <div className={`p-2.5 px-3 border-t flex items-center justify-between text-[11px] shrink-0 ${
-            isDark ? 'bg-slate-900/90 border-slate-800 text-slate-400' : 'bg-slate-50 border-slate-200 text-slate-500'
+            isDark ? 'bg-slate-900/90 border-slate-800 text-slate-400' : 'bg-slate-50 border-slate-200 text-slate-600'
           }`}>
-            <div className="flex items-center gap-1.5">
-              <RefreshCw className={`w-3 h-3 ${isRefreshingData ? 'animate-spin text-blue-500' : ''}`} />
-              <span>รีเฟรชใน {Math.floor(refreshCountdown / 60)}:{(refreshCountdown % 60).toString().padStart(2, '0')}</span>
+            <div className="flex items-center gap-1.5 min-w-0">
+              <span className="relative flex h-2 w-2 shrink-0">
+                <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${
+                  isRefreshingData ? 'bg-blue-400' : 'bg-emerald-400'
+                }`} />
+                <span className={`relative inline-flex rounded-full h-2 w-2 ${
+                  isRefreshingData ? 'bg-blue-500' : 'bg-emerald-500'
+                }`} />
+              </span>
+              <span className="truncate text-[10.5px]">
+                {isRefreshingData ? 'กำลังซิงก์โทรมาตร...' : `โทรมาตรสด (ซิงก์ใน ${Math.floor(refreshCountdown / 60)}:${(refreshCountdown % 60).toString().padStart(2, '0')})`}
+              </span>
             </div>
             <button
-              onClick={handleRefreshData}
+              type="button"
+              onClick={() => {
+                playRefreshSound();
+                handleRefreshData();
+              }}
               disabled={isRefreshingData}
-              className="text-blue-600 dark:text-cyan-400 hover:underline cursor-pointer font-semibold"
+              className={`px-2 py-1 rounded text-[10.5px] font-bold border transition-all cursor-pointer shrink-0 flex items-center gap-1 ${
+                isRefreshingData
+                  ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
+                  : isDark
+                  ? 'bg-slate-800 hover:bg-slate-700 text-cyan-300 border-slate-700 hover:border-slate-600'
+                  : 'bg-white hover:bg-blue-50 text-blue-700 border-slate-200 hover:border-blue-300 shadow-2xs'
+              }`}
+              title="ซิงก์ข้อมูลโทรมาตรล่าสุดทันที"
             >
-              {isRefreshingData ? 'กำลังซิงค์...' : 'รีเฟรชทันที'}
+              <RefreshCw className={`w-3 h-3 ${isRefreshingData ? 'animate-spin' : ''}`} />
+              <span>{isRefreshingData ? 'ซิงก์...' : 'ซิงก์ทันที'}</span>
             </button>
           </div>
         </div>
@@ -3289,26 +3318,45 @@ export default function App() {
             </div>
           )}
 
-          {/* Floating Toast Notification */}
+          {/* Official Civic Toast Notification */}
           {latestUpdateNotification && (
-            <div className={`fixed top-[56px] sm:top-[68px] left-1/2 -translate-x-1/2 z-[85] px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-md shadow-md backdrop-blur-md flex items-center gap-2 max-w-[90vw] sm:max-w-md pointer-events-auto animate-in fade-in slide-in-from-top-2 duration-300 border ${
+            <div className={`fixed top-[52px] sm:top-[64px] left-1/2 -translate-x-1/2 z-[85] px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-xl shadow-xl backdrop-blur-md flex items-center gap-2.5 max-w-[92vw] sm:max-w-md pointer-events-auto animate-in fade-in slide-in-from-top-3 duration-300 border ${
               latestUpdateNotification.includes('⚠️') || latestUpdateNotification.includes('ไม่ได้อยู่ใน')
-                ? 'bg-slate-900 border-amber-400 text-amber-200 shadow-amber-950/50'
-                : 'bg-slate-900 border-emerald-400 text-emerald-200 shadow-emerald-950/50'
+                ? 'bg-slate-950/95 border-amber-500/80 text-amber-200 shadow-amber-950/40'
+                : 'bg-slate-950/95 border-emerald-500/80 text-emerald-100 shadow-emerald-950/40'
             }`}>
-              {latestUpdateNotification.includes('⚠️') || latestUpdateNotification.includes('ไม่ได้อยู่ใน') ? (
-                <AlertTriangle className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-              ) : (
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-              )}
-              <span className="text-[11.5px] sm:text-xs font-bold leading-tight truncate text-white">{latestUpdateNotification}</span>
+              <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 border ${
+                latestUpdateNotification.includes('⚠️') || latestUpdateNotification.includes('ไม่ได้อยู่ใน')
+                  ? 'bg-amber-500/15 border-amber-500/40 text-amber-400'
+                  : 'bg-emerald-500/15 border-emerald-500/40 text-emerald-400'
+              }`}>
+                {latestUpdateNotification.includes('⚠️') || latestUpdateNotification.includes('ไม่ได้อยู่ใน') ? (
+                  <AlertTriangle className="w-4 h-4" />
+                ) : (
+                  <CivicShield className="w-4 h-4" />
+                )}
+              </div>
+              <div className="min-w-0 flex-1">
+                <span className={`text-[9.5px] font-bold uppercase tracking-wider block leading-tight ${
+                  latestUpdateNotification.includes('⚠️') || latestUpdateNotification.includes('ไม่ได้อยู่ใน')
+                    ? 'text-amber-400'
+                    : 'text-emerald-400'
+                }`}>
+                  {latestUpdateNotification.includes('⚠️') || latestUpdateNotification.includes('ไม่ได้อยู่ใน')
+                    ? 'การแจ้งเตือนจากระบบ'
+                    : 'ศูนย์บัญชาการข้อมูล • PRAKANGUARD'}
+                </span>
+                <span className="text-[11.5px] sm:text-xs font-semibold leading-snug block text-slate-100 truncate">
+                  {latestUpdateNotification}
+                </span>
+              </div>
               <button
                 type="button"
                 onClick={() => setLatestUpdateNotification(null)}
-                className="p-0.5 hover:bg-white/20 rounded-md text-slate-400 hover:text-white cursor-pointer ml-1 shrink-0"
+                className="p-1 hover:bg-white/10 rounded-md text-slate-400 hover:text-white cursor-pointer ml-1 shrink-0 transition-colors"
                 title="ปิดการแจ้งเตือน"
               >
-                <X className="w-3 h-3" />
+                <X className="w-3.5 h-3.5" />
               </button>
             </div>
           )}

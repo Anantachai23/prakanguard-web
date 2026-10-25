@@ -4,7 +4,9 @@ import {
   Moon, 
   MoreVertical,
   ChevronDown,
-  Activity
+  Activity,
+  RefreshCw,
+  CheckCircle2
 } from 'lucide-react';
 import {
   CivicCrest,
@@ -30,7 +32,8 @@ import {
   playEmergencySound, 
   playModalOpenSound,
   playCloseSound, 
-  playTabSound
+  playTabSound,
+  playRefreshSound
 } from '../services/soundEffects';
 
 export default function Navbar({ 
@@ -68,6 +71,19 @@ export default function Navbar({
   const [isDesktopMenuOpen, setIsDesktopMenuOpen] = useState(false);
   const tabletMenuRef = useRef(null);
   const desktopMenuRef = useRef(null);
+
+  // Stateful Refresh Indicator (Civic Synchronized State)
+  const [isJustSynced, setIsJustSynced] = useState(false);
+  const prevRefreshingRef = useRef(isRefreshing);
+
+  useEffect(() => {
+    if (prevRefreshingRef.current && !isRefreshing) {
+      setIsJustSynced(true);
+      const timer = setTimeout(() => setIsJustSynced(false), 2200);
+      return () => clearTimeout(timer);
+    }
+    prevRefreshingRef.current = isRefreshing;
+  }, [isRefreshing]);
 
   // Close dropdown menus when clicking outside
   useEffect(() => {
@@ -315,6 +331,34 @@ export default function Navbar({
           <div className="flex md:hidden items-center gap-1 shrink-0">
             <RealTimeClock theme={theme} />
 
+            {/* Mobile Official Telemetry Sync Button */}
+            {onRefreshData && (
+              <button
+                type="button"
+                onClick={() => {
+                  playRefreshSound();
+                  onRefreshData();
+                }}
+                disabled={isRefreshing}
+                className={`w-7 h-7 rounded-md border text-xs font-semibold flex items-center justify-center transition-all cursor-pointer shadow-xs active:scale-95 shrink-0 ${
+                  isRefreshing
+                    ? 'bg-blue-600 text-white border-blue-600 shadow-blue-500/30'
+                    : isJustSynced
+                    ? (isDark ? 'bg-emerald-950 text-emerald-300 border-emerald-700' : 'bg-emerald-50 text-emerald-800 border-emerald-300')
+                    : isDark 
+                    ? 'bg-slate-900 hover:bg-slate-800 text-slate-200 border-slate-800' 
+                    : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-200'
+                }`}
+                title="ซิงก์ข้อมูลโทรมาตรล่าสุดทันที"
+              >
+                {isJustSynced ? (
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0 animate-in zoom-in-75 duration-200" />
+                ) : (
+                  <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-white' : 'text-blue-600 dark:text-cyan-400'}`} />
+                )}
+              </button>
+            )}
+
             {/* Theme Switcher Button */}
             <button
               type="button"
@@ -336,6 +380,35 @@ export default function Navbar({
           {/* --- TABLET (768px - 1023px): Primary 1-Tap + More Menu Dropdown --- */}
           <div className="hidden md:flex lg:hidden items-center gap-1.5 shrink-0">
             <RealTimeClock theme={theme} />
+
+            {/* Tablet Official Civic Telemetry Sync Button */}
+            {onRefreshData && (
+              <button
+                type="button"
+                onClick={() => {
+                  playRefreshSound();
+                  onRefreshData();
+                }}
+                disabled={isRefreshing}
+                className={`px-2.5 py-1.5 rounded-md border text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer shadow-xs active:scale-95 shrink-0 ${
+                  isRefreshing
+                    ? 'bg-blue-600 text-white border-blue-600 shadow-blue-500/30'
+                    : isJustSynced
+                    ? (isDark ? 'bg-emerald-950/80 text-emerald-300 border-emerald-700' : 'bg-emerald-50 text-emerald-800 border-emerald-300')
+                    : isDark 
+                    ? 'bg-slate-900 hover:bg-slate-800 text-slate-200 border-slate-800' 
+                    : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-200'
+                }`}
+                title="ซิงก์ข้อมูลโทรมาตรล่าสุดทันที"
+              >
+                {isJustSynced ? (
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0 animate-in zoom-in-75 duration-200" />
+                ) : (
+                  <RefreshCw className={`w-3.5 h-3.5 text-blue-500 dark:text-cyan-400 shrink-0 ${isRefreshing ? 'animate-spin text-white dark:text-white' : ''}`} />
+                )}
+                <span>{isRefreshing ? 'ซิงก์...' : isJustSynced ? 'สำเร็จ' : 'ซิงก์'}</span>
+              </button>
+            )}
 
             {/* Tablet Sidebar Toggle Button */}
             <button
@@ -526,6 +599,40 @@ export default function Navbar({
 
           {/* --- DESKTOP (Screen >= 1024px): Zero-Overflow Streamlined Command Bar --- */}
           <div className="hidden lg:flex items-center gap-1.5 shrink-0">
+            {/* Official Civic Telemetry Sync Button */}
+            {onRefreshData && (
+              <button 
+                type="button"
+                onClick={() => {
+                  playRefreshSound();
+                  onRefreshData();
+                }}
+                disabled={isRefreshing}
+                className={`px-2.5 py-1.5 rounded-md border text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer shadow-xs active:scale-95 shrink-0 ${
+                  isRefreshing
+                    ? 'bg-blue-600 text-white border-blue-600 shadow-blue-500/30'
+                    : isJustSynced
+                    ? (isDark ? 'bg-emerald-950/80 text-emerald-300 border-emerald-700' : 'bg-emerald-50 text-emerald-800 border-emerald-300')
+                    : isDark 
+                    ? 'bg-slate-900/90 hover:bg-slate-800 text-slate-200 border-slate-800 hover:text-white' 
+                    : 'bg-white/90 hover:bg-slate-50 text-slate-700 border-slate-200 hover:text-slate-900'
+                }`}
+                title="ซิงก์ข้อมูลโทรมาตรสภาพอากาศและระดับน้ำล่าสุด (รีเซ็ตอัตโนมัติทุก 5 นาที)"
+              >
+                {isJustSynced ? (
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0 animate-in zoom-in-75 duration-200" />
+                ) : (
+                  <RefreshCw className={`w-3.5 h-3.5 text-blue-500 dark:text-cyan-400 shrink-0 ${isRefreshing ? 'animate-spin text-white dark:text-white' : ''}`} />
+                )}
+                <span className="hidden xl:inline">
+                  {isRefreshing ? 'กำลังซิงก์...' : isJustSynced ? 'ซิงก์สำเร็จ' : 'ซิงก์ข้อมูล'}
+                </span>
+                <span className="xl:hidden">
+                  {isRefreshing ? 'ซิงก์...' : isJustSynced ? 'สำเร็จ' : 'ซิงก์'}
+                </span>
+              </button>
+            )}
+
             {/* Official Announcement Button (if present) */}
             {hasAnnouncement && (
               <button 

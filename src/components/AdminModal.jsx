@@ -290,14 +290,16 @@ export default function AdminModal({
     }
   };
   const [showRefreshToast, setShowRefreshToast] = useState(false);
+  const [isSyncSuccess, setIsSyncSuccess] = useState(false);
   
   const handleManualSyncNow = async () => {
     setIsManualSyncing(true);
     setShowRefreshToast(true);
-    setTimeout(() => setShowRefreshToast(false), 2500);
     if (onSyncCloudData) {
       try {
         const res = await onSyncCloudData();
+        setIsSyncSuccess(true);
+        setTimeout(() => setIsSyncSuccess(false), 2400);
         if (res) {
           showNotice(`🔄 ซิงก์ดึงข้อมูลสำเร็จ: รายงาน ${res.reportCount || 0} รายการ, ข้อเสนอแนะ ${res.feedbackCount || 0} รายการ`);
         } else {
@@ -307,9 +309,17 @@ export default function AdminModal({
         showNotice('เชื่อมต่อระบบคลาวด์เรียบร้อย');
       } finally {
         setIsManualSyncing(false);
+        setTimeout(() => setShowRefreshToast(false), 2400);
       }
     } else {
-      setTimeout(() => setIsManualSyncing(false), 400);
+      setTimeout(() => {
+        setIsManualSyncing(false);
+        setIsSyncSuccess(true);
+        setTimeout(() => {
+          setIsSyncSuccess(false);
+          setShowRefreshToast(false);
+        }, 2200);
+      }, 450);
     }
   };
 
@@ -1984,14 +1994,42 @@ export default function AdminModal({
         isDark ? 'bg-slate-900 border-slate-800 text-slate-100' : 'bg-white border-slate-200 text-slate-900'
       }`}>
         
-        {/* Top Institutional Accent Bar */}
-        <div className="h-1 w-full bg-blue-700 shrink-0" />
+        {/* Top Institutional Sync Scanning Beam */}
+        <div className="relative h-[2.5px] w-full bg-slate-200 dark:bg-slate-800 shrink-0 overflow-hidden">
+          {isManualSyncing ? (
+            <div className="absolute inset-0 bg-gradient-to-r from-blue-600 via-sky-400 to-emerald-400 animate-[pulse_1s_ease-in-out_infinite]" />
+          ) : isSyncSuccess ? (
+            <div className="absolute inset-0 bg-emerald-500 transition-colors duration-500" />
+          ) : (
+            <div className="h-full w-full bg-blue-700" />
+          )}
+        </div>
 
-        {/* Refresh Toast Popup */}
+        {/* Executive Civic Command Center Refresh Toast Popup */}
         {showRefreshToast && (
-          <div className="fixed top-5 left-1/2 -translate-x-1/2 z-[100] px-4 py-2 rounded-lg bg-emerald-600 text-white font-semibold text-xs shadow-xl flex items-center gap-2 border border-emerald-500">
-            <CheckCircle2 className="w-4 h-4 text-emerald-100 shrink-0" />
-            <span>รีเฟรชข้อมูลเรียบร้อยแล้ว</span>
+          <div className="fixed top-5 left-1/2 -translate-x-1/2 z-[100] px-4 py-2.5 rounded-xl bg-slate-900/95 border border-slate-700/80 text-white shadow-2xl backdrop-blur-md flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-300">
+            <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border ${
+              isSyncSuccess ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400' : 'bg-blue-500/20 border-blue-500/40 text-blue-400'
+            }`}>
+              {isSyncSuccess ? (
+                <CheckCircle2 className="w-4 h-4 text-emerald-400 animate-in zoom-in-75 duration-200" />
+              ) : (
+                <RefreshCw className="w-4 h-4 text-blue-400 animate-spin" />
+              )}
+            </div>
+            <div className="flex flex-col">
+              <div className="flex items-center gap-1.5">
+                <CivicShield className="w-3.5 h-3.5 text-blue-400" />
+                <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400">
+                  ระบบผู้ดูแลส่วนกลาง • ADMIN TELEMETRY
+                </span>
+              </div>
+              <span className="text-xs font-semibold text-slate-100">
+                {isSyncSuccess
+                  ? 'ซิงก์ข้อมูลฐานข้อมูลคลาวด์และเซสชันสำเร็จ'
+                  : 'กำลังซิงก์อัปเดตข้อมูลโทรมาตรและเซสชัน...'}
+              </span>
+            </div>
           </div>
         )}
 
@@ -2065,15 +2103,25 @@ export default function AdminModal({
                     pingSupabaseLatency();
                   }}
                   disabled={isManualSyncing}
-                  className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer border active:scale-95 ${
-                    isDark 
-                      ? 'bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700' 
-                      : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer border active:scale-95 ${
+                    isSyncSuccess
+                      ? 'bg-emerald-500/15 border-emerald-500/50 text-emerald-400 font-bold'
+                      : isManualSyncing
+                      ? 'bg-blue-500/15 border-blue-500/40 text-blue-400 animate-pulse'
+                      : isDark 
+                      ? 'bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700 shadow-xs' 
+                      : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200 shadow-xs'
                   }`}
                   title="ซิงก์ข้อมูล Supabase Cloud ทันที"
                 >
-                  <RefreshCw className={`w-3.5 h-3.5 ${isManualSyncing ? 'animate-spin' : ''}`} />
-                  <span className="hidden sm:inline">ซิงก์ข้อมูล</span>
+                  {isSyncSuccess ? (
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 animate-in zoom-in-50 duration-200" />
+                  ) : (
+                    <RefreshCw className={`w-3.5 h-3.5 ${isManualSyncing ? 'animate-spin text-blue-400' : ''}`} />
+                  )}
+                  <span className="hidden sm:inline">
+                    {isSyncSuccess ? 'ซิงก์สำเร็จ' : isManualSyncing ? 'กำลังซิงก์...' : 'ซิงก์ข้อมูล'}
+                  </span>
                 </button>
 
                 <button
@@ -2458,11 +2506,19 @@ export default function AdminModal({
                         type="button"
                         onClick={handleManualSyncNow}
                         disabled={isManualSyncing}
-                        className="px-3 py-1.5 rounded-md bg-amber-500 hover:bg-amber-400 active:scale-95 text-slate-950 font-bold text-xs flex items-center gap-1.5 shrink-0 transition-all cursor-pointer shadow-xs disabled:opacity-50"
+                        className={`px-3 py-1.5 rounded-md font-bold text-xs flex items-center gap-1.5 shrink-0 transition-all cursor-pointer shadow-xs disabled:opacity-50 active:scale-95 ${
+                          isSyncSuccess
+                            ? 'bg-emerald-600 text-white'
+                            : 'bg-amber-500 hover:bg-amber-400 text-slate-950'
+                        }`}
                         title="ดึงรายงานและข้อเสนอแนะล่าสุดจากคลาวด์"
                       >
-                        <RefreshCw className={`w-3.5 h-3.5 ${isManualSyncing ? 'animate-spin' : ''}`} />
-                        <span>{isManualSyncing ? 'กำลังซิงก์...' : 'ซิงก์ข้อมูล Cloud'}</span>
+                        {isSyncSuccess ? (
+                          <CheckCircle2 className="w-3.5 h-3.5 text-white" />
+                        ) : (
+                          <RefreshCw className={`w-3.5 h-3.5 ${isManualSyncing ? 'animate-spin' : ''}`} />
+                        )}
+                        <span>{isSyncSuccess ? 'ซิงก์สำเร็จ' : isManualSyncing ? 'กำลังซิงก์...' : 'ซิงก์ข้อมูล Cloud'}</span>
                       </button>
                     )}
                   </div>
@@ -4110,11 +4166,19 @@ export default function AdminModal({
                           type="button"
                           onClick={handleManualSyncNow}
                           disabled={isManualSyncing}
-                          className="px-2.5 py-1.5 rounded-xl bg-teal-600 hover:bg-teal-500 active:scale-95 text-white text-xs font-bold cursor-pointer transition-colors shrink-0 flex items-center gap-1 shadow-xs disabled:opacity-50"
+                          className={`px-2.5 py-1.5 rounded-xl text-xs font-bold cursor-pointer transition-colors shrink-0 flex items-center gap-1 shadow-xs disabled:opacity-50 active:scale-95 ${
+                            isSyncSuccess
+                              ? 'bg-emerald-600 text-white'
+                              : 'bg-teal-600 hover:bg-teal-500 text-white'
+                          }`}
                           title="ดึงข้อเสนอแนะล่าสุดจากคลาวด์"
                         >
-                          <RefreshCw className={`w-3.5 h-3.5 ${isManualSyncing ? 'animate-spin' : ''}`} />
-                          <span className="hidden sm:inline">{isManualSyncing ? 'กำลังดึง...' : 'ซิงก์ดึงข้อมูลสด'}</span>
+                          {isSyncSuccess ? (
+                            <CheckCircle2 className="w-3.5 h-3.5 text-white" />
+                          ) : (
+                            <RefreshCw className={`w-3.5 h-3.5 ${isManualSyncing ? 'animate-spin' : ''}`} />
+                          )}
+                          <span className="hidden sm:inline">{isSyncSuccess ? 'ซิงก์สำเร็จ' : isManualSyncing ? 'กำลังดึง...' : 'ซิงก์ดึงข้อมูลสด'}</span>
                         </button>
                       )}
                     </div>

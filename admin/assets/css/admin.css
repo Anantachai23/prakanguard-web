@@ -410,17 +410,17 @@ body {
 }
 
 /* ==========================================================================
-   Cyber Sync Top Laser Beam & Refresh Button Micro-interactions
+   Executive Civic Command Center Telemetry Sync Beam & Formal Refresh State
    ========================================================================== */
 .global-sync-beam {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
-  height: 3px;
-  background: linear-gradient(90deg, transparent, rgba(0, 240, 255, 0.4), #00f0ff, #38bdf8, #00f0ff, rgba(0, 240, 255, 0.4), transparent);
+  height: 2.5px;
+  background: linear-gradient(90deg, transparent, rgba(37, 99, 235, 0.4), #2563eb, #38bdf8, #10b981, rgba(37, 99, 235, 0.4), transparent);
   background-size: 200% 100%;
-  box-shadow: 0 0 16px rgba(0, 240, 255, 0.85), 0 0 30px rgba(56, 189, 248, 0.6);
+  box-shadow: 0 0 12px rgba(37, 99, 235, 0.7), 0 0 20px rgba(56, 189, 248, 0.4);
   opacity: 0;
   pointer-events: none;
   z-index: 99999;
@@ -429,7 +429,7 @@ body {
 
 .global-sync-beam.active {
   opacity: 1;
-  animation: syncBeamSweep 1.1s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  animation: syncBeamSweep 1.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 }
 
 @keyframes syncBeamSweep {
@@ -438,7 +438,7 @@ body {
     filter: brightness(1);
   }
   50% {
-    filter: brightness(1.5);
+    filter: brightness(1.25);
   }
   100% {
     background-position: -100% 0;
@@ -452,7 +452,9 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .global-refresh-btn .refresh-icon-wrap {
@@ -463,9 +465,10 @@ body {
 }
 
 .global-refresh-btn.is-refreshing {
-  border-color: rgba(0, 240, 255, 0.8) !important;
-  box-shadow: 0 0 16px rgba(0, 240, 255, 0.4), inset 0 0 10px rgba(0, 240, 255, 0.15) !important;
-  color: #38bdf8 !important;
+  border-color: rgba(37, 99, 235, 0.75) !important;
+  background: rgba(37, 99, 235, 0.12) !important;
+  box-shadow: 0 0 12px rgba(37, 99, 235, 0.35), inset 0 0 8px rgba(37, 99, 235, 0.12) !important;
+  color: #60a5fa !important;
   pointer-events: none;
 }
 
@@ -480,14 +483,14 @@ body {
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(0, 240, 255, 0.25), transparent);
-  animation: btnCyberSweep 1s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  background: linear-gradient(90deg, transparent, rgba(96, 165, 250, 0.2), transparent);
+  animation: btnCivicSweep 1s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 }
 
 .global-refresh-btn.is-success {
-  border-color: rgba(16, 185, 129, 0.85) !important;
-  background: rgba(16, 185, 129, 0.14) !important;
-  box-shadow: 0 0 18px rgba(16, 185, 129, 0.45), inset 0 0 10px rgba(16, 185, 129, 0.2) !important;
+  border-color: rgba(16, 185, 129, 0.8) !important;
+  background: rgba(16, 185, 129, 0.15) !important;
+  box-shadow: 0 0 14px rgba(16, 185, 129, 0.35), inset 0 0 8px rgba(16, 185, 129, 0.15) !important;
   color: #34d399 !important;
   animation: refreshSuccessPop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
@@ -497,14 +500,14 @@ body {
   100% { transform: rotate(360deg); }
 }
 
-@keyframes btnCyberSweep {
+@keyframes btnCivicSweep {
   0% { left: -100%; }
   100% { left: 200%; }
 }
 
 @keyframes refreshSuccessPop {
-  0% { transform: scale(0.95); }
-  60% { transform: scale(1.05); }
+  0% { transform: scale(0.96); }
+  60% { transform: scale(1.03); }
   100% { transform: scale(1); }
 }
 
@@ -513,8 +516,8 @@ body {
 .stat-card.scanning-shimmer {
   position: relative;
   overflow: hidden;
-  box-shadow: 0 0 22px rgba(0, 240, 255, 0.22), inset 0 0 14px rgba(0, 240, 255, 0.08) !important;
-  border-color: rgba(0, 240, 255, 0.45) !important;
+  box-shadow: 0 0 16px rgba(37, 99, 235, 0.15), inset 0 0 10px rgba(37, 99, 235, 0.05) !important;
+  border-color: rgba(37, 99, 235, 0.35) !important;
   transition: border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
@@ -529,9 +532,9 @@ body {
   background: linear-gradient(
     90deg,
     transparent 0%,
-    rgba(0, 240, 255, 0.04) 35%,
-    rgba(0, 240, 255, 0.22) 50%,
-    rgba(0, 240, 255, 0.04) 65%,
+    rgba(37, 99, 235, 0.03) 35%,
+    rgba(37, 99, 235, 0.15) 50%,
+    rgba(37, 99, 235, 0.03) 65%,
     transparent 100%
   );
   transform: skewX(-20deg);
@@ -547,20 +550,21 @@ body {
 
 /* Light Theme Overrides */
 [data-theme="light"] .global-sync-beam {
-  background: linear-gradient(90deg, transparent, rgba(2, 132, 199, 0.4), #0284c7, #38bdf8, #0284c7, rgba(2, 132, 199, 0.4), transparent);
-  box-shadow: 0 0 14px rgba(2, 132, 199, 0.6);
+  background: linear-gradient(90deg, transparent, rgba(2, 132, 199, 0.4), #0284c7, #38bdf8, #10b981, rgba(2, 132, 199, 0.4), transparent);
+  box-shadow: 0 0 12px rgba(2, 132, 199, 0.5);
 }
 
 [data-theme="light"] .global-refresh-btn.is-refreshing {
   border-color: #0284c7 !important;
+  background: rgba(2, 132, 199, 0.08) !important;
   color: #0284c7 !important;
-  box-shadow: 0 0 14px rgba(2, 132, 199, 0.25) !important;
+  box-shadow: 0 0 12px rgba(2, 132, 199, 0.2) !important;
 }
 
 [data-theme="light"] .card.scanning-shimmer,
 [data-theme="light"] .stat-card.scanning-shimmer {
-  border-color: rgba(2, 132, 199, 0.45) !important;
-  box-shadow: 0 0 18px rgba(2, 132, 199, 0.18) !important;
+  border-color: rgba(2, 132, 199, 0.35) !important;
+  box-shadow: 0 0 14px rgba(2, 132, 199, 0.12) !important;
 }
 
 
