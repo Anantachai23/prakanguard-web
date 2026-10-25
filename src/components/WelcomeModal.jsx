@@ -106,12 +106,12 @@ export default function WelcomeModal({
         }`}>
           {/* Institutional Crest / Logo */}
           <div className="relative mb-3">
-            <div className={`w-14 h-14 rounded-2xl p-1.5 flex items-center justify-center border shadow-md ${
+            <div className={`w-14 h-14 rounded-full p-0.5 flex items-center justify-center border shadow-md overflow-hidden ${
               isDark 
-                ? 'bg-gradient-to-b from-slate-800 to-slate-900 border-slate-700 text-blue-400 shadow-blue-950/40' 
-                : 'bg-gradient-to-b from-blue-50 to-white border-blue-100 text-blue-700 shadow-blue-500/10'
+                ? 'bg-slate-900 border-blue-500/40 text-blue-400 shadow-blue-950/40' 
+                : 'bg-white border-blue-300/60 text-blue-700 shadow-blue-500/10'
             }`}>
-              <img src="/logo.png" alt="PrakanGuard Logo" className="w-full h-full object-contain rounded-xl" />
+              <img src="/logo.png" alt="PrakanGuard Logo" className="w-full h-full object-cover rounded-full" />
             </div>
             <span className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-emerald-500 border-2 border-white dark:border-slate-900 flex items-center justify-center shadow-xs" title="ระบบเปิดออนไลน์พร้อมใช้งาน">
               <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />

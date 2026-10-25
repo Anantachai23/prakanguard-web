@@ -122,13 +122,13 @@ export default function Navbar({
         {/* ========================================================= */}
         <div className="flex items-center space-x-2 sm:space-x-2.5 shrink-0 min-w-0">
           {/* Official Provincial Crest / Logo */}
-          <div className={`relative w-8 h-8 sm:w-8.5 sm:h-8.5 rounded-lg p-0.5 border shadow-xs shrink-0 flex items-center justify-center overflow-hidden ${
+          <div className={`relative w-8.5 h-8.5 sm:w-9 sm:h-9 rounded-full p-0.5 border shadow-xs shrink-0 flex items-center justify-center overflow-hidden ${
             isDark ? 'bg-slate-900 border-blue-500/40 shadow-blue-950/40' : 'bg-white border-blue-300/60 shadow-blue-500/10'
           }`}>
             <img 
               src="/logo.png" 
               alt="PrakanGuard Logo" 
-              className="w-full h-full rounded-[6px] object-contain" 
+              className="w-full h-full rounded-full object-cover" 
             />
           </div>
 
