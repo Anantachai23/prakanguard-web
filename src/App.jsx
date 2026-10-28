@@ -43,6 +43,7 @@ import {
   syncCloudDataNow,
   isValidReport,
   isValidFeedback,
+  markCloudItemDeleted,
   sendVisitorTelemetry,
   getDetailedDeviceInfo,
   getSupabaseUrl,
@@ -692,16 +693,8 @@ export default function App() {
       let rawList = (Array.isArray(parsed) && parsed.length > 0) ? parsed : [];
       const realigned = rawList.map(realignPointLocation);
       const cleaned = realigned.filter(r => {
-        if (!r || !r.id) return false;
+        if (!isValidReport(r)) return false;
         const checkId = String(r.id).toLowerCase();
-        const checkName = String(r.name || '').toLowerCase();
-        const checkDist = String(r.district || '');
-        const checkSub = String(r.subdistrict || '');
-
-        if (checkId.includes('test') || checkId.includes('verify') || checkId.includes('seed')) return false;
-        if (checkId.startsWith('node-') || checkId.startsWith('zz-sec-probe-') || checkId.includes('probe')) return false;
-        if (checkName.includes('security-probe') || checkName.includes('auto-deleted') || checkName.includes('probe') || checkName.includes('ทดสอบ')) return false;
-        if (checkName.includes('????') || checkDist.includes('????') || checkSub.includes('????')) return false;
         if (r.isAiGenerated || checkId.startsWith('ai-alert-')) return false;
 
         return (
@@ -779,7 +772,8 @@ export default function App() {
   const [feedbackItems, setFeedbackItems] = useState(() => {
     try {
       const saved = localStorage.getItem('prakanguard_feedback_items');
-      return saved ? JSON.parse(saved) : [];
+      const list = saved ? JSON.parse(saved) : [];
+      return Array.isArray(list) ? list.filter(isValidFeedback) : [];
     } catch (e) {
       return [];
     }
@@ -1720,18 +1714,18 @@ export default function App() {
       let newReportsCount = 0;
       let newFeedbackCount = 0;
 
-      if (Array.isArray(reports) && reports.length > 0) {
+      if (Array.isArray(reports)) {
         setCitizenReports(prev => {
-          const map = new Map(prev.map(r => [r.id, r]));
+          const map = new Map(prev.filter(isValidReport).map(r => [r.id, r]));
           reports.forEach(cr => {
             if (isValidReport(cr) && isPointInSamutPrakan(cr.lat, cr.lng)) {
               if (!map.has(cr.id)) newReportsCount++;
               const existing = map.get(cr.id);
               // preserve admin approval/resolution status if already acted upon locally
-              map.set(cr.id, { ...cr, ...(existing ? { isApproved: existing.isApproved, isResolved: existing.isResolved } : {}) });
+              map.set(cr.id, { ...cr, ...(existing ? { isApproved: cr.isApproved ?? existing.isApproved, isResolved: cr.isResolved ?? existing.isResolved } : {}) });
             }
           });
-          const merged = Array.from(map.values()).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+          const merged = Array.from(map.values()).filter(isValidReport).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
           try {
             localStorage.setItem('prakanguard_citizen_reports', JSON.stringify(merged));
           } catch (e) {}
@@ -1739,9 +1733,9 @@ export default function App() {
         });
       }
 
-      if (Array.isArray(feedback) && feedback.length > 0) {
+      if (Array.isArray(feedback)) {
         setFeedbackItems(prev => {
-          const map = new Map(prev.map(f => [f.id, f]));
+          const map = new Map(prev.filter(isValidFeedback).map(f => [f.id, f]));
           feedback.forEach(cf => {
             if (isValidFeedback(cf)) {
               if (!map.has(cf.id)) newFeedbackCount++;
@@ -1749,7 +1743,7 @@ export default function App() {
               map.set(cf.id, { ...cf, ...(existing ? { isRead: existing.isRead } : {}) });
             }
           });
-          const merged = Array.from(map.values()).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+          const merged = Array.from(map.values()).filter(isValidFeedback).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
           try {
             localStorage.setItem('prakanguard_feedback_items', JSON.stringify(merged));
           } catch (e) {}
@@ -1884,6 +1878,7 @@ export default function App() {
   };
 
   const handleDeleteFeedback = (id) => {
+    markCloudItemDeleted('feedback', id);
     setFeedbackItems(prev => {
       const updated = prev.filter(f => f.id !== id);
       try {
@@ -2038,6 +2033,7 @@ export default function App() {
 
   // Admin Actions: Reject Report / Delete Announcement
   const handleRejectReport = (id, shouldBroadcast = true) => {
+    markCloudItemDeleted('report', id);
     setCitizenReports(prev => {
       const updated = prev.filter(r => r.id !== id);
       try {

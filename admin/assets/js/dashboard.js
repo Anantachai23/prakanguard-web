@@ -14,7 +14,8 @@ import {
   restoreFromTrash, purgeTrash, fetchReportPhoto, fetchAnnouncements, 
   createAnnouncement, setAnnouncementActive, deleteAnnouncement, 
   fetchAdminSessions, buildBackup, serverNow, fetchPublicIp, rest,
-  fetchSupabasePing, fetchTableSample, fetchOfficialPoints
+  fetchSupabasePing, fetchTableSample, fetchOfficialPoints,
+  updateReportDetails, createAdminReport, setFeedbackRead
 } from './api.js';
 import { currentAdmin, login, logout, changePassword, adminDeviceLabel } from './auth.js';
 
@@ -91,11 +92,15 @@ const state = {
   adminIp: null,
   reports: [],
   reportsPhotoSet: new Set(),
-  reportsFilter: 'all', // all | pending | approved
+  reportsFilter: 'all', // all | pending | approved | dry
   reportsDistrict: 'all',
+  reportsLevel: 'all',
   reportsSearch: '',
   selectedReports: new Set(),
   officialPoints: [],
+  stationsDistrict: 'all',
+  stationsStatus: 'all',
+  stationsSearch: '',
 
   // Interactive Leaflet Map State
   reportsMap: null,
@@ -109,6 +114,8 @@ const state = {
   currentHoverLng: 100.5968,
 
   feedback: [],
+  feedbackStatus: 'all',
+  feedbackCategory: 'all',
   feedbackSearch: '',
   selectedFeedback: new Set(),
 
@@ -160,18 +167,19 @@ export function switchTab(tabId, playSound = false) {
   });
 
   const titles = {
-    overview: 'ภาพรวมระบบและการเข้าชม',
-    reports: 'ผู้แจ้งรายงานน้ำท่วม',
-    visitors: 'รายการเซสชันผู้เข้าใช้งานสด',
-    feedback: 'ข้อเสนอจากประชาชน',
-    announcements: 'การประกาศหน้าเว็บ',
-    trash: 'ลบล่าสุด (ถังขยะ)',
-    logins: 'ประวัติเข้าระบบแอดมิน',
-    supabase: 'ศูนย์ควบคุมฐานข้อมูล Supabase Cloud (Live PostgreSQL)',
-    settings: 'ตั้งค่าระบบ & สำรองข้อมูล'
+    overview: 'ศูนย์ปฏิบัติการข้อมูลอุทกภัย (Operations Overview)',
+    reports: 'จัดการรายงานจุดน้ำท่วมขัง (Incident Management)',
+    stations: 'ควบคุมสถานีตรวจวัดหลัก 30 จุด (Hydrological Stations)',
+    visitors: 'ระบบติดตามผู้ใช้งานออนไลน์สด (Real-time Telemetry)',
+    feedback: 'ศูนย์รับเรื่องร้องเรียนและข้อเสนอแนะ (Service Desk)',
+    announcements: 'ระบบออกประกาศแจ้งเตือนภัยพิบัติ (Public Broadcast)',
+    trash: 'แฟ้มพักข้อมูลที่ถูกลบ (Archive & Recovery)',
+    logins: 'บันทึกประวัติการเข้าปฏิบัติงาน (Security Audit Log)',
+    supabase: 'ศูนย์ควบคุมฐานข้อมูลคลาวด์ (Supabase Cloud Console)',
+    settings: 'ตั้งค่าความปลอดภัยและสำรองข้อมูล (System Configuration)'
   };
   const titleEl = $('#header-view-title');
-  if (titleEl) titleEl.textContent = titles[tabId] || 'ศูนย์บัญชาการแอดมิน';
+  if (titleEl) titleEl.textContent = titles[tabId] || 'ศูนย์ปฏิบัติการแอดมิน';
 
   // Specific render on switch
   if (tabId === 'overview') renderOverview();
@@ -188,6 +196,7 @@ export function switchTab(tabId, playSound = false) {
       }
     }, 120);
   }
+  else if (tabId === 'stations') renderStations();
   else if (tabId === 'visitors') renderVisitorsTable();
   else if (tabId === 'feedback') renderFeedback();
   else if (tabId === 'announcements') renderAnnouncements();
@@ -454,16 +463,28 @@ function updateNavBadges() {
     repBadge.className = `nav-badge ${pendingReports > 0 ? 'badge-alert pulse' : ''}`;
   }
 
+  const stBadge = $('#badge-stations-count');
+  if (stBadge) {
+    stBadge.textContent = (state.officialPoints && state.officialPoints.length > 0) ? state.officialPoints.length : 30;
+  }
+
+  const prioBadge = $('#badge-overview-priority');
+  if (prioBadge) {
+    prioBadge.textContent = pendingReports > 0 ? `รออนุมัติ ${pendingReports} รายการ` : `ทั้งหมด ${state.reports.length} รายการ`;
+    prioBadge.className = `badge ${pendingReports > 0 ? 'badge-warn' : 'badge-ok'}`;
+  }
+
   const onlineCount = state.activeVisitors.length;
   const visBadge = $('#badge-visitors-count');
   if (visBadge) {
     visBadge.textContent = onlineCount;
   }
 
+  const unreadFb = state.feedback.filter(f => !f.is_read).length;
   const fbBadge = $('#badge-feedback-count');
   if (fbBadge) {
-    fbBadge.textContent = state.feedback.length;
-    fbBadge.className = `nav-badge ${state.feedback.length > 0 ? 'badge-info' : ''}`;
+    fbBadge.textContent = unreadFb > 0 ? unreadFb : state.feedback.length;
+    fbBadge.className = `nav-badge ${unreadFb > 0 ? 'badge-info' : ''}`;
   }
 
   const trashBadge = $('#badge-trash-count');
@@ -474,7 +495,7 @@ function updateNavBadges() {
   // Header quick alert pill
   const headerNotifyBadge = $('#header-notify-badge');
   if (headerNotifyBadge) {
-    const totalPending = pendingReports + state.feedback.length;
+    const totalPending = pendingReports + unreadFb;
     headerNotifyBadge.textContent = totalPending;
     headerNotifyBadge.style.display = totalPending > 0 ? 'inline-flex' : 'none';
   }
@@ -568,15 +589,109 @@ function renderOverview() {
     elApproved.textContent = nf(aCount);
   }
 
-  // Render Monitored Districts list, advisory, and charts
+  // Render Monitored Districts list, advisory, priority queue, and charts
   renderMonitoredDistricts();
   renderAIAdvisory();
+  renderOverviewPriorityQueue();
   updateCharts();
 
   // Also render mini feed on overview
   renderMiniLiveFeed();
   // Render auto-cleared dry points table on overview
   renderOverviewAutoCleared();
+}
+
+function renderOverviewPriorityQueue() {
+  const tbody = $('#overview-priority-reports-tbody');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+
+  const list = [...(state.reports || [])]
+    .filter(r => !r.autoRemovedBecauseDry && !r.is_resolved && !r.isResolved)
+    .sort((a, b) => {
+      const aPend = !(a.is_approved || a.isApproved) ? 1 : 0;
+      const bPend = !(b.is_approved || b.isApproved) ? 1 : 0;
+      if (aPend !== bPend) return bPend - aPend;
+      const aLv = Number(a.level || 1);
+      const bLv = Number(b.level || 1);
+      if (aLv !== bLv) return bLv - aLv;
+      return new Date(b.timestamp || b.created_at || 0).getTime() - new Date(a.timestamp || a.created_at || 0).getTime();
+    });
+
+  if (list.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted" style="padding: 28px;">ไม่มีรายการแจ้งเหตุค้างตรวจสอบในขณะนี้ — สถานการณ์ปกติ</td></tr>`;
+    return;
+  }
+
+  list.slice(0, 8).forEach(r => {
+    const isApproved = !!(r.is_approved || r.isApproved);
+    const lv = levelInfo(r);
+    const depthVal = (r.depth_cm || r.depthCm) ? `${r.depth_cm || r.depthCm} ซม.` : lv.range;
+    const { isValid: hasGps } = getReportCoordinates(r);
+
+    const tr = h('tr', {},
+      h('td', {},
+        h('span', { class: `badge ${isApproved ? 'badge-ok' : 'badge-warn'}` },
+          isApproved ? 'เผยแพร่แล้ว' : 'รอตรวจสอบ'
+        )
+      ),
+      h('td', {},
+        h('span', { class: `badge badge-${lv.tone}` }, `${lv.label} (${depthVal})`)
+      ),
+      h('td', {},
+        h('div', { style: { fontWeight: 600, color: 'var(--text-main)' } }, r.name || 'จุดแจ้งเหตุน้ำท่วม'),
+        r.traffic_status || r.trafficStatus
+          ? h('div', { class: 'text-muted', style: { fontSize: '11px' } }, r.traffic_status || r.trafficStatus)
+          : null
+      ),
+      h('td', {},
+        h('span', { class: 'badge badge-neutral' }, `อ.${r.district || 'เมืองสมุทรปราการ'}`)
+      ),
+      h('td', { class: 'cell-mono', style: { fontSize: '11px' } },
+        r.timestamp ? dateTime(r.timestamp) : (r.reported_at || '—')
+      ),
+      h('td', {},
+        h('div', { style: { display: 'flex', gap: '5px', alignItems: 'center', flexWrap: 'wrap' } },
+          !isApproved ? h('button', {
+            type: 'button',
+            class: 'btn btn-success btn-sm',
+            onclick: () => handleApproveSingle(r.id),
+            html: `${icon('check', 12)} อนุมัติ`
+          }) : h('button', {
+            type: 'button',
+            class: 'btn btn-secondary btn-sm',
+            onclick: () => handleResolveReportSingle(r.id),
+            html: 'น้ำแห้ง'
+          }),
+          h('button', {
+            type: 'button',
+            class: 'btn btn-secondary btn-sm',
+            title: 'แก้ไขระดับน้ำ / รายละเอียด',
+            onclick: () => openEditReportModal(r),
+            html: 'แก้ไข'
+          }),
+          hasGps ? h('button', {
+            type: 'button',
+            class: 'btn btn-secondary btn-sm',
+            title: 'ดูบนแผนที่',
+            onclick: () => {
+              switchTab('reports');
+              setTimeout(() => window.__pgFlyToReport && window.__pgFlyToReport(r.id), 150);
+            },
+            html: icon('pin', 12)
+          }) : null,
+          h('button', {
+            type: 'button',
+            class: 'btn btn-danger btn-sm',
+            title: 'ลบรายการนี้',
+            onclick: () => handleDeleteReportsSingle(r),
+            html: icon('trash', 12)
+          })
+        )
+      )
+    );
+    tbody.appendChild(tr);
+  });
 }
 
 function renderMonitoredDistricts() {
@@ -734,9 +849,8 @@ function renderOverviewAutoCleared() {
   if (autoClearedList.length === 0) {
     tbody.innerHTML = `<tr><td colspan="8" class="text-center text-muted" style="padding: 28px;">
       <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;">
-        <span style="font-size: 24px;">💧</span>
-        <span style="font-size: 13px; font-weight: 600;">ขณะนี้ยังไม่มีจุดที่ถูกนำออกอัตโนมัติ</span>
-        <span style="font-size: 11px; color: var(--text-muted);">เมื่อระดับน้ำลดเหลือ 0 ซม. ระบบ AI Sentry จะตรวจจับและนำออกจากแผนที่สด พร้อมบันทึกรายละเอียดที่นี่ทันที</span>
+        <span style="font-size: 13px; font-weight: 600; color: var(--text-secondary);">ขณะนี้ยังไม่มีจุดที่ถูกปิดสถานะหรือระบายน้ำแห้ง</span>
+        <span style="font-size: 11px; color: var(--text-muted);">เมื่อระดับน้ำลดเหลือ 0 ซม. ระบบโทรมาตรจะนำออกจากแผนที่สดและบันทึกประวัติการระบายน้ำที่นี่อัตโนมัติ</span>
       </div>
     </td></tr>`;
     return;
@@ -751,11 +865,11 @@ function renderOverviewAutoCleared() {
     const tr = h('tr', {},
       // Name
       h('td', {},
-        h('div', { style: { fontWeight: 600, color: '#ffffff', display: 'flex', alignItems: 'center', gap: '6px' } },
+        h('div', { style: { fontWeight: 600, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '6px' } },
           r.name || 'จุดแจ้งเหตุ',
-          r.isOfficial ? h('span', { class: 'badge badge-primary', style: 'font-size: 9.5px; padding: 1px 5px;' }, 'จุดตรวจการณ์') : null
+          r.isOfficial ? h('span', { class: 'badge badge-primary', style: 'font-size: 9.5px; padding: 1px 5px;' }, 'สถานีตรวจวัด') : null
         ),
-        h('div', { class: 'text-muted', style: { fontSize: '11px', marginTop: '2px' } }, r.cause ? `หมายเหตุเดิม: ${r.cause}` : (r.roadSegment || ''))
+        h('div', { class: 'text-muted', style: { fontSize: '11px', marginTop: '2px' } }, r.cause ? `หมายเหตุเดิม: ${r.cause}` : (typeof r.roadSegment === 'string' ? r.roadSegment : ''))
       ),
       // District / Subdistrict
       h('td', {},
@@ -768,7 +882,7 @@ function renderOverviewAutoCleared() {
       ),
       // Reason
       h('td', {},
-        h('div', { style: { fontSize: '11.5px', color: '#38bdf8', maxWidth: '280px', lineHeight: '1.4' } },
+        h('div', { style: { fontSize: '11.5px', color: 'var(--text-secondary)', maxWidth: '280px', lineHeight: '1.4' } },
           r.dry_reason || r.dryReason || 'จุดตรวจวัดหลักระดับน้ำลดเหลือ 0 ซม. สภาพอากาศแห้งปกติ'
         )
       ),
@@ -781,8 +895,8 @@ function renderOverviewAutoCleared() {
       // Status Badge
       h('td', {},
         isAiCleared
-          ? h('span', { class: 'badge', style: 'background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); font-size: 10.5px;' }, '🟢 นำออกอัตโนมัติ')
-          : h('span', { class: 'badge', style: 'background: rgba(56, 189, 248, 0.2); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.4); font-size: 10.5px;' }, '💧 น้ำแห้งแล้ว')
+          ? h('span', { class: 'badge badge-ok' }, 'นำออกอัตโนมัติ')
+          : h('span', { class: 'badge badge-primary' }, 'ระบายแห้งแล้ว')
       ),
       // Actions
       h('td', {},
@@ -798,7 +912,7 @@ function renderOverviewAutoCleared() {
                 handleRestoreDryReportSingle(r);
               }
             },
-            html: '🔄 กู้คืน'
+            html: `${icon('restore', 12)} กู้คืน`
           }),
           r.lat && r.lng ? h('button', {
             type: 'button',
@@ -1460,7 +1574,7 @@ function updateReportsMapMarkers(list) {
         const matchesName = (p.name || '').toLowerCase().includes(q);
         const matchesDist = (p.district || '').toLowerCase().includes(q);
         const matchesSub = (p.subdistrict || '').toLowerCase().includes(q);
-        const matchesRoad = (p.roadSegment || '').toLowerCase().includes(q);
+        const matchesRoad = (typeof p.roadSegment === 'string' ? p.roadSegment : '').toLowerCase().includes(q);
         if (!matchesName && !matchesDist && !matchesSub && !matchesRoad) return false;
       }
 
@@ -1681,7 +1795,7 @@ function updateReportsMapMarkers(list) {
               ${isFalling ? '<span class="badge badge-ok" style="font-size: 10px;">น้ำกำลังลด</span>' : ''}
             </div>
             <h4 class="admin-popup-title">${esc(p.name)}</h4>
-            <p class="admin-popup-subtitle">อ.${esc(p.district || 'เมืองสมุทรปราการ')} ${p.subdistrict ? 'ต.' + esc(p.subdistrict) : ''} · ${esc(p.roadSegment || '')}</p>
+            <p class="admin-popup-subtitle">อ.${esc(p.district || 'เมืองสมุทรปราการ')} ${p.subdistrict ? 'ต.' + esc(String(p.subdistrict).replace(/^ต\./, '')) : ''}</p>
           </div>
           ${statusBadgeHtml}
         </div>
@@ -1780,6 +1894,16 @@ function renderReports() {
     list = list.filter(r => r.district === state.reportsDistrict);
   }
 
+  // Filter: Severity Level (3, 2, 1, hail)
+  if (state.reportsLevel !== 'all') {
+    if (state.reportsLevel === 'hail') {
+      list = list.filter(r => r.hazard_type === 'hail' || r.hazardType === 'hail');
+    } else {
+      const lvTarget = Number(state.reportsLevel);
+      list = list.filter(r => Number(r.level || 1) === lvTarget);
+    }
+  }
+
   // Search
   if (state.reportsSearch) {
     const q = state.reportsSearch.toLowerCase();
@@ -1800,9 +1924,8 @@ function renderReports() {
   if (list.length === 0) {
     tbody.innerHTML = `<tr><td colspan="8" class="text-center text-muted" style="padding: 44px 20px;">
       <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;">
-        <span style="font-size: 32px; opacity: 0.65;">📋</span>
         <span style="font-size: 13.5px; font-weight: 600; color: var(--text-secondary);">ไม่พบรายการรายงานน้ำท่วมตามเงื่อนไขที่เลือก</span>
-        <span style="font-size: 11.5px; color: var(--text-muted);">ลองเปลี่ยนตัวกรองอำเภอ หรือคลิกปุ่ม "รีเฟรชข้อมูล" เพื่อดึงข้อมูลล่าสุด</span>
+        <span style="font-size: 11.5px; color: var(--text-muted);">ลองเปลี่ยนตัวกรองอำเภอ หรือคลิกปุ่ม "ซิงก์ข้อมูล" เพื่อดึงข้อมูลล่าสุด</span>
       </div>
     </td></tr>`;
     return;
@@ -1846,11 +1969,12 @@ function renderReports() {
       h('td', {},
         h('span', { class: `badge badge-${lv.tone}` },
           `${r.body_level_label || r.bodyLevelLabel || lv.label} (${(r.depth_cm || r.depthCm) ? (r.depth_cm || r.depthCm) + ' ซม.' : lv.range})`
-        )
+        ),
+        (r.traffic_status || r.trafficStatus) ? h('div', { class: 'text-muted', style: { fontSize: '10.5px', marginTop: '3px' } }, r.traffic_status || r.trafficStatus) : null
       ),
       // Location Name & Details + Jump to Map Button
       h('td', {},
-        h('div', { style: { fontWeight: 600, color: '#ffffff' } }, r.name || 'ไม่ระบุชื่อจุด'),
+        h('div', { style: { fontWeight: 600, color: 'var(--text-main)' } }, r.name || 'ไม่ระบุชื่อจุด'),
         h('div', { class: 'text-muted', style: { fontSize: '11.5px', marginTop: '2px' } },
           `อ.${r.district || 'เมืองสมุทรปราการ'} ${r.subdistrict ? 'ต.' + r.subdistrict : ''}`
         ),
@@ -1873,7 +1997,7 @@ function renderReports() {
             class: 'report-coord-tag',
             onclick: () => window.__pgFlyToReport && window.__pgFlyToReport(r.id),
             title: 'คลิกเพื่อดูหมุดพิกัดบนแผนที่',
-            html: `📍 ${lat.toFixed(4)}, ${lng.toFixed(4)}`
+            html: `${icon('pin', 11)} ${lat.toFixed(4)}, ${lng.toFixed(4)}`
           }) : h('span', { class: 'badge badge-neutral', style: { alignSelf: 'flex-start', fontSize: '10px' } }, 'ไม่มีพิกัด GPS')
         )
       ),
@@ -1889,18 +2013,18 @@ function renderReports() {
         (() => {
           if (r.autoRemovedBecauseDry) {
             return h('div', {},
-              h('span', { class: 'badge', style: 'background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); font-size: 11px;' }, '💧 น้ำแห้งแล้ว (นำออกอัตโนมัติ)'),
+              h('span', { class: 'badge badge-ok' }, 'น้ำแห้งแล้ว (อัตโนมัติ)'),
               (r.dry_reason || r.dryReason) ? h('div', { class: 'text-muted', style: { fontSize: '10.5px', marginTop: '3px' } }, r.dry_reason || r.dryReason) : null
             );
           }
           if (r.is_resolved || r.isResolved || (r.depth_cm !== undefined && r.depth_cm <= 0) || (r.depthCm !== undefined && r.depthCm <= 0)) {
             return h('div', {},
-              h('span', { class: 'badge', style: 'background: rgba(56, 189, 248, 0.2); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.4); font-size: 11px;' }, '💧 น้ำแห้งแล้ว (ระบายปกติ)'),
+              h('span', { class: 'badge badge-primary' }, 'ระบายน้ำแห้งแล้ว'),
               (r.dry_reason || r.dryReason) ? h('div', { class: 'text-muted', style: { fontSize: '10.5px', marginTop: '3px' } }, r.dry_reason || r.dryReason) : null
             );
           }
           return h('span', { class: `badge ${isApproved ? 'badge-ok' : 'badge-warn'}` },
-            isApproved ? 'อนุมัติแล้ว' : 'รออนุมัติ'
+            isApproved ? 'อนุมัติเผยแพร่' : 'รอตรวจสอบ'
           );
         })()
       ),
@@ -1914,7 +2038,7 @@ function renderReports() {
                   src: photo,
                   alt: 'รูปสภาพน้ำท่วม',
                   title: 'คลิกเพื่อดูรูปภาพขนาดเต็ม',
-                  style: { width: '38px', height: '38px', borderRadius: '8px', objectFit: 'cover', cursor: 'pointer', border: '1px solid var(--border-subtle)', flexShrink: 0 },
+                  style: { width: '38px', height: '38px', borderRadius: '6px', objectFit: 'cover', cursor: 'pointer', border: '1px solid var(--border-subtle)', flexShrink: 0 },
                   onclick: () => showPhotoModal(photo, r.name)
                 }),
                 h('button', {
@@ -1929,7 +2053,7 @@ function renderReports() {
       })(),
       // Actions & Map Focus
       h('td', {},
-        h('div', { style: { display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' } },
+        h('div', { style: { display: 'flex', gap: '5px', alignItems: 'center', flexWrap: 'wrap' } },
           hasGps
             ? [
                 h('button', {
@@ -1948,12 +2072,19 @@ function renderReports() {
                 })
               ]
             : null,
+          h('button', {
+            type: 'button',
+            class: 'btn btn-secondary btn-sm',
+            title: 'แก้ไขระดับน้ำ / ข้อมูลจุดแจ้งเหตุ',
+            onclick: () => openEditReportModal(r),
+            html: 'แก้ไข'
+          }),
           (r.autoRemovedBecauseDry || r.is_resolved || r.isResolved || (r.depth_cm !== undefined && r.depth_cm <= 0) || (r.depthCm !== undefined && r.depthCm <= 0))
             ? h('button', {
                 class: 'btn btn-success btn-sm',
                 title: 'กู้คืนจุดนี้กลับขึ้นแผนที่หากยังมีน้ำท่วมขังอยู่',
                 onclick: () => handleRestoreDryReportSingle(r),
-                html: '🔄 กู้คืน'
+                html: `${icon('restore', 12)} กู้คืน`
               })
             : !isApproved
             ? [
@@ -1967,7 +2098,7 @@ function renderReports() {
                   style: { color: 'var(--danger, #ef4444)' },
                   title: 'ไม่อนุมัติรายงานนี้ (ย้ายไปถังขยะ)',
                   onclick: () => handleRejectSingle(r),
-                  html: `${icon('x', 14)} ไม่อนุมัติ`
+                  html: `${icon('x', 14)} ปฏิเสธ`
                 })
               ]
             : [
@@ -1975,7 +2106,7 @@ function renderReports() {
                   class: 'btn btn-secondary btn-sm',
                   title: 'ทำเครื่องหมายว่าน้ำแห้งแล้ว (นำออกจากแผนที่)',
                   onclick: () => handleResolveReportSingle(r.id),
-                  html: '💧 น้ำแห้ง'
+                  html: 'น้ำแห้ง'
                 }),
                 h('button', {
                   class: 'btn btn-secondary btn-sm',
@@ -1985,6 +2116,7 @@ function renderReports() {
               ],
           h('button', {
             class: 'btn btn-danger btn-sm',
+            title: 'ลบรายการนี้',
             onclick: () => handleDeleteReportsSingle(r),
             html: icon('trash', 14)
           })
@@ -1995,6 +2127,221 @@ function renderReports() {
   });
 
   updateReportsSelectionUI();
+}
+
+function openEditReportModal(report) {
+  if (!report) return;
+  const currentDepth = Number(report.depth_cm ?? report.depthCm ?? 20);
+  const currentName = report.name || '';
+  const currentDist = report.district || 'เมืองสมุทรปราการ';
+  const currentSub = report.subdistrict || '';
+  const currentTraffic = report.traffic_status || report.trafficStatus || 'การจราจรเคลื่อนตัวช้า';
+  const currentCause = report.cause || '';
+
+  const formWrap = h('div', { style: { display: 'flex', flexDirection: 'column', gap: '14px' } },
+    h('div', { class: 'form-group', style: { marginBottom: 0 } },
+      h('label', { class: 'form-label' }, 'ชื่อถนน / จุดเกิดเหตุ'),
+      h('input', { type: 'text', id: 'edit-rep-name', class: 'form-input', value: currentName })
+    ),
+    h('div', { class: 'grid-2', style: { marginBottom: 0 } },
+      h('div', { class: 'form-group', style: { marginBottom: 0 } },
+        h('label', { class: 'form-label' }, 'อำเภอ'),
+        h('select', { id: 'edit-rep-district', class: 'form-select' },
+          ...DISTRICTS.map(d => h('option', { value: d, selected: d === currentDist }, `อ.${d}`))
+        )
+      ),
+      h('div', { class: 'form-group', style: { marginBottom: 0 } },
+        h('label', { class: 'form-label' }, 'ตำบล'),
+        h('input', { type: 'text', id: 'edit-rep-subdistrict', class: 'form-input', value: currentSub, placeholder: 'ระบุตำบล (ถ้ามี)' })
+      )
+    ),
+    h('div', { class: 'grid-2', style: { marginBottom: 0 } },
+      h('div', { class: 'form-group', style: { marginBottom: 0 } },
+        h('label', { class: 'form-label' }, 'ระดับน้ำท่วมขัง (เซนติเมตร)'),
+        h('input', { type: 'number', id: 'edit-rep-depth', class: 'form-input', min: 0, max: 200, value: currentDepth })
+      ),
+      h('div', { class: 'form-group', style: { marginBottom: 0 } },
+        h('label', { class: 'form-label' }, 'สภาพการจราจร'),
+        h('select', { id: 'edit-rep-traffic', class: 'form-select' },
+          ...['สัญจรได้ตามปกติ (เพิ่มความระมัดระวัง)', 'การจราจรเคลื่อนตัวช้า / ติดขัดสะสม', 'รถเล็กไม่สามารถสัญจรผ่านได้ (แนะนำเลี่ยงเส้นทาง)'].map(t =>
+            h('option', { value: t, selected: t === currentTraffic }, t)
+          )
+        )
+      )
+    ),
+    h('div', { class: 'form-group', style: { marginBottom: 0 } },
+      h('label', { class: 'form-label' }, 'สาเหตุ / หมายเหตุเพิ่มเติม'),
+      h('input', { type: 'text', id: 'edit-rep-cause', class: 'form-input', value: currentCause, placeholder: 'เช่น ฝนตกหนักสะสม / น้ำทะเลหนุน' })
+    ),
+    h('div', { style: { display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '6px' } },
+      h('button', {
+        type: 'button',
+        class: 'btn btn-primary',
+        onclick: async () => {
+          const newName = $('#edit-rep-name')?.value?.trim() || currentName;
+          const newDist = $('#edit-rep-district')?.value || currentDist;
+          const newSub = $('#edit-rep-subdistrict')?.value?.trim() || '';
+          const newDepth = Math.max(0, Math.min(200, Number($('#edit-rep-depth')?.value ?? currentDepth)));
+          const newTraffic = $('#edit-rep-traffic')?.value || currentTraffic;
+          const newCause = $('#edit-rep-cause')?.value?.trim() || '';
+          const newLevel = newDepth > 50 ? 3 : newDepth >= 21 ? 2 : 1;
+          const newLabel = newLevel === 3 ? 'ระดับ 3: วิกฤต (>50 ซม.)' : newLevel === 2 ? 'ระดับ 2: ปานกลาง (21-50 ซม.)' : 'ระดับ 1: ขังผิวทาง (5-20 ซม.)';
+
+          await updateReportDetails(report.id, {
+            name: newName,
+            district: newDist,
+            subdistrict: newSub,
+            depth_cm: newDepth,
+            depthCm: newDepth,
+            level: newLevel,
+            body_level_label: newLabel,
+            traffic_status: newTraffic,
+            cause: newCause,
+            is_resolved: newDepth === 0
+          });
+          document.querySelector('.overlay.show')?.remove();
+          playApprovalChime();
+          toast(`บันทึกการแก้ไขจุด "${newName}" (${newDepth} ซม.) เรียบร้อยแล้ว`, 'success');
+          await refreshAllData();
+        },
+        html: `${icon('check', 14)} บันทึกการแก้ไข`
+      })
+    )
+  );
+
+  openModal({
+    title: 'แก้ไขข้อมูลรายงานจุดน้ำท่วม',
+    subtitle: `รหัสรายงาน: ${report.id}`,
+    body: formWrap,
+    width: 560
+  });
+}
+
+export function openCreateAdminReportModal() {
+  const formWrap = h('div', { style: { display: 'flex', flexDirection: 'column', gap: '14px' } },
+    h('div', { class: 'form-group', style: { marginBottom: 0 } },
+      h('label', { class: 'form-label' }, 'ชื่อถนน / จุดเกิดเหตุน้ำท่วม *'),
+      h('input', { type: 'text', id: 'create-rep-name', class: 'form-input', placeholder: 'เช่น ถ.สุขุมวิท แยกปู่เจ้าสมิงพราย' })
+    ),
+    h('div', { class: 'grid-2', style: { marginBottom: 0 } },
+      h('div', { class: 'form-group', style: { marginBottom: 0 } },
+        h('label', { class: 'form-label' }, 'อำเภอ *'),
+        h('select', { id: 'create-rep-district', class: 'form-select' },
+          ...DISTRICTS.map(d => h('option', { value: d }, `อ.${d}`))
+        )
+      ),
+      h('div', { class: 'form-group', style: { marginBottom: 0 } },
+        h('label', { class: 'form-label' }, 'ตำบล'),
+        h('input', { type: 'text', id: 'create-rep-subdistrict', class: 'form-input', placeholder: 'เช่น ปากน้ำ, สำโรงเหนือ' })
+      )
+    ),
+    h('div', { class: 'grid-2', style: { marginBottom: 0 } },
+      h('div', { class: 'form-group', style: { marginBottom: 0 } },
+        h('label', { class: 'form-label' }, 'ระดับน้ำท่วมขัง (เซนติเมตร) *'),
+        h('input', { type: 'number', id: 'create-rep-depth', class: 'form-input', min: 5, max: 200, value: 25 })
+      ),
+      h('div', { class: 'form-group', style: { marginBottom: 0 } },
+        h('label', { class: 'form-label' }, 'สภาพการจราจร'),
+        h('select', { id: 'create-rep-traffic', class: 'form-select' },
+          ...['การจราจรเคลื่อนตัวช้า / ติดขัดสะสม', 'สัญจรได้ตามปกติ (เพิ่มความระมัดระวัง)', 'รถเล็กไม่สามารถสัญจรผ่านได้ (แนะนำเลี่ยงเส้นทาง)'].map(t =>
+            h('option', { value: t }, t)
+          )
+        )
+      )
+    ),
+    h('div', { class: 'grid-2', style: { marginBottom: 0 } },
+      h('div', { class: 'form-group', style: { marginBottom: 0 } },
+        h('label', { class: 'form-label' }, 'พิกัดละติจูด (Latitude)'),
+        h('input', { type: 'number', step: '0.0001', id: 'create-rep-lat', class: 'form-input', value: 13.5991 })
+      ),
+      h('div', { class: 'form-group', style: { marginBottom: 0 } },
+        h('label', { class: 'form-label' }, 'พิกัดลองจิจูด (Longitude)'),
+        h('input', { type: 'number', step: '0.0001', id: 'create-rep-lng', class: 'form-input', value: 100.5968 })
+      )
+    ),
+    h('div', { class: 'form-group', style: { marginBottom: 0 } },
+      h('label', { class: 'form-label' }, 'สาเหตุ / หมายเหตุเจ้าหน้าที่'),
+      h('input', { type: 'text', id: 'create-rep-cause', class: 'form-input', placeholder: 'เช่น รายงานจากศูนย์วิทยุ / กล้องวงจรปิดเทศบาล' })
+    ),
+    h('div', { style: { display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '6px' } },
+      h('button', {
+        type: 'button',
+        class: 'btn btn-primary',
+        onclick: async () => {
+          const name = $('#create-rep-name')?.value?.trim();
+          if (!name) {
+            toast('กรุณาระบุชื่อถนนหรือจุดเกิดเหตุ', 'warning');
+            return;
+          }
+          const district = $('#create-rep-district')?.value || 'เมืองสมุทรปราการ';
+          const subdistrict = $('#create-rep-subdistrict')?.value?.trim() || '';
+          const depth_cm = Math.max(5, Math.min(200, Number($('#create-rep-depth')?.value || 25)));
+          const traffic_status = $('#create-rep-traffic')?.value || 'การจราจรเคลื่อนตัวช้า';
+          const lat = Number($('#create-rep-lat')?.value || 13.5991);
+          const lng = Number($('#create-rep-lng')?.value || 100.5968);
+          const cause = $('#create-rep-cause')?.value?.trim() || 'รายงานโดยเจ้าหน้าที่ศูนย์ปฏิบัติการ';
+
+          await createAdminReport({
+            name,
+            district,
+            subdistrict,
+            depth_cm,
+            traffic_status,
+            lat,
+            lng,
+            cause
+          });
+          document.querySelector('.overlay.show')?.remove();
+          playApprovalChime();
+          toast(`เพิ่มจุดรายงาน "${name}" ขึ้นแสดงบนแผนที่เรียบร้อยแล้ว`, 'success');
+          await refreshAllData();
+        },
+        html: `${icon('check', 14)} บันทึกและเผยแพร่ทันที`
+      })
+    )
+  );
+
+  openModal({
+    title: 'เพิ่มจุดรายงานน้ำท่วมโดยเจ้าหน้าที่ (Official Incident Entry)',
+    subtitle: 'รายการที่สร้างโดยแอดมินจะได้รับการอนุมัติและแสดงบนแผนที่หลักทันที',
+    body: formWrap,
+    width: 580
+  });
+}
+
+export function exportReportsCsv() {
+  const rows = state.reports || [];
+  if (rows.length === 0) {
+    toast('ไม่มีข้อมูลรายงานน้ำท่วมสำหรับส่งออก', 'warning');
+    return;
+  }
+  const headers = ['ID', 'ชื่อจุด/ถนน', 'อำเภอ', 'ตำบล', 'ระดับความรุนแรง', 'ระดับน้ำ(ซม.)', 'สภาพการจราจร', 'สถานะอนุมัติ', 'พิกัด(Lat,Lng)', 'เวลาแจ้งเหตุ'];
+  const csvLines = [headers.join(',')];
+  rows.forEach(r => {
+    const { lat, lng, isValid } = getReportCoordinates(r);
+    const coordStr = isValid ? `${lat.toFixed(5)} ${lng.toFixed(5)}` : '-';
+    const cols = [
+      r.id || '',
+      `"${String(r.name || '').replace(/"/g, '""')}"`,
+      `"${String(r.district || '').replace(/"/g, '""')}"`,
+      `"${String(r.subdistrict || '').replace(/"/g, '""')}"`,
+      r.level || 1,
+      r.depth_cm || r.depthCm || 0,
+      `"${String(r.traffic_status || r.trafficStatus || '').replace(/"/g, '""')}"`,
+      (r.is_approved || r.isApproved) ? 'อนุมัติแล้ว' : 'รออนุมัติ',
+      `"${coordStr}"`,
+      `"${dateTime(r.timestamp || r.created_at)}"`
+    ];
+    csvLines.push(cols.join(','));
+  });
+  const csvContent = '\uFEFF' + csvLines.join('\r\n');
+  downloadFile(csvContent, `prakanguard_reports_${new Date().toISOString().slice(0, 10)}.csv`, 'text/csv;charset=utf-8;');
+  toast(`ส่งออกข้อมูลรายงานน้ำท่วม ${rows.length} รายการ (CSV) สำเร็จ`, 'success');
+}
+
+if (typeof window !== 'undefined') {
+  window.__pgOpenCreateReportModal = openCreateAdminReportModal;
+  window.__pgExportReportsCsv = exportReportsCsv;
 }
 
 function updateReportsSelectionUI() {
@@ -2092,6 +2439,18 @@ async function handleApproveSelected() {
   }
 }
 
+async function handleResolveReportsSelected() {
+  const ids = Array.from(state.selectedReports);
+  if (ids.length === 0) return;
+  for (const id of ids) {
+    await setReportResolved(id, true);
+  }
+  playApprovalChime();
+  toast(`ทำเครื่องหมายน้ำแห้งแล้ว ${ids.length} รายการ`, 'info');
+  state.selectedReports.clear();
+  await refreshAllData();
+}
+
 async function handleDeleteReportsSingle(report) {
   const confirmed = await confirmDialog({
     title: 'ยืนยันการลบรายงานน้ำท่วม',
@@ -2147,18 +2506,10 @@ async function handleRestoreDryReportSingle(r) {
   });
   if (!confirmed) return;
   const restoredDepth = (r.depth_cm && r.depth_cm > 0) ? r.depth_cm : (r.depthCm && r.depthCm > 0) ? r.depthCm : 20;
-  const res = await rest(`reports?id=eq.${encodeURIComponent(r.id)}`, {
-    method: 'PATCH',
-    body: { is_approved: true, is_resolved: false, depth_cm: restoredDepth },
-    prefer: 'return=representation'
-  });
-  if (res.ok) {
-    playApprovalChime();
-    toast(`กู้คืนจุด "${r.name || ''}" กลับขึ้นแผนที่เรียบร้อยแล้ว`, 'success');
-    await refreshAllData();
-  } else {
-    toast('ไม่สามารถกู้คืนได้ กรุณาลองใหม่', 'error');
-  }
+  await updateReportDetails(r.id, { is_approved: true, is_resolved: false, depth_cm: restoredDepth });
+  playApprovalChime();
+  toast(`กู้คืนจุด "${r.name || ''}" กลับขึ้นแผนที่เรียบร้อยแล้ว`, 'success');
+  await refreshAllData();
 }
 
 async function handleResolveReportSingle(id) {
@@ -2191,6 +2542,252 @@ function showPhotoModal(photoUrl, title = 'รูปภาพที่แนบ�
     ),
     width: 680
   });
+}
+
+/* ------------------------------------------------------------- 3.5. OFFICIAL 30 STATIONS CONTROL */
+function renderStations() {
+  const tbody = $('#stations-tbody');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+
+  if (!state.officialPoints || state.officialPoints.length === 0) {
+    fetchOfficialPoints().then(pts => {
+      if (Array.isArray(pts) && pts.length > 0) {
+        state.officialPoints = pts;
+        updateNavBadges();
+        renderStations();
+      }
+    }).catch(() => {});
+  }
+
+  let list = [...(state.officialPoints || [])];
+
+  if (state.stationsDistrict !== 'all') {
+    list = list.filter(p => (p.district || '').includes(state.stationsDistrict));
+  }
+
+  if (state.stationsStatus !== 'all') {
+    if (state.stationsStatus === 'dry') {
+      list = list.filter(p => p.autoRemovedBecauseDry || p.isResolved || p.isActive === false || Number(p.depthCm || 0) <= 0);
+    } else if (state.stationsStatus === 'critical') {
+      list = list.filter(p => !p.isResolved && p.isActive !== false && (Number(p.level) === 3 || Number(p.depthCm || 0) > 50));
+    } else if (state.stationsStatus === 'active') {
+      list = list.filter(p => !p.autoRemovedBecauseDry && !p.isResolved && p.isActive !== false && Number(p.depthCm || 0) > 0);
+    }
+  }
+
+  if (state.stationsSearch) {
+    const q = state.stationsSearch.toLowerCase();
+    list = list.filter(p =>
+      (p.name && p.name.toLowerCase().includes(q)) ||
+      (p.district && p.district.toLowerCase().includes(q)) ||
+      (p.subdistrict && p.subdistrict.toLowerCase().includes(q)) ||
+      (typeof p.roadSegment === 'string' && p.roadSegment.toLowerCase().includes(q)) ||
+      (p.cause && p.cause.toLowerCase().includes(q))
+    );
+  }
+
+  const countEl = $('#stations-count-total');
+  if (countEl) countEl.textContent = list.length;
+
+  if (list.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted" style="padding: 36px;">ไม่พบสถานีตรวจวัดตามเงื่อนไขที่เลือก</td></tr>`;
+    return;
+  }
+
+  list.forEach((p, idx) => {
+    const depthNum = Number(p.depthCm ?? p.depth_cm ?? 0);
+    const isDry = p.autoRemovedBecauseDry === true || p.isResolved === true || p.isActive === false || depthNum <= 0;
+    const lv = levelInfo(p);
+    const stationCode = `SPK-ST-${String(idx + 1).padStart(2, '0')}`;
+    const roadDesc = (typeof p.roadSegment === 'string' ? p.roadSegment : '') || p.cause || p.source || 'จุดเฝ้าระวังหลัก 24 ชม.';
+    const subClean = p.subdistrict ? String(p.subdistrict).replace(/^ต\./, '') : '';
+
+    const tr = h('tr', {},
+      h('td', { class: 'cell-mono', style: { fontWeight: 600 } }, stationCode),
+      h('td', {},
+        h('div', { style: { fontWeight: 600, color: 'var(--text-main)' } }, p.name || 'สถานีตรวจวัด'),
+        h('div', { class: 'text-muted', style: { fontSize: '11px', marginTop: '2px' } }, roadDesc)
+      ),
+      h('td', {},
+        h('span', { class: 'badge badge-neutral' }, `อ.${p.district || 'เมืองสมุทรปราการ'}`),
+        subClean ? h('div', { class: 'text-muted', style: { fontSize: '11px', marginTop: '2px' } }, `ต.${subClean}`) : null
+      ),
+      h('td', {},
+        isDry
+          ? h('span', { class: 'badge badge-ok' }, '0 ซม. (พื้นผิวแห้งปกติ)')
+          : h('span', { class: `badge badge-${lv.tone}` }, `${depthNum} ซม. (${lv.label})`)
+      ),
+      h('td', {},
+        h('div', { style: { fontSize: '12px', fontWeight: 500 } }, p.trafficStatus || (isDry ? 'สัญจรคล่องตัว' : 'เฝ้าระวัง')),
+        h('div', { class: 'text-muted', style: { fontSize: '11px' } }, p.statusLabel || (isDry ? 'ระบายน้ำปกติ' : 'ตรวจวัดสด 24 ชม.'))
+      ),
+      h('td', {},
+        isDry
+          ? h('span', { class: 'badge badge-neutral' }, 'พักการแสดงบนแผนที่ (น้ำแห้ง)')
+          : h('span', { class: 'badge badge-primary' }, 'แสดงผลบนแผนที่หลัก')
+      ),
+      h('td', {},
+        h('div', { style: { display: 'flex', gap: '6px', flexWrap: 'wrap' } },
+          h('button', {
+            type: 'button',
+            class: 'btn btn-secondary btn-sm',
+            onclick: () => openEditStationModal(p),
+            html: 'ปรับระดับน้ำ'
+          }),
+          h('button', {
+            type: 'button',
+            class: `btn btn-sm ${isDry ? 'btn-success' : 'btn-secondary'}`,
+            onclick: () => toggleStationDryState(p, !isDry),
+            html: isDry ? 'กู้คืนเฝ้าระวัง' : 'ตั้งค่าน้ำแห้ง'
+          }),
+          h('button', {
+            type: 'button',
+            class: 'btn btn-secondary btn-sm',
+            title: 'ดูหมุดสถานีบนแผนที่',
+            onclick: () => {
+              switchTab('reports');
+              setTimeout(() => window.__pgFlyToReport && window.__pgFlyToReport(`official_${p.id}`), 150);
+            },
+            html: icon('pin', 13)
+          })
+        )
+      )
+    );
+    tbody.appendChild(tr);
+  });
+}
+
+function saveOfficialPointsList(points) {
+  try {
+    localStorage.setItem('prakanguard_points_state_v10', JSON.stringify(points));
+    state.officialPoints = points;
+    const bc = new BroadcastChannel('pg_points_sync');
+    bc.postMessage({ type: 'POINTS_UPDATED' });
+  } catch (e) {}
+}
+
+function openEditStationModal(point) {
+  if (!point) return;
+  const curDepth = Number(point.depthCm ?? 15);
+  const curTraffic = point.trafficStatus || 'สัญจรได้ปกติ';
+  const curLabel = point.statusLabel || 'เฝ้าระวังน้ำขัง';
+
+  const bodyEl = h('div', { style: { display: 'flex', flexDirection: 'column', gap: '14px' } },
+    h('div', { class: 'form-group', style: { marginBottom: 0 } },
+      h('label', { class: 'form-label' }, 'ระดับน้ำปัจจุบัน (เซนติเมตร) — ใส่ 0 หากน้ำแห้ง'),
+      h('input', { type: 'number', id: 'edit-st-depth', class: 'form-input', min: 0, max: 200, value: curDepth })
+    ),
+    h('div', { class: 'form-group', style: { marginBottom: 0 } },
+      h('label', { class: 'form-label' }, 'สภาพการจราจร'),
+      h('select', { id: 'edit-st-traffic', class: 'form-select' },
+        ...['สัญจรได้ตามปกติ', 'รถเล็กสัญจรได้แต่ชะลอตัว', 'การจราจรติดขัดสะสม', 'รถเล็กควรหลีกเลี่ยงเส้นทาง'].map(t =>
+          h('option', { value: t, selected: t === curTraffic }, t)
+        )
+      )
+    ),
+    h('div', { class: 'form-group', style: { marginBottom: 0 } },
+      h('label', { class: 'form-label' }, 'ข้อความสถานะประจำสถานี'),
+      h('input', { type: 'text', id: 'edit-st-label', class: 'form-input', value: curLabel })
+    ),
+    h('div', { style: { display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '6px' } },
+      h('button', {
+        type: 'button',
+        class: 'btn btn-primary',
+        onclick: () => {
+          const newDepth = Math.max(0, Math.min(200, Number($('#edit-st-depth')?.value ?? curDepth)));
+          const newTraffic = $('#edit-st-traffic')?.value || curTraffic;
+          const newStatusLabel = $('#edit-st-label')?.value?.trim() || curLabel;
+          const isDry = newDepth <= 0;
+          const newLevel = newDepth > 50 ? 3 : newDepth >= 21 ? 2 : 1;
+
+          const updated = (state.officialPoints || []).map(p => {
+            if (p.id === point.id) {
+              return {
+                ...p,
+                depthCm: newDepth,
+                level: newLevel,
+                isActive: !isDry,
+                isResolved: isDry,
+                autoRemovedBecauseDry: isDry,
+                trafficStatus: newTraffic,
+                statusLabel: isDry ? 'พื้นผิวจราจรแห้งปกติ (ปรับโดยแอดมิน)' : newStatusLabel
+              };
+            }
+            return p;
+          });
+          saveOfficialPointsList(updated);
+          document.querySelector('.overlay.show')?.remove();
+          playApprovalChime();
+          toast(`อัปเดตสถานี "${point.name}" (${newDepth} ซม.) สำเร็จ`, 'success');
+          renderStations();
+        },
+        html: `${icon('check', 14)} บันทึกค่าสถานี`
+      })
+    )
+  );
+
+  openModal({
+    title: `ปรับค่าระดับน้ำสถานี: ${point.name}`,
+    subtitle: `อ.${point.district || 'เมืองสมุทรปราการ'} · ${point.roadSegment || ''}`,
+    body: bodyEl,
+    width: 520
+  });
+}
+
+function toggleStationDryState(point, markAsDry) {
+  const updated = (state.officialPoints || []).map(p => {
+    if (p.id === point.id) {
+      if (markAsDry) {
+        return {
+          ...p,
+          originalDepthCm: p.depthCm > 0 ? p.depthCm : 15,
+          depthCm: 0,
+          isActive: false,
+          isResolved: true,
+          autoRemovedBecauseDry: false,
+          statusLabel: 'พื้นผิวจราจรแห้งปกติ (ปิดจุดโดยแอดมิน)',
+          dryReason: 'เจ้าหน้าที่ศูนย์ปฏิบัติการยืนยันระบายน้ำแห้งแล้ว'
+        };
+      } else {
+        const restoredDepth = p.originalDepthCm || 18;
+        return {
+          ...p,
+          depthCm: restoredDepth,
+          level: restoredDepth > 50 ? 3 : restoredDepth >= 21 ? 2 : 1,
+          isActive: true,
+          isResolved: false,
+          autoRemovedBecauseDry: false,
+          statusLabel: 'เฝ้าระวังน้ำขัง (กู้คืนโดยแอดมิน)'
+        };
+      }
+    }
+    return p;
+  });
+  saveOfficialPointsList(updated);
+  toast(markAsDry ? `ตั้งค่าสถานี "${point.name}" เป็นน้ำแห้งแล้ว` : `กู้คืนสถานี "${point.name}" กลับสู่โหมดเฝ้าระวังสดแล้ว`, 'success');
+  renderStations();
+}
+
+async function resetAllStationsToDefault() {
+  const ok = await confirmDialog({
+    title: 'รีเซ็ตสถานีตรวจวัดหลักทั้ง 30 จุด',
+    message: 'คุณต้องการคืนค่าระดับน้ำของสถานีตรวจวัดหลักทั้งหมดกลับสู่ค่าโทรมาตรเริ่มต้นหรือไม่?',
+    confirmText: 'ยืนยันรีเซ็ตค่าเริ่มต้น',
+    cancelText: 'ยกเลิก',
+    tone: 'primary',
+    icon: 'restore'
+  });
+  if (!ok) return;
+  try {
+    localStorage.removeItem('prakanguard_points_state_v10');
+  } catch (e) {}
+  state.officialPoints = await fetchOfficialPoints();
+  const bc = new BroadcastChannel('pg_points_sync');
+  bc.postMessage({ type: 'POINTS_UPDATED' });
+  playSyncSuccessChime();
+  toast('รีเซ็ตสถานีตรวจวัดหลักทั้ง 30 จุดกลับสู่ค่าโทรมาตรเริ่มต้นสำเร็จ', 'success');
+  renderStations();
 }
 
 /* ------------------------------------------------------------- 4. LIVE SESSIONS FEED */
@@ -2256,6 +2853,17 @@ function renderFeedback() {
   tbody.innerHTML = '';
 
   let list = [...state.feedback];
+
+  if (state.feedbackStatus === 'unread') {
+    list = list.filter(f => !f.is_read);
+  } else if (state.feedbackStatus === 'read') {
+    list = list.filter(f => !!f.is_read);
+  }
+
+  if (state.feedbackCategory !== 'all') {
+    list = list.filter(f => (f.category || 'general') === state.feedbackCategory);
+  }
+
   if (state.feedbackSearch) {
     const q = state.feedbackSearch.toLowerCase();
     list = list.filter(f => 
@@ -2265,15 +2873,20 @@ function renderFeedback() {
     );
   }
 
-  $('#feedback-count-total').textContent = list.length;
+  const countEl = $('#feedback-count-total');
+  if (countEl) countEl.textContent = list.length;
 
   if (list.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted" style="padding: 36px;">ไม่พบข้อเสนอแนะจากประชาชน</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="8" class="text-center text-muted" style="padding: 36px;">ไม่พบข้อเสนอแนะหรือคำร้องเรียนจากประชาชนตามเงื่อนไขที่เลือก</td></tr>`;
     return;
   }
 
   list.forEach(f => {
     const isChecked = state.selectedFeedback.has(f.id);
+    const isRead = !!f.is_read;
+    const ratingNum = Number(f.rating || 5);
+    const catLabel = f.category_label || (f.category === 'bug' ? 'แจ้งปัญหาระบบ' : f.category === 'urgent_help' ? 'ขอความช่วยเหลือ' : f.category === 'feature' ? 'เสนอแนะฟีเจอร์' : f.category === 'data_error' ? 'ข้อมูลคลาดเคลื่อน' : 'ข้อเสนอแนะทั่วไป');
+
     const tr = h('tr', {},
       h('td', {},
         h('input', {
@@ -2286,20 +2899,34 @@ function renderFeedback() {
           }
         })
       ),
-      h('td', { style: { maxWidth: '320px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } },
-        h('span', { style: { fontWeight: 500 } }, f.message)
+      h('td', {},
+        h('div', { style: { display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'flex-start' } },
+          h('span', { class: `badge ${isRead ? 'badge-ok' : 'badge-warn'}` }, isRead ? 'รับทราบแล้ว' : 'รอตรวจสอบ'),
+          h('span', { class: 'badge badge-neutral', style: { fontSize: '10px' } }, catLabel)
+        )
+      ),
+      h('td', { style: { maxWidth: '320px' } },
+        h('div', { style: { fontWeight: isRead ? 500 : 700, color: 'var(--text-main)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } }, f.message),
+        f.admin_note ? h('div', { class: 'text-muted', style: { fontSize: '11px', marginTop: '3px', color: 'var(--primary-text)' } }, `บันทึกเจ้าหน้าที่: ${f.admin_note}`) : null
       ),
       h('td', {}, f.sender_name || 'ประชาชนทั่วไป'),
       h('td', {}, f.contact || '—'),
-      h('td', {}, '⭐'.repeat(f.rating || 5)),
+      h('td', {},
+        h('span', { class: `badge ${ratingNum >= 4 ? 'badge-ok' : ratingNum === 3 ? 'badge-warn' : 'badge-danger'}` }, `${ratingNum} / 5 คะแนน`)
+      ),
       h('td', { class: 'cell-mono' }, dateTime(f.timestamp || f.created_at)),
       h('td', {},
-        h('div', { style: { display: 'flex', gap: '6px' } },
+        h('div', { style: { display: 'flex', gap: '6px', flexWrap: 'wrap' } },
           h('button', {
             class: 'btn btn-secondary btn-sm',
             onclick: () => showFeedbackModal(f),
-            html: `${icon('eye', 14)} รายละเอียด`
+            html: `${icon('eye', 14)} ตรวจสอบ`
           }),
+          !isRead ? h('button', {
+            class: 'btn btn-success btn-sm',
+            onclick: () => handleMarkFeedbackReadSingle(f, true),
+            html: `${icon('check', 13)} รับทราบ`
+          }) : null,
           h('button', {
             class: 'btn btn-danger btn-sm',
             onclick: () => handleDeleteFeedbackSingle(f),
@@ -2334,19 +2961,85 @@ function updateFeedbackSelectionUI() {
 }
 
 function showFeedbackModal(f) {
+  const ratingNum = Number(f.rating || 5);
   openModal({
-    title: 'ข้อเสนอแนะจากประชาชน',
+    title: 'รายละเอียดข้อเสนอแนะและบันทึกการปฏิบัติงาน',
     subtitle: `${f.sender_name || 'ประชาชนทั่วไป'} · ${dateTime(f.timestamp || f.created_at)}`,
     body: h('div', { style: { display: 'flex', flexDirection: 'column', gap: '14px' } },
-      h('div', { style: { fontSize: '14px', lineHeight: '1.6', background: 'var(--bg-subtle)', padding: '16px', borderRadius: '12px' } }, f.message),
-      h('div', { style: { display: 'flex', gap: '20px', fontSize: '13px' } },
-        h('div', {}, h('strong', {}, 'เบอร์/ช่องทางติดต่อ: '), f.contact || '—'),
-        h('div', {}, h('strong', {}, 'คะแนนความพึงพอใจ: '), '⭐'.repeat(f.rating || 5)),
-        h('div', {}, h('strong', {}, 'หมวดหมู่: '), f.category_label || f.category || 'ทั่วไป')
+      h('div', { style: { fontSize: '14px', lineHeight: '1.6', background: 'var(--bg-subtle)', padding: '16px', borderRadius: '10px', border: '1px solid var(--border-subtle)' } }, f.message),
+      h('div', { style: { display: 'flex', gap: '20px', fontSize: '12.5px', flexWrap: 'wrap' } },
+        h('div', {}, h('strong', {}, 'ช่องทางติดต่อ: '), f.contact || '—'),
+        h('div', {}, h('strong', {}, 'ระดับความพึงพอใจ: '), `${ratingNum} / 5 คะแนน`),
+        h('div', {}, h('strong', {}, 'หมวดหมู่: '), f.category_label || f.category || 'ข้อเสนอแนะทั่วไป')
+      ),
+      h('div', { class: 'form-group', style: { marginBottom: 0 } },
+        h('label', { class: 'form-label' }, 'บันทึกการตรวจสอบของเจ้าหน้าที่ (Admin Note)'),
+        h('input', { type: 'text', id: 'feedback-admin-note-input', class: 'form-input', value: f.admin_note || '', placeholder: 'ระบุผลการตรวจสอบหรือการประสานงานต่อ...' })
+      ),
+      h('div', { style: { display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '4px' } },
+        h('button', {
+          type: 'button',
+          class: 'btn btn-primary',
+          onclick: async () => {
+            const noteVal = $('#feedback-admin-note-input')?.value?.trim() || '';
+            await setFeedbackRead(f.id, true, noteVal);
+            document.querySelector('.overlay.show')?.remove();
+            playApprovalChime();
+            toast('บันทึกรับทราบข้อเสนอแนะเรียบร้อยแล้ว', 'success');
+            await refreshAllData();
+          },
+          html: `${icon('check', 14)} บันทึกรับทราบเรื่อง`
+        })
       )
     ),
     width: 580
   });
+}
+
+async function handleMarkFeedbackReadSingle(f, isRead = true) {
+  await setFeedbackRead(f.id, isRead, f.admin_note || '');
+  playApprovalChime();
+  toast('ทำเครื่องหมายรับทราบข้อเสนอแนะแล้ว', 'success');
+  await refreshAllData();
+}
+
+async function handleMarkFeedbackReadSelected() {
+  const ids = Array.from(state.selectedFeedback);
+  if (ids.length === 0) return;
+  for (const id of ids) {
+    await setFeedbackRead(id, true);
+  }
+  playApprovalChime();
+  toast(`ทำเครื่องหมายรับทราบแล้ว ${ids.length} รายการ`, 'success');
+  state.selectedFeedback.clear();
+  await refreshAllData();
+}
+
+export function exportFeedbackCsv() {
+  const rows = state.feedback || [];
+  if (rows.length === 0) {
+    toast('ไม่มีข้อมูลข้อเสนอแนะสำหรับส่งออก', 'warning');
+    return;
+  }
+  const headers = ['ID', 'สถานะ', 'หมวดหมู่', 'ข้อความข้อเสนอแนะ', 'ผู้แจ้ง', 'ช่องทางติดต่อ', 'คะแนน(เต็ม5)', 'บันทึกเจ้าหน้าที่', 'วันที่ส่ง'];
+  const csvLines = [headers.join(',')];
+  rows.forEach(f => {
+    const cols = [
+      f.id || '',
+      f.is_read ? 'รับทราบแล้ว' : 'รอตรวจสอบ',
+      `"${String(f.category_label || f.category || 'ทั่วไป').replace(/"/g, '""')}"`,
+      `"${String(f.message || '').replace(/"/g, '""')}"`,
+      `"${String(f.sender_name || 'ประชาชนทั่วไป').replace(/"/g, '""')}"`,
+      `"${String(f.contact || '').replace(/"/g, '""')}"`,
+      f.rating || 5,
+      `"${String(f.admin_note || '').replace(/"/g, '""')}"`,
+      `"${dateTime(f.timestamp || f.created_at)}"`
+    ];
+    csvLines.push(cols.join(','));
+  });
+  const csvContent = '\uFEFF' + csvLines.join('\r\n');
+  downloadFile(csvContent, `prakanguard_feedback_${new Date().toISOString().slice(0, 10)}.csv`, 'text/csv;charset=utf-8;');
+  toast(`ส่งออกข้อมูลข้อเสนอแนะ ${rows.length} รายการ (CSV) สำเร็จ`, 'success');
 }
 
 async function handleDeleteFeedbackSingle(f) {
@@ -3067,10 +3760,18 @@ export function initDashboard() {
     renderReports();
   });
 
+  $('#reports-level-select')?.addEventListener('change', (e) => {
+    state.reportsLevel = e.target.value;
+    renderReports();
+  });
+
   $('#reports-search-input')?.addEventListener('input', (e) => {
     state.reportsSearch = e.target.value.trim();
     renderReports();
   });
+
+  $('#btn-create-admin-report')?.addEventListener('click', openCreateAdminReportModal);
+  $('#btn-export-reports-csv')?.addEventListener('click', exportReportsCsv);
 
   $('#th-reports-select-all')?.addEventListener('change', (e) => {
     const isChecked = e.target.checked;
@@ -3082,7 +3783,23 @@ export function initDashboard() {
     renderReports();
   });
   $('#btn-reports-approve-selected')?.addEventListener('click', handleApproveSelected);
+  $('#btn-reports-resolve-selected')?.addEventListener('click', handleResolveReportsSelected);
   $('#btn-reports-delete-selected')?.addEventListener('click', handleDeleteReportsSelected);
+
+  // Stations Filters & Actions
+  $('#stations-district-select')?.addEventListener('change', (e) => {
+    state.stationsDistrict = e.target.value;
+    renderStations();
+  });
+  $('#stations-status-select')?.addEventListener('change', (e) => {
+    state.stationsStatus = e.target.value;
+    renderStations();
+  });
+  $('#stations-search-input')?.addEventListener('input', (e) => {
+    state.stationsSearch = e.target.value.trim();
+    renderStations();
+  });
+  $('#btn-reset-all-stations')?.addEventListener('click', resetAllStationsToDefault);
 
   // Feedback Search & Actions
   $('#th-feedback-select-all')?.addEventListener('change', (e) => {
@@ -3094,11 +3811,21 @@ export function initDashboard() {
     }
     renderFeedback();
   });
+  $('#feedback-status-select')?.addEventListener('change', (e) => {
+    state.feedbackStatus = e.target.value;
+    renderFeedback();
+  });
+  $('#feedback-category-select')?.addEventListener('change', (e) => {
+    state.feedbackCategory = e.target.value;
+    renderFeedback();
+  });
   $('#feedback-search-input')?.addEventListener('input', (e) => {
     state.feedbackSearch = e.target.value.trim();
     renderFeedback();
   });
+  $('#btn-feedback-read-selected')?.addEventListener('click', handleMarkFeedbackReadSelected);
   $('#btn-feedback-delete-selected')?.addEventListener('click', handleDeleteFeedbackSelected);
+  $('#btn-export-feedback-csv')?.addEventListener('click', exportFeedbackCsv);
 
   // Announcements: Form submission & segmented target radio
   $('#form-create-announcement')?.addEventListener('submit', handleCreateAnnouncement);

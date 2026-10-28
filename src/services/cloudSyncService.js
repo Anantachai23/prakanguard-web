@@ -58,6 +58,101 @@ const PRIMARY_ACTIONS_TOPIC = 'https://ntfy.sh/prakanguard_live_actions_v4_spk';
 
 const LOCAL_ADMIN_API = 'http://localhost:4000';
 
+const PERMANENT_BLOCKED_IDS = new Set([
+  'test-check-insert',
+  'test-inspect-1792700165089',
+  'zz-sec-probe-1792736969'
+]);
+
+function getDeletedSet(kind = 'report') {
+  try {
+    const k1 = kind === 'report' ? 'pg_deleted_report_ids_v1' : 'pg_deleted_feedback_ids_v1';
+    const a1 = JSON.parse(localStorage.getItem(k1) || '[]');
+    const a2 = kind === 'report' ? JSON.parse(localStorage.getItem('pg_deleted_ids_v1') || '[]') : [];
+    const set = new Set([
+      ...(Array.isArray(a1) ? a1.map(String) : []),
+      ...(Array.isArray(a2) ? a2.map(String) : [])
+    ]);
+    if (kind === 'report') {
+      PERMANENT_BLOCKED_IDS.forEach(id => set.add(id));
+    }
+    return set;
+  } catch {
+    return kind === 'report' ? new Set(PERMANENT_BLOCKED_IDS) : new Set();
+  }
+}
+
+export function markCloudItemDeleted(kind = 'report', id) {
+  if (!id) return;
+  try {
+    const key = kind === 'report' ? 'pg_deleted_report_ids_v1' : 'pg_deleted_feedback_ids_v1';
+    const set = getDeletedSet(kind);
+    set.add(String(id));
+    localStorage.setItem(key, JSON.stringify(Array.from(set)));
+    if (kind === 'report') {
+      localStorage.setItem('pg_deleted_ids_v1', JSON.stringify(Array.from(set)));
+    }
+  } catch {}
+}
+
+function getLocalReportOverrides() {
+  try {
+    const obj = JSON.parse(localStorage.getItem('pg_report_overrides_v1') || '{}');
+    return obj && typeof obj === 'object' ? obj : {};
+  } catch {
+    return {};
+  }
+}
+
+function setLocalReportOverride(id, patch) {
+  if (!id || !patch) return;
+  try {
+    const map = getLocalReportOverrides();
+    map[String(id)] = { ...(map[String(id)] || {}), ...patch, updated_at: Date.now() };
+    localStorage.setItem('pg_report_overrides_v1', JSON.stringify(map));
+  } catch {}
+}
+
+let lastActionPollTs = 0;
+async function syncActionsFromTopic() {
+  if (typeof localStorage === 'undefined') return;
+  if (Date.now() - lastActionPollTs < 4000) return;
+  lastActionPollTs = Date.now();
+  try {
+    const res = await fetch(`${PRIMARY_ACTIONS_TOPIC}/json?poll=1&since=all`, {
+      cache: 'no-cache',
+      signal: AbortSignal.timeout(3500)
+    }).catch(() => null);
+    if (!res || !res.ok) return;
+    const text = await res.text();
+    const lines = text.trim().split('\n');
+    for (const line of lines) {
+      if (!line) continue;
+      try {
+        const entry = JSON.parse(line);
+        if (entry.event === 'message' && entry.message) {
+          const act = JSON.parse(entry.message);
+          if (!act || !act.id) continue;
+          const sid = String(act.id);
+          if (act.type === 'reject' || act.type === 'delete_report') {
+            markCloudItemDeleted('report', sid);
+          } else if (act.type === 'delete_feedback') {
+            markCloudItemDeleted('feedback', sid);
+          } else if (act.type === 'approve') {
+            setLocalReportOverride(sid, { isApproved: true, is_approved: true, isResolved: false, is_resolved: false });
+          } else if (act.type === 'unapprove') {
+            setLocalReportOverride(sid, { isApproved: false, is_approved: false });
+          } else if (act.type === 'resolve') {
+            setLocalReportOverride(sid, { isResolved: true, is_resolved: true, depthCm: 0, depth_cm: 0 });
+          } else if (act.type === 'update_report' && act.patch) {
+            setLocalReportOverride(sid, act.patch);
+          }
+        }
+      } catch {}
+    }
+  } catch {}
+}
+
 /**
  * แปลง CamelCase เป็น Snake_Case สำหรับ Supabase Reports
  * บังคับ is_approved = false เสมอสำหรับการส่งรายงานจากฝั่งประชาชน (เว้นแต่มีเซสชันแอดมินที่ถูกต้อง)
@@ -188,9 +283,9 @@ export function isValidReport(r) {
   const dist = String(r.district || '').toLowerCase();
   const sub = String(r.subdistrict || '').toLowerCase();
 
-  // กรองข้อมูลทดสอบ หรือคำหยาบ/สัญลักษณ์ผิดปกติออกทั้งหมด
+  // กรองข้อมูลโพรบของ AI หรือสัญลักษณ์ผิดปกติออกทั้งหมด
   if (id.startsWith('zz-') || id.includes('probe') || id.includes('test-inspect') || id.includes('test-check')) return false;
-  if (name.includes('security-probe') || name.includes('auto-deleted') || name.includes('probe') || name.includes('ทดสอบ')) return false;
+  if (name.includes('security-probe') || name.includes('auto-deleted') || name.includes('probe') || name === 'ทดสอบเช็คการเขียน' || name === 'ทดสอบระบบ') return false;
   if (name.includes('????') || dist.includes('????') || sub.includes('????')) return false;
   if (typeof r.lat !== 'number' || isNaN(r.lat) || typeof r.lng !== 'number' || isNaN(r.lng)) return false;
 
@@ -345,6 +440,28 @@ export async function publishAdminAction(action) {
     const payload = JSON.stringify(action);
     const asciiTitle = `Admin Action: ${action.type || 'update'}`;
 
+    // Persist locally in shared ledger
+    if (action.id) {
+      const sid = String(action.id);
+      if (action.type === 'approve') {
+        setLocalReportOverride(sid, { isApproved: true, is_approved: true, isResolved: false, is_resolved: false });
+      } else if (action.type === 'unapprove') {
+        setLocalReportOverride(sid, { isApproved: false, is_approved: false });
+      } else if (action.type === 'resolve') {
+        setLocalReportOverride(sid, { isResolved: true, is_resolved: true, depthCm: 0, depth_cm: 0 });
+      } else if (action.type === 'reject' || action.type === 'delete_report') {
+        markCloudItemDeleted('report', sid);
+      } else if (action.type === 'delete_feedback') {
+        markCloudItemDeleted('feedback', sid);
+      }
+    }
+
+    try {
+      const bc = new BroadcastChannel('pg_admin_sync_channel');
+      bc.postMessage(action);
+      bc.close();
+    } catch (_) {}
+
     // Update Supabase Database
     try {
       if (action.type === 'approve' && action.id) {
@@ -426,7 +543,32 @@ export async function fetchCloudReportPhoto(reportId) {
  */
 export async function fetchRecentCloudReports() {
   try {
+    await syncActionsFromTopic();
+    const deletedSet = getDeletedSet('report');
+    const overrides = getLocalReportOverrides();
     const reportMap = new Map();
+
+    const applyOverridesAndAdd = (r) => {
+      if (!r || !r.id) return;
+      const sid = String(r.id);
+      if (deletedSet.has(sid) || !isValidReport(r)) return;
+      const ov = overrides[sid] || {};
+      const merged = { ...r, ...ov };
+      if (ov.is_approved !== undefined) merged.isApproved = ov.is_approved;
+      if (ov.isApproved !== undefined) merged.isApproved = ov.isApproved;
+      if (ov.is_resolved !== undefined) merged.isResolved = ov.is_resolved;
+      if (ov.isResolved !== undefined) merged.isResolved = ov.isResolved;
+      if (ov.depth_cm !== undefined) merged.depthCm = ov.depth_cm;
+      reportMap.set(sid, merged);
+    };
+
+    // 0. ดึงรายงานที่สร้างจาก Admin Portal ในเครื่องเดียวกัน (ถ้ามี)
+    try {
+      const adminLocal = JSON.parse(localStorage.getItem('pg_admin_local_reports_v1') || '[]');
+      if (Array.isArray(adminLocal)) {
+        adminLocal.forEach(row => applyOverridesAndAdd(fromSupabaseReport(row)));
+      }
+    } catch (_) {}
 
     // 1. ดึงจาก Supabase Cloud Database เป็นหลัก (ซ่อนเบอร์โทรศัพท์หากไม่ใช่เซสชันแอดมิน)
     try {
@@ -452,9 +594,7 @@ export async function fetchRecentCloudReports() {
             }
             const parsed = fromSupabaseReport(row);
             if (!isAdmin) parsed.phone = '';
-            if (isValidReport(parsed)) {
-              reportMap.set(parsed.id, parsed);
-            }
+            applyOverridesAndAdd(parsed);
           });
         }
       }
@@ -467,8 +607,8 @@ export async function fetchRecentCloudReports() {
         const localReports = await localRes.json();
         if (Array.isArray(localReports)) {
           localReports.forEach(r => {
-            if (isValidReport(r) && !reportMap.has(r.id)) {
-              reportMap.set(r.id, r);
+            if (!reportMap.has(String(r.id))) {
+              applyOverridesAndAdd(r);
             }
           });
         }
@@ -489,6 +629,8 @@ export async function fetchRecentCloudReports() {
  */
 export async function fetchRecentCloudFeedback() {
   try {
+    await syncActionsFromTopic();
+    const deletedSet = getDeletedSet('feedback');
     const feedbackMap = new Map();
 
     // 1. ดึงจาก Supabase Cloud Database เป็นหลัก
@@ -508,7 +650,7 @@ export async function fetchRecentCloudFeedback() {
         if (Array.isArray(rows)) {
           rows.forEach(row => {
             const parsed = fromSupabaseFeedback(row);
-            if (isValidFeedback(parsed)) {
+            if (isValidFeedback(parsed) && !deletedSet.has(String(parsed.id))) {
               feedbackMap.set(parsed.id, parsed);
             }
           });
@@ -523,7 +665,7 @@ export async function fetchRecentCloudFeedback() {
         const data = await serverlessRes.json();
         if (Array.isArray(data)) {
           data.forEach(f => {
-            if (isValidFeedback(f) && !feedbackMap.has(f.id)) {
+            if (isValidFeedback(f) && !deletedSet.has(String(f.id)) && !feedbackMap.has(f.id)) {
               feedbackMap.set(f.id, f);
             }
           });
@@ -537,7 +679,7 @@ export async function fetchRecentCloudFeedback() {
         const localFeedback = await localRes.json();
         if (Array.isArray(localFeedback)) {
           localFeedback.forEach(f => {
-            if (isValidFeedback(f) && !feedbackMap.has(f.id)) {
+            if (isValidFeedback(f) && !deletedSet.has(String(f.id)) && !feedbackMap.has(f.id)) {
               feedbackMap.set(f.id, f);
             }
           });
@@ -558,7 +700,7 @@ export async function fetchRecentCloudFeedback() {
               const entry = JSON.parse(line);
               if (entry.event === 'message' && entry.message) {
                 const parsed = JSON.parse(entry.message);
-                if (isValidFeedback(parsed) && !feedbackMap.has(parsed.id)) {
+                if (isValidFeedback(parsed) && !deletedSet.has(String(parsed.id)) && !feedbackMap.has(parsed.id)) {
                   feedbackMap.set(parsed.id, parsed);
                 }
               }

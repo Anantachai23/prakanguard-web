@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PrakanGuard | ศูนย์บัญชาการข้อมูลและเฝ้าระวังอุทกภัย จ.สมุทรปราการ (Admin Portal)</title>
+  <title>PrakanGuard Operations | ศูนย์บริหารจัดการและเฝ้าระวังอุทกภัย จังหวัดสมุทรปราการ (Admin Console)</title>
   
   <!-- Favicon & Fonts -->
   <link rel="icon" type="image/png" href="./assets/img/logo.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700;800&family=Sarabun:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   
   <!-- Leaflet & Chart Libraries (CDN with Local Fallback) -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
@@ -23,15 +23,13 @@
   </script>
   <script src="./assets/vendor/chart.umd.js"></script>
   
-  <!-- Critical Anti-FOUC (Flash of Unauthenticated Content) & White Autofill Box Shield -->
+  <!-- Critical Anti-FOUC (Flash of Unauthenticated Content) & Autofill Shield -->
   <style>
-    /* Prevent 1-second flash of admin dashboard menu on initial page load */
     #app-shell { display: none !important; }
     #login-wall { display: flex !important; }
     html.admin-authenticated #app-shell { display: flex !important; }
     html.admin-authenticated #login-wall { display: none !important; }
 
-    /* WebKit Autofill Box Kill: prevents browser from rendering white/light blue rectangular boxes */
     input:-webkit-autofill,
     input:-webkit-autofill:hover, 
     input:-webkit-autofill:focus, 
@@ -40,12 +38,12 @@
     .floating-input-field:-webkit-autofill:hover,
     .floating-input-field:-webkit-autofill:focus,
     .floating-input-field:-webkit-autofill:active {
-      -webkit-box-shadow: 0 0 0 1000px #090f19 inset !important;
-      box-shadow: 0 0 0 1000px #090f19 inset !important;
-      -webkit-text-fill-color: #ffffff !important;
-      color: #ffffff !important;
-      caret-color: #38bdf8 !important;
-      border-radius: 8px !important;
+      -webkit-box-shadow: 0 0 0 1000px #0b1120 inset !important;
+      box-shadow: 0 0 0 1000px #0b1120 inset !important;
+      -webkit-text-fill-color: #f8fafc !important;
+      color: #f8fafc !important;
+      caret-color: #3b82f6 !important;
+      border-radius: 6px !important;
       transition: background-color 50000s ease-in-out 0s !important;
     }
   </style>
@@ -64,45 +62,37 @@
 <body>
 
   <!-- =========================================================================
-       1. LOGIN WALL (แสดงเฉพาะเมื่อยังไม่ได้เข้าสู่ระบบ - ห้ามใส่รหัสผ่านค้างไว้)
+       1. OFFICIAL ENTERPRISE LOGIN WALL
        ========================================================================= -->
   <div id="login-wall">
     <div class="login-wrapper">
       
-      <!-- Top Brand Crest -->
-      <div class="login-top-brand">
-        <div class="login-brand-logo-wrap">
-          <img src="./assets/img/logo.png" alt="PrakanGuard Admin Logo" class="login-brand-logo">
-        </div>
-        <div class="login-brand-text">
-          <span class="login-brand-name">PrakanGuard</span>
-          <span class="login-brand-tag">COMMAND CENTER</span>
-        </div>
-      </div>
-
-      <!-- Main Login Card (Clean, Focused, Secure) -->
       <div class="login-card-clean">
-        <div class="login-hero">
-          <h1 class="split-login-title">
-            <span class="text-cyan-gradient">Admin</span> Login
-          </h1>
-          <p class="login-subtitle">กรุณากรอกชื่อผู้ใช้และรหัสผ่านเพื่อเข้าสู่ระบบศูนย์ควบคุม</p>
+        <!-- Institutional Crest Header -->
+        <div class="login-official-header">
+          <div class="login-brand-logo-wrap">
+            <img src="./assets/img/logo.png" alt="PrakanGuard Emblem" class="login-brand-logo">
+          </div>
+          <div class="login-brand-text">
+            <div class="login-brand-org">ศูนย์ปฏิบัติการข้อมูลอุทกภัย จังหวัดสมุทรปราการ</div>
+            <h1 class="login-brand-title">PrakanGuard Admin Console</h1>
+            <p class="login-subtitle">ระบบบริหารจัดการข้อมูลสารสนเทศและการแจ้งเตือนภัยสำหรับเจ้าหน้าที่</p>
+          </div>
         </div>
 
         <div id="login-error" class="login-error"></div>
 
         <form id="login-form" autocomplete="off">
-          <!-- Username Input with Floating Outlined Box -->
           <div class="floating-input-group">
-            <label class="floating-label" for="login-username">ชื่อผู้ใช้งาน (Username)</label>
+            <label class="floating-label" for="login-username">รหัสผู้ดูแลระบบ (Administrator ID)</label>
             <div class="floating-input-box">
-              <svg class="floating-input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              <svg class="floating-input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
               <input 
                 type="text" 
                 id="login-username" 
                 name="username" 
                 class="floating-input-field" 
-                placeholder="กรอกชื่อผู้ใช้แอดมิน" 
+                placeholder="ระบุชื่อบัญชีผู้ดูแลระบบ" 
                 autocomplete="off" 
                 required
                 value=""
@@ -110,52 +100,50 @@
             </div>
           </div>
 
-          <!-- Password Input with Floating Outlined Box & Toggle Visibility -->
           <div class="floating-input-group">
-            <label class="floating-label" for="login-password">รหัสผ่าน (Password)</label>
+            <label class="floating-label" for="login-password">รหัสผ่านยืนยันตัวตน (Password)</label>
             <div class="floating-input-box">
-              <svg class="floating-input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              <svg class="floating-input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
               <input 
                 type="password" 
                 id="login-password" 
                 name="password" 
                 class="floating-input-field" 
-                placeholder="กรอกรหัสผ่านเพื่อเข้าสู่ระบบ" 
+                placeholder="ระบุรหัสผ่านเข้าสู่ระบบ" 
                 autocomplete="new-password" 
                 required
                 value=""
               >
               <button type="button" id="btn-toggle-login-pass" class="toggle-pass-btn" title="แสดง/ซ่อนรหัสผ่าน">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2.06 12.35a1 1 0 0 1 0-.7 10.75 10.75 0 0 1 19.88 0 1 1 0 0 1 0 .7 10.75 10.75 0 0 1-19.88 0"/><circle cx="12" cy="12" r="3"/></svg>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2.06 12.35a1 1 0 0 1 0-.7 10.75 10.75 0 0 1 19.88 0 1 1 0 0 1 0 .7 10.75 10.75 0 0 1-19.88 0"/><circle cx="12" cy="12" r="3"/></svg>
               </button>
             </div>
           </div>
 
-          <!-- Options Row (Remember Me & Security Indicator) -->
           <div class="login-options-row">
             <label class="remember-checkbox-label">
               <input type="checkbox" id="login-remember-me" checked>
               <span class="checkbox-custom"></span>
-              <span>จดจำการใช้งาน</span>
+              <span>คงสถานะเซสชันการทำงาน (12 ชั่วโมง)</span>
             </label>
-            <div class="security-level-pill">
-              <span class="status-dot pulse" style="background: #10b981;"></span>
-              <span>PBKDF2-SHA256 Encrypted</span>
-            </div>
           </div>
 
-          <!-- Submit Button -->
           <button type="submit" id="btn-login-submit" class="split-login-btn">
-            <span>เข้าสู่ระบบ Admin</span>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+            <span>ยืนยันตัวตนเข้าสู่ระบบ</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
           </button>
         </form>
+
+        <div class="login-official-footer">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          <span>สงวนสิทธิ์เฉพาะเจ้าหน้าที่ผู้ได้รับมอบหมาย ระบบบันทึกประวัติการเข้าถึงข้อมูลตามมาตรฐานความมั่นคงปลอดภัย</span>
+        </div>
       </div>
     </div>
   </div>
 
   <!-- =========================================================================
-       2. APP SHELL
+       2. ENTERPRISE APP SHELL
        ========================================================================= -->
   <div id="app-shell" style="display: none;">
 
@@ -167,122 +155,85 @@
         </div>
         <div class="brand-titles">
           <span class="brand-title">PrakanGuard Admin</span>
-          <span class="brand-subtitle">ศูนย์ควบคุมข้อมูลอุทกภัย 6 อำเภอ</span>
+          <span class="brand-subtitle">ศูนย์ปฏิบัติการข้อมูล จ.สมุทรปราการ</span>
         </div>
         <button id="btn-sidebar-close" class="icon-btn mobile-sidebar-close-btn" aria-label="ปิดเมนู" title="ปิดเมนู">
           <svg class="ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
         </button>
       </div>
 
-      <!-- Welcome Back User Card (From Mockup) -->
-      <div style="margin: 12px 14px 4px 14px; padding: 10px 12px; background: var(--bg-subtle); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); display: flex; align-items: center; gap: 10px;">
-        <div style="width: 36px; height: 36px; border-radius: 50%; overflow: hidden; border: 1.5px solid #38bdf8; flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: rgba(56, 189, 248, 0.1); box-shadow: 0 0 10px rgba(56, 189, 248, 0.25);">
-          <img id="sidebar-admin-avatar" src="./assets/img/admin01.jpg" alt="Admin Avatar" style="width: 100%; height: 100%; object-fit: cover;">
+      <!-- Active Officer Profile Bar -->
+      <div class="sidebar-officer-card">
+        <div class="sidebar-officer-avatar">
+          <img id="sidebar-admin-avatar" src="./assets/img/admin01.jpg" alt="Admin Avatar">
         </div>
-        <div style="min-width: 0; flex: 1;">
-          <div id="sidebar-greeting-title" style="font-size: 10.5px; color: var(--text-muted);">ยินดีต้อนรับ</div>
-          <div id="sidebar-greeting-name" style="font-size: 13px; font-weight: 700; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Admin 01</div>
+        <div class="sidebar-officer-info">
+          <div id="sidebar-greeting-title" class="sidebar-officer-role">เจ้าหน้าที่เวรปฏิบัติการ</div>
+          <div id="sidebar-greeting-name" class="sidebar-officer-name">Admin 01</div>
         </div>
+        <span class="sidebar-officer-status" title="สถานะเซสชันปกติ"></span>
       </div>
 
       <nav class="sidebar-nav">
-        <div class="nav-label">เมนูหลัก</div>
+        <div class="nav-label">ศูนย์ปฏิบัติการ (OPERATIONS)</div>
         <a class="nav-item active" data-tab="overview">
-          <svg class="ico" width="18" height="18" viewBox="0 0 24 24" fill="none">
-            <rect x="3" y="3" width="7.5" height="9" rx="1.5" fill="currentColor" fill-opacity="0.16" stroke="currentColor" stroke-width="1.75"/>
-            <rect x="13.5" y="3" width="7.5" height="5" rx="1.5" stroke="currentColor" stroke-width="1.75"/>
-            <rect x="13.5" y="11" width="7.5" height="10" rx="1.5" fill="currentColor" fill-opacity="0.16" stroke="currentColor" stroke-width="1.75"/>
-            <rect x="3" y="15" width="7.5" height="6" rx="1.5" stroke="currentColor" stroke-width="1.75"/>
-          </svg>
-          <span>ภาพรวมระบบ</span>
+          <svg class="ico" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+          <span>ภาพรวมศูนย์ปฏิบัติการ</span>
         </a>
         <a class="nav-item" data-tab="reports">
-          <svg class="ico" width="18" height="18" viewBox="0 0 24 24" fill="none">
-            <rect x="5" y="2.5" width="7" height="19" rx="1.5" fill="currentColor" fill-opacity="0.14" stroke="currentColor" stroke-width="1.75"/>
-            <path d="M5 7H9M5 11H8M5 15H9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-            <path d="M14 14.5C15.2 13.5 16.8 13.5 18 14.5C19.2 15.5 20.5 15.5 21.5 14.5" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>
-            <path d="M14 18.5C15.2 17.5 16.8 17.5 18 18.5C19.2 19.5 20.5 19.5 21.5 18.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-          </svg>
-          <span>ผู้แจ้งรายงานน้ำท่วม</span>
+          <svg class="ico" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
+          <span>จัดการรายงานน้ำท่วม</span>
           <span id="badge-reports-count" class="nav-badge">0</span>
         </a>
+        <a class="nav-item" data-tab="stations">
+          <svg class="ico" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+          <span>สถานีตรวจวัดหลัก 30 จุด</span>
+          <span id="badge-stations-count" class="nav-badge">30</span>
+        </a>
+        <a class="nav-item" data-tab="feedback">
+          <svg class="ico" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          <span>ข้อเสนอแนะประชาชน</span>
+          <span id="badge-feedback-count" class="nav-badge">0</span>
+        </a>
+        <a class="nav-item" data-tab="announcements">
+          <svg class="ico" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg>
+          <span>ประกาศแจ้งเตือนภัย</span>
+        </a>
+
+        <div class="nav-label" style="margin-top: 12px;">ระบบและธรรมาภิบาล (GOVERNANCE)</div>
         <a class="nav-item" data-tab="visitors">
-          <svg class="ico" width="18" height="18" viewBox="0 0 24 24" fill="none">
-            <circle cx="12" cy="12" r="9" fill="currentColor" fill-opacity="0.12" stroke="currentColor" stroke-width="1.75"/>
-            <circle cx="12" cy="12" r="4.5" stroke="currentColor" stroke-width="1.4" stroke-dasharray="2 2"/>
-            <path d="M12 12L17.5 6.5" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>
-            <circle cx="12" cy="12" r="1.8" fill="currentColor"/>
-          </svg>
+          <svg class="ico" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
           <span>ผู้เข้าใช้งานสด</span>
           <span id="badge-visitors-count" class="nav-badge">0</span>
         </a>
-        <a class="nav-item" data-tab="feedback">
-          <svg class="ico" width="18" height="18" viewBox="0 0 24 24" fill="none">
-            <path d="M4 5.5C4 4.4 4.9 3.5 6 3.5H18C19.1 3.5 20 4.4 20 5.5V14.5C20 15.6 19.1 16.5 18 16.5H9L4.5 20.5V5.5Z" fill="currentColor" fill-opacity="0.14" stroke="currentColor" stroke-width="1.75" stroke-linejoin="round"/>
-            <path d="M8 8.5H16M8 12H13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-          </svg>
-          <span>ข้อเสนอจากประชาชน</span>
-          <span id="badge-feedback-count" class="nav-badge">0</span>
-        </a>
-
-        <div class="nav-label" style="margin-top: 10px;">การจัดการ & ระบบ</div>
-        <a class="nav-item" data-tab="announcements">
-          <svg class="ico" width="18" height="18" viewBox="0 0 24 24" fill="none">
-            <path d="M11 5L6 9H3V15H6L11 19V5Z" fill="currentColor" fill-opacity="0.16" stroke="currentColor" stroke-width="1.75" stroke-linejoin="round"/>
-            <path d="M15.5 8.5C17.2 10.2 17.2 13.8 15.5 15.5M18.5 5.5C21.8 8.8 21.8 15.2 18.5 18.5" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>
-          </svg>
-          <span>การประกาศหน้าเว็บ</span>
+        <a class="nav-item" data-tab="logins">
+          <svg class="ico" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          <span>ประวัติเข้าใช้งานแอดมิน</span>
         </a>
         <a class="nav-item" data-tab="trash">
-          <svg class="ico" width="18" height="18" viewBox="0 0 24 24" fill="none">
-            <path d="M4 6.5H20" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>
-            <path d="M6 6.5H18V19C18 20.1 17.1 21 16 21H8C6.9 21 6 20.1 6 19V6.5Z" fill="currentColor" fill-opacity="0.12" stroke="currentColor" stroke-width="1.75"/>
-            <path d="M9 6.5V4.5C9 3.9 9.4 3.5 10 3.5H14C14.6 3.5 15 3.9 15 4.5V6.5" stroke="currentColor" stroke-width="1.75"/>
-          </svg>
-          <span>ลบล่าสุด (ถังขยะ)</span>
+          <svg class="ico" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+          <span>ถังขยะกู้คืนข้อมูล</span>
           <span id="badge-trash-count" class="nav-badge">0</span>
         </a>
-        <a class="nav-item" data-tab="logins">
-          <svg class="ico" width="18" height="18" viewBox="0 0 24 24" fill="none">
-            <path d="M12 2.5L4.5 5.8V11.5C4.5 16.5 7.7 20.8 12 22C16.3 20.8 19.5 16.5 19.5 11.5V5.8L12 2.5Z" fill="currentColor" fill-opacity="0.14" stroke="currentColor" stroke-width="1.75" stroke-linejoin="round"/>
-            <path d="M9 12L11 14L15 10" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-          <span>ประวัติเข้าระบบแอดมิน</span>
-        </a>
         <a class="nav-item" data-tab="supabase">
-          <svg class="ico" width="18" height="18" viewBox="0 0 24 24" fill="none">
-            <ellipse cx="12" cy="5.5" rx="8" ry="3" fill="currentColor" fill-opacity="0.16" stroke="currentColor" stroke-width="1.75"/>
-            <path d="M4 5.5V12C4 13.66 7.58 15 12 15C16.42 15 20 13.66 20 12V5.5" stroke="currentColor" stroke-width="1.75"/>
-            <path d="M4 12V18.5C4 20.16 7.58 21.5 12 21.5C16.42 21.5 20 20.16 20 18.5V12" stroke="currentColor" stroke-width="1.75"/>
-          </svg>
-          <span>ฐานข้อมูล Supabase</span>
-          <span class="nav-badge" style="background: rgba(16, 185, 129, 0.16); color: #34d399; border-color: rgba(16, 185, 129, 0.35);">LIVE</span>
+          <svg class="ico" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5V19A9 3 0 0 0 21 19V5"/><path d="M3 12A9 3 0 0 0 21 12"/></svg>
+          <span>ฐานข้อมูลระบบ (DB)</span>
         </a>
         <a class="nav-item" data-tab="settings">
-          <svg class="ico" width="18" height="18" viewBox="0 0 24 24" fill="none">
-            <rect x="3" y="4" width="18" height="16" rx="2" fill="currentColor" fill-opacity="0.12" stroke="currentColor" stroke-width="1.75"/>
-            <path d="M7 9H17M7 13H13M7 17H11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-          </svg>
-          <span>ตั้งค่า & สำรองข้อมูล</span>
+          <svg class="ico" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          <span>ตั้งค่าและสำรองข้อมูล</span>
         </a>
       </nav>
 
-      <!-- Cloud Telemetry Banner -->
-      <div class="sidebar-telemetry-banner">
-        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 2px;">
-          <span class="status-dot pulse" style="background: var(--accent);"></span>
-          <span class="telemetry-title">Cloud Telemetry Live</span>
-        </div>
-        <div class="telemetry-desc">
-          เชื่อมโยงข้อมูลกับเว็บหลักแบบเรียลไทม์ 100%
-        </div>
-      </div>
-
       <div class="sidebar-footer">
         <span id="sidebar-admin-name" style="display: none;">Admin</span>
-        <button id="btn-logout" class="btn btn-secondary btn-sm" style="width: 100%; justify-content: center; gap: 8px; color: #fca5a5; border-color: rgba(239, 68, 68, 0.25); background: rgba(239, 68, 68, 0.08); padding: 8px 12px;" title="ออกจากระบบ Admin">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
-          <span style="font-size: 12px; font-weight: 600;">ออกจากระบบ Admin</span>
+        <a href="../" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm" style="flex: 1; justify-content: center; font-size: 12px;" title="เปิดหน้าเว็บไซต์หลักสำหรับประชาชน">
+          <span>เปิดหน้าเว็บหลัก</span>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        </a>
+        <button id="btn-logout" class="btn btn-secondary btn-sm sidebar-logout-btn" title="ออกจากระบบผู้ดูแล">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
+          <span>ออก</span>
         </button>
       </div>
     </aside>
@@ -299,319 +250,259 @@
             <svg class="ico" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
           </button>
           <div class="header-title-group">
-            <h1 id="header-view-title">ภาพรวมระบบและการเฝ้าระวังอุทกภัย</h1>
-            <p>ระบบเชื่อมต่อข้อมูลตรงกับเว็บหลัก (Supabase Real-time Telemetry)</p>
+            <h1 id="header-view-title">ภาพรวมศูนย์ปฏิบัติการและเฝ้าระวังอุทกภัย</h1>
+            <p>ศูนย์บริหารจัดการข้อมูลอุทกภัย 6 อำเภอ จังหวัดสมุทรปราการ</p>
           </div>
         </div>
         <div class="header-actions">
-          <div class="header-date-pill" id="header-sync-status-pill">
-            <span class="status-dot pulse" style="background: var(--accent);"></span>
-            <span id="header-sync-status-text">สดเรียลไทม์ (Live Telemetry)</span>
+          <div class="header-date-pill" id="header-sync-status-pill" title="สถานะการซิงค์ฐานข้อมูล">
+            <span class="status-dot" style="background: var(--success);"></span>
+            <span id="header-sync-status-text">เชื่อมต่อปกติ</span>
+            <span class="header-ping-sep">·</span>
+            <span id="overview-sp-latency" class="cell-mono" style="font-size: 11px;">28ms</span>
           </div>
-          <button id="btn-header-notifications" class="header-notify-btn" title="การแจ้งเตือนรายงานและข้อเสนอแนะ">
-            <svg class="ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+          <button id="btn-header-notifications" class="header-notify-btn" title="รายการรอดำเนินการ">
+            <svg class="ico" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
             <span id="header-notify-badge" class="header-notify-pill" style="display: none;">0</span>
           </button>
-          <button id="btn-global-refresh" class="btn btn-secondary btn-sm global-refresh-btn" title="รีเฟรชข้อมูลสดทันที (ซิงค์โทรมาตร Supabase)">
+          <button id="btn-global-refresh" class="btn btn-secondary btn-sm global-refresh-btn" title="ซิงก์ข้อมูลล่าสุดจากฐานข้อมูล">
             <span class="refresh-icon-wrap" id="refresh-icon-slot">
-              <svg class="ico refresh-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
+              <svg class="ico refresh-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
             </span>
-            <span id="refresh-label-text">รีเฟรชข้อมูล</span>
+            <span id="refresh-label-text">ซิงก์ข้อมูล</span>
           </button>
-          <button id="btn-theme-toggle" class="icon-btn" title="สลับธีม">
-            <svg class="ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+          <button id="btn-theme-toggle" class="icon-btn" title="สลับโหมดสี">
+            <svg class="ico" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
           </button>
         </div>
       </header>
 
       <div class="app-content">
 
-        <!-- ================= VIEW 1: OVERVIEW ================= -->
+        <!-- ================= VIEW 1: EXECUTIVE OVERVIEW ================= -->
         <section id="view-overview" class="view-section">
           
-          <!-- Supabase Live Cloud Status Banner -->
-          <div class="card" style="margin-bottom: 20px; padding: 14px 18px; background: var(--bg-surface); border: 1px solid rgba(16, 185, 129, 0.35); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
-            <div style="display: flex; align-items: center; gap: 12px;">
-              <div style="width: 38px; height: 38px; border-radius: 8px; background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.35); display: flex; align-items: center; justify-content: center; color: #10b981; flex-shrink: 0;">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                  <ellipse cx="12" cy="5.5" rx="8" ry="3" fill="currentColor" fill-opacity="0.16" stroke="currentColor" stroke-width="1.8"/>
-                  <path d="M4 5.5V12C4 13.66 7.58 15 12 15C16.42 15 20 13.66 20 12V5.5" stroke="currentColor" stroke-width="1.8"/>
-                  <path d="M4 12V18.5C4 20.16 7.58 21.5 12 21.5C16.42 21.5 20 20.16 20 18.5V12" stroke="currentColor" stroke-width="1.8"/>
-                </svg>
-              </div>
-              <div>
-                <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                  <strong style="font-size: 14px; color: var(--text-main);">ฐานข้อมูล Supabase Cloud (Live Telemetry & Sync)</strong>
-                  <span class="badge badge-ok" id="overview-sp-status"><span class="status-dot pulse"></span> เชื่อมต่อสด 100% · <span id="overview-sp-latency">32ms</span></span>
-                  <span class="badge badge-neutral" style="font-size: 10.5px;">PostgreSQL 15 • TLS 1.3</span>
-                </div>
-                <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">
-                  เซิร์ฟเวอร์คลาวด์: <code style="color: var(--accent); font-family: var(--font-mono);">uyszfmcumloxwuojmndy.supabase.co</code> · ซิงค์ 6 ตารางสมบูรณ์
-                </div>
-              </div>
-            </div>
-            <button type="button" class="btn btn-secondary btn-sm" onclick="switchTab('supabase')" style="gap: 6px; border-color: rgba(16, 185, 129, 0.35); background: rgba(16, 185, 129, 0.08); color: #34d399;">
-              <span>จัดการฐานข้อมูล Supabase</span>
-            </button>
-          </div>
-
-          <!-- 1. Top KPI Row -->
+          <!-- 1. Executive KPI Row (5 High-Density Metrics) -->
           <div class="grid-5">
-            <!-- KPI 1: Active Now -->
-            <div class="card kpi-card">
+            <!-- KPI 1: Pending Reports Queue -->
+            <div class="card kpi-card kpi-clickable" onclick="switchTab('reports'); document.querySelector('.reports-filter-btn[data-filter=pending]')?.click();">
               <div class="kpi-top">
-                <span class="kpi-label">กำลังออนไลน์สด (Active Now)</span>
-                <div class="kpi-icon-wrap" style="color: var(--success); background: var(--success-subtle); border-color: var(--success-border);">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                    <circle cx="12" cy="12" r="9" fill="currentColor" fill-opacity="0.15" stroke="currentColor" stroke-width="1.8"/>
-                    <circle cx="12" cy="12" r="3" fill="currentColor"/>
-                  </svg>
-                </div>
+                <span class="kpi-label">รายการรอตรวจสอบ (Pending)</span>
+                <span class="kpi-status-tag warning">คิวงานด่วน</span>
               </div>
-              <div id="stat-active-now" class="kpi-val">0</div>
-              <div class="kpi-foot">
-                <span class="kpi-badge positive"><span class="status-dot pulse"></span> สดเรียลไทม์</span>
-                <span style="color: var(--text-muted);">ในรอบ 60 วินาที</span>
-              </div>
-            </div>
-
-            <!-- KPI 2: Today Visitors -->
-            <div class="card kpi-card">
-              <div class="kpi-top">
-                <span class="kpi-label">ยอดเข้าชมวันนี้ (Visitors Today)</span>
-                <div class="kpi-icon-wrap" style="color: var(--accent); background: var(--accent-subtle); border-color: rgba(56, 189, 248, 0.3);">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                    <circle cx="12" cy="8" r="4" fill="currentColor" fill-opacity="0.16" stroke="currentColor" stroke-width="1.8"/>
-                    <path d="M5 20C5 16.6863 8.13401 14 12 14C15.866 14 19 16.6863 19 20" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-                  </svg>
-                </div>
-              </div>
-              <div id="stat-visitors-today" class="kpi-val">0</div>
-              <div class="kpi-foot">
-                <span class="kpi-badge positive">อุปกรณ์จริง</span>
-                <span style="color: var(--text-muted);">สูงสุดพร้อมกัน <strong id="stat-peak-online" class="kpi-peak-highlight">0</strong> คน</span>
-              </div>
-            </div>
-
-            <!-- KPI 3: Flood Reports Queue -->
-            <div class="card kpi-card">
-              <div class="kpi-top">
-                <span class="kpi-label">รายงานน้ำท่วม (รอ / อนุมัติแล้ว)</span>
-                <div class="kpi-icon-wrap" style="color: var(--warning); background: var(--warning-subtle); border-color: var(--warning-border);">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                    <rect x="5" y="2.5" width="7" height="19" rx="1.5" fill="currentColor" fill-opacity="0.16" stroke="currentColor" stroke-width="1.8"/>
-                    <path d="M5 7H9M5 11H8M5 15H9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-                    <path d="M14 15C15.2 14 16.8 14 18 15C19.2 16 20.5 16 21.5 15" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-                  </svg>
-                </div>
-              </div>
-              <div style="display: flex; align-items: baseline; gap: 8px;">
+              <div class="kpi-main-row">
                 <span id="stat-pending-reports" class="kpi-val" style="color: var(--warning);">0</span>
-                <span style="font-size: 20px; color: var(--text-muted); font-weight: 300;">/</span>
+                <span class="kpi-unit">รายการ</span>
+              </div>
+              <div class="kpi-foot">
+                <span>คลิกเพื่อตรวจสอบและอนุมัติขึ้นแผนที่</span>
+              </div>
+            </div>
+
+            <!-- KPI 2: Approved Active Incidents -->
+            <div class="card kpi-card kpi-clickable" onclick="switchTab('reports'); document.querySelector('.reports-filter-btn[data-filter=approved]')?.click();">
+              <div class="kpi-top">
+                <span class="kpi-label">จุดน้ำท่วมยืนยันแล้ว (Approved)</span>
+                <span class="kpi-status-tag positive">แสดงผลสด</span>
+              </div>
+              <div class="kpi-main-row">
                 <span id="stat-approved-reports" class="kpi-val" style="color: var(--success);">0</span>
+                <span class="kpi-unit">จุดพิกัด</span>
               </div>
               <div class="kpi-foot">
-                <span class="kpi-badge warning">รอตรวจสอบ</span>
-                <span class="kpi-badge positive">ขึ้นแผนที่หลักแล้ว</span>
+                <span>อนุมัติแสดงผลบนแผนที่สาธารณะแล้ว</span>
               </div>
             </div>
 
-            <!-- KPI 4: Peak Hotspot Zone -->
-            <div class="card kpi-card">
+            <!-- KPI 3: Resolved / Dry Points -->
+            <div class="card kpi-card kpi-clickable" onclick="switchTab('reports'); document.querySelector('.reports-filter-btn[data-filter=dry]')?.click();">
               <div class="kpi-top">
-                <span class="kpi-label">อำเภอกิจกรรมสูงสุด (GPS จริง)</span>
-                <div class="kpi-icon-wrap" style="color: var(--accent); background: var(--accent-subtle); border-color: rgba(56, 189, 248, 0.3);">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                    <path d="M12 21C16.5 16.2 19 12.8 19 9.5C19 5.63 15.87 2.5 12 2.5C8.13 2.5 5 5.63 5 9.5C5 12.8 7.5 16.2 12 21Z" fill="currentColor" fill-opacity="0.15" stroke="currentColor" stroke-width="1.8"/>
-                    <circle cx="12" cy="9.5" r="2.5" fill="currentColor"/>
-                  </svg>
-                </div>
+                <span class="kpi-label">ระบายแห้งแล้ว (Resolved)</span>
+                <span class="kpi-status-tag neutral">คลี่คลาย</span>
               </div>
-              <div id="stat-top-district" class="kpi-val" style="font-size: 20px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">—</div>
+              <div class="kpi-main-row">
+                <span id="stat-auto-cleared-dry" class="kpi-val">0</span>
+                <span class="kpi-unit">จุด</span>
+              </div>
               <div class="kpi-foot">
-                <span class="kpi-badge positive">GPS สด</span>
-                <span id="stat-top-district-sub" style="color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">อิงจากพิกัดเปิดจริงในพื้นที่</span>
+                <span id="stat-auto-cleared-sub">นำออกจากแผนที่สาธารณะแล้ว</span>
               </div>
             </div>
 
-            <!-- KPI 5: Auto-Cleared Dry Reports -->
-            <div class="card kpi-card" onclick="switchTab('reports'); document.querySelector('.reports-filter-btn[data-filter=dry]')?.click();" style="cursor: pointer;" title="คลิกเพื่อดูจุดที่ระบบนำออกอัตโนมัติแล้ว">
+            <!-- KPI 4: Live Traffic / Online Citizens -->
+            <div class="card kpi-card kpi-clickable" onclick="switchTab('visitors');">
               <div class="kpi-top">
-                <span class="kpi-label">น้ำแห้งแล้ว (นำออกอัตโนมัติ)</span>
-                <div class="kpi-icon-wrap" style="color: #0284c7; background: rgba(2, 132, 199, 0.12); border-color: rgba(2, 132, 199, 0.3);">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                    <path d="M12 3L17.5 8.5C20.5 11.5 20.5 16.5 17.5 19.5C14.5 22.5 9.5 22.5 6.5 19.5C3.5 16.5 3.5 11.5 6.5 8.5L12 3Z" fill="currentColor" fill-opacity="0.15" stroke="currentColor" stroke-width="1.8"/>
-                    <path d="M9 14L11 16L15 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-                  </svg>
-                </div>
+                <span class="kpi-label">ผู้ใช้งานขณะนี้ / วันนี้</span>
+                <span class="kpi-status-tag info">เรียลไทม์</span>
               </div>
-              <div id="stat-auto-cleared-dry" class="kpi-val" style="color: #38bdf8;">0</div>
+              <div class="kpi-main-row">
+                <span id="stat-active-now" class="kpi-val">0</span>
+                <span style="font-size: 18px; color: var(--text-muted); font-weight: 400;">/</span>
+                <span id="stat-visitors-today" class="kpi-val" style="font-size: 20px; color: var(--text-secondary);">0</span>
+              </div>
               <div class="kpi-foot">
-                <span class="kpi-badge positive">ตรวจวัดอัตโนมัติ</span>
-                <span id="stat-auto-cleared-sub" style="color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">นำออกจากแผนที่แล้ว</span>
+                <span>ออนไลน์พร้อมกันสูงสุด <strong id="stat-peak-online">0</strong> คน</span>
+              </div>
+            </div>
+
+            <!-- KPI 5: Active Hotspot District -->
+            <div class="card kpi-card kpi-clickable" onclick="switchTab('stations');">
+              <div class="kpi-top">
+                <span class="kpi-label">พื้นที่เฝ้าระวังสูงสุด</span>
+                <span class="kpi-status-tag neutral">6 อำเภอ</span>
+              </div>
+              <div id="stat-top-district" class="kpi-val" style="font-size: 19px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 4px;">—</div>
+              <div class="kpi-foot">
+                <span id="stat-top-district-sub" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">อ้างอิงจากจุดตรวจวัดและพิกัดจริง</span>
               </div>
             </div>
           </div>
 
-          <!-- 2. Visual Intelligence Grid -->
-          <div class="grid-3">
-            
-            <!-- Widget 1: Severity Breakdown Donut Chart -->
-            <div class="card">
-              <div class="card-header">
-                <div>
-                  <h3 class="card-title">สัดส่วนระดับความรุนแรง</h3>
-                  <p class="card-subtitle">จำแนกวิกฤตน้ำท่วมและภัยพิบัติ 3 เกณฑ์</p>
-                </div>
-              </div>
-              <div class="donut-chart-container">
-                <canvas id="chart-severity-breakdown"></canvas>
-                <div class="donut-center-stat">
-                  <div id="stat-total-reports-center" class="donut-center-num">0</div>
-                  <div class="donut-center-label">จุดรายงาน</div>
-                </div>
-              </div>
-              <div class="donut-legend-list">
-                <div class="donut-legend-item">
-                  <div class="donut-legend-item-left">
-                    <span class="donut-legend-color" style="background: #ef4444;"></span>
-                    <span>วิกฤต (>50cm)</span>
-                  </div>
-                  <span id="legend-count-l3" class="donut-legend-val">0 จุด</span>
-                </div>
-                <div class="donut-legend-item">
-                  <div class="donut-legend-item-left">
-                    <span class="donut-legend-color" style="background: #f59e0b;"></span>
-                    <span>ปานกลาง (21-50cm)</span>
-                  </div>
-                  <span id="legend-count-l2" class="donut-legend-val">0 จุด</span>
-                </div>
-                <div class="donut-legend-item">
-                  <div class="donut-legend-item-left">
-                    <span class="donut-legend-color" style="background: #10b981;"></span>
-                    <span>ปกติ (5-20cm)</span>
-                  </div>
-                  <span id="legend-count-l1" class="donut-legend-val">0 จุด</span>
-                </div>
-                <div class="donut-legend-item">
-                  <div class="donut-legend-item-left">
-                    <span class="donut-legend-color" style="background: #06b6d4;"></span>
-                    <span>ลูกเห็บ (Hail)</span>
-                  </div>
-                  <span id="legend-count-hail" class="donut-legend-val">0 จุด</span>
-                </div>
-              </div>
+          <!-- Operational Status Bar -->
+          <div class="ops-summary-strip">
+            <div class="ops-summary-left">
+              <span class="ops-summary-tag">สรุปสถานการณ์ปฏิบัติการ</span>
+              <span id="ai-insight-text" class="ops-summary-text">กำลังประมวลผลข้อมูลสถานีตรวจวัดและรายงานภาคสนาม...</span>
             </div>
-
-            <!-- Widget 2: Monitored Districts Telemetry -->
-            <div class="card">
-              <div class="card-header">
-                <div>
-                  <h3 class="card-title">พื้นที่เฝ้าระวัง 6 อำเภอ</h3>
-                  <p class="card-subtitle">สถานะจุดน้ำท่วมและระดับน้ำ จ.สมุทรปราการ</p>
-                </div>
-                <button class="btn btn-secondary btn-sm" onclick="switchTab('reports')">ดูแผนที่</button>
-              </div>
-              <div id="district-status-list" class="district-stat-list">
-                <!-- Dynamically injected via dashboard.js -->
-                <div style="text-align: center; color: var(--text-muted); padding: 24px;">กำลังโหลดสถานะรายอำเภอ...</div>
-              </div>
-            </div>
-
-            <!-- Widget 3: Hourly Telemetry Bar Pillars -->
-            <div class="card">
-              <div class="card-header">
-                <div>
-                  <h3 class="card-title">ความถี่รายชั่วโมง (Hourly Telemetry)</h3>
-                  <p class="card-subtitle">การกระจายตัวของผู้เข้าใช้งานตลอดวัน</p>
-                </div>
-              </div>
-              <div style="position: relative; height: 260px; width: 100%;">
-                <canvas id="chart-hourly-pillars"></canvas>
-              </div>
-            </div>
-
-          </div>
-
-          <!-- 3. Dual-Curve Glowing Spline Area Chart (Matching Screen 1 & 3 in Mockup) -->
-          <div class="card" style="margin-bottom: 22px;">
-            <div class="card-header">
-              <div>
-                <h3 class="card-title">แนวโน้มผู้เข้าใช้งานและการแจ้งเตือน (Telemetry Dynamics)</h3>
-                <p class="card-subtitle">สถิติผู้เข้าชมสด (Visitors) และการส่งรายงานน้ำท่วม (Reports) ตลอด 24 ชั่วโมง</p>
-              </div>
-              <div class="tabs-pill" style="padding: 2px;">
-                <span class="tab-pill-btn active" style="cursor: default;">24 ชั่วโมง</span>
-              </div>
-            </div>
-            <div style="position: relative; height: 260px; width: 100%;">
-              <canvas id="chart-visitor-trend"></canvas>
-            </div>
-          </div>
-
-          <!-- 4. Hero Hydrological Situation Summary -->
-          <div class="ai-insights-hero">
-            <div class="ai-insights-content">
-              <div class="ai-insights-header">
-                <span class="ai-badge">รายงานสรุปสถานการณ์อุทกวิทยา</span>
-                <span class="ai-insights-sub">การประเมินสถานการณ์จากโทรมาตรและพิกัดภาคสนาม</span>
-              </div>
-              <h3 class="ai-insights-title">
-                สรุปสภาวะน้ำท่วมและข้อสั่งการแนะนำประจำศูนย์บัญชาการ
-              </h3>
-              <p id="ai-insight-text" class="ai-insights-text">
-                ระบบกำลังประมวลผลข้อมูลโทรมาตรแบบเรียลไทม์ร่วมกับพิกัด GPS ประชาชน...
-              </p>
-            </div>
-            <div class="ai-insights-action">
-              <button id="btn-goto-reports-map" class="btn btn-primary" onclick="switchTab('reports')">
-                <span>ตรวจสอบจุดรายงานบนแผนที่</span>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17l9.2-9.2M17 17V7H7"/></svg>
+            <div class="ops-summary-actions">
+              <button type="button" class="btn btn-secondary btn-sm" onclick="window.__pgOpenCreateReportModal && window.__pgOpenCreateReportModal()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                <span>เพิ่มจุดรายงาน</span>
+              </button>
+              <button type="button" id="btn-goto-reports-map" class="btn btn-primary btn-sm" onclick="switchTab('reports')">
+                <span>เปิดตารางจัดการรายงาน</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
               </button>
             </div>
           </div>
 
-          <!-- 5. Mini Live Session Activity Feed Table -->
-          <div class="card">
+          <!-- 2. Primary Operations Workspace: Action Queue (Left) + 6-District Matrix & Severity (Right) -->
+          <div class="grid-70-30">
+            
+            <!-- Left: Immediate Actionable Reports Queue -->
+            <div class="card" style="display: flex; flex-direction: column;">
+              <div class="card-header" style="flex-wrap: wrap; gap: 10px;">
+                <div>
+                  <h3 class="card-title">
+                    <span>รายการรายงานน้ำท่วมล่าสุดและคิวรอตรวจสอบ (Incident Action Queue)</span>
+                  </h3>
+                  <p class="card-subtitle">สามารถกดอนุมัติ แก้ไขระดับน้ำ หรือลบรายการได้ทันทีจากหน้าศูนย์ปฏิบัติการ</p>
+                </div>
+                <div style="display: flex; gap: 8px;">
+                  <button type="button" class="btn btn-secondary btn-sm" onclick="window.__pgExportReportsCsv && window.__pgExportReportsCsv()">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    <span>ส่งออก CSV</span>
+                  </button>
+                  <button type="button" class="btn btn-secondary btn-sm" onclick="switchTab('reports')">ดูทั้งหมด</button>
+                </div>
+              </div>
+              <div class="table-wrap" style="flex: 1;">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>จุดเกิดเหตุ / อำเภอ</th>
+                      <th>ระดับน้ำ</th>
+                      <th>พิกัด GPS</th>
+                      <th>เวลาแจ้ง</th>
+                      <th>สถานะ</th>
+                      <th style="text-align: right;">การจัดการด่วน</th>
+                    </tr>
+                  </thead>
+                  <tbody id="overview-priority-reports-tbody">
+                    <tr><td colspan="6" class="text-center text-muted" style="padding: 28px;">กำลังโหลดรายการรายงาน...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Right: 6-District Status Matrix & Severity Breakdown -->
+            <div style="display: flex; flex-direction: column; gap: 18px;">
+              <!-- Widget: Monitored 6 Districts -->
+              <div class="card">
+                <div class="card-header">
+                  <div>
+                    <h3 class="card-title">สถานะรายอำเภอ (6 อำเภอ)</h3>
+                    <p class="card-subtitle">คลิกที่อำเภอเพื่อกรองจุดรายงาน</p>
+                  </div>
+                  <button class="btn btn-secondary btn-sm" onclick="switchTab('stations')">สถานีหลัก</button>
+                </div>
+                <div id="district-status-list" class="district-stat-list">
+                  <div style="text-align: center; color: var(--text-muted); padding: 20px;">กำลังโหลดข้อมูล...</div>
+                </div>
+              </div>
+
+              <!-- Widget: Severity Breakdown -->
+              <div class="card">
+                <div class="card-header">
+                  <div>
+                    <h3 class="card-title">สัดส่วนความรุนแรง (3 ระดับ)</h3>
+                    <p class="card-subtitle">จำแนกตามเกณฑ์ความลึกน้ำท่วมขัง</p>
+                  </div>
+                </div>
+                <div class="donut-chart-container" style="height: 165px;">
+                  <canvas id="chart-severity-breakdown"></canvas>
+                  <div class="donut-center-stat">
+                    <div id="stat-total-reports-center" class="donut-center-num">0</div>
+                    <div class="donut-center-label">จุดรายงาน</div>
+                  </div>
+                </div>
+                <div class="donut-legend-list">
+                  <div class="donut-legend-item">
+                    <div class="donut-legend-item-left">
+                      <span class="donut-legend-color" style="background: #dc2626;"></span>
+                      <span>ระดับ 3 วิกฤต (&gt;50 ซม.)</span>
+                    </div>
+                    <span id="legend-count-l3" class="donut-legend-val">0 จุด</span>
+                  </div>
+                  <div class="donut-legend-item">
+                    <div class="donut-legend-item-left">
+                      <span class="donut-legend-color" style="background: #d97706;"></span>
+                      <span>ระดับ 2 ปานกลาง (21-50 ซม.)</span>
+                    </div>
+                    <span id="legend-count-l2" class="donut-legend-val">0 จุด</span>
+                  </div>
+                  <div class="donut-legend-item">
+                    <div class="donut-legend-item-left">
+                      <span class="donut-legend-color" style="background: #059669;"></span>
+                      <span>ระดับ 1 รอระบาย (5-20 ซม.)</span>
+                    </div>
+                    <span id="legend-count-l1" class="donut-legend-val">0 จุด</span>
+                  </div>
+                  <div class="donut-legend-item" style="display: none;">
+                    <span id="legend-count-hail">0</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- 3. 24-Hour Telemetry & Incident Trend Chart -->
+          <div class="card" style="margin-bottom: 20px;">
             <div class="card-header">
               <div>
-                <h3 class="card-title">เซสชันผู้เข้าใช้งานสดล่าสุด (Live Active Telemetry)</h3>
-                <p class="card-subtitle">ประชาชนที่กำลังเปิดดูเว็บ ณ ขณะนี้ · รีเฟรชอัตโนมัติทุก 60 วินาที</p>
+                <h3 class="card-title">แนวโน้มการเข้าใช้งานและการแจ้งเหตุรอบ 24 ชั่วโมง (24-Hour Operations Trend)</h3>
+                <p class="card-subtitle">เปรียบเทียบปริมาณผู้เข้าใช้งานระบบ (Visitors) และจำนวนการแจ้งรายงานน้ำท่วม (Incident Reports) รายชั่วโมง</p>
               </div>
-              <button class="btn btn-secondary btn-sm" onclick="switchTab('visitors')">ดูทั้งหมด</button>
+              <span class="badge badge-neutral">เวลาประเทศไทย (UTC+7)</span>
             </div>
-            <div class="table-wrap">
-              <table class="data-table">
-                <thead>
-                  <tr>
-                    <th>รหัสเซสชัน</th>
-                    <th>ไอพี</th>
-                    <th>อุปกรณ์ / รุ่นมือถือ</th>
-                    <th>อำเภอ (GPS จริง)</th>
-                    <th>หน้าที่เปิดอยู่</th>
-                    <th>ระยะเวลาบนเว็บ</th>
-                  </tr>
-                </thead>
-                <tbody id="overview-live-feed-tbody">
-                  <tr><td colspan="6" class="text-center text-muted" style="padding: 24px;">กำลังโหลดข้อมูล...</td></tr>
-                </tbody>
-              </table>
+            <div style="position: relative; height: 230px; width: 100%;">
+              <canvas id="chart-visitor-trend"></canvas>
             </div>
           </div>
 
-          <!-- 6. Auto-Cleared Dry Flood Points Table -->
-          <div class="card" style="margin-top: 22px;">
+          <!-- 4. Auto-Cleared / Resolved Flood Points Summary -->
+          <div class="card">
             <div class="card-header" style="flex-wrap: wrap; gap: 10px;">
               <div>
-                <h3 class="card-title" style="display: flex; align-items: center; gap: 8px;">
-                  <span>จุดที่ระบบนำออกอัตโนมัติแล้วเพราะน้ำแห้ง (Auto-Cleared Dry Points)</span>
+                <h3 class="card-title">
+                  <span>บันทึกจุดที่ระบายน้ำแห้งแล้ว / นำออกจากแผนที่อัตโนมัติ (Resolved & Dry Log)</span>
                   <span id="badge-overview-auto-cleared" class="badge badge-ok" style="font-size: 11px;">0 จุด</span>
                 </h3>
-                <p class="card-subtitle">จุดที่ระดับน้ำลดเหลือ 0 ซม. ระบบตรวจวัดอัตโนมัตินำออกจากแผนที่สาธารณะแล้ว</p>
+                <p class="card-subtitle">รายการจุดที่ระดับน้ำลดลงเหลือ 0 ซม. และถูกนำออกจากแผนที่สาธารณะ สามารถกดกู้คืนได้หากยังมีน้ำขัง</p>
               </div>
-              <button class="btn btn-secondary btn-sm" onclick="switchTab('reports'); document.querySelector('.reports-filter-btn[data-filter=dry]')?.click();" style="gap: 6px;">
-                <span>ดูทั้งหมดในหน้ารายงาน</span>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+              <button class="btn btn-secondary btn-sm" onclick="switchTab('reports'); document.querySelector('.reports-filter-btn[data-filter=dry]')?.click();">
+                <span>จัดการในหน้ารายงาน</span>
               </button>
             </div>
             <div class="table-wrap">
@@ -621,15 +512,15 @@
                     <th>ชื่อจุดที่นำออก</th>
                     <th>อำเภอ / ตำบล</th>
                     <th>ระดับน้ำเดิม</th>
-                    <th>เหตุผลที่นำออกอัตโนมัติ</th>
-                    <th>จุดตรวจวัดที่เชื่อมโยง</th>
-                    <th>เวลาที่นำออก</th>
+                    <th>สาเหตุ / หมายเหตุการปิดจุด</th>
+                    <th>แหล่งข้อมูลอ้างอิง</th>
+                    <th>เวลาที่บันทึก</th>
                     <th>สถานะ</th>
                     <th>จัดการ</th>
                   </tr>
                 </thead>
                 <tbody id="overview-auto-cleared-tbody">
-                  <tr><td colspan="8" class="text-center text-muted" style="padding: 24px;">กำลังโหลดข้อมูลจุดที่นำออก...</td></tr>
+                  <tr><td colspan="8" class="text-center text-muted" style="padding: 24px;">กำลังโหลดข้อมูล...</td></tr>
                 </tbody>
               </table>
             </div>
@@ -637,99 +528,121 @@
 
         </section>
 
-        <!-- ================= VIEW 2: FLOOD REPORTS ================= -->
+        <!-- ================= VIEW 2: FLOOD REPORTS MANAGEMENT ================= -->
         <section id="view-reports" class="view-section" style="display: none;">
-          <!-- Interactive Admin Map Card -->
-          <div class="card map-card" style="padding: 0; overflow: hidden; margin-bottom: 20px; border: 1px solid var(--border-subtle);">
+          
+          <!-- Interactive GIS Command Map Card -->
+          <div class="card map-card" style="padding: 0; overflow: hidden; margin-bottom: 18px; border: 1px solid var(--border-subtle);">
             <div class="map-card-header" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 18px; border-bottom: 1px solid var(--border-subtle); background: var(--bg-surface-elevated); flex-wrap: wrap; gap: 10px;">
               <div style="display: flex; align-items: center; gap: 10px;">
-                <span class="status-dot pulse" style="background: var(--accent);"></span>
+                <span class="status-dot" style="background: var(--primary);"></span>
                 <div>
-                  <h3 style="font-size: 14.5px; font-weight: 700; margin: 0; display: flex; align-items: center; gap: 8px;">
-                    แผนที่พิกัดจุดแจ้งเหตุน้ำท่วมและลูกเห็บ
+                  <h3 style="font-size: 14px; font-weight: 700; margin: 0; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                    <span>แผนที่สารสนเทศภูมิศาสตร์แสดงจุดรายงานและสถานีตรวจวัด (GIS Command Map)</span>
                     <span id="reports-map-counter" class="badge badge-primary" style="font-size: 11px;">0 จุดพิกัด</span>
                     <span id="reports-map-filter-info" class="badge badge-neutral" style="font-size: 10.5px;">แสดงทั้งหมด</span>
                   </h3>
-                  <p style="font-size: 11.5px; color: var(--text-muted); margin: 2px 0 0 0;">คลิกที่หมุดบนแผนที่เพื่อดูพิกัดและรายละเอียด หรือคลิก "ดูพิกัดบนแผนที่" ในตารางด้านล่าง</p>
                 </div>
               </div>
 
               <!-- Map Toolbar Controls -->
               <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
                 <div class="tabs-pill" style="padding: 2px;">
-                  <button type="button" id="btn-map-layer-dark" class="tab-pill-btn active" title="แผนที่โหมดมืด (Dark Command Mode)">มืด</button>
-                  <button type="button" id="btn-map-layer-street" class="tab-pill-btn" title="แผนที่ถนน (Roadmap คมชัด ภาษาไทย)">ถนน</button>
-                  <button type="button" id="btn-map-layer-satellite" class="tab-pill-btn" title="ภาพถ่ายดาวเทียม (Satellite Hybrid)">ดาวเทียม</button>
+                  <button type="button" id="btn-map-layer-dark" class="tab-pill-btn active" title="แผนที่โหมดมืด">มืด</button>
+                  <button type="button" id="btn-map-layer-street" class="tab-pill-btn" title="แผนที่ถนน">ถนน</button>
+                  <button type="button" id="btn-map-layer-satellite" class="tab-pill-btn" title="ภาพถ่ายดาวเทียม">ดาวเทียม</button>
                 </div>
-                <button type="button" id="btn-map-fit-bounds" class="btn btn-secondary btn-sm" title="ปรับมุมมองแผนที่ให้พอดีกับจุดรายงานทั้งหมด">
+                <button type="button" id="btn-map-fit-bounds" class="btn btn-secondary btn-sm" title="ปรับมุมมองแผนที่ให้พอดีกับทุกหมุด">
                   <svg class="ico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="m4.93 4.93 4.24 4.24"/><path d="m14.83 9.17 4.24-4.24"/><path d="m14.83 14.83 4.24 4.24"/><path d="m9.17 14.83-4.24 4.24"/></svg>
-                  <span>รวมจุด</span>
+                  <span>จัดกึ่งกลาง</span>
                 </button>
-                <button type="button" id="btn-map-toggle-view" class="btn btn-secondary btn-sm" title="ย่อ/ขยายความสูงของแผนที่">
-                  <svg class="ico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
-                  <span id="btn-map-toggle-text">ขยาย</span>
+                <button type="button" id="btn-map-toggle-view" class="btn btn-secondary btn-sm" title="ย่อ/ขยายความสูงแผนที่">
+                  <span id="btn-map-toggle-text">ขยายแผนที่</span>
                 </button>
               </div>
             </div>
 
             <!-- Leaflet Map Container -->
-            <div id="reports-map" class="map-dark-tiles" style="height: 420px; width: 100%; position: relative; z-index: 1; transition: height 0.3s ease;">
-              <!-- Map Real-time Coordinate HUD -->
+            <div id="reports-map" class="map-dark-tiles" style="height: 380px; width: 100%; position: relative; z-index: 1; transition: height 0.25s ease;">
               <div id="map-coord-hud" class="map-coord-hud">
-                <span class="map-coord-text" id="map-coord-text">พิกัดเคอร์เซอร์: 13.5991, 100.5968</span>
-                <button type="button" id="btn-copy-map-hud" class="btn-copy-mini" title="คัดลอกพิกัดตำแหน่งนี้">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
-                  <span>คัดลอกพิกัด</span>
+                <span class="map-coord-text" id="map-coord-text">LAT/LNG: 13.59910, 100.59680</span>
+                <button type="button" id="btn-copy-map-hud" class="btn-copy-mini" title="คัดลอกพิกัด">
+                  <span>คัดลอก</span>
                 </button>
               </div>
 
-              <!-- Map Legend Overlay -->
               <div class="map-legend-overlay">
-                <div class="map-legend-item"><span class="legend-color legend-l1"></span> ปกติ (5-20cm)</div>
-                <div class="map-legend-item"><span class="legend-color legend-l2"></span> ปานกลาง (21-50cm)</div>
-                <div class="map-legend-item"><span class="legend-color legend-l3"></span> วิกฤต (>50cm)</div>
-                <div class="map-legend-item"><span class="legend-color legend-hail"></span> ลูกเห็บ</div>
-                <div class="map-legend-item"><span class="legend-color legend-pending"></span> รออนุมัติ (กะพริบ)</div>
+                <div class="map-legend-item"><span class="legend-color legend-l1"></span> ระดับ 1 (5-20 ซม.)</div>
+                <div class="map-legend-item"><span class="legend-color legend-l2"></span> ระดับ 2 (21-50 ซม.)</div>
+                <div class="map-legend-item"><span class="legend-color legend-l3"></span> ระดับ 3 (&gt;50 ซม.)</div>
+                <div class="map-legend-item"><span class="legend-color legend-pending"></span> รอตรวจสอบ</div>
               </div>
             </div>
           </div>
 
+          <!-- Reports Data Table Card -->
           <div class="card">
-            <!-- Filter & Search Controls -->
+            <!-- Top Table Action Header -->
+            <div class="card-header" style="flex-wrap: wrap; gap: 12px; padding-bottom: 14px; border-bottom: 1px solid var(--border-subtle); margin-bottom: 16px;">
+              <div>
+                <h3 class="card-title">ตารางบริหารจัดการรายงานน้ำท่วมขัง (Incident Reports)</h3>
+                <p class="card-subtitle">ตรวจสอบ อนุมัติ แก้ไขความลึกน้ำ (ซม.) หรือลบข้อมูลทดสอบออกจากระบบ</p>
+              </div>
+              <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                <button type="button" id="btn-export-reports-csv" class="btn btn-secondary btn-sm">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                  <span>ส่งออก CSV (Excel)</span>
+                </button>
+                <button type="button" id="btn-create-admin-report" class="btn btn-primary btn-sm">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                  <span>เพิ่มจุดรายงานโดยเจ้าหน้าที่</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Multi-Filter & Search Controls -->
             <div class="filter-bar">
               <div class="filter-group">
                 <div class="tabs-pill">
                   <button class="tab-pill-btn reports-filter-btn active" data-filter="all">ทั้งหมด</button>
                   <button class="tab-pill-btn reports-filter-btn" data-filter="pending">รออนุมัติ</button>
                   <button class="tab-pill-btn reports-filter-btn" data-filter="approved">อนุมัติแล้ว</button>
-                  <button class="tab-pill-btn reports-filter-btn" data-filter="dry" title="จุดรายงานที่น้ำแห้งแล้ว (นำออกอัตโนมัติ/ปิดจุด)">น้ำแห้งแล้ว (นำออกแล้ว)</button>
+                  <button class="tab-pill-btn reports-filter-btn" data-filter="dry">น้ำแห้งแล้ว</button>
                 </div>
 
-                <select id="reports-district-select" class="select-ctrl">
-                  <option value="all">ทุกอำเภอ</option>
-                  <option value="เมืองสมุทรปราการ">เมืองสมุทรปราการ</option>
-                  <option value="บางพลี">บางพลี</option>
-                  <option value="พระประแดง">พระประแดง</option>
-                  <option value="บางบ่อ">บางบ่อ</option>
-                  <option value="พระสมุทรเจดีย์">พระสมุทรเจดีย์</option>
-                  <option value="บางเสาธง">บางเสาธง</option>
+                <select id="reports-district-select" class="select-ctrl" aria-label="กรองตามอำเภอ">
+                  <option value="all">ทุกอำเภอ (6 อำเภอ)</option>
+                  <option value="เมืองสมุทรปราการ">อ.เมืองสมุทรปราการ</option>
+                  <option value="บางพลี">อ.บางพลี</option>
+                  <option value="พระประแดง">อ.พระประแดง</option>
+                  <option value="บางบ่อ">อ.บางบ่อ</option>
+                  <option value="พระสมุทรเจดีย์">อ.พระสมุทรเจดีย์</option>
+                  <option value="บางเสาธง">อ.บางเสาธง</option>
+                </select>
+
+                <select id="reports-level-select" class="select-ctrl" aria-label="กรองตามระดับความรุนแรง">
+                  <option value="all">ทุกระดับความรุนแรง</option>
+                  <option value="3">ระดับ 3 : วิกฤต (&gt;50 ซม.)</option>
+                  <option value="2">ระดับ 2 : ปานกลาง (21-50 ซม.)</option>
+                  <option value="1">ระดับ 1 : รอระบาย (5-20 ซม.)</option>
                 </select>
               </div>
 
               <div class="filter-group">
                 <div class="search-input-wrap">
-                  <svg class="ico search-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-                  <input type="text" id="reports-search-input" class="search-input" placeholder="ค้นหาจุดน้ำท่วม, ตำบล...">
+                  <svg class="ico search-ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                  <input type="text" id="reports-search-input" class="search-input" placeholder="ค้นหาชื่อถนน, จุดสังเกต, ตำบล...">
                 </div>
               </div>
             </div>
 
-            <!-- Batch Action Bar (เมื่อเลือกหลายรายการ) -->
-            <div id="reports-batch-actions" style="display: none; align-items: center; justify-content: space-between; background: var(--bg-subtle); padding: 10px 16px; border-radius: var(--radius-md); margin-bottom: 14px; border: 1px solid var(--border-subtle);">
+            <!-- Batch Action Bar -->
+            <div id="reports-batch-actions" class="batch-action-bar" style="display: none;">
               <span id="reports-selected-count" style="font-weight: 600; font-size: 13px;">เลือกแล้ว 0 รายการ</span>
-              <div style="display: flex; gap: 8px;">
-                <button id="btn-reports-approve-selected" class="btn btn-success btn-sm">อนุมัติที่เลือก</button>
-                <button id="btn-reports-delete-selected" class="btn btn-danger btn-sm">ลบที่เลือก (ย้ายไปถังขยะ)</button>
+              <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <button id="btn-reports-approve-selected" class="btn btn-success btn-sm">อนุมัติรายการที่เลือก</button>
+                <button id="btn-reports-resolve-selected" class="btn btn-secondary btn-sm">ทำเครื่องหมายน้ำแห้ง</button>
+                <button id="btn-reports-delete-selected" class="btn btn-danger btn-sm">ลบรายการที่เลือก</button>
               </div>
             </div>
 
@@ -738,24 +651,89 @@
               <table class="data-table">
                 <thead>
                   <tr>
-                    <th style="width: 38px;"><input type="checkbox" id="th-reports-select-all" title="เลือกทั้งหมด"></th>
-                    <th>ระดับน้ำ (3 เกณฑ์)</th>
-                    <th>จุดสังเกต / อำเภอ</th>
-                    <th>พิกัดบนแผนที่ & ข้อมูลผู้แจ้ง</th>
-                    <th>เวลาที่แจ้ง</th>
+                    <th style="width: 36px;"><input type="checkbox" id="th-reports-select-all" title="เลือกทั้งหมด"></th>
+                    <th>ระดับความรุนแรง / ความลึก</th>
+                    <th>สถานที่เกิดเหตุ / อำเภอ</th>
+                    <th>พิกัดภูมิศาสตร์ &amp; แหล่งที่มา</th>
+                    <th>วันเวลาที่บันทึก</th>
                     <th>สถานะ</th>
-                    <th>รูปภาพ</th>
-                    <th>จัดการ & แผนที่</th>
+                    <th>หลักฐานภาพ</th>
+                    <th style="text-align: right;">การจัดการ</th>
                   </tr>
                 </thead>
                 <tbody id="reports-tbody">
-                  <tr><td colspan="8" class="text-center text-muted" style="padding: 24px;">กำลังโหลดข้อมูล...</td></tr>
+                  <tr><td colspan="8" class="text-center text-muted" style="padding: 28px;">กำลังโหลดข้อมูลรายงาน...</td></tr>
                 </tbody>
               </table>
             </div>
-            <div style="margin-top: 14px; font-size: 12px; color: var(--text-muted); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
-              <span>รายการทั้งหมด: <strong id="reports-count-total">0</strong> รายการ</span>
-              <span>เกณฑ์ระดับน้ำ: ปกติ (5-20cm) · ปานกลาง (21-50cm) · วิกฤต (>50cm) · ลูกเห็บ | คลิก "ดูพิกัดบนแผนที่" เพื่อโฟกัสหมุดทันที</span>
+            <div class="table-footer-meta">
+              <span>แสดงผลทั้งหมด: <strong id="reports-count-total">0</strong> รายการ</span>
+              <span>เกณฑ์มาตรฐาน ปภ.: ระดับ 1 (5-20 ซม.) · ระดับ 2 (21-50 ซม.) · ระดับ 3 (&gt;50 ซม.)</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= VIEW 2.5: OFFICIAL 30 MONITORING STATIONS ================= -->
+        <section id="view-stations" class="view-section" style="display: none;">
+          <div class="card">
+            <div class="card-header" style="flex-wrap: wrap; gap: 12px; padding-bottom: 14px; border-bottom: 1px solid var(--border-subtle); margin-bottom: 16px;">
+              <div>
+                <h3 class="card-title">ศูนย์ควบคุมสถานีตรวจวัดหลัก 30 จุดเสี่ยง (Official Monitoring Stations Control)</h3>
+                <p class="card-subtitle">บริหารจัดการระดับน้ำและสถานะของจุดเฝ้าระวังหลักประจำจังหวัดสมุทรปราการ (ซิงค์กับหน้าเว็บหลักทันที)</p>
+              </div>
+              <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <button type="button" id="btn-reset-all-stations" class="btn btn-secondary btn-sm">
+                  <span>รีเซ็ตตามค่าโทรมาตรเริ่มต้น</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="filter-bar">
+              <div class="filter-group">
+                <select id="stations-district-select" class="select-ctrl" aria-label="กรองสถานีตามอำเภอ">
+                  <option value="all">ทุกอำเภอ (6 อำเภอ)</option>
+                  <option value="เมืองสมุทรปราการ">อ.เมืองสมุทรปราการ</option>
+                  <option value="บางพลี">อ.บางพลี</option>
+                  <option value="พระประแดง">อ.พระประแดง</option>
+                  <option value="บางบ่อ">อ.บางบ่อ</option>
+                  <option value="พระสมุทรเจดีย์">อ.พระสมุทรเจดีย์</option>
+                  <option value="บางเสาธง">อ.บางเสาธง</option>
+                </select>
+                <select id="stations-status-select" class="select-ctrl" aria-label="กรองตามสถานะสถานี">
+                  <option value="all">ทุกสถานะสถานี</option>
+                  <option value="active">กำลังเฝ้าระวังน้ำขัง (&gt;0 ซม.)</option>
+                  <option value="dry">ผิวจราจรแห้งปกติ (0 ซม.)</option>
+                </select>
+              </div>
+              <div class="filter-group">
+                <div class="search-input-wrap">
+                  <svg class="ico search-ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                  <input type="text" id="stations-search-input" class="search-input" placeholder="ค้นหาชื่อสถานี, ถนน, ตำบล...">
+                </div>
+              </div>
+            </div>
+
+            <div class="table-wrap">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>ชื่อจุดตรวจวัดหลัก / สายทาง</th>
+                    <th>อำเภอ / ตำบล</th>
+                    <th>พิกัด GPS</th>
+                    <th>ความลึกปัจจุบัน</th>
+                    <th>เกณฑ์ความรุนแรง</th>
+                    <th>สภาพจราจร</th>
+                    <th style="text-align: right;">ปรับค่าระดับน้ำ / จัดการ</th>
+                  </tr>
+                </thead>
+                <tbody id="stations-tbody">
+                  <tr><td colspan="7" class="text-center text-muted" style="padding: 28px;">กำลังโหลดข้อมูลสถานีตรวจวัดหลัก...</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="table-footer-meta">
+              <span>จำนวนสถานีที่แสดง: <strong id="stations-count-total">0</strong> สถานี</span>
+              <span>การปรับค่าระดับน้ำจะอัปเดตหมุดบนแผนที่หลักทันที</span>
             </div>
           </div>
         </section>
@@ -765,11 +743,11 @@
           <div class="card">
             <div class="card-header">
               <div>
-                <h3 class="card-title">รายการเซสชันผู้เข้าใช้งานสด (Live Session Activity Feed)</h3>
-                <p class="card-subtitle">แสดงสถานะประชาชนผู้ใช้งานจริง ณ ขณะนี้ · รีเฟรชอัตโนมัติทุก 60 วินาที</p>
+                <h3 class="card-title">รายการเซสชันผู้เข้าใช้งานสด (Real-time Citizen Traffic)</h3>
+                <p class="card-subtitle">แสดงข้อมูลอุปกรณ์และพื้นที่ของผู้เข้าใช้งานจริง ณ ปัจจุบัน (คัดกรองเครื่องทำงานแอดมินออกอัตโนมัติ)</p>
               </div>
-              <div>
-                <span class="badge badge-ok"><span class="status-dot pulse"></span> ออนไลน์ <span id="visitors-active-count">0</span> คน</span>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span class="badge badge-ok"><span class="status-dot"></span> ออนไลน์สด <span id="visitors-active-count">0</span> เซสชัน</span>
               </div>
             </div>
 
@@ -778,59 +756,90 @@
                 <thead>
                   <tr>
                     <th>รหัสเซสชัน</th>
-                    <th>ไอพี</th>
-                    <th>อุปกรณ์ / รุ่นมือถือ</th>
-                    <th>อำเภอที่เปิดดู (GPS จริง)</th>
-                    <th>หน้าที่เปิดอยู่</th>
-                    <th>ระยะเวลาบนเว็บ</th>
+                    <th>หมายเลข IP</th>
+                    <th>อุปกรณ์ที่ใช้งาน</th>
+                    <th>พื้นที่อำเภอ (GPS)</th>
+                    <th>ส่วนงานที่เปิดดู</th>
+                    <th>ระยะเวลาใช้งาน</th>
                     <th>สถานะ</th>
                   </tr>
                 </thead>
                 <tbody id="visitors-tbody">
-                  <tr><td colspan="7" class="text-center text-muted" style="padding: 30px;">กำลังโหลดเซสชันสด...</td></tr>
+                  <tr><td colspan="7" class="text-center text-muted" style="padding: 30px;">กำลังโหลดข้อมูลเซสชัน...</td></tr>
                 </tbody>
               </table>
             </div>
           </div>
         </section>
 
-        <!-- ================= VIEW 4: CITIZEN FEEDBACK ================= -->
+        <!-- ================= VIEW 4: CITIZEN FEEDBACK (SERVICE DESK) ================= -->
         <section id="view-feedback" class="view-section" style="display: none;">
           <div class="card">
+            <div class="card-header" style="flex-wrap: wrap; gap: 12px; padding-bottom: 14px; border-bottom: 1px solid var(--border-subtle); margin-bottom: 16px;">
+              <div>
+                <h3 class="card-title">ระบบจัดการข้อเสนอแนะและแจ้งปัญหาจากประชาชน (Citizen Service Desk)</h3>
+                <p class="card-subtitle">ตรวจสอบข้อคิดเห็น บันทึกผลการดำเนินการของเจ้าหน้าที่ หรือลบข้อความทดสอบ</p>
+              </div>
+              <div style="display: flex; gap: 8px;">
+                <button type="button" id="btn-export-feedback-csv" class="btn btn-secondary btn-sm">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                  <span>ส่งออก CSV (Excel)</span>
+                </button>
+              </div>
+            </div>
+
             <div class="filter-bar">
               <div class="filter-group">
+                <select id="feedback-status-select" class="select-ctrl" aria-label="กรองตามสถานะการตรวจสอบ">
+                  <option value="all">ทุกสถานะ</option>
+                  <option value="unread">รอตรวจสอบ (ใหม่)</option>
+                  <option value="read">รับทราบแล้ว</option>
+                </select>
+                <select id="feedback-category-select" class="select-ctrl" aria-label="กรองตามหมวดหมู่">
+                  <option value="all">ทุกหมวดหมู่</option>
+                  <option value="suggestion">ข้อเสนอแนะระบบ</option>
+                  <option value="issue">แจ้งปัญหาการใช้งาน</option>
+                  <option value="compliment">ประเมินความพึงพอใจ</option>
+                  <option value="other">เรื่องอื่นๆ</option>
+                </select>
+              </div>
+              <div class="filter-group">
                 <div class="search-input-wrap">
-                  <svg class="ico search-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-                  <input type="text" id="feedback-search-input" class="search-input" placeholder="ค้นหาข้อความ, ชื่อผู้ส่ง...">
+                  <svg class="ico search-ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                  <input type="text" id="feedback-search-input" class="search-input" placeholder="ค้นหาข้อความ, ชื่อผู้แจ้ง, เบอร์ติดต่อ...">
                 </div>
               </div>
             </div>
 
-            <div id="feedback-batch-actions" style="display: none; align-items: center; justify-content: space-between; background: var(--bg-subtle); padding: 10px 16px; border-radius: var(--radius-md); margin-bottom: 14px; border: 1px solid var(--border-subtle);">
+            <div id="feedback-batch-actions" class="batch-action-bar" style="display: none;">
               <span id="feedback-selected-count" style="font-weight: 600; font-size: 13px;">เลือกแล้ว 0 รายการ</span>
-              <button id="btn-feedback-delete-selected" class="btn btn-danger btn-sm">ลบที่เลือก (ย้ายไปถังขยะ)</button>
+              <div style="display: flex; gap: 8px;">
+                <button id="btn-feedback-read-selected" class="btn btn-secondary btn-sm">ทำเครื่องหมายว่าอ่านแล้ว</button>
+                <button id="btn-feedback-delete-selected" class="btn btn-danger btn-sm">ลบรายการที่เลือก</button>
+              </div>
             </div>
 
             <div class="table-wrap">
               <table class="data-table">
                 <thead>
                   <tr>
-                    <th style="width: 38px;"><input type="checkbox" id="th-feedback-select-all" title="เลือกทั้งหมด"></th>
-                    <th>ข้อความข้อเสนอแนะ</th>
-                    <th>ผู้ส่ง</th>
-                    <th>ช่องทางติดต่อ</th>
-                    <th>ดาว</th>
-                    <th>วันที่เวลา</th>
-                    <th>จัดการ</th>
+                    <th style="width: 36px;"><input type="checkbox" id="th-feedback-select-all" title="เลือกทั้งหมด"></th>
+                    <th>หมวดหมู่ / ข้อความ</th>
+                    <th>ชื่อผู้แจ้ง</th>
+                    <th>ข้อมูลติดต่อ</th>
+                    <th>คะแนนประเมิน</th>
+                    <th>สถานะ</th>
+                    <th>วันเวลาที่ส่ง</th>
+                    <th style="text-align: right;">การจัดการ</th>
                   </tr>
                 </thead>
                 <tbody id="feedback-tbody">
-                  <tr><td colspan="7" class="text-center text-muted" style="padding: 24px;">กำลังโหลดข้อเสนอแนะ...</td></tr>
+                  <tr><td colspan="8" class="text-center text-muted" style="padding: 28px;">กำลังโหลดข้อเสนอแนะ...</td></tr>
                 </tbody>
               </table>
             </div>
-            <div style="margin-top: 14px; font-size: 12px; color: var(--text-muted);">
-              ข้อเสนอแนะทั้งหมด: <strong id="feedback-count-total">0</strong> รายการ
+            <div class="table-footer-meta">
+              <span>ข้อเสนอแนะทั้งหมด: <strong id="feedback-count-total">0</strong> รายการ</span>
             </div>
           </div>
         </section>
@@ -842,24 +851,22 @@
             <div class="card">
               <div class="card-header">
                 <div>
-                  <h3 class="card-title">สร้างการประกาศหน้าเว็บ</h3>
-                  <p class="card-subtitle">ส่งข้อความแจ้งเตือนด่วนไปยังหน้าเว็บประชาชนแบบเรียลไทม์</p>
+                  <h3 class="card-title">ออกประกาศแจ้งเตือนภัยบนหน้าเว็บไซต์หลัก</h3>
+                  <p class="card-subtitle">เผยแพร่ข้อความแจ้งเตือนสถานการณ์น้ำท่วมหรือน้ำทะเลหนุนไปยังประชาชนแบบเรียลไทม์</p>
                 </div>
               </div>
               <form id="form-create-announcement">
                 <div class="login-field">
                   <label class="login-label" for="announcement-message">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-                    <span>ข้อความที่ต้องการประกาศ</span>
+                    <span>ข้อความประกาศทางการ</span>
                     <span class="label-hint" id="ann-char-count">0 / 300 ตัวอักษร</span>
                   </label>
 
-                  <!-- Quick Preset Templates -->
                   <div class="quick-templates-wrap">
-                    <button type="button" class="quick-template-chip" data-tpl="แจ้งเตือนน้ำทะเลหนุนสูงในพื้นที่ริมแม่น้ำเจ้าพระยาและชายฝั่ง ขอให้เฝ้าระวัง">น้ำทะเลหนุนสูง</button>
-                    <button type="button" class="quick-template-chip" data-tpl="ประกาศเตือนฝนตกหนักถึงหนักมาก อาจมีน้ำท่วมขังรอการระบาย">ฝนตกหนัก/พายุ</button>
-                    <button type="button" class="quick-template-chip" data-tpl="แจ้งเตือนน้ำท่วมขังเส้นทางสัญจร โปรดหลีกเลี่ยงเส้นทางหรือขับขี่ด้วยความระมัดระวัง">ปิดเส้นทางน้ำท่วม</button>
-                    <button type="button" class="quick-template-chip" data-tpl="ปิดปรับปรุงระบบประมวลผลข้อมูลชั่วคราว ข้อมูลสภาพอากาศยังเปิดให้บริการปกติ">ปรับปรุงระบบ</button>
+                    <button type="button" class="quick-template-chip" data-tpl="แจ้งเตือนน้ำทะเลหนุนสูงในพื้นที่ริมแม่น้ำเจ้าพระยาและชายฝั่ง ขอให้ประชาชนเฝ้าระวังระดับน้ำ">น้ำทะเลหนุนสูง</button>
+                    <button type="button" class="quick-template-chip" data-tpl="ประกาศเตือนฝนตกหนักในพื้นที่จังหวัดสมุทรปราการ อาจมีน้ำท่วมขังผิวจราจรรอการระบาย">ฝนตกหนัก/เฝ้าระวัง</button>
+                    <button type="button" class="quick-template-chip" data-tpl="แจ้งเตือนน้ำท่วมขังผิวจราจรสายหลัก โปรดหลีกเลี่ยงเส้นทางหรือใช้ความระมัดระวังในการสัญจร">แจ้งเลี่ยงเส้นทาง</button>
+                    <button type="button" class="quick-template-chip" data-tpl="สถานการณ์ระดับน้ำในพื้นที่กลับเข้าสู่ภาวะปกติ การจราจรสามารถสัญจรได้ทุกช่องทาง">สถานการณ์คลี่คลาย</button>
                   </div>
 
                   <textarea 
@@ -867,36 +874,34 @@
                     rows="4" 
                     class="login-input form-textarea" 
                     maxlength="300"
-                    placeholder="เช่น แจ้งเตือนน้ำทะเลหนุนสูง หรือ ประกาศอัปเดตระบบ..." 
+                    placeholder="ระบุข้อความประกาศอย่างเป็นทางการ..." 
                     required
                   ></textarea>
                 </div>
 
                 <div class="login-field">
                   <label class="login-label">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-                    <span>ขอบเขตพื้นที่ที่ต้องการประกาศ</span>
+                    <span>ขอบเขตพื้นที่เป้าหมายในการแสดงประกาศ</span>
                   </label>
                   
                   <div class="segmented-target-grid">
                     <label class="segmented-target-card">
                       <input type="radio" name="ann-target" value="all" checked>
                       <div>
-                        <div class="segmented-target-title">ทุกอำเภอ</div>
-                        <div class="segmented-target-desc">ครอบคลุมทั้ง 6 อำเภอ</div>
+                        <div class="segmented-target-title">ทั้งจังหวัดสมุทรปราการ</div>
+                        <div class="segmented-target-desc">แสดงผลครอบคลุมทั้ง 6 อำเภอ</div>
                       </div>
                     </label>
                     <label class="segmented-target-card">
                       <input type="radio" name="ann-target" value="specific">
                       <div>
                         <div class="segmented-target-title">ระบุเฉพาะอำเภอ</div>
-                        <div class="segmented-target-desc">เฉพาะอำเภอที่เลือก</div>
+                        <div class="segmented-target-desc">เฉพาะผู้ใช้งานในเขตอำเภอที่เลือก</div>
                       </div>
                     </label>
                   </div>
                 </div>
 
-                <!-- Specific District Checkboxes -->
                 <div id="ann-district-checkboxes" class="district-checkboxes-grid" style="display: none;">
                   <label class="district-checkbox-label"><input type="checkbox" name="ann-district" value="เมืองสมุทรปราการ"> อ.เมืองสมุทรปราการ</label>
                   <label class="district-checkbox-label"><input type="checkbox" name="ann-district" value="บางพลี"> อ.บางพลี</label>
@@ -906,13 +911,8 @@
                   <label class="district-checkbox-label"><input type="checkbox" name="ann-district" value="บางเสาธง"> อ.บางเสาธง</label>
                 </div>
 
-                <div style="background: var(--bg-subtle); border-left: 3px solid var(--primary); padding: 10px 14px; font-size: 12px; color: var(--text-muted); margin-bottom: 18px; border-radius: 6px;">
-                  <strong>เงื่อนไขการแสดงผล:</strong> ประกาศจะแสดงเตือนตามพิกัดพื้นที่ของผู้ใช้งานที่เปิด GPS
-                </div>
-
-                <button type="submit" class="btn btn-primary" style="width: 100%; padding: 13px 20px; font-size: 14px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px;">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-                  <span>เผยแพร่การประกาศหน้าเว็บ</span>
+                <button type="submit" class="btn btn-primary" style="width: 100%; padding: 11px 18px; font-size: 13.5px; margin-top: 8px;">
+                  <span>เผยแพร่ประกาศสู่หน้าเว็บไซต์หลัก</span>
                 </button>
               </form>
             </div>
@@ -920,7 +920,7 @@
             <!-- Active Announcements List -->
             <div>
               <div class="card-header" style="margin-bottom: 12px;">
-                <h3 class="card-title">รายการประกาศที่กำลังเผยแพร่</h3>
+                <h3 class="card-title">รายการประกาศที่บันทึกในระบบ</h3>
               </div>
               <div id="announcements-list">
                 <div class="card" style="text-align: center; padding: 36px; color: var(--text-muted);">
@@ -931,26 +931,26 @@
           </div>
         </section>
 
-        <!-- ================= VIEW 6: TRASH (ลบล่าสุด) ================= -->
+        <!-- ================= VIEW 6: TRASH & RECOVERY ================= -->
         <section id="view-trash" class="view-section" style="display: none;">
           <div class="card">
             <div class="card-header">
               <div>
-                <h3 class="card-title">ลบล่าสุด (ถังขยะส่วนกลาง)</h3>
-                <p class="card-subtitle">รายการที่ถูกลบออกจากแจ้งน้ำท่วมและข้อเสนอแนะ สามารถกู้คืนกลับสู่ระบบเดิม หรือกดลบแบบถาวรได้</p>
+                <h3 class="card-title">ถังขยะและกู้คืนข้อมูล (Trash &amp; Data Recovery)</h3>
+                <p class="card-subtitle">รายการรายงานและข้อเสนอแนะที่ถูกลบ สามารถกู้คืนกลับสู่ตารางหลัก หรือยืนยันลบถาวร</p>
               </div>
               <div class="tabs-pill">
                 <button class="tab-pill-btn trash-filter-btn active" data-filter="all">ทั้งหมด</button>
-                <button class="tab-pill-btn trash-filter-btn" data-filter="report">เฉพาะน้ำท่วม</button>
-                <button class="tab-pill-btn trash-filter-btn" data-filter="feedback">เฉพาะข้อเสนอแนะ</button>
+                <button class="tab-pill-btn trash-filter-btn" data-filter="report">รายงานน้ำท่วม</button>
+                <button class="tab-pill-btn trash-filter-btn" data-filter="feedback">ข้อเสนอแนะ</button>
               </div>
             </div>
 
-            <div id="trash-batch-actions" style="display: none; align-items: center; justify-content: space-between; background: var(--bg-subtle); padding: 10px 16px; border-radius: var(--radius-md); margin-bottom: 14px; border: 1px solid var(--border-subtle);">
+            <div id="trash-batch-actions" class="batch-action-bar" style="display: none;">
               <span id="trash-selected-count" style="font-weight: 600; font-size: 13px;">เลือกแล้ว 0 รายการ</span>
               <div style="display: flex; gap: 8px;">
-                <button id="btn-trash-restore-selected" class="btn btn-secondary btn-sm">กู้คืนที่เลือก</button>
-                <button id="btn-trash-purge-selected" class="btn btn-danger btn-sm">ลบถาวรที่เลือก</button>
+                <button id="btn-trash-restore-selected" class="btn btn-secondary btn-sm">กู้คืนรายการที่เลือก</button>
+                <button id="btn-trash-purge-selected" class="btn btn-danger btn-sm">ลบถาวรรายการที่เลือก</button>
               </div>
             </div>
 
@@ -958,32 +958,32 @@
               <table class="data-table">
                 <thead>
                   <tr>
-                    <th style="width: 38px;"><input type="checkbox" id="th-trash-select-all" title="เลือกทั้งหมด"></th>
-                    <th>ประเภท</th>
-                    <th>รายละเอียดข้อความ / จุดน้ำท่วม</th>
-                    <th>ผู้แจ้ง / พื้นที่</th>
-                    <th>เวลาที่ลบ</th>
-                    <th>จัดการ</th>
+                    <th style="width: 36px;"><input type="checkbox" id="th-trash-select-all" title="เลือกทั้งหมด"></th>
+                    <th>ประเภทข้อมูล</th>
+                    <th>รายละเอียดจุดรายงาน / ข้อความ</th>
+                    <th>อำเภอ / ผู้แจ้ง</th>
+                    <th>วันเวลาที่ลบ</th>
+                    <th style="text-align: right;">การจัดการ</th>
                   </tr>
                 </thead>
                 <tbody id="trash-tbody">
-                  <tr><td colspan="6" class="text-center text-muted" style="padding: 24px;">ถังขยะว่างเปล่า</td></tr>
+                  <tr><td colspan="6" class="text-center text-muted" style="padding: 28px;">ถังขยะว่างเปล่า</td></tr>
                 </tbody>
               </table>
             </div>
-            <div style="margin-top: 14px; font-size: 12px; color: var(--text-muted);">
-              รายการในถังขยะ: <strong id="trash-count-total">0</strong> รายการ
+            <div class="table-footer-meta">
+              <span>รายการในถังขยะ: <strong id="trash-count-total">0</strong> รายการ</span>
             </div>
           </div>
         </section>
 
-        <!-- ================= VIEW 7: ADMIN LOGINS ================= -->
+        <!-- ================= VIEW 7: ADMIN LOGINS AUDIT ================= -->
         <section id="view-logins" class="view-section" style="display: none;">
           <div class="card">
             <div class="card-header">
               <div>
-                <h3 class="card-title">ประวัติเข้าระบบแอดมิน (Admin Login Sessions)</h3>
-                <p class="card-subtitle">บันทึกและแสดงสถานะการเข้าใช้งานระบบแอดมินแบบเรียลไทม์ (ออนไลน์ / ออฟไลน์)</p>
+                <h3 class="card-title">บันทึกประวัติการเข้าใช้งานระบบของผู้ดูแล (Admin Audit Log)</h3>
+                <p class="card-subtitle">ตรวจสอบสถานะเซสชัน ประวัติการเข้าสู่ระบบ และอุปกรณ์ของเจ้าหน้าที่แอดมิน</p>
               </div>
             </div>
 
@@ -991,15 +991,15 @@
               <table class="data-table">
                 <thead>
                   <tr>
-                    <th>ชื่อผู้ใช้</th>
-                    <th>แอดมินคนที่...</th>
-                    <th>อุปกรณ์</th>
-                    <th>สถานะ</th>
-                    <th>เวลาที่เข้าสู่ระบบ</th>
+                    <th>บัญชีผู้ดูแลระบบ</th>
+                    <th>สิทธิ์การเข้าถึง</th>
+                    <th>อุปกรณ์และเครือข่าย</th>
+                    <th>สถานะเซสชัน</th>
+                    <th>วันเวลาที่เข้าสู่ระบบ</th>
                   </tr>
                 </thead>
                 <tbody id="logins-tbody">
-                  <tr><td colspan="5" class="text-center text-muted" style="padding: 24px;">กำลังโหลดประวัติ...</td></tr>
+                  <tr><td colspan="5" class="text-center text-muted" style="padding: 28px;">กำลังโหลดประวัติ...</td></tr>
                 </tbody>
               </table>
             </div>
@@ -1009,331 +1009,159 @@
         <!-- ================= VIEW 8: SUPABASE CLOUD MANAGEMENT ================= -->
         <section id="view-supabase" class="view-section" style="display: none;">
           
-          <!-- Egress Quota Alert Banner (Hidden unless HTTP 402 occurs) -->
-          <div id="sp-quota-banner" class="card" style="display: none; margin-bottom: 20px; background: var(--danger-subtle); border: 1px solid var(--danger-border);">
-            <div style="display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 14px;">
-              <div style="display: flex; gap: 12px; align-items: flex-start; max-width: 850px;">
-                <div>
-                  <h3 style="font-size: 15px; font-weight: 700; color: #f87171; margin: 0 0 4px 0;">
-                    แจ้งเตือน: โควตาการเชื่อมต่อ Supabase เต็มชั่วคราว (HTTP 402)
-                  </h3>
-                  <p style="font-size: 12.5px; color: var(--text-secondary); line-height: 1.5; margin: 0;">
-                    ระบบกำลังทำงานต่อเนื่องด้วยฐานข้อมูลสำรองอัตโนมัติ หรือสามารถระบุ Project URL และ Anon Key ใหม่ด้านล่างเพื่อสลับฐานข้อมูลทันที
-                  </p>
-                </div>
-              </div>
-            </div>
+          <div id="sp-quota-banner" class="card" style="display: none; margin-bottom: 18px; background: var(--danger-subtle); border: 1px solid var(--danger-border);">
+            <h3 style="font-size: 14px; font-weight: 700; color: var(--danger-text); margin: 0 0 4px 0;">
+              แจ้งเตือน: โควตาการเชื่อมต่อ Supabase เต็มชั่วคราว (HTTP 402)
+            </h3>
+            <p style="font-size: 12px; color: var(--text-secondary); margin: 0;">
+              ระบบกำลังทำงานต่อเนื่องด้วยฐานข้อมูลสำรองอัตโนมัติ หรือสามารถระบุ Project URL และ Anon Key ใหม่ด้านล่าง
+            </p>
           </div>
 
-          <!-- Supabase Project Connection & Switcher Card -->
-          <div id="sp-project-switcher-card" class="card" style="margin-bottom: 20px; border: 1px solid var(--border-subtle); background: var(--bg-surface-elevated);">
-            <div class="card-header" style="flex-wrap: wrap; gap: 10px;">
+          <div class="card" style="margin-bottom: 18px;">
+            <div class="card-header" style="flex-wrap: wrap; gap: 12px;">
               <div>
-                <h3 class="card-title" style="display: flex; align-items: center; gap: 8px;">
-                  <span>ตั้งค่าและสลับโปรเจกต์ Supabase (Project Switcher)</span>
-                  <span id="sp-active-project-badge" class="badge badge-primary">Default Project</span>
-                </h3>
-                <p class="card-subtitle">ระบุ Project URL และ Publishable Anon Key เพื่อเชื่อมต่อฐานข้อมูล Supabase</p>
+                <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                  <h3 class="card-title">สถานะการเชื่อมต่อฐานข้อมูลคลาวด์ (Supabase PostgreSQL)</h3>
+                  <span class="badge badge-ok" id="sp-header-status-badge"><span class="status-dot"></span> เชื่อมต่อสมบูรณ์</span>
+                  <span class="badge badge-neutral cell-mono" id="sp-header-ping-badge">Latency: <strong id="sp-ping-ms">—</strong> ms</span>
+                </div>
+                <p class="card-subtitle">ตรวจสอบข้อมูลสดในตารางฐานข้อมูลและตั้งค่าการเชื่อมต่อ</p>
               </div>
-              <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                <button type="button" id="btn-copy-supabase-sql" class="btn btn-secondary btn-sm" style="gap: 6px;">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
-                  <span>คัดลอก SQL Setup (สร้างตาราง)</span>
-                </button>
-                <button type="button" id="btn-reset-supabase-config" class="btn btn-ghost btn-sm" style="gap: 6px; color: var(--text-muted);">
-                  <span>รีเซ็ตเป็นค่าเริ่มต้น</span>
-                </button>
+              <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                <button type="button" id="btn-sp-test-ping" class="btn btn-secondary btn-sm">ทดสอบ Ping</button>
+                <button type="button" id="btn-sp-refresh-all" class="btn btn-primary btn-sm">ซิงก์ข้อมูลทุกตาราง</button>
               </div>
             </div>
 
-            <form id="form-supabase-config" style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 16px; align-items: flex-end; margin-top: 8px;">
-              <div class="form-group" style="margin: 0;">
-                <label class="form-label" for="input-sp-custom-url" style="font-size: 12px; font-weight: 600;">Supabase Project URL</label>
-                <input type="url" id="input-sp-custom-url" class="form-input" placeholder="https://xxxxxxxxxxxx.supabase.co" required style="font-family: var(--font-mono); font-size: 13px;">
-              </div>
-              <div class="form-group" style="margin: 0;">
-                <label class="form-label" for="input-sp-custom-key" style="font-size: 12px; font-weight: 600;">Supabase Anon / Publishable Key</label>
-                <input type="text" id="input-sp-custom-key" class="form-input" placeholder="sb_publishable_... หรือ eyJhbGciOi..." required style="font-family: var(--font-mono); font-size: 13px;">
-              </div>
-              <div>
-                <button type="submit" id="btn-save-supabase-config" class="btn btn-primary" style="white-space: nowrap; gap: 6px; height: 42px;">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-                  <span>บันทึกและเชื่อมต่อทันที</span>
-                </button>
-              </div>
-            </form>
-
-            <div style="margin-top: 12px; padding: 8px 12px; background: var(--bg-subtle); border-radius: 6px; border: 1px solid var(--border-subtle); font-size: 12px; color: var(--text-muted); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
-              <span>เซิร์ฟเวอร์ปัจจุบันเชื่อมโยงข้อมูลทั้ง 6 ตารางระหว่างหน้าเว็บหลักและระบบแอดมิน</span>
-              <span id="sp-current-config-source" style="font-family: var(--font-mono); font-size: 11px; color: #94a3b8;">Active: DEFAULT</span>
-            </div>
-          </div>
-
-          <!-- Top Control Card -->
-          <div class="card" style="margin-bottom: 20px; background: var(--bg-surface); border-color: rgba(16, 185, 129, 0.35);">
-            <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;">
-              <div style="display: flex; align-items: center; gap: 14px;">
-                <div style="width: 44px; height: 44px; border-radius: 8px; background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.35); display: flex; align-items: center; justify-content: center; color: #10b981; flex-shrink: 0;">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                    <ellipse cx="12" cy="5.5" rx="8" ry="3" fill="currentColor" fill-opacity="0.16" stroke="currentColor" stroke-width="1.8"/>
-                    <path d="M4 5.5V12C4 13.66 7.58 15 12 15C16.42 15 20 13.66 20 12V5.5" stroke="currentColor" stroke-width="1.8"/>
-                    <path d="M4 12V18.5C4 20.16 7.58 21.5 12 21.5C16.42 21.5 20 20.16 20 18.5V12" stroke="currentColor" stroke-width="1.8"/>
-                  </svg>
+            <!-- 6 Database Tables Summary Grid -->
+            <div class="grid-3" style="gap: 12px; margin-bottom: 0;">
+              <div class="card sp-table-card active" data-table="reports" style="padding: 14px; cursor: pointer;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                  <strong style="font-size: 13.5px; font-family: var(--font-mono);">public.reports</strong>
+                  <strong id="sp-count-reports" style="font-size: 13px; color: var(--primary);">0 แถว</strong>
                 </div>
-                <div>
-                  <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-                    <h2 style="font-size: 18px; font-weight: 700; color: var(--text-main); margin: 0;">ฐานข้อมูล Supabase Cloud (PostgreSQL 15)</h2>
-                    <span class="badge badge-ok" id="sp-header-status-badge"><span class="status-dot pulse"></span> เชื่อมต่อสมบูรณ์ (Active 24/7)</span>
-                    <span class="badge badge-neutral" id="sp-header-ping-badge" style="font-family: var(--font-mono);">Ping: <strong id="sp-ping-ms">—</strong> ms</span>
-                  </div>
-                  <p style="font-size: 12px; color: var(--text-muted); margin-top: 3px;">
-                    ศูนย์กลางเก็บข้อมูลคลาวด์ 6 ตารางหลัก ซิงค์ข้ามอุปกรณ์และเว็บหลักแบบเรียลไทม์ 100%
-                  </p>
-                </div>
-              </div>
-              <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-                <button type="button" id="btn-sp-test-ping" class="btn btn-secondary btn-sm" style="gap: 6px;">
-                  <span>ทดสอบ Ping ทันที</span>
-                </button>
-                <button type="button" id="btn-sp-refresh-all" class="btn btn-primary btn-sm" style="gap: 6px;">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
-                  <span>ดึงข้อมูลสดทุกตาราง</span>
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <!-- 4 Core Supabase KPI Metrics -->
-          <div class="grid-4" style="margin-bottom: 24px;">
-            <!-- KPI 1: Project Health -->
-            <div class="card kpi-card">
-              <div class="kpi-top">
-                <span class="kpi-label">สถานะเซิร์ฟเวอร์คลาวด์</span>
-                <div class="kpi-icon-wrap" style="color: var(--success); background: var(--success-subtle); border-color: var(--success-border);">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
-                </div>
-              </div>
-              <div class="kpi-val" style="font-size: 20px; color: var(--success);">ออนไลน์ 100%</div>
-              <div class="kpi-foot">
-                <span class="kpi-badge positive">REST API v1</span>
-                <span style="color: var(--text-muted); font-size: 11px;">PostgREST Gateway</span>
-              </div>
-            </div>
-
-            <!-- KPI 2: Live Network Latency -->
-            <div class="card kpi-card">
-              <div class="kpi-top">
-                <span class="kpi-label">ความหน่วงเครือข่าย (Live Latency)</span>
-                <div class="kpi-icon-wrap" style="color: var(--accent); background: var(--accent-subtle); border-color: rgba(56, 189, 248, 0.3);">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-                </div>
-              </div>
-              <div id="supaLatencyValue" class="kpi-val" style="font-size: 20px; color: var(--accent); font-family: var(--font-mono);">32 ms</div>
-              <div class="kpi-foot">
-                <span class="kpi-badge positive">TLS 1.3</span>
-                <span style="color: var(--text-muted); font-size: 11px;">วัดความเร็วตอบกลับจริง</span>
-              </div>
-            </div>
-
-            <!-- KPI 3: Storage Quota -->
-            <div class="card kpi-card">
-              <div class="kpi-top">
-                <span class="kpi-label">พื้นที่ใช้งานฐานข้อมูล</span>
-                <div class="kpi-icon-wrap" style="color: var(--accent); background: var(--accent-subtle); border-color: rgba(56, 189, 248, 0.3);">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
-                </div>
-              </div>
-              <div class="kpi-val" style="font-size: 20px; color: var(--text-main);">~2.4 MB <span style="font-size: 13px; color: var(--text-muted); font-weight: 400;">/ 500 MB</span></div>
-              <div class="kpi-foot">
-                <span class="kpi-badge positive">ใช้ไป 0.48%</span>
-                <span style="color: var(--text-muted); font-size: 11px;">6 ตารางหลัก</span>
-              </div>
-            </div>
-
-            <!-- KPI 4: Security & RLS -->
-            <div class="card kpi-card">
-              <div class="kpi-top">
-                <span class="kpi-label">ความปลอดภัย & RLS</span>
-                <div class="kpi-icon-wrap" style="color: var(--warning); background: var(--warning-subtle); border-color: var(--warning-border);">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/></svg>
-                </div>
-              </div>
-              <div class="kpi-val" style="font-size: 20px; color: var(--warning);">RLS Active</div>
-              <div class="kpi-foot">
-                <span class="kpi-badge positive">PBKDF2-SHA256</span>
-                <span style="color: var(--text-muted); font-size: 11px;">Row-Level Security</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- 6 Database Tables Summary Grid -->
-          <div style="margin-bottom: 24px;">
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; flex-wrap: wrap; gap: 8px;">
-              <div>
-                <h3 style="font-size: 16px; font-weight: 700; color: var(--text-main); margin: 0;">ตารางข้อมูลทั้งหมดใน Supabase (6 Tables)</h3>
-                <p style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">คลิกที่การ์ดเพื่อเปิดดูข้อมูลแถวสดในตารางได้ทันที</p>
-              </div>
-              <span class="badge badge-primary">Database Schema: public</span>
-            </div>
-
-            <div class="grid-3" style="gap: 16px;">
-              <!-- Table 1: reports -->
-              <div class="card sp-table-card active" data-table="reports" style="cursor: pointer; transition: all 0.2s ease;">
-                <div style="display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 8px;">
-                  <div>
-                    <span style="font-size: 11px; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 0.5px;">Table 01</span>
-                    <h4 style="font-size: 15px; font-weight: 700; color: var(--text-main); margin: 2px 0 0 0;">public.reports</h4>
-                  </div>
-                  <span class="badge badge-ok"><span class="status-dot pulse"></span> Active</span>
-                </div>
-                <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 10px;">
-                  จุดรายงานน้ำท่วมและลูกเห็บจากประชาชน พิกัด GPS ความลึก และสถานะการอนุมัติ
-                </p>
-                <div style="display: flex; align-items: center; justify-content: space-between; border-top: 1px solid var(--border-subtle); padding-top: 8px;">
-                  <span style="font-size: 12px; color: var(--text-secondary);">จำนวนข้อมูลสด:</span>
-                  <strong id="sp-count-reports" style="font-size: 15px; color: var(--accent);">0 แถว</strong>
-                </div>
+                <div style="font-size: 11.5px; color: var(--text-muted); margin-top: 4px;">ตารางรายงานจุดน้ำท่วมและพิกัด GPS</div>
               </div>
 
-              <!-- Table 2: feedback -->
-              <div class="card sp-table-card" data-table="feedback" style="cursor: pointer; transition: all 0.2s ease;">
-                <div style="display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 8px;">
-                  <div>
-                    <span style="font-size: 11px; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 0.5px;">Table 02</span>
-                    <h4 style="font-size: 15px; font-weight: 700; color: var(--text-main); margin: 2px 0 0 0;">public.feedback</h4>
-                  </div>
-                  <span class="badge badge-ok"><span class="status-dot pulse"></span> Active</span>
+              <div class="card sp-table-card" data-table="feedback" style="padding: 14px; cursor: pointer;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                  <strong style="font-size: 13.5px; font-family: var(--font-mono);">public.feedback</strong>
+                  <strong id="sp-count-feedback" style="font-size: 13px; color: var(--primary);">0 แถว</strong>
                 </div>
-                <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 10px;">
-                  ข้อเสนอแนะและคะแนนประเมินจากประชาชน พร้อมข้อความตอบกลับของเจ้าหน้าที่
-                </p>
-                <div style="display: flex; align-items: center; justify-content: space-between; border-top: 1px solid var(--border-subtle); padding-top: 8px;">
-                  <span style="font-size: 12px; color: var(--text-secondary);">จำนวนข้อมูลสด:</span>
-                  <strong id="sp-count-feedback" style="font-size: 15px; color: var(--accent);">0 แถว</strong>
-                </div>
+                <div style="font-size: 11.5px; color: var(--text-muted); margin-top: 4px;">ตารางข้อเสนอแนะจากประชาชน</div>
               </div>
 
-              <!-- Table 3: visitors -->
-              <div class="card sp-table-card" data-table="visitors" style="cursor: pointer; transition: all 0.2s ease;">
-                <div style="display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 8px;">
-                  <div>
-                    <span style="font-size: 11px; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 0.5px;">Table 03</span>
-                    <h4 style="font-size: 15px; font-weight: 700; color: var(--text-main); margin: 2px 0 0 0;">public.visitors</h4>
-                  </div>
-                  <span class="badge badge-ok"><span class="status-dot pulse"></span> Active</span>
+              <div class="card sp-table-card" data-table="visitors" style="padding: 14px; cursor: pointer;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                  <strong style="font-size: 13.5px; font-family: var(--font-mono);">public.visitors</strong>
+                  <strong id="sp-count-visitors" style="font-size: 13px; color: var(--primary);">0 แถว</strong>
                 </div>
-                <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 10px;">
-                  โทรมาตรบันทึกเซสชันผู้เข้าชมเว็บจริงทุก 60 วินาที แยกตามอำเภอและอุปกรณ์
-                </p>
-                <div style="display: flex; align-items: center; justify-content: space-between; border-top: 1px solid var(--border-subtle); padding-top: 8px;">
-                  <span style="font-size: 12px; color: var(--text-secondary);">จำนวนข้อมูลสด:</span>
-                  <strong id="sp-count-visitors" style="font-size: 15px; color: var(--accent);">0 แถว</strong>
-                </div>
+                <div style="font-size: 11.5px; color: var(--text-muted); margin-top: 4px;">ตารางเซสชันผู้เข้าใช้งาน</div>
               </div>
 
-              <!-- Table 4: announcements -->
-              <div class="card sp-table-card" data-table="announcements" style="cursor: pointer; transition: all 0.2s ease;">
-                <div style="display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 8px;">
-                  <div>
-                    <span style="font-size: 11px; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 0.5px;">Table 04</span>
-                    <h4 style="font-size: 15px; font-weight: 700; color: var(--text-main); margin: 2px 0 0 0;">public.announcements</h4>
-                  </div>
-                  <span class="badge badge-ok"><span class="status-dot pulse"></span> Active</span>
+              <div class="card sp-table-card" data-table="announcements" style="padding: 14px; cursor: pointer;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                  <strong style="font-size: 13.5px; font-family: var(--font-mono);">public.announcements</strong>
+                  <strong id="sp-count-announcements" style="font-size: 13px; color: var(--primary);">0 แถว</strong>
                 </div>
-                <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 10px;">
-                  ประกาศแจ้งเตือนภัยระดับจังหวัดและรายอำเภอที่เผยแพร่บนหน้าเว็บหลัก
-                </p>
-                <div style="display: flex; align-items: center; justify-content: space-between; border-top: 1px solid var(--border-subtle); padding-top: 8px;">
-                  <span style="font-size: 12px; color: var(--text-secondary);">จำนวนข้อมูลสด:</span>
-                  <strong id="sp-count-announcements" style="font-size: 15px; color: var(--accent);">0 แถว</strong>
-                </div>
+                <div style="font-size: 11.5px; color: var(--text-muted); margin-top: 4px;">ตารางประกาศแจ้งเตือนภัย</div>
               </div>
 
-              <!-- Table 5: admin_sessions -->
-              <div class="card sp-table-card" data-table="admin_sessions" style="cursor: pointer; transition: all 0.2s ease;">
-                <div style="display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 8px;">
-                  <div>
-                    <span style="font-size: 11px; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 0.5px;">Table 05</span>
-                    <h4 style="font-size: 15px; font-weight: 700; color: var(--text-main); margin: 2px 0 0 0;">public.admin_sessions</h4>
-                  </div>
-                  <span class="badge badge-ok"><span class="status-dot pulse"></span> Active</span>
+              <div class="card sp-table-card" data-table="admin_sessions" style="padding: 14px; cursor: pointer;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                  <strong style="font-size: 13.5px; font-family: var(--font-mono);">public.admin_sessions</strong>
+                  <strong id="sp-count-sessions" style="font-size: 13px; color: var(--primary);">0 แถว</strong>
                 </div>
-                <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 10px;">
-                  บันทึกประวัติการเข้าสู่ระบบแอดมิน สถานะออนไลน์ อุปกรณ์ และ IP
-                </p>
-                <div style="display: flex; align-items: center; justify-content: space-between; border-top: 1px solid var(--border-subtle); padding-top: 8px;">
-                  <span style="font-size: 12px; color: var(--text-secondary);">จำนวนข้อมูลสด:</span>
-                  <strong id="sp-count-sessions" style="font-size: 15px; color: var(--accent);">0 แถว</strong>
-                </div>
+                <div style="font-size: 11.5px; color: var(--text-muted); margin-top: 4px;">ตารางประวัติการเข้าใช้งานแอดมิน</div>
               </div>
 
-              <!-- Table 6: admin_trash -->
-              <div class="card sp-table-card" data-table="admin_trash" style="cursor: pointer; transition: all 0.2s ease;">
-                <div style="display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 8px;">
-                  <div>
-                    <span style="font-size: 11px; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 0.5px;">Table 06</span>
-                    <h4 style="font-size: 15px; font-weight: 700; color: var(--text-main); margin: 2px 0 0 0;">public.admin_trash</h4>
-                  </div>
-                  <span class="badge badge-ok"><span class="status-dot pulse"></span> Active</span>
+              <div class="card sp-table-card" data-table="admin_trash" style="padding: 14px; cursor: pointer;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                  <strong style="font-size: 13.5px; font-family: var(--font-mono);">public.admin_trash</strong>
+                  <strong id="sp-count-trash" style="font-size: 13px; color: var(--primary);">0 แถว</strong>
                 </div>
-                <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 10px;">
-                  ถังขยะกู้คืนข้อมูล (Soft-delete) สำหรับรายการที่ถูกลบชั่วคราว
-                </p>
-                <div style="display: flex; align-items: center; justify-content: space-between; border-top: 1px solid var(--border-subtle); padding-top: 8px;">
-                  <span style="font-size: 12px; color: var(--text-secondary);">จำนวนข้อมูลสด:</span>
-                  <strong id="sp-count-trash" style="font-size: 15px; color: var(--accent);">0 แถว</strong>
-                </div>
+                <div style="font-size: 11.5px; color: var(--text-muted); margin-top: 4px;">ตารางถังขยะกู้คืนข้อมูล</div>
               </div>
             </div>
           </div>
 
           <!-- Live Table Inspector -->
-          <div class="card">
-            <div class="card-header" style="flex-wrap: wrap; gap: 14px;">
+          <div class="card" style="margin-bottom: 18px;">
+            <div class="card-header" style="flex-wrap: wrap; gap: 12px;">
               <div>
-                <h3 class="card-title" style="display: flex; align-items: center; gap: 8px;">
-                  <span>ตัวสืบค้นข้อมูลในตาราง Supabase สด (Live Table Inspector)</span>
-                  <span class="badge badge-primary" id="sp-current-table-badge">table: reports</span>
+                <h3 class="card-title">
+                  <span>ตัวตรวจสอบแถวข้อมูลสด (Database Table Inspector)</span>
+                  <span class="badge badge-primary cell-mono" id="sp-current-table-badge">table: reports</span>
                 </h3>
-                <p class="card-subtitle">ดึงข้อมูลจริงจาก Supabase Cloud REST Gateway มาแสดงผลแบบสดๆ</p>
               </div>
 
-              <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-                <div style="display: flex; gap: 6px; background: var(--bg-subtle); padding: 4px; border-radius: var(--radius-md); border: 1px solid var(--border-subtle);" id="sp-table-selector-btns">
-                  <button type="button" class="btn btn-sm btn-ghost sp-tab-btn active" data-table="reports">reports</button>
-                  <button type="button" class="btn btn-sm btn-ghost sp-tab-btn" data-table="feedback">feedback</button>
-                  <button type="button" class="btn btn-sm btn-ghost sp-tab-btn" data-table="visitors">visitors</button>
-                  <button type="button" class="btn btn-sm btn-ghost sp-tab-btn" data-table="announcements">announcements</button>
-                  <button type="button" class="btn btn-sm btn-ghost sp-tab-btn" data-table="admin_sessions">admin_sessions</button>
-                  <button type="button" class="btn btn-sm btn-ghost sp-tab-btn" data-table="admin_trash">admin_trash</button>
+              <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                <div class="tabs-pill" id="sp-table-selector-btns">
+                  <button type="button" class="tab-pill-btn sp-tab-btn active" data-table="reports">reports</button>
+                  <button type="button" class="tab-pill-btn sp-tab-btn" data-table="feedback">feedback</button>
+                  <button type="button" class="tab-pill-btn sp-tab-btn" data-table="visitors">visitors</button>
+                  <button type="button" class="tab-pill-btn sp-tab-btn" data-table="announcements">announcements</button>
+                  <button type="button" class="tab-pill-btn sp-tab-btn" data-table="admin_sessions">admin_sessions</button>
+                  <button type="button" class="tab-pill-btn sp-tab-btn" data-table="admin_trash">admin_trash</button>
                 </div>
-                <button type="button" id="btn-sp-reload-table" class="btn btn-secondary btn-sm" title="โหลดข้อมูลตารางนี้ใหม่">
-                  <svg class="ico" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
-                </button>
+                <button type="button" id="btn-sp-reload-table" class="btn btn-secondary btn-sm" title="โหลดข้อมูลตารางนี้ใหม่">รีโหลด</button>
               </div>
             </div>
 
-            <!-- Table Search & Filter Bar -->
-            <div style="padding: 12px 16px; background: rgba(255, 255, 255, 0.02); border-bottom: 1px solid var(--border-subtle); display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
-              <div style="position: relative; max-width: 360px; width: 100%;">
-                <input type="text" id="sp-inspector-search" class="form-input" placeholder="ค้นหาข้อมูลในตารางนี้..." style="padding-left: 36px; height: 38px; font-size: 13px;">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="position: absolute; left: 12px; top: 11px; color: var(--text-muted);"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            <div style="padding: 10px 0; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
+              <div style="position: relative; max-width: 320px; width: 100%;">
+                <input type="text" id="sp-inspector-search" class="form-input" placeholder="ค้นหาข้อมูลในตารางนี้..." style="height: 34px; font-size: 12.5px;">
               </div>
               <div style="font-size: 12px; color: var(--text-muted);">
-                กำลังแสดงผล: <strong id="sp-inspector-showing-count" style="color: var(--text-main);">0</strong> แถวล่าสุดจาก Supabase
+                แสดงผล: <strong id="sp-inspector-showing-count" style="color: var(--text-main);">0</strong> แถว
               </div>
             </div>
 
-            <!-- Table View Wrap -->
-            <div class="table-wrap" style="max-height: 480px; overflow-y: auto;">
+            <div class="table-wrap" style="max-height: 440px; overflow-y: auto;">
               <table class="data-table" id="sp-inspector-table">
                 <thead id="sp-inspector-thead">
                   <tr><th>กำลังโหลดโครงสร้างตาราง...</th></tr>
                 </thead>
                 <tbody id="sp-inspector-tbody">
-                  <tr><td class="text-center text-muted" style="padding: 36px;">กำลังดึงข้อมูลแถวจาก Supabase Cloud...</td></tr>
+                  <tr><td class="text-center text-muted" style="padding: 32px;">กำลังดึงข้อมูล...</td></tr>
                 </tbody>
               </table>
+            </div>
+          </div>
+
+          <!-- Supabase Project Connection & Switcher Card -->
+          <div id="sp-project-switcher-card" class="card">
+            <div class="card-header" style="flex-wrap: wrap; gap: 10px;">
+              <div>
+                <h3 class="card-title">
+                  <span>ตั้งค่าการเชื่อมต่อโปรเจกต์ Supabase (Connection Config)</span>
+                  <span id="sp-active-project-badge" class="badge badge-primary">Default Project</span>
+                </h3>
+                <p class="card-subtitle">เปลี่ยน URL และ Publishable Key หากต้องการสลับฐานข้อมูล</p>
+              </div>
+              <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <button type="button" id="btn-copy-supabase-sql" class="btn btn-secondary btn-sm">คัดลอก SQL Setup</button>
+                <button type="button" id="btn-reset-supabase-config" class="btn btn-ghost btn-sm">รีเซ็ตค่าเริ่มต้น</button>
+              </div>
+            </div>
+
+            <form id="form-supabase-config" style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 14px; align-items: flex-end;">
+              <div class="form-group" style="margin: 0;">
+                <label class="form-label" for="input-sp-custom-url" style="font-size: 12px; font-weight: 600;">Supabase Project URL</label>
+                <input type="url" id="input-sp-custom-url" class="form-input" placeholder="https://xxxxxxxxxxxx.supabase.co" required style="font-family: var(--font-mono); font-size: 12.5px;">
+              </div>
+              <div class="form-group" style="margin: 0;">
+                <label class="form-label" for="input-sp-custom-key" style="font-size: 12px; font-weight: 600;">Supabase Publishable Key</label>
+                <input type="text" id="input-sp-custom-key" class="form-input" placeholder="sb_publishable_..." required style="font-family: var(--font-mono); font-size: 12.5px;">
+              </div>
+              <div>
+                <button type="submit" id="btn-save-supabase-config" class="btn btn-primary" style="height: 38px;">บันทึกการเชื่อมต่อ</button>
+              </div>
+            </form>
+            <div style="margin-top: 10px; font-size: 11.5px; color: var(--text-muted); display: flex; justify-content: space-between;">
+              <span>ซิงค์ข้อมูลระหว่างหน้าเว็บหลักและระบบแอดมิน</span>
+              <span id="sp-current-config-source" class="cell-mono">Active: DEFAULT</span>
             </div>
           </div>
 
@@ -1346,28 +1174,19 @@
             <div class="card">
               <div class="card-header">
                 <div>
-                  <h3 class="card-title">เปลี่ยนรหัสผ่านแอดมิน</h3>
-                  <p class="card-subtitle">ตั้งค่ารหัสผ่านใหม่เพื่อความปลอดภัยในการเข้าถึงระบบศูนย์บัญชาการ</p>
+                  <h3 class="card-title">เปลี่ยนรหัสผ่านผู้ดูแลระบบ</h3>
+                  <p class="card-subtitle">อัปเดตรหัสผ่านสำหรับบัญชีผู้ดูแลระบบเพื่อความปลอดภัย</p>
                 </div>
               </div>
-              <div style="background: rgba(59, 130, 246, 0.08); border: 1px solid rgba(59, 130, 246, 0.2); padding: 10px 14px; border-radius: 10px; margin-bottom: 18px; display: flex; align-items: center; gap: 10px;">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                <div style="font-size: 12.5px; color: var(--text-secondary);">
-                  กำลังเข้าสู่ระบบในชื่อ: <strong id="settings-current-admin" style="color: var(--text-main); font-weight: 600;">Admin</strong>
-                </div>
+              <div style="background: var(--bg-subtle); border: 1px solid var(--border-subtle); padding: 10px 14px; border-radius: 6px; margin-bottom: 16px; font-size: 12.5px; color: var(--text-secondary);">
+                บัญชีที่กำลังเข้าสู่ระบบ: <strong id="settings-current-admin" style="color: var(--text-main);">Admin</strong>
               </div>
               <form id="form-change-password">
                 <div class="login-field">
-                  <label class="login-label" for="pwd-old">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6"/><path d="m15.5 7.5 3 3L22 7l-3-3"/></svg>
-                    <span>รหัสผ่านปัจจุบัน</span>
-                  </label>
+                  <label class="login-label" for="pwd-old"><span>รหัสผ่านปัจจุบัน</span></label>
                   <div class="password-input-group">
-                    <span class="input-icon-left">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                    </span>
-                    <input type="password" id="pwd-old" class="login-input form-input" placeholder="กรอกรหัสผ่านเดิม" required autocomplete="current-password">
-                    <button type="button" class="password-toggle-btn" data-target="pwd-old" title="แสดง/ซ่อนรหัสผ่าน" aria-label="แสดง/ซ่อนรหัสผ่าน">
+                    <input type="password" id="pwd-old" class="login-input form-input" placeholder="ระบุรหัสผ่านเดิม" required autocomplete="current-password">
+                    <button type="button" class="password-toggle-btn" data-target="pwd-old" title="แสดง/ซ่อนรหัสผ่าน">
                       <svg class="eye-open" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                     </button>
                   </div>
@@ -1375,69 +1194,61 @@
 
                 <div class="login-field">
                   <label class="login-label" for="pwd-new">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
                     <span>รหัสผ่านใหม่</span>
                     <span class="label-hint">อย่างน้อย 10 ตัวอักษร</span>
                   </label>
                   <div class="password-input-group">
-                    <span class="input-icon-left">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                    </span>
-                    <input type="password" id="pwd-new" class="login-input form-input" placeholder="กรอกรหัสผ่านใหม่ (อย่างน้อย 10 ตัวอักษร)" required autocomplete="new-password">
-                    <button type="button" class="password-toggle-btn" data-target="pwd-new" title="แสดง/ซ่อนรหัสผ่าน" aria-label="แสดง/ซ่อนรหัสผ่าน">
+                    <input type="password" id="pwd-new" class="login-input form-input" placeholder="ระบุรหัสผ่านใหม่ (อย่างน้อย 10 ตัวอักษร)" required autocomplete="new-password">
+                    <button type="button" class="password-toggle-btn" data-target="pwd-new" title="แสดง/ซ่อนรหัสผ่าน">
                       <svg class="eye-open" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                     </button>
                   </div>
                 </div>
 
                 <div class="login-field">
-                  <label class="login-label" for="pwd-confirm">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                    <span>ยืนยันรหัสผ่านใหม่</span>
-                  </label>
+                  <label class="login-label" for="pwd-confirm"><span>ยืนยันรหัสผ่านใหม่</span></label>
                   <div class="password-input-group">
-                    <span class="input-icon-left">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                    </span>
-                    <input type="password" id="pwd-confirm" class="login-input form-input" placeholder="กรอกรหัสผ่านใหม่อีกครั้งเพื่อยืนยัน" required autocomplete="new-password">
-                    <button type="button" class="password-toggle-btn" data-target="pwd-confirm" title="แสดง/ซ่อนรหัสผ่าน" aria-label="แสดง/ซ่อนรหัสผ่าน">
+                    <input type="password" id="pwd-confirm" class="login-input form-input" placeholder="ระบุรหัสผ่านใหม่อีกครั้ง" required autocomplete="new-password">
+                    <button type="button" class="password-toggle-btn" data-target="pwd-confirm" title="แสดง/ซ่อนรหัสผ่าน">
                       <svg class="eye-open" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                     </button>
                   </div>
                 </div>
 
-                <button type="submit" class="btn btn-primary" style="margin-top: 10px; padding: 12px 22px; font-size: 13.5px; font-weight: 600; display: inline-flex; align-items: center; gap: 8px;">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                <button type="submit" class="btn btn-primary" style="margin-top: 8px;">
                   <span>บันทึกรหัสผ่านใหม่</span>
                 </button>
               </form>
             </div>
 
-            <!-- Backup & Theme Settings -->
+            <!-- Backup & Export -->
             <div class="card">
               <div class="card-header">
-                <h3 class="card-title">สำรองข้อมูล & ตัวเลือกการแสดงผล</h3>
+                <div>
+                  <h3 class="card-title">สำรองข้อมูลระบบและส่งออกรายงาน (System Backup &amp; Export)</h3>
+                  <p class="card-subtitle">ส่งออกฐานข้อมูลเพื่อใช้จัดทำรายงานสรุปประจำวันหรือสำรองข้อมูล</p>
+                </div>
               </div>
               
-              <div style="margin-bottom: 24px;">
-                <h4 style="font-size: 13.5px; font-weight: 600; margin-bottom: 8px;">สำรองข้อมูลระบบทั้งหมด</h4>
-                <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px;">
-                  ดาวน์โหลดข้อมูลรายงานน้ำท่วม ข้อเสนอแนะ และการตั้งค่าเป็นไฟล์ JSON เพื่อเก็บสำรองไว้ในเครื่อง
-                </p>
-                <button id="btn-download-backup" class="btn btn-secondary">
-                  <svg class="ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
-                  ดาวน์โหลดไฟล์สำรองข้อมูล (JSON)
-                </button>
-              </div>
+              <div style="display: flex; flex-direction: column; gap: 14px;">
+                <div style="padding: 14px; background: var(--bg-subtle); border: 1px solid var(--border-subtle); border-radius: 8px;">
+                  <h4 style="font-size: 13.5px; font-weight: 600; margin-bottom: 4px;">1. ส่งออกตารางรายงานน้ำท่วม (CSV สำหรับ Excel)</h4>
+                  <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 10px;">
+                    ดาวน์โหลดข้อมูลจุดรายงานน้ำท่วมทั้งหมดในรูปแบบไฟล์ CSV รองรับภาษาไทยใน Microsoft Excel
+                  </p>
+                  <button type="button" class="btn btn-secondary btn-sm" onclick="window.__pgExportReportsCsv && window.__pgExportReportsCsv()">
+                    <span>ดาวน์โหลดรายงานน้ำท่วม (.CSV)</span>
+                  </button>
+                </div>
 
-              <div style="border-top: 1px solid var(--border-subtle); padding-top: 20px;">
-                <h4 style="font-size: 13.5px; font-weight: 600; margin-bottom: 8px;">สถานะการเชื่อมต่อฐานข้อมูล</h4>
-                <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 8px;">
-                  Supabase Cloud Database (Primary Real-time Telemetry):
-                </p>
-                <div style="display: flex; align-items: center; gap: 8px;">
-                  <span class="badge badge-ok"><span class="status-dot pulse"></span> เชื่อมต่อสมบูรณ์ (Active)</span>
-                  <span style="font-size: 11px; color: var(--text-muted);">uyszfmcumloxwuojmndy.supabase.co</span>
+                <div style="padding: 14px; background: var(--bg-subtle); border: 1px solid var(--border-subtle); border-radius: 8px;">
+                  <h4 style="font-size: 13.5px; font-weight: 600; margin-bottom: 4px;">2. สำรองฐานข้อมูลระบบทั้งหมด (Full System Snapshot JSON)</h4>
+                  <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 10px;">
+                    ดาวน์โหลดข้อมูลรายงานน้ำท่วม ข้อเสนอแนะ ประกาศ และถังขยะทั้งหมดเก็บไว้เป็นไฟล์ JSON
+                  </p>
+                  <button id="btn-download-backup" class="btn btn-secondary btn-sm">
+                    <span>ดาวน์โหลดไฟล์สำรองข้อมูล (.JSON)</span>
+                  </button>
                 </div>
               </div>
             </div>
