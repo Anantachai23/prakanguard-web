@@ -238,13 +238,18 @@ function renderLoginWall() {
     const nameEl = $('#sidebar-admin-name');
     if (nameEl) nameEl.textContent = `${user.label} (${user.username})`;
     const greetingTitleEl = $('#sidebar-greeting-title');
-    if (greetingTitleEl) greetingTitleEl.textContent = 'ยินดีต้อนรับ';
+    if (greetingTitleEl) greetingTitleEl.textContent = 'เจ้าหน้าที่เวรปฏิบัติการ';
     const greetingEl = $('#sidebar-greeting-name');
     if (greetingEl) greetingEl.textContent = `${user.label || 'Admin 01'}`;
     const avatarEl = $('#sidebar-admin-avatar');
     if (avatarEl) {
-      const is02 = String(user.username || '').includes('2');
-      avatarEl.src = user.avatar || (is02 ? './assets/img/admin02.jpg' : './assets/img/admin01.jpg');
+      avatarEl.src = './assets/img/logo.png';
+      avatarEl.style.width = '36px';
+      avatarEl.style.height = '36px';
+      avatarEl.style.maxWidth = '36px';
+      avatarEl.style.maxHeight = '36px';
+      avatarEl.style.borderRadius = '50%';
+      avatarEl.style.objectFit = 'cover';
     }
   }
 }
@@ -340,16 +345,18 @@ export async function refreshAllData(forceCharts = false, isUserTriggered = fals
   }
 
   try {
-    await detectCaps();
+    if (!caps.checked) {
+      detectCaps().catch(() => {});
+    }
 
-    // Ensure we fetch admin public IP once to reliably exclude this work PC
+    // Fetch admin public IP in parallel (non-blocking) to reliably exclude this work PC
     if (!state.adminIp) {
-      try {
-        state.adminIp = await fetchPublicIp();
-        if (state.adminIp && typeof localStorage !== 'undefined') {
-          localStorage.setItem('pg_admin_known_ip', state.adminIp);
+      fetchPublicIp().then((ip) => {
+        if (ip) {
+          state.adminIp = ip;
+          try { localStorage.setItem('pg_admin_known_ip', ip); } catch {}
         }
-      } catch (e) {}
+      }).catch(() => {});
     }
 
     // 1. Fetch live visitors, reports & official telemetry points in parallel
@@ -572,9 +579,15 @@ function renderOverview() {
 
   const elTopDist = $('#stat-top-district');
   if (elTopDist) {
-    elTopDist.textContent = topCount > 0 ? topDistrict : 'ปิด GPS ส่วนใหญ่';
     const sub = $('#stat-top-district-sub');
-    if (sub) sub.textContent = topCount > 0 ? `ออนไลน์ ${topCount} คนในพื้นที่` : `ปิด GPS ${closedGpsCount} คน`;
+    if (topCount > 0) {
+      elTopDist.textContent = `อ.${topDistrict}`;
+      if (sub) sub.textContent = `ผู้ใช้งานในพื้นที่ ${topCount} คน`;
+    } else {
+      const mueangStations = (state.officialPoints || []).filter(p => (p.district || '').includes('เมืองสมุทรปราการ')).length || 15;
+      elTopDist.textContent = 'อ.เมืองสมุทรปราการ';
+      if (sub) sub.textContent = `เฝ้าระวังหลัก ${mueangStations} สถานี`;
+    }
   }
 
   const elPending = $('#stat-pending-reports');
@@ -618,40 +631,49 @@ function renderOverviewPriorityQueue() {
       return new Date(b.timestamp || b.created_at || 0).getTime() - new Date(a.timestamp || a.created_at || 0).getTime();
     });
 
-  if (list.length === 0) {
+  if (list.length === 0 && (!state.officialPoints || state.officialPoints.length === 0)) {
     tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted" style="padding: 28px;">ไม่มีรายการแจ้งเหตุค้างตรวจสอบในขณะนี้ — สถานการณ์ปกติ</td></tr>`;
     return;
   }
 
-  list.slice(0, 8).forEach(r => {
+  list.slice(0, 6).forEach(r => {
     const isApproved = !!(r.is_approved || r.isApproved);
     const lv = levelInfo(r);
     const depthVal = (r.depth_cm || r.depthCm) ? `${r.depth_cm || r.depthCm} ซม.` : lv.range;
-    const { isValid: hasGps } = getReportCoordinates(r);
+    const { lat, lng, isValid: hasGps } = getReportCoordinates(r);
 
     const tr = h('tr', {},
+      // 1. จุดเกิดเหตุ / อำเภอ
       h('td', {},
-        h('span', { class: `badge ${isApproved ? 'badge-ok' : 'badge-warn'}` },
-          isApproved ? 'เผยแพร่แล้ว' : 'รอตรวจสอบ'
+        h('div', { style: { fontWeight: 600, color: 'var(--text-main)' } }, r.name || 'จุดแจ้งเหตุน้ำท่วม'),
+        h('div', { style: { display: 'flex', alignItems: 'center', gap: '6px', marginTop: '3px', flexWrap: 'wrap' } },
+          h('span', { class: 'badge badge-neutral', style: { fontSize: '10.5px', padding: '1px 7px' } }, `อ.${r.district || 'เมืองสมุทรปราการ'}`),
+          (r.traffic_status || r.trafficStatus)
+            ? h('span', { class: 'text-muted', style: { fontSize: '11px' } }, r.traffic_status || r.trafficStatus)
+            : null
         )
       ),
+      // 2. ระดับน้ำ
       h('td', {},
         h('span', { class: `badge badge-${lv.tone}` }, `${lv.label} (${depthVal})`)
       ),
-      h('td', {},
-        h('div', { style: { fontWeight: 600, color: 'var(--text-main)' } }, r.name || 'จุดแจ้งเหตุน้ำท่วม'),
-        r.traffic_status || r.trafficStatus
-          ? h('div', { class: 'text-muted', style: { fontSize: '11px' } }, r.traffic_status || r.trafficStatus)
-          : null
+      // 3. พิกัด GPS
+      h('td', { class: 'cell-mono', style: { fontSize: '11px' } },
+        hasGps ? `${Number(lat).toFixed(4)}, ${Number(lng).toFixed(4)}` : 'ไม่ระบุพิกัด'
       ),
-      h('td', {},
-        h('span', { class: 'badge badge-neutral' }, `อ.${r.district || 'เมืองสมุทรปราการ'}`)
-      ),
+      // 4. เวลาแจ้ง
       h('td', { class: 'cell-mono', style: { fontSize: '11px' } },
         r.timestamp ? dateTime(r.timestamp) : (r.reported_at || '—')
       ),
+      // 5. สถานะ
       h('td', {},
-        h('div', { style: { display: 'flex', gap: '5px', alignItems: 'center', flexWrap: 'wrap' } },
+        h('span', { class: `badge ${isApproved ? 'badge-ok' : 'badge-warn'}` },
+          isApproved ? 'อนุมัติแล้ว' : 'รอตรวจสอบ'
+        )
+      ),
+      // 6. การจัดการด่วน
+      h('td', { style: { textAlign: 'right' } },
+        h('div', { style: { display: 'flex', gap: '5px', alignItems: 'center', justifyContent: 'flex-end', flexWrap: 'wrap' } },
           !isApproved ? h('button', {
             type: 'button',
             class: 'btn btn-success btn-sm',
@@ -692,6 +714,44 @@ function renderOverviewPriorityQueue() {
     );
     tbody.appendChild(tr);
   });
+
+  const remainingSlots = Math.max(0, 5 - list.slice(0, 6).length);
+  if (remainingSlots > 0 && Array.isArray(state.officialPoints) && state.officialPoints.length > 0) {
+    const sortedStations = [...state.officialPoints].sort((a, b) => (Number(b.depthCm ?? b.depth_cm ?? 0) - Number(a.depthCm ?? a.depth_cm ?? 0)));
+    sortedStations.slice(0, remainingSlots).forEach(st => {
+      const depth = Number(st.depthCm ?? st.depth_cm ?? 0);
+      const isDry = depth <= 0 || st.isResolved || st.autoRemovedBecauseDry;
+      const lv = isDry ? { label: '0 ซม. (ปกติ)', tone: 'ok' } : levelInfo({ level: st.level || (depth > 50 ? 3 : depth > 20 ? 2 : 1), depth_cm: depth });
+      const tr = h('tr', {},
+        h('td', {},
+          h('div', { style: { fontWeight: 600, color: 'var(--text-main)' } }, st.name || 'สถานีตรวจวัดหลัก'),
+          h('div', { style: { display: 'flex', alignItems: 'center', gap: '6px', marginTop: '3px' } },
+            h('span', { class: 'badge badge-primary', style: { fontSize: '10px', padding: '1px 6px' } }, 'สถานีหลัก'),
+            h('span', { class: 'text-muted', style: { fontSize: '11px' } }, `อ.${st.district || 'เมืองสมุทรปราการ'}`)
+          )
+        ),
+        h('td', {},
+          h('span', { class: `badge badge-${lv.tone}` }, isDry ? '0 ซม. (แห้งปกติ)' : `${lv.label} (${depth} ซม.)`)
+        ),
+        h('td', { class: 'cell-mono', style: { fontSize: '11px' } },
+          (st.lat && st.lng) ? `${Number(st.lat).toFixed(4)}, ${Number(st.lng).toFixed(4)}` : '—'
+        ),
+        h('td', { class: 'cell-mono', style: { fontSize: '11px', color: 'var(--text-muted)' } }, 'โทรมาตร 24 ชม.'),
+        h('td', {},
+          h('span', { class: `badge ${isDry ? 'badge-neutral' : 'badge-ok'}` }, isDry ? 'ปกติ' : 'เฝ้าระวัง')
+        ),
+        h('td', { style: { textAlign: 'right' } },
+          h('button', {
+            type: 'button',
+            class: 'btn btn-secondary btn-sm',
+            onclick: () => openAdjustStationModal(st),
+            html: 'ปรับระดับน้ำ'
+          })
+        )
+      );
+      tbody.appendChild(tr);
+    });
+  }
 }
 
 function renderMonitoredDistricts() {
@@ -702,17 +762,18 @@ function renderMonitoredDistricts() {
   container.innerHTML = '';
 
   districts.forEach(d => {
-    const list = state.reports.filter(r => (r.district || '').includes(d));
-    const count = list.length;
-    const maxLevel = list.reduce((m, r) => Math.max(m, r.level || 1), 0);
+    const repList = (state.reports || []).filter(r => (r.district || '').includes(d) && !r.is_resolved && !r.isResolved);
+    const stList = (state.officialPoints || []).filter(p => (p.district || '').includes(d));
+    const count = repList.length;
+    const maxLevel = repList.reduce((m, r) => Math.max(m, Number(r.level) || 1), 0);
 
     let statusBadge = '<span class="badge badge-ok">ปกติ</span>';
     if (count > 0 && maxLevel === 3) {
-      statusBadge = '<span class="badge badge-danger">วิกฤต (>50cm)</span>';
+      statusBadge = '<span class="badge badge-danger">วิกฤต (&gt;50 ซม.)</span>';
     } else if (count > 0 && maxLevel === 2) {
-      statusBadge = '<span class="badge badge-warn">ปานกลาง</span>';
+      statusBadge = '<span class="badge badge-warn">ปานกลาง (21-50 ซม.)</span>';
     } else if (count > 0) {
-      statusBadge = '<span class="badge badge-ok">ปกติ (5-20cm)</span>';
+      statusBadge = '<span class="badge badge-ok">รอระบาย (5-20 ซม.)</span>';
     }
 
     const row = document.createElement('div');
@@ -720,10 +781,11 @@ function renderMonitoredDistricts() {
     row.innerHTML = `
       <div class="district-stat-name">
         <span>อ.${d}</span>
+        <span class="text-muted" style="font-size: 11px; font-weight: 400;">(${stList.length} สถานี)</span>
       </div>
       <div class="district-stat-meta">
         ${statusBadge}
-        <span class="cell-mono" style="font-size: 11px; color: ${count > 0 ? '#38bdf8' : 'var(--text-muted)'}; font-weight: 600;">${count} จุด</span>
+        <span class="cell-mono" style="font-size: 11px; color: ${count > 0 ? '#38bdf8' : 'var(--text-muted)'}; font-weight: 600;">${count} รายงาน</span>
       </div>
     `;
     row.addEventListener('click', () => {
@@ -732,7 +794,7 @@ function renderMonitoredDistricts() {
       if (sel) {
         sel.value = d;
         state.reportsDistrict = d;
-        filterAndRenderReports();
+        renderReports();
       }
     });
     container.appendChild(row);
@@ -840,7 +902,9 @@ function renderOverviewAutoCleared() {
   const autoAiCount = autoClearedList.filter(r => r.autoRemovedBecauseDry).length;
 
   if (statEl) statEl.textContent = autoClearedList.length;
-  if (subEl) subEl.textContent = autoAiCount > 0 ? `AI นำออกอัตโนมัติ ${autoAiCount} จุด` : `ระบายแห้งแล้ว ${autoClearedList.length} จุด`;
+  const statResolvedEl = $('#stat-resolved-reports');
+  if (statResolvedEl) statResolvedEl.textContent = autoClearedList.length;
+  if (subEl) subEl.textContent = autoAiCount > 0 ? `ระบบนำออกอัตโนมัติ ${autoAiCount} จุด` : `ระบายแห้งแล้ว ${autoClearedList.length} จุด`;
   if (badgeEl) badgeEl.textContent = `${autoClearedList.length} จุด`;
 
   if (!tbody) return;
@@ -3348,7 +3412,7 @@ function renderLogins() {
     const is02 = rawU.includes('2') || rawU.includes('02');
     const displayUser = s.username || (is02 ? 'admin_prakanguard02' : 'admin_prakanguard01');
     const displayLabel = is02 ? 'Admin 02' : 'Admin 01';
-    const avatarImg = is02 ? './assets/img/admin02.jpg' : './assets/img/admin01.jpg';
+    const avatarImg = './assets/img/logo.png';
 
     // Status: ออนไลน์ เมื่อใช้งานเว็บอยู่, ออฟไลน์ เมื่อปิดไปแล้ว
     const isCurrentActive = currentAdm && (currentAdm.loginId === s.id);
@@ -3363,7 +3427,9 @@ function renderLogins() {
           h('img', { 
             src: avatarImg, 
             alt: displayLabel,
-            style: { width: '28px', height: '28px', borderRadius: '50%', objectFit: 'cover', border: '1.5px solid #38bdf8', flexShrink: '0' } 
+            width: 28,
+            height: 28,
+            style: { width: '28px', height: '28px', maxWidth: '28px', maxHeight: '28px', borderRadius: '50%', objectFit: 'cover', border: '1.5px solid #38bdf8', flexShrink: '0' } 
           }),
           h('div', {},
             h('span', { style: { display: 'block', fontSize: '13px' } }, displayUser),
@@ -4009,6 +4075,15 @@ export function initDashboard() {
 
   // Initial Load if logged in
   if (currentAdmin()) {
+    // Render initial UI immediately so no "กำลังโหลด..." placeholder hangs
+    renderOverview();
+    fetchOfficialPoints().then(pts => {
+      if (Array.isArray(pts) && pts.length > 0 && state.officialPoints.length === 0) {
+        state.officialPoints = pts;
+        updateNavBadges();
+        if (state.currentTab === 'overview') renderOverview();
+      }
+    }).catch(() => {});
     refreshAllData(true);
   }
 

@@ -14,7 +14,7 @@
   <!-- Leaflet & Chart Libraries (CDN with Local Fallback) -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
   <link rel="stylesheet" href="./assets/vendor/leaflet/leaflet.css">
-  <link rel="stylesheet" href="./assets/css/admin.css">
+  <link rel="stylesheet" href="./assets/css/admin.css?v=20261028_6">
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <script>
     if (typeof L === 'undefined') {
@@ -29,6 +29,78 @@
     #login-wall { display: flex !important; }
     html.admin-authenticated #app-shell { display: flex !important; }
     html.admin-authenticated #login-wall { display: none !important; }
+
+    /* Critical Image & Layout Guards (Prevents oversized avatar or unpadded view even under aggressive cache) */
+    .sidebar-officer-avatar,
+    .sidebar-officer-avatar-wrap {
+      width: 36px !important;
+      height: 36px !important;
+      min-width: 36px !important;
+      min-height: 36px !important;
+      max-width: 36px !important;
+      max-height: 36px !important;
+      border-radius: 50% !important;
+      overflow: hidden !important;
+      flex-shrink: 0 !important;
+    }
+    #sidebar-admin-avatar,
+    .sidebar-officer-avatar img,
+    .sidebar-officer-avatar-wrap img {
+      width: 36px !important;
+      height: 36px !important;
+      max-width: 36px !important;
+      max-height: 36px !important;
+      border-radius: 50% !important;
+      object-fit: cover !important;
+      display: block !important;
+    }
+    .brand-emblem {
+      width: 40px !important;
+      height: 40px !important;
+      max-width: 40px !important;
+      max-height: 40px !important;
+      border-radius: 50% !important;
+      overflow: hidden !important;
+      flex-shrink: 0 !important;
+    }
+    .brand-emblem img {
+      width: 100% !important;
+      height: 100% !important;
+      border-radius: 50% !important;
+      object-fit: cover !important;
+    }
+    .login-brand-logo-wrap {
+      width: 48px !important;
+      height: 48px !important;
+      max-width: 48px !important;
+      max-height: 48px !important;
+      border-radius: 50% !important;
+      overflow: hidden !important;
+      flex-shrink: 0 !important;
+    }
+    .login-brand-logo {
+      width: 100% !important;
+      height: 100% !important;
+      border-radius: 50% !important;
+      object-fit: cover !important;
+    }
+    .app-content {
+      padding: 24px 28px 40px 28px;
+      flex: 1;
+      max-width: 1480px;
+      width: 100%;
+      margin: 0 auto;
+      box-sizing: border-box;
+    }
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      min-width: 0;
+    }
+    @media (max-width: 768px) {
+      .app-content { padding: 14px 16px 28px 16px; }
+    }
 
     input:-webkit-autofill,
     input:-webkit-autofill:hover, 
@@ -71,7 +143,7 @@
         <!-- Institutional Crest Header -->
         <div class="login-official-header">
           <div class="login-brand-logo-wrap">
-            <img src="./assets/img/logo.png" alt="PrakanGuard Emblem" class="login-brand-logo">
+            <img src="./assets/img/logo.png" alt="PrakanGuard Emblem" class="login-brand-logo" width="48" height="48">
           </div>
           <div class="login-brand-text">
             <div class="login-brand-org">ศูนย์ปฏิบัติการข้อมูลอุทกภัย จังหวัดสมุทรปราการ</div>
@@ -151,7 +223,7 @@
     <aside class="app-sidebar">
       <div class="brand-section sidebar-header">
         <div class="brand-emblem">
-          <img src="./assets/img/logo.png" alt="PrakanGuard">
+          <img src="./assets/img/logo.png" alt="PrakanGuard" width="40" height="40">
         </div>
         <div class="brand-titles">
           <span class="brand-title">PrakanGuard Admin</span>
@@ -164,8 +236,8 @@
 
       <!-- Active Officer Profile Bar -->
       <div class="sidebar-officer-card">
-        <div class="sidebar-officer-avatar">
-          <img id="sidebar-admin-avatar" src="./assets/img/admin01.jpg" alt="Admin Avatar">
+        <div class="sidebar-officer-avatar sidebar-officer-avatar-wrap">
+          <img id="sidebar-admin-avatar" src="./assets/img/logo.png" alt="Admin Emblem" width="36" height="36">
         </div>
         <div class="sidebar-officer-info">
           <div id="sidebar-greeting-title" class="sidebar-officer-role">เจ้าหน้าที่เวรปฏิบัติการ</div>
@@ -277,7 +349,7 @@
         </div>
       </header>
 
-      <div class="app-content">
+      <div class="app-content view-container">
 
         <!-- ================= VIEW 1: EXECUTIVE OVERVIEW ================= -->
         <section id="view-overview" class="view-section">
@@ -1261,8 +1333,8 @@
 
   <!-- Entry Script -->
   <script type="module">
-    import { initDashboard } from './assets/js/dashboard.js';
-    import { initWaterCursor } from './assets/js/waterCursor.js';
+    import { initDashboard } from './assets/js/dashboard.js?v=20261028_6';
+    import { initWaterCursor } from './assets/js/waterCursor.js?v=20261028_6';
     initDashboard();
     initWaterCursor();
   </script>

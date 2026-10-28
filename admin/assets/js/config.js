@@ -67,7 +67,7 @@ export const ADMIN_ACCOUNTS = {
     key: 'admin01',
     label: 'Admin 01',
     role: 'ผู้ดูแลระบบ 01',
-    avatar: './assets/img/admin01.jpg',
+    avatar: './assets/img/logo.png',
     pbkdf2: {
       salt: '3472bd271dd9cb13257023bcfbaca0bf',
       iter: 100000,
@@ -78,7 +78,7 @@ export const ADMIN_ACCOUNTS = {
     key: 'admin02',
     label: 'Admin 02',
     role: 'ผู้ดูแลระบบ 02',
-    avatar: './assets/img/admin02.jpg',
+    avatar: './assets/img/logo.png',
     pbkdf2: {
       salt: '9f7c91a733a54213f78a337cd165f202',
       iter: 100000,

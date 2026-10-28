@@ -284,11 +284,11 @@ export function publishActionToLiveClients(type, id, extra = {}) {
 
 let lastActionsSyncTs = 0;
 export async function syncLiveActionsLedger() {
-  if (Date.now() - lastActionsSyncTs < 4000) return;
+  if (Date.now() - lastActionsSyncTs < 5000) return;
   lastActionsSyncTs = Date.now();
   try {
     const ctl = new AbortController();
-    const timer = setTimeout(() => ctl.abort(), 3500);
+    const timer = setTimeout(() => ctl.abort(), 1400);
     const res = await fetch(`${LIVE_ACTIONS_TOPIC}/json?poll=1&since=all`, {
       cache: 'no-store',
       signal: ctl.signal
@@ -381,52 +381,42 @@ export async function fetchReports() {
     processList(mainLocal);
   } catch {}
 
-  // 2. Supabase Cloud
-  try {
-    const cols = REPORT_BASE_COLS + (caps.reportExt ? ',' + REPORT_EXT_COLS : '');
-    const data = await restAll(`reports?select=${cols}&order=timestamp.desc`);
-    if (Array.isArray(data) && data.length > 0) {
-      processList(data);
-    }
-  } catch (err) {
-    console.warn('[Admin API] Supabase fetchReports failed, using local fallback:', err);
-  }
-
-  // 3. Fallback: Local server /api/reports
-  try {
-    const res = await fetch('/api/reports');
-    if (res.ok) {
-      const data = await res.json();
-      if (Array.isArray(data) && data.length > 0) processList(data);
-    }
-  } catch {}
-
-  // 4. Live ntfy reports stream (so citizen reports sent from any device appear immediately)
-  try {
-    const ctl = new AbortController();
-    const t = setTimeout(() => ctl.abort(), 3500);
-    const topicRes = await fetch('https://ntfy.sh/prakanguard_spk_reports_v5/json?poll=1&since=all', {
-      cache: 'no-store',
-      signal: ctl.signal
-    }).catch(() => null);
-    clearTimeout(t);
-    if (topicRes && topicRes.ok) {
-      const text = await topicRes.text();
-      const lines = text.trim().split('\n');
-      const ntfyItems = [];
-      for (const line of lines) {
-        if (!line) continue;
-        try {
-          const entry = JSON.parse(line);
-          if (entry.event === 'message' && entry.message) {
-            const parsed = JSON.parse(entry.message);
-            if (parsed && parsed.id) ntfyItems.push(parsed);
+  // 2. Fetch Supabase Cloud & Live ntfy stream in parallel for sub-second speed
+  const cols = REPORT_BASE_COLS + (caps.reportExt ? ',' + REPORT_EXT_COLS : '');
+  const [supaData, ntfyItems] = await Promise.all([
+    restAll(`reports?select=${cols}&order=timestamp.desc`).catch(() => []),
+    (async () => {
+      try {
+        const ctl = new AbortController();
+        const t = setTimeout(() => ctl.abort(), 1400);
+        const topicRes = await fetch('https://ntfy.sh/prakanguard_spk_reports_v5/json?poll=1&since=all', {
+          cache: 'no-store',
+          signal: ctl.signal
+        }).catch(() => null);
+        clearTimeout(t);
+        if (topicRes && topicRes.ok) {
+          const text = await topicRes.text();
+          const lines = text.trim().split('\n');
+          const items = [];
+          for (const line of lines) {
+            if (!line) continue;
+            try {
+              const entry = JSON.parse(line);
+              if (entry.event === 'message' && entry.message) {
+                const parsed = JSON.parse(entry.message);
+                if (parsed && parsed.id) items.push(parsed);
+              }
+            } catch {}
           }
-        } catch {}
-      }
-      processList(ntfyItems);
-    }
-  } catch {}
+          return items;
+        }
+      } catch {}
+      return [];
+    })()
+  ]);
+
+  if (Array.isArray(supaData) && supaData.length > 0) processList(supaData);
+  if (Array.isArray(ntfyItems) && ntfyItems.length > 0) processList(ntfyItems);
 
   const results = Array.from(reportMap.values());
   results.sort((a, b) => (Number(b.timestamp) || 0) - (Number(a.timestamp) || 0));
@@ -798,49 +788,41 @@ export async function fetchFeedback() {
     if (Array.isArray(localFb)) localFb.forEach(addFb);
   } catch {}
 
-  // 1. Fetch from Supabase Cloud
-  try {
-    const data = await restAll('feedback?select=*&order=created_at.desc');
-    if (Array.isArray(data) && data.length > 0) {
-      data.forEach(addFb);
-    }
-  } catch (err) {
-    console.warn('[Admin API] Supabase fetchFeedback failed, using local/ntfy fallback:', err);
-  }
-
-  // 2. Fetch from Local Admin API
-  try {
-    const res = await fetch('/api/feedback');
-    if (res.ok) {
-      const data = await res.json();
-      if (Array.isArray(data) && data.length > 0) data.forEach(addFb);
-    }
-  } catch {}
-
-  // 3. Fallback: Fetch from Live Cloud Topics (ntfy)
-  try {
-    const ctl = new AbortController();
-    const t = setTimeout(() => ctl.abort(), 3500);
-    const topicRes = await fetch('https://ntfy.sh/prakanguard_spk_feedback_v5/json?poll=1&since=all', {
-      cache: 'no-store',
-      signal: ctl.signal
-    }).catch(() => null);
-    clearTimeout(t);
-    if (topicRes && topicRes.ok) {
-      const text = await topicRes.text();
-      const lines = text.trim().split('\n');
-      for (const line of lines) {
-        if (!line) continue;
-        try {
-          const entry = JSON.parse(line);
-          if (entry.event === 'message' && entry.message) {
-            const parsed = JSON.parse(entry.message);
-            if (parsed && parsed.id) addFb(parsed);
+  // 1. Fetch from Supabase Cloud & Live ntfy stream in parallel
+  const [supaFb, ntfyFb] = await Promise.all([
+    restAll('feedback?select=*&order=created_at.desc').catch(() => []),
+    (async () => {
+      try {
+        const ctl = new AbortController();
+        const t = setTimeout(() => ctl.abort(), 1400);
+        const topicRes = await fetch('https://ntfy.sh/prakanguard_spk_feedback_v5/json?poll=1&since=all', {
+          cache: 'no-store',
+          signal: ctl.signal
+        }).catch(() => null);
+        clearTimeout(t);
+        if (topicRes && topicRes.ok) {
+          const text = await topicRes.text();
+          const lines = text.trim().split('\n');
+          const items = [];
+          for (const line of lines) {
+            if (!line) continue;
+            try {
+              const entry = JSON.parse(line);
+              if (entry.event === 'message' && entry.message) {
+                const parsed = JSON.parse(entry.message);
+                if (parsed && parsed.id) items.push(parsed);
+              }
+            } catch (_) {}
           }
-        } catch (_) {}
-      }
-    }
-  } catch {}
+          return items;
+        }
+      } catch {}
+      return [];
+    })()
+  ]);
+
+  if (Array.isArray(supaFb) && supaFb.length > 0) supaFb.forEach(addFb);
+  if (Array.isArray(ntfyFb) && ntfyFb.length > 0) ntfyFb.forEach(addFb);
 
   const results = Array.from(fbMap.values());
   results.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));

@@ -370,16 +370,25 @@ body {
   z-index: 90;
 }
 
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
 .header-title-group h1 {
   font-size: 18px;
   font-weight: 700;
   letter-spacing: -0.3px;
   color: var(--text-main);
+  line-height: 1.25;
 }
 
 .header-title-group p {
   font-size: 11.5px;
   color: var(--text-muted);
+  margin-top: 2px;
 }
 
 .header-actions {
@@ -569,12 +578,14 @@ body {
 
 
 /* Page Content View Area */
+.app-content,
 .view-container {
   padding: 24px 28px 40px 28px;
   flex: 1;
   max-width: 1480px;
   width: 100%;
   margin: 0 auto;
+  box-sizing: border-box;
 }
 
 /* ==========================================================================
@@ -613,6 +624,13 @@ body {
   gap: 8px;
 }
 
+.card-subtitle {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 3px;
+  line-height: 1.4;
+}
+
 /* Grid Systems */
 .grid-5 {
   display: grid;
@@ -647,6 +665,7 @@ body {
   grid-template-columns: 2.2fr 1fr;
   gap: 18px;
   margin-bottom: 22px;
+  align-items: start;
 }
 
 /* ==========================================================================
@@ -4005,10 +4024,39 @@ input:-moz-autofill-preview,
 .login-official-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  margin-bottom: 18px;
-  padding-bottom: 14px;
+  justify-content: flex-start;
+  gap: 14px;
+  margin-bottom: 22px;
+  padding-bottom: 16px;
   border-bottom: 1px solid var(--border-subtle);
+}
+
+.login-brand-org {
+  font-size: 11px;
+  font-weight: 700;
+  color: #38bdf8;
+  letter-spacing: 0.3px;
+  margin-bottom: 2px;
+}
+
+.login-brand-title {
+  font-size: 20px;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.3px;
+  margin: 0;
+  line-height: 1.25;
+}
+
+[data-theme="light"] .login-brand-title {
+  color: #0f172a;
+}
+
+.login-official-header .login-subtitle {
+  margin: 3px 0 0 0;
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.35;
 }
 
 .login-official-badge {
@@ -4046,8 +4094,18 @@ input:-moz-autofill-preview,
   padding-top: 16px;
   border-top: 1px solid var(--border-subtle);
   display: flex;
-  flex-direction: column;
-  gap: 8px;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 11.5px;
+  color: var(--text-muted);
+  line-height: 1.45;
+}
+
+.login-official-footer svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: #38bdf8;
 }
 
 .login-security-item {
@@ -4070,19 +4128,35 @@ input:-moz-autofill-preview,
   gap: 10px;
 }
 
+.sidebar-officer-avatar,
 .sidebar-officer-avatar-wrap {
   position: relative;
   width: 36px;
   height: 36px;
+  min-width: 36px;
+  min-height: 36px;
+  max-width: 36px;
+  max-height: 36px;
+  border-radius: 50%;
+  overflow: hidden;
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.sidebar-officer-avatar-wrap img {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 1.5px solid var(--primary);
+.sidebar-officer-avatar img,
+.sidebar-officer-avatar-wrap img,
+#sidebar-admin-avatar {
+  width: 36px !important;
+  height: 36px !important;
+  max-width: 36px !important;
+  max-height: 36px !important;
+  border-radius: 50% !important;
+  object-fit: cover !important;
+  border: 1.5px solid #38bdf8;
+  display: block;
+  flex-shrink: 0;
 }
 
 .sidebar-officer-dot {
@@ -4094,6 +4168,16 @@ input:-moz-autofill-preview,
   border-radius: 50%;
   background: #10b981;
   border: 1.5px solid var(--bg-surface);
+}
+
+.sidebar-officer-status {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.65);
+  flex-shrink: 0;
+  margin-left: auto;
 }
 
 .sidebar-officer-info {
@@ -4202,28 +4286,39 @@ input:-moz-autofill-preview,
   letter-spacing: 0.4px;
 }
 
-.kpi-status-tag.tag-warn {
+.kpi-status-tag.tag-warn,
+.kpi-status-tag.warning {
   background: var(--warning-subtle);
   color: var(--warning-text);
   border: 1px solid var(--warning-border);
 }
 
-.kpi-status-tag.tag-ok {
+.kpi-status-tag.tag-ok,
+.kpi-status-tag.positive {
   background: var(--success-subtle);
   color: var(--success-text);
   border: 1px solid var(--success-border);
 }
 
-.kpi-status-tag.tag-info {
+.kpi-status-tag.tag-info,
+.kpi-status-tag.info {
   background: var(--primary-subtle);
   color: var(--primary-text);
   border: 1px solid var(--primary-border);
 }
 
-.kpi-status-tag.tag-neutral {
+.kpi-status-tag.tag-neutral,
+.kpi-status-tag.neutral {
   background: var(--bg-subtle);
   color: var(--text-muted);
   border: 1px solid var(--border-subtle);
+}
+
+.kpi-status-tag.tag-danger,
+.kpi-status-tag.alert {
+  background: var(--danger-subtle);
+  color: var(--danger-text);
+  border: 1px solid var(--danger-border);
 }
 
 .kpi-main-row {
