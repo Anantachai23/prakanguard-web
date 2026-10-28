@@ -16,6 +16,10 @@ export function getSupabaseUrl() {
       return custom.trim().replace(/\/+$/, '');
     }
   }
+  const envUrl = typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_SUPABASE_URL;
+  if (envUrl && String(envUrl).trim().startsWith('http')) {
+    return String(envUrl).trim().replace(/\/+$/, '');
+  }
   return 'https://uyszfmcumloxwuojmndy.supabase.co';
 }
 
@@ -28,6 +32,10 @@ export function getSupabaseKey() {
     } else if (custom && custom.trim()) {
       return custom.trim();
     }
+  }
+  const envKey = typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_SUPABASE_ANON_KEY;
+  if (envKey && String(envKey).trim()) {
+    return String(envKey).trim();
   }
   return 'sb_publishable_Y73zrfwvP8NnXyjJ5q6bSA_xYqU0jF7';
 }

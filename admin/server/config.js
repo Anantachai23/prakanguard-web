@@ -11,9 +11,9 @@ const FEEDBACK_FILE = path.join(DATA_DIR, 'feedback.json');
 const VISITORS_FILE = path.join(DATA_DIR, 'visitors.json');
 const TRASH_FILE = path.join(DATA_DIR, 'trash.json');
 
-// Supabase Cloud Database Configuration
-const SUPABASE_URL = 'https://uyszfmcumloxwuojmndy.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_Y73zrfwvP8NnXyjJ5q6bSA_xYqU0jF7';
+// Supabase Cloud Database Configuration (Reads from Environment Variables first)
+const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || 'https://uyszfmcumloxwuojmndy.supabase.co';
+const SUPABASE_KEY = process.env.SUPABASE_KEY || process.env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_Y73zrfwvP8NnXyjJ5q6bSA_xYqU0jF7';
 
 // Cloud ntfy.sh Topics (Multi-Topic with Fallbacks)
 const CLOUD_REPORTS_TOPICS = [

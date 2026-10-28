@@ -150,3 +150,14 @@ admin/*.bat
 admin/data/*.json
 !admin/data/.gitkeep
 
+
+# Strictly block all environment, certificate, and secret key files from Git
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.secret
+*.credentials
+secrets/

@@ -5,6 +5,7 @@
 
 import fs from 'fs';
 import path from 'path';
+import { execSync } from 'child_process';
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -124,6 +125,51 @@ try {
   assertCheck('Vite build plugin isolates admin static assets (no data/server leak)', viteConfigCode.includes("copyDirSync(assetsSrc, resolve(dest, 'assets'))") && !fs.existsSync(path.join(ROOT_DIR, 'dist/admin/data')) && !fs.existsSync(path.join(ROOT_DIR, 'dist/admin/server')));
 } catch (e) {
   assertCheck('Privacy & secret verification checks', false, e.message);
+}
+
+// 7. Git Repository Secret & Plaintext Password Leak Prevention
+console.log('\n--- 7. GIT REPOSITORY SECRET & CREDENTIAL GUARD ---');
+try {
+  const gitignoreCode = fs.readFileSync(path.join(ROOT_DIR, '.gitignore'), 'utf8');
+  assertCheck('.gitignore blocks .env and .env.* files', gitignoreCode.includes('.env') && gitignoreCode.includes('.env.*'));
+  assertCheck('.gitignore blocks private keys (*.pem, *.key, *.secret)', gitignoreCode.includes('*.pem') && gitignoreCode.includes('*.key'));
+  assertCheck('.gitignore blocks local runtime admin data (admin/data/*.json)', gitignoreCode.includes('admin/data/*.json'));
+
+  const trackedFiles = execSync('git ls-files', { cwd: ROOT_DIR, encoding: 'utf8' })
+    .trim()
+    .split(/\r?\n/)
+    .filter(Boolean);
+
+  const trackedEnvFiles = trackedFiles.filter(f => /(^|\/)\.env(\..+)?$/i.test(f) && !f.endsWith('.env.example'));
+  assertCheck('Zero .env secret files tracked in Git', trackedEnvFiles.length === 0, trackedEnvFiles.join(', '));
+
+  const trackedKeyFiles = trackedFiles.filter(f => /\.(pem|key|p12|pfx|secret|credentials)$/i.test(f) || /^admin\/data\/.*\.json$/i.test(f));
+  assertCheck('Zero private key or local admin data JSON files tracked in Git', trackedKeyFiles.length === 0, trackedKeyFiles.join(', '));
+
+  const forbiddenPatterns = [
+    { name: 'Historical plaintext password (Prakan#Guard2026!Secured*)', regex: /Prakan#Guard2026!Secured/i },
+    { name: 'Supabase secret service_role key (sb_secret_*)', regex: /sb_secret_[A-Za-z0-9_-]{15,}/ },
+    { name: 'Google / Gemini API key (AIzaSy*)', regex: /AIzaSy[A-Za-z0-9_-]{33}/ },
+    { name: 'OpenAI secret key (sk-*)', regex: /\bsk-(proj-)?[A-Za-z0-9]{20,}/ },
+    { name: 'GitHub Personal Access Token (ghp_* / github_pat_*)', regex: /\b(ghp_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{30,})\b/ },
+    { name: 'PEM Private Key block', regex: /-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----/ },
+    { name: 'Old revoked Supabase project key (sb_publishable_cwxpTPIFXkyWVgXksZASAQ_76DreEAw)', regex: /sb_publishable_cwxpTPIFXkyWVgXksZASAQ_76DreEAw/ }
+  ];
+
+  const textFiles = trackedFiles.filter(f => !/\.(png|jpg|jpeg|gif|svg|ico|woff2?|ttf|eot)$/i.test(f) && f !== 'package-lock.json' && f !== 'scripts/audit_security.js' && !f.includes('vendor/'));
+
+  for (const pat of forbiddenPatterns) {
+    const hits = [];
+    for (const f of textFiles) {
+      const full = path.join(ROOT_DIR, f);
+      if (!fs.existsSync(full)) continue;
+      const content = fs.readFileSync(full, 'utf8');
+      if (pat.regex.test(content)) hits.push(f);
+    }
+    assertCheck(`Zero leaks of ${pat.name}`, hits.length === 0, hits.join(', '));
+  }
+} catch (e) {
+  assertCheck('Git repository secret scan', false, e.message);
 }
 
 // Summary

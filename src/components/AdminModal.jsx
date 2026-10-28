@@ -854,18 +854,40 @@ export default function AdminModal({
     const targetAcc = is02 ? ADMIN_HASH_CONFIG.admin_prakanguard02 : ADMIN_HASH_CONFIG.admin_prakanguard01;
     let authValid = false;
 
-    // 1. ตรวจสอบกับรหัสผ่านที่เปลี่ยนใหม่และบันทึกไว้ใน localStorage (ถ้ามี)
+    // 0. ตรวจสอบผ่าน Supabase Server RPC (admin_verify) เป็นลำดับแรก
     try {
-      const savedCred = JSON.parse(localStorage.getItem('prakanguard_admin_credentials') || 'null');
-      if (savedCred && savedCred.salt && savedCred.hash) {
-        const computedSaved = await pbkdf2Hex(normP, savedCred.salt, savedCred.iter || 100000);
-        if (computedSaved === savedCred.hash) {
+      const rpcRes = await fetch(`${getSupabaseUrl()}/rest/v1/rpc/admin_verify`, {
+        method: 'POST',
+        headers: {
+          'apikey': getSupabaseKey(),
+          'Authorization': `Bearer ${getSupabaseKey()}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ p_username: targetAcc.username, p_password: normP }),
+        signal: AbortSignal.timeout(4500)
+      });
+      if (rpcRes.ok) {
+        const rpcData = await rpcRes.json();
+        if (rpcData && rpcData.ok) {
           authValid = true;
         }
       }
     } catch (_) {}
 
-    // 2. ตรวจสอบกับค่า Salted PBKDF2 Hash ค่าเริ่มต้น
+    // 1. ตรวจสอบกับรหัสผ่านที่เปลี่ยนใหม่และบันทึกไว้ใน localStorage (ถ้ามี)
+    if (!authValid) {
+      try {
+        const savedCred = JSON.parse(localStorage.getItem('prakanguard_admin_credentials') || 'null');
+        if (savedCred && savedCred.salt && savedCred.hash) {
+          const computedSaved = await pbkdf2Hex(normP, savedCred.salt, savedCred.iter || 100000);
+          if (computedSaved === savedCred.hash) {
+            authValid = true;
+          }
+        }
+      } catch (_) {}
+    }
+
+    // 2. ตรวจสอบกับค่า Salted PBKDF2 Hash สำรอง
     if (!authValid) {
       try {
         const computed = await pbkdf2Hex(normP, targetAcc.salt, targetAcc.iter);
