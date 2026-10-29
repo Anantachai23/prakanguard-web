@@ -10,7 +10,8 @@ export function initWaterCursor() {
   const mediaQuery = window.matchMedia('(hover: hover) and (pointer: fine)');
   if (!mediaQuery.matches) return;
 
-  document.body.classList.add('water-cursor-enabled');
+  // Ensure legacy cursor:none class is never active
+  document.body.classList.remove('water-cursor-enabled');
 
   // 1. Create Canvas Overlay for Splash & Ripples on Click
   const canvas = document.createElement('canvas');

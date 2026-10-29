@@ -218,12 +218,11 @@ export default function WaterCursor() {
   }, [runAnimationLoop]);
 
   useEffect(() => {
+    document.body.classList.remove('water-cursor-enabled');
     if (!isFinePointer) {
-      document.body.classList.remove('water-cursor-enabled');
       return;
     }
 
-    document.body.classList.add('water-cursor-enabled');
     resizeCanvas();
     window.addEventListener('resize', resizeCanvas, { passive: true });
 

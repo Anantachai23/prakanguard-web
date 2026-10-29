@@ -4003,22 +4003,6 @@ input:-moz-autofill-preview,
 }
 
 /* ==========================================================================
-   Desktop Liquid Water Droplet Cursor & Smooth Interactivity
-   ========================================================================== */
-@media (hover: hover) and (pointer: fine) {
-  body.water-cursor-enabled,
-  body.water-cursor-enabled *:not(input):not(textarea):not([contenteditable="true"]) {
-    cursor: none !important;
-  }
-
-  body.water-cursor-enabled input,
-  body.water-cursor-enabled textarea,
-  body.water-cursor-enabled [contenteditable="true"] {
-    cursor: text !important;
-  }
-}
-
-/* ==========================================================================
    Enterprise Operations Console Extensions (Official Corporate UI)
    ========================================================================== */
 .login-official-header {
@@ -4375,7 +4359,6 @@ input:-moz-autofill-preview,
 
   html,
   body,
-  body.water-cursor-enabled,
   .leaflet-grab,
   .leaflet-container {
     cursor: var(--cursor-water-default) !important;
@@ -4389,6 +4372,7 @@ input:-moz-autofill-preview,
   summary,
   .btn,
   .nav-item,
+  .kpi-clickable,
   .cursor-pointer,
   .leaflet-interactive,
   [onclick],
@@ -4396,7 +4380,8 @@ input:-moz-autofill-preview,
   button *,
   [role="button"] *,
   .btn *,
-  .nav-item * {
+  .nav-item *,
+  .kpi-clickable * {
     cursor: var(--cursor-water-pointer) !important;
   }
 
