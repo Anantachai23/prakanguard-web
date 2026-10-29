@@ -78,21 +78,18 @@ export default function RainForecast24hCard({
 
   const isRainingNow = activeForecast.isRainingNow;
   const status = activeForecast.status || (isRainingNow ? 'ฝนตกในพื้นที่' : 'โอกาสฝนตกปานกลาง');
-  const maxProb = activeForecast.maxProbability ?? 50;
+  const todayProb = activeForecast.todayProbability ?? activeForecast.maxProbability ?? 35;
+  const tomorrowProb = activeForecast.tomorrowProbability ?? 50;
 
-  // Clean time window text for today (คาดการณ์ล่วงหน้า ไม่แสดงว่ากำลังตก)
-  let rainTimeToday = "ไม่มีแนวโน้มฝนตกหนัก";
-  if (activeForecast.startTimeText && activeForecast.startTimeText !== 'ไม่มีแนวโน้มฝนตกหนัก') {
-    rainTimeToday = activeForecast.startTimeText.replace('เริ่มราว ', '').replace('เริ่มประมาณ ', '');
-  } else if (maxProb >= 60) {
-    rainTimeToday = "ช่วงบ่าย-เย็น (15:00 - 18:30 น.)";
-  } else if (maxProb >= 40) {
-    rainTimeToday = "ช่วงเย็น-ค่ำ (16:30 - 19:30 น.)";
+  let rainTimeToday = activeForecast.todayTimeWindow || activeForecast.startTimeText || "ไม่มีแนวโน้มฝนตกหนัก";
+  if (rainTimeToday.startsWith('เริ่มราว ') || rainTimeToday.startsWith('เริ่มประมาณ ')) {
+    rainTimeToday = rainTimeToday.replace('เริ่มราว ', '').replace('เริ่มประมาณ ', '');
   }
+  const rainTimeTomorrow = activeForecast.tomorrowTimeWindow || "15:00 - 18:00 น.";
 
   // 6 Districts List (ดึงตรงจาก telemetry จริงของ Open-Meteo ไม่ใช้ข้อมูลจำลอง)
   const defaultTimeWindow = rainTimeToday;
-  const defaultDuration = maxProb >= 50 ? "คาดการณ์ตกต่อเนื่อง ~30 - 60 นาที" : "ไม่มีสัญญาณฝนต่อเนื่อง";
+  const defaultDuration = todayProb >= 50 ? "คาดการณ์ตกต่อเนื่อง ~30 - 60 นาที" : "ไม่มีสัญญาณฝนต่อเนื่อง";
   const storedDistrictTemps = (() => {
     try {
       const s = localStorage.getItem('prakanguard_live_district_temps');
@@ -105,12 +102,12 @@ export default function RainForecast24hCard({
     : (Array.isArray(storedDistrictTemps) && storedDistrictTemps.length > 0)
       ? storedDistrictTemps
       : [
-          { district: "เมืองสมุทรปราการ", probability: maxProb, temperature: 26, status: activeForecast?.status || "ปกติ", timeWindow: defaultTimeWindow, durationText: defaultDuration },
-          { district: "บางพลี", probability: maxProb, temperature: 26, status: activeForecast?.status || "ปกติ", timeWindow: defaultTimeWindow, durationText: defaultDuration },
-          { district: "พระประแดง", probability: maxProb, temperature: 26, status: activeForecast?.status || "ปกติ", timeWindow: defaultTimeWindow, durationText: defaultDuration },
-          { district: "บางเสาธง", probability: maxProb, temperature: 25, status: activeForecast?.status || "ปกติ", timeWindow: defaultTimeWindow, durationText: defaultDuration },
-          { district: "บางบ่อ", probability: maxProb, temperature: 25, status: activeForecast?.status || "ปกติ", timeWindow: defaultTimeWindow, durationText: defaultDuration },
-          { district: "พระสมุทรเจดีย์", probability: maxProb, temperature: 27, status: activeForecast?.status || "ปกติ", timeWindow: defaultTimeWindow, durationText: defaultDuration }
+          { district: "เมืองสมุทรปราการ", probability: todayProb, todayProbability: todayProb, todayTimeWindow: defaultTimeWindow, tomorrowProbability: tomorrowProb, tomorrowTimeWindow: rainTimeTomorrow, temperature: 26, status: activeForecast?.status || "ปกติ", timeWindow: defaultTimeWindow, durationText: defaultDuration },
+          { district: "บางพลี", probability: todayProb, todayProbability: todayProb, todayTimeWindow: defaultTimeWindow, tomorrowProbability: tomorrowProb, tomorrowTimeWindow: rainTimeTomorrow, temperature: 26, status: activeForecast?.status || "ปกติ", timeWindow: defaultTimeWindow, durationText: defaultDuration },
+          { district: "พระประแดง", probability: todayProb, todayProbability: todayProb, todayTimeWindow: defaultTimeWindow, tomorrowProbability: tomorrowProb, tomorrowTimeWindow: rainTimeTomorrow, temperature: 26, status: activeForecast?.status || "ปกติ", timeWindow: defaultTimeWindow, durationText: defaultDuration },
+          { district: "บางเสาธง", probability: todayProb, todayProbability: todayProb, todayTimeWindow: defaultTimeWindow, tomorrowProbability: tomorrowProb, tomorrowTimeWindow: rainTimeTomorrow, temperature: 25, status: activeForecast?.status || "ปกติ", timeWindow: defaultTimeWindow, durationText: defaultDuration },
+          { district: "บางบ่อ", probability: todayProb, todayProbability: todayProb, todayTimeWindow: defaultTimeWindow, tomorrowProbability: tomorrowProb, tomorrowTimeWindow: rainTimeTomorrow, temperature: 25, status: activeForecast?.status || "ปกติ", timeWindow: defaultTimeWindow, durationText: defaultDuration },
+          { district: "พระสมุทรเจดีย์", probability: todayProb, todayProbability: todayProb, todayTimeWindow: defaultTimeWindow, tomorrowProbability: tomorrowProb, tomorrowTimeWindow: rainTimeTomorrow, temperature: 27, status: activeForecast?.status || "ปกติ", timeWindow: defaultTimeWindow, durationText: defaultDuration }
         ];
 
   const cleanDistrictName = (dName) => {
@@ -188,7 +185,7 @@ export default function RainForecast24hCard({
                 </span>
               )}
               <span className={`text-[10px] block truncate ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                {todayLabel} • {rainTimeToday}
+                วันนี้ {todayProb}% ({rainTimeToday}) • พรุ่งนี้ {tomorrowProb}% ({rainTimeTomorrow})
               </span>
             </div>
           </button>
@@ -372,12 +369,49 @@ export default function RainForecast24hCard({
         </div>
 
         {/* ========================================================= */}
-        {/* COMPACT LIST VIEW แนวตั้ง (แสดงชื่อเต็ม ไม่เบียด ไม่ล้น 'อำเน...') */}
+        {/* PROVINCE SUMMARY: TODAY vs TOMORROW                       */}
+        {/* ========================================================= */}
+        <div className="mt-2 grid grid-cols-2 gap-1.5">
+          <div className={`p-2 rounded-md border ${
+            isDark ? 'bg-slate-850/90 border-slate-800' : 'bg-sky-50/60 border-sky-200/80'
+          }`}>
+            <div className="flex items-center justify-between gap-1">
+              <span className="text-[10px] font-bold text-sky-600 dark:text-sky-400">วันนี้</span>
+              <span className={`text-xs font-black font-mono ${
+                todayProb >= 60 ? 'text-rose-600 dark:text-rose-400' : todayProb >= 35 ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400'
+              }`}>
+                โอกาส {todayProb}%
+              </span>
+            </div>
+            <div className="text-[10px] text-slate-600 dark:text-slate-300 mt-0.5 truncate font-medium">
+              🕒 {rainTimeToday}
+            </div>
+          </div>
+
+          <div className={`p-2 rounded-md border ${
+            isDark ? 'bg-slate-850/90 border-slate-800' : 'bg-indigo-50/50 border-indigo-200/80'
+          }`}>
+            <div className="flex items-center justify-between gap-1">
+              <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400">พรุ่งนี้</span>
+              <span className={`text-xs font-black font-mono ${
+                tomorrowProb >= 60 ? 'text-rose-600 dark:text-rose-400' : tomorrowProb >= 35 ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400'
+              }`}>
+                โอกาส {tomorrowProb}%
+              </span>
+            </div>
+            <div className="text-[10px] text-slate-600 dark:text-slate-300 mt-0.5 truncate font-medium">
+              🕒 {rainTimeTomorrow}
+            </div>
+          </div>
+        </div>
+
+        {/* ========================================================= */}
+        {/* COMPACT LIST VIEW แนวตั้ง (แสดงชื่อเต็ม แยกวันนี้/พรุ่งนี้ชัดเจน) */}
         {/* ========================================================= */}
         <div className="mt-2.5">
           <div className="flex items-center justify-between mb-1.5">
             <span className={`text-[11px] font-bold block ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-              ความเสี่ยงฝนตกแยก 6 อำเภอ (จ.สมุทรปราการ):
+              โอกาสฝนตกและช่วงเวลา แยก 6 อำเภอ:
             </span>
             {lastUpdatedTime && (
               <span className={`text-[10px] font-mono ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
@@ -391,81 +425,83 @@ export default function RainForecast24hCard({
               const raw = d.district.replace(/^(อ\.|อำเภอ)/, '').trim();
               const fullName = raw.includes('เมือง') ? 'อำเภอเมืองสมุทรปราการ' : `อำเภอ${raw}`;
               const isMatched = userDistrict && (userDistrict.includes(raw) || raw.includes(userDistrict.replace(/^(อ\.|อำเภอ)/, '').trim()));
+              const dTodayProb = d.todayProbability ?? d.probability ?? todayProb;
+              const dTodayWin = d.todayTimeWindow || d.timeWindow || rainTimeToday;
+              const dTomProb = d.tomorrowProbability ?? tomorrowProb;
+              const dTomWin = d.tomorrowTimeWindow || rainTimeTomorrow;
 
               return (
                 <div
                   key={idx}
-                  className={`p-2.5 rounded-lg border text-xs transition-colors flex items-start sm:items-center justify-between gap-2.5 ${
+                  className={`p-2.5 rounded-lg border text-xs transition-colors ${
                     isMatched
                       ? (isDark ? 'bg-blue-950/60 border-blue-700 text-cyan-200' : 'bg-blue-50/80 border-blue-300 text-blue-950 font-medium')
                       : (isDark ? 'bg-slate-850/50 border-slate-800 text-slate-300 hover:bg-slate-800/60' : 'bg-slate-50/80 border-slate-200 text-slate-700 hover:bg-slate-100/70')
                   }`}
                 >
-                  {/* Left: Icon + Full District Name + Temperature + Accurate Time Window */}
-                  <div className="flex items-start gap-2 min-w-0 flex-1">
-                    <CivicWeather className="w-4 h-4 text-blue-500 dark:text-cyan-400 shrink-0 mt-0.5" />
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className={`font-semibold text-xs whitespace-nowrap ${
-                          isDark ? 'text-slate-100' : 'text-slate-900'
-                        } ${isMatched ? 'font-bold text-blue-700 dark:text-cyan-300' : ''}`}>
-                          {fullName}
+                  <div className="flex items-center justify-between gap-2 pb-1.5 border-b border-slate-200/60 dark:border-slate-800">
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <CivicWeather className="w-3.5 h-3.5 text-blue-500 dark:text-cyan-400 shrink-0" />
+                      <span className={`font-semibold text-xs truncate ${
+                        isDark ? 'text-slate-100' : 'text-slate-900'
+                      } ${isMatched ? 'font-bold text-blue-700 dark:text-cyan-300' : ''}`}>
+                        {fullName}
+                      </span>
+                      {d.isRainingNow && (
+                        <span className="text-[9px] px-1.5 py-0.5 rounded font-bold bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/30 shrink-0 flex items-center gap-1">
+                          <span className="inline-block w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
+                          ตกขณะนี้
                         </span>
-                        {d.temperature && (
-                          <span className="text-[10px] font-mono font-medium text-slate-500 dark:text-slate-400 shrink-0">
-                            {d.temperature}°C
-                          </span>
-                        )}
-                        {d.isRainingNow && (
-                          <span className="text-[9px] px-1.5 py-0.5 rounded font-bold bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/30 shrink-0 flex items-center gap-1">
-                            <span className="inline-block w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
-                            ฝนตกขณะนี้
-                          </span>
-                        )}
-                        {d.rainIntensityText && !d.isRainingNow && d.hasForecastRain && (
-                          <span className="text-[9px] px-1 py-0.5 rounded text-slate-500 dark:text-slate-400 font-medium bg-slate-100 dark:bg-slate-800">
-                            {d.rainIntensityText}
-                          </span>
-                        )}
-                        {!d.isRainingNow && !d.hasForecastRain && d.precipitationMm > 0 && (
-                          <span className="text-[9px] px-1 py-0.5 rounded text-blue-500 dark:text-cyan-400 font-medium bg-blue-50 dark:bg-blue-950/50">
-                            ละอองฝนโปรยปราย
-                          </span>
-                        )}
-                      </div>
-
-                      {/* Time Window & Duration - Fully Readable & Multi-line Capable without Ellipsis */}
-                      <div className="text-[10.5px] text-slate-600 dark:text-slate-400 mt-1 leading-relaxed break-words">
-                        <div className="flex items-start gap-1.5">
-                          <span className="shrink-0 text-xs">⏱️</span>
-                          <div className="break-words leading-snug min-w-0">
-                            <span className="font-semibold text-slate-800 dark:text-slate-200">
-                              {d.timeWindow || 'ไม่มีแนวโน้มฝนตกหนัก'}
-                            </span>
-                            {d.durationText ? (
-                              <span className="text-slate-500 dark:text-slate-400 font-normal">
-                                {' '}({d.durationText})
-                              </span>
-                            ) : null}
-                          </div>
-                        </div>
-                      </div>
+                      )}
                     </div>
+                    {d.temperature && (
+                      <span className="text-[10px] font-mono font-semibold text-slate-500 dark:text-slate-400 shrink-0">
+                        {d.temperature}°C
+                      </span>
+                    )}
                   </div>
 
-                  {/* Right: Rain Probability Badge */}
-                  <div className="flex items-center gap-1.5 shrink-0 self-start sm:self-center mt-0.5 sm:mt-0">
-                    <span className={`text-[10.5px] px-2.5 py-1 rounded-md font-bold border shrink-0 text-center shadow-xs ${
-                      d.isRainingNow
-                        ? (isDark ? 'bg-rose-950/80 text-rose-300 border-rose-800' : 'bg-rose-50 text-rose-900 border-rose-300')
-                        : d.probability >= 60 
-                        ? (isDark ? 'bg-amber-950/80 text-amber-300 border-amber-800' : 'bg-amber-50 text-amber-900 border-amber-300')
-                        : d.probability >= 40
-                        ? (isDark ? 'bg-blue-950/80 text-cyan-300 border-blue-800' : 'bg-blue-50 text-blue-800 border-blue-200')
-                        : (isDark ? 'bg-slate-800 text-slate-300 border-slate-700' : 'bg-slate-100 text-slate-700 border-slate-200')
-                    }`}>
-                      {d.isRainingNow ? 'ตกขณะนี้' : `ฝน ${d.probability}%`}
-                    </span>
+                  {/* แถวเปรียบเทียบ วันนี้ vs พรุ่งนี้ */}
+                  <div className="mt-1.5 space-y-1 text-[10.5px]">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-sky-500/15 text-sky-600 dark:text-sky-300 border border-sky-500/25 shrink-0">
+                          วันนี้
+                        </span>
+                        <span className="text-slate-700 dark:text-slate-300 truncate">
+                          {dTodayWin}
+                        </span>
+                      </div>
+                      <span className={`font-mono font-bold shrink-0 ${
+                        d.isRainingNow || dTodayProb >= 60
+                          ? 'text-rose-600 dark:text-rose-400'
+                          : dTodayProb >= 35
+                          ? 'text-amber-600 dark:text-amber-400'
+                          : 'text-emerald-600 dark:text-emerald-400'
+                      }`}>
+                        {d.isRainingNow ? `ตกขณะนี้ (${dTodayProb}%)` : `ฝน ${dTodayProb}%`}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-indigo-500/15 text-indigo-600 dark:text-indigo-300 border border-indigo-500/25 shrink-0">
+                          พรุ่งนี้
+                        </span>
+                        <span className="text-slate-700 dark:text-slate-300 truncate">
+                          {dTomWin}
+                        </span>
+                      </div>
+                      <span className={`font-mono font-bold shrink-0 ${
+                        dTomProb >= 60
+                          ? 'text-rose-600 dark:text-rose-400'
+                          : dTomProb >= 35
+                          ? 'text-amber-600 dark:text-amber-400'
+                          : 'text-emerald-600 dark:text-emerald-400'
+                      }`}>
+                        ฝน {dTomProb}%
+                      </span>
+                    </div>
                   </div>
                 </div>
               );

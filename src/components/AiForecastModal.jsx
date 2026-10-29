@@ -118,30 +118,25 @@ export default function AiForecastModal({ isOpen, onClose, userDistrict, theme =
   if (!isOpen) return null;
 
   const todayDate = currentDate;
+  const tomorrowDate = new Date(todayDate.getTime() + 24 * 60 * 60 * 1000);
   const thaiDays = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'];
   const thaiMonths = [
     'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
     'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'
   ];
+  const thaiShortMonths = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
   const thaiYear = todayDate.getFullYear() + 543;
   const todayTitle = `วัน${thaiDays[todayDate.getDay()]}ที่ ${todayDate.getDate()} ${thaiMonths[todayDate.getMonth()]} ${thaiYear}`;
+  const todayShortLabel = `วันนี้ (${todayDate.getDate()} ${thaiShortMonths[todayDate.getMonth()]})`;
+  const tomorrowShortLabel = `พรุ่งนี้ (${tomorrowDate.getDate()} ${thaiShortMonths[tomorrowDate.getMonth()]})`;
 
   const isRainingNow = Boolean(weather?.forecast24h?.isRainingNow);
-  const maxProb = weather?.forecast24h?.maxProbability ?? weather?.rainProbabilityToday ?? 50;
+  const todayProb = weather?.forecast24h?.todayProbability ?? weather?.rainProbabilityToday ?? 30;
+  const todayTimeWindow = weather?.forecast24h?.todayTimeWindow ?? weather?.rainTimeWindowToday ?? "ไม่มีแนวโน้มฝนตกหนัก";
+  const tomorrowProb = weather?.forecast24h?.tomorrowProbability ?? weather?.rainProbabilityTomorrow ?? 50;
+  const tomorrowTimeWindow = weather?.forecast24h?.tomorrowTimeWindow ?? weather?.rainTimeWindowTomorrow ?? "15:00 - 18:00 น.";
 
-  // ค้นหาช่วงเวลาที่คาดการณ์ว่าฝนจะตก
-  let rainTimeToday = "ไม่มีแนวโน้มฝนตกหนัก";
-  if (weather?.forecast24h?.startTimeText && weather.forecast24h.startTimeText !== 'ไม่มีแนวโน้มฝนตกหนัก') {
-    rainTimeToday = weather.forecast24h.startTimeText.replace('เริ่มราว ', '').replace('เริ่มประมาณ ', '');
-  } else if (weather?.peakHour) {
-    rainTimeToday = weather.peakHour;
-  } else if (maxProb >= 60) {
-    rainTimeToday = "ช่วงบ่ายถึงเย็น (15:00 - 18:30 น.)";
-  } else if (maxProb >= 40) {
-    rainTimeToday = "ช่วงเย็นถึงค่ำ (16:30 - 19:30 น.)";
-  }
-
-  const defaultDuration = maxProb >= 50 ? "คาดการณ์ตกต่อเนื่อง ~30 - 60 นาที" : "ไม่มีสัญญาณฝนต่อเนื่อง";
+  const defaultDuration = todayProb >= 50 ? "คาดการณ์ตกต่อเนื่อง ~30 - 60 นาที" : "ไม่มีสัญญาณฝนต่อเนื่อง";
 
   // ดึงข้อมูล 6 อำเภอ
   const storedDistrictTemps = (() => {
@@ -156,12 +151,12 @@ export default function AiForecastModal({ isOpen, onClose, userDistrict, theme =
     : (Array.isArray(storedDistrictTemps) && storedDistrictTemps.length > 0)
       ? storedDistrictTemps
       : [
-          { district: "เมืองสมุทรปราการ", probability: maxProb, temperature: 29, status: weather?.weatherDesc || "ปกติ", timeWindow: rainTimeToday, durationText: defaultDuration },
-          { district: "บางพลี", probability: maxProb, temperature: 29, status: weather?.weatherDesc || "ปกติ", timeWindow: rainTimeToday, durationText: defaultDuration },
-          { district: "พระประแดง", probability: maxProb, temperature: 29, status: weather?.weatherDesc || "ปกติ", timeWindow: rainTimeToday, durationText: defaultDuration },
-          { district: "บางเสาธง", probability: maxProb, temperature: 28, status: weather?.weatherDesc || "ปกติ", timeWindow: rainTimeToday, durationText: defaultDuration },
-          { district: "บางบ่อ", probability: maxProb, temperature: 28, status: weather?.weatherDesc || "ปกติ", timeWindow: rainTimeToday, durationText: defaultDuration },
-          { district: "พระสมุทรเจดีย์", probability: maxProb, temperature: 29, status: weather?.weatherDesc || "ปกติ", timeWindow: rainTimeToday, durationText: defaultDuration }
+          { district: "เมืองสมุทรปราการ", probability: todayProb, todayProbability: todayProb, todayTimeWindow, tomorrowProbability: tomorrowProb, tomorrowTimeWindow, temperature: 29, status: weather?.weatherDesc || "ปกติ", timeWindow: todayTimeWindow, durationText: defaultDuration },
+          { district: "บางพลี", probability: todayProb, todayProbability: todayProb, todayTimeWindow, tomorrowProbability: tomorrowProb, tomorrowTimeWindow, temperature: 29, status: weather?.weatherDesc || "ปกติ", timeWindow: todayTimeWindow, durationText: defaultDuration },
+          { district: "พระประแดง", probability: todayProb, todayProbability: todayProb, todayTimeWindow, tomorrowProbability: tomorrowProb, tomorrowTimeWindow, temperature: 29, status: weather?.weatherDesc || "ปกติ", timeWindow: todayTimeWindow, durationText: defaultDuration },
+          { district: "บางเสาธง", probability: todayProb, todayProbability: todayProb, todayTimeWindow, tomorrowProbability: tomorrowProb, tomorrowTimeWindow, temperature: 28, status: weather?.weatherDesc || "ปกติ", timeWindow: todayTimeWindow, durationText: defaultDuration },
+          { district: "บางบ่อ", probability: todayProb, todayProbability: todayProb, todayTimeWindow, tomorrowProbability: tomorrowProb, tomorrowTimeWindow, temperature: 28, status: weather?.weatherDesc || "ปกติ", timeWindow: todayTimeWindow, durationText: defaultDuration },
+          { district: "พระสมุทรเจดีย์", probability: todayProb, todayProbability: todayProb, todayTimeWindow, tomorrowProbability: tomorrowProb, tomorrowTimeWindow, temperature: 29, status: weather?.weatherDesc || "ปกติ", timeWindow: todayTimeWindow, durationText: defaultDuration }
         ];
 
   const cleanDistrictName = (dName) => {
@@ -272,109 +267,158 @@ export default function AiForecastModal({ isOpen, onClose, userDistrict, theme =
             </div>
           ) : (
             <>
-              {/* 1. HERO WEATHER & RAIN RISK CARD */}
+              {/* 1. HERO WEATHER & SEPARATED TODAY / TOMORROW RAIN RISK CARDS */}
               <div className={`p-2.5 sm:p-3.5 rounded-lg sm:rounded-xl border relative overflow-hidden transition-all ${
                 isDark 
                   ? 'bg-gradient-to-br from-slate-900/90 via-slate-900/60 to-blue-950/40 border-slate-800' 
                   : 'bg-gradient-to-br from-blue-50/70 via-sky-50/40 to-indigo-50/30 border-blue-200/70 shadow-2xs'
               }`}>
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-4">
-                  {/* Left: Main Temp & Sky */}
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight font-mono text-slate-900 dark:text-white">
-                        {weather?.temp ?? 29}°C
-                      </span>
-                      <div className="flex flex-col">
-                        <span className={`text-[10px] sm:text-xs font-bold px-1.5 py-0.5 rounded border inline-flex items-center gap-1 ${
-                          isDark ? 'bg-slate-800 text-slate-200 border-slate-700' : 'bg-white text-slate-700 border-slate-200 shadow-2xs'
-                        }`}>
-                          {getWeatherIcon(weather?.weatherCode ?? 2, weather?.precipitation ?? 0)}
-                          <span className="truncate max-w-[140px] sm:max-w-none">{weather?.weatherDesc || 'ท้องฟ้าโปร่ง มีเมฆบางส่วน'}</span>
-                        </span>
-                        {weather?.feelsLike && (
-                          <span className={`text-[9.5px] sm:text-[10px] mt-0.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                            รู้สึกเหมือน {weather.feelsLike}°C
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Micro Telemetry Badges */}
-                    <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap mt-2 text-[9px] sm:text-[10px]">
-                      <span className={`px-1.5 py-0.5 rounded border flex items-center gap-1 ${
-                        isDark ? 'bg-slate-850 text-slate-300 border-slate-700' : 'bg-white/90 text-slate-600 border-slate-200'
+                {/* Top Row: Current Temperature & Telemetry */}
+                <div className="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-slate-200/70 dark:border-slate-800">
+                  <div className="flex items-center gap-2.5">
+                    <span className="text-2xl sm:text-3xl font-extrabold tracking-tight font-mono text-slate-900 dark:text-white">
+                      {weather?.temp ?? 29}°C
+                    </span>
+                    <div className="flex flex-col">
+                      <span className={`text-[10px] sm:text-xs font-bold px-1.5 py-0.5 rounded border inline-flex items-center gap-1 ${
+                        isDark ? 'bg-slate-800 text-slate-200 border-slate-700' : 'bg-white text-slate-700 border-slate-200 shadow-2xs'
                       }`}>
-                        <Droplets className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-sky-500 shrink-0" />
-                        <span>ความชื้น {weather?.humidity ?? 72}%</span>
+                        {getWeatherIcon(weather?.weatherCode ?? 2, weather?.precipitation ?? 0)}
+                        <span>{weather?.weatherDesc || 'ท้องฟ้าโปร่ง มีเมฆบางส่วน'}</span>
                       </span>
-                      <span className={`px-1.5 py-0.5 rounded border flex items-center gap-1 ${
-                        isDark ? 'bg-slate-850 text-slate-300 border-slate-700' : 'bg-white/90 text-slate-600 border-slate-200'
-                      }`}>
-                        <Wind className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-cyan-500 shrink-0" />
-                        <span>ลม {weather?.windSpeed ?? 14} กม./ชม.</span>
-                      </span>
-                      {weather?.thunderstormRisk && (
-                        <span className={`px-1.5 py-0.5 rounded border flex items-center gap-1 ${
-                          weather.thunderstormRisk === 'สูง' || weather.thunderstormRisk === 'สูงมาก'
-                            ? (isDark ? 'bg-amber-950/80 text-amber-300 border-amber-800' : 'bg-amber-50 text-amber-800 border-amber-200')
-                            : (isDark ? 'bg-slate-850 text-slate-300 border-slate-700' : 'bg-white/90 text-slate-600 border-slate-200')
-                        }`}>
-                          <Zap className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-amber-500 shrink-0" />
-                          <span>ฟ้าคะนอง: {weather.thunderstormRisk}</span>
+                      {weather?.feelsLike && (
+                        <span className={`text-[9.5px] sm:text-[10px] mt-0.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                          รู้สึกเหมือน {weather.feelsLike}°C
                         </span>
                       )}
                     </div>
                   </div>
 
-                  {/* Right: Rain Probability & Peak Status */}
-                  <div className={`p-2 sm:p-3 rounded-lg border flex flex-col justify-center sm:min-w-[190px] shrink-0 ${
+                  {/* Micro Telemetry Badges */}
+                  <div className="flex items-center gap-1.5 flex-wrap text-[9.5px] sm:text-[10px]">
+                    <span className={`px-1.5 py-0.5 rounded border flex items-center gap-1 ${
+                      isDark ? 'bg-slate-850 text-slate-300 border-slate-700' : 'bg-white/90 text-slate-600 border-slate-200'
+                    }`}>
+                      <Droplets className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-sky-500 shrink-0" />
+                      <span>ความชื้น {weather?.humidity ?? 72}%</span>
+                    </span>
+                    <span className={`px-1.5 py-0.5 rounded border flex items-center gap-1 ${
+                      isDark ? 'bg-slate-850 text-slate-300 border-slate-700' : 'bg-white/90 text-slate-600 border-slate-200'
+                    }`}>
+                      <Wind className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-cyan-500 shrink-0" />
+                      <span>ลม {weather?.windSpeedKmh ?? weather?.windSpeed ?? 14} กม./ชม.</span>
+                    </span>
+                    {weather?.thunderstormRisk && (
+                      <span className={`px-1.5 py-0.5 rounded border flex items-center gap-1 ${
+                        weather.thunderstormRisk === 'สูง' || weather.thunderstormRisk === 'สูงมาก'
+                          ? (isDark ? 'bg-amber-950/80 text-amber-300 border-amber-800' : 'bg-amber-50 text-amber-800 border-amber-200')
+                          : (isDark ? 'bg-slate-850 text-slate-300 border-slate-700' : 'bg-white/90 text-slate-600 border-slate-200')
+                      }`}>
+                        <Zap className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-amber-500 shrink-0" />
+                        <span>ฟ้าคะนอง: {weather.thunderstormRisk}</span>
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Bottom Row: Explicitly Separated TODAY vs TOMORROW Forecast Cards */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-2.5 mt-2.5">
+                  {/* Card 1: TODAY (วันนี้) */}
+                  <div className={`p-2.5 rounded-lg border flex flex-col justify-between ${
                     isRainingNow
                       ? (isDark ? 'bg-rose-950/50 border-rose-800/80' : 'bg-rose-50 border-rose-200')
-                      : maxProb >= 60
+                      : todayProb >= 60
                       ? (isDark ? 'bg-amber-950/40 border-amber-800/70' : 'bg-amber-50 border-amber-200')
-                      : (isDark ? 'bg-emerald-950/30 border-emerald-800/60' : 'bg-emerald-50/80 border-emerald-200')
+                      : (isDark ? 'bg-slate-900/90 border-slate-700/80' : 'bg-white border-slate-200/90')
                   }`}>
-                    <div className="flex items-center justify-between gap-1 mb-0.5">
-                      <span className={`text-[9px] sm:text-[9.5px] font-bold uppercase tracking-wider ${
+                    <div className="flex items-center justify-between gap-1.5 mb-1">
+                      <span className={`text-[10px] sm:text-[11px] font-bold flex items-center gap-1.5 ${
                         isRainingNow
                           ? 'text-rose-600 dark:text-rose-400'
-                          : maxProb >= 60
+                          : todayProb >= 60
                           ? 'text-amber-700 dark:text-amber-300'
-                          : 'text-emerald-700 dark:text-emerald-400'
+                          : 'text-blue-700 dark:text-sky-400'
                       }`}>
-                        {isRainingNow ? 'สถานะปัจจุบัน' : 'ความเสี่ยงฝนวันนี้'}
+                        <span className={`w-1.5 h-1.5 rounded-full ${
+                          isRainingNow ? 'bg-rose-500 animate-ping' : todayProb >= 60 ? 'bg-amber-500' : 'bg-sky-500'
+                        }`} />
+                        <span>โอกาสฝนตก{todayShortLabel}</span>
                       </span>
-                      {isRainingNow && (
-                        <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-ping inline-block" />
-                      )}
+                      <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-sky-500/15 text-sky-600 dark:text-sky-300 border border-sky-500/25">
+                        วันนี้
+                      </span>
                     </div>
 
-                    <div className="flex items-baseline gap-1.5">
-                      {isRainingNow ? (
-                        <span className="text-xs sm:text-base font-black text-rose-600 dark:text-rose-400">
-                          ฝนตกในพื้นที่ขณะนี้
-                        </span>
-                      ) : (
-                        <>
-                          <span className="text-xl sm:text-2xl font-black font-mono tracking-tight text-slate-900 dark:text-white">
-                            {maxProb}%
-                          </span>
-                          <span className={`text-[10.5px] sm:text-xs font-semibold ${
-                            maxProb >= 60 ? 'text-rose-600 dark:text-rose-400' : maxProb >= 30 ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400'
-                          }`}>
-                            {maxProb >= 60 ? 'เสี่ยงฝนตกหนัก' : maxProb >= 30 ? 'เฝ้าระวังฝนฟ้าคะนอง' : 'โอกาสฝนน้อย'}
-                          </span>
-                        </>
-                      )}
+                    <div className="flex items-baseline gap-2 my-0.5">
+                      <span className="text-xl sm:text-2xl font-black font-mono tracking-tight text-slate-900 dark:text-white">
+                        {todayProb}%
+                      </span>
+                      <span className={`text-[11px] sm:text-xs font-bold ${
+                        isRainingNow
+                          ? 'text-rose-600 dark:text-rose-400'
+                          : todayProb >= 60
+                          ? 'text-rose-600 dark:text-rose-400'
+                          : todayProb >= 35
+                          ? 'text-amber-600 dark:text-amber-400'
+                          : 'text-emerald-600 dark:text-emerald-400'
+                      }`}>
+                        {isRainingNow ? 'ฝนกำลังตกขณะนี้' : todayProb >= 60 ? 'เสี่ยงฝนตกหนัก' : todayProb >= 35 ? 'เฝ้าระวังฝนฟ้าคะนอง' : 'โอกาสฝนน้อย'}
+                      </span>
                     </div>
 
-                    <div className={`mt-1 pt-1 border-t border-slate-200/60 dark:border-slate-800 text-[9.5px] sm:text-[10px] ${
+                    <div className={`mt-1.5 pt-1.5 border-t border-slate-200/60 dark:border-slate-800 text-[10px] sm:text-[11px] ${
                       isDark ? 'text-slate-300' : 'text-slate-600'
                     }`}>
-                      <div className="flex items-center gap-1 truncate font-medium">
-                        <Clock className="w-2.5 h-2.5 text-blue-500 shrink-0" />
-                        <span className="truncate">{rainTimeToday}</span>
+                      <div className="flex items-center gap-1.5 font-medium">
+                        <Clock className="w-3 h-3 text-sky-500 shrink-0" />
+                        <span>ช่วงเวลาวันนี้: <strong className="text-slate-900 dark:text-white">{todayTimeWindow}</strong></span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Card 2: TOMORROW (พรุ่งนี้) */}
+                  <div className={`p-2.5 rounded-lg border flex flex-col justify-between ${
+                    tomorrowProb >= 60
+                      ? (isDark ? 'bg-amber-950/35 border-amber-800/70' : 'bg-amber-50/80 border-amber-200')
+                      : (isDark ? 'bg-slate-900/90 border-slate-700/80' : 'bg-white border-slate-200/90')
+                  }`}>
+                    <div className="flex items-center justify-between gap-1.5 mb-1">
+                      <span className={`text-[10px] sm:text-[11px] font-bold flex items-center gap-1.5 ${
+                        tomorrowProb >= 60
+                          ? 'text-amber-700 dark:text-amber-300'
+                          : 'text-indigo-700 dark:text-indigo-300'
+                      }`}>
+                        <span className={`w-1.5 h-1.5 rounded-full ${
+                          tomorrowProb >= 60 ? 'bg-amber-500' : 'bg-indigo-500'
+                        }`} />
+                        <span>แนวโน้มฝน{tomorrowShortLabel}</span>
+                      </span>
+                      <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-indigo-500/15 text-indigo-600 dark:text-indigo-300 border border-indigo-500/25">
+                        พรุ่งนี้
+                      </span>
+                    </div>
+
+                    <div className="flex items-baseline gap-2 my-0.5">
+                      <span className="text-xl sm:text-2xl font-black font-mono tracking-tight text-slate-900 dark:text-white">
+                        {tomorrowProb}%
+                      </span>
+                      <span className={`text-[11px] sm:text-xs font-bold ${
+                        tomorrowProb >= 60
+                          ? 'text-rose-600 dark:text-rose-400'
+                          : tomorrowProb >= 35
+                          ? 'text-amber-600 dark:text-amber-400'
+                          : 'text-emerald-600 dark:text-emerald-400'
+                      }`}>
+                        {tomorrowProb >= 60 ? 'เสี่ยงฝนตกหนัก' : tomorrowProb >= 35 ? 'เฝ้าระวังฝนฟ้าคะนอง' : 'โอกาสฝนน้อย'}
+                      </span>
+                    </div>
+
+                    <div className={`mt-1.5 pt-1.5 border-t border-slate-200/60 dark:border-slate-800 text-[10px] sm:text-[11px] ${
+                      isDark ? 'text-slate-300' : 'text-slate-600'
+                    }`}>
+                      <div className="flex items-center gap-1.5 font-medium">
+                        <Clock className="w-3 h-3 text-indigo-500 shrink-0" />
+                        <span>ช่วงเวลาพรุ่งนี้: <strong className="text-slate-900 dark:text-white">{tomorrowTimeWindow}</strong></span>
                       </div>
                     </div>
                   </div>
@@ -499,13 +543,13 @@ export default function AiForecastModal({ isOpen, onClose, userDistrict, theme =
                 </div>
               )}
 
-              {/* 3. 6 DISTRICTS TELEMETRY GRID */}
+              {/* 3. 6 DISTRICTS TELEMETRY GRID (SEPARATED TODAY & TOMORROW) */}
               <div>
                 <div className="flex items-center justify-between mb-1.5">
                   <div className="flex items-center gap-1">
                     <CivicStationPin className="w-3 h-3 text-blue-600 dark:text-blue-400" />
                     <h4 className={`text-[11px] sm:text-xs font-bold ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>
-                      สถานการณ์และโอกาสเกิดฝนแยก 6 อำเภอ
+                      โอกาสเกิดฝนและช่วงเวลา แยก 6 อำเภอ (วันนี้ vs พรุ่งนี้)
                     </h4>
                   </div>
                   <span className="text-[9px] text-slate-400">อัปเดตรายชั่วโมง</span>
@@ -516,30 +560,21 @@ export default function AiForecastModal({ isOpen, onClose, userDistrict, theme =
                     const rawName = d.district.replace(/^(อ\.|อำเภอ)/, '').trim();
                     const fullName = rawName.includes('เมือง') ? 'อำเภอเมืองสมุทรปราการ' : `อำเภอ${rawName}`;
                     const isUserDistrict = currentDistrict && (currentDistrict.includes(rawName) || rawName.includes(currentDistrict));
-                    const isHigh = d.probability >= 60;
-                    const isMed = d.probability >= 40;
+                    const dTodayProb = d.todayProbability ?? d.probability ?? todayProb;
+                    const dTodayWin = d.todayTimeWindow || d.timeWindow || todayTimeWindow;
+                    const dTomProb = d.tomorrowProbability ?? tomorrowProb;
+                    const dTomWin = d.tomorrowTimeWindow || tomorrowTimeWindow;
 
-                    let badgeTheme = isDark ? 'bg-slate-800 text-slate-300 border-slate-700' : 'bg-slate-100 text-slate-700 border-slate-200';
-                    let barColor = 'bg-emerald-500';
-
-                    if (d.isRainingNow) {
-                      badgeTheme = isDark ? 'bg-rose-950 text-rose-300 border-rose-800' : 'bg-rose-50 text-rose-700 border-rose-200';
-                      barColor = 'bg-rose-500';
-                    } else if (isHigh) {
-                      badgeTheme = isDark ? 'bg-rose-950/80 text-rose-300 border-rose-800' : 'bg-rose-50 text-rose-700 border-rose-200';
-                      barColor = 'bg-rose-500';
-                    } else if (isMed) {
-                      badgeTheme = isDark ? 'bg-amber-950/80 text-amber-300 border-amber-800' : 'bg-amber-50 text-amber-700 border-amber-200';
-                      barColor = 'bg-amber-500';
-                    } else {
-                      badgeTheme = isDark ? 'bg-emerald-950/60 text-emerald-300 border-emerald-800' : 'bg-emerald-50 text-emerald-700 border-emerald-200';
-                      barColor = 'bg-emerald-500';
-                    }
+                    const getProbColor = (p, raining = false) => {
+                      if (raining || p >= 60) return 'text-rose-600 dark:text-rose-400 font-bold';
+                      if (p >= 35) return 'text-amber-600 dark:text-amber-400 font-bold';
+                      return 'text-emerald-600 dark:text-emerald-400 font-bold';
+                    };
 
                     return (
                       <div 
                         key={i}
-                        className={`p-2 sm:p-2.5 rounded-lg border text-xs transition-all ${
+                        className={`p-2.5 rounded-lg border text-xs transition-all ${
                           isUserDistrict
                             ? (isDark 
                                 ? 'bg-blue-950/50 border-blue-600/80 shadow-2xs ring-1 ring-blue-500/20' 
@@ -549,9 +584,9 @@ export default function AiForecastModal({ isOpen, onClose, userDistrict, theme =
                                 : 'bg-white border-slate-200/90 hover:border-slate-300')
                         }`}
                       >
-                        <div className="flex items-center justify-between gap-1.5">
+                        <div className="flex items-center justify-between gap-1.5 pb-1.5 border-b border-slate-200/60 dark:border-slate-800/80">
                           <div className="flex items-center gap-1 min-w-0">
-                            <span className={`font-bold text-[11px] sm:text-xs truncate ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                            <span className={`font-bold text-[11.5px] sm:text-xs truncate ${isDark ? 'text-white' : 'text-slate-900'}`}>
                               {fullName}
                             </span>
                             {isUserDistrict && (
@@ -563,37 +598,46 @@ export default function AiForecastModal({ isOpen, onClose, userDistrict, theme =
 
                           <div className="flex items-center gap-1 shrink-0">
                             {d.temperature && (
-                              <span className={`text-[9.5px] sm:text-[10px] font-mono px-1 py-0.2 rounded border ${
+                              <span className={`text-[9.5px] sm:text-[10px] font-mono px-1.5 py-0.2 rounded border ${
                                 isDark ? 'bg-slate-800 text-slate-300 border-slate-700' : 'bg-slate-100 text-slate-600 border-slate-200'
                               }`}>
                                 {d.temperature}°C
                               </span>
                             )}
-                            <span className={`px-1.5 py-0.2 rounded font-bold text-[9.5px] border font-mono ${badgeTheme}`}>
-                              {d.isRainingNow ? 'ฝนตกขณะนี้' : `โอกาส ${d.probability}%`}
-                            </span>
                           </div>
                         </div>
 
-                        {/* Rain Probability Bar */}
-                        <div className="mt-1.5 w-full h-1 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
-                          <div 
-                            className={`h-full rounded-full transition-all duration-500 ${barColor}`}
-                            style={{ width: `${Math.max(5, Math.min(100, d.probability))}%` }}
-                          />
-                        </div>
+                        {/* Separated Today & Tomorrow Rows */}
+                        <div className="mt-1.5 space-y-1 text-[10px] sm:text-[10.5px]">
+                          {/* Row 1: Today */}
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-1.5 min-w-0">
+                              <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-sky-500/15 text-sky-600 dark:text-sky-300 border border-sky-500/25 shrink-0">
+                                วันนี้
+                              </span>
+                              <span className={`truncate ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
+                                {dTodayWin}
+                              </span>
+                            </div>
+                            <span className={`font-mono shrink-0 ${getProbColor(dTodayProb, d.isRainingNow)}`}>
+                              {d.isRainingNow ? `ตกขณะนี้ (${dTodayProb}%)` : `โอกาส ${dTodayProb}%`}
+                            </span>
+                          </div>
 
-                        {/* Forecast Timing & Duration */}
-                        <div className={`mt-1.5 flex items-center justify-between gap-1.5 text-[9.5px] sm:text-[10px] ${
-                          isDark ? 'text-slate-400' : 'text-slate-500'
-                        }`}>
-                          <span className="flex items-center gap-1 truncate font-medium">
-                            <Clock className="w-2.5 h-2.5 text-blue-500 shrink-0" />
-                            <span className="truncate">{d.timeWindow || 'ไม่มีแนวโน้มฝนตกหนัก'}</span>
-                          </span>
-                          <span className="shrink-0 text-right text-[9px] opacity-80">
-                            {d.durationText || 'ไม่มีสัญญาณฝน'}
-                          </span>
+                          {/* Row 2: Tomorrow */}
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-1.5 min-w-0">
+                              <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-indigo-500/15 text-indigo-600 dark:text-indigo-300 border border-indigo-500/25 shrink-0">
+                                พรุ่งนี้
+                              </span>
+                              <span className={`truncate ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
+                                {dTomWin}
+                              </span>
+                            </div>
+                            <span className={`font-mono shrink-0 ${getProbColor(dTomProb, false)}`}>
+                              โอกาส {dTomProb}%
+                            </span>
+                          </div>
                         </div>
                       </div>
                     );

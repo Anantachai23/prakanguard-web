@@ -1306,9 +1306,11 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
   // High-Intelligence Domain Knowledge & Telemetry Synthesizer
   const synthesizeAnswer = (queryText, history = []) => {
     const q = queryText.toLowerCase().trim();
-    const rainChance = weather.rainProbabilityToday || 60;
+    const rainChance = weather.forecast24h?.todayProbability ?? weather.rainProbabilityToday ?? 60;
     const rainSum = weather.rainSumToday || 8.5;
-    const peakTime = weather.peakHour || '16:00 น.';
+    const peakTime = weather.forecast24h?.todayTimeWindow || weather.peakHour || 'ไม่มีฝนตกในวันนี้';
+    const rainChanceTomorrow = weather.forecast24h?.tomorrowProbability ?? weather.rainProbabilityTomorrow ?? 55;
+    const peakTimeTomorrow = weather.forecast24h?.tomorrowTimeWindow || weather.peakHourTomorrow || '15:00 - 18:00 น.';
 
     // Helper to format risk badges
     const getRiskBadge = (prob) => {
@@ -1783,8 +1785,8 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
       }
 
       return `📊 **สรุปสถานการณ์น้ำและสภาพอากาศ จ.สมุทรปราการ (แบบกระชับ):**\n\n` +
-        `• **โอกาสฝนตกวันนี้:** **${rainChance}%** (ปริมาณสะสมคาดการณ์ ~**${rainSum} มม.**)\n` +
-        `• **ช่วงเวลาเฝ้าระวังสูงสุด:** ⏱️ **${peakTime}**\n` +
+        `• **วันนี้:** โอกาสฝนตก **${rainChance}%** | ช่วงเวลา: ⏱️ **${peakTime}** (~${rainSum} มม.)\n` +
+        `• **พรุ่งนี้:** โอกาสฝนตก **${rainChanceTomorrow}%** | ช่วงเวลา: ⏱️ **${peakTimeTomorrow}**\n` +
         `• **จุดลุ่มต่ำเฝ้าระวัง:** ซอยทรัพย์บุญชัย, ซอยวัดด่านสำโรง, ตลาดปากน้ำ, กิ่งแก้ว, นิคมฯ บางปู\n\n` +
         `💡 พิมพ์ชื่อถนนหรือซอยที่ต้องการ เพื่อให้ระบบวิเคราะห์ระดับน้ำเจาะลึกเฉพาะพิกัดได้ทันทีครับ`;
     }
@@ -1810,8 +1812,8 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
         `อ้างอิงข้อมูล: [สนง.ปภ. จังหวัดสมุทรปราการ] • [กรมอุตุนิยมวิทยา (TMD)] • [กรมอุทกศาสตร์ กองทัพเรือ]\n\n` +
         `📊 **ระดับความเสี่ยงเฉลี่ยของจังหวัดวันนี้:** ${getRiskBadge(floodProb)}\n\n` +
         `🌧️ **1. ปัจจัยฝนฟ้าคะนอง (เรดาร์ตรวจอากาศ TMD):**\n` +
-        `• โอกาสเกิดฝนตกภาพรวม: **${rainChance}%** (ปริมาณฝนสะสมคาดการณ์ ~**${rainSum} มม.**)\n` +
-        `• ช่วงเวลาเสี่ยงฝนตกหนักสูงสุด: ⏱️ **${peakTime}**\n\n` +
+        `• **วันนี้:** โอกาสฝนตก **${rainChance}%** | ช่วงเวลา: ⏱️ **${peakTime}** (สะสม ~**${rainSum} มม.**)\n` +
+        `• **พรุ่งนี้:** โอกาสฝนตก **${rainChanceTomorrow}%** | ช่วงเวลา: ⏱️ **${peakTimeTomorrow}**\n\n` +
         `🌊 **2. ปัจจัยน้ำทะเลหนุน (สถานีป้อมพระจุลจอมเกล้า):**\n` +
         `• เฝ้าระวังช่วงน้ำขึ้นสูงสุดในแม่น้ำเจ้าพระยา (ระดับเตือนภัย +1.70 ม. รทก.)\n\n` +
         `📍 **3. พิกัด 4 จุดเปราะบางสำคัญที่ต้องเฝ้าระวังเป็นพิเศษ:**\n` +
@@ -1824,15 +1826,18 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
 
     // 10. ถามเรื่องพยากรณ์อากาศ / ฝนจะตกไหม / ฝนตกกี่เปอร์เซ็นต์ / ฝนตกหนัก
     if (q.includes("พยากรณ์") || q.includes("ฝน") || q.includes("ตกกี่") || q.includes("อากาศ") || q.includes("ตกหนัก")) {
-      const isRainy = (weather.rainProbabilityToday || 0) >= 50;
-      return `🌧️ **รายงานพยากรณ์อากาศและคาดการณ์ฝนตกหนัก จ.สมุทรปราการ**\n` +
+      const isRainy = Math.max(rainChance, rainChanceTomorrow) >= 50;
+      return `🌧️ **รายงานพยากรณ์อากาศและคาดการณ์ฝนตก จ.สมุทรปราการ (แยกวันนี้ / พรุ่งนี้)**\n` +
         `อ้างอิงข้อมูล: [กรมอุตุนิยมวิทยา (TMD)] และ [ศูนย์พยากรณ์อากาศยุโรป ECMWF]\n\n` +
-        `• **สถานะอากาศ:** ${weather.weatherDesc}\n` +
-        `• **อุณหภูมิ:** ${weather.temp}°C (สูงสุด ${weather.tempMax || 33}°C / ต่ำสุด ${weather.tempMin || 26}°C)\n` +
-        `• **ความชื้นสัมพัทธ์:** ${weather.humidity}%\n` +
-        `• **โอกาสเกิดฝนตกวันนี้:** 🌧️ **${weather.rainProbabilityToday}%**\n` +
-        `• **ปริมาณน้ำฝนสะสมคาดการณ์:** **${weather.rainSumToday} มิลลิเมตร**\n` +
-        `• **ช่วงเวลาเสี่ยงฝนตกหนักที่สุด:** ⏱️ **${weather.peakHour}**\n` +
+        `• **สถานะอากาศปัจจุบัน:** ${weather.weatherDesc}\n` +
+        `• **อุณหภูมิ:** ${weather.temp}°C (สูงสุด ${weather.tempMax || 33}°C / ต่ำสุด ${weather.tempMin || 26}°C) | ความชื้น ${weather.humidity}%\n\n` +
+        `📅 **วิเคราะห์ฝนวันนี้ (${weather.forecast24h?.todayDateLabel || 'วันนี้'}):**\n` +
+        `• **โอกาสเกิดฝนตกวันนี้:** 🌧️ **${rainChance}%** (${weather.forecast24h?.todayRiskLabel || 'ปกติ'})\n` +
+        `• **ช่วงเวลาที่มีโอกาสตกวันนี้:** ⏱️ **${peakTime}**\n` +
+        `• **ปริมาณน้ำฝนสะสมคาดการณ์วันนี้:** **${rainSum} มิลลิเมตร**\n\n` +
+        `📆 **วิเคราะห์ฝนพรุ่งนี้ (${weather.forecast24h?.tomorrowDateLabel || 'พรุ่งนี้'}):**\n` +
+        `• **โอกาสเกิดฝนตกพรุ่งนี้:** 🌦️ **${rainChanceTomorrow}%** (${weather.forecast24h?.tomorrowRiskLabel || 'ปกติ'})\n` +
+        `• **ช่วงเวลาที่มีโอกาสตกพรุ่งนี้:** ⏱️ **${peakTimeTomorrow}**\n\n` +
         `• **ระดับการแจ้งเตือน:** ${isRainy ? '⚠️ ' + weather.rainAlertLevel : '🟢 สภาพอากาศปกติ'}\n\n` +
         `💡 **ข้อแนะนำ:** หากมีฝนตกสะสมเกิน 30 มม. ใน 2 ชั่วโมง มักจะเกิดน้ำรอการระบายบนถนนสุขุมวิท, ศรีนครินทร์ และกิ่งแก้ว ควรเผื่อเวลาเดินทาง 30 - 45 นาทีครับ`;
     }
