@@ -63,26 +63,18 @@ export default function RealTimeClock({ theme = 'light' }) {
       </div>
 
       {/* Date display */}
-      <div className="flex items-center gap-1 shrink-0">
+      <div className="flex items-center gap-1.5 shrink-0">
         <span className="hidden xl:inline font-sans font-semibold text-slate-600 dark:text-slate-300">
-          {dayNameShort} {date} {monthNameShort} {yearBEShort}
+          {dayNameShort} {date} {monthNameShort}
         </span>
 
         <span className="hidden xl:inline text-slate-400 font-sans">•</span>
 
-        {/* Real-time Digital Clock with Seconds */}
-        <span className="flex items-center font-bold text-blue-700 dark:text-cyan-300 shrink-0 tracking-tight">
+        <span className="flex items-center font-bold text-slate-800 dark:text-slate-100 shrink-0 tracking-tight">
           <span>{hours}:{minutes}</span>
-          <span className="hidden sm:inline text-[10.5px] text-slate-400 dark:text-slate-500 font-semibold">:{seconds}</span>
-          <span className="ml-0.5 text-[10px] font-sans">น.</span>
+          <span className="ml-1 text-[10.5px] font-sans font-medium text-slate-500 dark:text-slate-400">น.</span>
         </span>
       </div>
-
-      {/* Live Sync Status */}
-      <span className="flex items-center gap-1 pl-1 border-l border-slate-200 dark:border-slate-700 text-[9.5px] font-sans text-emerald-600 dark:text-emerald-400 font-bold shrink-0">
-        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse inline-block"></span>
-        <span className="hidden sm:inline">ICT</span>
-      </span>
     </div>
   );
 }

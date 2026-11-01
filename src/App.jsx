@@ -582,7 +582,7 @@ export default function App() {
   // Live Meteorological Weather Telemetry
   const [weather, setWeather] = useState(() => {
     try {
-      const cached = localStorage.getItem('prakanguard_cached_weather_v2');
+      const cached = localStorage.getItem('prakanguard_cached_weather_v3');
       if (cached) {
         const parsed = JSON.parse(cached);
         if (parsed && parsed.forecast24h) return parsed;
@@ -593,41 +593,55 @@ export default function App() {
       temp: 29,
       feelsLike: 32,
       weatherDesc: 'มีเมฆบางส่วน',
-      rainProbabilityToday: 55,
-      rainSumToday: 5.2,
-      peakHour: '16:00 น.',
+      rainProbabilityToday: 25,
+      rainTimeWindowToday: 'ไม่มีฝนตก',
+      rainContinuousDurationToday: 'ไม่มีฝนต่อเนื่อง',
+      rainProbabilityTomorrow: 55,
+      rainTimeWindowTomorrow: '15:00 – 18:00 น.',
+      rainContinuousDurationTomorrow: 'ต่อเนื่อง ~3 ชั่วโมง',
+      rainSumToday: 0,
+      peakHour: 'ไม่มีฝนตก',
       forecast24h: {
-        title: "คาดการณ์ฝนตก",
-        status: "เฝ้าระวังฝนฟ้าคะนอง",
+        title: "พยากรณ์ฝนรายวัน",
+        status: "สภาพอากาศปกติ",
         temp: 29,
         feelsLike: 32,
-        totalRainMm: 5.2,
+        totalRainMm: 0,
         maxProbability: 55,
-        startTimeText: "ช่วงบ่ายถึงเย็น (15:30 - 18:30 น.)",
+        todayProbability: 25,
+        todayMaxProb: 25,
+        todayTimeWindow: "ไม่มีฝนตก",
+        todayContinuousDuration: "ไม่มีฝนต่อเนื่อง",
+        todayRainyHoursCount: 0,
+        tomorrowProbability: 55,
+        tomorrowMaxProb: 55,
+        tomorrowTimeWindow: "15:00 – 18:00 น.",
+        tomorrowContinuousDuration: "ต่อเนื่อง ~3 ชั่วโมง",
+        startTimeText: "ไม่มีฝนตก",
         isRainingNow: false,
         timeLabels: ["12:00", "15:00", "18:00", "21:00", "00:00", "03:00", "06:00", "09:00"],
         hourly: Array.from({ length: 24 }).map((_, i) => ({
           time: `${String(i).padStart(2, '0')}:00`,
           dayLabel: "วันนี้",
-          precipitation: (i >= 15 && i <= 18) ? 1.2 : 0,
-          probability: (i >= 15 && i <= 18) ? 55 : 15,
-          barHeightPercent: (i >= 15 && i <= 18) ? 60 : 10
+          precipitation: 0,
+          probability: 20,
+          barHeightPercent: 15
         })),
         districtRainAnalysis: [
-          { district: "เมืองสมุทรปราการ", probability: 65, temperature: 29, status: "เฝ้าระวังฝนตก", timeWindow: "15:00 - 18:00 น.", durationText: "คาดการณ์ ~30 - 45 นาที", hasForecastRain: true, icon: "" },
-          { district: "บางพลี", probability: 55, temperature: 29, status: "มีเมฆบางส่วน", timeWindow: "15:30 - 18:30 น.", durationText: "คาดการณ์ ~30 - 60 นาที", hasForecastRain: true, icon: "" },
-          { district: "บางบ่อ", probability: 50, temperature: 28, status: "มีเมฆบางส่วน", timeWindow: "16:00 - 18:30 น.", durationText: "คาดการณ์ ~30 - 45 นาที", hasForecastRain: true, icon: "" },
-          { district: "บางเสาธง", probability: 45, temperature: 28, status: "มีเมฆบางส่วน", timeWindow: "15:30 - 18:00 น.", durationText: "คาดการณ์ ~30 - 45 นาที", hasForecastRain: true, icon: "" },
-          { district: "พระประแดง", probability: 60, temperature: 29, status: "เฝ้าระวังฝนตก", timeWindow: "15:00 - 18:00 น.", durationText: "คาดการณ์ ~45 - 60 นาที", hasForecastRain: true, icon: "" },
-          { district: "พระสมุทรเจดีย์", probability: 55, temperature: 29, status: "เฝ้าระวังฝนตก", timeWindow: "15:00 - 17:30 น.", durationText: "คาดการณ์ ~30 - 45 นาที", hasForecastRain: true, icon: "" }
+          { district: "เมืองสมุทรปราการ", probability: 25, todayProbability: 25, todayTimeWindow: "ไม่มีฝนตก", todayContinuousDuration: "ไม่มีฝนต่อเนื่อง", tomorrowProbability: 60, tomorrowTimeWindow: "15:00 – 18:00 น.", tomorrowContinuousDuration: "ต่อเนื่อง ~3 ชั่วโมง", temperature: 29, status: "สภาพอากาศปกติ", timeWindow: "ไม่มีฝนตก", durationText: "ไม่มีฝนต่อเนื่อง", hasForecastRain: false, icon: "" },
+          { district: "บางพลี", probability: 25, todayProbability: 25, todayTimeWindow: "ไม่มีฝนตก", todayContinuousDuration: "ไม่มีฝนต่อเนื่อง", tomorrowProbability: 55, tomorrowTimeWindow: "15:00 – 18:00 น.", tomorrowContinuousDuration: "ต่อเนื่อง ~3 ชั่วโมง", temperature: 29, status: "สภาพอากาศปกติ", timeWindow: "ไม่มีฝนตก", durationText: "ไม่มีฝนต่อเนื่อง", hasForecastRain: false, icon: "" },
+          { district: "บางบ่อ", probability: 20, todayProbability: 20, todayTimeWindow: "ไม่มีฝนตก", todayContinuousDuration: "ไม่มีฝนต่อเนื่อง", tomorrowProbability: 50, tomorrowTimeWindow: "16:00 – 18:00 น.", tomorrowContinuousDuration: "ต่อเนื่อง ~2 ชั่วโมง", temperature: 28, status: "สภาพอากาศปกติ", timeWindow: "ไม่มีฝนตก", durationText: "ไม่มีฝนต่อเนื่อง", hasForecastRain: false, icon: "" },
+          { district: "บางเสาธง", probability: 20, todayProbability: 20, todayTimeWindow: "ไม่มีฝนตก", todayContinuousDuration: "ไม่มีฝนต่อเนื่อง", tomorrowProbability: 50, tomorrowTimeWindow: "15:00 – 17:00 น.", tomorrowContinuousDuration: "ต่อเนื่อง ~2 ชั่วโมง", temperature: 28, status: "สภาพอากาศปกติ", timeWindow: "ไม่มีฝนตก", durationText: "ไม่มีฝนต่อเนื่อง", hasForecastRain: false, icon: "" },
+          { district: "พระประแดง", probability: 25, todayProbability: 25, todayTimeWindow: "ไม่มีฝนตก", todayContinuousDuration: "ไม่มีฝนต่อเนื่อง", tomorrowProbability: 60, tomorrowTimeWindow: "15:00 – 18:00 น.", tomorrowContinuousDuration: "ต่อเนื่อง ~3 ชั่วโมง", temperature: 29, status: "สภาพอากาศปกติ", timeWindow: "ไม่มีฝนตก", durationText: "ไม่มีฝนต่อเนื่อง", hasForecastRain: false, icon: "" },
+          { district: "พระสมุทรเจดีย์", probability: 20, todayProbability: 20, todayTimeWindow: "ไม่มีฝนตก", todayContinuousDuration: "ไม่มีฝนต่อเนื่อง", tomorrowProbability: 50, tomorrowTimeWindow: "15:00 – 17:00 น.", tomorrowContinuousDuration: "ต่อเนื่อง ~2 ชั่วโมง", temperature: 29, status: "สภาพอากาศปกติ", timeWindow: "ไม่มีฝนตก", durationText: "ไม่มีฝนต่อเนื่อง", hasForecastRain: false, icon: "" }
         ],
         meteorologicalInsight: {
           activeCount: 0,
           activeNames: "",
-          incomingCount: 2,
-          incomingNames: "อ.เมืองสมุทรปราการ, อ.พระประแดง",
+          incomingCount: 0,
+          incomingNames: "",
           isRainingNow: false,
-          expectedStartTime: "ช่วงบ่ายถึงเย็น (15:30 - 18:30 น.)"
+          expectedStartTime: "ไม่มีฝนตก"
         }
       }
     };
@@ -2631,33 +2645,13 @@ export default function App() {
         {/* ========================================================================= */}
         <nav
           aria-label="แถบเครื่องมือหลัก"
-          className={`hidden md:flex flex-col items-center justify-between w-[60px] h-full py-3 px-2 shrink-0 z-45 border-r select-none transition-colors ${
+          className={`hidden md:flex flex-col items-center justify-between w-[56px] h-full py-3 px-2 shrink-0 z-45 border-r select-none transition-colors ${
             isDark
               ? 'bg-slate-950 border-slate-800/90 text-slate-300'
               : 'bg-white border-slate-200/90 text-slate-700'
           }`}
         >
-          {/* Top Circular Brand Emblem */}
-          <button
-            type="button"
-            onClick={() => {
-              playClickSound();
-              setSelectedDistrict('ทั้งหมด');
-              setFlyToLocation({ lat: 13.6000, lng: 100.6500, zoom: 11, ts: Date.now() });
-            }}
-            className={`w-10 h-10 rounded-full p-0.5 border-2 flex items-center justify-center transition-transform active:scale-95 cursor-pointer shadow-xs ${
-              isDark ? 'border-sky-400/70 bg-slate-900' : 'border-slate-900 bg-white'
-            }`}
-            title="รีเซ็ตมุมมองแผนที่จังหวัดสมุทรปราการ"
-          >
-            <img
-              src="/logo.png"
-              alt="PrakanGuard"
-              className="w-full h-full rounded-full object-cover block pointer-events-none"
-            />
-          </button>
-
-          {/* Center Navigation Stack */}
+          {/* Top Navigation Stack */}
           <div className="flex flex-col items-center gap-2">
             {/* 1. จุดเฝ้าระวังน้ำท่วม (Flood Points) */}
             <button
@@ -2667,12 +2661,12 @@ export default function App() {
                 setIsSidebarOpen(true);
                 setDesktopSidebarTab('points');
               }}
-              className={`w-10 h-10 rounded-2xl flex items-center justify-center transition-all cursor-pointer active:scale-95 relative ${
+              className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all cursor-pointer active:scale-95 relative ${
                 isSidebarOpen && desktopSidebarTab === 'points'
                   ? (isDark ? 'bg-sky-500 text-slate-950 shadow-sm' : 'bg-slate-900 text-white shadow-sm')
                   : (isDark ? 'text-slate-400 hover:bg-slate-800 hover:text-white' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-900')
               }`}
-              title="จุดเฝ้าระวังน้ำท่วม (GIS)"
+              title="จุดเฝ้าระวังน้ำท่วม"
             >
               <CivicStationPin className="w-5 h-5" />
             </button>
@@ -2685,12 +2679,12 @@ export default function App() {
                 setIsSidebarOpen(true);
                 setDesktopSidebarTab('weather');
               }}
-              className={`w-10 h-10 rounded-2xl flex items-center justify-center transition-all cursor-pointer active:scale-95 relative ${
+              className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all cursor-pointer active:scale-95 relative ${
                 isSidebarOpen && desktopSidebarTab === 'weather'
                   ? (isDark ? 'bg-sky-500 text-slate-950 shadow-sm' : 'bg-slate-900 text-white shadow-sm')
                   : (isDark ? 'text-slate-400 hover:bg-slate-800 hover:text-white' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-900')
               }`}
-              title="พยากรณ์เวลาฝนตก & ระยะเวลาตกต่อเนื่องวันนี้"
+              title="พยากรณ์เวลาฝนตกวันนี้"
             >
               <CloudRain className="w-5 h-5" />
             </button>
@@ -2702,7 +2696,7 @@ export default function App() {
                 playModalOpenSound();
                 handleOpenCctv();
               }}
-              className={`w-10 h-10 rounded-2xl flex items-center justify-center transition-all cursor-pointer active:scale-95 ${
+              className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all cursor-pointer active:scale-95 ${
                 isDark ? 'text-slate-400 hover:bg-slate-800 hover:text-white' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-900'
               }`}
               title="กล้องวงจรปิดสด CCTV 24 ชม."
@@ -2717,7 +2711,7 @@ export default function App() {
                 playReportSound();
                 setIsCitizenReportModalOpen(true);
               }}
-              className={`w-10 h-10 rounded-2xl flex items-center justify-center transition-all cursor-pointer active:scale-95 ${
+              className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all cursor-pointer active:scale-95 ${
                 isDark ? 'text-slate-400 hover:bg-slate-800 hover:text-white' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-900'
               }`}
               title="แจ้งรายงานจุดน้ำท่วม"
@@ -2732,7 +2726,7 @@ export default function App() {
                 playModalOpenSound();
                 setIsStandardsModalOpen(true);
               }}
-              className={`w-10 h-10 rounded-2xl flex items-center justify-center transition-all cursor-pointer active:scale-95 ${
+              className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all cursor-pointer active:scale-95 ${
                 isDark ? 'text-slate-400 hover:bg-slate-800 hover:text-white' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-900'
               }`}
               title="เกณฑ์วัดระดับน้ำและความปลอดภัยยานพาหนะ"
@@ -2741,31 +2735,15 @@ export default function App() {
             </button>
           </div>
 
-          {/* Bottom Utility Stack (Theme Toggle + Collapse/Expand Panel) */}
-          <div className="flex flex-col items-center gap-2">
-            <button
-              type="button"
-              onClick={() => {
-                playToggleSound(!isDark);
-                toggleTheme();
-              }}
-              className={`w-10 h-10 rounded-2xl flex items-center justify-center transition-all cursor-pointer active:scale-95 border ${
-                isDark
-                  ? 'bg-slate-900 border-slate-800 text-amber-400 hover:bg-slate-800'
-                  : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
-              }`}
-              title={isDark ? 'สลับเป็นโทนสว่าง (Light Mode)' : 'สลับเป็นโทนมืด (Dark Mode)'}
-            >
-              {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-            </button>
-
+          {/* Bottom Collapse/Expand Panel Button */}
+          <div className="flex flex-col items-center">
             <button
               type="button"
               onClick={() => {
                 playToggleSound(!isSidebarOpen);
                 setIsSidebarOpen(v => !v);
               }}
-              className={`w-10 h-10 rounded-2xl flex items-center justify-center transition-all cursor-pointer active:scale-95 ${
+              className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all cursor-pointer active:scale-95 ${
                 isDark ? 'text-slate-400 hover:bg-slate-800 hover:text-white' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-900'
               }`}
               title={isSidebarOpen ? 'ซ่อนแผงรายการด้านซ้าย' : 'เปิดแผงรายการด้านซ้าย'}
@@ -2790,7 +2768,7 @@ export default function App() {
         <aside className={`
           hidden md:flex flex-col h-full z-40 lg:z-20 shrink-0 backdrop-blur-md transition-[width,opacity,transform] duration-300 ease-in-out select-none
           ${isDark ? 'bg-slate-900/98 text-slate-100' : 'bg-white text-slate-900'}
-          fixed lg:relative top-0 bottom-0 left-[60px] lg:left-0
+          fixed lg:relative top-0 bottom-0 left-[56px] lg:left-0
           ${isSidebarOpen 
               ? 'w-[340px] lg:w-[385px] xl:w-[415px] border-r translate-x-0 opacity-100 shadow-2xl lg:shadow-sm' 
               : 'w-0 min-w-0 max-w-0 border-r-0 border-transparent overflow-hidden opacity-0 pointer-events-none -translate-x-full lg:translate-x-0'
@@ -2798,25 +2776,20 @@ export default function App() {
           ${isDark ? 'border-slate-800' : 'border-slate-200/90'}
         `}>
           <div className="w-[340px] lg:w-[385px] xl:w-[415px] h-full flex flex-col shrink-0 overflow-hidden">
-            {/* Sidebar Header (Globetrans Clean Title Style) */}
-            <div className="px-4 pt-3.5 pb-2.5 border-b border-slate-100 dark:border-slate-800/80 flex items-center justify-between gap-2 shrink-0">
-              <div className="min-w-0">
-                <h2 className="text-base sm:text-[17px] font-extrabold tracking-tight truncate text-slate-900 dark:text-white">
-                  {desktopSidebarTab === 'weather' ? 'พยากรณ์ฝนสมุทรปราการ' : 'จุดเฝ้าระวังน้ำท่วม'}
-                </h2>
-                <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 block truncate">
-                  ติดตามระดับน้ำและเวลาฝนตกต่อเนื่องครบ 6 อำเภอ
-                </span>
-              </div>
+            {/* Sidebar Header */}
+            <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-800/80 flex items-center justify-between gap-2 shrink-0">
+              <h2 className="text-base sm:text-[17px] font-extrabold tracking-tight truncate text-slate-900 dark:text-white">
+                {desktopSidebarTab === 'weather' ? 'พยากรณ์ฝนสมุทรปราการ' : 'จุดเฝ้าระวังน้ำท่วม'}
+              </h2>
               
-              <div className="flex items-center gap-1 shrink-0">
+              <div className="flex items-center gap-1.5 shrink-0">
                 <button
                   type="button"
                   onClick={() => {
                     playModalOpenSound();
                     setIsOfficialModalOpen(true);
                   }}
-                  className={`w-8 h-8 rounded-xl border flex items-center justify-center transition-colors cursor-pointer ${
+                  className={`w-8 h-8 rounded-lg border flex items-center justify-center transition-colors cursor-pointer ${
                     isDark ? 'bg-slate-850 border-slate-700 text-sky-400 hover:bg-slate-800' : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
                   }`}
                   title="เปิดหน้าต่างพยากรณ์อากาศ 24 ชม. แบบเต็ม"
@@ -2829,10 +2802,10 @@ export default function App() {
                     playToggleSound(false);
                     setIsSidebarOpen(false);
                   }}
-                  className={`w-8 h-8 rounded-xl border flex items-center justify-center transition-colors cursor-pointer ${
+                  className={`w-8 h-8 rounded-lg border flex items-center justify-center transition-colors cursor-pointer ${
                     isDark ? 'bg-slate-850 border-slate-700 text-slate-400 hover:text-white' : 'bg-slate-50 border-slate-200 text-slate-600 hover:text-slate-900'
                   }`}
-                  title="ย่อแถบข้าง (ขยายแผนที่เต็มจอ)"
+                  title="ย่อแถบข้าง"
                 >
                   <CivicDrawerToggle className="w-4 h-4" isOpen={true} />
                 </button>
@@ -2840,7 +2813,7 @@ export default function App() {
             </div>
 
           {/* Sidebar Scrollable Body */}
-          <div className="flex-1 overflow-y-auto p-3 space-y-3">
+          <div className="flex-1 overflow-y-auto p-3 space-y-3 custom-scrollbar-thin">
             {/* 1. Quick Search Box */}
             <div ref={searchContainerRef} className="relative">
               <div className="relative">
@@ -3107,20 +3080,20 @@ export default function App() {
                         : 'text-slate-500 hover:text-slate-900')
                 }`}
               >
-                <span className="truncate">พยากรณ์ฝนวันนี้ ({weather?.forecast24h?.todayProbability ?? weather?.rainProbabilityToday ?? 35}%)</span>
+                <span className="truncate">พยากรณ์ฝนวันนี้ ({weather?.forecast24h?.todayProbability ?? weather?.forecast24h?.todayMaxProb ?? weather?.rainProbabilityToday ?? 25}%)</span>
               </button>
             </div>
 
-            {/* TAB 1: POINTS LIST (จุดเฝ้าระวัง — Globetrans Card List Style) */}
+            {/* TAB 1: POINTS LIST (จุดเฝ้าระวัง) */}
             {desktopSidebarTab === 'points' && (
               <div className="space-y-2.5">
-                {/* Today's Rain Quick Summary Banner (เห็นเวลาฝนตกวันนี้และระยะเวลาตกต่อเนื่องได้ทันทีไม่งง) */}
+                {/* Today's Rain Quick Summary Banner */}
                 <div
                   onClick={() => {
                     playTabSound();
                     setDesktopSidebarTab('weather');
                   }}
-                  className={`p-3 rounded-2xl border transition-all cursor-pointer group ${
+                  className={`p-3 rounded-xl border transition-all cursor-pointer group ${
                     isDark
                       ? 'bg-slate-850/90 border-slate-800 hover:border-sky-500/60'
                       : 'bg-slate-50/90 border-slate-200/90 hover:border-slate-400'
@@ -3130,30 +3103,30 @@ export default function App() {
                     <div className="flex items-center gap-1.5 min-w-0">
                       <CloudRain className="w-4 h-4 text-sky-500 shrink-0" />
                       <span className={`text-xs font-extrabold truncate ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                        พยากรณ์ฝนวันนี้: โอกาส {weather?.forecast24h?.todayProbability ?? weather?.rainProbabilityToday ?? 35}%
+                        พยากรณ์ฝนวันนี้: โอกาส {weather?.forecast24h?.todayProbability ?? weather?.forecast24h?.todayMaxProb ?? weather?.rainProbabilityToday ?? 25}%
                       </span>
                     </div>
-                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold shrink-0 ${
-                      (weather?.forecast24h?.todayProbability ?? 35) >= 60
+                    <span className={`px-2.5 py-0.5 rounded-full text-[10.5px] font-bold shrink-0 ${
+                      (weather?.forecast24h?.todayProbability ?? 25) >= 60
                         ? 'bg-amber-400 text-slate-950'
-                        : (weather?.forecast24h?.todayProbability ?? 35) >= 35
-                        ? 'bg-[#b8f338] text-slate-950'
+                        : (weather?.forecast24h?.todayProbability ?? 25) >= 35
+                        ? 'bg-sky-500 text-white'
                         : (isDark ? 'bg-slate-800 text-emerald-400' : 'bg-emerald-100 text-emerald-800')
                     }`}>
-                      ดูพยากรณ์ &rarr;
+                      ดูรายละเอียด &rarr;
                     </span>
                   </div>
-                  <div className="mt-1.5 grid grid-cols-2 gap-2 pt-1.5 border-t border-slate-200/60 dark:border-slate-800 text-[10.5px]">
+                  <div className="mt-2 grid grid-cols-2 gap-2 pt-2 border-t border-slate-200/60 dark:border-slate-800 text-xs">
                     <div>
-                      <span className="text-[9.5px] text-slate-400 block">วันนี้มีโอกาสตกเวลา</span>
-                      <strong className={isDark ? 'text-slate-100' : 'text-slate-900'}>
-                        {weather?.forecast24h?.todayTimeWindow || weather?.rainTimeWindowToday || 'ไม่มีเกณฑ์ฝนตกวันนี้'}
+                      <span className="text-[11px] text-slate-500 dark:text-slate-400 block">เวลาที่คาดว่าจะตก</span>
+                      <strong className={`text-xs mt-0.5 block ${isDark ? 'text-slate-100' : 'text-slate-900'}`}>
+                        {weather?.forecast24h?.todayTimeWindow || weather?.rainTimeWindowToday || 'ไม่มีฝนตก'}
                       </strong>
                     </div>
                     <div>
-                      <span className="text-[9.5px] text-slate-400 block">คาดการณ์ตกติดกันนาน</span>
-                      <strong className={(weather?.forecast24h?.todayProbability ?? 35) >= 40 ? (isDark ? 'text-sky-300' : 'text-blue-700') : (isDark ? 'text-emerald-400' : 'text-emerald-700')}>
-                        {weather?.forecast24h?.todayContinuousDuration || weather?.rainContinuousDurationToday || 'ไม่ตกต่อเนื่อง (0 ชม.)'}
+                      <span className="text-[11px] text-slate-500 dark:text-slate-400 block">ตกติดกันต่อเนื่อง</span>
+                      <strong className={`text-xs mt-0.5 block ${(weather?.forecast24h?.todayProbability ?? 25) >= 35 ? (isDark ? 'text-sky-300' : 'text-blue-700') : (isDark ? 'text-emerald-400' : 'text-emerald-700')}`}>
+                        {weather?.forecast24h?.todayContinuousDuration || weather?.rainContinuousDurationToday || 'ไม่มีฝนต่อเนื่อง'}
                       </strong>
                     </div>
                   </div>
@@ -3222,8 +3195,8 @@ export default function App() {
                   </button>
                 </div>
 
-                {/* Scrollable Points List (Globetrans Card Style) */}
-                <div className="space-y-2 max-h-[50vh] overflow-y-auto pr-0.5 custom-scrollbar-thin">
+                {/* Scrollable Points List */}
+                <div className="space-y-2 pr-0.5">
                   {displayPoints.length === 0 ? (
                     <div className="py-8 text-center text-xs text-slate-400">
                       ไม่พบจุดเฝ้าระวังตามเงื่อนไขที่เลือก
@@ -3242,38 +3215,38 @@ export default function App() {
                           <div
                             key={pt.id}
                             onClick={() => handleSelectLocation(pt)}
-                            className={`w-full p-3.5 rounded-2xl border-2 text-left transition-all cursor-pointer select-none ${
+                            className={`w-full p-3.5 rounded-xl border-2 text-left transition-all cursor-pointer select-none ${
                               isDark
                                 ? 'bg-slate-900 border-sky-400 shadow-lg shadow-black/40'
                                 : 'bg-white border-slate-900 shadow-md'
                             }`}
                           >
-                            {/* Top Row: Name + Station Code */}
+                            {/* Top Row: Name + District */}
                             <div className="flex items-start justify-between gap-2">
                               <div className="min-w-0">
-                                <h4 className={`font-extrabold text-[13px] leading-snug truncate ${isDark ? 'text-white' : 'text-slate-950'}`}>
+                                <h4 className={`font-extrabold text-[13.5px] leading-snug truncate ${isDark ? 'text-white' : 'text-slate-950'}`}>
                                   {pt.name}
                                 </h4>
-                                <span className="text-[10.5px] text-slate-400 font-mono block mt-0.5">
-                                  สถานีเฝ้าระวัง #{String(pt.id).slice(-5).toUpperCase()} • อ.{pt.district?.replace(/^อ\./, '')}
+                                <span className="text-[11px] text-slate-500 dark:text-slate-400 block mt-0.5">
+                                  อ.{pt.district?.replace(/^อ\./, '')}{pt.subdistrict ? ` • ต.${pt.subdistrict.replace(/^ต\./, '')}` : ''}
                                 </span>
                               </div>
                               {hasPtPhoto && (
-                                <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-cyan-300 shrink-0">
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-cyan-300 shrink-0">
                                   มีภาพจริง
                                 </span>
                               )}
                             </div>
 
-                            {/* Center Pill Badge + Progress Bar (Globetrans IN TRANSIT style) */}
-                            <div className="my-3">
+                            {/* Center Pill Badge + Progress Bar */}
+                            <div className="my-2.5">
                               <div className="flex justify-center mb-1.5">
-                                <span className={`px-3 py-0.5 rounded-full text-[10.5px] font-extrabold tracking-wide uppercase ${
+                                <span className={`px-3 py-0.5 rounded-full text-[11px] font-extrabold tracking-wide ${
                                   lvl === 3
                                     ? 'bg-rose-600 text-white'
                                     : lvl === 2
                                     ? 'bg-amber-400 text-slate-950'
-                                    : 'bg-[#b8f338] text-slate-950'
+                                    : 'bg-emerald-500 text-white'
                                 }`}>
                                   {lvl === 3 ? `วิกฤต • ${depthText}` : lvl === 2 ? `ปานกลาง • ${depthText}` : `ปกติ • ${depthText}`}
                                 </span>
@@ -3281,29 +3254,29 @@ export default function App() {
                               <div className="w-full h-1.5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
                                 <div
                                   className={`h-full rounded-full transition-all duration-300 ${
-                                    lvl === 3 ? 'bg-rose-500' : lvl === 2 ? 'bg-amber-500' : 'bg-[#84cc16]'
+                                    lvl === 3 ? 'bg-rose-500' : lvl === 2 ? 'bg-amber-500' : 'bg-emerald-500'
                                   }`}
                                   style={{ width: `${barPercent}%` }}
                                 />
                               </div>
                             </div>
 
-                            {/* 4-Column Data Grid (Sender / Departured / Distance / Weight style) */}
-                            <div className="grid grid-cols-4 gap-1.5 pt-2 border-t border-slate-100 dark:border-slate-800 text-[10.5px]">
+                            {/* 4-Column Data Grid */}
+                            <div className="grid grid-cols-4 gap-1.5 pt-2 border-t border-slate-100 dark:border-slate-800 text-[11px]">
                               <div>
-                                <span className="text-[9.5px] text-slate-400 block">อำเภอ</span>
+                                <span className="text-[10.5px] text-slate-500 dark:text-slate-400 block">อำเภอ</span>
                                 <strong className={`truncate block mt-0.5 ${isDark ? 'text-slate-200' : 'text-slate-900'}`}>
                                   {pt.district?.replace(/^อ\./, '')}
                                 </strong>
                               </div>
                               <div>
-                                <span className="text-[9.5px] text-slate-400 block">ระดับน้ำ</span>
+                                <span className="text-[10.5px] text-slate-500 dark:text-slate-400 block">ระดับน้ำ</span>
                                 <strong className={`font-mono block mt-0.5 ${isDark ? 'text-slate-200' : 'text-slate-900'}`}>
                                   {depthText}
                                 </strong>
                               </div>
                               <div>
-                                <span className="text-[9.5px] text-slate-400 block">แนวโน้ม</span>
+                                <span className="text-[10.5px] text-slate-500 dark:text-slate-400 block">แนวโน้ม</span>
                                 <strong className={`block mt-0.5 ${
                                   isReceding ? 'text-teal-600 dark:text-teal-400' : pt.waterTrend === 'rising' ? 'text-rose-600 dark:text-rose-400' : (isDark ? 'text-slate-200' : 'text-slate-900')
                                 }`}>
@@ -3311,7 +3284,7 @@ export default function App() {
                                 </strong>
                               </div>
                               <div>
-                                <span className="text-[9.5px] text-slate-400 block">การสัญจร</span>
+                                <span className="text-[10.5px] text-slate-500 dark:text-slate-400 block">การสัญจร</span>
                                 <strong className={`truncate block mt-0.5 ${isDark ? 'text-slate-200' : 'text-slate-900'}`}>
                                   {lvl === 3 ? 'ห้ามผ่าน' : lvl === 2 ? 'ควรเลี่ยง' : 'ผ่านได้'}
                                 </strong>
@@ -3326,7 +3299,7 @@ export default function App() {
                           key={pt.id}
                           type="button"
                           onClick={() => handleSelectLocation(pt)}
-                          className={`w-full p-3 rounded-2xl border text-left transition-all cursor-pointer flex items-center justify-between gap-2 select-none active:scale-[0.98] ${
+                          className={`w-full p-3 rounded-xl border text-left transition-all cursor-pointer flex items-center justify-between gap-2 select-none active:scale-[0.98] ${
                             isDark 
                               ? 'bg-slate-850/60 hover:bg-slate-800/90 border-slate-800/90 text-slate-200' 
                               : 'bg-slate-50/90 hover:bg-white border-slate-200/70 text-slate-800 hover:shadow-xs'
@@ -3334,16 +3307,14 @@ export default function App() {
                         >
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-1.5">
-                              <h4 className="font-bold text-xs truncate leading-snug">{pt.name}</h4>
+                              <h4 className="font-bold text-[12.5px] truncate leading-snug">{pt.name}</h4>
                               {hasPtPhoto && (
                                 <span className="inline-flex items-center px-1 py-0.5 rounded bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-cyan-300 shrink-0" title="มีภาพถ่ายประกอบ">
                                   <CivicReportCamera className="w-3 h-3" />
                                 </span>
                               )}
                             </div>
-                            <div className="flex items-center gap-1.5 text-[10.5px] text-slate-400 mt-0.5">
-                              <span className="font-mono">#{String(pt.id).slice(-4).toUpperCase()}</span>
-                              <span>•</span>
+                            <div className="flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
                               <span className="truncate">อ.{pt.district?.replace(/^อ\./, '')}</span>
                               <span>•</span>
                               <span className="truncate">{lvl === 3 ? 'รถเล็กห้ามผ่าน' : lvl === 2 ? 'รถเล็กควรเลี่ยง' : 'สัญจรผ่านได้'}</span>
@@ -3351,12 +3322,12 @@ export default function App() {
                           </div>
 
                           <div className="text-right shrink-0">
-                            <span className={`text-[10.5px] font-extrabold font-mono px-2.5 py-1 rounded-full inline-block ${
+                            <span className={`text-[11px] font-extrabold font-mono px-2.5 py-1 rounded-full inline-block ${
                               lvl === 3
                                 ? 'bg-rose-600 text-white'
                                 : lvl === 2
                                 ? 'bg-amber-400 text-slate-950'
-                                : 'bg-[#b8f338] text-slate-950'
+                                : (isDark ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-emerald-100 text-emerald-800')
                             }`}>
                               {depthText}
                             </span>
@@ -3372,7 +3343,6 @@ export default function App() {
             {/* TAB 2: WEATHER FORECAST (พยากรณ์สภาพอากาศ) */}
             {desktopSidebarTab === 'weather' && (
               <div className="space-y-3">
-                {/* 24-Hour Rain Forecast Card */}
                 <RainForecast24hCard
                   forecast={weather?.forecast24h}
                   userDistrict={userDistrict}
@@ -3387,138 +3357,8 @@ export default function App() {
                   onOpenPublicUpdates={() => setIsPublicUpdatesModalOpen(true)}
                   lastUpdatedTime={lastUpdatedTime}
                 />
-
-                {/* 24-Hour CCTV Quick Card */}
-                <div className={`p-2.5 rounded-lg border ${isDark ? 'bg-slate-850/60 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-bold flex items-center gap-1.5 text-slate-800 dark:text-slate-200">
-                      <CivicCctv className="w-3.5 h-3.5 text-blue-600 dark:text-cyan-400 shrink-0" />
-                      <span>กล้องวงจรปิด CCTV 24 ชม.</span>
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => handleOpenCctv()}
-                      className="text-[10px] font-bold text-blue-600 dark:text-cyan-400 hover:underline cursor-pointer"
-                    >
-                      ดูทั้งหมด ({CCTV_CAMERAS.length} จุด) &rarr;
-                    </button>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => handleOpenCctv()}
-                    className={`w-full p-2 rounded-md border text-left flex items-center justify-between gap-2 transition-all cursor-pointer active:scale-98 ${
-                      isDark 
-                        ? 'bg-slate-800/80 hover:bg-slate-750 border-slate-700 text-slate-200' 
-                        : 'bg-white hover:bg-slate-50 border-slate-200 text-slate-800'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2 min-w-0">
-                      <div className="w-7 h-7 rounded-md bg-blue-600 text-white flex items-center justify-center shrink-0">
-                        <CivicCctv className="w-3.5 h-3.5" />
-                      </div>
-                      <div className="min-w-0">
-                        <span className="text-xs font-bold block truncate">เปิดดูสัญญาณสด {CCTV_CAMERAS.length} จุด</span>
-                        <span className="text-[10px] text-slate-500 dark:text-slate-400 block truncate">DOH • EXAT • ทน.สมุทรปราการ ครบ 6 อำเภอ</span>
-                      </div>
-                    </div>
-                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-600 text-white shrink-0">
-                      LIVE
-                    </span>
-                  </button>
-                </div>
-
-                {/* Major Flood Corridors */}
-                <div className={`p-2.5 rounded-lg border ${isDark ? 'bg-slate-850/60 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-bold flex items-center gap-1.5 text-slate-800 dark:text-slate-200">
-                      <CivicRouteCorridor className="w-3.5 h-3.5 text-blue-600 dark:text-cyan-400 shrink-0" />
-                      <span>เส้นทางสัญจรเสี่ยงสำคัญ</span>
-                    </span>
-                    <span className="text-[10px] text-slate-400">คลิกเพื่อซูม</span>
-                  </div>
-                  <div className="grid grid-cols-2 gap-1.5">
-                    {MAJOR_FLOOD_CORRIDORS.slice(0, 6).map((corridor) => (
-                      <button
-                        key={corridor.id}
-                        onClick={() => {
-                          playSelectSound();
-                          if (corridor.coordinates && corridor.coordinates[0]) {
-                            setFlyToLocation({
-                              lat: corridor.coordinates[0][0],
-                              lng: corridor.coordinates[0][1],
-                              zoom: 14,
-                              duration: 1.8,
-                              ts: Date.now()
-                            });
-                          }
-                        }}
-                        className={`p-1.5 rounded-md text-left border text-[11px] font-medium transition-all cursor-pointer shadow-xs truncate active:scale-95 flex items-center gap-1 ${
-                          isDark ? 'bg-slate-800 hover:bg-slate-750 border-slate-700 text-slate-200 hover:text-cyan-300' : 'bg-white hover:bg-slate-100 border-slate-200 text-slate-800 hover:text-blue-600'
-                        }`}
-                        title={corridor.name}
-                      >
-                        <CivicStationPin className="w-3 h-3 text-blue-500 shrink-0" />
-                        <span className="truncate">{corridor.shortName || corridor.name}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Telemetry Summary Counters */}
-                <div className="grid grid-cols-2 gap-2 text-xs">
-                  <div className={`p-2.5 rounded-lg border ${isDark ? 'bg-slate-850/60 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
-                    <span className="text-[10px] text-slate-500 dark:text-slate-400 block font-medium">จุดเฝ้าระวังทั้งหมด</span>
-                    <span className="text-base font-bold text-blue-600 dark:text-cyan-400 font-mono mt-0.5 block">
-                      {points.length + citizenReports.length} จุด
-                    </span>
-                  </div>
-                  <div className={`p-2.5 rounded-lg border ${isDark ? 'bg-slate-850/60 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
-                    <span className="text-[10px] text-slate-500 dark:text-slate-400 block font-medium">รายงานประชาชน</span>
-                    <span className="text-base font-bold text-teal-600 dark:text-teal-400 font-mono mt-0.5 block">
-                      {citizenReports.length} รายการ
-                    </span>
-                  </div>
-                </div>
               </div>
             )}
-          </div>
-
-          {/* Sidebar Official Telemetry Status Footer */}
-          <div className={`p-2.5 px-3 border-t flex items-center justify-between text-[11px] shrink-0 ${
-            isDark ? 'bg-slate-900/90 border-slate-800 text-slate-400' : 'bg-slate-50 border-slate-200 text-slate-600'
-          }`}>
-            <div className="flex items-center gap-1.5 min-w-0">
-              <span className="relative flex h-2 w-2 shrink-0">
-                <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${
-                  isRefreshingData ? 'bg-blue-400' : 'bg-emerald-400'
-                }`} />
-                <span className={`relative inline-flex rounded-full h-2 w-2 ${
-                  isRefreshingData ? 'bg-blue-500' : 'bg-emerald-500'
-                }`} />
-              </span>
-              <span className="truncate text-[10.5px]">
-                {isRefreshingData ? 'กำลังซิงก์โทรมาตร...' : `โทรมาตรสด (ซิงก์ใน ${Math.floor(refreshCountdown / 60)}:${(refreshCountdown % 60).toString().padStart(2, '0')})`}
-              </span>
-            </div>
-            <button
-              type="button"
-              onClick={() => {
-                playRefreshSound();
-                handleRefreshData();
-              }}
-              disabled={isRefreshingData}
-              className={`px-2 py-1 rounded text-[10.5px] font-bold border transition-all cursor-pointer shrink-0 flex items-center gap-1 ${
-                isRefreshingData
-                  ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
-                  : isDark
-                  ? 'bg-slate-800 hover:bg-slate-700 text-cyan-300 border-slate-700 hover:border-slate-600'
-                  : 'bg-white hover:bg-blue-50 text-blue-700 border-slate-200 hover:border-blue-300 shadow-2xs'
-              }`}
-              title="ซิงก์ข้อมูลโทรมาตรล่าสุดทันที"
-            >
-              <RefreshCw className={`w-3 h-3 ${isRefreshingData ? 'animate-spin' : ''}`} />
-              <span>{isRefreshingData ? 'ซิงก์...' : 'ซิงก์ทันที'}</span>
-            </button>
           </div>
         </div>
       </aside>
@@ -3629,16 +3469,16 @@ export default function App() {
                 )}
               </div>
               <div className="min-w-0 flex-1">
-                <span className={`text-[9.5px] font-bold uppercase tracking-wider block leading-tight ${
+                <span className={`text-[10px] font-bold uppercase tracking-wider block leading-tight ${
                   latestUpdateNotification.includes('⚠️') || latestUpdateNotification.includes('ไม่ได้อยู่ใน')
                     ? 'text-amber-400'
                     : 'text-emerald-400'
                 }`}>
                   {latestUpdateNotification.includes('⚠️') || latestUpdateNotification.includes('ไม่ได้อยู่ใน')
                     ? 'การแจ้งเตือนจากระบบ'
-                    : 'ศูนย์บัญชาการข้อมูล • PRAKANGUARD'}
+                    : 'แจ้งเตือนระบบ'}
                 </span>
-                <span className="text-[11.5px] sm:text-xs font-semibold leading-snug block text-slate-100 truncate">
+                <span className="text-xs font-semibold leading-snug block text-slate-100 truncate">
                   {latestUpdateNotification}
                 </span>
               </div>
@@ -3760,136 +3600,138 @@ export default function App() {
             </div>
           )}
 
-          {/* DESKTOP/IPAD FLOATING SUMMARY & TELEMETRY CARD (GLOBETRANS BOTTOM MAP CARD STYLE) */}
-          <div className="hidden md:flex absolute bottom-4 left-4 right-20 max-w-3xl z-40 pointer-events-auto select-none">
-            <div
-              className={`w-full rounded-2xl border p-4 shadow-xl backdrop-blur-md transition-all ${
-                isDark
-                  ? 'bg-slate-900/95 border-slate-800 text-slate-200 shadow-black/50'
-                  : 'bg-white/95 border-slate-200/90 text-slate-800 shadow-slate-900/10'
-              }`}
-            >
-              {/* Top Row: Title + Pill Status + Action Buttons */}
-              <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-100 dark:border-slate-800">
-                <div className="flex items-center gap-2.5">
-                  <span className="text-[13px] font-black tracking-tight text-slate-900 dark:text-white">
-                    พยากรณ์ฝน & สถานะน้ำสมุทรปราการ
-                  </span>
-                  <span
-                    className={`px-2.5 py-0.5 rounded-md text-[10px] font-extrabold uppercase tracking-wider ${
-                      (weather?.forecast24h?.todayMaxProb ?? weather?.rainProb ?? 0) >= 60
-                        ? 'bg-rose-500 text-white'
-                        : (weather?.forecast24h?.todayMaxProb ?? weather?.rainProb ?? 0) >= 35
-                        ? 'bg-amber-400 text-slate-950'
-                        : 'bg-slate-900 text-[#b8f338] dark:bg-[#b8f338] dark:text-slate-950'
-                    }`}
-                  >
-                    วันนี้โอกาสตก {weather?.forecast24h?.todayMaxProb ?? weather?.rainProb ?? 0}%
-                  </span>
-                </div>
+          {/* DESKTOP/IPAD FLOATING SUMMARY CARD */}
+          {(() => {
+            const todayProb = weather?.forecast24h?.todayProbability ?? weather?.forecast24h?.todayMaxProb ?? weather?.rainProbabilityToday ?? 0;
+            const tomorrowProb = weather?.forecast24h?.tomorrowProbability ?? weather?.forecast24h?.tomorrowMaxProb ?? weather?.rainProbabilityTomorrow ?? 0;
+            const todayWindow = weather?.forecast24h?.todayTimeWindow || weather?.rainTimeWindowToday || 'ไม่มีฝนตก';
+            const todayDuration = weather?.forecast24h?.todayContinuousDuration || weather?.rainContinuousDurationToday || 'ไม่มีฝนต่อเนื่อง';
+            const tomorrowWindow = weather?.forecast24h?.tomorrowTimeWindow || weather?.rainTimeWindowTomorrow || 'ไม่มีฝนตก';
 
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      try { playModalOpenSound(); } catch (_) {}
-                      setIsAiForecastModalOpen(true);
-                    }}
-                    className={`px-3 py-1 rounded-full text-[11px] font-bold border transition-all cursor-pointer active:scale-95 ${
-                      isDark
-                        ? 'bg-slate-800 border-slate-700 text-sky-300 hover:bg-slate-700'
-                        : 'bg-slate-900 border-slate-900 text-white hover:bg-slate-800'
-                    }`}
-                  >
-                    วิเคราะห์ฝน 6 อำเภอ
-                  </button>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      try { playModalOpenSound(); } catch (_) {}
-                      setIsStandardsModalOpen(true);
-                    }}
-                    className={`px-3 py-1 rounded-full text-[11px] font-bold border transition-all cursor-pointer active:scale-95 ${
-                      isDark
-                        ? 'bg-slate-900 border-slate-700 text-slate-300 hover:bg-slate-800'
-                        : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
-                    }`}
-                  >
-                    เกณฑ์ระดับน้ำ ↗
-                  </button>
-                </div>
-              </div>
-
-              {/* Bottom 4-Column Data Grid */}
-              <div className="grid grid-cols-4 gap-3 pt-2.5">
-                <div>
-                  <div className="text-[10px] font-semibold text-slate-400 dark:text-slate-500">
-                    วันนี้คาดว่าจะตกเวลา
-                  </div>
-                  <div className="text-[12px] font-extrabold text-slate-900 dark:text-white mt-0.5 truncate">
-                    {weather?.forecast24h?.todayTimeWindow ||
-                      ((weather?.forecast24h?.todayMaxProb ?? 0) >= 35
-                        ? `ประมาณ ${weather?.forecast24h?.peakRainHourToday || 'วันนี้'}`
-                        : 'ไม่มีเกณฑ์ฝนตกวันนี้')}
-                  </div>
-                </div>
-
-                <div>
-                  <div className="text-[10px] font-semibold text-slate-400 dark:text-slate-500">
-                    คาดว่าจะตกติดกันนาน
-                  </div>
-                  <div className="text-[12px] font-extrabold text-sky-600 dark:text-sky-400 mt-0.5 truncate">
-                    {weather?.forecast24h?.todayContinuousDuration ||
-                      ((weather?.forecast24h?.todayRainyHoursCount ?? 0) > 0
-                        ? `ตกต่อเนื่อง ~${weather.forecast24h.todayRainyHoursCount} ชม.`
-                        : 'ไม่ตกต่อเนื่อง (0 ชม.)')}
-                  </div>
-                </div>
-
-                <div>
-                  <div className="text-[10px] font-semibold text-slate-400 dark:text-slate-500">
-                    แนวโน้มวันพรุ่งนี้
-                  </div>
-                  <div className="text-[12px] font-extrabold text-slate-800 dark:text-slate-200 mt-0.5 truncate">
-                    โอกาส {weather?.forecast24h?.tomorrowMaxProb ?? 0}% •{' '}
-                    {weather?.forecast24h?.tomorrowTimeWindow &&
-                    weather?.forecast24h?.tomorrowTimeWindow !== 'ไม่มีเกณฑ์ฝนตกพรุ่งนี้'
-                      ? weather.forecast24h.tomorrowTimeWindow
-                      : 'ไม่มีฝนเด่นชัด'}
-                  </div>
-                </div>
-
+            return (
+              <div className="hidden md:flex absolute bottom-4 left-4 right-20 max-w-3xl z-40 pointer-events-auto select-none">
                 <div
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    try { playModalOpenSound(); } catch (_) {}
-                    setIsStandardsModalOpen(true);
-                  }}
-                  className="cursor-pointer group"
+                  className={`w-full rounded-2xl border p-3.5 px-4 shadow-xl backdrop-blur-md transition-all ${
+                    isDark
+                      ? 'bg-slate-900/95 border-slate-800 text-slate-200 shadow-black/50'
+                      : 'bg-white/95 border-slate-200/90 text-slate-800 shadow-slate-900/10'
+                  }`}
                 >
-                  <div className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 group-hover:text-sky-500 transition-colors">
-                    เกณฑ์วัดระดับน้ำ (ซม.)
+                  {/* Top Row: Title + Pill Status + Action Buttons */}
+                  <div className="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-slate-100 dark:border-slate-800">
+                    <div className="flex items-center gap-2.5">
+                      <span className="text-[13.5px] font-extrabold tracking-tight text-slate-900 dark:text-white">
+                        พยากรณ์ฝน & สถานะน้ำสมุทรปราการ
+                      </span>
+                      <span
+                        className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
+                          todayProb >= 60
+                            ? 'bg-rose-600 text-white'
+                            : todayProb >= 35
+                            ? 'bg-amber-400 text-slate-950'
+                            : (isDark ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-emerald-100 text-emerald-800')
+                        }`}
+                      >
+                        วันนี้โอกาสตก {todayProb}%
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          try { playModalOpenSound(); } catch (_) {}
+                          setIsOfficialModalOpen(true);
+                        }}
+                        className={`px-3 py-1 rounded-full text-[11px] font-bold border transition-all cursor-pointer active:scale-95 ${
+                          isDark
+                            ? 'bg-slate-800 border-slate-700 text-sky-300 hover:bg-slate-700'
+                            : 'bg-slate-900 border-slate-900 text-white hover:bg-slate-800'
+                        }`}
+                      >
+                        พยากรณ์ 6 อำเภอ
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          try { playModalOpenSound(); } catch (_) {}
+                          setIsStandardsModalOpen(true);
+                        }}
+                        className={`px-3 py-1 rounded-full text-[11px] font-bold border transition-all cursor-pointer active:scale-95 ${
+                          isDark
+                            ? 'bg-slate-900 border-slate-700 text-slate-300 hover:bg-slate-800'
+                            : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+                        }`}
+                      >
+                        เกณฑ์ระดับน้ำ
+                      </button>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2 text-[11px] font-bold mt-0.5">
-                    <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                      5-20
-                    </span>
-                    <span className="inline-flex items-center gap-1 text-amber-600 dark:text-amber-400">
-                      <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                      21-50
-                    </span>
-                    <span className="inline-flex items-center gap-1 text-rose-600 dark:text-rose-400">
-                      <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
-                      &gt;50
-                    </span>
+
+                  {/* Bottom 4-Column Data Grid */}
+                  <div className="grid grid-cols-4 gap-3 pt-2.5">
+                    <div>
+                      <div className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
+                        เวลาที่คาดว่าจะตกวันนี้
+                      </div>
+                      <div className="text-[13px] font-bold text-slate-900 dark:text-white mt-0.5 truncate">
+                        {todayWindow}
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
+                        ตกติดกันต่อเนื่อง
+                      </div>
+                      <div className={`text-[13px] font-bold mt-0.5 truncate ${
+                        todayProb >= 35 ? 'text-sky-600 dark:text-sky-400' : 'text-emerald-600 dark:text-emerald-400'
+                      }`}>
+                        {todayDuration}
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
+                        แนวโน้มวันพรุ่งนี้
+                      </div>
+                      <div className="text-[13px] font-bold text-slate-800 dark:text-slate-200 mt-0.5 truncate">
+                        โอกาส {tomorrowProb}% {tomorrowWindow !== 'ไม่มีฝนตก' ? `(${tomorrowWindow})` : ''}
+                      </div>
+                    </div>
+
+                    <div
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        try { playModalOpenSound(); } catch (_) {}
+                        setIsStandardsModalOpen(true);
+                      }}
+                      className="cursor-pointer group"
+                    >
+                      <div className="text-[11px] font-medium text-slate-500 dark:text-slate-400 group-hover:text-sky-500 transition-colors">
+                        เกณฑ์ระดับน้ำ (ซม.)
+                      </div>
+                      <div className="flex items-center gap-2 text-xs font-bold mt-0.5">
+                        <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                          5-20
+                        </span>
+                        <span className="inline-flex items-center gap-1 text-amber-600 dark:text-amber-400">
+                          <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                          21-50
+                        </span>
+                        <span className="inline-flex items-center gap-1 text-rose-600 dark:text-rose-400">
+                          <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+                          &gt;50
+                        </span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
+            );
+          })()}
 
         {/* FLOATING POINT DETAIL MODAL (CENTERED POPUP DIALOG) */}
         {selectedPoint && (() => {

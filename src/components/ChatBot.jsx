@@ -2464,13 +2464,9 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
               <div className="min-w-0 leading-tight">
                 <div className="flex items-center gap-1.5">
                   <h4 className="text-[13px] sm:text-[14px] font-bold tracking-tight">PrakanBOT</h4>
-                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-gradient-to-r from-blue-500/15 via-cyan-500/15 to-emerald-500/15 text-blue-600 dark:text-cyan-300 border border-cyan-500/30">
-                    <AiSparkleIcon size={9} />
-                    <span>AI อัจฉริยะ</span>
-                  </span>
                 </div>
-                <p className={`text-[10px] sm:text-[10.5px] truncate mt-0.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                  {isBusy ? 'กำลังวิเคราะห์คำตอบ…' : 'ระบบวิเคราะห์อุทกภัยอัจฉริยะ 24 ชม.'}
+                <p className={`text-[10.5px] truncate mt-0.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                  {isBusy ? 'กำลังค้นหาข้อมูล…' : 'สอบถามจุดน้ำท่วมและพยากรณ์ฝน'}
                 </p>
               </div>
             </div>
@@ -2606,7 +2602,6 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
                         : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300'
                     }`}
                   >
-                    <AiSparkleIcon size={10} />
                     <span>{chip.label}</span>
                   </button>
                 ))}
@@ -2640,7 +2635,6 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
                       : 'border-slate-200/90 bg-slate-50 text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                   }`}
                 >
-                  <AiSparkleIcon size={9} />
                   <span>{chip.label}</span>
                 </button>
               ))}
@@ -2652,12 +2646,11 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
             onSubmit={(e) => { e.preventDefault(); handleSend(); }}
             className={`p-2.5 sm:p-3 border-t shrink-0 ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100'}`}
           >
-            <div className={`flex items-center gap-2 rounded-full border pl-3 pr-1 py-1 transition-all shadow-2xs ${
+            <div className={`flex items-center gap-2 rounded-full border pl-3.5 pr-1 py-1 transition-all shadow-2xs ${
               isDark
                 ? 'bg-slate-800/70 border-slate-700 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20'
                 : 'bg-slate-50 border-slate-200/90 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/15 focus-within:bg-white'
             }`}>
-              <AiSparkleIcon size={14} className="shrink-0 opacity-70" />
               <input
                 type="text"
                 value={input}

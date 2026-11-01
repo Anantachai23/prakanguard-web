@@ -1160,21 +1160,6 @@ export default function MapView({
         style={{ width: '100%', height: '100%', background: isDark ? '#0b132b' : '#f8fafc' }}
       ></div>
 
-      {/* 5-MIN AUTO-REFRESH READ-ONLY BADGE (TOP CENTER OF MAP - STRICTLY NON-CLICKABLE AS REQUESTED) */}
-      <div className="absolute top-1.5 sm:top-3 left-1/2 -translate-x-1/2 z-20 pointer-events-none select-none max-w-[88vw]">
-        <div className={`px-2 sm:px-3 py-0.5 sm:py-1 rounded-md border shadow-xs backdrop-blur-md flex items-center gap-1 sm:gap-1.5 text-[9.5px] sm:text-xs font-semibold transition-colors ${
-          isDark 
-            ? 'bg-slate-900/90 border-slate-800 text-slate-200' 
-            : 'bg-white/95 border-slate-200 text-slate-700'
-        }`}>
-          <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse shrink-0"></span>
-          <span>รีเฟรชอัตโนมัติใน</span>
-          <span className="font-mono font-bold text-cyan-600 dark:text-cyan-400">
-            {formatCountdown(refreshCountdown)}
-          </span>
-        </div>
-      </div>
-
       {/* FLOATING MAP CONTROLS (TOP RIGHT - CLEAN, UNCLUTTERED, COMPACT) */}
       <div className="absolute top-10 right-2 sm:top-4 sm:right-4 z-25 flex flex-col items-end gap-1 sm:gap-2 pointer-events-auto">
         

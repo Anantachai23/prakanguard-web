@@ -83,9 +83,6 @@ export default function WelcomeModal({
           willChange: 'transform, opacity'
         }}
       >
-        {/* Top Institutional Royal Accent Bar */}
-        <div className="h-1 w-full bg-gradient-to-r from-blue-700 via-sky-500 to-blue-700 shrink-0" />
-
         {/* Modal Close Icon */}
         <button 
           type="button"
@@ -100,17 +97,16 @@ export default function WelcomeModal({
           <X className="w-3.5 h-3.5" />
         </button>
 
-        {/* Executive Header Banner */}
+        {/* Header Banner */}
         <div className={`px-5 pt-6 pb-4 flex flex-col items-center text-center border-b shrink-0 ${
-          isDark ? 'bg-slate-900 border-slate-800' : 'bg-slate-50/70 border-slate-100'
+          isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100'
         }`}>
-          {/* Institutional Crest / Logo */}
           <div className="relative mb-3">
             <div 
-              className={`w-14 h-14 rounded-full p-0.5 flex items-center justify-center border shadow-md overflow-hidden ${
+              className={`w-14 h-14 rounded-full p-0.5 flex items-center justify-center border shadow-sm overflow-hidden ${
                 isDark 
-                  ? 'bg-slate-900 border-blue-500/40 text-blue-400 shadow-blue-950/40' 
-                  : 'bg-white border-blue-300/60 text-blue-700 shadow-blue-500/10'
+                  ? 'bg-slate-900 border-slate-700' 
+                  : 'bg-white border-slate-200'
               }`}
               style={{ width: '56px', height: '56px', minWidth: '56px', minHeight: '56px', maxWidth: '56px', maxHeight: '56px' }}
             >
@@ -121,99 +117,75 @@ export default function WelcomeModal({
                 style={{ width: '100%', height: '100%', maxWidth: '100%', maxHeight: '100%' }}
               />
             </div>
-            <span className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-emerald-500 border-2 border-white dark:border-slate-900 flex items-center justify-center shadow-xs" title="ระบบเปิดออนไลน์พร้อมใช้งาน">
-              <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-            </span>
           </div>
 
-          {/* Department / System Title */}
-          <div className="flex items-center gap-1.5 mb-1.5">
-            <CivicShield className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 shrink-0" />
-            <span className={`text-[10.5px] font-bold uppercase tracking-wider ${
-              isDark ? 'text-slate-300' : 'text-slate-600'
-            }`}>
-              ศูนย์บัญชาการข้อมูล • PRAKANGUARD
-            </span>
-          </div>
-
-          <h2 className={`text-base sm:text-lg font-bold tracking-tight ${
+          <h2 className={`text-base sm:text-lg font-extrabold tracking-tight ${
             isDark ? 'text-white' : 'text-slate-900'
           }`}>
-            ระบบสารสนเทศเฝ้าระวังอุทกภัย
+            PrakanGuard สมุทรปราการ
           </h2>
-          <p className={`text-xs mt-0.5 font-medium ${
-            isDark ? 'text-blue-400' : 'text-blue-700'
+          <p className={`text-xs mt-1 font-medium ${
+            isDark ? 'text-slate-400' : 'text-slate-500'
           }`}>
-            จังหวัดสมุทรปราการ (Real-time GIS Telemetry)
+            ติดตามระดับน้ำท่วมขังและพยากรณ์ฝนครบ 6 อำเภอ
           </p>
         </div>
 
-        {/* Modal Body - Official, Clean & Non-Cluttered */}
-        <div className="px-5 py-4 space-y-3.5">
-          {/* Formal Summary Statement */}
-          <p className={`text-xs sm:text-[12.5px] leading-relaxed text-center ${
-            isDark ? 'text-slate-300' : 'text-slate-600'
-          }`}>
-            ระบบติดตามสถานการณ์ระดับน้ำท่วมขังผิวจราจร กล้องวงจรปิด CCTV ตรวจจับ และพยากรณ์สภาพอากาศรายชั่วโมง เพื่อความปลอดภัยในการเดินทางของประชาชน
-          </p>
-
-          {/* 3 Compact Official Metric Chips */}
-          <div className="grid grid-cols-3 gap-2 py-0.5">
-            <div className={`p-2.5 rounded-xl border flex flex-col items-center text-center transition-colors ${
+        {/* Modal Body */}
+        <div className="px-5 py-4">
+          <div className="grid grid-cols-3 gap-2">
+            <div className={`p-3 rounded-xl border flex flex-col items-center text-center ${
               isDark ? 'bg-slate-800/60 border-slate-700/60' : 'bg-slate-50 border-slate-200/80'
             }`}>
               <MapPin className="w-4 h-4 text-blue-500 mb-1 shrink-0" />
-              <span className={`text-[11px] font-bold ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>
+              <span className={`text-xs font-bold ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>
                 6 อำเภอ
               </span>
-              <span className={`text-[9.5px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                ครอบคลุมทั้งจังหวัด
+              <span className={`text-[10.5px] mt-0.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                จุดเสี่ยงน้ำท่วม
               </span>
             </div>
 
-            <div className={`p-2.5 rounded-xl border flex flex-col items-center text-center transition-colors ${
+            <div className={`p-3 rounded-xl border flex flex-col items-center text-center ${
               isDark ? 'bg-slate-800/60 border-slate-700/60' : 'bg-slate-50 border-slate-200/80'
             }`}>
               <Eye className="w-4 h-4 text-sky-500 mb-1 shrink-0" />
-              <span className={`text-[11px] font-bold ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>
+              <span className={`text-xs font-bold ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>
                 กล้อง CCTV
               </span>
-              <span className={`text-[9.5px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                ภาพสดถนนสายหลัก
+              <span className={`text-[10.5px] mt-0.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                ถนนสายหลัก
               </span>
             </div>
 
-            <div className={`p-2.5 rounded-xl border flex flex-col items-center text-center transition-colors ${
+            <div className={`p-3 rounded-xl border flex flex-col items-center text-center ${
               isDark ? 'bg-slate-800/60 border-slate-700/60' : 'bg-slate-50 border-slate-200/80'
             }`}>
               <Radio className="w-4 h-4 text-emerald-500 mb-1 shrink-0" />
-              <span className={`text-[11px] font-bold ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>
-                เรียลไทม์
+              <span className={`text-xs font-bold ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>
+                พยากรณ์ฝน
               </span>
-              <span className={`text-[9.5px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                อัปเดตตลอด 24 ชม.
+              <span className={`text-[10.5px] mt-0.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                อัปเดตรายชั่วโมง
               </span>
             </div>
           </div>
         </div>
 
         {/* Footer Actions */}
-        <div className={`px-5 py-3.5 border-t flex flex-col gap-2.5 shrink-0 ${
+        <div className={`px-5 py-3.5 border-t flex flex-col gap-2 shrink-0 ${
           isDark ? 'border-slate-800 bg-slate-950/40' : 'border-slate-100 bg-slate-50/50'
         }`}>
           <button
             type="button"
             onClick={handleEnter}
-            className="w-full py-2.5 px-4 rounded-xl bg-blue-700 hover:bg-blue-600 active:scale-[0.98] text-white font-bold text-xs sm:text-[13px] shadow-md shadow-blue-700/20 transition-all cursor-pointer flex items-center justify-center gap-2 group"
+            className={`w-full py-2.5 px-4 rounded-xl active:scale-[0.98] font-bold text-xs sm:text-[13px] transition-all cursor-pointer flex items-center justify-center gap-2 group ${
+              isDark ? 'bg-white text-slate-950 hover:bg-slate-100' : 'bg-slate-900 text-white hover:bg-slate-800'
+            }`}
           >
-            <span>เข้าสู่ระบบแผนที่สถานการณ์</span>
+            <span>เข้าสู่แผนที่</span>
             <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
           </button>
-
-          <div className="flex items-center justify-center gap-1.5 text-[10px] text-slate-500 dark:text-slate-400">
-            <ShieldCheck className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 shrink-0" />
-            <span>มาตรฐานข้อมูล ปภ. และแขวงทางหลวงสมุทรปราการ</span>
-          </div>
         </div>
       </div>
     </div>

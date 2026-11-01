@@ -154,28 +154,6 @@ export default function Navbar({
         {/* 2. CENTER AREA: EXECUTIVE TELEMETRY STATUS (Desktop only) */}
         {/* ========================================================= */}
         <div className="hidden lg:flex items-center gap-1.5 sm:gap-2 shrink-0">
-          
-          {/* Executive Situation Status Badge */}
-          <div className={`hidden 2xl:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold border select-none tabular-nums ${
-            severe > 0 
-              ? (isDark ? 'bg-rose-950/80 text-rose-300 border-rose-800' : 'bg-rose-50 text-rose-800 border-rose-200')
-              : moderate > 0
-              ? (isDark ? 'bg-amber-950/80 text-amber-300 border-amber-800' : 'bg-amber-50 text-amber-800 border-amber-200')
-              : (isDark ? 'bg-emerald-950/80 text-emerald-300 border-emerald-800' : 'bg-emerald-50 text-emerald-800 border-emerald-200')
-          }`}>
-            <span className={`w-2 h-2 rounded-full ${
-              severe > 0 ? 'bg-rose-500 animate-pulse' : moderate > 0 ? 'bg-amber-500' : 'bg-emerald-500'
-            }`} />
-            <span>
-              {severe > 0 
-                ? `วิกฤต: ${severe} จุด` 
-                : moderate > 0 
-                ? `เฝ้าระวัง: ${moderate} จุด` 
-                : 'สถานการณ์ปกติ'
-              }
-            </span>
-          </div>
-
           {/* Segmented Compact Status Bar (แท่งเดียว เรียบหรู ไม่ล้นจอ) */}
           <div className={`inline-flex items-center p-0.5 rounded-lg border backdrop-blur-md shadow-xs select-none gap-0.5 ${
             isDark ? 'bg-slate-900/90 border-slate-800' : 'bg-slate-100/90 border-slate-200'
@@ -672,8 +650,8 @@ export default function Navbar({
                   : 'bg-blue-50 hover:bg-blue-100 text-blue-800 border-blue-300 shadow-blue-500/10'
               }`}
             >
-              <CivicCctv className="w-3.5 h-3.5 text-cyan-500 shrink-0 animate-pulse" />
-              <span className="hidden xl:inline">กล้อง CCTV 24 ชม.</span>
+              <CivicCctv className="w-3.5 h-3.5 text-cyan-500 shrink-0" />
+              <span className="hidden xl:inline">กล้อง CCTV</span>
               <span className="xl:hidden">CCTV</span>
             </button>
 
