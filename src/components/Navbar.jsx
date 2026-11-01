@@ -359,228 +359,35 @@ export default function Navbar({
             </button>
           </div>
 
-          {/* --- TABLET (768px - 1023px): Primary 1-Tap + More Menu Dropdown --- */}
-          <div className="hidden md:flex lg:hidden items-center gap-1.5 shrink-0">
-            <RealTimeClock theme={theme} />
-
-            {/* Tablet Official Civic Telemetry Sync Button */}
-            {onRefreshData && (
-              <button
+          {/* --- TABLET & DESKTOP (Screen >= 768px): Clean Institutional Header --- */}
+          <div className="hidden md:flex items-center gap-2 shrink-0">
+            {/* Live Weather & Temperature (Tablet & Desktop) */}
+            {weather && weather.temp !== undefined && (
+              <button 
                 type="button"
                 onClick={() => {
-                  playRefreshSound();
-                  onRefreshData();
+                  playModalOpenSound();
+                  if (onOpenAiForecast) onOpenAiForecast();
                 }}
-                disabled={isRefreshing}
-                className={`px-2.5 py-1.5 rounded-md border text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer shadow-xs active:scale-95 shrink-0 ${
-                  isRefreshing
-                    ? 'bg-blue-600 text-white border-blue-600 shadow-blue-500/30'
-                    : isJustSynced
-                    ? (isDark ? 'bg-emerald-950/80 text-emerald-300 border-emerald-700' : 'bg-emerald-50 text-emerald-800 border-emerald-300')
-                    : isDark 
-                    ? 'bg-slate-900 hover:bg-slate-800 text-slate-200 border-slate-800' 
-                    : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-200'
+                className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-semibold select-none shrink-0 cursor-pointer transition-all active:scale-95 ${
+                  isDark 
+                    ? 'bg-slate-900/90 hover:bg-slate-800 border-slate-800 text-slate-200 hover:text-cyan-300' 
+                    : 'bg-white/90 hover:bg-slate-50 border-slate-200 text-slate-800 hover:text-blue-600'
                 }`}
-                title="ซิงก์ข้อมูลโทรมาตรล่าสุดทันที"
+                title={`สภาพอากาศจริง จ.สมุทรปราการ: ${weather.weatherDesc || 'มีเมฆบางส่วน'} • ${weather.temp}°C (แตะดูพยากรณ์อากาศ 24 ชม.)`}
               >
-                {isJustSynced ? (
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0 animate-in zoom-in-75 duration-200" />
-                ) : (
-                  <RefreshCw className={`w-3.5 h-3.5 text-blue-500 dark:text-cyan-400 shrink-0 ${isRefreshing ? 'animate-spin text-white dark:text-white' : ''}`} />
-                )}
-                <span>{isRefreshing ? 'ซิงก์...' : isJustSynced ? 'สำเร็จ' : 'ซิงก์'}</span>
+                <CivicWeather className="w-3.5 h-3.5 text-blue-500 dark:text-cyan-400 shrink-0" />
+                <span className="font-mono font-bold text-xs">
+                  {weather.temp}°C
+                </span>
               </button>
             )}
 
-            {/* Tablet Sidebar Toggle Button */}
-            <button
-              type="button"
-              onClick={() => {
-                playTabSound();
-                if (onToggleSidebar) onToggleSidebar();
-              }}
-              className={`px-2.5 py-1.5 rounded-md border text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer shadow-xs active:scale-95 ${
-                isSidebarOpen
-                  ? 'bg-blue-600 text-white border-blue-600'
-                  : isDark
-                    ? 'bg-slate-900 hover:bg-slate-800 text-slate-200 border-slate-800'
-                    : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-200'
-              }`}
-              title={isSidebarOpen ? "ปิดแถบข้อมูลและพยากรณ์" : "เปิดแถบข้อมูลและพยากรณ์"}
-            >
-              <CivicDrawerToggle className="w-3.5 h-3.5" isOpen={isSidebarOpen} />
-              <span>แผงข้อมูล</span>
-            </button>
-
-            {/* Citizen Flood Report Button */}
-            <button 
-              type="button"
-              onClick={() => {
-                playReportSound();
-                if (onOpenCitizenReport) onOpenCitizenReport();
-              }}
-              title="รายงานจุดน้ำท่วม"
-              className="px-2.5 py-1.5 rounded-md bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer border border-blue-700/50 shadow-xs active:scale-95"
-            >
-              <CivicReportCamera className="w-3.5 h-3.5 shrink-0" />
-              <span>แจ้งท่วม</span>
-            </button>
-
-            {/* Citizen Feedback Button (กล่องข้อเสนอแนะ นำออกมาข้างนอก) */}
-            <button 
-              type="button"
-              onClick={() => {
-                playModalOpenSound();
-                if (onOpenFeedback) onOpenFeedback();
-              }}
-              title="กล่องข้อเสนอแนะประชาชน"
-              className={`px-2.5 py-1.5 rounded-md border text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer shadow-xs active:scale-95 ${
-                isDark 
-                  ? 'bg-teal-500/15 hover:bg-teal-500/25 text-teal-300 border-teal-700/80' 
-                  : 'bg-teal-50 hover:bg-teal-100 text-teal-800 border-teal-300'
-              }`}
-            >
-              <CivicFeedback className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400 shrink-0" />
-              <span>ข้อเสนอแนะ</span>
-            </button>
-
-            {/* TABLET MORE ACTIONS DROPDOWN (จัดเก็บเมนูเสริมเรียบร้อย ไม่ล้นจอ) */}
-            <div className="relative" ref={tabletMenuRef}>
-              <button
-                type="button"
-                onClick={() => {
-                  playTabSound();
-                  setIsTabletMenuOpen(prev => !prev);
-                }}
-                className={`px-2.5 py-1.5 rounded-md border text-xs font-semibold flex items-center gap-1 transition-all cursor-pointer shadow-xs active:scale-95 ${
-                  isTabletMenuOpen
-                    ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
-                    : isDark 
-                      ? 'bg-slate-900 hover:bg-slate-800 text-slate-200 border-slate-800' 
-                      : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-200'
-                }`}
-                title="เมนูเพิ่มเติม"
-              >
-                <MoreVertical className="w-3.5 h-3.5" />
-                <span>เพิ่มเติม</span>
-              </button>
-
-              {/* Dropdown Menu Popup for Tablet */}
-              {isTabletMenuOpen && (
-                <div className={`absolute right-0 top-full mt-1.5 w-56 rounded-lg border shadow-xl p-1 z-50 backdrop-blur-md animate-in zoom-in-95 duration-150 ${
-                  isDark ? 'bg-slate-900/95 border-slate-800 text-slate-100 shadow-black/80' : 'bg-white/95 border-slate-200 text-slate-900 shadow-slate-300/40'
-                }`}>
-                  {/* CCTV 24H Live Cameras Option */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      playModalOpenSound();
-                      setIsTabletMenuOpen(false);
-                      if (onOpenCctv) onOpenCctv();
-                    }}
-                    className={`w-full p-2 rounded-md text-xs font-semibold text-left flex items-center justify-between transition-colors cursor-pointer ${
-                      isDark ? 'hover:bg-slate-800 text-cyan-300' : 'hover:bg-slate-100 text-blue-700'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2">
-                      <CivicCctv className="w-4 h-4 text-cyan-500 shrink-0" />
-                      <span>กล้องวงจรปิด CCTV 24 ชม.</span>
-                    </div>
-                    <span className="px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-emerald-500 text-white">
-                      LIVE
-                    </span>
-                  </button>
-
-                  {/* Public Updates Option */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      playModalOpenSound();
-                      setIsTabletMenuOpen(false);
-                      if (onOpenPublicUpdates) onOpenPublicUpdates();
-                    }}
-                    className={`w-full p-2 rounded-md text-xs font-semibold text-left flex items-center gap-2 transition-colors cursor-pointer ${
-                      isDark ? 'hover:bg-slate-800 text-slate-200' : 'hover:bg-slate-100 text-slate-800'
-                    }`}
-                  >
-                    <Activity className="w-4 h-4 text-blue-500 shrink-0" />
-                    <span>อัปเดตสถานการณ์สดรายวัน</span>
-                  </button>
-
-                  {/* Emergency Hotline Option */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      playEmergencySound();
-                      setIsTabletMenuOpen(false);
-                      if (onOpenEmergency) onOpenEmergency();
-                    }}
-                    className={`w-full p-2 rounded-md text-xs font-semibold text-left flex items-center justify-between transition-colors cursor-pointer ${
-                      isDark ? 'hover:bg-slate-800 text-slate-200' : 'hover:bg-slate-100 text-slate-800'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2">
-                      <CivicEmergencyPhone className="w-4 h-4 text-rose-500 shrink-0" />
-                      <span>สายด่วนฉุกเฉิน 1784</span>
-                    </div>
-                    <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-700 dark:bg-rose-950/80 dark:text-rose-300 border border-rose-200 dark:border-rose-800">
-                      โทรฟรี
-                    </span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      playModalOpenSound();
-                      setIsTabletMenuOpen(false);
-                      if (onOpenStandards) onOpenStandards();
-                    }}
-                    className={`w-full p-2 rounded-md text-xs font-medium text-left flex items-center gap-2 transition-colors cursor-pointer ${
-                      isDark ? 'hover:bg-slate-800 text-slate-200' : 'hover:bg-slate-100 text-slate-800'
-                    }`}
-                  >
-                    <CivicStandards className="w-4 h-4 text-blue-500 shrink-0" />
-                    <span>เกณฑ์วัดระดับน้ำ & ยานพาหนะ</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      playModalOpenSound();
-                      setIsTabletMenuOpen(false);
-                      if (onOpenPrivacyPolicy) onOpenPrivacyPolicy();
-                    }}
-                    className={`w-full p-2 rounded-md text-xs font-medium text-left flex items-center gap-2 transition-colors cursor-pointer ${
-                      isDark ? 'hover:bg-slate-800 text-slate-200' : 'hover:bg-slate-100 text-slate-800'
-                    }`}
-                  >
-                    <CivicShield className="w-4 h-4 text-sky-500 shrink-0" />
-                    <span>นโยบาย & ข้อมูลอ้างอิง</span>
-                  </button>
-                </div>
-              )}
+            {/* Official Clock */}
+            <div className="shrink-0">
+              <RealTimeClock theme={theme} />
             </div>
 
-            {/* Theme Toggle Button */}
-            <button
-              type="button"
-              onClick={() => {
-                playToggleSound(!isDark);
-                if (onToggleTheme) onToggleTheme();
-              }}
-              className={`p-1.5 sm:p-2 rounded-md border text-xs font-semibold flex items-center justify-center transition-all cursor-pointer shadow-xs active:scale-95 ${
-                isDark 
-                  ? 'bg-slate-900 hover:bg-slate-800 text-amber-300 border-slate-800' 
-                  : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-200'
-              }`}
-              title={isDark ? "เปลี่ยนเป็นธีมสว่าง" : "เปลี่ยนเป็นธีมมืด"}
-            >
-              {isDark ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-slate-700" />}
-            </button>
-          </div>
-
-          {/* --- DESKTOP (Screen >= 1024px): Zero-Overflow Streamlined Command Bar --- */}
-          <div className="hidden lg:flex items-center gap-1.5 shrink-0">
             {/* Official Civic Telemetry Sync Button */}
             {onRefreshData && (
               <button 
@@ -590,7 +397,7 @@ export default function Navbar({
                   onRefreshData();
                 }}
                 disabled={isRefreshing}
-                className={`px-2.5 py-1.5 rounded-md border text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer shadow-xs active:scale-95 shrink-0 ${
+                className={`px-2.5 py-1.5 rounded-lg border text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer shadow-xs active:scale-95 shrink-0 ${
                   isRefreshing
                     ? 'bg-blue-600 text-white border-blue-600 shadow-blue-500/30'
                     : isJustSynced
@@ -599,18 +406,15 @@ export default function Navbar({
                     ? 'bg-slate-900/90 hover:bg-slate-800 text-slate-200 border-slate-800 hover:text-white' 
                     : 'bg-white/90 hover:bg-slate-50 text-slate-700 border-slate-200 hover:text-slate-900'
                 }`}
-                title="ซิงก์ข้อมูลโทรมาตรสภาพอากาศและระดับน้ำล่าสุด (รีเซ็ตอัตโนมัติทุก 5 นาที)"
+                title="ซิงก์ข้อมูลโทรมาตรสภาพอากาศและระดับน้ำล่าสุด (อัปเดตอัตโนมัติทุก 5 นาที)"
               >
                 {isJustSynced ? (
                   <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0 animate-in zoom-in-75 duration-200" />
                 ) : (
                   <RefreshCw className={`w-3.5 h-3.5 text-blue-500 dark:text-cyan-400 shrink-0 ${isRefreshing ? 'animate-spin text-white dark:text-white' : ''}`} />
                 )}
-                <span className="hidden xl:inline">
+                <span>
                   {isRefreshing ? 'กำลังซิงก์...' : isJustSynced ? 'ซิงก์สำเร็จ' : 'ซิงก์ข้อมูล'}
-                </span>
-                <span className="xl:hidden">
-                  {isRefreshing ? 'ซิงก์...' : isJustSynced ? 'สำเร็จ' : 'ซิงก์'}
                 </span>
               </button>
             )}
@@ -623,7 +427,7 @@ export default function Navbar({
                   playModalOpenSound();
                   if (onOpenAnnouncement) onOpenAnnouncement();
                 }}
-                className={`px-2.5 py-1.5 rounded-md border text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer shadow-xs active:scale-95 ${
+                className={`px-2.5 py-1.5 rounded-lg border text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer shadow-xs active:scale-95 ${
                   isDark 
                     ? 'bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border-amber-700/80 shadow-amber-950/40' 
                     : 'bg-amber-50 hover:bg-amber-100 text-amber-800 border-amber-300 shadow-amber-500/10'
@@ -631,65 +435,11 @@ export default function Navbar({
                 title="ดูประกาศล่าสุดจากเจ้าหน้าที่แอดมิน"
               >
                 <CivicBroadcast className="w-3.5 h-3.5 text-amber-500 shrink-0 animate-pulse" />
-                <span className="hidden xl:inline">ประกาศแอดมิน</span>
-                <span className="xl:hidden">ประกาศ</span>
+                <span>ประกาศ</span>
               </button>
             )}
 
-            {/* 24-Hour CCTV Live Cameras Button */}
-            <button 
-              type="button"
-              onClick={() => {
-                playModalOpenSound();
-                if (onOpenCctv) onOpenCctv();
-              }}
-              title="ดูกล้องวงจรปิด CCTV สด 24 ชม. ทั่วสมุทรปราการ"
-              className={`px-2.5 py-1.5 rounded-md border text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer shadow-xs active:scale-95 ${
-                isDark 
-                  ? 'bg-cyan-950/40 hover:bg-cyan-900/50 text-cyan-300 border-cyan-700/80 shadow-cyan-950/40' 
-                  : 'bg-blue-50 hover:bg-blue-100 text-blue-800 border-blue-300 shadow-blue-500/10'
-              }`}
-            >
-              <CivicCctv className="w-3.5 h-3.5 text-cyan-500 shrink-0" />
-              <span className="hidden xl:inline">กล้อง CCTV</span>
-              <span className="xl:hidden">CCTV</span>
-            </button>
-
-            {/* Citizen Flood Report Primary Button */}
-            <button 
-              type="button"
-              onClick={() => {
-                playReportSound();
-                if (onOpenCitizenReport) onOpenCitizenReport();
-              }}
-              title="รายงานจุดน้ำท่วม"
-              className="px-2.5 py-1.5 rounded-md bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer border border-blue-700/50 shadow-xs active:scale-95"
-            >
-              <CivicReportCamera className="w-3.5 h-3.5 shrink-0" />
-              <span className="hidden xl:inline">แจ้งจุดท่วม</span>
-              <span className="xl:hidden">แจ้งท่วม</span>
-            </button>
-
-            {/* Citizen Feedback Button (กล่องข้อเสนอแนะ นำออกมาข้างนอก) */}
-            <button 
-              type="button"
-              onClick={() => {
-                playModalOpenSound();
-                if (onOpenFeedback) onOpenFeedback();
-              }}
-              title="กล่องข้อเสนอแนะประชาชน"
-              className={`px-2.5 py-1.5 rounded-md border text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer shadow-xs active:scale-95 ${
-                isDark 
-                  ? 'bg-teal-500/15 hover:bg-teal-500/25 text-teal-300 border-teal-700/80 shadow-teal-950/40' 
-                  : 'bg-teal-50 hover:bg-teal-100 text-teal-800 border-teal-300 shadow-teal-500/10'
-              }`}
-            >
-              <CivicFeedback className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400 shrink-0" />
-              <span className="hidden xl:inline">กล่องข้อเสนอแนะ</span>
-              <span className="xl:hidden">ข้อเสนอแนะ</span>
-            </button>
-
-            {/* DESKTOP MORE ACTIONS DROPDOWN (จัดเก็บเมนูเสริมเรียบร้อย ไม่ล้นขอบจอเด็ดขาด) */}
+            {/* Official Services Dropdown Menu */}
             <div className="relative" ref={desktopMenuRef}>
               <button
                 type="button"
@@ -697,47 +447,42 @@ export default function Navbar({
                   playTabSound();
                   setIsDesktopMenuOpen(prev => !prev);
                 }}
-                className={`px-2.5 py-1.5 rounded-md border text-xs font-semibold flex items-center gap-1 transition-all cursor-pointer shadow-xs active:scale-95 ${
+                className={`px-2.5 py-1.5 rounded-lg border text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer shadow-xs active:scale-95 ${
                   isDesktopMenuOpen
                     ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
                     : isDark 
                       ? 'bg-slate-900 hover:bg-slate-800 text-slate-200 border-slate-800' 
                       : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-200'
                 }`}
-                title="เมนูเพิ่มเติม"
+                title="บริการและข้อมูลทางการ"
               >
                 <MoreVertical className="w-3.5 h-3.5" />
-                <span>เมนู</span>
+                <span>บริการ</span>
                 <ChevronDown className={`w-3 h-3 text-slate-400 transition-transform ${isDesktopMenuOpen ? 'rotate-180 text-white' : ''}`} />
               </button>
 
-              {/* Dropdown Menu Popup for Desktop */}
+              {/* Dropdown Menu Popup */}
               {isDesktopMenuOpen && (
-                <div className={`absolute right-0 top-full mt-1.5 w-56 rounded-lg border shadow-xl p-1 z-50 backdrop-blur-md animate-in zoom-in-95 duration-150 ${
-                  isDark ? 'bg-slate-900/95 border-slate-800 text-slate-100 shadow-black/80' : 'bg-white/95 border-slate-200 text-slate-900 shadow-slate-300/40'
+                <div className={`absolute right-0 top-full mt-1.5 w-60 rounded-xl border shadow-xl p-1 z-50 backdrop-blur-md animate-in zoom-in-95 duration-150 ${
+                  isDark ? 'bg-slate-900/98 border-slate-800 text-slate-100 shadow-black/80' : 'bg-white/98 border-slate-200 text-slate-900 shadow-slate-300/40'
                 }`}>
-                  {/* CCTV 24H Live Cameras Option */}
+                  {/* Public Feedback */}
                   <button
                     type="button"
                     onClick={() => {
                       playModalOpenSound();
                       setIsDesktopMenuOpen(false);
-                      if (onOpenCctv) onOpenCctv();
+                      if (onOpenFeedback) onOpenFeedback();
                     }}
-                    className={`w-full p-2 rounded-md text-xs font-semibold text-left flex items-center justify-between transition-colors cursor-pointer ${
-                      isDark ? 'hover:bg-slate-800 text-cyan-300' : 'hover:bg-slate-100 text-blue-700'
+                    className={`w-full p-2.5 rounded-lg text-xs font-medium text-left flex items-center gap-2.5 transition-colors cursor-pointer ${
+                      isDark ? 'hover:bg-slate-800 text-teal-300' : 'hover:bg-slate-100 text-teal-800'
                     }`}
                   >
-                    <div className="flex items-center gap-2">
-                      <CivicCctv className="w-4 h-4 text-cyan-500 shrink-0" />
-                      <span>กล้องวงจรปิด CCTV 24 ชม.</span>
-                    </div>
-                    <span className="px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-emerald-500 text-white">
-                      LIVE
-                    </span>
+                    <CivicFeedback className="w-4 h-4 text-teal-500 shrink-0" />
+                    <span>กล่องข้อเสนอแนะประชาชน</span>
                   </button>
 
-                  {/* Public Updates Option */}
+                  {/* Public Situation Updates */}
                   <button
                     type="button"
                     onClick={() => {
@@ -745,15 +490,15 @@ export default function Navbar({
                       setIsDesktopMenuOpen(false);
                       if (onOpenPublicUpdates) onOpenPublicUpdates();
                     }}
-                    className={`w-full p-2 rounded-md text-xs font-semibold text-left flex items-center gap-2 transition-colors cursor-pointer ${
+                    className={`w-full p-2.5 rounded-lg text-xs font-medium text-left flex items-center gap-2.5 transition-colors cursor-pointer ${
                       isDark ? 'hover:bg-slate-800 text-slate-200' : 'hover:bg-slate-100 text-slate-800'
                     }`}
                   >
                     <Activity className="w-4 h-4 text-blue-500 shrink-0" />
-                    <span>อัปเดตสถานการณ์สดรายวัน</span>
+                    <span>บันทึกสถานการณ์น้ำประจำวัน</span>
                   </button>
 
-                  {/* Emergency Hotline Option */}
+                  {/* Emergency Hotline 1784 */}
                   <button
                     type="button"
                     onClick={() => {
@@ -761,36 +506,20 @@ export default function Navbar({
                       setIsDesktopMenuOpen(false);
                       if (onOpenEmergency) onOpenEmergency();
                     }}
-                    className={`w-full p-2 rounded-md text-xs font-semibold text-left flex items-center justify-between transition-colors cursor-pointer ${
+                    className={`w-full p-2.5 rounded-lg text-xs font-medium text-left flex items-center justify-between transition-colors cursor-pointer ${
                       isDark ? 'hover:bg-slate-800 text-slate-200' : 'hover:bg-slate-100 text-slate-800'
                     }`}
                   >
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2.5">
                       <CivicEmergencyPhone className="w-4 h-4 text-rose-500 shrink-0" />
-                      <span>สายด่วนฉุกเฉิน 1784</span>
+                      <span>สายด่วนสาธารณภัย 1784</span>
                     </div>
-                    <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-700 dark:bg-rose-950/80 dark:text-rose-300 border border-rose-200 dark:border-rose-800">
-                      โทรฟรี
+                    <span className="px-1.5 py-0.2 rounded text-[9.5px] font-bold bg-rose-100 text-rose-700 dark:bg-rose-950/80 dark:text-rose-300 border border-rose-200 dark:border-rose-800">
+                      24 ชม.
                     </span>
                   </button>
 
-                  {/* Water Standards Option */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      playModalOpenSound();
-                      setIsDesktopMenuOpen(false);
-                      if (onOpenStandards) onOpenStandards();
-                    }}
-                    className={`w-full p-2 rounded-md text-xs font-medium text-left flex items-center gap-2 transition-colors cursor-pointer ${
-                      isDark ? 'hover:bg-slate-800 text-slate-200' : 'hover:bg-slate-100 text-slate-800'
-                    }`}
-                  >
-                    <CivicStandards className="w-4 h-4 text-blue-500 shrink-0" />
-                    <span>เกณฑ์วัดระดับน้ำ & ยานพาหนะ</span>
-                  </button>
-
-                  {/* Privacy Policy Option */}
+                  {/* Privacy Policy */}
                   <button
                     type="button"
                     onClick={() => {
@@ -798,37 +527,57 @@ export default function Navbar({
                       setIsDesktopMenuOpen(false);
                       if (onOpenPrivacyPolicy) onOpenPrivacyPolicy();
                     }}
-                    className={`w-full p-2 rounded-md text-xs font-medium text-left flex items-center gap-2 transition-colors cursor-pointer ${
+                    className={`w-full p-2.5 rounded-lg text-xs font-medium text-left flex items-center gap-2.5 transition-colors cursor-pointer ${
                       isDark ? 'hover:bg-slate-800 text-slate-200' : 'hover:bg-slate-100 text-slate-800'
                     }`}
                   >
                     <CivicShield className="w-4 h-4 text-sky-500 shrink-0" />
-                    <span>นโยบาย & ข้อมูลอ้างอิง</span>
+                    <span>นโยบาย & แหล่งข้อมูลอ้างอิง</span>
+                  </button>
+
+                  <div className="h-px bg-slate-200 dark:bg-slate-800 my-1" />
+
+                  {/* Admin Portal Entry */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      playModalOpenSound();
+                      setIsDesktopMenuOpen(false);
+                      if (onOpenAdmin) onOpenAdmin();
+                    }}
+                    className={`w-full p-2.5 rounded-lg text-xs font-medium text-left flex items-center justify-between transition-colors cursor-pointer ${
+                      isDark ? 'hover:bg-slate-800 text-slate-300' : 'hover:bg-slate-100 text-slate-700'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <CivicDatabase className="w-4 h-4 text-amber-500 shrink-0" />
+                      <span>ศูนย์ควบคุมเจ้าหน้าที่ (Admin)</span>
+                    </div>
+                    {pendingReportsCount > 0 && (
+                      <span className="px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-amber-500 text-slate-950">
+                        {pendingReportsCount}
+                      </span>
+                    )}
                   </button>
                 </div>
               )}
             </div>
 
-            {/* Theme Switcher Button */}
+            {/* Theme Toggle Button */}
             <button
               type="button"
               onClick={() => {
                 playToggleSound(!isDark);
                 if (onToggleTheme) onToggleTheme();
               }}
-              className={`p-2 rounded-md border text-xs font-semibold flex items-center justify-center transition-all cursor-pointer shadow-xs active:scale-95 ${
+              className={`w-8 h-8 rounded-lg border text-xs font-semibold flex items-center justify-center transition-all cursor-pointer shadow-xs active:scale-95 shrink-0 ${
                 isDark 
-                  ? 'bg-slate-900 hover:bg-slate-800 text-amber-300 border-slate-800 hover:border-slate-700' 
-                  : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-200 hover:border-slate-300'
+                  ? 'bg-slate-900 hover:bg-slate-800 text-amber-300 border-slate-800' 
+                  : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-200'
               }`}
               title={isDark ? "เปลี่ยนเป็นธีมสว่าง" : "เปลี่ยนเป็นธีมมืด"}
-              aria-label="เปลี่ยนธีมสี"
             >
-              {isDark ? (
-                <Sun className="w-4 h-4 text-amber-400" />
-              ) : (
-                <Moon className="w-4 h-4 text-slate-700" />
-              )}
+              {isDark ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-slate-700" />}
             </button>
           </div>
 

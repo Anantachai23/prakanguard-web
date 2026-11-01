@@ -3392,30 +3392,6 @@ export default function App() {
             />
           </div>
 
-          {/* Re-Open Sidebar Button on Desktop & Tablet when sidebar is closed */}
-          {!isSidebarOpen && (
-            <button
-              onClick={() => {
-                playToggleSound(true);
-                setIsSidebarOpen(true);
-              }}
-              className={`hidden md:flex absolute top-4 left-4 z-20 items-center gap-2 px-3 py-2 rounded-md shadow-md border text-xs font-semibold backdrop-blur-md transition-all active:scale-95 cursor-pointer ${
-                isDark 
-                  ? 'bg-slate-900/95 text-slate-100 border-slate-800 hover:border-slate-700' 
-                  : 'bg-white/95 text-slate-800 border-slate-200 hover:border-slate-300'
-              }`}
-              title="เปิดแผงควบคุม GIS และพยากรณ์ฝน"
-            >
-              <CivicDrawerToggle className="w-4 h-4 text-blue-500 shrink-0" isOpen={false} />
-              <span>เปิดแผง GIS</span>
-              {selectedDistrict !== 'ทั้งหมด' && (
-                <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-cyan-300 font-bold">
-                  {selectedDistrict.replace(/^อ\./, '')}
-                </span>
-              )}
-            </button>
-          )}
-
           {/* Floating Instruction Banner when User is Picking Location on Map */}
           {isPickingLocationOnMap && (
             <div className="absolute top-3 sm:top-4 left-1/2 -translate-x-1/2 z-50 bg-slate-950/95 text-white px-3 sm:px-5 py-2 sm:py-3 rounded-lg shadow-2xl border border-cyan-500/50 backdrop-blur-xl flex items-center gap-2 sm:gap-3 pointer-events-auto max-w-[92vw] sm:max-w-none">
@@ -3636,38 +3612,22 @@ export default function App() {
                       </span>
                     </div>
 
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          try { playModalOpenSound(); } catch (_) {}
-                          setIsOfficialModalOpen(true);
-                        }}
-                        className={`px-3 py-1 rounded-full text-[11px] font-bold border transition-all cursor-pointer active:scale-95 ${
-                          isDark
-                            ? 'bg-slate-800 border-slate-700 text-sky-300 hover:bg-slate-700'
-                            : 'bg-slate-900 border-slate-900 text-white hover:bg-slate-800'
-                        }`}
-                      >
-                        พยากรณ์ 6 อำเภอ
-                      </button>
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          try { playModalOpenSound(); } catch (_) {}
-                          setIsStandardsModalOpen(true);
-                        }}
-                        className={`px-3 py-1 rounded-full text-[11px] font-bold border transition-all cursor-pointer active:scale-95 ${
-                          isDark
-                            ? 'bg-slate-900 border-slate-700 text-slate-300 hover:bg-slate-800'
-                            : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
-                        }`}
-                      >
-                        เกณฑ์ระดับน้ำ
-                      </button>
-                    </div>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        try { playModalOpenSound(); } catch (_) {}
+                        setIsOfficialModalOpen(true);
+                      }}
+                      className={`px-3 py-1 rounded-full text-[11px] font-bold border transition-all cursor-pointer active:scale-95 flex items-center gap-1 ${
+                        isDark
+                          ? 'bg-slate-800 border-slate-700 text-sky-300 hover:bg-slate-700'
+                          : 'bg-slate-900 border-slate-900 text-white hover:bg-slate-800'
+                      }`}
+                    >
+                      <span>รายละเอียดพยากรณ์</span>
+                      <span>&rarr;</span>
+                    </button>
                   </div>
 
                   {/* Bottom 4-Column Data Grid */}
@@ -4143,102 +4103,15 @@ export default function App() {
       </div>
 
       {/* ========================================================================= */}
-      {/* C. MOBILE INTERACTIVE BOTTOM SHEET & PEEK STATUS BAR (md:hidden) */}
+      {/* C. MOBILE INTERACTIVE BOTTOM DRAWER (md:hidden)                            */}
       {/* ========================================================================= */}
-      {/* 1. Collapsed Mode: Clean Floating Status Bar anchored right above MobileBottomNav (Not expandable) */}
-      {!isMobileSheetOpen && (
-        <div className="md:hidden fixed bottom-[50px] inset-x-3 z-30 pointer-events-auto select-none">
-          <div className={`p-1 rounded-lg border backdrop-blur-md shadow-md transition-all ${
-            isDark 
-              ? 'bg-slate-900/95 border-slate-800 text-slate-100' 
-              : 'bg-white/95 border-slate-200 text-slate-800'
-          }`}>
-            {/* 4 Compact Segmented Status Badges */}
-            <div className="grid grid-cols-4 gap-1">
-              {/* ปกติ */}
-              <button
-                type="button"
-                onClick={() => {
-                  try { playSelectSound(); } catch (_) {}
-                  setSeverityFilter(severityFilter === 'falling' ? 'all' : 'falling');
-                }}
-                className={`py-0.5 px-1 rounded-md border text-center transition-all cursor-pointer ${
-                  severityFilter === 'falling'
-                    ? 'bg-emerald-500 text-white border-emerald-500 shadow-2xs'
-                    : isDark ? 'bg-slate-850 border-slate-800 hover:bg-slate-800 text-slate-300' : 'bg-slate-50 border-slate-200 hover:bg-slate-100 text-slate-700'
-                }`}
-                title="กรองเฉพาะจุดที่ระดับน้ำเริ่มลดลง"
-              >
-                <div className="text-[9px] font-medium leading-none text-slate-400 dark:text-slate-500">ปกติ/ลด</div>
-                <div className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 mt-0.5 leading-none">{falling}</div>
-              </button>
-
-              {/* เฝ้าระวัง */}
-              <button
-                type="button"
-                onClick={() => {
-                  try { playSelectSound(); } catch (_) {}
-                  setSeverityFilter((severityFilter === '1' || severityFilter === 'minor') ? 'all' : '1');
-                }}
-                className={`py-0.5 px-1 rounded-md border text-center transition-all cursor-pointer ${
-                  (severityFilter === '1' || severityFilter === 'minor')
-                    ? 'bg-amber-500 text-white border-amber-500 shadow-2xs'
-                    : isDark ? 'bg-slate-850 border-slate-800 hover:bg-slate-800 text-slate-300' : 'bg-slate-50 border-slate-200 hover:bg-slate-100 text-slate-700'
-                }`}
-                title="ระดับ 1: เฝ้าระวัง ผิวจราจร (<15 ซม.)"
-              >
-                <div className="text-[9px] font-medium leading-none text-slate-400 dark:text-slate-500">เฝ้าระวัง</div>
-                <div className="text-[11px] font-bold text-amber-600 dark:text-amber-400 mt-0.5 leading-none">{minor}</div>
-              </button>
-
-              {/* ปานกลาง */}
-              <button
-                type="button"
-                onClick={() => {
-                  try { playSelectSound(); } catch (_) {}
-                  setSeverityFilter((severityFilter === '2' || severityFilter === 'moderate') ? 'all' : '2');
-                }}
-                className={`py-0.5 px-1 rounded-md border text-center transition-all cursor-pointer ${
-                  (severityFilter === '2' || severityFilter === 'moderate')
-                    ? 'bg-orange-500 text-white border-orange-500 shadow-2xs'
-                    : isDark ? 'bg-slate-850 border-slate-800 hover:bg-slate-800 text-slate-300' : 'bg-slate-50 border-slate-200 hover:bg-slate-100 text-slate-700'
-                }`}
-                title="ระดับ 2: ปานกลาง (15-30 ซม.)"
-              >
-                <div className="text-[9px] font-medium leading-none text-slate-400 dark:text-slate-500">ปานกลาง</div>
-                <div className="text-[11px] font-bold text-orange-600 dark:text-orange-400 mt-0.5 leading-none">{moderate}</div>
-              </button>
-
-              {/* วิกฤต */}
-              <button
-                type="button"
-                onClick={() => {
-                  try { playSelectSound(); } catch (_) {}
-                  setSeverityFilter((severityFilter === '3' || severityFilter === 'severe') ? 'all' : '3');
-                }}
-                className={`py-0.5 px-1 rounded-md border text-center transition-all cursor-pointer ${
-                  (severityFilter === '3' || severityFilter === 'severe')
-                    ? 'bg-rose-600 text-white border-rose-600 shadow-2xs'
-                    : isDark ? 'bg-slate-850 border-slate-800 hover:bg-slate-800 text-slate-300' : 'bg-slate-50 border-slate-200 hover:bg-slate-100 text-slate-700'
-                }`}
-                title="ระดับ 3: วิกฤต (>30 ซม.)"
-              >
-                <div className="text-[9px] font-medium leading-none text-slate-400 dark:text-slate-500">วิกฤต</div>
-                <div className="text-[11px] font-bold text-rose-600 dark:text-rose-400 mt-0.5 leading-none">{severe}</div>
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* 2. Compact Mobile Search Drawer */}
       {isMobileSheetOpen && (
         <div 
           className="md:hidden fixed inset-0 z-45 bg-slate-950/65 backdrop-blur-xs transition-opacity"
           onClick={() => setIsMobileSheetOpen(false)}
         >
           <div 
-            className={`fixed inset-x-0 bottom-0 z-50 max-h-[54vh] h-[48vh] flex flex-col rounded-t-xl border-t shadow-2xl select-none pb-[calc(env(safe-area-inset-bottom,0px)+8px)] ${
+            className={`fixed inset-x-0 bottom-0 z-50 max-h-[68vh] h-[62vh] flex flex-col rounded-t-2xl border-t shadow-2xl select-none pb-[calc(env(safe-area-inset-bottom,0px)+8px)] ${
               isDark 
                 ? 'bg-slate-900 border-slate-800 text-slate-100' 
                 : 'bg-white border-slate-200 text-slate-900'
@@ -4247,18 +4120,18 @@ export default function App() {
           >
             <div className="h-1 w-full bg-blue-700 shrink-0" />
             {/* Sheet Header */}
-            <div className={`px-3.5 py-2.5 border-b flex items-center justify-between gap-2 shrink-0 ${
+            <div className={`px-4 py-3 border-b flex items-center justify-between gap-2 shrink-0 ${
               isDark ? 'border-slate-800 bg-slate-950/50' : 'border-slate-200 bg-slate-50/80'
             }`}>
-              <div className="flex items-center gap-2 min-w-0">
-                <div className={`w-7 h-7 rounded-lg border flex items-center justify-center shrink-0 ${
-                  isDark ? 'bg-slate-800 text-blue-400 border-slate-700' : 'bg-white text-blue-700 border-slate-200'
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className={`w-8 h-8 rounded-lg border flex items-center justify-center shrink-0 ${
+                  isDark ? 'bg-slate-800 text-blue-400 border-slate-700' : 'bg-white text-blue-700 border-slate-200 shadow-xs'
                 }`}>
-                  <CivicStationPin className="w-3.5 h-3.5" />
+                  <CivicStationPin className="w-4 h-4" />
                 </div>
                 <div className="min-w-0">
-                  <h3 className="text-[13px] font-bold truncate">ค้นหาจุดเฝ้าระวังน้ำท่วมขัง</h3>
-                  <p className="text-[10.5px] text-slate-500 dark:text-slate-400 truncate">
+                  <h3 className="text-sm font-bold truncate">จุดเฝ้าระวังน้ำท่วมขัง</h3>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
                     จ.สมุทรปราการ (พบ {displayPoints.length} จุด)
                   </p>
                 </div>
@@ -4266,17 +4139,17 @@ export default function App() {
               <button
                 type="button"
                 onClick={() => setIsMobileSheetOpen(false)}
-                className={`w-7 h-7 rounded-lg border flex items-center justify-center transition-colors ${
-                  isDark ? 'bg-slate-800 text-slate-400 border-slate-700' : 'bg-white text-slate-500 border-slate-200'
+                className={`w-8 h-8 rounded-lg border flex items-center justify-center transition-colors cursor-pointer ${
+                  isDark ? 'bg-slate-800 text-slate-400 border-slate-700 hover:text-white' : 'bg-white text-slate-500 border-slate-200 hover:text-slate-900'
                 }`}
-                aria-label="ปิดการค้นหา"
+                aria-label="ปิด"
               >
-                <X className="w-3.5 h-3.5" />
+                <X className="w-4 h-4" />
               </button>
             </div>
 
             {/* Drawer Body */}
-            <div className="flex-1 overflow-y-auto px-3.5 py-2.5 space-y-2 custom-scrollbar-thin">
+            <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2.5 custom-scrollbar-thin">
               {/* Search Input */}
               <div className="relative shrink-0">
                 <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -4284,8 +4157,8 @@ export default function App() {
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="ระบุชื่อถนน, ซอย หรือจุดสังเกต..."
-                  className={`w-full pl-9 pr-8 py-2 rounded-lg border text-xs outline-none ${
+                  placeholder="ค้นหาชื่อถนน, ซอย หรือจุดสังเกต..."
+                  className={`w-full pl-9 pr-8 py-2 rounded-lg border text-xs outline-none transition-colors ${
                     isDark 
                       ? 'bg-slate-950 border-slate-800 text-white placeholder-slate-500 focus:border-blue-500' 
                       : 'bg-white border-slate-300 text-slate-800 placeholder-slate-400 focus:border-blue-600'
@@ -4324,12 +4197,12 @@ export default function App() {
                             }
                           }
                         }}
-                        className={`px-2.5 py-1 rounded-md text-xs font-semibold whitespace-nowrap shrink-0 transition-colors cursor-pointer border ${
+                        className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap shrink-0 transition-colors cursor-pointer border ${
                           isSelected
-                            ? 'bg-blue-700 text-white border-blue-700'
+                            ? 'bg-blue-700 text-white border-blue-700 shadow-xs'
                             : isDark
                               ? 'bg-slate-800 border-slate-700 text-slate-300'
-                              : 'bg-slate-50 border-slate-200 text-slate-700'
+                              : 'bg-slate-100 border-slate-200 text-slate-700'
                         }`}
                       >
                         {dist === 'ทั้งหมด' ? 'ทุกอำเภอ' : dist.replace(/^อ\./, '')}
@@ -4337,6 +4210,66 @@ export default function App() {
                     );
                   })}
                 </div>
+              </div>
+
+              {/* Quick Severity Filters in Mobile Drawer */}
+              <div className="grid grid-cols-4 gap-1 text-[11px] shrink-0">
+                <button
+                  type="button"
+                  onClick={() => {
+                    try { playSelectSound(); } catch (_) {}
+                    setSeverityFilter('all');
+                  }}
+                  className={`py-1.5 px-1 rounded-full text-center font-bold border transition-all cursor-pointer ${
+                    severityFilter === 'all'
+                      ? (isDark ? 'bg-white text-slate-950 border-white shadow-xs' : 'bg-slate-900 text-white border-slate-900 shadow-xs')
+                      : isDark ? 'bg-slate-800 border-slate-700 text-slate-300' : 'bg-slate-100 border-slate-200 text-slate-700'
+                  }`}
+                >
+                  ทั้งหมด
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    try { playSelectSound(); } catch (_) {}
+                    setSeverityFilter(severityFilter === '3' ? 'all' : '3');
+                  }}
+                  className={`py-1.5 px-1 rounded-full text-center font-bold border transition-all cursor-pointer ${
+                    severityFilter === '3'
+                      ? 'bg-rose-600 text-white border-rose-600 shadow-xs'
+                      : isDark ? 'bg-slate-800 border-slate-700 text-rose-400' : 'bg-rose-50 border-rose-200 text-rose-700'
+                  }`}
+                >
+                  วิกฤต ({severe})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    try { playSelectSound(); } catch (_) {}
+                    setSeverityFilter(severityFilter === '2' ? 'all' : '2');
+                  }}
+                  className={`py-1.5 px-1 rounded-full text-center font-bold border transition-all cursor-pointer ${
+                    severityFilter === '2'
+                      ? 'bg-amber-500 text-white border-amber-500 shadow-xs'
+                      : isDark ? 'bg-slate-800 border-slate-700 text-amber-400' : 'bg-amber-50 border-amber-200 text-amber-800'
+                  }`}
+                >
+                  กลาง ({moderate})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    try { playSelectSound(); } catch (_) {}
+                    setSeverityFilter(severityFilter === '1' ? 'all' : '1');
+                  }}
+                  className={`py-1.5 px-1 rounded-full text-center font-bold border transition-all cursor-pointer ${
+                    severityFilter === '1'
+                      ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
+                      : isDark ? 'bg-slate-800 border-slate-700 text-emerald-400' : 'bg-emerald-50 border-emerald-200 text-emerald-800'
+                  }`}
+                >
+                  ปกติ ({minor})
+                </button>
               </div>
 
               {/* Filtered Points List */}
