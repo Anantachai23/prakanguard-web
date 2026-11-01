@@ -613,13 +613,13 @@ export default function CitizenReportModal({
               </div>
             </div>
 
-            {/* 4. แนบรูปถ่ายจุดน้ำท่วมจริง (เด่นเป็นพิเศษสำหรับประชาชน) */}
+            {/* 4. แนบรูปถ่ายจุดน้ำท่วมจริง (เด่นเป็นพิเศษสำหรับประชาชน - ไม่บังคับ) */}
             <div className="space-y-1.5 pt-1">
               <div className="flex items-center justify-between">
                 <label className={`text-xs font-bold flex items-center gap-1.5 ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>
                   <CivicReportCamera className="w-3.5 h-3.5 text-blue-500 shrink-0" />
                   <span>4. แนบรูปถ่ายจุดน้ำท่วมจริง</span>
-                  <span className="text-[10px] text-slate-400 font-normal">(แนะนำ)</span>
+                  <span className="text-[10.5px] text-slate-500 dark:text-slate-400 font-semibold">(ไม่บังคับ)</span>
                 </label>
                 <span className="text-[10px] font-bold text-sky-600 dark:text-cyan-400">
                   ช่วยยืนยันระดับน้ำ
@@ -684,7 +684,7 @@ export default function CitizenReportModal({
                     แตะเพื่อถ่ายรูป หรือเลือกรูปภาพจากมือถือ
                   </span>
                   <span className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 block max-w-xs">
-                    รองรับภาพถ่ายจริง (JPG, PNG) ระบบช่วยบีบอัดภาพให้อัตโนมัติ
+                    รองรับภาพถ่ายจริง (JPG, PNG) ระบบช่วยบีบอัดภาพให้อัตโนมัติ • ไม่บังคับแนบรูป
                   </span>
                 </button>
               )}
