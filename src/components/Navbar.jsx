@@ -124,7 +124,7 @@ export default function Navbar({
             <span className="text-[15px] font-bold tracking-tight text-slate-900 dark:text-white leading-none shrink-0">
               PrakanGuard
             </span>
-            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700/70 shrink-0">
+            <span className="hidden xs:inline-flex text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700/70 shrink-0">
               สมุทรปราการ
             </span>
           </div>
@@ -246,11 +246,12 @@ export default function Navbar({
                   playReportSound();
                   onOpenCitizenReport();
                 }}
-                className="h-[32px] px-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs flex items-center gap-1 shadow-xs active:scale-95 transition-all cursor-pointer shrink-0"
+                className="h-[32px] px-2 xs:px-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs flex items-center gap-1 shadow-xs active:scale-95 transition-all cursor-pointer shrink-0"
                 title="แจ้งรายงานจุดน้ำท่วม"
               >
                 <CivicReportCamera className="w-3.5 h-3.5 text-white" />
-                <span>แจ้งน้ำท่วม</span>
+                <span className="hidden xs:inline">แจ้งน้ำท่วม</span>
+                <span className="xs:hidden inline">แจ้ง</span>
               </button>
             )}
 
@@ -263,7 +264,7 @@ export default function Navbar({
                   onRefreshData();
                 }}
                 disabled={isRefreshing}
-                className="w-8 h-8 rounded-lg border text-xs flex items-center justify-center transition-colors cursor-pointer bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 active:scale-95"
+                className="w-8 h-8 rounded-lg border text-xs flex items-center justify-center transition-colors cursor-pointer bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 active:scale-95 shrink-0"
                 title="ซิงก์ข้อมูลโทรมาตรล่าสุดทันที"
               >
                 {isJustSynced ? (
@@ -282,7 +283,7 @@ export default function Navbar({
                 playTabSound();
                 setIsMenuOpen(prev => !prev);
               }}
-              className={`w-8 h-8 rounded-lg border text-xs flex items-center justify-center transition-colors cursor-pointer active:scale-95 ${
+              className={`w-8 h-8 rounded-lg border text-xs flex items-center justify-center transition-colors cursor-pointer active:scale-95 shrink-0 ${
                 isMenuOpen
                   ? 'bg-slate-200 dark:bg-slate-800 text-slate-900 dark:text-white border-slate-300 dark:border-slate-700'
                   : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800'
@@ -290,6 +291,19 @@ export default function Navbar({
               title="เมนูบริการ"
             >
               <MoreVertical className="w-3.5 h-3.5 text-slate-400" />
+            </button>
+
+            {/* Mobile Theme Toggle */}
+            <button
+              type="button"
+              onClick={() => {
+                playToggleSound(!isDark);
+                if (onToggleTheme) onToggleTheme();
+              }}
+              className="w-8 h-8 rounded-lg border text-xs flex items-center justify-center transition-colors cursor-pointer bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 active:scale-95 shrink-0"
+              title={isDark ? "เปลี่ยนเป็นธีมสว่าง" : "เปลี่ยนเป็นธีมมืด"}
+            >
+              {isDark ? <Sun className="w-3.5 h-3.5 text-amber-400" /> : <Moon className="w-3.5 h-3.5 text-slate-700" />}
             </button>
           </div>
 
@@ -422,7 +436,7 @@ export default function Navbar({
         {isMenuOpen && (
           <div 
             ref={menuRef}
-            className={`absolute right-3 sm:right-4 top-full mt-1.5 w-64 rounded-xl border p-1.5 z-[1002] shadow-2xl animate-in zoom-in-95 duration-150 ${
+            className={`absolute right-3 sm:right-4 top-full mt-1.5 w-[calc(100vw-24px)] max-w-[260px] sm:w-64 rounded-xl border p-1.5 z-[1002] shadow-2xl animate-in zoom-in-95 duration-150 ${
               isDark 
                 ? 'bg-slate-900 border-slate-700 text-slate-100 shadow-black/90 ring-1 ring-white/10' 
                 : 'bg-white border-slate-200 text-slate-900 shadow-slate-900/15 ring-1 ring-black/5'

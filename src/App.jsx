@@ -3719,10 +3719,10 @@ export default function App() {
                 setSelectedPoint(null);
               }
             }}
-            className="fixed inset-0 z-[100] bg-slate-950/65 backdrop-blur-xs flex items-center justify-center p-2.5 sm:p-4 pointer-events-auto overflow-y-auto"
+            className="fixed inset-0 z-[100] bg-slate-950/75 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 pt-[max(0.75rem,env(safe-area-inset-top))] pb-[max(0.75rem,env(safe-area-inset-bottom))] pointer-events-auto overflow-y-auto"
           >
             <div 
-              className={`w-[88vw] max-w-[330px] sm:max-w-md my-auto m-auto border rounded-xl shadow-2xl relative max-h-[72vh] sm:max-h-[84vh] flex flex-col overflow-hidden transition-colors ${
+              className={`w-full max-w-[calc(100vw-24px)] xs:max-w-[420px] sm:max-w-md my-auto m-auto border rounded-2xl shadow-2xl relative max-h-[86vh] flex flex-col overflow-hidden transition-colors ${
                 isDark 
                   ? 'bg-slate-900 border-slate-800 text-slate-100' 
                   : 'bg-white border-slate-200 text-slate-900'
@@ -4411,9 +4411,9 @@ export default function App() {
       {isAnnouncementModalOpen && latestAnnouncement && (
         <div 
           onClick={(e) => { if (e.target === e.currentTarget) { playCloseSound(); setIsAnnouncementModalOpen(false); } }}
-          className="fixed inset-0 z-[105] bg-slate-950/65 backdrop-blur-xs flex items-center justify-center p-2.5 sm:p-4 pointer-events-auto overflow-y-auto"
+          className="fixed inset-0 z-[105] bg-slate-950/75 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 pt-[max(0.75rem,env(safe-area-inset-top))] pb-[max(0.75rem,env(safe-area-inset-bottom))] pointer-events-auto overflow-y-auto"
         >
-          <div className={`w-[88vw] max-w-[330px] sm:max-w-md my-auto m-auto border rounded-xl shadow-2xl flex flex-col max-h-[72vh] sm:max-h-[82vh] overflow-hidden transition-colors ${
+          <div className={`w-full max-w-[calc(100vw-24px)] xs:max-w-[420px] sm:max-w-md my-auto m-auto border rounded-2xl shadow-2xl flex flex-col max-h-[86vh] overflow-hidden transition-colors ${
             isDark 
               ? 'bg-slate-900 border-slate-800 text-slate-100' 
               : 'bg-white border-slate-200 text-slate-900'
