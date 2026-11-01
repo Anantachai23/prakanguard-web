@@ -2627,7 +2627,156 @@ export default function App() {
       <div className="flex-1 flex overflow-hidden relative w-full h-full">
 
         {/* ========================================================================= */}
-        {/* A. DESKTOP & TABLET GIS SIDEBAR (DOCKED ON PC, SLIDE-IN DRAWER ON TABLET) */}
+        {/* A0. LEFTMOST VERTICAL ICON NAVIGATION RAIL (GLOBETRANS REFERENCE STYLE)    */}
+        {/* ========================================================================= */}
+        <nav
+          aria-label="แถบเครื่องมือหลัก"
+          className={`hidden md:flex flex-col items-center justify-between w-[60px] h-full py-3 px-2 shrink-0 z-45 border-r select-none transition-colors ${
+            isDark
+              ? 'bg-slate-950 border-slate-800/90 text-slate-300'
+              : 'bg-white border-slate-200/90 text-slate-700'
+          }`}
+        >
+          {/* Top Circular Brand Emblem */}
+          <button
+            type="button"
+            onClick={() => {
+              playClickSound();
+              setSelectedDistrict('ทั้งหมด');
+              setFlyToLocation({ lat: 13.6000, lng: 100.6500, zoom: 11, ts: Date.now() });
+            }}
+            className={`w-10 h-10 rounded-full p-0.5 border-2 flex items-center justify-center transition-transform active:scale-95 cursor-pointer shadow-xs ${
+              isDark ? 'border-sky-400/70 bg-slate-900' : 'border-slate-900 bg-white'
+            }`}
+            title="รีเซ็ตมุมมองแผนที่จังหวัดสมุทรปราการ"
+          >
+            <img
+              src="/logo.png"
+              alt="PrakanGuard"
+              className="w-full h-full rounded-full object-cover block pointer-events-none"
+            />
+          </button>
+
+          {/* Center Navigation Stack */}
+          <div className="flex flex-col items-center gap-2">
+            {/* 1. จุดเฝ้าระวังน้ำท่วม (Flood Points) */}
+            <button
+              type="button"
+              onClick={() => {
+                playTabSound();
+                setIsSidebarOpen(true);
+                setDesktopSidebarTab('points');
+              }}
+              className={`w-10 h-10 rounded-2xl flex items-center justify-center transition-all cursor-pointer active:scale-95 relative ${
+                isSidebarOpen && desktopSidebarTab === 'points'
+                  ? (isDark ? 'bg-sky-500 text-slate-950 shadow-sm' : 'bg-slate-900 text-white shadow-sm')
+                  : (isDark ? 'text-slate-400 hover:bg-slate-800 hover:text-white' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-900')
+              }`}
+              title="จุดเฝ้าระวังน้ำท่วม (GIS)"
+            >
+              <CivicStationPin className="w-5 h-5" />
+            </button>
+
+            {/* 2. พยากรณ์ฝนวันนี้ & เวลาตกต่อเนื่อง (Rain Forecast) */}
+            <button
+              type="button"
+              onClick={() => {
+                playTabSound();
+                setIsSidebarOpen(true);
+                setDesktopSidebarTab('weather');
+              }}
+              className={`w-10 h-10 rounded-2xl flex items-center justify-center transition-all cursor-pointer active:scale-95 relative ${
+                isSidebarOpen && desktopSidebarTab === 'weather'
+                  ? (isDark ? 'bg-sky-500 text-slate-950 shadow-sm' : 'bg-slate-900 text-white shadow-sm')
+                  : (isDark ? 'text-slate-400 hover:bg-slate-800 hover:text-white' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-900')
+              }`}
+              title="พยากรณ์เวลาฝนตก & ระยะเวลาตกต่อเนื่องวันนี้"
+            >
+              <CloudRain className="w-5 h-5" />
+            </button>
+
+            {/* 3. กล้องวงจรปิดสด CCTV 24 ชม. */}
+            <button
+              type="button"
+              onClick={() => {
+                playModalOpenSound();
+                handleOpenCctv();
+              }}
+              className={`w-10 h-10 rounded-2xl flex items-center justify-center transition-all cursor-pointer active:scale-95 ${
+                isDark ? 'text-slate-400 hover:bg-slate-800 hover:text-white' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-900'
+              }`}
+              title="กล้องวงจรปิดสด CCTV 24 ชม."
+            >
+              <CivicCctv className="w-5 h-5" />
+            </button>
+
+            {/* 4. แจ้งจุดน้ำท่วม */}
+            <button
+              type="button"
+              onClick={() => {
+                playReportSound();
+                setIsCitizenReportModalOpen(true);
+              }}
+              className={`w-10 h-10 rounded-2xl flex items-center justify-center transition-all cursor-pointer active:scale-95 ${
+                isDark ? 'text-slate-400 hover:bg-slate-800 hover:text-white' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-900'
+              }`}
+              title="แจ้งรายงานจุดน้ำท่วม"
+            >
+              <CivicReportCamera className="w-5 h-5" />
+            </button>
+
+            {/* 5. เกณฑ์วัดระดับน้ำ & ยานพาหนะ */}
+            <button
+              type="button"
+              onClick={() => {
+                playModalOpenSound();
+                setIsStandardsModalOpen(true);
+              }}
+              className={`w-10 h-10 rounded-2xl flex items-center justify-center transition-all cursor-pointer active:scale-95 ${
+                isDark ? 'text-slate-400 hover:bg-slate-800 hover:text-white' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-900'
+              }`}
+              title="เกณฑ์วัดระดับน้ำและความปลอดภัยยานพาหนะ"
+            >
+              <CivicStandards className="w-5 h-5" />
+            </button>
+          </div>
+
+          {/* Bottom Utility Stack (Theme Toggle + Collapse/Expand Panel) */}
+          <div className="flex flex-col items-center gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                playToggleSound(!isDark);
+                toggleTheme();
+              }}
+              className={`w-10 h-10 rounded-2xl flex items-center justify-center transition-all cursor-pointer active:scale-95 border ${
+                isDark
+                  ? 'bg-slate-900 border-slate-800 text-amber-400 hover:bg-slate-800'
+                  : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
+              }`}
+              title={isDark ? 'สลับเป็นโทนสว่าง (Light Mode)' : 'สลับเป็นโทนมืด (Dark Mode)'}
+            >
+              {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                playToggleSound(!isSidebarOpen);
+                setIsSidebarOpen(v => !v);
+              }}
+              className={`w-10 h-10 rounded-2xl flex items-center justify-center transition-all cursor-pointer active:scale-95 ${
+                isDark ? 'text-slate-400 hover:bg-slate-800 hover:text-white' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-900'
+              }`}
+              title={isSidebarOpen ? 'ซ่อนแผงรายการด้านซ้าย' : 'เปิดแผงรายการด้านซ้าย'}
+            >
+              <CivicDrawerToggle className="w-4 h-4" isOpen={isSidebarOpen} />
+            </button>
+          </div>
+        </nav>
+
+        {/* ========================================================================= */}
+        {/* A. DESKTOP & TABLET FLOATING PANEL (GLOBETRANS CARD PANEL STYLE)          */}
         {/* ========================================================================= */}
         {/* Backdrop for Tablet Drawer */}
         {isSidebarOpen && (
@@ -2640,37 +2789,55 @@ export default function App() {
         {/* Sidebar Panel */}
         <aside className={`
           hidden md:flex flex-col h-full z-40 lg:z-20 shrink-0 backdrop-blur-md transition-[width,opacity,transform] duration-300 ease-in-out select-none
-          ${isDark ? 'bg-slate-900/98 text-slate-100' : 'bg-white/98 text-slate-800'}
-          fixed lg:relative top-0 bottom-0 left-0
+          ${isDark ? 'bg-slate-900/98 text-slate-100' : 'bg-white text-slate-900'}
+          fixed lg:relative top-0 bottom-0 left-[60px] lg:left-0
           ${isSidebarOpen 
-              ? 'w-[340px] lg:w-[380px] xl:w-[410px] border-r translate-x-0 opacity-100 shadow-2xl lg:shadow-none' 
+              ? 'w-[340px] lg:w-[385px] xl:w-[415px] border-r translate-x-0 opacity-100 shadow-2xl lg:shadow-sm' 
               : 'w-0 min-w-0 max-w-0 border-r-0 border-transparent overflow-hidden opacity-0 pointer-events-none -translate-x-full lg:translate-x-0'
           }
-          ${isDark ? 'border-slate-800' : 'border-slate-200'}
+          ${isDark ? 'border-slate-800' : 'border-slate-200/90'}
         `}>
-          <div className="w-[340px] lg:w-[380px] xl:w-[410px] h-full flex flex-col shrink-0 overflow-hidden">
-            {/* Sidebar Header */}
-          <div className="p-3 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between gap-2 shrink-0">
-            <div className="flex items-center gap-2 min-w-0">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
+          <div className="w-[340px] lg:w-[385px] xl:w-[415px] h-full flex flex-col shrink-0 overflow-hidden">
+            {/* Sidebar Header (Globetrans Clean Title Style) */}
+            <div className="px-4 pt-3.5 pb-2.5 border-b border-slate-100 dark:border-slate-800/80 flex items-center justify-between gap-2 shrink-0">
               <div className="min-w-0">
-                <h2 className="text-xs sm:text-sm font-extrabold tracking-tight truncate">ศูนย์ปฏิบัติการสารสนเทศภูมิศาสตร์ (GIS)</h2>
-                <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 block truncate">เฝ้าระวังอุทกภัย 6 อำเภอ จังหวัดสมุทรปราการ</span>
+                <h2 className="text-base sm:text-[17px] font-extrabold tracking-tight truncate text-slate-900 dark:text-white">
+                  {desktopSidebarTab === 'weather' ? 'พยากรณ์ฝนสมุทรปราการ' : 'จุดเฝ้าระวังน้ำท่วม'}
+                </h2>
+                <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 block truncate">
+                  ติดตามระดับน้ำและเวลาฝนตกต่อเนื่องครบ 6 อำเภอ
+                </span>
+              </div>
+              
+              <div className="flex items-center gap-1 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => {
+                    playModalOpenSound();
+                    setIsOfficialModalOpen(true);
+                  }}
+                  className={`w-8 h-8 rounded-xl border flex items-center justify-center transition-colors cursor-pointer ${
+                    isDark ? 'bg-slate-850 border-slate-700 text-sky-400 hover:bg-slate-800' : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
+                  }`}
+                  title="เปิดหน้าต่างพยากรณ์อากาศ 24 ชม. แบบเต็ม"
+                >
+                  <CloudRain className="w-4 h-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    playToggleSound(false);
+                    setIsSidebarOpen(false);
+                  }}
+                  className={`w-8 h-8 rounded-xl border flex items-center justify-center transition-colors cursor-pointer ${
+                    isDark ? 'bg-slate-850 border-slate-700 text-slate-400 hover:text-white' : 'bg-slate-50 border-slate-200 text-slate-600 hover:text-slate-900'
+                  }`}
+                  title="ย่อแถบข้าง (ขยายแผนที่เต็มจอ)"
+                >
+                  <CivicDrawerToggle className="w-4 h-4" isOpen={true} />
+                </button>
               </div>
             </div>
-            
-            <button
-              type="button"
-              onClick={() => {
-                playToggleSound(false);
-                setIsSidebarOpen(false);
-              }}
-              className="p-1.5 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
-              title="ย่อแถบข้าง (ขยายแผนที่เต็มจอ)"
-            >
-              <CivicDrawerToggle className="w-4 h-4" isOpen={true} />
-            </button>
-          </div>
 
           {/* Sidebar Scrollable Body */}
           <div className="flex-1 overflow-y-auto p-3 space-y-3">
@@ -2902,22 +3069,27 @@ export default function App() {
               )}
             </div>
 
-            {/* 3. Desktop & Tablet GIS Sidebar Tab Switcher */}
-            <div className="grid grid-cols-2 gap-1 p-1 rounded-lg bg-slate-100 dark:bg-slate-800/90 text-xs">
+            {/* 3. Globetrans-Style Capsule Tab Switcher (On the way / Delivered style) */}
+            <div className={`grid grid-cols-2 gap-1 p-1 rounded-full text-xs border ${
+              isDark ? 'bg-slate-850 border-slate-800' : 'bg-slate-100/90 border-slate-200/70'
+            }`}>
               <button
                 type="button"
                 onClick={() => {
                   try { playTabSound(); } catch (e) {}
                   setDesktopSidebarTab('points');
                 }}
-                className={`py-1.5 px-2 rounded-md font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                className={`py-2 px-3 rounded-full font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                   desktopSidebarTab === 'points'
-                    ? 'bg-white dark:bg-slate-700 text-blue-700 dark:text-cyan-300 shadow-xs border border-slate-200 dark:border-slate-600'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                    ? (isDark
+                        ? 'bg-white text-slate-950 shadow-sm'
+                        : 'bg-slate-950 text-white shadow-sm')
+                    : (isDark
+                        ? 'text-slate-400 hover:text-white'
+                        : 'text-slate-500 hover:text-slate-900')
                 }`}
               >
-                <CivicStationPin className="w-3.5 h-3.5 text-blue-600 dark:text-cyan-400" />
-                <span className="truncate">จุดตรวจการณ์ GIS ({displayPoints.length})</span>
+                <span className="truncate">จุดเฝ้าระวัง ({displayPoints.length})</span>
               </button>
               <button
                 type="button"
@@ -2925,20 +3097,68 @@ export default function App() {
                   try { playTabSound(); } catch (e) {}
                   setDesktopSidebarTab('weather');
                 }}
-                className={`py-1.5 px-2 rounded-md font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                className={`py-2 px-3 rounded-full font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                   desktopSidebarTab === 'weather'
-                    ? 'bg-white dark:bg-slate-700 text-blue-700 dark:text-cyan-300 shadow-xs border border-slate-200 dark:border-slate-600'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                    ? (isDark
+                        ? 'bg-white text-slate-950 shadow-sm'
+                        : 'bg-slate-950 text-white shadow-sm')
+                    : (isDark
+                        ? 'text-slate-400 hover:text-white'
+                        : 'text-slate-500 hover:text-slate-900')
                 }`}
               >
-                <CivicRadar className="w-3.5 h-3.5 text-blue-500 dark:text-cyan-400" />
-                <span className="truncate">พยากรณ์ฝน & เรดาร์ ปภ.</span>
+                <span className="truncate">พยากรณ์ฝนวันนี้ ({weather?.forecast24h?.todayProbability ?? weather?.rainProbabilityToday ?? 35}%)</span>
               </button>
             </div>
 
-            {/* TAB 1: POINTS LIST (จุดเฝ้าระวัง) */}
+            {/* TAB 1: POINTS LIST (จุดเฝ้าระวัง — Globetrans Card List Style) */}
             {desktopSidebarTab === 'points' && (
-              <div className="space-y-2">
+              <div className="space-y-2.5">
+                {/* Today's Rain Quick Summary Banner (เห็นเวลาฝนตกวันนี้และระยะเวลาตกต่อเนื่องได้ทันทีไม่งง) */}
+                <div
+                  onClick={() => {
+                    playTabSound();
+                    setDesktopSidebarTab('weather');
+                  }}
+                  className={`p-3 rounded-2xl border transition-all cursor-pointer group ${
+                    isDark
+                      ? 'bg-slate-850/90 border-slate-800 hover:border-sky-500/60'
+                      : 'bg-slate-50/90 border-slate-200/90 hover:border-slate-400'
+                  }`}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <CloudRain className="w-4 h-4 text-sky-500 shrink-0" />
+                      <span className={`text-xs font-extrabold truncate ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                        พยากรณ์ฝนวันนี้: โอกาส {weather?.forecast24h?.todayProbability ?? weather?.rainProbabilityToday ?? 35}%
+                      </span>
+                    </div>
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold shrink-0 ${
+                      (weather?.forecast24h?.todayProbability ?? 35) >= 60
+                        ? 'bg-amber-400 text-slate-950'
+                        : (weather?.forecast24h?.todayProbability ?? 35) >= 35
+                        ? 'bg-[#b8f338] text-slate-950'
+                        : (isDark ? 'bg-slate-800 text-emerald-400' : 'bg-emerald-100 text-emerald-800')
+                    }`}>
+                      ดูพยากรณ์ &rarr;
+                    </span>
+                  </div>
+                  <div className="mt-1.5 grid grid-cols-2 gap-2 pt-1.5 border-t border-slate-200/60 dark:border-slate-800 text-[10.5px]">
+                    <div>
+                      <span className="text-[9.5px] text-slate-400 block">วันนี้มีโอกาสตกเวลา</span>
+                      <strong className={isDark ? 'text-slate-100' : 'text-slate-900'}>
+                        {weather?.forecast24h?.todayTimeWindow || weather?.rainTimeWindowToday || 'ไม่มีเกณฑ์ฝนตกวันนี้'}
+                      </strong>
+                    </div>
+                    <div>
+                      <span className="text-[9.5px] text-slate-400 block">คาดการณ์ตกติดกันนาน</span>
+                      <strong className={(weather?.forecast24h?.todayProbability ?? 35) >= 40 ? (isDark ? 'text-sky-300' : 'text-blue-700') : (isDark ? 'text-emerald-400' : 'text-emerald-700')}>
+                        {weather?.forecast24h?.todayContinuousDuration || weather?.rainContinuousDurationToday || 'ไม่ตกต่อเนื่อง (0 ชม.)'}
+                      </strong>
+                    </div>
+                  </div>
+                </div>
+
                 {/* Severity Quick Filters for Points */}
                 <div className="grid grid-cols-4 gap-1 text-[11px]">
                   <button
@@ -2947,10 +3167,10 @@ export default function App() {
                       playSelectSound();
                       setSeverityFilter('all');
                     }}
-                    className={`py-1 px-1 rounded-md text-center font-bold border transition-all cursor-pointer ${
+                    className={`py-1.5 px-1 rounded-full text-center font-bold border transition-all cursor-pointer ${
                       severityFilter === 'all'
-                        ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
-                        : isDark ? 'bg-slate-800/80 border-slate-700 text-slate-300' : 'bg-slate-100 border-slate-200 text-slate-700'
+                        ? (isDark ? 'bg-white text-slate-950 border-white shadow-xs' : 'bg-slate-900 text-white border-slate-900 shadow-xs')
+                        : isDark ? 'bg-slate-850 border-slate-800 text-slate-300' : 'bg-slate-100 border-slate-200 text-slate-700'
                     }`}
                   >
                     ทั้งหมด
@@ -2962,10 +3182,10 @@ export default function App() {
                       playSelectSound();
                       setSeverityFilter(severityFilter === '3' || severityFilter === 'severe' ? 'all' : '3');
                     }}
-                    className={`py-1 px-1 rounded-md text-center font-bold border transition-all cursor-pointer ${
+                    className={`py-1.5 px-1 rounded-full text-center font-bold border transition-all cursor-pointer ${
                       severityFilter === '3' || severityFilter === 'severe'
                         ? 'bg-rose-600 text-white border-rose-600 shadow-xs'
-                        : isDark ? 'bg-slate-800/80 border-slate-700 text-rose-400' : 'bg-rose-50 border-rose-200 text-rose-700'
+                        : isDark ? 'bg-slate-850 border-slate-800 text-rose-400' : 'bg-rose-50 border-rose-200 text-rose-700'
                     }`}
                   >
                     วิกฤต ({severe})
@@ -2977,10 +3197,10 @@ export default function App() {
                       playSelectSound();
                       setSeverityFilter(severityFilter === '2' || severityFilter === 'moderate' ? 'all' : '2');
                     }}
-                    className={`py-1 px-1 rounded-md text-center font-bold border transition-all cursor-pointer ${
+                    className={`py-1.5 px-1 rounded-full text-center font-bold border transition-all cursor-pointer ${
                       severityFilter === '2' || severityFilter === 'moderate'
                         ? 'bg-amber-500 text-white border-amber-500 shadow-xs'
-                        : isDark ? 'bg-slate-800/80 border-slate-700 text-amber-400' : 'bg-amber-50 border-amber-200 text-amber-800'
+                        : isDark ? 'bg-slate-850 border-slate-800 text-amber-400' : 'bg-amber-50 border-amber-200 text-amber-800'
                     }`}
                   >
                     กลาง ({moderate})
@@ -2992,7 +3212,7 @@ export default function App() {
                       playSelectSound();
                       setSeverityFilter(severityFilter === '1' || severityFilter === 'minor' ? 'all' : '1');
                     }}
-                    className={`py-1 px-1 rounded-md text-center font-bold border transition-all cursor-pointer ${
+                    className={`py-1.5 px-1 rounded-full text-center font-bold border transition-all cursor-pointer ${
                       severityFilter === '1' || severityFilter === 'minor'
                         ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
                         : isDark ? 'bg-slate-800/80 border-slate-700 text-emerald-400' : 'bg-emerald-50 border-emerald-200 text-emerald-800'
@@ -3002,37 +3222,118 @@ export default function App() {
                   </button>
                 </div>
 
-                {/* Scrollable Points List */}
-                <div className="space-y-1.5 max-h-[52vh] overflow-y-auto pr-0.5 custom-scrollbar-thin">
+                {/* Scrollable Points List (Globetrans Card Style) */}
+                <div className="space-y-2 max-h-[50vh] overflow-y-auto pr-0.5 custom-scrollbar-thin">
                   {displayPoints.length === 0 ? (
                     <div className="py-8 text-center text-xs text-slate-400">
                       ไม่พบจุดเฝ้าระวังตามเงื่อนไขที่เลือก
                     </div>
                   ) : (
-                    displayPoints.map((pt) => {
+                    displayPoints.map((pt, idx) => {
                       const lvl = resolveLevel(pt);
                       const isReceding = isWaterReceding(pt);
                       const hasPtPhoto = Boolean(pt.photoUrl || pt.photo_url || pt.photo || pt.image || pt.imageUrl);
-                      const isSelected = selectedPoint?.id === pt.id;
+                      const isSelected = selectedPoint ? selectedPoint.id === pt.id : idx === 0;
+                      const depthText = pt.depthCm ? `${pt.depthCm} ซม.` : (pt.depthRange || `${lvl === 3 ? '>50' : lvl === 2 ? '21-50' : '5-20'} ซม.`);
+                      const barPercent = Math.min(100, Math.max(18, pt.depthCm ? Math.round((pt.depthCm / 65) * 100) : (lvl === 3 ? 90 : lvl === 2 ? 55 : 28)));
+
+                      if (isSelected) {
+                        return (
+                          <div
+                            key={pt.id}
+                            onClick={() => handleSelectLocation(pt)}
+                            className={`w-full p-3.5 rounded-2xl border-2 text-left transition-all cursor-pointer select-none ${
+                              isDark
+                                ? 'bg-slate-900 border-sky-400 shadow-lg shadow-black/40'
+                                : 'bg-white border-slate-900 shadow-md'
+                            }`}
+                          >
+                            {/* Top Row: Name + Station Code */}
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="min-w-0">
+                                <h4 className={`font-extrabold text-[13px] leading-snug truncate ${isDark ? 'text-white' : 'text-slate-950'}`}>
+                                  {pt.name}
+                                </h4>
+                                <span className="text-[10.5px] text-slate-400 font-mono block mt-0.5">
+                                  สถานีเฝ้าระวัง #{String(pt.id).slice(-5).toUpperCase()} • อ.{pt.district?.replace(/^อ\./, '')}
+                                </span>
+                              </div>
+                              {hasPtPhoto && (
+                                <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-cyan-300 shrink-0">
+                                  มีภาพจริง
+                                </span>
+                              )}
+                            </div>
+
+                            {/* Center Pill Badge + Progress Bar (Globetrans IN TRANSIT style) */}
+                            <div className="my-3">
+                              <div className="flex justify-center mb-1.5">
+                                <span className={`px-3 py-0.5 rounded-full text-[10.5px] font-extrabold tracking-wide uppercase ${
+                                  lvl === 3
+                                    ? 'bg-rose-600 text-white'
+                                    : lvl === 2
+                                    ? 'bg-amber-400 text-slate-950'
+                                    : 'bg-[#b8f338] text-slate-950'
+                                }`}>
+                                  {lvl === 3 ? `วิกฤต • ${depthText}` : lvl === 2 ? `ปานกลาง • ${depthText}` : `ปกติ • ${depthText}`}
+                                </span>
+                              </div>
+                              <div className="w-full h-1.5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                                <div
+                                  className={`h-full rounded-full transition-all duration-300 ${
+                                    lvl === 3 ? 'bg-rose-500' : lvl === 2 ? 'bg-amber-500' : 'bg-[#84cc16]'
+                                  }`}
+                                  style={{ width: `${barPercent}%` }}
+                                />
+                              </div>
+                            </div>
+
+                            {/* 4-Column Data Grid (Sender / Departured / Distance / Weight style) */}
+                            <div className="grid grid-cols-4 gap-1.5 pt-2 border-t border-slate-100 dark:border-slate-800 text-[10.5px]">
+                              <div>
+                                <span className="text-[9.5px] text-slate-400 block">อำเภอ</span>
+                                <strong className={`truncate block mt-0.5 ${isDark ? 'text-slate-200' : 'text-slate-900'}`}>
+                                  {pt.district?.replace(/^อ\./, '')}
+                                </strong>
+                              </div>
+                              <div>
+                                <span className="text-[9.5px] text-slate-400 block">ระดับน้ำ</span>
+                                <strong className={`font-mono block mt-0.5 ${isDark ? 'text-slate-200' : 'text-slate-900'}`}>
+                                  {depthText}
+                                </strong>
+                              </div>
+                              <div>
+                                <span className="text-[9.5px] text-slate-400 block">แนวโน้ม</span>
+                                <strong className={`block mt-0.5 ${
+                                  isReceding ? 'text-teal-600 dark:text-teal-400' : pt.waterTrend === 'rising' ? 'text-rose-600 dark:text-rose-400' : (isDark ? 'text-slate-200' : 'text-slate-900')
+                                }`}>
+                                  {isReceding ? 'น้ำลดลง' : pt.waterTrend === 'rising' ? 'น้ำเพิ่มขึ้น' : 'ทรงตัว'}
+                                </strong>
+                              </div>
+                              <div>
+                                <span className="text-[9.5px] text-slate-400 block">การสัญจร</span>
+                                <strong className={`truncate block mt-0.5 ${isDark ? 'text-slate-200' : 'text-slate-900'}`}>
+                                  {lvl === 3 ? 'ห้ามผ่าน' : lvl === 2 ? 'ควรเลี่ยง' : 'ผ่านได้'}
+                                </strong>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      }
+
                       return (
                         <button
                           key={pt.id}
                           type="button"
                           onClick={() => handleSelectLocation(pt)}
-                          className={`w-full p-2.5 rounded-lg border text-left transition-all cursor-pointer flex items-center justify-between gap-2 select-none active:scale-[0.98] ${
-                            isSelected
-                              ? 'border-blue-500 bg-blue-50/80 dark:bg-blue-950/50 ring-1 ring-blue-500'
-                              : isDark 
-                                ? 'bg-slate-850/60 hover:bg-slate-800/80 border-slate-800 text-slate-200' 
-                                : 'bg-white hover:bg-slate-50 border-slate-200 text-slate-800 shadow-2xs'
+                          className={`w-full p-3 rounded-2xl border text-left transition-all cursor-pointer flex items-center justify-between gap-2 select-none active:scale-[0.98] ${
+                            isDark 
+                              ? 'bg-slate-850/60 hover:bg-slate-800/90 border-slate-800/90 text-slate-200' 
+                              : 'bg-slate-50/90 hover:bg-white border-slate-200/70 text-slate-800 hover:shadow-xs'
                           }`}
                         >
                           <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-1.5 mb-1">
-                              <span className={`w-2 h-2 rounded-full shrink-0 ${
-                                lvl === 3 ? 'bg-rose-500 ring-2 ring-rose-500/20' :
-                                lvl === 2 ? 'bg-amber-500 ring-2 ring-amber-500/20' : 'bg-emerald-500'
-                              }`} />
+                            <div className="flex items-center gap-1.5">
                               <h4 className="font-bold text-xs truncate leading-snug">{pt.name}</h4>
                               {hasPtPhoto && (
                                 <span className="inline-flex items-center px-1 py-0.5 rounded bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-cyan-300 shrink-0" title="มีภาพถ่ายประกอบ">
@@ -3040,30 +3341,24 @@ export default function App() {
                                 </span>
                               )}
                             </div>
-                            <div className="flex items-center gap-1.5 text-[10.5px] text-slate-500 dark:text-slate-400">
+                            <div className="flex items-center gap-1.5 text-[10.5px] text-slate-400 mt-0.5">
+                              <span className="font-mono">#{String(pt.id).slice(-4).toUpperCase()}</span>
+                              <span>•</span>
                               <span className="truncate">อ.{pt.district?.replace(/^อ\./, '')}</span>
                               <span>•</span>
-                              <span className={`font-medium inline-flex items-center gap-1 ${
-                                isReceding ? 'text-teal-600 dark:text-teal-400 font-semibold' :
-                                pt.waterTrend === 'rising' ? 'text-rose-600 dark:text-rose-400 font-semibold' : ''
-                              }`}>
-                                {(isReceding || pt.waterTrend === 'rising') && (
-                                  <CivicWaterTrend className="w-3 h-3" direction={isReceding ? 'falling' : 'rising'} />
-                                )}
-                                <span>{isReceding ? 'น้ำลด' : pt.waterTrend === 'rising' ? 'น้ำขึ้น' : 'ทรงตัว'}</span>
-                              </span>
-                              <span>•</span>
-                              <span className="truncate">{lvl === 3 ? 'รถเล็กห้ามผ่าน' : lvl === 2 ? 'รถเล็กควรเลี่ยง' : 'ผ่านได้'}</span>
+                              <span className="truncate">{lvl === 3 ? 'รถเล็กห้ามผ่าน' : lvl === 2 ? 'รถเล็กควรเลี่ยง' : 'สัญจรผ่านได้'}</span>
                             </div>
                           </div>
 
                           <div className="text-right shrink-0">
-                            <span className={`text-[11px] font-black font-mono px-2 py-0.5 rounded-md border inline-block ${
-                              lvl === 3 ? 'bg-rose-50 dark:bg-rose-950 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800' :
-                              lvl === 2 ? 'bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800' :
-                              'bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800'
+                            <span className={`text-[10.5px] font-extrabold font-mono px-2.5 py-1 rounded-full inline-block ${
+                              lvl === 3
+                                ? 'bg-rose-600 text-white'
+                                : lvl === 2
+                                ? 'bg-amber-400 text-slate-950'
+                                : 'bg-[#b8f338] text-slate-950'
                             }`}>
-                              {pt.depthCm ? `${pt.depthCm} cm` : (pt.depthRange || `${lvl === 3 ? '>50' : lvl === 2 ? '21-50' : '5-20'} cm`)}
+                              {depthText}
                             </span>
                           </div>
                         </button>
@@ -3465,61 +3760,135 @@ export default function App() {
             </div>
           )}
 
-          {/* DESKTOP/IPAD FLOATING LEGEND CARD (BOTTOM LEFT) */}
-          <div className="hidden md:flex absolute bottom-4 left-4 z-40 pointer-events-auto select-none">
-            <button 
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                try { playModalOpenSound(); } catch (_) {}
-                setIsStandardsModalOpen(true);
-              }}
-              className={`px-3 py-1.5 rounded-md border text-xs flex items-center gap-2.5 shadow-xs backdrop-blur-md cursor-pointer transition-all active:scale-95 group ${
-                isDark 
-                  ? 'bg-slate-900/95 border-slate-800 hover:border-slate-700 text-slate-300' 
-                  : 'bg-white/95 border-slate-200 hover:border-slate-300 text-slate-700'
+          {/* DESKTOP/IPAD FLOATING SUMMARY & TELEMETRY CARD (GLOBETRANS BOTTOM MAP CARD STYLE) */}
+          <div className="hidden md:flex absolute bottom-4 left-4 right-20 max-w-3xl z-40 pointer-events-auto select-none">
+            <div
+              className={`w-full rounded-2xl border p-4 shadow-xl backdrop-blur-md transition-all ${
+                isDark
+                  ? 'bg-slate-900/95 border-slate-800 text-slate-200 shadow-black/50'
+                  : 'bg-white/95 border-slate-200/90 text-slate-800 shadow-slate-900/10'
               }`}
-              title="คลิกเพื่อดูรายละเอียดเกณฑ์วัดระดับน้ำและผลกระทบฉบับเต็ม"
             >
-              <div className="flex items-center gap-1.5 font-semibold">
-                <CivicStandards className={`w-3.5 h-3.5 ${isDark ? 'text-cyan-400' : 'text-blue-600'}`} />
-                <span className={isDark ? 'text-white' : 'text-slate-900'}>เกณฑ์ระดับน้ำ:</span>
+              {/* Top Row: Title + Pill Status + Action Buttons */}
+              <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-100 dark:border-slate-800">
+                <div className="flex items-center gap-2.5">
+                  <span className="text-[13px] font-black tracking-tight text-slate-900 dark:text-white">
+                    พยากรณ์ฝน & สถานะน้ำสมุทรปราการ
+                  </span>
+                  <span
+                    className={`px-2.5 py-0.5 rounded-md text-[10px] font-extrabold uppercase tracking-wider ${
+                      (weather?.forecast24h?.todayMaxProb ?? weather?.rainProb ?? 0) >= 60
+                        ? 'bg-rose-500 text-white'
+                        : (weather?.forecast24h?.todayMaxProb ?? weather?.rainProb ?? 0) >= 35
+                        ? 'bg-amber-400 text-slate-950'
+                        : 'bg-slate-900 text-[#b8f338] dark:bg-[#b8f338] dark:text-slate-950'
+                    }`}
+                  >
+                    วันนี้โอกาสตก {weather?.forecast24h?.todayMaxProb ?? weather?.rainProb ?? 0}%
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      try { playModalOpenSound(); } catch (_) {}
+                      setIsAiForecastModalOpen(true);
+                    }}
+                    className={`px-3 py-1 rounded-full text-[11px] font-bold border transition-all cursor-pointer active:scale-95 ${
+                      isDark
+                        ? 'bg-slate-800 border-slate-700 text-sky-300 hover:bg-slate-700'
+                        : 'bg-slate-900 border-slate-900 text-white hover:bg-slate-800'
+                    }`}
+                  >
+                    วิเคราะห์ฝน 6 อำเภอ
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      try { playModalOpenSound(); } catch (_) {}
+                      setIsStandardsModalOpen(true);
+                    }}
+                    className={`px-3 py-1 rounded-full text-[11px] font-bold border transition-all cursor-pointer active:scale-95 ${
+                      isDark
+                        ? 'bg-slate-900 border-slate-700 text-slate-300 hover:bg-slate-800'
+                        : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+                    }`}
+                  >
+                    เกณฑ์ระดับน้ำ ↗
+                  </button>
+                </div>
               </div>
 
-              <div className="flex items-center space-x-1.5">
-                <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                <span className="font-medium text-emerald-700 dark:text-emerald-400">ปกติ 5-20 ซม.</span>
+              {/* Bottom 4-Column Data Grid */}
+              <div className="grid grid-cols-4 gap-3 pt-2.5">
+                <div>
+                  <div className="text-[10px] font-semibold text-slate-400 dark:text-slate-500">
+                    วันนี้คาดว่าจะตกเวลา
+                  </div>
+                  <div className="text-[12px] font-extrabold text-slate-900 dark:text-white mt-0.5 truncate">
+                    {weather?.forecast24h?.todayTimeWindow ||
+                      ((weather?.forecast24h?.todayMaxProb ?? 0) >= 35
+                        ? `ประมาณ ${weather?.forecast24h?.peakRainHourToday || 'วันนี้'}`
+                        : 'ไม่มีเกณฑ์ฝนตกวันนี้')}
+                  </div>
+                </div>
+
+                <div>
+                  <div className="text-[10px] font-semibold text-slate-400 dark:text-slate-500">
+                    คาดว่าจะตกติดกันนาน
+                  </div>
+                  <div className="text-[12px] font-extrabold text-sky-600 dark:text-sky-400 mt-0.5 truncate">
+                    {weather?.forecast24h?.todayContinuousDuration ||
+                      ((weather?.forecast24h?.todayRainyHoursCount ?? 0) > 0
+                        ? `ตกต่อเนื่อง ~${weather.forecast24h.todayRainyHoursCount} ชม.`
+                        : 'ไม่ตกต่อเนื่อง (0 ชม.)')}
+                  </div>
+                </div>
+
+                <div>
+                  <div className="text-[10px] font-semibold text-slate-400 dark:text-slate-500">
+                    แนวโน้มวันพรุ่งนี้
+                  </div>
+                  <div className="text-[12px] font-extrabold text-slate-800 dark:text-slate-200 mt-0.5 truncate">
+                    โอกาส {weather?.forecast24h?.tomorrowMaxProb ?? 0}% •{' '}
+                    {weather?.forecast24h?.tomorrowTimeWindow &&
+                    weather?.forecast24h?.tomorrowTimeWindow !== 'ไม่มีเกณฑ์ฝนตกพรุ่งนี้'
+                      ? weather.forecast24h.tomorrowTimeWindow
+                      : 'ไม่มีฝนเด่นชัด'}
+                  </div>
+                </div>
+
+                <div
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    try { playModalOpenSound(); } catch (_) {}
+                    setIsStandardsModalOpen(true);
+                  }}
+                  className="cursor-pointer group"
+                >
+                  <div className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 group-hover:text-sky-500 transition-colors">
+                    เกณฑ์วัดระดับน้ำ (ซม.)
+                  </div>
+                  <div className="flex items-center gap-2 text-[11px] font-bold mt-0.5">
+                    <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                      5-20
+                    </span>
+                    <span className="inline-flex items-center gap-1 text-amber-600 dark:text-amber-400">
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                      21-50
+                    </span>
+                    <span className="inline-flex items-center gap-1 text-rose-600 dark:text-rose-400">
+                      <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+                      &gt;50
+                    </span>
+                  </div>
+                </div>
               </div>
-
-              <span className={isDark ? 'text-slate-800' : 'text-slate-300'}>•</span>
-
-              <div className="flex items-center space-x-1.5">
-                <span className="w-2 h-2 rounded-full bg-amber-500"></span>
-                <span className="font-medium text-amber-700 dark:text-amber-400">ปานกลาง 21-50 ซม.</span>
-              </div>
-
-              <span className={isDark ? 'text-slate-800' : 'text-slate-300'}>•</span>
-
-              <div className="flex items-center space-x-1.5">
-                <span className="w-2 h-2 rounded-full bg-rose-600 animate-pulse"></span>
-                <span className="text-rose-600 dark:text-rose-400 font-semibold">วิกฤต &gt;50 ซม.</span>
-              </div>
-
-              <span 
-                onClick={(e) => {
-                  e.stopPropagation();
-                  try { playModalOpenSound(); } catch (_) {}
-                  setIsStandardsModalOpen(true);
-                }}
-                className={`ml-1 text-[11px] font-medium px-2 py-0.5 rounded-md border flex items-center gap-1 transition-colors cursor-pointer ${
-                  isDark 
-                    ? 'bg-slate-800 text-slate-200 border-slate-700 hover:bg-slate-700' 
-                    : 'bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200'
-                }`}
-              >
-                ดูรายละเอียด ↗
-              </span>
-            </button>
+            </div>
           </div>
 
         {/* FLOATING POINT DETAIL MODAL (CENTERED POPUP DIALOG) */}
