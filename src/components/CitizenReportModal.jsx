@@ -7,7 +7,9 @@ import {
   Plus,
   AlertTriangle,
   Navigation,
-  MapPin
+  MapPin,
+  Camera,
+  FileText
 } from 'lucide-react';
 import { detectDistrictForCoordinates, isPointInSamutPrakan, detectSubdistrictForLocation } from '../data/samutPrakanBoundary';
 import { getDetailedDeviceInfo } from '../services/cloudSyncService';
@@ -94,6 +96,15 @@ export const OFFICIAL_SEVERITY_TIERS = [
   }
 ];
 
+// ชิปข้อความด่วนช่วยประชาชนระบุสภาพจุดเกิดเหตุได้สะดวก
+const QUICK_SITUATION_TAGS = [
+  '💧 น้ำท่วมขังผิวถนน',
+  '🚗 รถเล็กผ่านยาก',
+  '🌊 น้ำเอ่อล้นคลอง/ท่อ',
+  '🏠 น้ำเริ่มเข้าบ้าน',
+  '🛑 การจราจรติดขัด'
+];
+
 export default function CitizenReportModal({ 
   isOpen, 
   onClose, 
@@ -151,6 +162,19 @@ export default function CitizenReportModal({
       if (subDetected.district) setDistrict(subDetected.district);
       if (subDetected.subdistrict) setSubdistrict(subDetected.subdistrict);
     }
+  };
+
+  const handleAddTag = (tag) => {
+    setNotes(prev => {
+      const updated = prev.trim() ? (prev.includes(tag) ? prev : `${prev.trim()} ${tag}`) : tag;
+      const subDetected = detectSubdistrictForLocation(customCoords?.lat, customCoords?.lng, updated, district);
+      if (subDetected) {
+        if (subDetected.district) setDistrict(subDetected.district);
+        if (subDetected.subdistrict) setSubdistrict(subDetected.subdistrict);
+      }
+      return updated;
+    });
+    if (formError) setFormError('');
   };
 
   const compressImage = (file, maxWidth = 800, maxHeight = 800, quality = 0.65) => {
@@ -369,10 +393,10 @@ export default function CitizenReportModal({
               </div>
             )}
 
-            {/* 1. ตำแหน่งและชื่อสถานที่ */}
-            <div className="space-y-2.5">
+            {/* 1. ตำแหน่งจุดเกิดเหตุบนแผนที่ */}
+            <div className="space-y-2">
               <label className={`block text-xs font-bold ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>
-                1. ตำแหน่งและสถานที่เกิดเหตุ <span className="text-rose-500">*</span>
+                1. ตำแหน่งจุดเกิดเหตุบนแผนที่ <span className="text-rose-500">*</span>
               </label>
 
               {customCoords ? (
@@ -392,7 +416,7 @@ export default function CitizenReportModal({
                     <button
                       type="button"
                       onClick={() => onStartPickOnMap('citizen')}
-                      className={`px-2 py-1 rounded border text-[11px] font-semibold cursor-pointer shrink-0 ${
+                      className={`px-2.5 py-1 rounded-md border text-[11px] font-semibold cursor-pointer shrink-0 ${
                         isDark ? 'bg-slate-900 border-slate-700 text-slate-200 hover:bg-slate-800' : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-100'
                       }`}
                     >
@@ -406,7 +430,7 @@ export default function CitizenReportModal({
                     <button
                       type="button"
                       onClick={() => onStartPickOnMap('citizen')}
-                      className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition-colors cursor-pointer"
+                      className="inline-flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all cursor-pointer shadow-xs active:scale-95"
                     >
                       <MapPin className="w-3.5 h-3.5" />
                       <span>ปักหมุดบนแผนที่</span>
@@ -424,7 +448,7 @@ export default function CitizenReportModal({
                       const detected = detectDistrictForCoordinates(userLocation.lat, userLocation.lng);
                       if (detected) setDistrict(detected);
                     }}
-                    className={`inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border text-xs font-semibold transition-colors cursor-pointer ${
+                    className={`inline-flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-lg border text-xs font-semibold transition-all cursor-pointer active:scale-95 ${
                       isDark ? 'bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700' : 'bg-slate-50 border-slate-300 text-slate-700 hover:bg-slate-100'
                     }`}
                   >
@@ -433,26 +457,13 @@ export default function CitizenReportModal({
                   </button>
                 </div>
               )}
-
-              <input
-                type="text"
-                value={notes}
-                onChange={handleNotesChange}
-                placeholder="ชื่อถนน / ซอย / จุดสังเกต (เช่น ถ.สุขุมวิท หน้าสำโรง)"
-                className={`w-full px-3 py-2 rounded-lg text-xs border transition-colors outline-none ${
-                  isDark 
-                    ? 'bg-slate-950 border-slate-800 text-white placeholder-slate-500 focus:border-blue-500' 
-                    : 'bg-white border-slate-300 text-slate-900 placeholder-slate-400 focus:border-blue-600'
-                }`}
-                required
-              />
             </div>
 
-            {/* 2. ระดับน้ำท่วมขัง (เรียบง่าย เลือกได้ 3 ระดับ หรือระบุ ซม.) */}
+            {/* 2. ระดับน้ำท่วมขัง (เลือก 3 ระดับ หรือระบุความลึก) */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <label className={`text-xs font-bold ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>
-                  2. ระดับน้ำท่วมขัง <span className="text-rose-500">*</span>
+                  2. ระดับความลึกน้ำท่วม <span className="text-rose-500">*</span>
                 </label>
                 <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${activeTierMeta.badgeStyle}`}>
                   {activeTierMeta.title}
@@ -489,7 +500,7 @@ export default function CitizenReportModal({
                 })}
               </div>
 
-              {/* ช่องปรับตัวเลขความลึก (ซม.) แบบกะทัดรัด */}
+              {/* ช่องปรับตัวเลขความลึก (ซม.) */}
               <div className={`px-3 py-2 rounded-lg border flex items-center justify-between gap-2 ${
                 isDark ? 'bg-slate-950/60 border-slate-800' : 'bg-slate-50 border-slate-200'
               }`}>
@@ -551,8 +562,70 @@ export default function CitizenReportModal({
               </div>
             </div>
 
-            {/* 3. รูปภาพประกอบ (ถ้ามี) */}
-            <div>
+            {/* 3. เนื้อหาและรายละเอียดจุดน้ำท่วม (เด่นชัดเป็นพิเศษ) */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <label className={`text-xs font-bold flex items-center gap-1.5 ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>
+                  <FileText className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+                  <span>3. เนื้อหาและรายละเอียดจุดน้ำท่วม</span>
+                  <span className="text-rose-500">*</span>
+                </label>
+                <span className="text-[10.5px] text-slate-400 font-mono">
+                  {notes.length} ตัวอักษร
+                </span>
+              </div>
+
+              <textarea
+                rows={3}
+                value={notes}
+                onChange={handleNotesChange}
+                placeholder="ระบุชื่อถนน ซอย หรือจุดสังเกตสำคัญ (เช่น ถ.สุขุมวิท หน้าบิ๊กซีสำโรง ท่วมขัง 2 ช่องจราจรฝั่งซ้าย รถเก๋งผ่านลำบาก)"
+                className={`w-full px-3 py-2.5 rounded-xl text-xs border transition-colors outline-none resize-none leading-relaxed ${
+                  isDark 
+                    ? 'bg-slate-950 border-slate-800 text-white placeholder-slate-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500' 
+                    : 'bg-white border-slate-300 text-slate-900 placeholder-slate-400 focus:border-blue-600 focus:ring-1 focus:ring-blue-600'
+                }`}
+                required
+              />
+
+              {/* ชิปคำช่วยระบุสถานการณ์ด่วน (Quick Context Chips) */}
+              <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+                <span className="text-[10.5px] font-medium text-slate-400 mr-0.5 shrink-0">
+                  แตะช่วยระบุ:
+                </span>
+                {QUICK_SITUATION_TAGS.map((tag) => {
+                  const isAlreadyIn = notes.includes(tag);
+                  return (
+                    <button
+                      key={tag}
+                      type="button"
+                      onClick={() => handleAddTag(tag)}
+                      className={`text-[10.5px] px-2.5 py-1 rounded-full border transition-all cursor-pointer active:scale-95 ${
+                        isAlreadyIn
+                          ? (isDark ? 'bg-blue-950 text-cyan-300 border-blue-700 font-bold' : 'bg-blue-100 text-blue-800 border-blue-300 font-bold')
+                          : (isDark ? 'bg-slate-800/80 hover:bg-slate-800 text-slate-300 border-slate-700' : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200')
+                      }`}
+                    >
+                      {tag}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* 4. แนบรูปถ่ายจุดน้ำท่วมจริง (เด่นเป็นพิเศษสำหรับประชาชน) */}
+            <div className="space-y-1.5 pt-1">
+              <div className="flex items-center justify-between">
+                <label className={`text-xs font-bold flex items-center gap-1.5 ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>
+                  <CivicReportCamera className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+                  <span>4. แนบรูปถ่ายจุดน้ำท่วมจริง</span>
+                  <span className="text-[10px] text-slate-400 font-normal">(แนะนำ)</span>
+                </label>
+                <span className="text-[10px] font-bold text-sky-600 dark:text-cyan-400">
+                  ช่วยยืนยันระดับน้ำ
+                </span>
+              </div>
+
               <input
                 ref={fileInputRef}
                 type="file"
@@ -564,23 +637,33 @@ export default function CitizenReportModal({
               />
 
               {photoPreview ? (
-                <div className="relative rounded-lg overflow-hidden border border-slate-300 dark:border-slate-700 h-28">
+                <div className="relative rounded-xl overflow-hidden border-2 border-blue-500 shadow-md h-40 sm:h-44 bg-slate-950 group">
                   <img src={photoPreview} alt="รูปภาพน้ำท่วม" className="w-full h-full object-cover" />
-                  <div className="absolute inset-0 bg-slate-950/45 flex items-center justify-center gap-2">
+                  
+                  {/* Badge Status */}
+                  <div className="absolute top-2.5 left-2.5 px-2.5 py-1 rounded-md bg-emerald-600 text-white text-[11px] font-bold shadow-md flex items-center gap-1.5 backdrop-blur-xs">
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    <span>แนบรูปภาพสำเร็จ</span>
+                  </div>
+
+                  {/* Bottom Action Bar */}
+                  <div className="absolute inset-x-0 bottom-0 p-2.5 bg-gradient-to-t from-slate-950/95 via-slate-950/60 to-transparent flex items-center justify-between gap-2">
                     <button
                       type="button"
                       onClick={() => fileInputRef.current?.click()}
-                      className="px-2.5 py-1 rounded-md bg-white text-slate-900 text-xs font-semibold cursor-pointer"
+                      className="px-3 py-1.5 rounded-lg bg-white text-slate-900 text-xs font-bold shadow-md cursor-pointer flex items-center gap-1.5 active:scale-95 transition-all"
                     >
-                      เปลี่ยนรูป
+                      <Camera className="w-3.5 h-3.5 text-blue-600" />
+                      <span>เปลี่ยนรูปถ่าย</span>
                     </button>
                     <button
                       type="button"
                       onClick={handleRemovePhoto}
-                      className="p-1.5 rounded-md bg-rose-600 text-white cursor-pointer"
-                      title="ลบรูป"
+                      className="px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-md cursor-pointer flex items-center gap-1.5 active:scale-95 transition-all"
+                      title="ลบรูปภาพ"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
+                      <span>ลบรูป</span>
                     </button>
                   </div>
                 </div>
@@ -588,14 +671,21 @@ export default function CitizenReportModal({
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className={`w-full py-2 px-3 rounded-lg border border-dashed flex items-center justify-center gap-2 text-xs font-semibold transition-colors cursor-pointer ${
+                  className={`w-full py-4 px-3 rounded-xl border-2 border-dashed flex flex-col items-center justify-center text-center transition-all cursor-pointer group active:scale-[0.99] ${
                     isDark 
-                      ? 'border-slate-700 hover:border-blue-500 bg-slate-950/40 text-slate-300' 
-                      : 'border-slate-300 hover:border-blue-600 bg-slate-50 text-slate-700'
+                      ? 'border-blue-500/50 hover:border-blue-400 bg-blue-950/20 hover:bg-blue-950/35 text-slate-200' 
+                      : 'border-blue-400 hover:border-blue-600 bg-blue-50/60 hover:bg-blue-50 text-slate-800'
                   }`}
                 >
-                  <CivicReportCamera className="w-4 h-4 text-blue-500 shrink-0" />
-                  <span>3. แนบรูปภาพจุดเกิดเหตุ (ถ้ามี)</span>
+                  <div className="w-11 h-11 rounded-full bg-blue-600/15 dark:bg-blue-500/20 text-blue-600 dark:text-cyan-400 flex items-center justify-center mb-1.5 group-hover:scale-110 transition-transform">
+                    <Camera className="w-5 h-5" />
+                  </div>
+                  <span className="text-xs font-bold text-blue-600 dark:text-blue-400 block">
+                    แตะเพื่อถ่ายรูป หรือเลือกรูปภาพจากมือถือ
+                  </span>
+                  <span className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 block max-w-xs">
+                    รองรับภาพถ่ายจริง (JPG, PNG) ระบบช่วยบีบอัดภาพให้อัตโนมัติ
+                  </span>
                 </button>
               )}
             </div>

@@ -2704,19 +2704,17 @@ export default function App() {
               <CivicCctv className="w-5 h-5" />
             </button>
 
-            {/* 4. แจ้งจุดน้ำท่วม */}
+            {/* 4. แจ้งจุดน้ำท่วม (ปุ่มเด่นพิเศษสำหรับประชาชน) */}
             <button
               type="button"
               onClick={() => {
                 playReportSound();
                 setIsCitizenReportModalOpen(true);
               }}
-              className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all cursor-pointer active:scale-95 ${
-                isDark ? 'text-slate-400 hover:bg-slate-800 hover:text-white' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-900'
-              }`}
-              title="แจ้งรายงานจุดน้ำท่วม"
+              className="w-10 h-10 rounded-xl flex items-center justify-center transition-all cursor-pointer active:scale-95 bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-600/30 ring-2 ring-blue-500/40 relative"
+              title="แจ้งรายงานจุดน้ำท่วมสำหรับประชาชน"
             >
-              <CivicReportCamera className="w-5 h-5" />
+              <CivicReportCamera className="w-5 h-5 text-white" />
             </button>
 
             {/* 5. เกณฑ์วัดระดับน้ำ & ยานพาหนะ */}

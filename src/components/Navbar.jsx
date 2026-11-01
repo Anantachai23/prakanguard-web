@@ -439,6 +439,22 @@ export default function Navbar({
               </button>
             )}
 
+            {/* Prominent Citizen Report Action Button */}
+            {onOpenCitizenReport && (
+              <button
+                type="button"
+                onClick={() => {
+                  playReportSound();
+                  onOpenCitizenReport();
+                }}
+                className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-md shadow-blue-500/25 active:scale-95 transition-all cursor-pointer shrink-0"
+                title="แจ้งรายงานจุดน้ำท่วมสำหรับประชาชน"
+              >
+                <CivicReportCamera className="w-3.5 h-3.5 text-white" />
+                <span>แจ้งน้ำท่วม</span>
+              </button>
+            )}
+
             {/* Official Services Dropdown Menu */}
             <div className="relative" ref={desktopMenuRef}>
               <button
@@ -535,31 +551,6 @@ export default function Navbar({
                   >
                     <CivicShield className="w-4 h-4 text-sky-400 shrink-0" />
                     <span>นโยบาย & แหล่งข้อมูลอ้างอิง</span>
-                  </button>
-
-                  <div className="h-px bg-slate-200 dark:bg-slate-800 my-1.5" />
-
-                  {/* Admin Portal Entry */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      playModalOpenSound();
-                      setIsDesktopMenuOpen(false);
-                      if (onOpenAdmin) onOpenAdmin();
-                    }}
-                    className={`w-full p-2.5 rounded-lg text-xs font-semibold text-left flex items-center justify-between transition-colors cursor-pointer ${
-                      isDark ? 'hover:bg-slate-800 text-slate-200 hover:text-white' : 'hover:bg-slate-100 text-slate-700 hover:text-slate-950'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <CivicDatabase className="w-4 h-4 text-amber-400 shrink-0" />
-                      <span>ศูนย์ควบคุมเจ้าหน้าที่ (Admin)</span>
-                    </div>
-                    {pendingReportsCount > 0 && (
-                      <span className="px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-amber-500 text-slate-950">
-                        {pendingReportsCount}
-                      </span>
-                    )}
                   </button>
                 </div>
               )}
