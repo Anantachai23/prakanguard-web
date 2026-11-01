@@ -2766,8 +2766,8 @@ export default function App() {
 
         {/* Sidebar Panel */}
         <aside className={`
-          hidden md:flex flex-col h-full z-40 lg:z-20 shrink-0 backdrop-blur-md transition-[width,opacity,transform] duration-300 ease-in-out select-none
-          ${isDark ? 'bg-slate-900/98 text-slate-100' : 'bg-white text-slate-900'}
+          hidden md:flex flex-col h-full z-40 lg:z-20 shrink-0 transition-[width,opacity,transform] duration-300 ease-in-out select-none
+          ${isDark ? 'bg-slate-900 text-slate-100' : 'bg-white text-slate-900'}
           fixed lg:relative top-0 bottom-0 left-[56px] lg:left-0
           ${isSidebarOpen 
               ? 'w-[340px] lg:w-[385px] xl:w-[415px] border-r translate-x-0 opacity-100 shadow-2xl lg:shadow-sm' 
@@ -3587,10 +3587,10 @@ export default function App() {
             return (
               <div className="hidden md:flex absolute bottom-4 left-4 right-20 max-w-3xl z-40 pointer-events-auto select-none">
                 <div
-                  className={`w-full rounded-2xl border p-3.5 px-4 shadow-xl backdrop-blur-md transition-all ${
+                  className={`w-full rounded-2xl border p-3.5 px-4 shadow-xl transition-all ${
                     isDark
-                      ? 'bg-slate-900/95 border-slate-800 text-slate-200 shadow-black/50'
-                      : 'bg-white/95 border-slate-200/90 text-slate-800 shadow-slate-900/10'
+                      ? 'bg-slate-900 border-slate-800 text-slate-200 shadow-black/50'
+                      : 'bg-white border-slate-200 text-slate-800 shadow-slate-900/10'
                   }`}
                 >
                   {/* Top Row: Title + Pill Status + Action Buttons */}

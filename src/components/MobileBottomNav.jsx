@@ -198,10 +198,10 @@ export default function MobileBottomNav({
       {/* ===== MAIN 5-BUTTON BAR (COMPACT MOBILE PROPORTIONS) ===== */}
       <nav
         aria-label="เมนูหลักสำหรับมือถือ"
-        className={`md:hidden fixed bottom-0 left-0 right-0 z-40 border-t backdrop-blur-md transition-all duration-200 select-none pb-[calc(env(safe-area-inset-bottom,0px)+1px)] ${
+        className={`md:hidden fixed bottom-0 left-0 right-0 z-40 border-t transition-all duration-200 select-none pb-[calc(env(safe-area-inset-bottom,0px)+1px)] ${
           isDark
-            ? 'bg-slate-950/95 border-slate-800 text-slate-200 shadow-md'
-            : 'bg-white/95 border-slate-200 text-slate-900 shadow-sm'
+            ? 'bg-slate-950 border-slate-800 text-slate-200 shadow-md'
+            : 'bg-white border-slate-200 text-slate-900 shadow-sm'
         }`}
       >
         <div className="flex items-stretch justify-around px-1.5 max-w-md mx-auto" style={{ height: '46px' }}>
