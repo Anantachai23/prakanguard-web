@@ -23,7 +23,7 @@ const THAI_MONTHS_SHORT = [
   'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'
 ];
 
-export default function RealTimeClock({ theme = 'light' }) {
+export default function RealTimeClock({ theme = 'light', variant = 'default', className = '' }) {
   const isDark = theme === 'dark';
   const [now, setNow] = useState(new Date());
 
@@ -49,16 +49,43 @@ export default function RealTimeClock({ theme = 'light' }) {
   const minutes = String(now.getMinutes()).padStart(2, '0');
   const seconds = String(now.getSeconds()).padStart(2, '0');
 
+  if (variant === 'bare') {
+    return (
+      <div 
+        className={`inline-flex items-center gap-1.5 text-xs font-mono font-medium select-none tabular-nums text-slate-700 dark:text-slate-200 ${className}`}
+        title={`วัน${dayNameFull}ที่ ${date} ${monthNameFull} พ.ศ. ${yearBE} เวลา ${hours}:${minutes}:${seconds} น. (เวลามาตรฐานประเทศไทย ICT)`}
+      >
+        <div className="flex items-center gap-1 text-blue-500 dark:text-cyan-400 shrink-0">
+          <Clock className="w-3.5 h-3.5" />
+        </div>
+
+        {/* Date display */}
+        <div className="flex items-center gap-1.5 shrink-0">
+          <span className="hidden xl:inline font-sans font-medium text-slate-600 dark:text-slate-400">
+            {dayNameShort} {date} {monthNameShort}
+          </span>
+
+          <span className="hidden xl:inline text-slate-350 dark:text-slate-600 font-sans">•</span>
+
+          <span className="flex items-center font-bold text-slate-800 dark:text-slate-100 shrink-0 tracking-tight">
+            <span>{hours}:{minutes}</span>
+            <span className="ml-0.5 text-[10px] font-sans font-medium text-slate-500 dark:text-slate-400">น.</span>
+          </span>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div 
-      className={`inline-flex items-center gap-1 sm:gap-1.5 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md sm:rounded-lg border text-[10px] sm:text-xs font-mono font-medium shadow-2xs select-none transition-colors max-w-full shrink-0 tabular-nums ${
+      className={`inline-flex items-center gap-1.5 px-2.5 h-[34px] rounded-lg border text-xs font-mono font-medium select-none transition-colors max-w-full shrink-0 tabular-nums ${
         isDark 
-          ? 'bg-slate-900/95 border-slate-700/80 text-slate-200' 
-          : 'bg-white/95 border-slate-200 text-slate-800'
-      }`}
+          ? 'bg-slate-900 border-slate-800 text-slate-200' 
+          : 'bg-white border-slate-200 text-slate-700'
+      } ${className}`}
       title={`วัน${dayNameFull}ที่ ${date} ${monthNameFull} พ.ศ. ${yearBE} เวลา ${hours}:${minutes}:${seconds} น. (เวลามาตรฐานประเทศไทย ICT)`}
     >
-      <div className="hidden sm:flex items-center gap-1 text-blue-600 dark:text-cyan-400 shrink-0">
+      <div className="flex items-center gap-1 text-blue-500 dark:text-cyan-400 shrink-0">
         <Clock className="w-3.5 h-3.5" />
       </div>
 
