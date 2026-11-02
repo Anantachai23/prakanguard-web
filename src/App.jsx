@@ -3725,22 +3725,9 @@ export default function App() {
 
         {/* FLOATING POINT DETAIL MODAL (CENTERED POPUP DIALOG) */}
         {selectedPoint && (() => {
-          const directPhoto = selectedPoint.photoUrl || selectedPoint.photo_url || selectedPoint.photo || selectedPoint.image || selectedPoint.imageUrl;
-          let matchedPhoto = null;
-          if (!directPhoto) {
-            const allCandidates = [...(citizenReports || []), ...(points || [])];
-            const matched = allCandidates.find(c => {
-              const cPhoto = c.photoUrl || c.photo_url || c.photo || c.image || c.imageUrl;
-              if (!cPhoto) return false;
-              return (
-                (c.id && selectedPoint.id && String(c.id) === String(selectedPoint.id)) ||
-                (c.name && selectedPoint.name && c.name.trim().toLowerCase() === selectedPoint.name.trim().toLowerCase()) ||
-                (typeof c.lat === 'number' && typeof selectedPoint.lat === 'number' && Math.abs(c.lat - selectedPoint.lat) < 0.005 && Math.abs(c.lng - selectedPoint.lng) < 0.005)
-              );
-            });
-            matchedPhoto = matched?.photoUrl || matched?.photo_url || matched?.photo || matched?.image || matched?.imageUrl || null;
-          }
-          const pointPhoto = directPhoto || matchedPhoto;
+          // Strictly resolve photo from point itself (official stations never borrow citizen photos)
+          const directPhoto = selectedPoint.photoUrl || selectedPoint.photo_url || selectedPoint.photo || selectedPoint.image || selectedPoint.imageUrl || null;
+          const pointPhoto = directPhoto;
           const hasPhoto = !!(pointPhoto && typeof pointPhoto === 'string' && pointPhoto.trim() && pointPhoto !== 'null' && pointPhoto !== 'undefined');
 
           return (
@@ -3880,7 +3867,7 @@ export default function App() {
                       />
                       <div className="absolute top-2 left-2 px-2 py-0.5 rounded bg-slate-950/80 text-white text-[10px] font-semibold border border-white/15 flex items-center gap-1">
                         <CivicReportCamera className="w-3 h-3 shrink-0" />
-                        <span>ภาพถ่ายหน้างานจริง</span>
+                        <span>{selectedPoint.isCitizen || selectedPoint.source === 'รายงานจากประชาชนในพื้นที่' ? 'ภาพถ่ายรายงานจากประชาชน' : 'ภาพถ่ายหน้างานจริง'}</span>
                       </div>
                       <div className="absolute bottom-2 right-2 px-2 py-0.5 rounded bg-blue-700 text-white text-[10px] font-semibold">
                         ดูภาพขยาย

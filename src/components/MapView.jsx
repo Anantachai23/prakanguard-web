@@ -211,10 +211,12 @@ export function deduplicateAndDeclutterPoints(citizenList = [], officialList = [
       // Same location or matching name within 1.2km
       if (distKm < thresholdKm || (sameName && distKm < 1.2)) {
         isDuplicate = true;
-        // Merge photo from pt to r if r doesn't have one
-        const ptPhoto = pt.photoUrl || pt.photo_url || pt.photo;
-        if (!(r.photoUrl || r.photo_url || r.photo) && ptPhoto) {
-          r.photoUrl = ptPhoto;
+        // Only merge photo if both points are citizen reports (never borrow from citizen to official)
+        if (r.isCitizen && pt.isCitizen) {
+          const ptPhoto = pt.photoUrl || pt.photo_url || pt.photo;
+          if (!(r.photoUrl || r.photo_url || r.photo) && ptPhoto) {
+            r.photoUrl = ptPhoto;
+          }
         }
         break;
       }
@@ -848,23 +850,9 @@ export default function MapView({
         return;
       }
 
-      // 1. Resolve photo from point itself OR from any matching citizen report
-      const directPhoto = point.photoUrl || point.photo_url || point.photo || point.image || point.imageUrl;
-      let matchedCitizenPhoto = null;
-      if (!directPhoto && Array.isArray(citizenReports)) {
-        const matched = citizenReports.find(c => 
-          (c.id && point.id && String(c.id) === String(point.id)) ||
-          (c.name && point.name && c.name.trim().toLowerCase() === point.name.trim().toLowerCase()) ||
-          (typeof c.lat === 'number' && typeof point.lat === 'number' && Math.abs(c.lat - point.lat) < 0.0035 && Math.abs(c.lng - point.lng) < 0.0035)
-        );
-        matchedCitizenPhoto = matched?.photoUrl || matched?.photo_url || matched?.photo || null;
-      }
-      const effectivePhoto = directPhoto || matchedCitizenPhoto;
-      const hasPhoto = !!(effectivePhoto && typeof effectivePhoto === 'string' && effectivePhoto.trim() && effectivePhoto !== 'null' && effectivePhoto !== 'undefined');
-
-      if (effectivePhoto && !point.photoUrl) {
-        point.photoUrl = effectivePhoto;
-      }
+      // 1. Resolve photo strictly from official point itself (NEVER borrow from citizen reports)
+      const directPhoto = point.photoUrl || point.photo_url || point.photo || point.image || point.imageUrl || null;
+      const hasPhoto = !!(directPhoto && typeof directPhoto === 'string' && directPhoto.trim() && directPhoto !== 'null' && directPhoto !== 'undefined');
 
       // Register point in global quick-access lookup
       window.__pgPointsMap.set(String(point.id), point);
@@ -949,8 +937,7 @@ export default function MapView({
         lastFlyToTimeRef.current = Date.now();
         playPinClickSound();
         if (onSelectPointRef.current) {
-          const effPhoto = point.photoUrl || directPhoto || matchedCitizenPhoto;
-          const pointPayload = effPhoto ? { ...point, photoUrl: effPhoto } : point;
+          const pointPayload = directPhoto ? { ...point, photoUrl: directPhoto } : point;
           onSelectPointRef.current(pointPayload, { fromMapPin: true });
         }
       };
