@@ -46,7 +46,7 @@ export default function AdminVerificationPrompt({
             window.dispatchEvent(new CustomEvent('prakanguard_open_admin_tab', { detail: 'feedback' }));
             if (onOpenFullAdmin) onOpenFullAdmin();
           }}
-          className={`px-3.5 py-2 rounded-lg shadow-xl border flex items-center gap-2.5 cursor-pointer transition-colors ${
+          className={`px-4 py-2 rounded-full shadow-xl border flex items-center gap-2.5 cursor-pointer transition-colors ${
             isDark 
               ? 'bg-slate-900 border-teal-500/80 text-teal-200 hover:bg-slate-800' 
               : 'bg-white border-teal-300 text-teal-900 hover:bg-teal-50'
@@ -56,7 +56,7 @@ export default function AdminVerificationPrompt({
           <span className="w-2 h-2 rounded-full bg-teal-500 animate-pulse" />
           <span className="text-xs font-bold flex items-center gap-1.5">
             <span>ข้อเสนอแนะใหม่</span>
-            <span className="px-1.5 py-0.2 rounded bg-teal-600 text-white text-[10px] font-mono">
+            <span className="px-2 py-0.5 rounded-full bg-teal-600 text-white text-[10px] font-mono">
               +{unreadFeedbackCount}
             </span>
           </span>
@@ -75,7 +75,7 @@ export default function AdminVerificationPrompt({
       <div className="fixed top-14 sm:top-16 right-3 sm:right-6 z-50 flex items-center gap-2">
         <button
           onClick={() => setIsDismissed(false)}
-          className={`px-3.5 py-2 rounded-lg shadow-xl border flex items-center gap-2.5 cursor-pointer transition-colors ${
+          className={`px-4 py-2 rounded-full shadow-xl border flex items-center gap-2.5 cursor-pointer transition-colors ${
             isDark 
               ? 'bg-slate-900 border-amber-600/80 text-amber-200 hover:bg-slate-800' 
               : 'bg-white border-amber-300 text-amber-900 hover:bg-amber-50'
@@ -85,7 +85,7 @@ export default function AdminVerificationPrompt({
           <span className="w-2 h-2 rounded-full bg-amber-500" />
           <span className="text-xs font-bold flex items-center gap-1.5">
             <span>รอตรวจสอบ</span>
-            <span className="px-1.5 py-0.2 rounded bg-amber-600 text-white text-[10px] font-mono">
+            <span className="px-2 py-0.5 rounded-full bg-amber-600 text-white text-[10px] font-mono">
               {pendingCount}
             </span>
           </span>
@@ -97,7 +97,7 @@ export default function AdminVerificationPrompt({
               window.dispatchEvent(new CustomEvent('prakanguard_open_admin_tab', { detail: 'feedback' }));
               if (onOpenFullAdmin) onOpenFullAdmin();
             }}
-            className={`px-2.5 py-2 rounded-lg shadow-xl border flex items-center gap-1.5 cursor-pointer transition-colors ${
+            className={`px-3.5 py-2 rounded-full shadow-xl border flex items-center gap-1.5 cursor-pointer transition-colors ${
               isDark 
                 ? 'bg-slate-900 border-teal-500/80 text-teal-200 hover:bg-slate-800' 
                 : 'bg-white border-teal-300 text-teal-900 hover:bg-teal-50'
@@ -170,11 +170,11 @@ export default function AdminVerificationPrompt({
           <div className="px-3.5 sm:px-5 py-3 sm:py-4 overflow-y-auto space-y-2.5 text-xs sm:text-sm">
             
             {/* Location & District Badge */}
-            <div className={`p-3.5 rounded-lg border ${
+            <div className={`p-3.5 rounded-2xl border ${
               isDark ? 'bg-slate-950/50 border-slate-800' : 'bg-slate-50/70 border-slate-200'
             }`}>
               <div className="flex items-center justify-between gap-2 mb-1.5">
-                <span className={`text-[11px] font-bold px-2 py-0.5 rounded border ${
+                <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full border ${
                   isDark ? 'bg-slate-800 text-blue-400 border-slate-700' : 'bg-white text-blue-700 border-slate-200'
                 }`}>
                   อ.{currentReport.district}
@@ -195,7 +195,7 @@ export default function AdminVerificationPrompt({
 
             {/* Severity & Water Depth / Hail Size */}
             <div className="grid grid-cols-2 gap-2.5">
-              <div className={`p-3 rounded-lg border ${
+              <div className={`p-3 rounded-2xl border ${
                 isDark ? 'bg-slate-950/40 border-slate-800' : 'bg-slate-50/70 border-slate-200'
               }`}>
                 <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 block mb-0.5">
@@ -216,7 +216,7 @@ export default function AdminVerificationPrompt({
                 </span>
               </div>
 
-              <div className={`p-3 rounded-lg border ${
+              <div className={`p-3 rounded-2xl border ${
                 isDark ? 'bg-slate-950/40 border-slate-800' : 'bg-slate-50/70 border-slate-200'
               }`}>
                 <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 block mb-0.5">
@@ -243,7 +243,7 @@ export default function AdminVerificationPrompt({
 
             {/* Traffic Guidance / Comments */}
             {currentReport.trafficStatus && (
-              <div className={`p-3 rounded-lg border ${
+              <div className={`p-3 rounded-2xl border ${
                 isDark ? 'bg-slate-950/40 border-slate-800' : 'bg-slate-50/70 border-slate-200'
               }`}>
                 <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 block mb-0.5">
@@ -257,7 +257,7 @@ export default function AdminVerificationPrompt({
 
             {/* Photo Preview if uploaded */}
             {currentReport.photoUrl && (
-              <div className={`rounded-lg border overflow-hidden ${isDark ? 'border-slate-800' : 'border-slate-200'}`}>
+              <div className={`rounded-2xl border overflow-hidden ${isDark ? 'border-slate-800' : 'border-slate-200'}`}>
                 <div className="relative group cursor-pointer" onClick={() => setSelectedPhoto(currentReport.photoUrl)}>
                   <img 
                     src={currentReport.photoUrl} 
@@ -277,7 +277,7 @@ export default function AdminVerificationPrompt({
               <button
                 type="button"
                 onClick={() => onFlyToCoords(currentReport.lat, currentReport.lng)}
-                className={`w-full py-2 px-3 rounded-lg border text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer ${
+                className={`w-full py-2.5 px-3 rounded-full border text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer active:scale-95 ${
                   isDark ? 'bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-200' : 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-700'
                 }`}
               >

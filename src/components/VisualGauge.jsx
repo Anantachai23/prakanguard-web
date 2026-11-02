@@ -42,20 +42,20 @@ export default function VisualGauge({ depthCm = 0, level, theme = 'light' }) {
   }
 
   return (
-    <div className={`border rounded-lg p-1.5 sm:p-4 shadow-sm transition-colors ${
-      isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'
+    <div className={`border rounded-2xl p-2 sm:p-4 shadow-xs transition-colors ${
+      isDark ? 'bg-slate-850/80 border-slate-750' : 'bg-white border-slate-200'
     }`}>
       
       {/* Top Header: Level & Current Depth */}
-      <div className={`flex items-center justify-between pb-1 sm:pb-2.5 border-b mb-1.5 sm:mb-3 ${
-        isDark ? 'border-slate-700/80' : 'border-slate-200'
+      <div className={`flex items-center justify-between pb-1.5 sm:pb-2.5 border-b mb-1.5 sm:mb-3 ${
+        isDark ? 'border-slate-700/80' : 'border-slate-100'
       }`}>
         <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
-          <div className={`w-5 h-5 sm:w-8 sm:h-8 rounded-md flex items-center justify-center border shadow-inner shrink-0 ${levelTheme.badge}`}>
-            <CivicGauge className="w-3 h-3 sm:w-4 sm:h-4" />
+          <div className={`w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center border shadow-inner shrink-0 ${levelTheme.badge}`}>
+            <CivicGauge className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
           </div>
           <div className="min-w-0">
-            <span className={`text-[9px] sm:text-xs font-bold px-1.5 sm:px-2 py-0.5 rounded-md border inline-block ${levelTheme.badge}`}>
+            <span className={`text-[9px] sm:text-xs font-bold px-2 sm:px-2.5 py-0.5 rounded-full border inline-block ${levelTheme.badge}`}>
               {standard.name}
             </span>
             <span className={`text-[8.5px] sm:text-[11px] block mt-0.5 font-medium ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
@@ -398,8 +398,8 @@ export default function VisualGauge({ depthCm = 0, level, theme = 'light' }) {
         </svg>
       </div>
 
-      {/* Traffic Impact Status Tag (Clean & Compact) */}
-      <div className={`mt-1 sm:mt-2.5 p-1 sm:p-2 rounded-lg sm:rounded-xl border flex items-center justify-between text-[8.5px] sm:text-xs font-semibold break-words whitespace-normal leading-snug ${levelTheme.tagStyle}`}>
+      {/* Traffic Impact Status Tag (Clean & Rounded Pill) */}
+      <div className={`mt-2 sm:mt-2.5 px-3 py-1.5 sm:py-2 rounded-full border flex items-center justify-center text-[8.5px] sm:text-xs font-semibold break-words whitespace-normal leading-snug text-center ${levelTheme.tagStyle}`}>
         <span className="break-words whitespace-normal leading-snug">{levelTheme.tag}</span>
       </div>
 

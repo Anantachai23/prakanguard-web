@@ -3845,7 +3845,7 @@ export default function App() {
                 {/* Citizen Uploaded Photo Preview (If available) */}
                 {hasPhoto && (
                   <div 
-                    className={`rounded-lg overflow-hidden border relative cursor-pointer group bg-slate-950 ${
+                    className={`rounded-2xl overflow-hidden border relative cursor-pointer group bg-slate-950 shadow-xs ${
                       isDark ? 'border-slate-800' : 'border-slate-200'
                     }`}
                     onClick={() => {
@@ -3862,14 +3862,14 @@ export default function App() {
                       <img 
                         src={pointPhoto} 
                         alt="รูปภาพสถานการณ์น้ำท่วม" 
-                        className="w-full h-36 sm:h-40 object-cover" 
+                        className="w-full h-36 sm:h-44 object-cover" 
                         loading="lazy"
                       />
-                      <div className="absolute top-2 left-2 px-2 py-0.5 rounded bg-slate-950/80 text-white text-[10px] font-semibold border border-white/15 flex items-center gap-1">
+                      <div className="absolute top-2 left-2 px-2.5 py-1 rounded-full bg-slate-950/80 text-white text-[10px] font-semibold border border-white/15 flex items-center gap-1 shadow-xs backdrop-blur-xs">
                         <CivicReportCamera className="w-3 h-3 shrink-0" />
                         <span>{selectedPoint.isCitizen || selectedPoint.source === 'รายงานจากประชาชนในพื้นที่' ? 'ภาพถ่ายรายงานจากประชาชน' : 'ภาพถ่ายหน้างานจริง'}</span>
                       </div>
-                      <div className="absolute bottom-2 right-2 px-2 py-0.5 rounded bg-blue-700 text-white text-[10px] font-semibold">
+                      <div className="absolute bottom-2 right-2 px-3 py-1 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-semibold shadow-xs active:scale-95 transition-all">
                         ดูภาพขยาย
                       </div>
                     </div>
@@ -4128,20 +4128,20 @@ export default function App() {
           onClick={() => setIsMobileSheetOpen(false)}
         >
           <div 
-            className={`fixed inset-x-0 bottom-0 z-50 max-h-[68vh] h-[62vh] flex flex-col rounded-t-2xl border-t shadow-2xl select-none pb-[calc(env(safe-area-inset-bottom,0px)+8px)] ${
+            className={`fixed inset-x-0 bottom-0 z-50 max-h-[70vh] h-[64vh] flex flex-col rounded-t-3xl border-t shadow-2xl select-none pb-[calc(env(safe-area-inset-bottom,0px)+8px)] ${
               isDark 
                 ? 'bg-slate-900 border-slate-800 text-slate-100' 
                 : 'bg-white border-slate-200 text-slate-900'
             }`}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="h-1 w-full bg-blue-700 shrink-0" />
+            <div className="h-1.5 w-full bg-blue-700 shrink-0" />
             {/* Sheet Header */}
-            <div className={`px-4 py-3 border-b flex items-center justify-between gap-2 shrink-0 ${
-              isDark ? 'border-slate-800 bg-slate-950/50' : 'border-slate-200 bg-slate-50/80'
+            <div className={`px-4 py-3 sm:px-5 sm:py-3.5 border-b flex items-center justify-between gap-2 shrink-0 ${
+              isDark ? 'border-slate-800/80 bg-slate-900/60' : 'border-slate-100 bg-slate-50/50'
             }`}>
               <div className="flex items-center gap-2.5 min-w-0">
-                <div className={`w-8 h-8 rounded-lg border flex items-center justify-center shrink-0 ${
+                <div className={`w-8 h-8 rounded-full border flex items-center justify-center shrink-0 ${
                   isDark ? 'bg-slate-800 text-blue-400 border-slate-700' : 'bg-white text-blue-700 border-slate-200 shadow-xs'
                 }`}>
                   <CivicStationPin className="w-4 h-4" />
@@ -4156,8 +4156,8 @@ export default function App() {
               <button
                 type="button"
                 onClick={() => setIsMobileSheetOpen(false)}
-                className={`w-8 h-8 rounded-lg border flex items-center justify-center transition-colors cursor-pointer ${
-                  isDark ? 'bg-slate-800 text-slate-400 border-slate-700 hover:text-white' : 'bg-white text-slate-500 border-slate-200 hover:text-slate-900'
+                className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center transition-colors cursor-pointer shrink-0 ${
+                  isDark ? 'hover:bg-slate-800 text-slate-400 hover:text-white' : 'hover:bg-slate-100 text-slate-500 hover:text-slate-800'
                 }`}
                 aria-label="ปิด"
               >
@@ -4169,13 +4169,13 @@ export default function App() {
             <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2.5 custom-scrollbar-thin">
               {/* Search Input */}
               <div className="relative shrink-0">
-                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="ค้นหาชื่อถนน, ซอย หรือจุดสังเกต..."
-                  className={`w-full pl-9 pr-8 py-2 rounded-lg border text-xs outline-none transition-colors ${
+                  className={`w-full pl-9 pr-8 py-2 rounded-full border text-xs outline-none transition-colors ${
                     isDark 
                       ? 'bg-slate-950 border-slate-800 text-white placeholder-slate-500 focus:border-blue-500' 
                       : 'bg-white border-slate-300 text-slate-800 placeholder-slate-400 focus:border-blue-600'
@@ -4322,7 +4322,7 @@ export default function App() {
                     </button>
                   </div>
                 ) : (
-                  <div className={`rounded-lg border divide-y overflow-hidden ${
+                  <div className={`rounded-2xl border divide-y overflow-hidden ${
                     isDark ? 'border-slate-800 divide-slate-800 bg-slate-950/40' : 'border-slate-200 divide-slate-200 bg-white'
                   }`}>
                     {displayPoints.map(pt => {
@@ -4432,21 +4432,21 @@ export default function App() {
           onClick={(e) => { if (e.target === e.currentTarget) { playCloseSound(); setIsAnnouncementModalOpen(false); } }}
           className="fixed inset-0 z-[105] bg-slate-950/75 backdrop-blur-xs flex items-center justify-center p-3.5 sm:p-4 py-8 sm:py-8 pointer-events-auto overflow-y-auto overscroll-contain"
         >
-          <div className={`w-full max-w-[calc(100vw-28px)] xs:max-w-[420px] sm:max-w-md my-auto m-auto border rounded-2xl shadow-2xl flex flex-col max-h-[76vh] sm:max-h-[82vh] overflow-hidden transition-colors ${
+          <div className={`w-full max-w-[calc(100vw-24px)] xs:max-w-[420px] sm:max-w-md my-auto m-auto border rounded-3xl shadow-2xl flex flex-col max-h-[78vh] sm:max-h-[84vh] overflow-hidden transition-colors ${
             isDark 
               ? 'bg-slate-900 border-slate-800 text-slate-100' 
               : 'bg-white border-slate-200 text-slate-900'
           }`}>
-            <div className="h-1 w-full bg-amber-500 shrink-0" />
+            <div className="h-1.5 w-full bg-amber-500 shrink-0" />
             {/* Header */}
-            <div className={`flex items-center justify-between gap-2.5 px-3.5 py-2.5 sm:px-4 sm:py-3 border-b shrink-0 ${
-              isDark ? 'border-slate-800 bg-slate-950/50' : 'border-slate-200 bg-slate-50/80'
+            <div className={`flex items-center justify-between gap-2.5 px-4 py-3 sm:px-5 sm:py-3.5 border-b shrink-0 ${
+              isDark ? 'border-slate-800/80 bg-slate-900/60' : 'border-slate-100 bg-slate-50/50'
             }`}>
               <div className="flex items-center gap-2.5 min-w-0">
-                <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg border flex items-center justify-center shrink-0 ${
-                  isDark ? 'bg-amber-950/60 text-amber-400 border-amber-800/80' : 'bg-amber-50 text-amber-700 border-amber-200'
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
+                  isDark ? 'bg-amber-950/60 text-amber-400' : 'bg-amber-50 text-amber-700'
                 }`}>
-                  <CivicBroadcast className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                  <CivicBroadcast className="w-4 h-4" />
                 </div>
                 <div className="min-w-0">
                   <h3 className={`text-[13px] sm:text-base font-bold leading-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>
@@ -4463,16 +4463,16 @@ export default function App() {
                   playCloseSound();
                   setIsAnnouncementModalOpen(false);
                 }}
-                className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg border flex items-center justify-center cursor-pointer transition-colors ${
-                  isDark ? 'bg-slate-800 text-slate-400 border-slate-700 hover:text-white' : 'bg-white text-slate-500 border-slate-200 hover:text-slate-800'
+                className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center cursor-pointer transition-colors shrink-0 ${
+                  isDark ? 'hover:bg-slate-800 text-slate-400 hover:text-white' : 'hover:bg-slate-100 text-slate-500 hover:text-slate-800'
                 }`}
               >
-                <X className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                <X className="w-4 h-4" />
               </button>
             </div>
 
             {/* Body */}
-            <div className="flex-1 overflow-y-auto px-3.5 py-3 sm:px-4 sm:py-3.5 space-y-2.5 text-xs">
+            <div className="flex-1 overflow-y-auto px-4 py-3 sm:px-5 sm:py-3.5 space-y-2.5 text-xs">
               <div className="flex items-center justify-between text-[11px] text-slate-400">
                 <span className="truncate">
                   พื้นที่แจ้งเตือน: <strong className={isDark ? 'text-slate-200' : 'text-slate-800'}>
@@ -4486,7 +4486,7 @@ export default function App() {
                 )}
               </div>
 
-              <div className={`text-xs sm:text-sm leading-relaxed whitespace-pre-line p-3.5 rounded-lg border break-words ${
+              <div className={`text-xs sm:text-sm leading-relaxed whitespace-pre-line p-3.5 rounded-2xl border break-words ${
                 isDark ? 'bg-slate-950/50 border-slate-800 text-slate-100' : 'bg-slate-50/80 border-slate-200 text-slate-900'
               }`}>
                 {latestAnnouncement.message}
@@ -4494,8 +4494,8 @@ export default function App() {
             </div>
 
             {/* Footer */}
-            <div className={`px-4 py-3 border-t flex items-center justify-end shrink-0 ${
-              isDark ? 'border-slate-800 bg-slate-950/60' : 'border-slate-200 bg-slate-50/80'
+            <div className={`px-4 py-3 sm:px-5 border-t flex items-center justify-end shrink-0 ${
+              isDark ? 'border-slate-800/80 bg-slate-900/60' : 'border-slate-100 bg-slate-50/50'
             }`}>
               <button
                 type="button"
@@ -4503,7 +4503,7 @@ export default function App() {
                   playCloseSound();
                   setIsAnnouncementModalOpen(false);
                 }}
-                className="w-full sm:w-auto px-5 py-2 rounded-lg bg-blue-700 hover:bg-blue-800 text-white text-xs font-semibold transition-colors cursor-pointer"
+                className="w-full sm:w-auto px-5 py-2.5 rounded-full bg-blue-700 hover:bg-blue-800 text-white text-xs font-semibold transition-colors cursor-pointer active:scale-95 shadow-xs"
               >
                 รับทราบและปิดหน้าต่าง
               </button>

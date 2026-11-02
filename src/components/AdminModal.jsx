@@ -2198,7 +2198,7 @@ export default function AdminModal({
             <div className="w-full max-w-sm space-y-4">
               
               <div className="text-center space-y-1.5">
-                <div className={`w-12 h-12 mx-auto rounded-xl border flex items-center justify-center ${
+                <div className={`w-12 h-12 mx-auto rounded-full border flex items-center justify-center ${
                   isDark ? 'bg-slate-800 border-slate-700 text-blue-400' : 'bg-slate-50 border-slate-200 text-blue-700'
                 }`}>
                   <CivicCrest className="w-6 h-6" />
@@ -2212,7 +2212,7 @@ export default function AdminModal({
               </div>
 
               {/* Legal Disclaimer Notice Card */}
-              <div className={`p-3 rounded-lg border text-[11px] leading-relaxed flex items-start gap-2.5 text-left ${
+              <div className={`p-3.5 rounded-2xl border text-[11px] leading-relaxed flex items-start gap-2.5 text-left ${
                 isDark ? 'bg-slate-950/60 border-slate-800 text-slate-300' : 'bg-slate-50 border-slate-200 text-slate-600'
               }`}>
                 <CivicShield className="w-4 h-4 shrink-0 text-blue-600 dark:text-blue-400 mt-0.5" />
@@ -2222,7 +2222,7 @@ export default function AdminModal({
               </div>
 
               {loginError && (
-                <div className={`p-3 rounded-lg border text-xs flex items-center gap-2 ${
+                <div className={`p-3 rounded-2xl border text-xs flex items-center gap-2 ${
                   isDark ? 'bg-rose-950/40 border-rose-900/60 text-rose-300' : 'bg-rose-50 border-rose-200 text-rose-700'
                 }`}>
                   <AlertTriangle className="w-4 h-4 shrink-0 text-rose-500" />
@@ -2236,7 +2236,7 @@ export default function AdminModal({
                     ชื่อผู้ใช้งาน (Username)
                   </label>
                   <div className="relative">
-                    <User className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+                    <User className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
                     <input
                       type="text"
                       value={inputUsername}
@@ -2244,7 +2244,7 @@ export default function AdminModal({
                       placeholder="ระบุชื่อผู้ใช้งาน"
                       disabled={lockoutSeconds > 0}
                       autoFocus
-                      className={`w-full text-xs sm:text-sm pl-9 pr-3 py-2 rounded-lg border focus:outline-none transition-colors ${
+                      className={`w-full text-xs sm:text-sm pl-10 pr-4 py-2.5 rounded-full border focus:outline-none transition-colors ${
                         isDark 
                           ? 'bg-slate-950 border-slate-800 text-white focus:border-blue-500' 
                           : 'bg-slate-50 border-slate-200 text-slate-900 focus:border-blue-600'
@@ -2258,14 +2258,14 @@ export default function AdminModal({
                     รหัสผ่าน (Password)
                   </label>
                   <div className="relative">
-                    <KeyRound className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+                    <KeyRound className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
                     <input
                       type={showPassword ? "text" : "password"}
                       value={inputPassword}
                       onChange={(e) => setInputPassword(e.target.value)}
                       placeholder="ระบุรหัสผ่าน"
                       disabled={lockoutSeconds > 0}
-                      className={`w-full text-xs sm:text-sm pl-9 pr-10 py-2 rounded-lg border focus:outline-none transition-colors ${
+                      className={`w-full text-xs sm:text-sm pl-10 pr-11 py-2.5 rounded-full border focus:outline-none transition-colors ${
                         isDark 
                           ? 'bg-slate-950 border-slate-800 text-white focus:border-blue-500' 
                           : 'bg-slate-50 border-slate-200 text-slate-900 focus:border-blue-600'
@@ -2274,7 +2274,7 @@ export default function AdminModal({
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-200"
+                      className="absolute right-3.5 top-3 text-slate-400 hover:text-slate-200"
                     >
                       {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
@@ -2284,7 +2284,7 @@ export default function AdminModal({
                 <button
                   type="submit"
                   disabled={lockoutSeconds > 0 || !inputUsername.trim() || !inputPassword.trim()}
-                  className="w-full py-2.5 rounded-lg bg-blue-700 hover:bg-blue-800 active:scale-[0.99] text-white font-semibold text-xs sm:text-sm transition-colors cursor-pointer shadow-xs disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full py-2.5 rounded-full bg-blue-700 hover:bg-blue-800 active:scale-[0.99] text-white font-semibold text-xs sm:text-sm transition-colors cursor-pointer shadow-xs disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {lockoutSeconds > 0 ? `ระงับชั่วคราว (${lockoutSeconds}s)` : 'เข้าสู่ระบบผู้ดูแล'}
                 </button>

@@ -236,7 +236,7 @@ export default function RainForecast24hCard({
                     playToggleSound(false);
                     setIsExpanded(false);
                   }}
-                  className={`p-1 rounded-lg border cursor-pointer ${
+                  className={`p-1.5 rounded-full border cursor-pointer ${
                     isDark ? 'bg-slate-800 border-slate-700 text-slate-400' : 'bg-slate-50 border-slate-200 text-slate-600'
                   }`}
                   title="ย่อการ์ด"
@@ -303,7 +303,7 @@ export default function RainForecast24hCard({
                   return (
                     <div
                       key={idx}
-                      className={`py-1.5 px-1 rounded-lg text-center border text-[10.5px] transition-colors ${
+                      className={`py-1.5 px-1 rounded-full text-center border text-[10.5px] transition-colors ${
                         isRainSlot
                           ? (isDark
                               ? 'bg-sky-950 border-sky-500/70 text-sky-200 font-bold'
@@ -440,7 +440,7 @@ export default function RainForecast24hCard({
               {rainTimeTomorrow} • {tomorrowContDuration}
             </span>
           </div>
-          <span className={`px-2.5 py-1 rounded-lg font-mono font-bold text-xs shrink-0 ${
+          <span className={`px-2.5 py-1 rounded-full font-mono font-bold text-xs shrink-0 ${
             isDark ? 'bg-slate-800 text-sky-300' : 'bg-white border border-slate-200 text-slate-900'
           }`}>
             โอกาส {tomorrowProb}%
@@ -455,7 +455,7 @@ export default function RainForecast24hCard({
               playClickSound();
               onOpenRadar();
             }}
-            className={`w-full py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+            className={`w-full py-2.5 px-3 rounded-full text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-xs active:scale-95 ${
               isDark ? 'bg-slate-800 text-slate-100 hover:bg-slate-700 border border-slate-700' : 'bg-slate-900 text-white hover:bg-slate-800'
             }`}
           >
