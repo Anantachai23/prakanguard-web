@@ -46,7 +46,6 @@ export default function Navbar({
   onOpenCctv,
   onOpenAnnouncement,
   hasAnnouncement = false,
-  onOpenPrivacyPolicy,
   lastUpdatedTime,
   lastUpdatedTimeDetailed,
   pendingReportsCount = 0,
@@ -493,22 +492,6 @@ export default function Navbar({
               <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-600 text-white shadow-xs">
                 24 ชม.
               </span>
-            </button>
-
-            {/* Privacy Policy */}
-            <button
-              type="button"
-              onClick={() => {
-                playModalOpenSound();
-                setIsMenuOpen(false);
-                if (onOpenPrivacyPolicy) onOpenPrivacyPolicy();
-              }}
-              className={`w-full p-2.5 rounded-2xl text-xs font-semibold text-left flex items-center gap-2.5 transition-colors cursor-pointer ${
-                isDark ? 'hover:bg-slate-800 text-slate-100 hover:text-white' : 'hover:bg-slate-100 text-slate-800 hover:text-slate-950'
-              }`}
-            >
-              <CivicShield className="w-4 h-4 text-sky-400 shrink-0" />
-              <span>นโยบาย & แหล่งข้อมูลอ้างอิง</span>
             </button>
           </div>
         )}

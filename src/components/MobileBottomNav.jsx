@@ -37,7 +37,6 @@ export default function MobileBottomNav({
   onOpenFeedback,
   onOpenEmergency,
   onOpenStandards,
-  onOpenPrivacyPolicy,
   onOpenAdmin,
   onToggleTheme,
   hasGps = false,
@@ -113,11 +112,11 @@ export default function MobileBottomNav({
                   </div>
                   <div>
                     <span className="text-[11.5px] font-bold block leading-tight">ระบุพิกัดตำแหน่งของฉัน (GPS)</span>
-                    <span className="text-[9.5px] opacity-80 block">{hasGps ? 'เปิดใช้งานอยู่ • แตะเพื่ออัปเดตและซูม' : 'แตะเพื่อค้นหาตำแหน่งปัจจุบันบนแผนที่'}</span>
+                    <span className="text-[9.5px] opacity-80 block">{hasGps ? 'เปิดใช้งานอยู่ • แตะเพื่อค้นหาพิกัดฉัน' : 'แตะเพื่อค้นหาตำแหน่งปัจจุบันบนแผนที่'}</span>
                   </div>
                 </div>
                 <span className="px-2.5 py-0.5 rounded-full bg-blue-600 text-white text-[10px] font-bold shrink-0">
-                  {hasGps ? 'อัปเดต' : 'เปิด GPS'}
+                  {hasGps ? 'พิกัดฉัน' : 'เปิด GPS'}
                 </span>
               </button>
 
@@ -166,8 +165,8 @@ export default function MobileBottomNav({
                   <Activity className="w-3 h-3" />
                 </div>
                 <div className="min-w-0">
-                  <span className="text-[11px] font-semibold block text-slate-900 dark:text-white truncate">อัปเดตประจำวัน</span>
-                  <span className="text-[9.5px] text-slate-500 dark:text-slate-400 block truncate">สรุปสถานการณ์</span>
+                  <span className="text-[11px] font-semibold block text-slate-900 dark:text-white truncate">อัปเดตสถานการณ์น้ำ</span>
+                  <span className="text-[9.5px] text-slate-500 dark:text-slate-400 block truncate">สรุปข้อมูลสด & บันทึกการเปลี่ยนแปลง</span>
                 </div>
               </button>
 
@@ -188,20 +187,6 @@ export default function MobileBottomNav({
                 </div>
                 <span className="text-[10px] text-blue-600 dark:text-cyan-400 font-bold shrink-0">
                   ดูเกณฑ์ &rarr;
-                </span>
-              </button>
-
-              {/* 5. Privacy Policy & Terms */}
-              <button
-                type="button"
-                onClick={() => handleMenuAction(onOpenPrivacyPolicy, playModalOpenSound)}
-                className="col-span-2 p-2.5 rounded-2xl bg-slate-50 hover:bg-slate-100 dark:bg-slate-800/80 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 flex items-center gap-2.5 transition-colors text-left cursor-pointer"
-              >
-                <div className="w-7 h-7 rounded-full bg-slate-700 text-white flex items-center justify-center shrink-0">
-                  <CivicShield className="w-3 h-3" />
-                </div>
-                <span className="text-[11px] font-medium text-slate-900 dark:text-white truncate">
-                  นโยบายความเป็นส่วนตัวและแหล่งข้อมูลอ้างอิง
                 </span>
               </button>
 

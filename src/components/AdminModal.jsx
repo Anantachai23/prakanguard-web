@@ -158,8 +158,7 @@ export default function AdminModal({
   theme = 'light',
   isAdminAuthenticated = false,
   onAuthChange,
-  onSyncCloudData,
-  onOpenPrivacyPolicy
+  onSyncCloudData
 }) {
   if (!isOpen) return null;
   const isDark = theme === 'dark';
@@ -5543,27 +5542,8 @@ export default function AdminModal({
           <div className={`p-3 sm:px-6 border-t flex items-center justify-between gap-3 shrink-0 ${
             isDark ? 'bg-slate-900 border-slate-800' : 'bg-slate-50 border-slate-200'
           }`}>
-            {/* Bottom Left: Privacy Policy & Logout */}
+            {/* Bottom Left: Logout */}
             <div className="flex items-center gap-2 flex-wrap">
-              {onOpenPrivacyPolicy && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    playAdminTabSound();
-                    onOpenPrivacyPolicy();
-                  }}
-                  className={`px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer border active:scale-95 shadow-xs ${
-                    isDark 
-                      ? 'bg-slate-800 hover:bg-slate-700 text-cyan-300 border-slate-700' 
-                      : 'bg-white hover:bg-slate-100 text-blue-700 border-slate-300'
-                  }`}
-                  title="เปิดดูนโยบายข้อกำหนดส่วนตัว"
-                >
-                  <FileText className="w-3.5 h-3.5 text-cyan-500" />
-                  <span>นโยบายข้อกำหนดส่วนตัว</span>
-                </button>
-              )}
-
               <button
                 type="button"
                 onClick={handleLogout}

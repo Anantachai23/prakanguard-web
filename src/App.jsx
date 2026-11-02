@@ -14,7 +14,6 @@ import PublicUpdatesModal from './components/PublicUpdatesModal';
 import RainForecast24hCard from './components/RainForecast24hCard';
 import CctvModal from './components/CctvModal';
 import MobileBottomNav from './components/MobileBottomNav';
-import PrivacyPolicyModal from './components/PrivacyPolicyModal';
 import AutoMarquee from './components/AutoMarquee';
 import ChatBot from './components/ChatBot';
 import WaterCursor from './components/WaterCursor';
@@ -693,7 +692,6 @@ export default function App() {
   const [isOfficialModalOpen, setIsOfficialModalOpen] = useState(false);
   const [isStandardsModalOpen, setIsStandardsModalOpen] = useState(false);
   const [isEmergencyModalOpen, setIsEmergencyModalOpen] = useState(false);
-  const [isPrivacyPolicyModalOpen, setIsPrivacyPolicyModalOpen] = useState(false);
   const [isCctvModalOpen, setIsCctvModalOpen] = useState(false);
   const [selectedCctvCameraId, setSelectedCctvCameraId] = useState(null);
 
@@ -2737,7 +2735,6 @@ export default function App() {
         onOpenCctv={() => handleOpenCctv()}
         onOpenAnnouncement={() => setIsAnnouncementModalOpen(true)}
         hasAnnouncement={Boolean(latestAnnouncement)}
-        onOpenPrivacyPolicy={() => setIsPrivacyPolicyModalOpen(true)}
         lastUpdatedTime={lastUpdatedTime}
         lastUpdatedTimeDetailed={lastUpdatedTimeDetailed}
         pendingReportsCount={isAdminAuthenticated ? pendingReportsCount : 0}
@@ -4630,7 +4627,6 @@ export default function App() {
         isAdminAuthenticated={isAdminAuthenticated}
         onAuthChange={setIsAdminAuthenticated}
         onSyncCloudData={handleManualSyncCloudData}
-        onOpenPrivacyPolicy={() => setIsPrivacyPolicyModalOpen(true)}
         theme={theme}
       />
 
@@ -4739,12 +4735,6 @@ export default function App() {
         theme={theme}
       />
 
-      <PrivacyPolicyModal 
-        isOpen={isPrivacyPolicyModalOpen} 
-        onClose={() => setIsPrivacyPolicyModalOpen(false)} 
-        theme={theme} 
-      />
-
       <CctvModal
         isOpen={isCctvModalOpen}
         onClose={() => setIsCctvModalOpen(false)}
@@ -4764,7 +4754,6 @@ export default function App() {
         onOpenFeedback={() => setIsFeedbackModalOpen(true)}
         onOpenEmergency={() => setIsEmergencyModalOpen(true)}
         onOpenStandards={() => setIsStandardsModalOpen(true)}
-        onOpenPrivacyPolicy={() => setIsPrivacyPolicyModalOpen(true)}
         onOpenAdmin={() => setIsAdminModalOpen(true)}
         onToggleTheme={toggleTheme}
         hasGps={!!userLocation}
