@@ -133,19 +133,13 @@ export function evaluateDynamicFloodLifecycle(points = [], citizenReports = [], 
       : (point.depthCm !== undefined && point.depthCm !== null ? Number(point.depthCm) : 0);
     const originalDepthRange = point.originalDepthRange || point.depthRange || (originalDepthCm > 0 ? `${originalDepthCm} ซม.` : '0 ซม. (แห้งปกติ)');
 
-    const isTidalSpot = (point.cause && point.cause.includes('น้ำทะเลหนุน')) || 
+    // เฉพาะจุดเฝ้าระวังริมแม่น้ำเจ้าพระยาและปากอ่าวไทยจริงเท่านั้น (ป้อมพระจุลฯ และ ท้ายบ้าน-ปากน้ำ)
+    const isTidalSpot = point.id === 'sp-02' || 
+                        point.id === 'sp-15' || 
                         (point.name && (
                           point.name.includes('ป้อมพระจุล') || 
-                          point.name.includes('ท้ายบ้าน') || 
-                          point.name.includes('ท่าน้ำพระประแดง') ||
-                          point.name.includes('พระสมุทรเจดีย์') ||
-                          point.name.includes('คลองสรรพสามิต') ||
-                          point.name.includes('สาขลา') ||
-                          point.name.includes('บางปู') ||
-                          point.name.includes('คลองด่าน') ||
-                          point.name.includes('ปู่เจ้า')
-                        )) ||
-                        point.district === 'พระสมุทรเจดีย์';
+                          point.name.includes('ท้ายบ้าน - ตลาดปากน้ำ (แนวเขื่อนเจ้าพระยา)')
+                        ));
 
     const isRainDependent = (point.cause && (
                               point.cause.includes('น้ำฝน') || 
@@ -172,7 +166,7 @@ export function evaluateDynamicFloodLifecycle(points = [], citizenReports = [], 
     const isCurrentlyFloodingIncident = point.isFlooding || originalLevel >= 2;
 
     // หากจุดนี้แห้งเป็นปกติอยู่แล้ว หรือถูกปลดออกเพราะแห้ง (autoRemovedBecauseDry / isResolved) ให้คงสถานะแห้งไว้เสมอ
-    // จะกลับมาท่วมใหม่ได้ก็ต่อเมื่อมีฝนตกหนักรุนแรงวิกฤตจริงในอำเภอนั้น หรือมีน้ำทะเลหนุนสูงวิกฤตจริง
+    // จะกลับมาท่วมใหม่ได้ก็ต่อเมื่อมีฝนตกหนักรุนแรงวิกฤตจริงในอำเภอนั้น (เฉพาะจุดริมแม่น้ำเจ้าพระยา sp-02 และ sp-15 เท่านั้นที่ตรวจจับน้ำหนุน)
     if (point.autoRemovedBecauseDry === true || point.isResolved === true || point.isActive === false || originalDepthCm === 0) {
       if (!isDistrictTorrential && (!isTidalSpot || !tideInfo.isHighTide)) {
         shouldBeActive = false;
@@ -193,12 +187,11 @@ export function evaluateDynamicFloodLifecycle(points = [], citizenReports = [], 
           calculatedDepthCm = 0;
         }
       } else {
-        // ช่วงน้ำหนุน: คำนวณความสูงน้ำท่วมตามระดับน้ำทะเลหนุนจริง
-        const overflowFactor = Math.max(0.6, (tideInfo.waterLevelM - 1.50) / 0.45);
-        calculatedDepthCm = Math.min(85, Math.round(Math.max(originalDepthCm, 20) * overflowFactor));
+        // ช่วงน้ำหนุนริมเจ้าพระยา: ระดับน้ำหนุนผิวจราจรชิดแนวเขื่อน (ระดับ 1 เฝ้าระวังน้ำลด ~8-12 ซม.)
+        calculatedDepthCm = Math.min(18, Math.max(originalDepthCm, 8));
         shouldBeActive = true;
       }
-    } else if (isRainDependent) {
+    } else if (isRainDependent || !isTidalSpot) {
       if (!isDistrictTorrential && (point.autoRemovedBecauseDry || point.isResolved || !shouldBeActive)) {
         shouldBeActive = false;
         clearanceReason = 'กลุ่มฝนสลายตัวและเครื่องสูบน้ำผลักดันน้ำแห้งสนิท สัญจรได้ปกติ';
@@ -214,6 +207,10 @@ export function evaluateDynamicFloodLifecycle(points = [], citizenReports = [], 
       } else if (isCurrentlyFloodingIncident && shouldBeActive) {
         shouldBeActive = true;
         calculatedDepthCm = originalDepthCm;
+      } else {
+        shouldBeActive = false;
+        clearanceReason = 'กลุ่มฝนสลายตัวและเครื่องสูบน้ำผลักดันน้ำแห้งสนิท สัญจรได้ปกติ';
+        calculatedDepthCm = 0;
       }
     }
 
@@ -324,6 +321,31 @@ export function evaluateDynamicFloodLifecycle(points = [], citizenReports = [], 
     const isDistrictRaining = (weather?.districtWeather?.[report.district]?.isRainingNow) ||
       (weather?.forecast24h?.districtRainAnalysis?.some(d => d.district && d.district.includes(report.district) && d.isRainingNow)) ||
       false;
+
+    // 0) หากตัวรายงานประชาชนเองมีสถานะแห้ง/คลี่คลายแล้ว หรือเป็นรายงานเดิมที่ผ่านเวลามาแล้วและไม่มีฝนตก
+    if (report.isResolved || report.autoRemovedBecauseDry || (report.depthCm !== undefined && Number(report.depthCm) <= 0) || report.waterTrend === 'dry' || (reportAgeMinutes > 60 && !isDistrictRaining)) {
+      const dryReason = report.dryReason || 'รายงานระบุระดับน้ำลดลงเหลือ 0 ซม. ผิวจราจรแห้งสนิท สัญจรได้ปกติ';
+      return {
+        ...report,
+        originalDepthCm,
+        isResolved: true,
+        isActive: false,
+        autoRemovedBecauseDry: true,
+        depthCm: 0,
+        depthRange: '0 ซม. (แห้งปกติ)',
+        level: 0,
+        waterTrend: 'dry',
+        dryReason: dryReason,
+        resolvedAt: report.resolvedAt || nowTime,
+        resolvedAtDetailed: report.resolvedAtDetailed || nowDetailed,
+        clearedAt: report.clearedAt || nowTime,
+        clearedAtDetailed: report.clearedAtDetailed || nowDetailed,
+        clearedBy: 'ระบบตรวจสอบสถานะน้ำแห้งและคืนผิวจราจร 100%',
+        statusLabel: 'สัญจรปกติ (น้ำแห้งแล้ว)',
+        trafficStatus: 'ผิวจราจรแห้งสนิท สัญจรได้ปกติทุกช่องทาง',
+        lastCheckedTime: nowTime
+      };
+    }
 
     // เชื่อมโยงข้อมูล: ค้นหาจุดเฝ้าระวังทางการที่ใกล้เคียงที่สุดในรัศมี 1.8 กม. หรือชื่อถนน/ตำบลตรงกัน
     let linkedOfficialPoint = null;

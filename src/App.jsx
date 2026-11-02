@@ -170,8 +170,9 @@ export default function App() {
       localStorage.removeItem('prakanguard_points_state_v7');
       localStorage.removeItem('prakanguard_points_state_v8');
       localStorage.removeItem('prakanguard_points_state_v9');
+      localStorage.removeItem('prakanguard_points_state_v10');
       
-      const saved = localStorage.getItem('prakanguard_points_state_v10');
+      const saved = localStorage.getItem('prakanguard_points_state_v11');
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
@@ -230,7 +231,7 @@ export default function App() {
             .map(realignPointLocation)
             .filter(p => p && typeof p.lat === 'number' && typeof p.lng === 'number' && isPointInSamutPrakan(p.lat, p.lng));
           try {
-            localStorage.setItem('prakanguard_points_state_v10', JSON.stringify(cleanedList));
+            localStorage.setItem('prakanguard_points_state_v11', JSON.stringify(cleanedList));
           } catch (e) {}
 
           return cleanedList;
@@ -274,7 +275,7 @@ export default function App() {
   useEffect(() => {
     pointsRef.current = points;
     try {
-      localStorage.setItem('prakanguard_points_state_v10', JSON.stringify(points));
+      localStorage.setItem('prakanguard_points_state_v11', JSON.stringify(points));
     } catch (e) {}
   }, [points]);
 
@@ -734,18 +735,27 @@ export default function App() {
           subdistrict: sub
         };
       });
+      // Merge with authoritative baseline citizen reports (all historical reports have dried up/resolved)
+      const baselineMap = new Map((INITIAL_CITIZEN_REPORTS || []).map(r => [r.id, r]));
+      const resolvedList = sanitized.map(r => {
+        const base = baselineMap.get(r.id);
+        if (base && base.isResolved) {
+          return { ...r, ...base };
+        }
+        return r;
+      });
       if (Array.isArray(INITIAL_CITIZEN_REPORTS) && INITIAL_CITIZEN_REPORTS.length > 0) {
-        const idSet = new Set(sanitized.map(x => x.id));
+        const idSet = new Set(resolvedList.map(x => x.id));
         INITIAL_CITIZEN_REPORTS.forEach(initR => {
           if (!idSet.has(initR.id)) {
-            sanitized.push(initR);
+            resolvedList.push(initR);
           }
         });
       }
       try {
-        localStorage.setItem('prakanguard_citizen_reports', JSON.stringify(sanitized));
+        localStorage.setItem('prakanguard_citizen_reports', JSON.stringify(resolvedList));
       } catch (e) {}
-      return sanitized;
+      return resolvedList;
     } catch (e) {
       return Array.isArray(INITIAL_CITIZEN_REPORTS) ? INITIAL_CITIZEN_REPORTS : [];
     }
@@ -2165,7 +2175,7 @@ export default function App() {
       const filtered = prev.filter(p => p.id !== newPoint.id);
       const updated = [newPoint, ...filtered];
       try {
-        localStorage.setItem('prakanguard_points_state_v10', JSON.stringify(updated));
+        localStorage.setItem('prakanguard_points_state_v11', JSON.stringify(updated));
       } catch (e) {}
       return updated;
     });
@@ -2192,7 +2202,7 @@ export default function App() {
         return merged;
       });
       try {
-        localStorage.setItem('prakanguard_points_state_v10', JSON.stringify(updated));
+        localStorage.setItem('prakanguard_points_state_v11', JSON.stringify(updated));
       } catch (e) {}
       return updated;
     });
@@ -2209,7 +2219,7 @@ export default function App() {
     setPoints(prev => {
       const updated = prev.filter(p => p.id !== pointId);
       try {
-        localStorage.setItem('prakanguard_points_state_v10', JSON.stringify(updated));
+        localStorage.setItem('prakanguard_points_state_v11', JSON.stringify(updated));
       } catch (e) {}
       return updated;
     });
@@ -2229,7 +2239,7 @@ export default function App() {
       const newItems = pointsToImport.filter(p => !existingIds.has(p.id) && !existingNames.has(p.name));
       const updated = [...newItems, ...prev];
       try {
-        localStorage.setItem('prakanguard_points_state_v10', JSON.stringify(updated));
+        localStorage.setItem('prakanguard_points_state_v11', JSON.stringify(updated));
       } catch (e) {}
       return updated;
     });
@@ -2252,7 +2262,7 @@ export default function App() {
     });
     setPoints(defaultPoints);
     try {
-      localStorage.setItem('prakanguard_points_state_v10', JSON.stringify(defaultPoints));
+      localStorage.setItem('prakanguard_points_state_v11', JSON.stringify(defaultPoints));
     } catch (e) {}
   };
 

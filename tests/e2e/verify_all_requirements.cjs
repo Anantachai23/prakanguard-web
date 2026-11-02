@@ -25,7 +25,7 @@ async function runTest(width, height, isMobile) {
     'https://prakanguard-web.vercel.app'
   ], { stdio: 'ignore' });
 
-  await wait(2200);
+  await wait(3500);
 
   const tabs = await getJson('http://localhost:9222/json/list');
   const pageTab = tabs.find(t => t.type === 'page' && t.url.includes('vercel.app')) || tabs[0];
