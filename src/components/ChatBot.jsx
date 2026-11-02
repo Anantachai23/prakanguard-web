@@ -2401,12 +2401,12 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
             ...(customSize.width ? { width: `${customSize.width}px`, maxWidth: '96vw' } : {}),
             ...(customSize.height ? { height: `${customSize.height}px`, maxHeight: '85vh' } : {})
           }}
-          className={`smooth-pop fixed z-[2000] w-full max-w-[calc(100vw-24px)] xs:max-w-[420px] sm:max-w-none ${
+          className={`smooth-pop fixed z-[2000] w-full max-w-[calc(100vw-28px)] xs:max-w-[420px] sm:max-w-none ${
             customSize.width || customSize.height
               ? ''
               : isExpanded
-                ? 'sm:w-[540px] h-[480px] max-h-[82vh] sm:h-[680px] sm:max-h-[86vh]'
-                : 'sm:w-[400px] h-[420px] max-h-[76vh] sm:h-[580px] sm:max-h-[84vh]'
+                ? 'sm:w-[540px] h-[460px] max-h-[74vh] sm:h-[680px] sm:max-h-[84vh]'
+                : 'sm:w-[400px] h-[400px] max-h-[68vh] sm:h-[580px] sm:max-h-[82vh]'
           } border rounded-2xl shadow-2xl flex flex-col overflow-hidden ${
             !position ? 'bottom-[calc(4.2rem+env(safe-area-inset-bottom,0px))] left-1/2 -translate-x-1/2 sm:translate-x-0 sm:left-auto sm:bottom-6 sm:right-6' : ''
           } ${

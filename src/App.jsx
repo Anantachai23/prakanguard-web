@@ -2645,7 +2645,7 @@ export default function App() {
         {/* ========================================================================= */}
         <nav
           aria-label="แถบเครื่องมือหลัก"
-          className={`hidden md:flex flex-col items-center justify-between w-[56px] h-full py-3 px-2 shrink-0 z-45 border-r select-none transition-colors ${
+          className={`hidden md:flex flex-col items-center justify-between w-[56px] h-full py-3 px-2 shrink-0 z-[45] border-r select-none transition-colors ${
             isDark
               ? 'bg-slate-950 border-slate-800/90 text-slate-300'
               : 'bg-white border-slate-200/90 text-slate-700'
@@ -2757,7 +2757,7 @@ export default function App() {
         {/* Backdrop for Tablet Drawer */}
         {isSidebarOpen && (
           <div 
-            className="lg:hidden fixed inset-0 z-35 bg-black/40 backdrop-blur-xs transition-opacity duration-300 md:block hidden"
+            className="lg:hidden fixed inset-0 z-[35] bg-black/40 backdrop-blur-xs transition-opacity duration-300 md:block hidden"
             onClick={() => setIsSidebarOpen(false)}
           />
         )}
@@ -3719,10 +3719,10 @@ export default function App() {
                 setSelectedPoint(null);
               }
             }}
-            className="fixed inset-0 z-[100] bg-slate-950/75 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 pt-[max(0.75rem,env(safe-area-inset-top))] pb-[max(0.75rem,env(safe-area-inset-bottom))] pointer-events-auto overflow-y-auto"
+            className="fixed inset-0 z-[100] bg-slate-950/75 backdrop-blur-xs flex items-center justify-center p-3.5 sm:p-4 py-8 sm:py-8 pointer-events-auto overflow-y-auto overscroll-contain"
           >
             <div 
-              className={`w-full max-w-[calc(100vw-24px)] xs:max-w-[420px] sm:max-w-md my-auto m-auto border rounded-2xl shadow-2xl relative max-h-[86vh] flex flex-col overflow-hidden transition-colors ${
+              className={`w-full max-w-[calc(100vw-28px)] xs:max-w-[420px] sm:max-w-md my-auto m-auto border rounded-2xl shadow-2xl relative max-h-[76vh] sm:max-h-[82vh] flex flex-col overflow-hidden transition-colors ${
                 isDark 
                   ? 'bg-slate-900 border-slate-800 text-slate-100' 
                   : 'bg-white border-slate-200 text-slate-900'
@@ -4105,7 +4105,7 @@ export default function App() {
       {/* ========================================================================= */}
       {isMobileSheetOpen && (
         <div 
-          className="md:hidden fixed inset-0 z-45 bg-slate-950/65 backdrop-blur-xs transition-opacity"
+          className="md:hidden fixed inset-0 z-[45] bg-slate-950/65 backdrop-blur-xs transition-opacity"
           onClick={() => setIsMobileSheetOpen(false)}
         >
           <div 
@@ -4411,9 +4411,9 @@ export default function App() {
       {isAnnouncementModalOpen && latestAnnouncement && (
         <div 
           onClick={(e) => { if (e.target === e.currentTarget) { playCloseSound(); setIsAnnouncementModalOpen(false); } }}
-          className="fixed inset-0 z-[105] bg-slate-950/75 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 pt-[max(0.75rem,env(safe-area-inset-top))] pb-[max(0.75rem,env(safe-area-inset-bottom))] pointer-events-auto overflow-y-auto"
+          className="fixed inset-0 z-[105] bg-slate-950/75 backdrop-blur-xs flex items-center justify-center p-3.5 sm:p-4 py-8 sm:py-8 pointer-events-auto overflow-y-auto overscroll-contain"
         >
-          <div className={`w-full max-w-[calc(100vw-24px)] xs:max-w-[420px] sm:max-w-md my-auto m-auto border rounded-2xl shadow-2xl flex flex-col max-h-[86vh] overflow-hidden transition-colors ${
+          <div className={`w-full max-w-[calc(100vw-28px)] xs:max-w-[420px] sm:max-w-md my-auto m-auto border rounded-2xl shadow-2xl flex flex-col max-h-[76vh] sm:max-h-[82vh] overflow-hidden transition-colors ${
             isDark 
               ? 'bg-slate-900 border-slate-800 text-slate-100' 
               : 'bg-white border-slate-200 text-slate-900'

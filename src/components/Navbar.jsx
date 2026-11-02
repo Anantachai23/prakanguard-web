@@ -112,7 +112,7 @@ export default function Navbar({
         {/* ========================================================= */}
         <div className="flex items-center gap-2.5 shrink-0 min-w-0">
           {/* Provincial Crest / Official Logo */}
-          <div className="relative w-8 h-8 rounded-full p-0.5 border border-slate-700/60 dark:border-slate-700 shrink-0 flex items-center justify-center overflow-hidden bg-white dark:bg-slate-900 shadow-xs">
+          <div className="relative w-8 h-8 rounded-full p-0.5 border border-slate-200 dark:border-slate-750 shrink-0 flex items-center justify-center overflow-hidden bg-white dark:bg-slate-900 shadow-xs">
             <img 
               src="/logo.png" 
               alt="PrakanGuard Logo" 
@@ -124,7 +124,7 @@ export default function Navbar({
             <span className="text-[15px] font-bold tracking-tight text-slate-900 dark:text-white leading-none shrink-0">
               PrakanGuard
             </span>
-            <span className="hidden xs:inline-flex text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700/70 shrink-0">
+            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 border border-blue-200/80 dark:border-blue-800/60 shrink-0">
               สมุทรปราการ
             </span>
           </div>
@@ -236,25 +236,8 @@ export default function Navbar({
         {/* ========================================================= */}
         <div className="flex items-center gap-1.5 shrink-0">
           
-          {/* --- MOBILE ONLY (< 768px) --- */}
+          {/* --- MOBILE ONLY (< 768px): Clean, Uncluttered, No Duplicate Report Button --- */}
           <div className="flex md:hidden items-center gap-1.5 shrink-0">
-            {/* Mobile Report Button */}
-            {onOpenCitizenReport && (
-              <button
-                type="button"
-                onClick={() => {
-                  playReportSound();
-                  onOpenCitizenReport();
-                }}
-                className="h-[32px] px-2 xs:px-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs flex items-center gap-1 shadow-xs active:scale-95 transition-all cursor-pointer shrink-0"
-                title="แจ้งรายงานจุดน้ำท่วม"
-              >
-                <CivicReportCamera className="w-3.5 h-3.5 text-white" />
-                <span className="hidden xs:inline">แจ้งน้ำท่วม</span>
-                <span className="xs:hidden inline">แจ้ง</span>
-              </button>
-            )}
-
             {/* Mobile Telemetry Sync */}
             {onRefreshData && (
               <button

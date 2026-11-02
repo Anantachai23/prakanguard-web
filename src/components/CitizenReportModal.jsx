@@ -336,9 +336,9 @@ export default function CitizenReportModal({
   return (
     <div 
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
-      className="fixed inset-0 z-[2000] bg-slate-950/75 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 pt-[max(0.75rem,env(safe-area-inset-top))] pb-[max(0.75rem,env(safe-area-inset-bottom))] overflow-y-auto"
+      className="fixed inset-0 z-[2000] bg-slate-950/75 backdrop-blur-xs flex items-center justify-center p-3.5 sm:p-4 py-8 sm:py-8 overflow-y-auto overscroll-contain"
     >
-      <div className={`w-full max-w-[calc(100vw-24px)] xs:max-w-[460px] sm:max-w-lg my-auto m-auto rounded-2xl border shadow-2xl overflow-hidden flex flex-col max-h-[86vh] transition-colors ${
+      <div className={`w-full max-w-[calc(100vw-28px)] xs:max-w-[460px] sm:max-w-lg my-auto m-auto rounded-2xl border shadow-2xl overflow-hidden flex flex-col max-h-[76vh] sm:max-h-[82vh] transition-colors ${
         isDark ? 'bg-slate-900 border-slate-700/90 text-slate-100' : 'bg-white border-slate-200 text-slate-900'
       }`}>
         {/* Header */}

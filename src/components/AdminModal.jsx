@@ -2011,8 +2011,8 @@ export default function AdminModal({
   }, [activeFeedbackList]);
 
   return (
-    <div className="fixed inset-0 z-[2000] bg-slate-950/75 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 pt-[max(0.75rem,env(safe-area-inset-top))] pb-[max(0.75rem,env(safe-area-inset-bottom))] overflow-y-auto">
-      <div className={`w-full max-w-[calc(100vw-24px)] xs:max-w-[460px] sm:max-w-4xl my-auto m-auto border rounded-2xl shadow-2xl flex flex-col max-h-[86vh] sm:max-h-[88vh] shrink-0 overflow-hidden transition-all ${
+    <div className="fixed inset-0 z-[2000] bg-slate-950/75 backdrop-blur-xs flex items-center justify-center p-3.5 sm:p-4 py-8 sm:py-8 overflow-y-auto overscroll-contain">
+      <div className={`w-full max-w-[calc(100vw-28px)] xs:max-w-[460px] sm:max-w-4xl my-auto m-auto border rounded-2xl shadow-2xl flex flex-col max-h-[78vh] sm:max-h-[86vh] shrink-0 overflow-hidden transition-all ${
         isDark ? 'bg-slate-900 border-slate-800 text-slate-100' : 'bg-white border-slate-200 text-slate-900'
       }`}>
         
@@ -5572,7 +5572,7 @@ export default function AdminModal({
         {selectedPhotoModal && (
           <div 
             onClick={() => setSelectedPhotoModal(null)}
-            className="fixed inset-0 z-60 bg-black/90 flex items-center justify-center p-4 cursor-pointer animate-in fade-in"
+            className="fixed inset-0 z-[60] bg-black/90 flex items-center justify-center p-4 cursor-pointer animate-in fade-in"
           >
             <div className="relative max-w-2xl max-h-[85vh] overflow-hidden rounded-2xl">
               <img src={selectedPhotoModal} alt="ภาพขยาย" className="w-full h-full object-contain" />

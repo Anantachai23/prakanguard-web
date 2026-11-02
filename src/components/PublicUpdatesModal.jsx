@@ -114,9 +114,9 @@ export default function PublicUpdatesModal({
   return (
     <div 
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
-      className="fixed inset-0 z-[2000] bg-slate-950/75 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 pt-[max(0.75rem,env(safe-area-inset-top))] pb-[max(0.75rem,env(safe-area-inset-bottom))] pointer-events-auto overflow-y-auto"
+      className="fixed inset-0 z-[2000] bg-slate-950/75 backdrop-blur-xs flex items-center justify-center p-3.5 sm:p-4 py-8 sm:py-8 pointer-events-auto overflow-y-auto overscroll-contain"
     >
-      <div className={`w-full max-w-[calc(100vw-24px)] xs:max-w-[420px] sm:max-w-lg my-auto m-auto border rounded-2xl shadow-2xl flex flex-col max-h-[86vh] shrink-0 overflow-hidden transition-colors ${
+      <div className={`w-full max-w-[calc(100vw-28px)] xs:max-w-[420px] sm:max-w-lg my-auto m-auto border rounded-2xl shadow-2xl flex flex-col max-h-[76vh] sm:max-h-[82vh] shrink-0 overflow-hidden transition-colors ${
         isDark ? 'bg-slate-900 border-slate-800 text-slate-100' : 'bg-white border-slate-200 text-slate-900'
       }`}>
         {/* Top Institutional Bar */}

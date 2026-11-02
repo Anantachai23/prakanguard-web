@@ -52,7 +52,7 @@ export default function WelcomeModal({
 
   return (
     <div 
-      className={`fixed inset-0 z-[2000] flex items-center justify-center p-3 sm:p-5 pt-[max(0.75rem,env(safe-area-inset-top))] pb-[max(0.75rem,env(safe-area-inset-bottom))] overflow-y-auto select-none transition-all duration-400 ${
+      className={`fixed inset-0 z-[2000] flex items-center justify-center p-3.5 sm:p-5 py-8 sm:py-8 overflow-y-auto overscroll-contain select-none transition-all duration-400 ${
         isEntering && !isExiting 
           ? 'bg-slate-950/75 backdrop-blur-xs opacity-100 pointer-events-auto' 
           : 'bg-slate-950/0 backdrop-blur-none opacity-0 pointer-events-none'
@@ -65,7 +65,7 @@ export default function WelcomeModal({
       }}
     >
       <div 
-        className={`w-full max-w-[calc(100vw-24px)] xs:max-w-[420px] sm:max-w-md my-auto m-auto max-h-[86vh] shrink-0 border rounded-2xl shadow-2xl overflow-hidden flex flex-col relative transition-all ${
+        className={`w-full max-w-[calc(100vw-28px)] xs:max-w-[420px] sm:max-w-md my-auto m-auto max-h-[76vh] sm:max-h-[82vh] shrink-0 border rounded-2xl shadow-2xl overflow-hidden flex flex-col relative transition-all ${
           isDark 
             ? 'bg-slate-900/95 border-slate-700/80 text-slate-100 shadow-black/60' 
             : 'bg-white/95 border-slate-200/90 text-slate-900 shadow-slate-900/20'

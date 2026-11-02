@@ -205,9 +205,9 @@ export default function AiForecastModal({ isOpen, onClose, userDistrict, theme =
           onClose();
         } 
       }}
-      className="fixed inset-0 z-[2000] bg-slate-950/75 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 pt-[max(0.75rem,env(safe-area-inset-top))] pb-[max(0.75rem,env(safe-area-inset-bottom))] overflow-y-auto"
+      className="fixed inset-0 z-[2000] bg-slate-950/75 backdrop-blur-xs flex items-center justify-center p-3.5 sm:p-4 py-8 sm:py-8 overflow-y-auto overscroll-contain"
     >
-      <div className={`w-full max-w-[calc(100vw-24px)] xs:max-w-[460px] sm:max-w-2xl lg:max-w-3xl my-auto m-auto border rounded-2xl shadow-2xl relative max-h-[86vh] shrink-0 flex flex-col overflow-hidden transition-all ${
+      <div className={`w-full max-w-[calc(100vw-28px)] xs:max-w-[460px] sm:max-w-2xl lg:max-w-3xl my-auto m-auto border rounded-2xl shadow-2xl relative max-h-[76vh] sm:max-h-[82vh] shrink-0 flex flex-col overflow-hidden transition-all ${
         isDark ? 'bg-slate-900 border-slate-800 text-slate-100' : 'bg-white border-slate-200 text-slate-900'
       }`}>
         {/* Header */}

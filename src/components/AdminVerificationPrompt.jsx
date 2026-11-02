@@ -116,9 +116,9 @@ export default function AdminVerificationPrompt({
 
   return (
     <>
-      <div className="fixed inset-0 z-[2000] flex items-center justify-center p-3 sm:p-4 pt-[max(0.75rem,env(safe-area-inset-top))] pb-[max(0.75rem,env(safe-area-inset-bottom))] bg-slate-950/75 backdrop-blur-xs overflow-y-auto">
+      <div className="fixed inset-0 z-[2000] flex items-center justify-center p-3.5 sm:p-4 py-8 sm:py-8 bg-slate-950/75 backdrop-blur-xs overflow-y-auto overscroll-contain">
         <div 
-          className={`w-full max-w-[calc(100vw-24px)] xs:max-w-[420px] sm:max-w-lg my-auto m-auto rounded-2xl border shadow-2xl overflow-hidden flex flex-col max-h-[86vh] shrink-0 transition-colors ${
+          className={`w-full max-w-[calc(100vw-28px)] xs:max-w-[420px] sm:max-w-lg my-auto m-auto rounded-2xl border shadow-2xl overflow-hidden flex flex-col max-h-[76vh] sm:max-h-[82vh] shrink-0 transition-colors ${
             isDark 
               ? 'bg-slate-900 border-slate-800 text-slate-100' 
               : 'bg-white border-slate-200 text-slate-900'
@@ -335,7 +335,7 @@ export default function AdminVerificationPrompt({
       {selectedPhoto && (
         <div 
           onClick={() => setSelectedPhoto(null)}
-          className="fixed inset-0 z-60 bg-black/85 flex items-center justify-center p-4 cursor-pointer"
+          className="fixed inset-0 z-[60] bg-black/85 flex items-center justify-center p-4 cursor-pointer"
         >
           <div className="relative max-w-2xl max-h-[85vh] overflow-hidden rounded-2xl">
             <img src={selectedPhoto} alt="ภาพถ่ายขยายใหญ่" className="max-w-full max-h-[85vh] object-contain" />

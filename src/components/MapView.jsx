@@ -1161,7 +1161,7 @@ export default function MapView({
       ></div>
 
       {/* FLOATING MAP CONTROLS (TOP RIGHT - CLEAN, UNCLUTTERED, COMPACT) */}
-      <div className="absolute top-10 right-2 sm:top-4 sm:right-4 z-25 flex flex-col items-end gap-1 sm:gap-2 pointer-events-auto">
+      <div className="absolute top-10 right-2 sm:top-4 sm:right-4 z-[25] flex flex-col items-end gap-1 sm:gap-2 pointer-events-auto">
         
         {/* Map Tile Switcher (Official GIS Style) */}
         <div className={`p-0.5 sm:p-1 rounded-lg flex items-center gap-0.5 sm:gap-1 border shadow-xs text-xs backdrop-blur-md transition-colors ${

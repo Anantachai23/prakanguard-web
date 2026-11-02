@@ -250,14 +250,14 @@ export default function CctvModal({
 
   return (
     <div
-      className="fixed inset-0 z-[10000] flex items-center justify-center p-3 sm:p-6 pt-[max(0.75rem,env(safe-area-inset-top))] pb-[max(0.75rem,env(safe-area-inset-bottom))] overflow-y-auto bg-slate-950/75 backdrop-blur-xs smooth-backdrop"
+      className="fixed inset-0 z-[10000] flex items-center justify-center p-3.5 sm:p-6 py-8 sm:py-8 overflow-y-auto overscroll-contain bg-slate-950/75 backdrop-blur-xs smooth-backdrop"
       onClick={() => {
         playCloseSound();
         onClose();
       }}
     >
       <div
-        className={`smooth-pop w-full max-w-[calc(100vw-24px)] xs:max-w-[460px] sm:max-w-3xl lg:max-w-5xl my-auto m-auto max-h-[86vh] shrink-0 flex flex-col rounded-2xl border shadow-2xl overflow-hidden ${
+        className={`smooth-pop w-full max-w-[calc(100vw-28px)] xs:max-w-[460px] sm:max-w-3xl lg:max-w-5xl my-auto m-auto max-h-[76vh] sm:max-h-[82vh] shrink-0 flex flex-col rounded-2xl border shadow-2xl overflow-hidden ${
           isDark ? 'bg-slate-900 border-slate-800 text-slate-100' : 'bg-white border-slate-200 text-slate-900'
         }`}
         onClick={(e) => e.stopPropagation()}
