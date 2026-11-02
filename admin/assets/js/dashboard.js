@@ -162,6 +162,9 @@ export function switchTab(tabId, playSound = false) {
   $$('.nav-item').forEach(el => {
     el.classList.toggle('active', el.dataset.tab === tabId);
   });
+  $$('.admin-mobile-nav-item[data-tab]').forEach(el => {
+    el.classList.toggle('active', el.dataset.tab === tabId);
+  });
   $$('.view-section').forEach(el => {
     el.style.display = el.id === `view-${tabId}` ? 'block' : 'none';
   });
@@ -505,6 +508,27 @@ function updateNavBadges() {
     const totalPending = pendingReports + unreadFb;
     headerNotifyBadge.textContent = totalPending;
     headerNotifyBadge.style.display = totalPending > 0 ? 'inline-flex' : 'none';
+  }
+
+  // Mobile Bottom Nav Badges
+  const mobileRepBadge = $('#mobile-badge-reports');
+  if (mobileRepBadge) {
+    if (pendingReports > 0) {
+      mobileRepBadge.textContent = pendingReports > 99 ? '99+' : pendingReports;
+      mobileRepBadge.style.display = 'inline-flex';
+    } else {
+      mobileRepBadge.style.display = 'none';
+    }
+  }
+
+  const mobileFbBadge = $('#mobile-badge-feedback');
+  if (mobileFbBadge) {
+    if (unreadFb > 0) {
+      mobileFbBadge.textContent = unreadFb > 99 ? '99+' : unreadFb;
+      mobileFbBadge.style.display = 'inline-flex';
+    } else {
+      mobileFbBadge.style.display = 'none';
+    }
   }
 }
 
@@ -3719,6 +3743,18 @@ export function initDashboard() {
       e.preventDefault();
       switchTab(btn.dataset.tab, true);
     });
+  });
+
+  // Mobile Bottom Navigation Handlers
+  $$('.admin-mobile-nav-item[data-tab]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      switchTab(btn.dataset.tab, true);
+    });
+  });
+  $('#btn-mobile-more-menu')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    openMobileSidebar();
   });
 
   // Mobile Sidebar Drawer Toggle & Backdrop

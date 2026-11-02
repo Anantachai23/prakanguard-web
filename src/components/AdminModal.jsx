@@ -2011,8 +2011,8 @@ export default function AdminModal({
   }, [activeFeedbackList]);
 
   return (
-    <div className="fixed inset-0 z-[2000] bg-slate-950/75 backdrop-blur-xs flex items-center justify-center p-3.5 sm:p-4 py-8 sm:py-8 overflow-y-auto overscroll-contain">
-      <div className={`w-full max-w-[calc(100vw-24px)] xs:max-w-[460px] sm:max-w-4xl my-auto m-auto border rounded-3xl shadow-2xl flex flex-col max-h-[80vh] sm:max-h-[86vh] shrink-0 overflow-hidden transition-all ${
+    <div className="fixed inset-0 z-[2000] bg-slate-950/75 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 py-4 sm:py-8 overflow-y-auto overscroll-contain">
+      <div className={`w-full max-w-[calc(100vw-16px)] xs:max-w-[460px] sm:max-w-4xl my-auto m-auto border rounded-3xl shadow-2xl flex flex-col max-h-[88vh] sm:max-h-[86vh] shrink-0 overflow-hidden transition-all ${
         isDark ? 'bg-slate-900 border-slate-800 text-slate-100' : 'bg-white border-slate-200 text-slate-900'
       }`}>
         
@@ -2230,21 +2230,27 @@ export default function AdminModal({
                 </div>
               )}
 
-              <form onSubmit={handleLogin} className="space-y-3">
+              <form onSubmit={handleLogin} className="space-y-3" autoComplete="on" method="post" action="#">
                 <div>
-                  <label className={`block text-[11px] font-semibold mb-1.5 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
+                  <label 
+                    htmlFor="admin-login-username"
+                    className={`block text-[11px] font-semibold mb-1.5 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}
+                  >
                     ชื่อผู้ใช้งาน (Username)
                   </label>
                   <div className="relative">
                     <User className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
                     <input
+                      id="admin-login-username"
+                      name="username"
                       type="text"
+                      autoComplete="username"
                       value={inputUsername}
                       onChange={(e) => setInputUsername(e.target.value)}
                       placeholder="ระบุชื่อผู้ใช้งาน"
                       disabled={lockoutSeconds > 0}
                       autoFocus
-                      className={`w-full text-xs sm:text-sm pl-10 pr-4 py-2.5 rounded-full border focus:outline-none transition-colors ${
+                      className={`w-full text-base sm:text-sm pl-10 pr-4 py-2.5 rounded-full border focus:outline-none transition-colors ${
                         isDark 
                           ? 'bg-slate-950 border-slate-800 text-white focus:border-blue-500' 
                           : 'bg-slate-50 border-slate-200 text-slate-900 focus:border-blue-600'
@@ -2254,18 +2260,24 @@ export default function AdminModal({
                 </div>
 
                 <div>
-                  <label className={`block text-[11px] font-semibold mb-1.5 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
+                  <label 
+                    htmlFor="admin-login-password"
+                    className={`block text-[11px] font-semibold mb-1.5 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}
+                  >
                     รหัสผ่าน (Password)
                   </label>
                   <div className="relative">
                     <KeyRound className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
                     <input
+                      id="admin-login-password"
+                      name="password"
                       type={showPassword ? "text" : "password"}
+                      autoComplete="current-password"
                       value={inputPassword}
                       onChange={(e) => setInputPassword(e.target.value)}
                       placeholder="ระบุรหัสผ่าน"
                       disabled={lockoutSeconds > 0}
-                      className={`w-full text-xs sm:text-sm pl-10 pr-11 py-2.5 rounded-full border focus:outline-none transition-colors ${
+                      className={`w-full text-base sm:text-sm pl-10 pr-11 py-2.5 rounded-full border focus:outline-none transition-colors ${
                         isDark 
                           ? 'bg-slate-950 border-slate-800 text-white focus:border-blue-500' 
                           : 'bg-slate-50 border-slate-200 text-slate-900 focus:border-blue-600'
@@ -2274,7 +2286,7 @@ export default function AdminModal({
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3.5 top-3 text-slate-400 hover:text-slate-200"
+                      className="absolute right-3.5 top-3 text-slate-400 hover:text-slate-200 cursor-pointer"
                     >
                       {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
