@@ -3830,13 +3830,13 @@ export default function App() {
                 setSelectedPoint(null);
               }
             }}
-            className="fixed inset-0 z-[100] bg-slate-950/75 backdrop-blur-xs flex items-center justify-center p-3.5 sm:p-4 py-8 sm:py-8 pointer-events-auto overflow-y-auto overscroll-contain"
+            className="fixed inset-0 z-[2000] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-3.5 sm:p-5 py-6 sm:py-10 pointer-events-auto overflow-y-auto overscroll-contain select-none"
           >
             <div 
-              className={`w-full max-w-[calc(100vw-24px)] xs:max-w-[420px] sm:max-w-md my-auto m-auto border rounded-3xl shadow-2xl relative max-h-[78vh] sm:max-h-[84vh] flex flex-col overflow-hidden transition-colors ${
+              className={`w-full max-w-[calc(100vw-28px)] xs:max-w-[410px] sm:max-w-md my-auto m-auto border rounded-3xl shadow-2xl relative max-h-[70vh] sm:max-h-[82vh] flex flex-col overflow-hidden transition-all duration-200 ${
                 isDark 
-                  ? 'bg-slate-900 border-slate-800 text-slate-100' 
-                  : 'bg-white border-slate-200 text-slate-900'
+                  ? 'bg-slate-900 border-slate-800 text-slate-100 shadow-slate-950/60' 
+                  : 'bg-white border-slate-200 text-slate-900 shadow-slate-900/15'
               }`}
             >
               {/* Top Institutional Bar */}

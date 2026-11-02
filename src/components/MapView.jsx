@@ -72,26 +72,26 @@ function createOfficialFloodPin({ level, depthCm, hasPhoto, isSelected, isFallin
     levelClass = 'pg-pin-l3';
   }
 
-  const depthText = (depthCm !== undefined && depthCm !== null && !isNaN(Number(depthCm)) && Number(depthCm) > 0)
-    ? `${depthCm}`
-    : '';
+  const displayDepth = (depthCm !== undefined && depthCm !== null && !isNaN(Number(depthCm)) && Number(depthCm) > 0)
+    ? `${Math.round(Number(depthCm))}`
+    : (level ? `${level}` : '1');
 
   const isL3 = level === 3;
-  const pinW = isMobile ? 28 : 34;
-  const pinH = isMobile ? 36 : 44;
+  const pinW = isMobile ? 32 : 36;
+  const pinH = isMobile ? 42 : 46;
 
   const pulseHtml = isL3 
-    ? `<div style="position:absolute;left:50%;bottom:2px;transform:translateX(-50%);width:${isMobile ? 22 : 28}px;height:${isMobile ? 22 : 28}px;border-radius:50%;background:rgba(220,38,38,0.35);animation:pgPinPulse 1.8s ease-out infinite;pointer-events:none;z-index:0;"></div>`
+    ? `<div style="position:absolute;left:50%;bottom:2px;transform:translateX(-50%);width:${isMobile ? 24 : 28}px;height:${isMobile ? 24 : 28}px;border-radius:50%;background:rgba(220,38,38,0.35);animation:pgPinPulse 1.8s ease-out infinite;pointer-events:none;z-index:0;"></div>`
     : '';
 
   // สัญลักษณ์น้ำลดที่เห็นได้ชัดเจนบนแผนที่ตามที่ระบุ
   const fallingBadgeHtml = isFalling
     ? `
-      <div class="pg-pin-falling-tag" style="position:absolute;top:${isMobile ? '-16px' : '-20px'};left:50%;transform:translateX(-50%);background:#0d9488;color:#ffffff;font-size:${isMobile ? '8.5px' : '9.5px'};font-weight:900;font-family:'Prompt',-apple-system,sans-serif;padding:1px ${isMobile ? '4px' : '6px'};border-radius:5px;border:1.5px solid #ffffff;box-shadow:0 2px 6px rgba(0,0,0,0.4);white-space:nowrap;display:flex;align-items:center;gap:2px;pointer-events:none;z-index:30;">
+      <div class="pg-pin-falling-tag" style="position:absolute;top:${isMobile ? '-17px' : '-20px'};left:50%;transform:translateX(-50%);background:#0d9488;color:#ffffff;font-size:${isMobile ? '8.5px' : '9.5px'};font-weight:900;font-family:'Prompt',-apple-system,sans-serif;padding:1px ${isMobile ? '4px' : '6px'};border-radius:5px;border:1.5px solid #ffffff;box-shadow:0 2px 6px rgba(0,0,0,0.4);white-space:nowrap;display:flex;align-items:center;gap:2px;pointer-events:none;z-index:30;">
         <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>
         <span>น้ำลด</span>
       </div>
-      <div style="position:absolute;bottom:0px;right:-4px;width:${isMobile ? 14 : 17}px;height:${isMobile ? 14 : 17}px;background:#0d9488;border:1.5px solid #ffffff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:900;color:#ffffff;box-shadow:0 2px 4px rgba(0,0,0,0.3);z-index:15;pointer-events:none;" title="น้ำกำลังลด">↓</div>
+      <div style="position:absolute;bottom:0px;right:-4px;width:${isMobile ? 15 : 17}px;height:${isMobile ? 15 : 17}px;background:#0d9488;border:1.5px solid #ffffff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8.5px;font-weight:900;color:#ffffff;box-shadow:0 2px 4px rgba(0,0,0,0.3);z-index:15;pointer-events:none;" title="น้ำกำลังลด">↓</div>
     `
     : '';
 
@@ -108,12 +108,8 @@ function createOfficialFloodPin({ level, depthCm, hasPhoto, isSelected, isFallin
     ? `<div style="position:absolute;inset:-5px;border-radius:20px;border:2px solid #0284c7;box-shadow:0 0 10px rgba(2,132,199,0.8);animation:pgSelectedGlow 1.5s ease-in-out infinite alternate;pointer-events:none;z-index:1;"></div>`
     : '';
 
-  const fontSize = depthText.length >= 3 ? '8' : (depthText.length === 2 ? '9.5' : '11');
-  const svgInnerContent = depthText
-    ? `<text x="17" y="17.2" font-family="'Prompt', -apple-system, sans-serif" font-size="${fontSize}" font-weight="900" fill="${primaryColor}" text-anchor="middle" dominant-baseline="central">${depthText}</text>`
-    : `<path d="M17 10C17 10 13.5 14.5 13.5 17C13.5 18.93 15.07 20.5 17 20.5C18.93 20.5 20.5 18.93 20.5 17C20.5 14.5 17 10 17 10Z" fill="${primaryColor}"/>`;
-
-  const safeId = String(id || '').replace(/'/g, "\\'");
+  const fontSize = displayDepth.length >= 3 ? '8' : (displayDepth.length === 2 ? '9.5' : '11');
+  const safeId = String(id || '').replace(/[^a-zA-Z0-9_-]/g, '_');
   const safeTitle = String(name || '').replace(/"/g, '&quot;');
 
   const html = `
@@ -130,17 +126,21 @@ function createOfficialFloodPin({ level, depthCm, hasPhoto, isSelected, isFallin
       ${photoBadgeHtml}
       <svg width="${pinW}" height="${pinH}" viewBox="0 0 34 44" fill="none" xmlns="http://www.w3.org/2000/svg" style="position:relative;z-index:2;filter:drop-shadow(0 3px 5px rgba(0,0,0,0.35));pointer-events:auto;cursor:pointer;">
         <defs>
-          <linearGradient id="pgGrad-${level}" x1="17" y1="2" x2="17" y2="43" gradientUnits="userSpaceOnUse">
+          <linearGradient id="pgGrad-${level}-${safeId}" x1="17" y1="2" x2="17" y2="43" gradientUnits="userSpaceOnUse">
             <stop offset="0%" stop-color="${gradientStart}" />
             <stop offset="100%" stop-color="${gradientEnd}" />
           </linearGradient>
         </defs>
         <!-- Teardrop Pin Path -->
-        <path d="M17 43C17 43 32 27 32 17C32 8.71573 25.2843 2 17 2C8.71573 2 2 8.71573 2 17C2 27 17 43 17 43Z" fill="url(#pgGrad-${level})" stroke="#ffffff" stroke-width="2.5" stroke-linejoin="round"/>
+        <path d="M17 43C17 43 32 27 32 17C32 8.71573 25.2843 2 17 2C8.71573 2 2 8.71573 2 17C2 27 17 43 17 43Z" fill="url(#pgGrad-${level}-${safeId})" stroke="#ffffff" stroke-width="2.5" stroke-linejoin="round"/>
         <!-- Inner White Disc -->
         <circle cx="17" cy="17" r="9.5" fill="#ffffff" />
-        ${svgInnerContent}
+        <text x="17" y="17" dy="0.35em" font-family="'Prompt', system-ui, -apple-system, sans-serif" font-size="${fontSize}" font-weight="900" fill="${primaryColor}" text-anchor="middle" alignment-baseline="middle">${displayDepth}</text>
       </svg>
+      <!-- HTML Fallback Number Badge: 100% Guaranteed cross-platform visibility -->
+      <div class="pg-pin-number-badge" style="position:absolute;top:${isMobile ? '5px' : '6px'};left:50%;transform:translateX(-50%);width:${isMobile ? '18px' : '20px'};height:${isMobile ? '18px' : '20px'};border-radius:50%;display:flex;align-items:center;justify-content:center;color:${primaryColor};font-family:'Prompt',system-ui,-apple-system,sans-serif;font-weight:900;font-size:${isMobile ? (displayDepth.length >= 3 ? '8px' : (displayDepth.length === 2 ? '9.5px' : '11px')) : (displayDepth.length >= 3 ? '9px' : (displayDepth.length === 2 ? '10.5px' : '12px'))};line-height:1;pointer-events:none;z-index:10;user-select:none;-webkit-user-select:none;text-align:center;">
+        ${displayDepth}
+      </div>
     </div>
   `;
 
