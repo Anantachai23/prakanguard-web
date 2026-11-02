@@ -238,7 +238,7 @@ export default function CctvModal({
 
   const districts = ['ทั้งหมด', 'เมืองสมุทรปราการ', 'บางพลี', 'พระประแดง', 'บางเสาธง', 'บางบ่อ', 'พระสมุทรเจดีย์'];
 
-  const ghostBtn = `w-8 h-8 rounded-lg flex items-center justify-center transition-colors cursor-pointer ${
+  const ghostBtn = `w-8 h-8 rounded-full flex items-center justify-center transition-colors cursor-pointer ${
     isDark ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
   }`;
   const mutedText = isDark ? 'text-slate-400' : 'text-slate-500';
@@ -257,7 +257,7 @@ export default function CctvModal({
       }}
     >
       <div
-        className={`smooth-pop w-full max-w-[calc(100vw-28px)] xs:max-w-[460px] sm:max-w-3xl lg:max-w-5xl my-auto m-auto max-h-[76vh] sm:max-h-[82vh] shrink-0 flex flex-col rounded-2xl border shadow-2xl overflow-hidden ${
+        className={`smooth-pop w-full max-w-[calc(100vw-24px)] xs:max-w-[460px] sm:max-w-3xl lg:max-w-5xl my-auto m-auto max-h-[78vh] sm:max-h-[84vh] shrink-0 flex flex-col rounded-3xl border shadow-2xl overflow-hidden ${
           isDark ? 'bg-slate-900 border-slate-800 text-slate-100' : 'bg-white border-slate-200 text-slate-900'
         }`}
         onClick={(e) => e.stopPropagation()}
@@ -364,7 +364,7 @@ export default function CctvModal({
                       href={focusedCamera.streamUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex-1 h-9 px-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors"
+                      className="flex-1 h-9 px-4 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer active:scale-95 shadow-xs"
                     >
                       <span>ดูภาพสดจาก {focusedCamera.agency}</span>
                       <ExternalLink className="w-3.5 h-3.5" />
@@ -373,7 +373,7 @@ export default function CctvModal({
                       href={`https://www.google.com/maps/search/?api=1&query=${focusedCamera.lat},${focusedCamera.lng}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className={`h-9 px-3 rounded-lg border text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors ${
+                      className={`h-9 px-4 rounded-full border text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer active:scale-95 ${
                         isDark ? 'border-slate-700 text-slate-200 hover:bg-slate-800' : 'border-slate-200 text-slate-700 hover:bg-slate-50'
                       }`}
                     >
@@ -385,13 +385,13 @@ export default function CctvModal({
               </div>
             </div>
 
-            <div className={`px-3 py-2 sm:px-5 sm:py-2.5 border-t flex items-center justify-between gap-2 shrink-0 ${
+            <div className={`px-4 py-2.5 sm:px-5 sm:py-3 border-t flex items-center justify-between gap-2 shrink-0 ${
               isDark ? 'border-slate-800' : 'border-slate-200/80'
             }`}>
               <button
                 type="button"
                 onClick={handlePrevCamera}
-                className={`h-8 px-2.5 rounded-lg text-xs font-medium flex items-center gap-1 transition-colors ${
+                className={`h-8 px-3 rounded-full text-xs font-medium flex items-center gap-1 transition-colors cursor-pointer active:scale-95 ${
                   isDark ? 'text-slate-300 hover:bg-slate-800' : 'text-slate-700 hover:bg-slate-100'
                 }`}
               >
@@ -404,7 +404,7 @@ export default function CctvModal({
               <button
                 type="button"
                 onClick={handleNextCamera}
-                className={`h-8 px-2.5 rounded-lg text-xs font-medium flex items-center gap-1 transition-colors ${
+                className={`h-8 px-3 rounded-full text-xs font-medium flex items-center gap-1 transition-colors cursor-pointer active:scale-95 ${
                   isDark ? 'text-slate-300 hover:bg-slate-800' : 'text-slate-700 hover:bg-slate-100'
                 }`}
               >
@@ -421,13 +421,13 @@ export default function CctvModal({
             }`}>
               <div className="flex items-center gap-2">
                 <div className="relative flex-1 min-w-0">
-                  <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <Search className="w-3.5 h-3.5 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
                   <input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="ค้นหาแยก ถนน หรือสถานี"
-                    className={`w-full h-9 pl-8 pr-8 text-xs rounded-lg border transition-colors focus:outline-none focus:ring-2 ${
+                    className={`w-full h-9 pl-9 pr-8 text-xs rounded-full border transition-colors focus:outline-none focus:ring-2 ${
                       isDark
                         ? 'bg-slate-950/50 border-slate-800 text-white placeholder-slate-500 focus:border-sky-500 focus:ring-sky-500/20'
                         : 'bg-slate-50 border-slate-200 text-slate-900 placeholder-slate-400 focus:bg-white focus:border-blue-500 focus:ring-blue-500/15'
@@ -437,7 +437,7 @@ export default function CctvModal({
                     <button
                       type="button"
                       onClick={() => setSearchQuery('')}
-                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
                       aria-label="ล้างคำค้นหา"
                     >
                       <X className="w-3.5 h-3.5" />
@@ -450,7 +450,7 @@ export default function CctvModal({
                     playSelectSound();
                     setSelectedDistrict(e.target.value);
                   }}
-                  className={`h-9 pl-2.5 pr-7 text-xs rounded-lg border cursor-pointer focus:outline-none max-w-[42%] sm:max-w-none ${
+                  className={`h-9 pl-3 pr-7 text-xs rounded-full border cursor-pointer focus:outline-none max-w-[42%] sm:max-w-none ${
                     isDark ? 'bg-slate-950/50 border-slate-800 text-slate-200' : 'bg-slate-50 border-slate-200 text-slate-700'
                   }`}
                   aria-label="เลือกอำเภอ"
@@ -461,7 +461,7 @@ export default function CctvModal({
                 </select>
               </div>
 
-              <div className={`inline-flex p-0.5 rounded-lg max-w-full overflow-x-auto no-scrollbar ${isDark ? 'bg-slate-800/70' : 'bg-slate-100'}`}>
+              <div className={`inline-flex p-1 rounded-full max-w-full overflow-x-auto no-scrollbar ${isDark ? 'bg-slate-800/70' : 'bg-slate-100'}`}>
                 {[
                   { id: 'ทั้งหมด', label: 'ทั้งหมด', count: agencyCounts.ALL },
                   { id: 'DOH', label: 'กรมทางหลวง', count: agencyCounts.DOH },
@@ -477,9 +477,9 @@ export default function CctvModal({
                         playClickSound();
                         setSelectedAgency(tab.id);
                       }}
-                      className={`h-7 px-2.5 rounded-md text-[11px] font-medium whitespace-nowrap flex items-center gap-1.5 transition-all ${
+                      className={`h-7 px-3 rounded-full text-[11px] font-medium whitespace-nowrap flex items-center gap-1.5 transition-all cursor-pointer ${
                         active
-                          ? isDark ? 'bg-slate-950 text-white shadow-sm' : 'bg-white text-slate-900 shadow-sm'
+                          ? isDark ? 'bg-slate-950 text-white shadow-xs font-bold' : 'bg-white text-slate-900 shadow-xs font-bold'
                           : isDark ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-800'
                       }`}
                     >
@@ -519,17 +519,17 @@ export default function CctvModal({
                         playClickSound();
                         setFocusedCamera(cam);
                       }}
-                      className={`group text-left rounded-xl overflow-hidden border transition-all duration-200 hover:-translate-y-0.5 ${
+                      className={`group text-left rounded-2xl overflow-hidden border transition-all duration-200 hover:-translate-y-0.5 cursor-pointer ${
                         isDark
                           ? 'bg-slate-950/40 border-slate-800 hover:border-slate-700 hover:shadow-lg hover:shadow-black/30'
                           : 'bg-white border-slate-200 hover:border-slate-300 hover:shadow-lg hover:shadow-slate-200/70'
                       }`}
                     >
                       <CameraFeed camera={cam} clock={liveClock} resetKey={resetKey} />
-                      <div className="px-3 py-2.5">
+                      <div className="px-3.5 py-3">
                         <div className="flex items-center justify-between gap-2">
                           <h3 className="text-[12.5px] sm:text-[13px] font-semibold truncate">{cam.shortName || cam.name}</h3>
-                          <span className={`shrink-0 px-1.5 py-0.5 rounded-md text-[9.5px] font-semibold ${agencyTone(cam.agency)}`}>
+                          <span className={`shrink-0 px-2 py-0.5 rounded-full text-[9.5px] font-semibold ${agencyTone(cam.agency)}`}>
                             {cam.agency}
                           </span>
                         </div>

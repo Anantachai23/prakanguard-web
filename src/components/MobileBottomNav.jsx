@@ -64,7 +64,7 @@ export default function MobileBottomNav({
           }}
         >
           <div 
-            className={`absolute bottom-0 left-0 right-0 max-h-[62vh] overflow-y-auto overscroll-contain rounded-t-xl border-t p-2.5 pb-[calc(0.5rem+env(safe-area-inset-bottom,0px))] shadow-2xl transition-all ${
+            className={`absolute bottom-0 left-0 right-0 max-h-[64vh] overflow-y-auto overscroll-contain rounded-t-3xl border-t p-3.5 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] shadow-2xl transition-all ${
               isDark 
                 ? 'bg-slate-900 border-slate-800 text-slate-100' 
                 : 'bg-white border-slate-200 text-slate-900'
@@ -72,10 +72,10 @@ export default function MobileBottomNav({
             onClick={(e) => e.stopPropagation()}
           >
             {/* Sheet Handle & Header */}
-            <div className="flex items-center justify-between pb-1.5 mb-2 border-b border-slate-200 dark:border-slate-800">
+            <div className="flex items-center justify-between pb-2 mb-2.5 border-b border-slate-200 dark:border-slate-800">
               <div className="flex items-center gap-2">
-                <span className="w-6 h-1 bg-slate-300 dark:bg-slate-700 rounded-md inline-block"></span>
-                <span className="text-[10.5px] font-bold text-slate-600 dark:text-slate-300 tracking-wide">
+                <span className="w-8 h-1 bg-slate-300 dark:bg-slate-700 rounded-full inline-block"></span>
+                <span className="text-[11px] font-bold text-slate-700 dark:text-slate-200 tracking-wide">
                   ศูนย์เมนูช่วยเหลือ & ข้อมูลทางการ
                 </span>
               </div>
@@ -85,7 +85,7 @@ export default function MobileBottomNav({
                   playCloseSound();
                   setIsMenuOpen(false);
                 }}
-                className="w-6 h-6 rounded-md flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 bg-slate-100 dark:bg-slate-800 cursor-pointer"
+                className="w-7 h-7 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 bg-slate-100 dark:bg-slate-800 cursor-pointer"
                 aria-label="ปิดเมนู"
               >
                 <X className="w-3.5 h-3.5" />
@@ -237,7 +237,7 @@ export default function MobileBottomNav({
                 playReportSound();
                 if (onOpenCitizenReport) onOpenCitizenReport();
               }}
-              className="flex flex-col items-center justify-center w-[46px] h-[46px] rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-600/35 border-2 border-white dark:border-slate-900 active:scale-90 transition-transform cursor-pointer relative"
+              className="flex flex-col items-center justify-center w-[46px] h-[46px] rounded-2xl bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-600/35 border-2 border-white dark:border-slate-900 active:scale-90 transition-transform cursor-pointer relative"
               title="แตะเพื่อแจ้งจุดน้ำท่วม"
             >
               <CivicReportCamera className="w-4 h-4 text-white" />

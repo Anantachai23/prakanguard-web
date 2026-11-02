@@ -338,21 +338,21 @@ export default function CitizenReportModal({
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
       className="fixed inset-0 z-[2000] bg-slate-950/75 backdrop-blur-xs flex items-center justify-center p-3.5 sm:p-4 py-8 sm:py-8 overflow-y-auto overscroll-contain"
     >
-      <div className={`w-full max-w-[calc(100vw-28px)] xs:max-w-[460px] sm:max-w-lg my-auto m-auto rounded-2xl border shadow-2xl overflow-hidden flex flex-col max-h-[76vh] sm:max-h-[82vh] transition-colors ${
+      <div className={`w-full max-w-[calc(100vw-24px)] xs:max-w-[460px] sm:max-w-lg my-auto m-auto rounded-3xl border shadow-2xl overflow-hidden flex flex-col max-h-[78vh] sm:max-h-[84vh] transition-colors ${
         isDark ? 'bg-slate-900 border-slate-700/90 text-slate-100' : 'bg-white border-slate-200 text-slate-900'
       }`}>
         {/* Header */}
-        <div className={`px-4 py-3 border-b flex items-center justify-between gap-3 shrink-0 ${
-          isDark ? 'border-slate-800 bg-slate-950/60' : 'border-slate-200 bg-slate-50'
+        <div className={`px-4 py-3 sm:px-5 sm:py-3.5 border-b flex items-center justify-between gap-3 shrink-0 ${
+          isDark ? 'border-slate-800/80 bg-slate-900/60' : 'border-slate-100 bg-slate-50/50'
         }`}>
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className={`w-8 h-8 rounded-lg border flex items-center justify-center shrink-0 ${
-              isDark ? 'bg-blue-950/60 text-blue-400 border-blue-800/60' : 'bg-blue-50 text-blue-700 border-blue-200'
+            <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
+              isDark ? 'bg-blue-950/60 text-blue-400' : 'bg-blue-50 text-blue-700'
             }`}>
               <CivicReportCamera className="w-4 h-4" />
             </div>
             <div>
-              <h3 className={`text-sm font-bold leading-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>
+              <h3 className={`text-sm sm:text-[15px] font-bold leading-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>
                 รายงานจุดน้ำท่วมขัง
               </h3>
               <p className={`text-[11px] leading-tight mt-0.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
@@ -363,10 +363,10 @@ export default function CitizenReportModal({
           <button 
             type="button"
             onClick={onClose} 
-            className={`w-7 h-7 rounded-lg border flex items-center justify-center transition-colors cursor-pointer shrink-0 ${
-              isDark ? 'bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white border-slate-700' : 'bg-white hover:bg-slate-100 text-slate-500 hover:text-slate-800 border-slate-200'
+            className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center transition-colors cursor-pointer shrink-0 ${
+              isDark ? 'hover:bg-slate-800 text-slate-400 hover:text-white' : 'hover:bg-slate-100 text-slate-500 hover:text-slate-800'
             }`}
-            title="ปิดหน้าต่าง"
+            title="ปิด"
           >
             <X className="w-4 h-4" />
           </button>
@@ -430,7 +430,7 @@ export default function CitizenReportModal({
                     <button
                       type="button"
                       onClick={() => onStartPickOnMap('citizen')}
-                      className="inline-flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all cursor-pointer shadow-xs active:scale-95"
+                      className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all cursor-pointer shadow-xs active:scale-95"
                     >
                       <MapPin className="w-3.5 h-3.5" />
                       <span>ปักหมุดบนแผนที่</span>
@@ -448,7 +448,7 @@ export default function CitizenReportModal({
                       const detected = detectDistrictForCoordinates(userLocation.lat, userLocation.lng);
                       if (detected) setDistrict(detected);
                     }}
-                    className={`inline-flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-lg border text-xs font-semibold transition-all cursor-pointer active:scale-95 ${
+                    className={`inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-full border text-xs font-semibold transition-all cursor-pointer active:scale-95 ${
                       isDark ? 'bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700' : 'bg-slate-50 border-slate-300 text-slate-700 hover:bg-slate-100'
                     }`}
                   >
@@ -465,7 +465,7 @@ export default function CitizenReportModal({
                 <label className={`text-xs font-bold ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>
                   2. ระดับความลึกน้ำท่วม <span className="text-rose-500">*</span>
                 </label>
-                <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${activeTierMeta.badgeStyle}`}>
+                <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${activeTierMeta.badgeStyle}`}>
                   {activeTierMeta.title}
                 </span>
               </div>
@@ -479,7 +479,7 @@ export default function CitizenReportModal({
                       key={tier.level}
                       type="button"
                       onClick={() => syncDepthValue(tier.defaultCm)}
-                      className={`p-2.5 rounded-lg border text-left transition-all cursor-pointer ${
+                      className={`p-3 rounded-2xl border text-left transition-all cursor-pointer ${
                         isSelected
                           ? tier.activeClass
                           : (isDark ? 'bg-slate-950/70 border-slate-800 text-slate-300 hover:border-slate-700' : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100')
@@ -501,7 +501,7 @@ export default function CitizenReportModal({
               </div>
 
               {/* ช่องปรับตัวเลขความลึก (ซม.) */}
-              <div className={`px-3 py-2 rounded-lg border flex items-center justify-between gap-2 ${
+              <div className={`px-3.5 py-2.5 rounded-2xl border flex items-center justify-between gap-2 ${
                 isDark ? 'bg-slate-950/60 border-slate-800' : 'bg-slate-50 border-slate-200'
               }`}>
                 <div className="min-w-0">
@@ -517,7 +517,7 @@ export default function CitizenReportModal({
                   <button
                     type="button"
                     onClick={() => syncDepthValue(Math.max(5, parsedDepthNum - 5))}
-                    className={`w-7 h-7 rounded-md border flex items-center justify-center cursor-pointer ${
+                    className={`w-7 h-7 rounded-full border flex items-center justify-center cursor-pointer transition-colors active:scale-95 ${
                       isDark ? 'bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700' : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-100'
                     }`}
                   >
@@ -537,7 +537,7 @@ export default function CitizenReportModal({
                           syncDepthValue(Number(raw));
                         }
                       }}
-                      className={`w-full pl-2 pr-7 py-1 rounded-md border text-center text-xs font-bold font-mono outline-none ${
+                      className={`w-full pl-2 pr-7 py-1 rounded-xl border text-center text-xs font-bold font-mono outline-none ${
                         isDark 
                           ? 'bg-slate-900 border-slate-700 text-white focus:border-blue-500' 
                           : 'bg-white border-slate-300 text-slate-900 focus:border-blue-600'
@@ -552,7 +552,7 @@ export default function CitizenReportModal({
                   <button
                     type="button"
                     onClick={() => syncDepthValue(Math.min(200, parsedDepthNum + 5))}
-                    className={`w-7 h-7 rounded-md border flex items-center justify-center cursor-pointer ${
+                    className={`w-7 h-7 rounded-full border flex items-center justify-center cursor-pointer transition-colors active:scale-95 ${
                       isDark ? 'bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700' : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-100'
                     }`}
                   >
@@ -690,13 +690,13 @@ export default function CitizenReportModal({
               )}
             </div>
 
-            {/* ปุ่มยืนยัน */}
-            <div className="pt-1 flex items-center justify-end gap-2">
+            {/* ปุ่มยืนยัน — Rounded Pill Buttons */}
+            <div className="pt-2 flex items-center justify-end gap-2">
               <button
                 type="button"
                 onClick={onClose}
-                className={`px-4 py-2 rounded-lg border text-xs font-semibold transition-colors cursor-pointer ${
-                  isDark ? 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700' : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-100'
+                className={`px-4 py-2 rounded-full border text-xs font-semibold transition-colors cursor-pointer active:scale-95 ${
+                  isDark ? 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700' : 'bg-slate-100 border-slate-300 text-slate-700 hover:bg-slate-200'
                 }`}
               >
                 ยกเลิก
@@ -704,7 +704,7 @@ export default function CitizenReportModal({
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="flex-1 sm:flex-none px-5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs transition-colors cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50"
+                className="flex-1 sm:flex-none px-5 py-2 rounded-full bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs transition-colors cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50 active:scale-95 shadow-xs"
               >
                 <span>{isSubmitting ? 'กำลังส่ง...' : 'ส่งรายงานน้ำท่วม'}</span>
               </button>

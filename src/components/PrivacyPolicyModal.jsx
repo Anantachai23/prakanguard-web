@@ -55,32 +55,32 @@ export default function PrivacyPolicyModal({
       }}
     >
       <div 
-        className={`w-full max-w-[calc(100vw-28px)] xs:max-w-[420px] sm:max-w-xl my-auto m-auto max-h-[76vh] sm:max-h-[82vh] shrink-0 border rounded-2xl shadow-2xl flex flex-col overflow-hidden transition-colors ${
+        className={`w-full max-w-[calc(100vw-24px)] xs:max-w-[420px] sm:max-w-xl my-auto m-auto max-h-[78vh] sm:max-h-[84vh] shrink-0 border rounded-3xl shadow-2xl flex flex-col overflow-hidden transition-colors ${
           isDark 
             ? 'bg-slate-900 border-slate-800 text-slate-100' 
             : 'bg-white border-slate-200 text-slate-900'
         }`}
       >
         {/* Top Institutional Bar */}
-        <div className="h-1 w-full bg-blue-700 shrink-0" />
+        <div className="h-1.5 w-full bg-blue-700 shrink-0" />
 
         {/* Header */}
-        <div className={`px-3 py-2 sm:px-4 sm:py-3 border-b flex items-center justify-between gap-2 shrink-0 ${
-          isDark ? 'bg-slate-950/50 border-slate-800' : 'bg-slate-50/80 border-slate-200'
+        <div className={`px-4 py-3 sm:px-5 sm:py-3.5 border-b flex items-center justify-between gap-3 shrink-0 ${
+          isDark ? 'bg-slate-900/60 border-slate-800/80' : 'bg-slate-50/50 border-slate-100'
         }`}>
-          <div className="flex items-center gap-2 min-w-0">
-            <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg border flex items-center justify-center shrink-0 ${
-              isDark ? 'bg-slate-800 border-slate-700 text-blue-400' : 'bg-white border-slate-200 text-blue-700 shadow-2xs'
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
+              isDark ? 'bg-blue-950/60 text-blue-400' : 'bg-blue-50 text-blue-700'
             }`}>
-              <CivicCrest className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <CivicCrest className="w-4 h-4" />
             </div>
             <div className="min-w-0">
-              <h2 className={`text-xs sm:text-sm font-bold leading-tight tracking-tight truncate ${
+              <h2 className={`text-sm sm:text-[15px] font-bold leading-tight tracking-tight truncate ${
                 isDark ? 'text-white' : 'text-slate-900'
               }`}>
                 ข้อกำหนดการใช้งานและนโยบายความเป็นส่วนตัว
               </h2>
-              <p className={`text-[9.5px] sm:text-xs leading-tight mt-0.5 truncate ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+              <p className={`text-[11px] leading-tight mt-0.5 truncate ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
                 โครงการเทคโนโลยีสารสนเทศเพื่อสังคม (PrakanGuard)
               </p>
             </div>
@@ -89,21 +89,21 @@ export default function PrivacyPolicyModal({
           <button
             type="button"
             onClick={handleClose}
-            className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg border flex items-center justify-center transition-colors cursor-pointer shrink-0 ${
+            className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center transition-colors cursor-pointer shrink-0 ${
               isDark 
-                ? 'bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white border-slate-700' 
-                : 'bg-white hover:bg-slate-100 text-slate-500 hover:text-slate-800 border-slate-200'
+                ? 'hover:bg-slate-800 text-slate-400 hover:text-white' 
+                : 'hover:bg-slate-100 text-slate-500 hover:text-slate-800'
             }`}
-            title="ปิดหน้าต่าง"
+            title="ปิด"
           >
-            <X className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Body */}
-        <div className="flex-1 overflow-y-auto px-3.5 sm:px-5 py-3 sm:py-4 text-[11px] sm:text-xs leading-relaxed">
-          <div className={`rounded-lg border divide-y ${
-            isDark ? 'bg-slate-950/40 border-slate-800 divide-slate-800' : 'bg-slate-50/50 border-slate-200 divide-slate-200'
+        <div className="flex-1 overflow-y-auto px-4 py-3 sm:px-5 sm:py-4 text-[11px] sm:text-xs leading-relaxed custom-scrollbar-thin">
+          <div className={`rounded-2xl border divide-y overflow-hidden ${
+            isDark ? 'bg-slate-900/60 border-slate-800 divide-slate-800' : 'bg-slate-50/40 border-slate-200 divide-slate-100'
           }`}>
             {sections.map((sec) => (
               <div key={sec.num} className="p-2.5 sm:p-3.5 space-y-1">
@@ -138,10 +138,10 @@ export default function PrivacyPolicyModal({
         </div>
 
         {/* Footer */}
-        <div className={`px-3.5 py-2 sm:px-5 sm:py-3 border-t flex items-center justify-between gap-2 shrink-0 ${
-          isDark ? 'border-slate-800 bg-slate-950/60' : 'border-slate-200 bg-slate-50/80'
+        <div className={`px-4 py-2.5 sm:px-5 flex items-center justify-between gap-2 shrink-0 border-t ${
+          isDark ? 'border-slate-800/80 bg-slate-900/60' : 'border-slate-100 bg-slate-50/50'
         }`}>
-          <div className="flex items-center gap-1.5 text-[10.5px] sm:text-[11px] text-slate-500 dark:text-slate-400 truncate">
+          <div className="flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400 truncate">
             <CivicShield className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 shrink-0" />
             <span className="truncate">มาตรฐานความปลอดภัย PrakanGuard</span>
           </div>
@@ -149,9 +149,9 @@ export default function PrivacyPolicyModal({
           <button
             type="button"
             onClick={handleClose}
-            className="px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-lg bg-blue-700 hover:bg-blue-800 text-white font-semibold text-[11px] sm:text-xs transition-colors cursor-pointer shrink-0"
+            className="px-4 py-1.5 rounded-full bg-blue-700 hover:bg-blue-800 text-white font-semibold text-xs transition-colors cursor-pointer shrink-0 active:scale-95 shadow-xs"
           >
-            รับทราบและปิด
+            รับทราบ
           </button>
         </div>
       </div>

@@ -65,7 +65,7 @@ export default function WelcomeModal({
       }}
     >
       <div 
-        className={`w-full max-w-[calc(100vw-28px)] xs:max-w-[420px] sm:max-w-md my-auto m-auto max-h-[76vh] sm:max-h-[82vh] shrink-0 border rounded-2xl shadow-2xl overflow-hidden flex flex-col relative transition-all ${
+        className={`w-full max-w-[calc(100vw-24px)] xs:max-w-[420px] sm:max-w-md my-auto m-auto max-h-[78vh] sm:max-h-[84vh] shrink-0 border rounded-3xl shadow-2xl overflow-hidden flex flex-col relative transition-all ${
           isDark 
             ? 'bg-slate-900/95 border-slate-700/80 text-slate-100 shadow-black/60' 
             : 'bg-white/95 border-slate-200/90 text-slate-900 shadow-slate-900/20'
@@ -87,14 +87,14 @@ export default function WelcomeModal({
         <button 
           type="button"
           onClick={handleEnter} 
-          className={`absolute top-3 right-3 w-7 h-7 rounded-lg border flex items-center justify-center transition-all cursor-pointer z-10 ${
+          className={`absolute top-3.5 right-3.5 w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center transition-all cursor-pointer z-10 ${
             isDark 
-              ? 'bg-slate-800/80 hover:bg-slate-700 text-slate-400 hover:text-white border-slate-700' 
-              : 'bg-slate-100/80 hover:bg-slate-200 text-slate-500 hover:text-slate-800 border-slate-200'
+              ? 'hover:bg-slate-800 text-slate-400 hover:text-white' 
+              : 'hover:bg-slate-100 text-slate-500 hover:text-slate-800'
           }`}
           title="เข้าสู่เว็บไซต์"
         >
-          <X className="w-3.5 h-3.5" />
+          <X className="w-4 h-4" />
         </button>
 
         {/* Header Banner */}
@@ -134,7 +134,7 @@ export default function WelcomeModal({
         {/* Modal Body */}
         <div className="px-5 py-4">
           <div className="grid grid-cols-3 gap-2">
-            <div className={`p-3 rounded-xl border flex flex-col items-center text-center ${
+            <div className={`p-3 rounded-2xl border flex flex-col items-center text-center ${
               isDark ? 'bg-slate-800/60 border-slate-700/60' : 'bg-slate-50 border-slate-200/80'
             }`}>
               <MapPin className="w-4 h-4 text-blue-500 mb-1 shrink-0" />
@@ -146,7 +146,7 @@ export default function WelcomeModal({
               </span>
             </div>
 
-            <div className={`p-3 rounded-xl border flex flex-col items-center text-center ${
+            <div className={`p-3 rounded-2xl border flex flex-col items-center text-center ${
               isDark ? 'bg-slate-800/60 border-slate-700/60' : 'bg-slate-50 border-slate-200/80'
             }`}>
               <Eye className="w-4 h-4 text-sky-500 mb-1 shrink-0" />
@@ -158,7 +158,7 @@ export default function WelcomeModal({
               </span>
             </div>
 
-            <div className={`p-3 rounded-xl border flex flex-col items-center text-center ${
+            <div className={`p-3 rounded-2xl border flex flex-col items-center text-center ${
               isDark ? 'bg-slate-800/60 border-slate-700/60' : 'bg-slate-50 border-slate-200/80'
             }`}>
               <Radio className="w-4 h-4 text-emerald-500 mb-1 shrink-0" />
@@ -179,7 +179,7 @@ export default function WelcomeModal({
           <button
             type="button"
             onClick={handleEnter}
-            className={`w-full py-2.5 px-4 rounded-xl active:scale-[0.98] font-bold text-xs sm:text-[13px] transition-all cursor-pointer flex items-center justify-center gap-2 group ${
+            className={`w-full py-2.5 px-4 rounded-full active:scale-[0.98] font-bold text-xs sm:text-[13px] transition-all cursor-pointer flex items-center justify-center gap-2 group shadow-xs ${
               isDark ? 'bg-white text-slate-950 hover:bg-slate-100' : 'bg-slate-900 text-white hover:bg-slate-800'
             }`}
           >

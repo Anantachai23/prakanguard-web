@@ -105,27 +105,27 @@ export default function FeedbackModal({ isOpen, onClose, theme = 'light', onFeed
       onClick={(e) => { if (e.target === e.currentTarget) handleResetAndClose(); }}
       className="fixed inset-0 z-[2000] bg-slate-950/75 backdrop-blur-xs flex items-center justify-center p-3.5 sm:p-4 py-8 sm:py-8 overflow-y-auto overscroll-contain"
     >
-      <div className={`w-full max-w-[calc(100vw-28px)] xs:max-w-[420px] sm:max-w-lg my-auto m-auto border rounded-2xl shadow-2xl flex flex-col max-h-[76vh] sm:max-h-[82vh] shrink-0 overflow-hidden transition-colors ${
+      <div className={`w-full max-w-[calc(100vw-24px)] xs:max-w-[420px] sm:max-w-lg my-auto m-auto border rounded-3xl shadow-2xl flex flex-col max-h-[78vh] sm:max-h-[84vh] shrink-0 overflow-hidden transition-colors ${
         isDark ? 'bg-slate-900 border-slate-800 text-slate-100' : 'bg-white border-slate-200 text-slate-900'
       }`}>
         {/* Top Institutional Bar */}
-        <div className="h-1 w-full bg-blue-700 shrink-0" />
+        <div className="h-1.5 w-full bg-blue-700 shrink-0" />
 
         {/* Header */}
-        <div className={`px-3 py-2 sm:px-4 sm:py-3 border-b flex items-center justify-between gap-2 shrink-0 ${
-          isDark ? 'border-slate-800 bg-slate-950/50' : 'border-slate-200 bg-slate-50/80'
+        <div className={`px-4 py-3 sm:px-5 sm:py-3.5 border-b flex items-center justify-between gap-3 shrink-0 ${
+          isDark ? 'border-slate-800/80 bg-slate-900/60' : 'border-slate-100 bg-slate-50/50'
         }`}>
-          <div className="flex items-center gap-2 min-w-0">
-            <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg border flex items-center justify-center shrink-0 ${
-              isDark ? 'bg-slate-800 text-blue-400 border-slate-700' : 'bg-white text-blue-700 border-slate-200 shadow-2xs'
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
+              isDark ? 'bg-blue-950/60 text-blue-400' : 'bg-blue-50 text-blue-600'
             }`}>
-              <CivicFeedback className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <CivicFeedback className="w-4 h-4" />
             </div>
             <div className="min-w-0">
-              <h2 className={`text-xs sm:text-sm font-bold leading-tight tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>
+              <h2 className={`text-sm sm:text-[15px] font-bold leading-tight tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>
                 แบบรับฟังความคิดเห็นและแจ้งปัญหา
               </h2>
-              <p className={`text-[9.5px] sm:text-xs mt-0.5 leading-tight ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+              <p className={`text-[11px] mt-0.5 leading-tight ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
                 ส่งข้อมูลถึงผู้ดูแลระบบเพื่อพัฒนาการให้บริการสาธารณะ
               </p>
             </div>
@@ -134,12 +134,12 @@ export default function FeedbackModal({ isOpen, onClose, theme = 'light', onFeed
           <button
             type="button"
             onClick={handleResetAndClose}
-            className={`w-6 h-6 sm:w-7 sm:h-7 rounded-md border flex items-center justify-center transition-colors cursor-pointer shrink-0 ${
-              isDark ? 'bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white border-slate-700' : 'bg-white hover:bg-slate-100 text-slate-500 hover:text-slate-900 border-slate-200'
+            className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center transition-colors cursor-pointer shrink-0 ${
+              isDark ? 'hover:bg-slate-800 text-slate-400 hover:text-white' : 'hover:bg-slate-100 text-slate-500 hover:text-slate-800'
             }`}
-            title="ปิดหน้าต่าง"
+            title="ปิด"
           >
-            <X className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            <X className="w-4 h-4" />
           </button>
         </div>
 
@@ -161,9 +161,9 @@ export default function FeedbackModal({ isOpen, onClose, theme = 'light', onFeed
               <button
                 type="button"
                 onClick={handleResetAndClose}
-                className="mt-2 px-5 py-2 rounded-lg bg-blue-700 hover:bg-blue-800 text-white font-semibold text-xs transition-colors cursor-pointer"
+                className="mt-2 px-5 py-2 rounded-full bg-blue-700 hover:bg-blue-800 text-white font-semibold text-xs transition-colors cursor-pointer active:scale-95"
               >
-                ปิดหน้าต่าง
+                ปิด
               </button>
             </div>
           ) : (
@@ -181,7 +181,7 @@ export default function FeedbackModal({ isOpen, onClose, theme = 'light', onFeed
                         key={cat.id}
                         type="button"
                         onClick={() => setCategory(cat.id)}
-                        className={`px-3 py-2 rounded-lg border text-left transition-colors cursor-pointer ${
+                        className={`px-3 py-2 rounded-2xl border text-left transition-colors cursor-pointer ${
                           active
                             ? (isDark ? 'bg-blue-950/60 border-blue-500 text-white' : 'bg-blue-50/80 border-blue-600 text-blue-900')
                             : (isDark ? 'bg-slate-950/40 border-slate-800 text-slate-400 hover:border-slate-700' : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50')
@@ -305,7 +305,7 @@ export default function FeedbackModal({ isOpen, onClose, theme = 'light', onFeed
                 <button
                   type="submit"
                   disabled={isSubmitting || !message.trim()}
-                  className="w-full sm:w-auto px-5 py-2.5 rounded-lg bg-blue-700 hover:bg-blue-800 text-white font-semibold text-xs sm:text-sm flex items-center justify-center gap-2 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full sm:w-auto px-6 py-2.5 rounded-full bg-blue-700 hover:bg-blue-800 text-white font-semibold text-xs sm:text-sm flex items-center justify-center gap-2 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 shadow-xs"
                 >
                   <Send className="w-3.5 h-3.5" />
                   <span>{isSubmitting ? 'กำลังบันทึก...' : 'ส่งข้อมูลข้อเสนอแนะ'}</span>
