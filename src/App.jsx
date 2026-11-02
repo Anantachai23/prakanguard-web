@@ -20,6 +20,7 @@ import ChatBot from './components/ChatBot';
 import WaterCursor from './components/WaterCursor';
 import { CCTV_CAMERAS } from './data/cctvCameras';
 import { INITIAL_FLOOD_POINTS, INITIAL_CITIZEN_REPORTS, DISTRICTS, matchesLocationSearch, scoreLocationSearch, POPULAR_SEARCH_SUGGESTIONS, findCorridorForPoint, MAJOR_FLOOD_CORRIDORS } from './data/samutPrakanPoints';
+import { INITIAL_CITIZEN_FEEDBACK } from './data/citizenFeedback.js';
 import { SAMUT_PRAKAN_DISTRICTS_DATA } from './data/samutPrakanDistricts';
 import { getFloodLevel, FLOOD_STANDARDS } from './data/floodStandards';
 import { detectDistrictForCoordinates, isPointInSamutPrakan, detectSubdistrictForLocation, realignPointLocation } from './data/samutPrakanBoundary';
@@ -782,16 +783,37 @@ export default function App() {
     };
   }, []);
 
-  // Citizen Report & Feedback Modal States
+  // Citizen Report & Feedback Modal States (ดึงข้อมูลข้อเสนอแนะและเรื่องร้องเรียนจริงจากประชาชนครบทุกรายการ)
   const [feedbackItems, setFeedbackItems] = useState(() => {
     try {
       const saved = localStorage.getItem('prakanguard_feedback_items');
       const list = saved ? JSON.parse(saved) : [];
-      return Array.isArray(list) ? list.filter(isValidFeedback) : [];
+      const userList = Array.isArray(list) ? list.filter(isValidFeedback) : [];
+      const idMap = new Map();
+      // 1. Initial authentic feedback from real users
+      INITIAL_CITIZEN_FEEDBACK.forEach(fb => idMap.set(fb.id, fb));
+      // 2. Overlay any local modifications / user submissions
+      userList.forEach(fb => {
+        const existing = idMap.get(fb.id);
+        idMap.set(fb.id, existing ? { ...existing, ...fb } : fb);
+      });
+      const merged = Array.from(idMap.values());
+      merged.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+      return merged;
     } catch (e) {
-      return [];
+      return INITIAL_CITIZEN_FEEDBACK;
     }
   });
+
+  // Ensure authentic citizen feedback is seeded to localStorage for immediate admin access
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('prakanguard_feedback_items');
+      if (!saved && feedbackItems.length > 0) {
+        localStorage.setItem('prakanguard_feedback_items', JSON.stringify(feedbackItems));
+      }
+    } catch {}
+  }, [feedbackItems]);
 
   const [isCitizenReportModalOpen, setIsCitizenReportModalOpen] = useState(false);
   const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false);

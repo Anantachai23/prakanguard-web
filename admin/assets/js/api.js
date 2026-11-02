@@ -788,6 +788,21 @@ export async function fetchFeedback() {
     if (Array.isArray(localFb)) localFb.forEach(addFb);
   } catch {}
 
+  // 0.1 Fetch authentic feedback from Serverless / Local Admin API / Static Asset
+  try {
+    const apiRes = await fetch('/api/feedback').catch(() => null);
+    if (apiRes && apiRes.ok) {
+      const apiFb = await apiRes.json();
+      if (Array.isArray(apiFb)) apiFb.forEach(addFb);
+    } else {
+      const assetRes = await fetch('./assets/data/feedback.json').catch(() => null);
+      if (assetRes && assetRes.ok) {
+        const assetFb = await assetRes.json();
+        if (Array.isArray(assetFb)) assetFb.forEach(addFb);
+      }
+    }
+  } catch {}
+
   // 1. Fetch from Supabase Cloud & Live ntfy stream in parallel
   const [supaFb, ntfyFb] = await Promise.all([
     restAll('feedback?select=*&order=created_at.desc').catch(() => []),
