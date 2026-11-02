@@ -6,7 +6,8 @@ import {
   playEmergencySound, 
   playCloseSound, 
   playModalOpenSound,
-  playTabSound
+  playTabSound,
+  playGpsSound
 } from '../services/soundEffects';
 import { 
   Activity, 
@@ -21,7 +22,8 @@ import {
   CivicEmergencyPhone,
   CivicStandards,
   CivicShield,
-  CivicStationPin
+  CivicStationPin,
+  CivicCompass
 } from './CivicIcons';
 
 export default function MobileBottomNav({
@@ -95,6 +97,30 @@ export default function MobileBottomNav({
             {/* Quick Actions List (ไม่มีปุ่มซ้ำซ้อนกับ Bottom Bar) */}
             <div className="grid grid-cols-2 gap-1.5">
               
+              {/* 0. GPS Locate Button */}
+              <button
+                type="button"
+                onClick={() => handleMenuAction(onLocateMe, playGpsSound)}
+                className={`col-span-2 p-2.5 rounded-2xl flex items-center justify-between transition-colors text-left cursor-pointer border ${
+                  hasGps
+                    ? (isDark ? 'bg-cyan-950/40 border-cyan-800/60 text-cyan-200' : 'bg-cyan-50 border-cyan-200 text-cyan-900')
+                    : (isDark ? 'bg-blue-950/40 border-blue-800/60 text-blue-200' : 'bg-blue-50 border-blue-200 text-blue-900')
+                }`}
+              >
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center shrink-0">
+                    <CivicCompass className="w-4 h-4 text-white" />
+                  </div>
+                  <div>
+                    <span className="text-[11.5px] font-bold block leading-tight">ระบุพิกัดตำแหน่งของฉัน (GPS)</span>
+                    <span className="text-[9.5px] opacity-80 block">{hasGps ? 'เปิดใช้งานอยู่ • แตะเพื่ออัปเดตและซูม' : 'แตะเพื่อค้นหาตำแหน่งปัจจุบันบนแผนที่'}</span>
+                  </div>
+                </div>
+                <span className="px-2.5 py-0.5 rounded-full bg-blue-600 text-white text-[10px] font-bold shrink-0">
+                  {hasGps ? 'อัปเดต' : 'เปิด GPS'}
+                </span>
+              </button>
+
               {/* 1. Emergency Hotline 1784 */}
               <button
                 type="button"

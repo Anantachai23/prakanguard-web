@@ -677,6 +677,7 @@ export default function App() {
   // GPS User Location
   const [userLocation, setUserLocation] = useState(null);
   const [locationAccuracy, setLocationAccuracy] = useState(null);
+  const [isLocatingGps, setIsLocatingGps] = useState(false);
 
   // Identify which district the user is currently located in strictly based on GeoJSON polygon boundaries
   const userDistrict = useMemo(() => {
@@ -2493,25 +2494,72 @@ export default function App() {
     return closest ? { point: closest, distanceKm: minDistance } : null;
   }, [userLocation, points]);
 
-  // GPS Geolocation Handler with High Accuracy (Auto-requested on entry for mobile, iPad, and all devices)
-  const handleLocateMe = (silent = false) => {
-    if (!navigator.geolocation) {
-      if (!silent) alert("อุปกรณ์หรือเบราว์เซอร์ของคุณไม่รองรับการระบุพิกัด GPS");
+  // Robust Geolocation Retriever with 2-stage fallback:
+  // 1st stage: High-accuracy GPS (satellite/Wi-Fi positioning, 6s timeout)
+  // 2nd stage: Standard/Network IP fallback (instant, works on PCs/laptops without GPS hardware)
+  const getGeolocationWithFallback = useCallback((onSuccess, onError) => {
+    if (typeof navigator === 'undefined' || !navigator.geolocation) {
+      if (onError) onError({ code: 0, message: "Geolocation not supported" });
       return;
     }
 
     navigator.geolocation.getCurrentPosition(
       (pos) => {
+        onSuccess(pos);
+      },
+      (firstErr) => {
+        // If permission was denied by user explicitly (code 1), don't retry, fail immediately
+        if (firstErr && firstErr.code === 1) {
+          if (onError) onError(firstErr);
+          return;
+        }
+
+        // Retry with low accuracy (enableHighAccuracy: false) for PCs, desktops, or weak GPS
+        try {
+          navigator.geolocation.getCurrentPosition(
+            (pos) => {
+              onSuccess(pos);
+            },
+            (secondErr) => {
+              if (onError) onError(secondErr || firstErr);
+            },
+            { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 }
+          );
+        } catch (e) {
+          if (onError) onError(firstErr);
+        }
+      },
+      { enableHighAccuracy: true, timeout: 6000, maximumAge: 60000 }
+    );
+  }, []);
+
+  // GPS Geolocation Handler with High Accuracy & Fallback
+  const handleLocateMe = useCallback((silent = false) => {
+    if (typeof navigator === 'undefined' || !navigator.geolocation) {
+      if (!silent) alert("อุปกรณ์หรือเบราว์เซอร์ของคุณไม่รองรับการระบุพิกัด GPS");
+      return;
+    }
+
+    setIsLocatingGps(true);
+
+    getGeolocationWithFallback(
+      (pos) => {
+        setIsLocatingGps(false);
         const coords = {
           lat: pos.coords.latitude,
           lng: pos.coords.longitude
         };
         setUserLocation(coords);
-        setLocationAccuracy(pos.coords.accuracy);
-        setFlyToLocation(coords);
+        setLocationAccuracy(pos.coords.accuracy || 20);
+        setFlyToLocation({
+          lat: coords.lat,
+          lng: coords.lng,
+          zoom: 14.5,
+          duration: 2.2,
+          easeLinearity: 0.22,
+          ts: Date.now()
+        });
 
-        const accuracyM = Math.round(pos.coords.accuracy);
-        const timeStr = new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) + ' น.';
         const detectedDistrict = detectDistrictForCoordinates(coords.lat, coords.lng);
         const deviceModel = getDetailedDeviceInfo();
 
@@ -2520,7 +2568,8 @@ export default function App() {
           sendVisitorTelemetry('ไม่ได้อยู่สมุทรปราการ', deviceModel);
 
           if (!silent) {
-            alert(`ตรวจพบพิกัดของคุณที่ [${coords.lat.toFixed(4)}, ${coords.lng.toFixed(4)}]\n\nตำแหน่งท่านไม่ได้อยู่ในพื้นที่จังหวัดสมุทรปราการ\n\nระบบ PrakanGuard พัฒนาขึ้นเพื่อติดตามและรายงานสถานการณ์น้ำท่วมในพื้นที่ 6 อำเภอของจังหวัดสมุทรปราการ`);
+            setLatestUpdateNotification(`ระบุพิกัดสำเร็จ: ตำแหน่งปัจจุบันอยู่นอกพื้นที่ จ.สมุทรปราการ`);
+            setTimeout(() => setLatestUpdateNotification(null), 5000);
           }
         } else {
           // อยู่ภายใน จ.สมุทรปราการ
@@ -2534,17 +2583,17 @@ export default function App() {
         }
       },
       (err) => {
+        setIsLocatingGps(false);
         sendVisitorTelemetry('ปิด GPS', getDetailedDeviceInfo());
         if (!silent) {
           let msg = "ไม่ได้เปิด GPS หรือไม่ได้อนุญาตการเข้าถึงตำแหน่ง กรุณาเปิดการอนุญาต Location ในการตั้งค่าเบราว์เซอร์เพื่อระบุพิกัด";
-          if (err.code === 1) msg = "คุณปฏิเสธการเข้าถึงตำแหน่ง GPS กรุณาเปิดการอนุญาต Location ในการตั้งค่าเบราว์เซอร์เพื่อระบุพิกัด";
-          else if (err.code === 2) msg = "สัญญาณ GPS ขัดข้อง ไม่สามารถระบุพิกัดได้ในขณะนี้";
+          if (err && err.code === 1) msg = "คุณปฏิเสธการเข้าถึงตำแหน่ง GPS กรุณาเปิดการอนุญาต Location ในการตั้งค่าเบราว์เซอร์เพื่อระบุพิกัด";
+          else if (err && err.code === 2) msg = "สัญญาณ GPS ขัดข้อง ไม่สามารถระบุพิกัดได้ในขณะนี้";
           alert(msg);
         }
-      },
-      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+      }
     );
-  };
+  }, [getGeolocationWithFallback]);
 
   // Handle entering website from WelcomeModal: fly and zoom smoothly directly to user's real GPS position
   const handleEnterWebsite = () => {
@@ -2563,61 +2612,91 @@ export default function App() {
       return;
     }
 
-    // Request user GPS location and zoom in directly
-    if (typeof navigator !== 'undefined' && navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          const coords = {
-            lat: pos.coords.latitude,
-            lng: pos.coords.longitude
-          };
-          setUserLocation(coords);
-          setLocationAccuracy(pos.coords.accuracy);
+    setIsLocatingGps(true);
 
-          // Fly smoothly and zoom to user's exact GPS location!
-          setFlyToLocation({
-            lat: coords.lat,
-            lng: coords.lng,
-            zoom: 15.5,
-            duration: 2.2,
-            easeLinearity: 0.22,
-            ts: Date.now()
-          });
+    getGeolocationWithFallback(
+      (pos) => {
+        setIsLocatingGps(false);
+        const coords = {
+          lat: pos.coords.latitude,
+          lng: pos.coords.longitude
+        };
+        setUserLocation(coords);
+        setLocationAccuracy(pos.coords.accuracy || 20);
 
-          const detectedDistrict = detectDistrictForCoordinates(coords.lat, coords.lng);
-          const deviceModel = getDetailedDeviceInfo();
-          if (!detectedDistrict) {
-            sendVisitorTelemetry('ไม่ได้อยู่สมุทรปราการ', deviceModel);
-          } else {
-            const cleanDistrict = detectedDistrict.replace(/^อ\./, '').replace(/^อำเภอ/, '').replace('เมืองสมุทรปราการ', 'เมือง');
-            sendVisitorTelemetry(cleanDistrict, deviceModel);
-          }
-        },
-        (err) => {
-          sendVisitorTelemetry('ปิด GPS', getDetailedDeviceInfo());
-          // Fallback if denied or unavailable: smooth zoom to Samut Prakan province overview
-          setFlyToLocation({
-            lat: 13.6000,
-            lng: 100.6500,
-            zoom: isMobileScreen ? 11.2 : 11.6,
-            duration: 2.2,
-            easeLinearity: 0.22,
-            ts: Date.now()
-          });
-        },
-        { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
-      );
-    } else {
-      setFlyToLocation({
-        lat: 13.6000,
-        lng: 100.6500,
-        zoom: isMobileScreen ? 11.2 : 11.6,
-        duration: 2.2,
-        easeLinearity: 0.22,
-        ts: Date.now()
-      });
-    }
+        // Fly smoothly and zoom to user's exact GPS location!
+        setFlyToLocation({
+          lat: coords.lat,
+          lng: coords.lng,
+          zoom: 15.5,
+          duration: 2.2,
+          easeLinearity: 0.22,
+          ts: Date.now()
+        });
+
+        const detectedDistrict = detectDistrictForCoordinates(coords.lat, coords.lng);
+        const deviceModel = getDetailedDeviceInfo();
+        if (!detectedDistrict) {
+          sendVisitorTelemetry('ไม่ได้อยู่สมุทรปราการ', deviceModel);
+        } else {
+          const cleanDistrict = detectedDistrict.replace(/^อ\./, '').replace(/^อำเภอ/, '').replace('เมืองสมุทรปราการ', 'เมือง');
+          sendVisitorTelemetry(cleanDistrict, deviceModel);
+        }
+      },
+      () => {
+        setIsLocatingGps(false);
+        sendVisitorTelemetry('ปิด GPS', getDetailedDeviceInfo());
+        // Fallback if denied or unavailable: smooth zoom to Samut Prakan province overview
+        setFlyToLocation({
+          lat: 13.6000,
+          lng: 100.6500,
+          zoom: isMobileScreen ? 11.2 : 11.6,
+          duration: 2.2,
+          easeLinearity: 0.22,
+          ts: Date.now()
+        });
+      }
+    );
   };
+
+  // Auto-detect and sync geolocation permission state (Reactive GPS detection on permission grant)
+  useEffect(() => {
+    if (typeof window === 'undefined' || !navigator.permissions || !navigator.geolocation) return;
+
+    let isMounted = true;
+    let permissionStatusObj = null;
+
+    try {
+      navigator.permissions.query({ name: 'geolocation' }).then((status) => {
+        if (!isMounted) return;
+        permissionStatusObj = status;
+
+        // If permission is already granted when site opens, silently fetch coordinates!
+        if (status.state === 'granted') {
+          handleLocateMe(true);
+        }
+
+        // When user toggles permission from prompt or address bar to 'granted'
+        status.onchange = () => {
+          if (!isMounted) return;
+          if (status.state === 'granted') {
+            handleLocateMe(true);
+          }
+        };
+      }).catch(() => {
+        // Permissions query error or unsupported
+      });
+    } catch (e) {
+      // Ignore
+    }
+
+    return () => {
+      isMounted = false;
+      if (permissionStatusObj) {
+        permissionStatusObj.onchange = null;
+      }
+    };
+  }, [handleLocateMe]);
 
   const minor = levelCounts ? levelCounts.minor : points.filter(p => p.level === 1 && p.isActive !== false && !p.isResolved).length;
   const moderate = levelCounts ? levelCounts.moderate : points.filter(p => p.level === 2 && p.isActive !== false && !p.isResolved).length;
@@ -3059,15 +3138,27 @@ export default function App() {
                 <button
                   type="button"
                   onClick={() => handleLocateMe(false)}
+                  disabled={isLocatingGps}
                   className={`shrink-0 flex items-center gap-1.5 px-2.5 py-2 rounded-md border text-xs font-semibold shadow-xs cursor-pointer active:scale-95 transition-all ${
                     isDark ? 'bg-slate-850 border-slate-700 text-slate-300 hover:text-white' : 'bg-slate-50 border-slate-200 text-slate-700 hover:text-slate-900'
                   }`}
                   title="คลิกเพื่อเปิดตำแหน่งและระบุพิกัด GPS"
                 >
-                  <CivicCompass className="w-3.5 h-3.5 text-blue-500 shrink-0" />
-                  <span className="font-semibold text-blue-600 dark:text-cyan-400">
-                    เปิด GPS
-                  </span>
+                  {isLocatingGps ? (
+                    <>
+                      <RefreshCw className="w-3.5 h-3.5 text-blue-500 animate-spin shrink-0" />
+                      <span className="font-semibold text-blue-600 dark:text-cyan-400">
+                        กำลังค้นหา...
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <CivicCompass className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+                      <span className="font-semibold text-blue-600 dark:text-cyan-400">
+                        เปิด GPS
+                      </span>
+                    </>
+                  )}
                 </button>
               )}
             </div>
@@ -3419,6 +3510,7 @@ export default function App() {
               isSidebarOpen={isSidebarOpen}
               refreshCountdown={refreshCountdown}
               onOpenCctv={handleOpenCctv}
+              isLocatingGps={isLocatingGps}
             />
           </div>
 

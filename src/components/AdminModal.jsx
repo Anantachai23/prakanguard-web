@@ -1547,21 +1547,30 @@ export default function AdminModal({
       alert("อุปกรณ์นี้ไม่รองรับการดึงพิกัด GPS");
       return;
     }
+    const applyCoords = (pos) => {
+      const lat = Number(pos.coords.latitude.toFixed(5));
+      const lng = Number(pos.coords.longitude.toFixed(5));
+      setNewLocationLat(lat);
+      setNewLocationLng(lng);
+      const detected = detectDistrictForCoordinates(lat, lng);
+      if (detected) {
+        setNewLocationDistrict(detected);
+      }
+    };
+
     navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const lat = Number(pos.coords.latitude.toFixed(5));
-        const lng = Number(pos.coords.longitude.toFixed(5));
-        setNewLocationLat(lat);
-        setNewLocationLng(lng);
-        const detected = detectDistrictForCoordinates(lat, lng);
-        if (detected) {
-          setNewLocationDistrict(detected);
-        }
+      applyCoords,
+      () => {
+        // Fallback for PCs/laptops without GPS hardware
+        navigator.geolocation.getCurrentPosition(
+          applyCoords,
+          (err) => {
+            alert("ไม่สามารถดึงตำแหน่งพิกัด GPS ได้: " + (err?.message || 'สัญญาณขัดข้อง'));
+          },
+          { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 }
+        );
       },
-      (err) => {
-        alert("ไม่สามารถดึงตำแหน่งพิกัด GPS ได้: " + err.message);
-      },
-      { enableHighAccuracy: true, timeout: 10000 }
+      { enableHighAccuracy: true, timeout: 6000, maximumAge: 60000 }
     );
   };
 

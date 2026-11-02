@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { Crosshair, Navigation } from 'lucide-react';
+import { Crosshair, Navigation, RefreshCw } from 'lucide-react';
 import { CivicRouteCorridor, CivicRadar, CivicNavigationArrow } from './CivicIcons';
 import { playClickSound, playPinClickSound, playToggleSound, playGpsSound } from '../services/soundEffects';
 import { 
@@ -249,7 +249,8 @@ export default function MapView({
   theme = 'light',
   isTopPanelCollapsed = false,
   isSidebarOpen = true,
-  refreshCountdown = 300
+  refreshCountdown = 300,
+  isLocatingGps = false
 }) {
   const isDark = theme === 'dark';
   const formatCountdown = (seconds) => {
@@ -1187,6 +1188,7 @@ export default function MapView({
               playGpsSound();
               if (onLocateMe) onLocateMe();
             }}
+            disabled={isLocatingGps}
             title="ค้นหาพิกัดตำแหน่งปัจจุบันของคุณ (GPS)"
             className={`px-2 py-1 sm:px-3 sm:py-1.5 rounded-lg shadow-xs border transition-all flex items-center gap-1 sm:gap-1.5 text-[10px] sm:text-xs cursor-pointer backdrop-blur-md font-bold active:scale-95 ${
               isDark 
@@ -1194,8 +1196,17 @@ export default function MapView({
                 : 'bg-white/95 text-slate-700 hover:text-blue-700 hover:bg-slate-50 border-slate-200'
             }`}
           >
-            <CivicNavigationArrow className={`w-3 h-3 sm:w-3.5 sm:h-3.5 ${isDark ? 'text-cyan-400' : 'text-blue-600'}`} />
-            <span className="hidden sm:inline">พิกัดฉัน</span>
+            {isLocatingGps ? (
+              <>
+                <RefreshCw className="w-3 h-3 sm:w-3.5 sm:h-3.5 animate-spin text-blue-500" />
+                <span className="hidden sm:inline">กำลังค้นหา...</span>
+              </>
+            ) : (
+              <>
+                <CivicNavigationArrow className={`w-3 h-3 sm:w-3.5 sm:h-3.5 ${isDark ? 'text-cyan-400' : 'text-blue-600'}`} />
+                <span className="hidden sm:inline">พิกัดฉัน</span>
+              </>
+            )}
           </button>
           
           <button 
