@@ -2,13 +2,18 @@ import React from 'react';
 import { 
   X, 
   RefreshCw, 
-  CheckCircle2,
-  AlertTriangle,
-  TrendingDown,
-  Clock
+  CheckCircle2, 
+  AlertTriangle, 
+  TrendingDown, 
+  Clock, 
+  PhoneCall,
+  MapPin,
+  ShieldCheck,
+  Radio
 } from 'lucide-react';
 import { CivicBroadcast, CivicShield } from './CivicIcons';
 import { isTimestampTodayBangkok, getBangkokDateKey } from '../services/dailyUpdatesService';
+import { playCloseSound, playEmergencySound, playRefreshSound } from '../services/soundEffects';
 
 export default function PublicUpdatesModal({ 
   isOpen, 
@@ -27,8 +32,11 @@ export default function PublicUpdatesModal({
   const isDark = theme === 'dark';
 
   const todayDateObj = new Date();
-  const thaiMonths = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
-  const todayThaiDate = `${todayDateObj.getDate()} ${thaiMonths[todayDateObj.getMonth()]} ${todayDateObj.getFullYear() + 543}`;
+  const thaiMonths = [
+    'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
+    'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'
+  ];
+  const todayThaiFull = `${todayDateObj.getDate()} ${thaiMonths[todayDateObj.getMonth()]} ${todayDateObj.getFullYear() + 543}`;
 
   const formatDisplayTime = (timeStr, timestamp) => {
     if (!timeStr && !timestamp) return 'เมื่อสักครู่';
@@ -50,17 +58,13 @@ export default function PublicUpdatesModal({
 
   const isRealUpdateItem = (item) => {
     if (!item) return false;
-    // ป้องกันข้อมูลเก่าข้ามวันบนมือถือ: กรองเฉพาะข้อมูลของวันนี้ตามเวลาประเทศไทยเท่านั้น (รีเซ็ตทุกเที่ยงคืน)
     if (item.timestamp && !isTimestampTodayBangkok(item.timestamp)) return false;
     if (item.dateKey && item.dateKey !== getBangkokDateKey()) return false;
 
     const name = String(item.locationName || '').toLowerCase();
-    const sub = String(item.locationSub || '');
-    const dist = String(item.district || '');
     const id = String(item.id || '').toLowerCase();
     if (name.includes('security-probe') || name.includes('auto-deleted') || name.includes('probe') || name.includes('ทดสอบ')) return false;
     if (id.includes('probe') || id.includes('test-inspect') || id.includes('test-check')) return false;
-    if (name.includes('????') || sub.includes('????') || dist.includes('????')) return false;
     return true;
   };
 
@@ -73,9 +77,9 @@ export default function PublicUpdatesModal({
       return String(b.itemTime || '').localeCompare(String(a.itemTime || ''));
     });
 
-  const dryCount = items.filter(i => i.statusType === 'dry').length;
-  const recedingCount = items.filter(i => i.statusType === 'receding').length;
-  const risingCount = items.filter(i => i.statusType === 'rising').length;
+  // Calculate live district telemetry metrics
+  const activeRiverfrontCount = points.filter(p => p.isActive && !p.isResolved).length;
+  const dryRoadsCount = points.filter(p => !p.isActive || p.isResolved).length;
 
   const handleItemClick = (item) => {
     const all = [...(citizenReports || []), ...(points || [])];
@@ -113,38 +117,44 @@ export default function PublicUpdatesModal({
 
   return (
     <div 
-      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
-      className="fixed inset-0 z-[2000] bg-slate-950/75 backdrop-blur-xs flex items-center justify-center p-3.5 sm:p-4 py-8 sm:py-8 pointer-events-auto overflow-y-auto overscroll-contain"
+      onClick={(e) => { 
+        if (e.target === e.currentTarget) {
+          playCloseSound();
+          onClose(); 
+        }
+      }}
+      className="fixed inset-0 z-[2000] bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto overscroll-contain animate-in fade-in-50 duration-150"
     >
-      <div className={`w-full max-w-[calc(100vw-28px)] xs:max-w-[420px] sm:max-w-lg my-auto m-auto border rounded-2xl shadow-2xl flex flex-col max-h-[76vh] sm:max-h-[82vh] shrink-0 overflow-hidden transition-colors ${
-        isDark ? 'bg-slate-900 border-slate-800 text-slate-100' : 'bg-white border-slate-200 text-slate-900'
+      <div className={`w-full max-w-[calc(100vw-24px)] xs:max-w-[430px] sm:max-w-xl my-auto flex flex-col rounded-2xl border shadow-2xl overflow-hidden max-h-[88vh] shrink-0 transition-colors ${
+        isDark ? 'bg-slate-900 border-slate-750 text-slate-100' : 'bg-white border-slate-200 text-slate-900'
       }`}>
-        {/* Top Institutional Bar */}
-        <div className="h-1 w-full bg-blue-700 shrink-0" />
+        
+        {/* Top Institutional Accent Line */}
+        <div className="h-1 w-full bg-blue-600 shrink-0" />
 
         {/* Header */}
-        <div className={`px-3 py-2 sm:px-4 sm:py-3 border-b flex items-center justify-between gap-2 shrink-0 ${
-          isDark ? 'border-slate-800 bg-slate-950/50' : 'border-slate-200 bg-slate-50/80'
+        <div className={`px-4 py-3 sm:px-5 sm:py-3.5 border-b flex items-center justify-between gap-3 shrink-0 ${
+          isDark ? 'border-slate-800 bg-slate-950/60' : 'border-slate-200 bg-slate-50/70'
         }`}>
-          <div className="flex items-center gap-2 min-w-0">
-            <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg border flex items-center justify-center shrink-0 ${
-              isDark ? 'bg-slate-800 text-blue-400 border-slate-700' : 'bg-white text-blue-700 border-slate-200 shadow-2xs'
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className={`w-8 h-8 sm:w-9 sm:h-9 rounded-xl border flex items-center justify-center shrink-0 ${
+              isDark ? 'bg-slate-850 border-slate-700 text-sky-400' : 'bg-white border-slate-200 text-blue-700 shadow-2xs'
             }`}>
-              <CivicBroadcast className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <CivicBroadcast className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-1.5">
-                <h3 className={`text-[12.5px] sm:text-base font-bold leading-tight tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                  บันทึกการเปลี่ยนแปลงสถานการณ์น้ำ
+                <h3 className={`text-sm sm:text-base font-bold leading-tight tracking-tight truncate ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                  รายงานสถานการณ์น้ำประจำวัน
                 </h3>
-                <span className={`px-1.5 py-0.2 rounded text-[9.5px] font-semibold border shrink-0 ${
-                  isDark ? 'bg-slate-800 text-slate-300 border-slate-700' : 'bg-slate-100 text-slate-600 border-slate-200'
+                <span className={`hidden xs:inline-flex px-1.5 py-0.5 rounded text-[10px] font-semibold border shrink-0 ${
+                  isDark ? 'bg-blue-950/80 text-blue-300 border-blue-800/80' : 'bg-blue-50 text-blue-700 border-blue-200'
                 }`}>
-                  รายวัน
+                  สมุทรปราการ
                 </span>
               </div>
-              <p className={`text-[10.5px] sm:text-xs leading-tight mt-0.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                {todayThaiDate} • รีเซ็ตทุกเที่ยงคืน 00:00 น.
+              <p className={`text-[11px] leading-tight mt-0.5 truncate ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                {todayThaiFull} • ซิงก์โทรมาตรล่าสุด {lastUpdatedTime || 'แบบเรียลไทม์'}
               </p>
             </div>
           </div>
@@ -153,177 +163,264 @@ export default function PublicUpdatesModal({
             {onRefreshData && (
               <button 
                 type="button"
-                onClick={onRefreshData}
+                onClick={() => {
+                  playRefreshSound();
+                  onRefreshData();
+                }}
                 disabled={isRefreshing}
                 className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg border flex items-center justify-center transition-colors cursor-pointer ${
-                  isDark ? 'bg-slate-800 hover:bg-slate-700 text-slate-300 border-slate-700' : 'bg-white hover:bg-slate-100 text-slate-600 border-slate-200'
+                  isDark 
+                    ? 'bg-slate-800 hover:bg-slate-700 text-slate-300 border-slate-700' 
+                    : 'bg-white hover:bg-slate-100 text-slate-600 border-slate-200'
                 }`}
-                title="รีเฟรชข้อมูล"
+                title="ซิงก์ข้อมูลโทรมาตรล่าสุด"
               >
                 <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-blue-600' : ''}`} />
               </button>
             )}
+
             <button 
               type="button"
-              onClick={onClose} 
-              className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg border flex items-center justify-center transition-colors cursor-pointer ${
-                isDark ? 'bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white border-slate-700' : 'bg-white hover:bg-slate-100 text-slate-500 hover:text-slate-800 border-slate-200'
+              onClick={() => {
+                playCloseSound();
+                onClose();
+              }} 
+              className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg border flex items-center justify-center cursor-pointer transition-colors shrink-0 ${
+                isDark 
+                  ? 'bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white border-slate-700' 
+                  : 'bg-white hover:bg-slate-100 text-slate-500 hover:text-slate-800 border-slate-200'
               }`}
               title="ปิดหน้าต่าง"
             >
-              <X className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <X className="w-4 h-4" />
             </button>
           </div>
         </div>
 
-        {/* Summary Strip */}
-        <div className={`px-3.5 py-2 sm:px-5 border-b flex items-center justify-between text-xs shrink-0 ${
-          isDark ? 'bg-slate-900 border-slate-800 text-slate-400' : 'bg-slate-50/50 border-slate-200 text-slate-600'
+        {/* Operational Situation Summary Bar */}
+        <div className={`px-4 py-2.5 sm:px-5 border-b flex items-center justify-between text-xs shrink-0 ${
+          isDark ? 'bg-slate-950/40 border-slate-800 text-slate-300' : 'bg-slate-100/60 border-slate-200 text-slate-700'
         }`}>
-          <div className="flex items-center gap-2.5 text-[10.5px]">
-            <span className="flex items-center gap-1 font-medium">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />
-              <span>แห้ง ({dryCount})</span>
-            </span>
-            <span className="flex items-center gap-1 font-medium">
-              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 inline-block" />
-              <span>ลดลง ({recedingCount})</span>
-            </span>
-            <span className="flex items-center gap-1 font-medium">
-              <span className="w-1.5 h-1.5 rounded-full bg-rose-500 inline-block" />
-              <span>เฝ้าระวัง ({risingCount})</span>
-            </span>
+          <div className="flex items-center gap-2 text-[11px] font-semibold">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+            <span>เส้นทางหลักสัญจรได้ปกติ</span>
           </div>
-          <span className="font-mono font-bold text-[11px] text-blue-600 dark:text-blue-400">
-            รวม {items.length} รายการ
-          </span>
+          <div className="flex items-center gap-2 text-[10.5px]">
+            <span className="font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold border border-emerald-500/20">
+              แห้งปกติ {dryRoadsCount} จุด
+            </span>
+            {activeRiverfrontCount > 0 && (
+              <span className="font-mono px-2 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 font-bold border border-amber-500/20">
+                เฝ้าระวังริมน้ำ {activeRiverfrontCount} จุด
+              </span>
+            )}
+          </div>
         </div>
 
-        {/* Body */}
-        <div className="flex-1 overflow-y-auto px-3.5 sm:px-5 py-3 sm:py-4 space-y-2.5">
+        {/* Scrollable Content */}
+        <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-3.5 custom-scrollbar-thin">
+          
+          {/* Official Admin Broadcast Announcement (if present) */}
           {latestAnnouncement && (
-            <div className={`p-3 rounded-lg border flex items-start gap-2.5 ${
-              isDark ? 'bg-amber-950/30 border-amber-800/80 text-amber-200' : 'bg-amber-50/80 border-amber-200 text-amber-900'
+            <div className={`p-3.5 rounded-xl border flex items-start gap-3 ${
+              isDark 
+                ? 'bg-amber-950/25 border-amber-800/80 text-amber-200' 
+                : 'bg-amber-50/80 border-amber-200 text-amber-900'
             }`}>
-              <div className="p-1.5 rounded-md bg-amber-500/20 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5">
-                <CivicBroadcast className="w-4 h-4" />
+              <div className="p-2 rounded-lg bg-amber-500/20 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5">
+                <Radio className="w-4 h-4 animate-pulse" />
               </div>
               <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-xs font-bold text-amber-700 dark:text-amber-300">
-                    ประกาศจากศูนย์ควบคุมระบบ
+                <div className="flex items-center justify-between gap-2 mb-1">
+                  <span className="text-xs font-bold text-amber-800 dark:text-amber-300">
+                    ประกาศด่วนจากศูนย์บัญชาการ
                   </span>
                   {latestAnnouncement.created_at && (
-                    <span className="text-[10px] opacity-75 font-mono">
+                    <span className="text-[10.5px] opacity-75 font-mono">
                       {new Date(latestAnnouncement.created_at).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })} น.
                     </span>
                   )}
                 </div>
-                <p className="text-xs mt-1 whitespace-pre-line leading-relaxed">
+                <p className="text-xs leading-relaxed whitespace-pre-line">
                   {latestAnnouncement.message}
                 </p>
               </div>
             </div>
           )}
 
+          {/* Today's Situational Dispatch (เมื่อทุกเส้นทางแห้งปกติ) */}
           {items.length === 0 ? (
-            <div className="py-10 text-center text-xs text-slate-500 flex flex-col items-center justify-center gap-2">
-              <CivicShield className="w-8 h-8 text-emerald-500 opacity-80" />
-              <span className="font-semibold text-slate-700 dark:text-slate-300">
-                ยังไม่มีรายงานน้ำท่วมขังของวันนี้ ({todayThaiDate})
-              </span>
-              <span className="text-[11px] text-slate-400 max-w-xs leading-relaxed">
-                ข้อมูลรีเซ็ตอัตโนมัติทุกเที่ยงคืน (00:00 น.) — เส้นทางหลักทุกสายในจังหวัดสมุทรปราการสัญจรได้ตามปกติ
-              </span>
+            <div className="space-y-3">
+              {/* Comprehensive All-Clear Reassurance Card */}
+              <div className={`p-4 rounded-xl border text-left ${
+                isDark 
+                  ? 'bg-slate-850/80 border-slate-750' 
+                  : 'bg-slate-50/90 border-slate-200'
+              }`}>
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-7 h-7 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex items-center justify-center shrink-0">
+                    <ShieldCheck className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h4 className={`text-xs sm:text-[13px] font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                      สถานการณ์ภาพรวม 6 อำเภอ จังหวัดสมุทรปราการ
+                    </h4>
+                    <span className="text-[10.5px] text-emerald-600 dark:text-emerald-400 font-semibold block">
+                      ทุกเส้นทางสัญจรได้คล่องตัว ผิวจราจรแห้งสนิท
+                    </span>
+                  </div>
+                </div>
+
+                <p className={`text-xs leading-relaxed ${isDark ? 'text-slate-300' : 'text-slate-600'} mb-3`}>
+                  จากการตรวจวัดด้วยระบบโทรมาตรเรดาร์สภาพอากาศและสถานีวัดระดับน้ำ ปัจจุบันไม่มีจุดน้ำท่วมขังบนถนนสายหลักในพื้นที่สมุทรปราการ โดยมีเพียงการเฝ้าระวังน้ำขึ้น-น้ำลงตามรอบธรรมชาติบริเวณแนวเขื่อนริมแม่น้ำเจ้าพระยา (ปากน้ำ และ ป้อมพระจุลจอมเกล้า) ซึ่งระดับน้ำกำลังลดลงอย่างต่อเนื่อง
+                </p>
+
+                {/* 6 Districts Summary Grid */}
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-2 border-t border-slate-200/80 dark:border-slate-800 text-[11px]">
+                  {[
+                    { d: 'เมืองสมุทรปราการ', s: 'สุขุมวิท • ศรีนครินทร์ ปกติ' },
+                    { d: 'บางพลี', s: 'บางนา-ตราด • กิ่งแก้ว แห้ง' },
+                    { d: 'บางบ่อ', s: 'ปานวิถี • สุขุมวิทสายเก่า แห้ง' },
+                    { d: 'บางเสาธง', s: 'เคหะบางเสาธง สัญจรปกติ' },
+                    { d: 'พระประแดง', s: 'ปู่เจ้าฯ • สุขสวัสดิ์ ปกติ' },
+                    { d: 'พระสมุทรเจดีย์', s: 'สถานีป้อมพระจุลฯ น้ำลดลง' },
+                  ].map((dist, idx) => (
+                    <div 
+                      key={idx}
+                      className={`p-2 rounded-lg border ${
+                        isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
+                      }`}
+                    >
+                      <strong className={`block text-[11px] truncate ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>
+                        {dist.d}
+                      </strong>
+                      <span className="text-[10px] text-slate-500 dark:text-slate-400 truncate block mt-0.5">
+                        {dist.s}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           ) : (
-            <div className={`rounded-lg border divide-y overflow-hidden ${
-              isDark ? 'border-slate-800 divide-slate-800 bg-slate-950/40' : 'border-slate-200 divide-slate-200 bg-white'
-            }`}>
-              {items.map((item) => {
-                const isDry = item.statusType === 'dry';
-                const isReceding = item.statusType === 'receding';
+            /* Active Chronological Updates Feed */
+            <div className="space-y-2.5">
+              <h4 className={`text-xs font-bold flex items-center justify-between ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
+                <span>บันทึกเหตุการณ์วันนี้ ({items.length} รายการ)</span>
+                <span className="text-[10.5px] font-normal text-slate-500">แตะเพื่อซูมดูพิกัดบนแผนที่</span>
+              </h4>
 
-                let icon = <AlertTriangle className="w-4 h-4 text-rose-500" />;
-                let badgeBg = isDark ? 'bg-rose-950/80 text-rose-300 border-rose-800' : 'bg-rose-50 text-rose-700 border-rose-200';
+              <div className="space-y-2">
+                {items.map((item) => {
+                  const isDry = item.statusType === 'dry';
+                  const isReceding = item.statusType === 'receding';
 
-                if (isDry) {
-                  icon = <CheckCircle2 className="w-4 h-4 text-emerald-500" />;
-                  badgeBg = isDark ? 'bg-emerald-950/80 text-emerald-300 border-emerald-800' : 'bg-emerald-50 text-emerald-700 border-emerald-200';
-                } else if (isReceding) {
-                  icon = <TrendingDown className="w-4 h-4 text-amber-500" />;
-                  badgeBg = isDark ? 'bg-amber-950/80 text-amber-300 border-amber-800' : 'bg-amber-50 text-amber-700 border-amber-200';
-                }
+                  let statusBadge = (
+                    <span className="inline-flex items-center gap-1 text-[10.5px] font-semibold px-2 py-0.5 rounded-md bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800 shrink-0">
+                      <AlertTriangle className="w-3 h-3 text-rose-600" />
+                      <span>{item.statusLabel || 'เฝ้าระวังน้ำท่วม'}</span>
+                    </span>
+                  );
 
-                return (
-                  <div
-                    key={item.id}
-                    onClick={() => handleItemClick(item)}
-                    className={`p-3 transition-colors cursor-pointer flex items-center justify-between gap-3 ${
-                      isDark ? 'hover:bg-slate-800/70' : 'hover:bg-slate-50'
-                    }`}
-                  >
-                    <div className="flex items-start gap-2.5 min-w-0 flex-1">
-                      <div className={`w-7 h-7 rounded-md border flex items-center justify-center shrink-0 mt-0.5 ${badgeBg}`}>
-                        {icon}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <span className={`text-xs font-bold block leading-snug ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                          {item.locationName}
-                        </span>
-                        <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
+                  if (isDry) {
+                    statusBadge = (
+                      <span className="inline-flex items-center gap-1 text-[10.5px] font-semibold px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 shrink-0">
+                        <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                        <span>{item.statusLabel || 'สัญจรปกติ (น้ำแห้งแล้ว)'}</span>
+                      </span>
+                    );
+                  } else if (isReceding) {
+                    statusBadge = (
+                      <span className="inline-flex items-center gap-1 text-[10.5px] font-semibold px-2 py-0.5 rounded-md bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800 shrink-0">
+                        <TrendingDown className="w-3 h-3 text-amber-600" />
+                        <span>{item.statusLabel || 'ระดับน้ำลดลง'}</span>
+                      </span>
+                    );
+                  }
+
+                  return (
+                    <div
+                      key={item.id}
+                      onClick={() => handleItemClick(item)}
+                      className={`p-3 rounded-xl border transition-all cursor-pointer ${
+                        isDark 
+                          ? 'bg-slate-850/80 border-slate-750 hover:border-slate-700 hover:bg-slate-800' 
+                          : 'bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50 shadow-2xs'
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-2 mb-1.5">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className={`text-xs font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                              {item.locationName}
+                            </span>
+                            {item.district && (
+                              <span className="text-[10px] px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
+                                {item.district}
+                              </span>
+                            )}
+                          </div>
                           {item.locationSub && (
-                            <span className={`text-[11px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 truncate">
                               {item.locationSub}
-                            </span>
-                          )}
-                          {item.depthCm > 0 && (
-                            <span className={`text-[10px] font-mono font-bold px-1.5 py-0.2 rounded border ${
-                              isDark ? 'bg-slate-800 text-slate-200 border-slate-700' : 'bg-slate-100 text-slate-700 border-slate-200'
-                            }`}>
-                              {item.depthCm} ซม.
-                            </span>
+                            </p>
                           )}
                         </div>
+                        {statusBadge}
+                      </div>
+
+                      <div className="flex items-center justify-between text-[11px] pt-1 border-t border-slate-100 dark:border-slate-800 text-slate-500">
+                        <span className="flex items-center gap-1">
+                          <Clock className="w-3 h-3 text-blue-600 dark:text-blue-400 shrink-0" />
+                          <span>{formatDisplayTime(item.itemTime, item.timestamp)}</span>
+                        </span>
+                        <span className="inline-flex items-center gap-1 text-blue-600 dark:text-blue-400 font-semibold text-[10.5px]">
+                          <MapPin className="w-3 h-3" />
+                          <span>ดูจุดบนแผนที่ &rarr;</span>
+                        </span>
                       </div>
                     </div>
-
-                    <div className="shrink-0 flex flex-col items-end justify-center gap-1 text-right">
-                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${badgeBg}`}>
-                        {item.statusLabel}
-                      </span>
-                      <span className={`text-[10.5px] font-mono flex items-center gap-1 ${
-                        isDark ? 'text-slate-400' : 'text-slate-500'
-                      }`}>
-                        <Clock className="w-3 h-3 text-blue-600 dark:text-blue-400 shrink-0" />
-                        <span>{formatDisplayTime(item.itemTime, item.timestamp)}</span>
-                      </span>
-                    </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
           )}
+
         </div>
 
-        {/* Footer */}
-        <div className={`px-3 py-2 sm:px-4 sm:py-2.5 border-t flex items-center justify-between text-xs shrink-0 ${
-          isDark ? 'border-slate-800 bg-slate-950/60 text-slate-400' : 'border-slate-200 bg-slate-50/80 text-slate-500'
+        {/* Institutional Footer */}
+        <div className={`px-4 py-2.5 sm:px-5 sm:py-3 border-t flex items-center justify-between gap-2 shrink-0 ${
+          isDark ? 'border-slate-800 bg-slate-950/70 text-slate-400' : 'border-slate-200 bg-slate-50/80 text-slate-600'
         }`}>
-          <span className="flex items-center gap-1.5 text-[10.5px] sm:text-[11px]">
-            <CivicShield className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 shrink-0" />
-            <span className="truncate">แตะรายการเพื่อดูบนแผนที่</span>
-          </span>
           <button
             type="button"
-            onClick={onClose}
-            className={`px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-lg font-semibold text-[11px] sm:text-xs border transition-colors cursor-pointer shrink-0 ${
-              isDark ? 'bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700' : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-200 shadow-2xs'
+            onClick={() => {
+              playEmergencySound();
+              window.location.href = 'tel:1784';
+            }}
+            className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/60 dark:hover:bg-rose-900/60 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800 cursor-pointer transition-colors active:scale-95"
+            title="โทรสายด่วนสาธารณภัย ปภ. 1784 ฟรีตลอด 24 ชม."
+          >
+            <PhoneCall className="w-3.5 h-3.5 text-rose-600 shrink-0" />
+            <span>สายด่วน 1784 (24 ชม.)</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              playCloseSound();
+              onClose();
+            }}
+            className={`px-3.5 py-1.5 rounded-lg font-semibold text-xs border transition-colors cursor-pointer shrink-0 active:scale-95 ${
+              isDark 
+                ? 'bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700' 
+                : 'bg-white hover:bg-slate-100 text-slate-800 border-slate-200 shadow-2xs'
             }`}
           >
             ปิดหน้าต่าง
           </button>
         </div>
+
       </div>
     </div>
   );

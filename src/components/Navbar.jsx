@@ -14,7 +14,8 @@ import {
   CivicShield,
   CivicBroadcast,
   CivicWeather,
-  CivicEmergencyPhone
+  CivicEmergencyPhone,
+  CivicStandards
 } from './CivicIcons';
 import RealTimeClock from './RealTimeClock';
 import { 
@@ -454,7 +455,23 @@ export default function Navbar({
               }`}
             >
               <Activity className="w-4 h-4 text-blue-400 shrink-0" />
-              <span>บันทึกสถานการณ์น้ำประจำวัน</span>
+              <span>อัปเดตสถานการณ์น้ำท่วม</span>
+            </button>
+
+            {/* Flood Standards */}
+            <button
+              type="button"
+              onClick={() => {
+                playModalOpenSound();
+                setIsMenuOpen(false);
+                if (onOpenStandards) onOpenStandards();
+              }}
+              className={`w-full p-2.5 rounded-lg text-xs font-semibold text-left flex items-center gap-2.5 transition-colors cursor-pointer ${
+                isDark ? 'hover:bg-slate-800 text-slate-100 hover:text-white' : 'hover:bg-slate-100 text-slate-800 hover:text-slate-950'
+              }`}
+            >
+              <CivicStandards className="w-4 h-4 text-amber-500 shrink-0" />
+              <span>เกณฑ์ระดับน้ำ & ยานพาหนะ</span>
             </button>
 
             {/* Emergency Hotline 1784 */}
