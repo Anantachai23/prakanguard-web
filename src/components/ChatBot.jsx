@@ -1385,13 +1385,36 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
     }
 
     // 0.3 เวลาและวันที่ปัจจุบัน (Real-time Date & Time Inquiry)
-    const isDateTimeQuery = 
-      q.includes("กี่โมง") || 
+    const hasContextualDomainKeywords = 
+      q.includes("ฝน") || 
+      q.includes("ตก") || 
+      q.includes("น้ำ") || 
+      q.includes("ท่วม") || 
+      q.includes("หนุน") || 
+      q.includes("ลด") || 
+      q.includes("ขึ้น") || 
+      q.includes("แห้ง") || 
+      q.includes("เรดาร์") || 
+      q.includes("พยากรณ์") || 
+      q.includes("โอกาส") || 
+      q.includes("อากาศ") || 
+      q.includes("พายุ") || 
+      q.includes("รถ") || 
+      q.includes("ทาง");
+
+    const isDateTimeQuery = !hasContextualDomainKeywords && (
+      q === "กี่โมง" || 
+      q === "กี่โมงแล้ว" || 
+      q.includes("ตอนนี้กี่โมง") || 
       q.includes("ตอนนี้เวลา") || 
+      q.includes("เวลาตอนนี้") || 
       q.includes("เวลาเท่าไหร่") || 
       q.includes("เวลาปัจจุบัน") || 
       q.includes("วันนี้วันที่") || 
-      q.includes("วันอะไร");
+      q.includes("วันอะไร") ||
+      q.includes("วันที่เท่าไหร่") ||
+      q.includes("วันนี้วันอะไร")
+    );
 
     if (isDateTimeQuery) {
       const now = new Date();
@@ -1474,8 +1497,17 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
     ];
     const wantsShort = shortenKeywords.some(kw => q.includes(kw));
 
-    // A. คำถามเกี่ยวกับข้อมูลสด ณ ปัจจุบัน (Live Flood Points Telemetry)
-    const isLiveFloodQuery = 
+    // A. คำถามเกี่ยวกับจุดจอดรถหนีน้ำ / อาคารจอดรถยกสูง (Parking Inquiry)
+    const isParkingQuery = 
+      q.includes("จอดรถ") || 
+      q.includes("ที่จอด") || 
+      q.includes("ลานจอด") || 
+      q.includes("อาคารจอด") || 
+      q.includes("ฝากรถ") ||
+      (q.includes("หนีน้ำ") && (q.includes("รถ") || q.includes("ที่สูง") || q.includes("จอด")));
+
+    // A.1 คำถามเกี่ยวกับข้อมูลสด ณ ปัจจุบัน (Live Flood Points Telemetry)
+    const isLiveFloodQuery = !isParkingQuery && (
       q.includes("ท่วมที่ไหน") || 
       q.includes("มีท่วม") || 
       q.includes("ตรงไหนท่วม") || 
@@ -1486,7 +1518,13 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
       q.includes("ตอนนี้ท่วม") ||
       q.includes("มีน้ำท่วมไหม") ||
       q.includes("มีน้ำท่วมมั้ย") ||
-      q.includes("น้ำท่วมกี่จุด");
+      q.includes("น้ำท่วมกี่จุด") ||
+      q.includes("น้ำท่วมตรงไหน") ||
+      q.includes("ท่วมตรงไหน") ||
+      q.includes("น้ำท่วมที่ไหน") ||
+      q.includes("มีน้ำท่วมตรงไหน") ||
+      (q.includes("ตรงไหนบ้าง") && (q.includes("ท่วม") || q.includes("น้ำ")))
+    );
 
     if (isLiveFloodQuery) {
       // คัดกรองจุดที่กำลังท่วมจริง (ไม่แห้ง ไม่ถูกปิดงาน)
@@ -1557,6 +1595,22 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
         `• 🟡 **21 - 50 ซม. (ปานกลาง):** รถเก๋ง/อีโคคาร์ห้ามลุยเกิน 30 ซม.! รถกระบะ/SUV ใช้เกียร์ต่ำ ปิดแอร์ทันที\n` +
         `• 🔴 **เกิน 50 ซม. (วิกฤต):** **ห้ามรถยนต์และมอเตอร์ไซค์ผ่านเด็ดขาด!** รถจะลอยน้ำและสูญเสียการควบคุม\n\n` +
         `💡 *ข้อควรจำ: เมื่อลุยน้ำ ให้ปิดแอร์ทันทีเพื่อป้องกันใบพัดตีน้ำเข้าเครื่องยนต์*`;
+    }
+
+    // C.1 คำถามเกี่ยวกับจุดจอดรถหนีน้ำ / อาคารจอดรถยกสูง (Elevated Parking Inquiry)
+    if (isParkingQuery) {
+      return `🅿️ **พิกัดอาคารจอดรถยกสูงและพื้นที่ปลอดภัยน้ำไม่ท่วม จ.สมุทรปราการ:**\n\n` +
+        `• **1. อาคารจอดแล้วจร (Park & Ride) BTS เคหะสมุทรปราการ:**\n` +
+        `  - อาคารจอดรถ 3 ชั้น รองรับรถยนต์ได้กว่า 1,200 คัน พื้นที่ยกสูงเหนือระดับน้ำทะเลอย่างปลอดภัย\n\n` +
+        `• **2. ศูนย์การค้าเมกาบางนา (Mega Bangna):**\n` +
+        `  - อาคารจอดรถในร่ม 7 ชั้น โซน IKEA และโซน Big C ถ.บางนา-ตราด\n\n` +
+        `• **3. โรบินสัน ไลฟ์สไตล์ สมุทรปราการ:**\n` +
+        `  - ถ.สุขุมวิท (ใกล้สถานี BTS แพรกษา) มีพื้นที่จอดรถในร่มยกสูง\n\n` +
+        `• **4. อิมพีเรียล เวิลด์ สำโรง:**\n` +
+        `  - อาคารจอดรถชั้น 3 ขึ้นไป พ้นระดับน้ำท่วมถนนสุขุมวิท\n\n` +
+        `• **5. อาคารจอดรถสถานีรถไฟฟ้าสายสีเหลือง (สถานีศรีเอี่ยม):**\n` +
+        `  - อาคารจอดรถ 7 ชั้น เชื่อมต่อถนนศรีนครินทร์และบางนา\n\n` +
+        `💡 *ข้อแนะนำ:* ควรนำเอกสารประจำตัวและกุญแจสำรองติดตัวไว้ และปลดเบรกมือทิ้งเกียร์ N ไว้ในกรณีต้องจอดขวางครับ`;
     }
 
     // D. คำถามเกี่ยวกับความปลอดภัย ไฟฟ้า สัตว์มีพิษ โรคระบาด
@@ -1791,11 +1845,36 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
         `💡 พิมพ์ชื่อถนนหรือซอยที่ต้องการ เพื่อให้ระบบวิเคราะห์ระดับน้ำเจาะลึกเฉพาะพิกัดได้ทันทีครับ`;
     }
 
+    // 9. ถามเรื่องพยากรณ์อากาศ / ฝนจะตกไหม / ฝนตกกี่โมง / ช่วงเวลาฝนตก / โอกาสเกิดฝนตก
+    const isRainForecastInquiry = 
+      (q.includes("พยากรณ์") || q.includes("ฝน") || q.includes("ตกกี่") || q.includes("อากาศ") || q.includes("ตกหนัก") || q.includes("เรดาร์") || q.includes("มีฝน") || q.includes("ตกช่วง")) &&
+      !q.includes("ท่วม");
+
+    if (isRainForecastInquiry) {
+      const isRainy = Math.max(rainChance, rainChanceTomorrow) >= 50;
+      const isAskingTime = q.includes("กี่โมง") || q.includes("ช่วงไหน") || q.includes("เวลาไหน") || q.includes("ตอนไหน") || q.includes("ช่วงกี่โมง");
+
+      return `🌧️ **รายงานพยากรณ์อากาศและคาดการณ์ฝนตก จ.สมุทรปราการ (แยกวันนี้ / พรุ่งนี้)**\n` +
+        `อ้างอิงข้อมูล: [กรมอุตุนิยมวิทยา (TMD)] และ [ศูนย์พยากรณ์อากาศยุโรป ECMWF]\n\n` +
+        (isAskingTime ? `⏱️ **คาดการณ์ช่วงเวลาที่มีโอกาสเกิดฝนตกสูงสุดวันนี้:** **${peakTime}** (โอกาสฝนตก 🌧️ **${rainChance}%**)\n\n` : ``) +
+        `• **สถานะอากาศปัจจุบัน:** ${weather.weatherDesc}\n` +
+        `• **อุณหภูมิ:** ${weather.temp}°C (สูงสุด ${weather.tempMax || 33}°C / ต่ำสุด ${weather.tempMin || 26}°C) | ความชื้น ${weather.humidity}%\n\n` +
+        `📅 **วิเคราะห์ฝนวันนี้ (${weather.forecast24h?.todayDateLabel || 'วันนี้'}):**\n` +
+        `• **โอกาสเกิดฝนตกวันนี้:** 🌧️ **${rainChance}%** (${weather.forecast24h?.todayRiskLabel || 'ปกติ'})\n` +
+        `• **ช่วงเวลาที่มีโอกาสตกวันนี้:** ⏱️ **${peakTime}**\n` +
+        `• **ปริมาณน้ำฝนสะสมคาดการณ์วันนี้:** **${rainSum} มิลลิเมตร**\n\n` +
+        `📆 **วิเคราะห์ฝนพรุ่งนี้ (${weather.forecast24h?.tomorrowDateLabel || 'พรุ่งนี้'}):**\n` +
+        `• **โอกาสเกิดฝนตกพรุ่งนี้:** 🌦️ **${rainChanceTomorrow}%** (${weather.forecast24h?.tomorrowRiskLabel || 'ปกติ'})\n` +
+        `• **ช่วงเวลาที่มีโอกาสตกพรุ่งนี้:** ⏱️ **${peakTimeTomorrow}**\n\n` +
+        `• **ระดับการแจ้งเตือน:** ${isRainy ? '⚠️ ' + weather.rainAlertLevel : '🟢 สภาพอากาศปกติ'}\n\n` +
+        `💡 **ข้อแนะนำ:** หากมีฝนตกสะสมเกิน 30 มม. ใน 2 ชั่วโมง มักจะเกิดน้ำรอการระบายบนถนนสุขุมวิท, ศรีนครินทร์ และกิ่งแก้ว ควรเผื่อเวลาเดินทาง 30 - 45 นาทีครับ`;
+    }
+
     // ถามคำถามทั่วไปเกี่ยวกับ "โอกาสเกิดน้ำท่วม" / "จะท่วมไหม" / "เสี่ยงไหม" (ไม่มีการระบุพิกัดเจาะจง)
     const isGeneralFloodQuery = 
-      q.includes("โอกาส") || 
+      (q.includes("โอกาส") && (q.includes("ท่วม") || q.includes("น้ำท่วม") || !q.includes("ฝน"))) || 
       q.includes("ท่วม") || 
-      q.includes("เสี่ยง") || 
+      (q.includes("เสี่ยง") && !q.includes("ฝน")) || 
       q.includes("น้ำท่วม") || 
       q.includes("ท่วมไหม") || 
       q.includes("ท่วมมั้ย") || 
@@ -1824,11 +1903,14 @@ export default function ChatBot({ points = INITIAL_FLOOD_POINTS, onSelectPoint, 
         `💡 **คำแนะนำ:** หากท่านต้องการทราบความเสี่ยงของจุดเฉพาะ สามารถพิมพ์ชื่อจุด (เช่น *"ทรัพย์บุญชัย"*, *"ทับบุนชัย"*, *"วัดด่าน"*, *"กิ่งแก้ว"*, *"ปากน้ำ"*) เพื่อให้ระบบวิเคราะห์รายพิกัดได้ทันทีครับ`;
     }
 
-    // 10. ถามเรื่องพยากรณ์อากาศ / ฝนจะตกไหม / ฝนตกกี่เปอร์เซ็นต์ / ฝนตกหนัก
-    if (q.includes("พยากรณ์") || q.includes("ฝน") || q.includes("ตกกี่") || q.includes("อากาศ") || q.includes("ตกหนัก")) {
+    // 10. คำถามเกี่ยวกับสภาพอากาศและฝนที่ระบุร่วมกับน้ำท่วม (Fallback Rain & Weather)
+    if (q.includes("พยากรณ์") || q.includes("ฝน") || q.includes("ตกกี่") || q.includes("อากาศ") || q.includes("ตกหนัก") || q.includes("เรดาร์")) {
       const isRainy = Math.max(rainChance, rainChanceTomorrow) >= 50;
+      const isAskingTime = q.includes("กี่โมง") || q.includes("ช่วงไหน") || q.includes("เวลาไหน") || q.includes("ตอนไหน") || q.includes("ช่วงกี่โมง");
+
       return `🌧️ **รายงานพยากรณ์อากาศและคาดการณ์ฝนตก จ.สมุทรปราการ (แยกวันนี้ / พรุ่งนี้)**\n` +
         `อ้างอิงข้อมูล: [กรมอุตุนิยมวิทยา (TMD)] และ [ศูนย์พยากรณ์อากาศยุโรป ECMWF]\n\n` +
+        (isAskingTime ? `⏱️ **คาดการณ์ช่วงเวลาที่มีโอกาสเกิดฝนตกสูงสุดวันนี้:** **${peakTime}** (โอกาสฝนตก 🌧️ **${rainChance}%**)\n\n` : ``) +
         `• **สถานะอากาศปัจจุบัน:** ${weather.weatherDesc}\n` +
         `• **อุณหภูมิ:** ${weather.temp}°C (สูงสุด ${weather.tempMax || 33}°C / ต่ำสุด ${weather.tempMin || 26}°C) | ความชื้น ${weather.humidity}%\n\n` +
         `📅 **วิเคราะห์ฝนวันนี้ (${weather.forecast24h?.todayDateLabel || 'วันนี้'}):**\n` +
