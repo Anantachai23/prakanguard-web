@@ -222,10 +222,10 @@ export default function RainForecast24hCard({
                 isRainingNow
                   ? 'bg-rose-600 text-white'
                   : todayProb >= 60
-                  ? 'bg-amber-400 text-slate-950'
+                  ? 'bg-rose-600 text-white'
                   : todayProb >= 35
-                  ? 'bg-[#b8f338] text-slate-950'
-                  : (isDark ? 'bg-slate-800 text-emerald-400 border border-slate-700' : 'bg-emerald-50 text-emerald-800 border border-emerald-200')
+                  ? 'bg-amber-500 text-white'
+                  : 'bg-emerald-600 text-white'
               }`}>
                 {isRainingNow ? 'กำลังตก' : `โอกาสตก ${todayProb}%`}
               </span>
@@ -388,10 +388,10 @@ export default function RainForecast24hCard({
                       d.isRainingNow
                         ? 'bg-rose-600 text-white'
                         : dTodayProb >= 60
-                        ? 'bg-amber-400 text-slate-950'
+                        ? 'bg-rose-600 text-white'
                         : dTodayProb >= 35
-                        ? 'bg-[#b8f338] text-slate-950'
-                        : (isDark ? 'bg-slate-800 text-emerald-400' : 'bg-emerald-100 text-emerald-800')
+                        ? 'bg-amber-500 text-white'
+                        : 'bg-emerald-600 text-white'
                     }`}>
                       {d.isRainingNow ? `กำลังตก ${dTodayProb}%` : `วันนี้ ${dTodayProb}%`}
                     </span>

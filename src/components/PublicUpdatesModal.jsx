@@ -315,31 +315,64 @@ export default function PublicUpdatesModal({
 
                       {/* Expanded Update Details Card (แสดงอัปเดตให้อ่านในนี้ ไม่ซูมหนี) */}
                       {isExpanded && (
-                        <div className={`px-3.5 py-3 border-t text-xs space-y-2 ${
-                          isDark ? 'bg-slate-950/60 border-slate-800 text-slate-300' : 'bg-white border-slate-150 text-slate-700'
+                        <div className={`px-3.5 py-3 border-t text-xs space-y-2.5 ${
+                          isDark ? 'bg-slate-950/80 border-slate-800 text-slate-300' : 'bg-white border-slate-150 text-slate-700'
                         }`}>
-                          <div className="grid grid-cols-2 gap-2 text-[11px]">
-                            <div className={`p-2 rounded-xl border ${
-                              isDark ? 'bg-slate-900 border-slate-800' : 'bg-slate-50 border-slate-200'
-                            }`}>
-                              <span className="text-[10px] text-slate-400 block">ระดับน้ำตรวจวัด</span>
-                              <strong className="text-xs text-blue-600 dark:text-cyan-400 font-bold">
-                                {depth > 0 ? `${depth} เซนติเมตร` : 'ระบายแห้งสนิท (0 ซม.)'}
+                          {/* Center Pill Badge + Progress Bar */}
+                          <div className="my-1">
+                            <div className="flex justify-center mb-1.5">
+                              <span className={`px-3 py-0.5 rounded-full text-[11px] font-extrabold tracking-wide ${
+                                target.level === 3
+                                  ? 'bg-rose-600 text-white'
+                                  : target.level === 2
+                                  ? 'bg-amber-500 text-white'
+                                  : 'bg-emerald-600 text-white'
+                              }`}>
+                                {target.level === 3 ? `วิกฤต • ${depth} ซม.` : target.level === 2 ? `ปานกลาง • ${depth} ซม.` : `ปกติ • ${depth} ซม.`}
+                              </span>
+                            </div>
+                            <div className="w-full h-1.5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                              <div
+                                className={`h-full rounded-full transition-all duration-300 ${
+                                  target.level === 3 ? 'bg-rose-500' : target.level === 2 ? 'bg-amber-500' : 'bg-emerald-500'
+                                }`}
+                                style={{ width: `${Math.min(100, Math.max(18, Math.round((depth / 65) * 100)))}%` }}
+                              />
+                            </div>
+                          </div>
+
+                          {/* 4-Column Data Grid (เหมือนแบบอันแรกเป๊ะ) */}
+                          <div className="grid grid-cols-4 gap-1.5 pt-1.5 border-t border-slate-100 dark:border-slate-800 text-[11px]">
+                            <div>
+                              <span className="text-[10px] text-slate-400 block">อำเภอ</span>
+                              <strong className={`truncate block mt-0.5 ${isDark ? 'text-slate-200' : 'text-slate-900'}`}>
+                                {target.district?.replace(/^อ\./, '') || 'สมุทรปราการ'}
                               </strong>
                             </div>
-
-                            <div className={`p-2 rounded-xl border ${
-                              isDark ? 'bg-slate-900 border-slate-800' : 'bg-slate-50 border-slate-200'
-                            }`}>
+                            <div>
+                              <span className="text-[10px] text-slate-400 block">ระดับน้ำ</span>
+                              <strong className={`font-mono block mt-0.5 ${isDark ? 'text-slate-200' : 'text-slate-900'}`}>
+                                {depth > 0 ? `${depth} ซม.` : '0 ซม.'}
+                              </strong>
+                            </div>
+                            <div>
+                              <span className="text-[10px] text-slate-400 block">แนวโน้ม</span>
+                              <strong className={`block mt-0.5 ${
+                                isReceding || isDry ? 'text-teal-600 dark:text-teal-400' : 'text-rose-600 dark:text-rose-400'
+                              }`}>
+                                {isDry ? 'แห้งแล้ว' : isReceding ? 'น้ำลดลง' : 'ทรงตัว'}
+                              </strong>
+                            </div>
+                            <div>
                               <span className="text-[10px] text-slate-400 block">การสัญจร</span>
-                              <strong className="text-xs font-bold text-slate-900 dark:text-white">
-                                {depth <= 20 ? 'รถทุกชนิดผ่านได้' : depth <= 50 ? 'รถเล็กควรหลีกเลี่ยง' : 'ห้ามรถเล็กผ่าน'}
+                              <strong className={`truncate block mt-0.5 ${isDark ? 'text-slate-200' : 'text-slate-900'}`}>
+                                {target.level === 3 ? 'ห้ามผ่าน' : target.level === 2 ? 'ควรเลี่ยง' : 'ผ่านได้'}
                               </strong>
                             </div>
                           </div>
 
                           {item.details && (
-                            <p className="text-[11px] leading-relaxed opacity-90">
+                            <p className="text-[11px] leading-relaxed opacity-90 pt-1">
                               {item.details}
                             </p>
                           )}
