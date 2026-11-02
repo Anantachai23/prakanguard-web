@@ -135,12 +135,8 @@ function createOfficialFloodPin({ level, depthCm, hasPhoto, isSelected, isFallin
         <path d="M17 43C17 43 32 27 32 17C32 8.71573 25.2843 2 17 2C8.71573 2 2 8.71573 2 17C2 27 17 43 17 43Z" fill="url(#pgGrad-${level}-${safeId})" stroke="#ffffff" stroke-width="2.5" stroke-linejoin="round"/>
         <!-- Inner White Disc -->
         <circle cx="17" cy="17" r="9.5" fill="#ffffff" />
-        <text x="17" y="17" dy="0.35em" font-family="'Prompt', system-ui, -apple-system, sans-serif" font-size="${fontSize}" font-weight="900" fill="${primaryColor}" text-anchor="middle" alignment-baseline="middle">${displayDepth}</text>
+        <text x="17" y="17.2" font-family="'Prompt', system-ui, -apple-system, sans-serif" font-size="${fontSize}" font-weight="900" fill="${primaryColor}" text-anchor="middle" dominant-baseline="central" alignment-baseline="central">${displayDepth}</text>
       </svg>
-      <!-- HTML Fallback Number Badge: 100% Guaranteed cross-platform visibility -->
-      <div class="pg-pin-number-badge" style="position:absolute;top:${isMobile ? '5px' : '6px'};left:50%;transform:translateX(-50%);width:${isMobile ? '18px' : '20px'};height:${isMobile ? '18px' : '20px'};border-radius:50%;display:flex;align-items:center;justify-content:center;color:${primaryColor};font-family:'Prompt',system-ui,-apple-system,sans-serif;font-weight:900;font-size:${isMobile ? (displayDepth.length >= 3 ? '8px' : (displayDepth.length === 2 ? '9.5px' : '11px')) : (displayDepth.length >= 3 ? '9px' : (displayDepth.length === 2 ? '10.5px' : '12px'))};line-height:1;pointer-events:none;z-index:10;user-select:none;-webkit-user-select:none;text-align:center;">
-        ${displayDepth}
-      </div>
     </div>
   `;
 
