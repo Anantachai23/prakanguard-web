@@ -2,16 +2,15 @@ import React from 'react';
 import { 
   X, 
   RefreshCw, 
-  CheckCircle2, 
+  Check, 
   AlertTriangle, 
   TrendingDown, 
   Clock, 
   PhoneCall,
   MapPin,
-  ShieldCheck,
   Radio
 } from 'lucide-react';
-import { CivicBroadcast, CivicShield } from './CivicIcons';
+import { CivicBroadcast } from './CivicIcons';
 import { isTimestampTodayBangkok, getBangkokDateKey } from '../services/dailyUpdatesService';
 import { playCloseSound, playEmergencySound, playRefreshSound } from '../services/soundEffects';
 
@@ -33,10 +32,10 @@ export default function PublicUpdatesModal({
 
   const todayDateObj = new Date();
   const thaiMonths = [
-    'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
-    'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'
+    'ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.',
+    'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'
   ];
-  const todayThaiFull = `${todayDateObj.getDate()} ${thaiMonths[todayDateObj.getMonth()]} ${todayDateObj.getFullYear() + 543}`;
+  const todayThaiShort = `${todayDateObj.getDate()} ${thaiMonths[todayDateObj.getMonth()]} ${todayDateObj.getFullYear() + 543}`;
 
   const formatDisplayTime = (timeStr, timestamp) => {
     if (!timeStr && !timestamp) return 'เมื่อสักครู่';
@@ -77,10 +76,6 @@ export default function PublicUpdatesModal({
       return String(b.itemTime || '').localeCompare(String(a.itemTime || ''));
     });
 
-  // Calculate live district telemetry metrics
-  const activeRiverfrontCount = points.filter(p => p.isActive && !p.isResolved).length;
-  const dryRoadsCount = points.filter(p => !p.isActive || p.isResolved).length;
-
   const handleItemClick = (item) => {
     const all = [...(citizenReports || []), ...(points || [])];
     const found = all.find(p => 
@@ -88,8 +83,6 @@ export default function PublicUpdatesModal({
       (p.name && item.locationName && p.name.trim().toLowerCase() === item.locationName.trim().toLowerCase()) ||
       (p.lat && item.lat && Math.abs(p.lat - item.lat) < 0.003 && Math.abs(p.lng - item.lng) < 0.003)
     );
-
-    const photo = item.photoUrl || item.rawPoint?.photoUrl || found?.photoUrl || found?.photo_url || found?.photo || null;
 
     const target = {
       ...(found || item.rawPoint || {}),
@@ -102,9 +95,6 @@ export default function PublicUpdatesModal({
       level: Number(item.depthCm) > 50 ? 3 : (Number(item.depthCm) > 20 ? 2 : 1),
       depthRange: Number(item.depthCm) > 50 ? '> 50 ซม.' : (Number(item.depthCm) > 20 ? '21 - 50 ซม.' : (Number(item.depthCm) > 0 ? '5 - 20 ซม.' : '0 ซม.')),
       statusLabel: item.statusLabel,
-      trafficStatus: item.trafficStatus || item.statusLabel,
-      source: item.source || 'รายงานสถานการณ์น้ำ',
-      photoUrl: photo,
       lat: found?.lat || item.lat || item.rawPoint?.lat,
       lng: found?.lng || item.lng || item.rawPoint?.lng
     };
@@ -123,38 +113,28 @@ export default function PublicUpdatesModal({
           onClose(); 
         }
       }}
-      className="fixed inset-0 z-[2000] bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto overscroll-contain animate-in fade-in-50 duration-150"
+      className="fixed inset-0 z-[2000] bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-3.5 sm:p-4 overflow-y-auto overscroll-contain animate-in fade-in-50 duration-150"
     >
-      <div className={`w-full max-w-[calc(100vw-24px)] xs:max-w-[430px] sm:max-w-xl my-auto flex flex-col rounded-2xl border shadow-2xl overflow-hidden max-h-[88vh] shrink-0 transition-colors ${
-        isDark ? 'bg-slate-900 border-slate-750 text-slate-100' : 'bg-white border-slate-200 text-slate-900'
+      <div className={`w-full max-w-[calc(100vw-24px)] xs:max-w-[400px] sm:max-w-[460px] my-auto flex flex-col rounded-3xl shadow-2xl border overflow-hidden max-h-[84vh] shrink-0 transition-colors ${
+        isDark ? 'bg-slate-900 border-slate-800 text-slate-100' : 'bg-white border-slate-200 text-slate-900'
       }`}>
         
-        {/* Top Institutional Accent Line */}
-        <div className="h-1 w-full bg-blue-600 shrink-0" />
-
-        {/* Header */}
-        <div className={`px-4 py-3 sm:px-5 sm:py-3.5 border-b flex items-center justify-between gap-3 shrink-0 ${
-          isDark ? 'border-slate-800 bg-slate-950/60' : 'border-slate-200 bg-slate-50/70'
+        {/* Header — Rounded & Concise */}
+        <div className={`px-4 py-3 sm:px-5 sm:py-3.5 flex items-center justify-between gap-3 shrink-0 border-b ${
+          isDark ? 'border-slate-800/80 bg-slate-900/60' : 'border-slate-100 bg-slate-50/50'
         }`}>
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className={`w-8 h-8 sm:w-9 sm:h-9 rounded-xl border flex items-center justify-center shrink-0 ${
-              isDark ? 'bg-slate-850 border-slate-700 text-sky-400' : 'bg-white border-slate-200 text-blue-700 shadow-2xs'
+            <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
+              isDark ? 'bg-blue-950/60 text-blue-400' : 'bg-blue-50 text-blue-600'
             }`}>
-              <CivicBroadcast className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
+              <CivicBroadcast className="w-4 h-4" />
             </div>
             <div className="min-w-0">
-              <div className="flex items-center gap-1.5">
-                <h3 className={`text-sm sm:text-base font-bold leading-tight tracking-tight truncate ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                  รายงานสถานการณ์น้ำประจำวัน
-                </h3>
-                <span className={`hidden xs:inline-flex px-1.5 py-0.5 rounded text-[10px] font-semibold border shrink-0 ${
-                  isDark ? 'bg-blue-950/80 text-blue-300 border-blue-800/80' : 'bg-blue-50 text-blue-700 border-blue-200'
-                }`}>
-                  สมุทรปราการ
-                </span>
-              </div>
+              <h3 className={`text-sm sm:text-[15px] font-bold leading-tight truncate ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                สถานการณ์น้ำวันนี้
+              </h3>
               <p className={`text-[11px] leading-tight mt-0.5 truncate ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                {todayThaiFull} • ซิงก์โทรมาตรล่าสุด {lastUpdatedTime || 'แบบเรียลไทม์'}
+                {todayThaiShort} • อัปเดต {lastUpdatedTime || 'เรียลไทม์'}
               </p>
             </div>
           </div>
@@ -168,14 +148,12 @@ export default function PublicUpdatesModal({
                   onRefreshData();
                 }}
                 disabled={isRefreshing}
-                className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg border flex items-center justify-center transition-colors cursor-pointer ${
-                  isDark 
-                    ? 'bg-slate-800 hover:bg-slate-700 text-slate-300 border-slate-700' 
-                    : 'bg-white hover:bg-slate-100 text-slate-600 border-slate-200'
+                className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center transition-colors cursor-pointer ${
+                  isDark ? 'hover:bg-slate-800 text-slate-400' : 'hover:bg-slate-100 text-slate-500'
                 }`}
-                title="ซิงก์ข้อมูลโทรมาตรล่าสุด"
+                title="ซิงก์ข้อมูล"
               >
-                <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-blue-600' : ''}`} />
+                <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-blue-500' : ''}`} />
               </button>
             )}
 
@@ -185,200 +163,114 @@ export default function PublicUpdatesModal({
                 playCloseSound();
                 onClose();
               }} 
-              className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg border flex items-center justify-center cursor-pointer transition-colors shrink-0 ${
-                isDark 
-                  ? 'bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white border-slate-700' 
-                  : 'bg-white hover:bg-slate-100 text-slate-500 hover:text-slate-800 border-slate-200'
+              className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center cursor-pointer transition-colors shrink-0 ${
+                isDark ? 'hover:bg-slate-800 text-slate-400 hover:text-white' : 'hover:bg-slate-100 text-slate-500 hover:text-slate-800'
               }`}
-              title="ปิดหน้าต่าง"
+              title="ปิด"
             >
               <X className="w-4 h-4" />
             </button>
           </div>
         </div>
 
-        {/* Operational Situation Summary Bar */}
-        <div className={`px-4 py-2.5 sm:px-5 border-b flex items-center justify-between text-xs shrink-0 ${
-          isDark ? 'bg-slate-950/40 border-slate-800 text-slate-300' : 'bg-slate-100/60 border-slate-200 text-slate-700'
-        }`}>
-          <div className="flex items-center gap-2 text-[11px] font-semibold">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
-            <span>เส้นทางหลักสัญจรได้ปกติ</span>
-          </div>
-          <div className="flex items-center gap-2 text-[10.5px]">
-            <span className="font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold border border-emerald-500/20">
-              แห้งปกติ {dryRoadsCount} จุด
-            </span>
-            {activeRiverfrontCount > 0 && (
-              <span className="font-mono px-2 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 font-bold border border-amber-500/20">
-                เฝ้าระวังริมน้ำ {activeRiverfrontCount} จุด
-              </span>
-            )}
-          </div>
-        </div>
-
-        {/* Scrollable Content */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-3.5 custom-scrollbar-thin">
+        {/* Content Body — Streamlined, No Bureaucratic Bloat */}
+        <div className="flex-1 overflow-y-auto px-4 py-3 sm:px-5 space-y-3 custom-scrollbar-thin">
           
-          {/* Official Admin Broadcast Announcement (if present) */}
+          {/* Quick Overall Status Capsule */}
+          <div className={`p-3 rounded-2xl border transition-colors ${
+            isDark ? 'bg-emerald-950/20 border-emerald-800/40 text-emerald-300' : 'bg-emerald-50/70 border-emerald-200/70 text-emerald-900'
+          }`}>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0" />
+              <span className="text-xs font-bold">
+                ทุกเส้นทางหลักสัญจรได้ปกติ ผิวทางแห้ง
+              </span>
+            </div>
+            <p className={`text-[11.5px] leading-relaxed pl-4.5 ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
+              ไม่มีน้ำท่วมขังบนถนนทางบก มีเพียงเฝ้าระวังน้ำหนุน 2 จุดริมเจ้าพระยา (ปากน้ำ และ ป้อมพระจุลฯ) ซึ่งน้ำลดลงต่อเนื่อง
+            </p>
+          </div>
+
+          {/* Broadcast Alert (if any) */}
           {latestAnnouncement && (
-            <div className={`p-3.5 rounded-xl border flex items-start gap-3 ${
-              isDark 
-                ? 'bg-amber-950/25 border-amber-800/80 text-amber-200' 
-                : 'bg-amber-50/80 border-amber-200 text-amber-900'
+            <div className={`p-3 rounded-2xl border flex items-start gap-2.5 ${
+              isDark ? 'bg-amber-950/20 border-amber-800/50 text-amber-200' : 'bg-amber-50/80 border-amber-200 text-amber-900'
             }`}>
-              <div className="p-2 rounded-lg bg-amber-500/20 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5">
-                <Radio className="w-4 h-4 animate-pulse" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between gap-2 mb-1">
-                  <span className="text-xs font-bold text-amber-800 dark:text-amber-300">
-                    ประกาศด่วนจากศูนย์บัญชาการ
-                  </span>
-                  {latestAnnouncement.created_at && (
-                    <span className="text-[10.5px] opacity-75 font-mono">
-                      {new Date(latestAnnouncement.created_at).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })} น.
-                    </span>
-                  )}
-                </div>
-                <p className="text-xs leading-relaxed whitespace-pre-line">
-                  {latestAnnouncement.message}
-                </p>
+              <Radio className="w-4 h-4 text-amber-500 shrink-0 mt-0.5 animate-pulse" />
+              <div className="flex-1 min-w-0 text-xs">
+                <strong className="block text-amber-700 dark:text-amber-300">ประกาศเจ้าหน้าที่:</strong>
+                <p className="mt-0.5 leading-relaxed">{latestAnnouncement.message}</p>
               </div>
             </div>
           )}
 
-          {/* Today's Situational Dispatch (เมื่อทุกเส้นทางแห้งปกติ) */}
-          {items.length === 0 ? (
-            <div className="space-y-3">
-              {/* Comprehensive All-Clear Reassurance Card */}
-              <div className={`p-4 rounded-xl border text-left ${
-                isDark 
-                  ? 'bg-slate-850/80 border-slate-750' 
-                  : 'bg-slate-50/90 border-slate-200'
-              }`}>
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="w-7 h-7 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex items-center justify-center shrink-0">
-                    <ShieldCheck className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <h4 className={`text-xs sm:text-[13px] font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                      สถานการณ์ภาพรวม 6 อำเภอ จังหวัดสมุทรปราการ
-                    </h4>
-                    <span className="text-[10.5px] text-emerald-600 dark:text-emerald-400 font-semibold block">
-                      ทุกเส้นทางสัญจรได้คล่องตัว ผิวจราจรแห้งสนิท
-                    </span>
-                  </div>
+          {/* 6 Districts Quick Status Pills */}
+          <div className="space-y-1.5">
+            <span className={`text-[11px] font-bold block ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+              สถานะรายอำเภอ (สมุทรปราการ)
+            </span>
+            <div className="grid grid-cols-2 gap-1.5 text-xs">
+              {[
+                { name: 'เมืองสมุทรปราการ', desc: 'ปกติ (เฝ้าระวังปากน้ำ)' },
+                { name: 'บางพลี', desc: 'ผิวทางแห้ง สัญจรปกติ' },
+                { name: 'บางบ่อ', desc: 'ผิวทางแห้ง สัญจรปกติ' },
+                { name: 'บางเสาธง', desc: 'ผิวทางแห้ง สัญจรปกติ' },
+                { name: 'พระประแดง', desc: 'ผิวทางแห้ง สัญจรปกติ' },
+                { name: 'พระสมุทรเจดีย์', desc: 'ปกติ (ป้อมพระจุลฯ น้ำลด)' },
+              ].map((d, i) => (
+                <div 
+                  key={i} 
+                  className={`p-2 rounded-xl flex items-center justify-between gap-1 border ${
+                    isDark ? 'bg-slate-800/40 border-slate-800 text-slate-300' : 'bg-slate-50 border-slate-150 text-slate-700'
+                  }`}
+                >
+                  <span className="font-semibold truncate text-[11.5px]">{d.name}</span>
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
                 </div>
-
-                <p className={`text-xs leading-relaxed ${isDark ? 'text-slate-300' : 'text-slate-600'} mb-3`}>
-                  จากการตรวจวัดด้วยระบบโทรมาตรเรดาร์สภาพอากาศและสถานีวัดระดับน้ำ ปัจจุบันไม่มีจุดน้ำท่วมขังบนถนนสายหลักในพื้นที่สมุทรปราการ โดยมีเพียงการเฝ้าระวังน้ำขึ้น-น้ำลงตามรอบธรรมชาติบริเวณแนวเขื่อนริมแม่น้ำเจ้าพระยา (ปากน้ำ และ ป้อมพระจุลจอมเกล้า) ซึ่งระดับน้ำกำลังลดลงอย่างต่อเนื่อง
-                </p>
-
-                {/* 6 Districts Summary Grid */}
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-2 border-t border-slate-200/80 dark:border-slate-800 text-[11px]">
-                  {[
-                    { d: 'เมืองสมุทรปราการ', s: 'สุขุมวิท • ศรีนครินทร์ ปกติ' },
-                    { d: 'บางพลี', s: 'บางนา-ตราด • กิ่งแก้ว แห้ง' },
-                    { d: 'บางบ่อ', s: 'ปานวิถี • สุขุมวิทสายเก่า แห้ง' },
-                    { d: 'บางเสาธง', s: 'เคหะบางเสาธง สัญจรปกติ' },
-                    { d: 'พระประแดง', s: 'ปู่เจ้าฯ • สุขสวัสดิ์ ปกติ' },
-                    { d: 'พระสมุทรเจดีย์', s: 'สถานีป้อมพระจุลฯ น้ำลดลง' },
-                  ].map((dist, idx) => (
-                    <div 
-                      key={idx}
-                      className={`p-2 rounded-lg border ${
-                        isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
-                      }`}
-                    >
-                      <strong className={`block text-[11px] truncate ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>
-                        {dist.d}
-                      </strong>
-                      <span className="text-[10px] text-slate-500 dark:text-slate-400 truncate block mt-0.5">
-                        {dist.s}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
+              ))}
             </div>
-          ) : (
-            /* Active Chronological Updates Feed */
-            <div className="space-y-2.5">
-              <h4 className={`text-xs font-bold flex items-center justify-between ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
-                <span>บันทึกเหตุการณ์วันนี้ ({items.length} รายการ)</span>
-                <span className="text-[10.5px] font-normal text-slate-500">แตะเพื่อซูมดูพิกัดบนแผนที่</span>
-              </h4>
+          </div>
 
-              <div className="space-y-2">
-                {items.map((item) => {
+          {/* Chronological Incident Feed (if any updates recorded) */}
+          {items.length > 0 && (
+            <div className="space-y-1.5 pt-1">
+              <span className={`text-[11px] font-bold block ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                บันทึกการเปลี่ยนแปลงล่าสุด ({items.length})
+              </span>
+              <div className={`rounded-2xl border divide-y overflow-hidden ${
+                isDark ? 'border-slate-800 divide-slate-800 bg-slate-900/60' : 'border-slate-200 divide-slate-100 bg-slate-50/40'
+              }`}>
+                {items.map(item => {
                   const isDry = item.statusType === 'dry';
                   const isReceding = item.statusType === 'receding';
-
-                  let statusBadge = (
-                    <span className="inline-flex items-center gap-1 text-[10.5px] font-semibold px-2 py-0.5 rounded-md bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800 shrink-0">
-                      <AlertTriangle className="w-3 h-3 text-rose-600" />
-                      <span>{item.statusLabel || 'เฝ้าระวังน้ำท่วม'}</span>
-                    </span>
-                  );
-
-                  if (isDry) {
-                    statusBadge = (
-                      <span className="inline-flex items-center gap-1 text-[10.5px] font-semibold px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 shrink-0">
-                        <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                        <span>{item.statusLabel || 'สัญจรปกติ (น้ำแห้งแล้ว)'}</span>
-                      </span>
-                    );
-                  } else if (isReceding) {
-                    statusBadge = (
-                      <span className="inline-flex items-center gap-1 text-[10.5px] font-semibold px-2 py-0.5 rounded-md bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800 shrink-0">
-                        <TrendingDown className="w-3 h-3 text-amber-600" />
-                        <span>{item.statusLabel || 'ระดับน้ำลดลง'}</span>
-                      </span>
-                    );
-                  }
 
                   return (
                     <div
                       key={item.id}
                       onClick={() => handleItemClick(item)}
-                      className={`p-3 rounded-xl border transition-all cursor-pointer ${
-                        isDark 
-                          ? 'bg-slate-850/80 border-slate-750 hover:border-slate-700 hover:bg-slate-800' 
-                          : 'bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50 shadow-2xs'
-                      }`}
+                      className="p-2.5 flex items-center justify-between gap-2 transition-colors hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
                     >
-                      <div className="flex items-start justify-between gap-2 mb-1.5">
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-1.5 flex-wrap">
-                            <span className={`text-xs font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                              {item.locationName}
-                            </span>
-                            {item.district && (
-                              <span className="text-[10px] px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
-                                {item.district}
-                              </span>
-                            )}
-                          </div>
-                          {item.locationSub && (
-                            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 truncate">
-                              {item.locationSub}
-                            </p>
-                          )}
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5">
+                          <span className={`text-xs font-semibold truncate ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                            {item.locationName}
+                          </span>
                         </div>
-                        {statusBadge}
-                      </div>
-
-                      <div className="flex items-center justify-between text-[11px] pt-1 border-t border-slate-100 dark:border-slate-800 text-slate-500">
-                        <span className="flex items-center gap-1">
-                          <Clock className="w-3 h-3 text-blue-600 dark:text-blue-400 shrink-0" />
+                        <span className="text-[10px] text-slate-500 flex items-center gap-1 mt-0.5">
+                          <Clock className="w-3 h-3" />
                           <span>{formatDisplayTime(item.itemTime, item.timestamp)}</span>
                         </span>
-                        <span className="inline-flex items-center gap-1 text-blue-600 dark:text-blue-400 font-semibold text-[10.5px]">
-                          <MapPin className="w-3 h-3" />
-                          <span>ดูจุดบนแผนที่ &rarr;</span>
-                        </span>
                       </div>
+
+                      <span className={`text-[10.5px] font-bold px-2 py-0.5 rounded-full shrink-0 ${
+                        isDry
+                          ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300'
+                          : isReceding
+                            ? 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300'
+                            : 'bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300'
+                      }`}>
+                        {item.statusLabel || (isDry ? 'แห้งแล้ว' : 'น้ำลด')}
+                      </span>
                     </div>
                   );
                 })}
@@ -388,9 +280,9 @@ export default function PublicUpdatesModal({
 
         </div>
 
-        {/* Institutional Footer */}
-        <div className={`px-4 py-2.5 sm:px-5 sm:py-3 border-t flex items-center justify-between gap-2 shrink-0 ${
-          isDark ? 'border-slate-800 bg-slate-950/70 text-slate-400' : 'border-slate-200 bg-slate-50/80 text-slate-600'
+        {/* Footer — Rounded Pill Actions */}
+        <div className={`px-4 py-2.5 sm:px-5 flex items-center justify-between gap-2 shrink-0 border-t ${
+          isDark ? 'border-slate-800/80 bg-slate-900/60' : 'border-slate-100 bg-slate-50/50'
         }`}>
           <button
             type="button"
@@ -398,11 +290,11 @@ export default function PublicUpdatesModal({
               playEmergencySound();
               window.location.href = 'tel:1784';
             }}
-            className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/60 dark:hover:bg-rose-900/60 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800 cursor-pointer transition-colors active:scale-95"
-            title="โทรสายด่วนสาธารณภัย ปภ. 1784 ฟรีตลอด 24 ชม."
+            className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/60 dark:hover:bg-rose-900/60 text-rose-700 dark:text-rose-300 transition-colors cursor-pointer active:scale-95"
+            title="โทรสายด่วนสาธารณภัย ปภ. 1784 ฟรี 24 ชม."
           >
-            <PhoneCall className="w-3.5 h-3.5 text-rose-600 shrink-0" />
-            <span>สายด่วน 1784 (24 ชม.)</span>
+            <PhoneCall className="w-3.5 h-3.5 text-rose-600" />
+            <span>สายด่วน 1784</span>
           </button>
 
           <button
@@ -411,13 +303,13 @@ export default function PublicUpdatesModal({
               playCloseSound();
               onClose();
             }}
-            className={`px-3.5 py-1.5 rounded-lg font-semibold text-xs border transition-colors cursor-pointer shrink-0 active:scale-95 ${
+            className={`px-4 py-1.5 rounded-full font-semibold text-xs transition-colors cursor-pointer active:scale-95 ${
               isDark 
-                ? 'bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700' 
-                : 'bg-white hover:bg-slate-100 text-slate-800 border-slate-200 shadow-2xs'
+                ? 'bg-slate-800 hover:bg-slate-700 text-slate-200' 
+                : 'bg-slate-200/80 hover:bg-slate-300 text-slate-800'
             }`}
           >
-            ปิดหน้าต่าง
+            ปิด
           </button>
         </div>
 
