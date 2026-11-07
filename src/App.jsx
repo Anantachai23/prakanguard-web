@@ -5089,6 +5089,7 @@ export default function App() {
         citizenReports={citizenReports}
         levelCounts={levelCounts}
         weather={weather}
+        lastUpdatedTime={lastUpdatedTimeDetailed || lastUpdatedTime}
         theme={theme}
       />
 
