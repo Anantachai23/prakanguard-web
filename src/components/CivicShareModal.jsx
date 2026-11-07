@@ -192,8 +192,7 @@ ${pointLines}
 ${districts.map(d => `• ${d.name.replace(/^อ\./, '')}: ${d.status}`).join('\n')}
 
 ⚠️ สายด่วนสาธารณภัย ปภ. 1784 (โทรฟรี 24 ชม.)
-🔗 ตรวจเช็กระดับน้ำสดและเรดาร์ฝนเรียลไทม์:
-https://prakanguard-web.vercel.app`;
+🔗 เช็กระดับน้ำสดและเรดาร์ฝน: https://prakanguard-web.vercel.app`;
   }, [allActivePoints, stats, rainProb, rainTime, todayThaiShort, lastUpdatedTime, districts]);
 
   const handleNativeShare = async () => {
@@ -202,8 +201,7 @@ https://prakanguard-web.vercel.app`;
       try {
         await navigator.share({
           title: 'PrakanGuard - สรุปสถานการณ์น้ำ จ.สมุทรปราการ',
-          text: shareText,
-          url: 'https://prakanguard-web.vercel.app'
+          text: shareText
         });
         return;
       } catch (err) {
