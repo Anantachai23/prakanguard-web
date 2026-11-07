@@ -6,7 +6,10 @@ import {
   ChevronDown, 
   Activity, 
   RefreshCw, 
-  CheckCircle2 
+  CheckCircle2,
+  Share2,
+  WifiOff,
+  PhoneCall
 } from 'lucide-react';
 import {
   CivicReportCamera,
@@ -46,6 +49,9 @@ export default function Navbar({
   onOpenCctv,
   onOpenAnnouncement,
   hasAnnouncement = false,
+  onOpenShare,
+  onOpenOfflineEmergency,
+  isOffline = false,
   lastUpdatedTime,
   lastUpdatedTimeDetailed,
   pendingReportsCount = 0,
@@ -258,6 +264,36 @@ export default function Navbar({
               </button>
             )}
 
+            {/* Offline Status Badge (Mobile) */}
+            {isOffline && (
+              <button
+                type="button"
+                onClick={() => {
+                  if (onOpenOfflineEmergency) onOpenOfflineEmergency();
+                }}
+                className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-600 text-white flex items-center gap-1 animate-pulse shrink-0 cursor-pointer"
+                title="โหมดออฟไลน์: แตะดูเบอร์โทรฉุกเฉิน"
+              >
+                <WifiOff className="w-3 h-3" />
+                <span>ออฟไลน์</span>
+              </button>
+            )}
+
+            {/* Mobile Share Button */}
+            {onOpenShare && (
+              <button
+                type="button"
+                onClick={() => {
+                  playModalOpenSound();
+                  onOpenShare();
+                }}
+                className="w-8 h-8 rounded-full border text-xs flex items-center justify-center transition-colors cursor-pointer bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-blue-600 dark:text-cyan-400 active:scale-95 shrink-0"
+                title="แชร์สรุปสถานการณ์น้ำท่วมลง LINE / โซเชียล"
+              >
+                <Share2 className="w-3.5 h-3.5" />
+              </button>
+            )}
+
             {/* Mobile Menu Dropdown (Services) */}
             <button
               type="button"
@@ -377,6 +413,37 @@ export default function Navbar({
               </button>
             )}
 
+            {/* Offline Status Badge (Desktop) */}
+            {isOffline && (
+              <button
+                type="button"
+                onClick={() => {
+                  if (onOpenOfflineEmergency) onOpenOfflineEmergency();
+                }}
+                className="h-[34px] px-3 rounded-full text-xs font-bold bg-rose-600 text-white flex items-center gap-1.5 animate-pulse shrink-0 cursor-pointer shadow-xs"
+                title="โหมดออฟไลน์: แตะดูเบอร์โทรฉุกเฉินและข้อมูลแคช"
+              >
+                <WifiOff className="w-3.5 h-3.5" />
+                <span>โหมดออฟไลน์</span>
+              </button>
+            )}
+
+            {/* Share Civic Status Button (Desktop) */}
+            {onOpenShare && (
+              <button
+                type="button"
+                onClick={() => {
+                  playModalOpenSound();
+                  onOpenShare();
+                }}
+                className="h-[34px] px-3 rounded-full border text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-blue-700 dark:text-cyan-300 hover:border-slate-300 dark:hover:border-slate-700 active:scale-95 shadow-2xs"
+                title="แชร์สรุปสถานการณ์น้ำท่วมลง LINE / โซเชียล"
+              >
+                <Share2 className="w-3.5 h-3.5" />
+                <span className="hidden lg:inline">แชร์สรุป</span>
+              </button>
+            )}
+
             {/* 4. Official Services Dropdown Button */}
             <button
               type="button"
@@ -440,6 +507,47 @@ export default function Navbar({
               <CivicFeedback className="w-4 h-4 text-teal-400 shrink-0" />
               <span>กล่องข้อเสนอแนะประชาชน</span>
             </button>
+
+            {/* Share Situation */}
+            {onOpenShare && (
+              <button
+                type="button"
+                onClick={() => {
+                  playModalOpenSound();
+                  setIsMenuOpen(false);
+                  onOpenShare();
+                }}
+                className={`w-full p-2.5 rounded-2xl text-xs font-semibold text-left flex items-center gap-2.5 transition-colors cursor-pointer ${
+                  isDark ? 'hover:bg-slate-800 text-slate-100 hover:text-white' : 'hover:bg-slate-100 text-slate-800 hover:text-slate-950'
+                }`}
+              >
+                <Share2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                <span>แชร์สรุปสถานการณ์ (LINE/โซเชียล)</span>
+              </button>
+            )}
+
+            {/* Offline Hotline Directory */}
+            {onOpenOfflineEmergency && (
+              <button
+                type="button"
+                onClick={() => {
+                  playEmergencySound();
+                  setIsMenuOpen(false);
+                  onOpenOfflineEmergency();
+                }}
+                className={`w-full p-2.5 rounded-2xl text-xs font-semibold text-left flex items-center justify-between transition-colors cursor-pointer ${
+                  isDark ? 'hover:bg-slate-800 text-slate-100 hover:text-white' : 'hover:bg-slate-100 text-slate-800 hover:text-slate-950'
+                }`}
+              >
+                <div className="flex items-center gap-2.5">
+                  <PhoneCall className="w-4 h-4 text-sky-400 shrink-0" />
+                  <span>สมุดสายด่วนฉุกเฉิน 6 อำเภอ (ออฟไลน์)</span>
+                </div>
+                <span className="px-2 py-0.5 rounded-full text-[9.5px] font-bold bg-blue-600 text-white">
+                  24 ชม.
+                </span>
+              </button>
+            )}
 
             {/* Public Situation Updates */}
             <button

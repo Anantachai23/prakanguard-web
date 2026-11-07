@@ -14,10 +14,13 @@ import PublicUpdatesModal from './components/PublicUpdatesModal';
 import RainForecast24hCard from './components/RainForecast24hCard';
 import CctvModal from './components/CctvModal';
 import MobileBottomNav from './components/MobileBottomNav';
+import CivicShareModal from './components/CivicShareModal';
+import OfflineEmergencyModal from './components/OfflineEmergencyModal';
 import AutoMarquee from './components/AutoMarquee';
 import ChatBot from './components/ChatBot';
 import WaterCursor from './components/WaterCursor';
 import { CCTV_CAMERAS } from './data/cctvCameras';
+import { findDetourForPoint } from './data/detourGuides';
 import { INITIAL_FLOOD_POINTS, INITIAL_CITIZEN_REPORTS, DISTRICTS, matchesLocationSearch, scoreLocationSearch, POPULAR_SEARCH_SUGGESTIONS, findCorridorForPoint, MAJOR_FLOOD_CORRIDORS } from './data/samutPrakanPoints';
 import { INITIAL_CITIZEN_FEEDBACK } from './data/citizenFeedback.js';
 import { SAMUT_PRAKAN_DISTRICTS_DATA } from './data/samutPrakanDistricts';
@@ -84,7 +87,11 @@ import {
   Sun,
   Moon,
   SlidersHorizontal,
-  Layers
+  Layers,
+  Star,
+  WifiOff,
+  Share2,
+  Smartphone
 } from 'lucide-react';
 import {
   CivicDrawerToggle,
@@ -694,6 +701,73 @@ export default function App() {
   const [isEmergencyModalOpen, setIsEmergencyModalOpen] = useState(false);
   const [isCctvModalOpen, setIsCctvModalOpen] = useState(false);
   const [selectedCctvCameraId, setSelectedCctvCameraId] = useState(null);
+
+  // Favorites State (จุดโปรดของฉัน ⭐)
+  const [favoritePointIds, setFavoritePointIds] = useState(() => {
+    try {
+      const saved = localStorage.getItem('prakanguard_favorite_points');
+      return saved ? JSON.parse(saved) : [];
+    } catch (_) {
+      return [];
+    }
+  });
+
+  const toggleFavoritePoint = useCallback((pointId) => {
+    if (!pointId) return;
+    try { playToggleSound(true); } catch (_) {}
+    setFavoritePointIds((prev) => {
+      const exists = prev.includes(pointId);
+      const next = exists ? prev.filter(id => id !== pointId) : [...prev, pointId];
+      try {
+        localStorage.setItem('prakanguard_favorite_points', JSON.stringify(next));
+      } catch (_) {}
+      return next;
+    });
+  }, []);
+
+  // Share & Offline Modal States
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [isOfflineModalOpen, setIsOfflineModalOpen] = useState(false);
+  const [isOffline, setIsOffline] = useState(!navigator.onLine);
+
+  useEffect(() => {
+    const handleOnline = () => setIsOffline(false);
+    const handleOffline = () => {
+      setIsOffline(true);
+      try { playEmergencySound(); } catch (_) {}
+    };
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  // PWA Install State
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+  }, []);
+
+  const handleInstallPwa = useCallback(async () => {
+    if (deferredPrompt) {
+      try {
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === 'accepted') {
+          setDeferredPrompt(null);
+        }
+      } catch (_) {}
+    } else {
+      alert('📱 วิธีติดตั้งแอป PrakanGuard บนมือถือ:\n\n• สำหรับ iPhone / iPad (Safari): แตะปุ่มแชร์ [⎋] ด้านล่าง แล้วเลือก "เพิ่มลงในหน้าจอโฮม (Add to Home Screen)"\n• สำหรับ Android (Chrome): แตะปุ่มเมนู 3 จุดด้านบนขวา แล้วเลือก "ติดตั้งแอป" หรือ "เพิ่มลงในหน้าจอหลัก"');
+    }
+  }, [deferredPrompt]);
 
   const handleOpenCctv = (cameraId = null) => {
     setSelectedCctvCameraId(cameraId);
@@ -2316,16 +2390,17 @@ export default function App() {
     return false;
   };
 
-  // Unified Severity Matching Helper (Seamlessly supports '1'/'minor', '2'/'moderate', '3'/'severe', 'falling')
+  // Unified Severity Matching Helper (Seamlessly supports '1'/'minor', '2'/'moderate', '3'/'severe', 'falling', 'favorites')
   const matchesSeverityFilter = useCallback((item, filter) => {
     if (!filter || filter === 'all') return true;
+    if (filter === 'favorites') return favoritePointIds.includes(item.id);
     if (filter === 'falling') return isWaterReceding(item);
     const lvl = resolveLevel(item);
     if (filter === '1' || filter === 'minor') return lvl === 1;
     if (filter === '2' || filter === 'moderate') return lvl === 2;
     if (filter === '3' || filter === 'severe') return lvl === 3;
     return true;
-  }, []);
+  }, [favoritePointIds]);
 
   // 1. Official Points shown on Map (filtered by district & severity, excludes dried-up points)
   const mapPoints = useMemo(() => {
@@ -2398,13 +2473,29 @@ export default function App() {
       .sort((a, b) => scoreLocationSearch(b, searchQuery) - scoreLocationSearch(a, searchQuery));
   }, [citizenReports, searchQuery]);
 
-  // 5. Unified Display Points for List Views & Mobile Sheet
+  // 5. Unified Display Points for List Views & Mobile Sheet (with Favorites Prioritization)
   const displayPoints = useMemo(() => {
+    let list;
     if (searchQuery && searchQuery.trim()) {
-      return [...searchResultsOfficial, ...searchResultsCitizen];
+      list = [...searchResultsOfficial, ...searchResultsCitizen];
+    } else {
+      list = [...mapPoints, ...mapCitizenReports];
     }
-    return [...mapPoints, ...mapCitizenReports];
-  }, [searchQuery, searchResultsOfficial, searchResultsCitizen, mapPoints, mapCitizenReports]);
+
+    if (severityFilter === 'favorites') {
+      return list.filter(pt => favoritePointIds.includes(pt.id));
+    }
+
+    if (favoritePointIds.length > 0) {
+      return [...list].sort((a, b) => {
+        const aFav = favoritePointIds.includes(a.id) ? 1 : 0;
+        const bFav = favoritePointIds.includes(b.id) ? 1 : 0;
+        return bFav - aFav;
+      });
+    }
+
+    return list;
+  }, [searchQuery, searchResultsOfficial, searchResultsCitizen, mapPoints, mapCitizenReports, severityFilter, favoritePointIds]);
 
   // Unified Handler: Select location & zoom smoothly into that point on the map
   const handleSelectLocation = useCallback((location, options = {}) => {
@@ -2735,6 +2826,9 @@ export default function App() {
         onOpenCctv={() => handleOpenCctv()}
         onOpenAnnouncement={() => setIsAnnouncementModalOpen(true)}
         hasAnnouncement={Boolean(latestAnnouncement)}
+        onOpenShare={() => setIsShareModalOpen(true)}
+        onOpenOfflineEmergency={() => setIsOfflineModalOpen(true)}
+        isOffline={isOffline}
         lastUpdatedTime={lastUpdatedTime}
         lastUpdatedTimeDetailed={lastUpdatedTimeDetailed}
         pendingReportsCount={isAdminAuthenticated ? pendingReportsCount : 0}
@@ -3274,14 +3368,14 @@ export default function App() {
                 })()}
 
                 {/* Severity Quick Filters for Points */}
-                <div className="grid grid-cols-4 gap-1 text-[11px]">
+                <div className="grid grid-cols-5 gap-1 text-[10.5px]">
                   <button
                     type="button"
                     onClick={() => {
                       playSelectSound();
                       setSeverityFilter('all');
                     }}
-                    className={`py-1.5 px-1 rounded-full text-center font-bold border transition-all cursor-pointer ${
+                    className={`py-1.5 px-0.5 rounded-full text-center font-bold border transition-all cursor-pointer ${
                       severityFilter === 'all'
                         ? (isDark ? 'bg-white text-slate-950 border-white shadow-xs' : 'bg-slate-900 text-white border-slate-900 shadow-xs')
                         : isDark ? 'bg-slate-850 border-slate-800 text-slate-300' : 'bg-slate-100 border-slate-200 text-slate-700'
@@ -3294,9 +3388,26 @@ export default function App() {
                     type="button"
                     onClick={() => {
                       playSelectSound();
+                      setSeverityFilter(severityFilter === 'favorites' ? 'all' : 'favorites');
+                    }}
+                    className={`py-1.5 px-0.5 rounded-full text-center font-bold border transition-all cursor-pointer flex items-center justify-center gap-0.5 ${
+                      severityFilter === 'favorites'
+                        ? 'bg-amber-400 text-slate-950 border-amber-400 shadow-xs'
+                        : isDark ? 'bg-slate-850 border-slate-800 text-amber-400' : 'bg-amber-50 border-amber-200 text-amber-700'
+                    }`}
+                    title="แสดงเฉพาะจุดโปรดที่บันทึกไว้"
+                  >
+                    <Star className={`w-3 h-3 ${severityFilter === 'favorites' ? 'fill-slate-950' : 'fill-amber-400'}`} />
+                    <span>({favoritePointIds.length})</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      playSelectSound();
                       setSeverityFilter(severityFilter === '3' || severityFilter === 'severe' ? 'all' : '3');
                     }}
-                    className={`py-1.5 px-1 rounded-full text-center font-bold border transition-all cursor-pointer ${
+                    className={`py-1.5 px-0.5 rounded-full text-center font-bold border transition-all cursor-pointer ${
                       severityFilter === '3' || severityFilter === 'severe'
                         ? 'bg-rose-600 text-white border-rose-600 shadow-xs'
                         : isDark ? 'bg-slate-850 border-slate-800 text-rose-400' : 'bg-rose-50 border-rose-200 text-rose-700'
@@ -3311,7 +3422,7 @@ export default function App() {
                       playSelectSound();
                       setSeverityFilter(severityFilter === '2' || severityFilter === 'moderate' ? 'all' : '2');
                     }}
-                    className={`py-1.5 px-1 rounded-full text-center font-bold border transition-all cursor-pointer ${
+                    className={`py-1.5 px-0.5 rounded-full text-center font-bold border transition-all cursor-pointer ${
                       severityFilter === '2' || severityFilter === 'moderate'
                         ? 'bg-amber-500 text-white border-amber-500 shadow-xs'
                         : isDark ? 'bg-slate-850 border-slate-800 text-amber-400' : 'bg-amber-50 border-amber-200 text-amber-800'
@@ -3326,10 +3437,10 @@ export default function App() {
                       playSelectSound();
                       setSeverityFilter(severityFilter === '1' || severityFilter === 'minor' ? 'all' : '1');
                     }}
-                    className={`py-1.5 px-1 rounded-full text-center font-bold border transition-all cursor-pointer ${
+                    className={`py-1.5 px-0.5 rounded-full text-center font-bold border transition-all cursor-pointer ${
                       severityFilter === '1' || severityFilter === 'minor'
                         ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
-                        : isDark ? 'bg-slate-800/80 border-slate-700 text-emerald-400' : 'bg-emerald-50 border-emerald-200 text-emerald-800'
+                        : isDark ? 'bg-slate-850 border-slate-800 text-emerald-400' : 'bg-emerald-50 border-emerald-200 text-emerald-800'
                     }`}
                   >
                     ปกติ ({minor})
@@ -3350,6 +3461,7 @@ export default function App() {
                       const isSelected = selectedPoint ? selectedPoint.id === pt.id : idx === 0;
                       const depthText = pt.depthCm ? `${pt.depthCm} ซม.` : (pt.depthRange || `${lvl === 3 ? '>50' : lvl === 2 ? '21-50' : '5-20'} ซม.`);
                       const barPercent = Math.min(100, Math.max(18, pt.depthCm ? Math.round((pt.depthCm / 65) * 100) : (lvl === 3 ? 90 : lvl === 2 ? 55 : 28)));
+                      const isFavorite = favoritePointIds.includes(pt.id);
 
                       if (isSelected) {
                         return (
@@ -3372,11 +3484,24 @@ export default function App() {
                                   อ.{pt.district?.replace(/^อ\./, '')}{pt.subdistrict ? ` • ต.${pt.subdistrict.replace(/^ต\./, '')}` : ''}
                                 </span>
                               </div>
-                              {hasPtPhoto && (
-                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-cyan-300 shrink-0">
-                                  มีภาพจริง
-                                </span>
-                              )}
+                              <div className="flex items-center gap-1.5 shrink-0">
+                                {hasPtPhoto && (
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-cyan-300">
+                                    มีภาพจริง
+                                  </span>
+                                )}
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    toggleFavoritePoint(pt.id);
+                                  }}
+                                  title={isFavorite ? "นำออกจากจุดโปรด" : "บันทึกเป็นจุดโปรด"}
+                                  className="p-1 rounded-full hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors"
+                                >
+                                  <Star className={`w-4 h-4 ${isFavorite ? "fill-amber-400 text-amber-400" : "text-slate-400 hover:text-amber-400"}`} />
+                                </button>
+                              </div>
                             </div>
 
                             {/* Center Pill Badge + Progress Bar */}
@@ -3462,7 +3587,18 @@ export default function App() {
                             </div>
                           </div>
 
-                          <div className="text-right shrink-0">
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleFavoritePoint(pt.id);
+                              }}
+                              title={isFavorite ? "นำออกจากจุดโปรด" : "บันทึกเป็นจุดโปรด"}
+                              className="p-1 rounded-full hover:bg-slate-200 dark:hover:bg-slate-750 transition-colors"
+                            >
+                              <Star className={`w-3.5 h-3.5 ${isFavorite ? "fill-amber-400 text-amber-400" : "text-slate-400 hover:text-amber-400"}`} />
+                            </button>
                             <span className={`text-[11px] font-extrabold font-mono px-2.5 py-1 rounded-full inline-block ${
                               lvl === 3
                                 ? 'bg-rose-600 text-white'
@@ -3914,22 +4050,36 @@ export default function App() {
                   )}
                 </div>
 
-                {/* Close Button */}
-                <button 
-                  type="button"
-                  onClick={() => {
-                    playCloseSound();
-                    setSelectedPoint(null);
-                  }}
-                  className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center transition-colors cursor-pointer shrink-0 ${
-                    isDark 
-                      ? 'hover:bg-slate-800 text-slate-400 hover:text-white' 
-                      : 'hover:bg-slate-100 text-slate-500 hover:text-slate-800'
-                  }`}
-                  title="ปิด"
-                >
-                  <X className="w-4 h-4" />
-                </button>
+                {/* Actions: Favorite Toggle + Close Button */}
+                <div className="flex items-center gap-1 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => toggleFavoritePoint(selectedPoint.id)}
+                    className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center transition-colors cursor-pointer ${
+                      favoritePointIds.includes(selectedPoint.id)
+                        ? 'bg-amber-400/20 text-amber-400'
+                        : isDark ? 'hover:bg-slate-800 text-slate-400 hover:text-amber-400' : 'hover:bg-slate-100 text-slate-500 hover:text-amber-500'
+                    }`}
+                    title={favoritePointIds.includes(selectedPoint.id) ? "นำออกจากจุดโปรด" : "บันทึกเป็นจุดโปรด"}
+                  >
+                    <Star className={`w-4 h-4 ${favoritePointIds.includes(selectedPoint.id) ? 'fill-amber-400 text-amber-400' : ''}`} />
+                  </button>
+                  <button 
+                    type="button"
+                    onClick={() => {
+                      playCloseSound();
+                      setSelectedPoint(null);
+                    }}
+                    className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center transition-colors cursor-pointer shrink-0 ${
+                      isDark 
+                        ? 'hover:bg-slate-800 text-slate-400 hover:text-white' 
+                        : 'hover:bg-slate-100 text-slate-500 hover:text-slate-800'
+                    }`}
+                    title="ปิด"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
 
               {/* Scrollable Body */}
@@ -4087,6 +4237,33 @@ export default function App() {
                       </span>
                     </div>
                   )}
+
+                  {/* Smart Detour Guide Intelligence */}
+                  {(() => {
+                    const detour = findDetourForPoint(selectedPoint);
+                    if (!detour) return null;
+                    return (
+                      <div className={`p-3 rounded-2xl border text-xs ${
+                        isDark ? 'bg-sky-950/30 border-sky-800/60 text-sky-200' : 'bg-sky-50 border-sky-200 text-sky-900'
+                      }`}>
+                        <div className="flex items-center gap-1.5 font-bold mb-1 text-sky-600 dark:text-sky-400">
+                          <Navigation className="w-3.5 h-3.5 shrink-0" />
+                          <span>คำแนะนำเส้นทางเลี่ยงน้ำท่วม</span>
+                        </div>
+                        <p className="text-[11.5px] leading-relaxed mb-1.5 font-medium">{detour.detourText}</p>
+                        {detour.tips && detour.tips.length > 0 && (
+                          <div className="space-y-0.5 text-[10.5px] opacity-90">
+                            {detour.tips.map((tip, tIdx) => (
+                              <div key={tIdx} className="flex items-center gap-1.5">
+                                <span className="w-1.5 h-1.5 rounded-full bg-sky-500 shrink-0" />
+                                <span>{tip}</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
 
                   <div className={`p-2.5 rounded-2xl border text-[11px] flex items-center justify-between gap-2 ${
                     isDark ? 'bg-slate-950/40 border-slate-800 text-slate-300' : 'bg-white border-slate-200 text-slate-700'
@@ -4342,14 +4519,14 @@ export default function App() {
               </div>
 
               {/* Quick Severity Filters in Mobile Drawer */}
-              <div className="grid grid-cols-4 gap-1 text-[11px] shrink-0">
+              <div className="grid grid-cols-5 gap-1 text-[10.5px] shrink-0">
                 <button
                   type="button"
                   onClick={() => {
                     try { playSelectSound(); } catch (_) {}
                     setSeverityFilter('all');
                   }}
-                  className={`py-1.5 px-1 rounded-full text-center font-bold border transition-all cursor-pointer ${
+                  className={`py-1.5 px-0.5 rounded-full text-center font-bold border transition-all cursor-pointer ${
                     severityFilter === 'all'
                       ? (isDark ? 'bg-white text-slate-950 border-white shadow-xs' : 'bg-slate-900 text-white border-slate-900 shadow-xs')
                       : isDark ? 'bg-slate-800 border-slate-700 text-slate-300' : 'bg-slate-100 border-slate-200 text-slate-700'
@@ -4361,9 +4538,25 @@ export default function App() {
                   type="button"
                   onClick={() => {
                     try { playSelectSound(); } catch (_) {}
+                    setSeverityFilter(severityFilter === 'favorites' ? 'all' : 'favorites');
+                  }}
+                  className={`py-1.5 px-0.5 rounded-full text-center font-bold border transition-all cursor-pointer flex items-center justify-center gap-0.5 ${
+                    severityFilter === 'favorites'
+                      ? 'bg-amber-400 text-slate-950 border-amber-400 shadow-xs'
+                      : isDark ? 'bg-slate-800 border-slate-700 text-amber-400' : 'bg-amber-50 border-amber-200 text-amber-700'
+                  }`}
+                  title="จุดโปรดของฉัน"
+                >
+                  <Star className={`w-3 h-3 ${severityFilter === 'favorites' ? 'fill-slate-950' : 'fill-amber-400'}`} />
+                  <span>({favoritePointIds.length})</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    try { playSelectSound(); } catch (_) {}
                     setSeverityFilter(severityFilter === '3' ? 'all' : '3');
                   }}
-                  className={`py-1.5 px-1 rounded-full text-center font-bold border transition-all cursor-pointer ${
+                  className={`py-1.5 px-0.5 rounded-full text-center font-bold border transition-all cursor-pointer ${
                     severityFilter === '3'
                       ? 'bg-rose-600 text-white border-rose-600 shadow-xs'
                       : isDark ? 'bg-slate-800 border-slate-700 text-rose-400' : 'bg-rose-50 border-rose-200 text-rose-700'
@@ -4377,7 +4570,7 @@ export default function App() {
                     try { playSelectSound(); } catch (_) {}
                     setSeverityFilter(severityFilter === '2' ? 'all' : '2');
                   }}
-                  className={`py-1.5 px-1 rounded-full text-center font-bold border transition-all cursor-pointer ${
+                  className={`py-1.5 px-0.5 rounded-full text-center font-bold border transition-all cursor-pointer ${
                     severityFilter === '2'
                       ? 'bg-amber-500 text-white border-amber-500 shadow-xs'
                       : isDark ? 'bg-slate-800 border-slate-700 text-amber-400' : 'bg-amber-50 border-amber-200 text-amber-800'
@@ -4391,7 +4584,7 @@ export default function App() {
                     try { playSelectSound(); } catch (_) {}
                     setSeverityFilter(severityFilter === '1' ? 'all' : '1');
                   }}
-                  className={`py-1.5 px-1 rounded-full text-center font-bold border transition-all cursor-pointer ${
+                  className={`py-1.5 px-0.5 rounded-full text-center font-bold border transition-all cursor-pointer ${
                     severityFilter === '1'
                       ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
                       : isDark ? 'bg-slate-800 border-slate-700 text-emerald-400' : 'bg-emerald-50 border-emerald-200 text-emerald-800'
@@ -4405,12 +4598,13 @@ export default function App() {
               <div className="space-y-1.5 pt-0.5">
                 <div className="flex items-center justify-between text-[11px] text-slate-500 font-medium">
                   <span>รายการจุดรายงาน ({displayPoints.length})</span>
-                  {(selectedDistrict !== 'ทั้งหมด' || searchQuery) && (
+                  {(selectedDistrict !== 'ทั้งหมด' || searchQuery || severityFilter !== 'all') && (
                     <button
                       type="button"
                       onClick={() => {
                         setSelectedDistrict('ทั้งหมด');
                         setSearchQuery('');
+                        setSeverityFilter('all');
                       }}
                       className="text-blue-600 dark:text-blue-400 hover:underline cursor-pointer"
                     >
@@ -4427,6 +4621,7 @@ export default function App() {
                       onClick={() => {
                         setSelectedDistrict('ทั้งหมด');
                         setSearchQuery('');
+                        setSeverityFilter('all');
                       }}
                       className="mt-2 text-blue-600 dark:text-blue-400 text-xs font-bold hover:underline"
                     >
@@ -4442,6 +4637,7 @@ export default function App() {
                       const isSelected = selectedPoint ? selectedPoint.id === pt.id : idx === 0;
                       const depthText = pt.depthCm ? `${pt.depthCm} ซม.` : (pt.depthRange || `${lvl === 3 ? '>50' : lvl === 2 ? '21-50' : '5-20'} ซม.`);
                       const barPercent = Math.min(100, Math.max(18, pt.depthCm ? Math.round((pt.depthCm / 65) * 100) : (lvl === 3 ? 90 : lvl === 2 ? 55 : 28)));
+                      const isFavorite = favoritePointIds.includes(pt.id);
 
                       if (isSelected) {
                         return (
@@ -4463,11 +4659,24 @@ export default function App() {
                                   อ.{pt.district?.replace(/^อ\./, '')}{pt.subdistrict ? ` • ต.${pt.subdistrict.replace(/^ต\./, '')}` : ''}
                                 </span>
                               </div>
-                              {hasPtPhoto && (
-                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-cyan-300 shrink-0">
-                                  มีภาพจริง
-                                </span>
-                              )}
+                              <div className="flex items-center gap-1.5 shrink-0">
+                                {hasPtPhoto && (
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-cyan-300">
+                                    มีภาพจริง
+                                  </span>
+                                )}
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    toggleFavoritePoint(pt.id);
+                                  }}
+                                  title={isFavorite ? "นำออกจากจุดโปรด" : "บันทึกเป็นจุดโปรด"}
+                                  className="p-1 rounded-full hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors"
+                                >
+                                  <Star className={`w-4 h-4 ${isFavorite ? "fill-amber-400 text-amber-400" : "text-slate-400 hover:text-amber-400"}`} />
+                                </button>
+                              </div>
                             </div>
 
                             {/* Center Pill Badge + Progress Bar */}
@@ -4573,7 +4782,18 @@ export default function App() {
                             </div>
                           </div>
 
-                          <div className="text-right shrink-0">
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleFavoritePoint(pt.id);
+                              }}
+                              title={isFavorite ? "นำออกจากจุดโปรด" : "บันทึกเป็นจุดโปรด"}
+                              className="p-1 rounded-full hover:bg-slate-200 dark:hover:bg-slate-750 transition-colors"
+                            >
+                              <Star className={`w-3.5 h-3.5 ${isFavorite ? "fill-amber-400 text-amber-400" : "text-slate-400 hover:text-amber-400"}`} />
+                            </button>
                             <span className={`text-[11px] font-extrabold font-mono px-2.5 py-1 rounded-full inline-block ${
                               lvl === 3
                                 ? 'bg-rose-600 text-white'
@@ -4861,6 +5081,44 @@ export default function App() {
         theme={theme}
       />
 
+      {/* CIVIC SHARE CARD MODAL */}
+      <CivicShareModal
+        isOpen={isShareModalOpen}
+        onClose={() => setIsShareModalOpen(false)}
+        points={points}
+        citizenReports={citizenReports}
+        levelCounts={levelCounts}
+        weather={weather}
+        theme={theme}
+      />
+
+      {/* OFFLINE EMERGENCY DIRECTORY MODAL */}
+      <OfflineEmergencyModal
+        isOpen={isOfflineModalOpen}
+        onClose={() => setIsOfflineModalOpen(false)}
+        theme={theme}
+        isOffline={isOffline}
+      />
+
+      {/* OFFLINE STATUS TOP BANNER */}
+      {isOffline && (
+        <div className="fixed top-14 sm:top-16 left-1/2 -translate-x-1/2 z-[4000] w-[92vw] max-w-md animate-in slide-in-from-top-3">
+          <div className="p-2.5 px-3.5 rounded-2xl bg-amber-500 text-slate-950 font-bold text-xs shadow-xl flex items-center justify-between gap-2 border border-amber-300">
+            <div className="flex items-center gap-2 min-w-0">
+              <WifiOff className="w-4 h-4 shrink-0 animate-pulse text-amber-950" />
+              <span className="truncate">โหมดออฟไลน์: กำลังใช้ข้อมูลแคชสำรอง</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsOfflineModalOpen(true)}
+              className="px-2.5 py-1 rounded-full bg-slate-950 text-white text-[11px] font-extrabold shrink-0 hover:bg-slate-800 transition-colors"
+            >
+              เบอร์ฉุกเฉิน
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* 4. MOBILE BOTTOM ACTION BAR (สำหรับมือถือ ใช้งานสะดวกด้วยนิ้วโป้ง ไม่ซับซ้อน) */}
       <MobileBottomNav
         onLocateMe={handleLocateMe}
@@ -4873,6 +5131,10 @@ export default function App() {
         onOpenFeedback={() => setIsFeedbackModalOpen(true)}
         onOpenEmergency={() => setIsEmergencyModalOpen(true)}
         onOpenStandards={() => setIsStandardsModalOpen(true)}
+        onOpenShare={() => setIsShareModalOpen(true)}
+        onOpenOfflineEmergency={() => setIsOfflineModalOpen(true)}
+        onInstallPwa={handleInstallPwa}
+        canInstallPwa={Boolean(deferredPrompt)}
         onOpenAdmin={() => setIsAdminModalOpen(true)}
         onToggleTheme={toggleTheme}
         hasGps={!!userLocation}
